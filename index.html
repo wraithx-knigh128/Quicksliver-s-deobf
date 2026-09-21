@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Quicksilver's Deobf</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  :root {
+    --bg: #07090d;
+    --panel: #0f141b;
+    --panel-2: #131a23;
+    --border: #1e2733;
+    --text: #e7edf3;
+    --muted: #8a97a6;
+    --accent: #38bdf8;
+    --accent-2: #22d3ee;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    min-height: 100vh;
+    padding: 24px 16px 64px;
+  }
+  .wrap { max-width: 900px; margin: 0 auto; }
+
+  /* ---------- Animated title ---------- */
+  header { text-align: center; margin-bottom: 28px; }
+  .title {
+    font-size: clamp(34px, 7vw, 64px);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin: 0;
+    background: linear-gradient(
+      100deg,
+      #0ea5e9 0%, #22d3ee 20%, #a5f3fc 40%, #ffffff 50%,
+      #a5f3fc 60%, #22d3ee 80%, #0ea5e9 100%
+    );
+    background-size: 300% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: shine 6s linear infinite;
+    display: inline-block;
+  }
+  .title span {
+    display: inline-block;
+    animation: wave 2.4s ease-in-out infinite;
+  }
+  @keyframes shine {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 300% 50%; }
+  }
+  @keyframes wave {
+    0%, 100% { transform: translateY(0); }
+    25% { transform: translateY(-6px); }
+    50% { transform: translateY(0); }
+    75% { transform: translateY(6px); }
+  }
+  .byline {
+    margin-top: 6px;
+    font-size: 14px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .byline b { color: var(--accent-2); font-weight: 700; }
+
+  /* ---------- Layout ---------- */
+  .field { margin-bottom: 20px; }
+  .row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  label { font-size: 15px; font-weight: 600; }
+  .hint { color: var(--muted); font-size: 13px; }
+  select, textarea {
+    width: 100%;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    color: var(--text);
+    padding: 14px;
+    font-size: 14px;
+    outline: none;
+  }
+  select:focus, textarea:focus { border-color: var(--accent); }
+  textarea {
+    min-height: 220px;
+    resize: vertical;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    line-height: 1.5;
+    white-space: pre;
+  }
+  .preset-note {
+    margin-top: 8px;
+    font-size: 13px;
+    color: var(--muted);
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    display: none;
+  }
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; margin: 8px 0 22px; }
+  button {
+    border: 1px solid var(--border);
+    background: var(--panel-2);
+    color: var(--text);
+    border-radius: 12px;
+    padding: 12px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform .05s ease, border-color .15s ease, background .15s ease;
+  }
+  button:hover { border-color: var(--accent); }
+  button:active { transform: translateY(1px); }
+  button.primary {
+    background: linear-gradient(100deg, #0ea5e9, #22d3ee);
+    border: none;
+    color: #04121a;
+  }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  .link-btn {
+    background: none; border: none; color: var(--accent);
+    padding: 4px 6px; font-weight: 600;
+  }
+  .steps {
+    margin: 0 0 18px;
+    padding: 12px 14px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 13px;
+    color: var(--muted);
+    display: none;
+  }
+  .steps ul { margin: 6px 0 0; padding-left: 18px; }
+  .toast {
+    position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%);
+    background: #131a23; border: 1px solid var(--border);
+    color: var(--text); padding: 12px 18px; border-radius: 12px;
+    font-size: 14px; opacity: 0; pointer-events: none; transition: opacity .2s ease;
+    z-index: 10;
+  }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1 class="title" id="title" aria-label="Quicksilver's Deobf"></h1>
+      <div class="byline">Made by <b>Wraith</b></div>
+    </header>
+
+    <div class="field">
+      <div class="row"><label for="preset">Obfuscator preset</label></div>
+      <select id="preset"></select>
+      <div class="preset-note" id="presetNote"></div>
+    </div>
+
+    <div class="field">
+      <div class="row">
+        <label for="input">Obfuscated code</label>
+        <button class="link-btn" id="loadExample">Load example</button>
+      </div>
+      <textarea id="input" spellcheck="false" placeholder="Paste obfuscated Lua, or a loadstring(game:HttpGet(...)) loader..."></textarea>
+    </div>
+
+    <div class="actions">
+      <button class="primary" id="deob">Deobfuscate</button>
+      <button id="downloadZip">Download ZIP</button>
+      <button id="downloadLua">Download .lua</button>
+      <button id="copy">Copy</button>
+    </div>
+
+    <div class="steps" id="steps"></div>
+
+    <div class="field">
+      <div class="row"><label for="output">Deobfuscated result</label></div>
+      <textarea id="output" spellcheck="false" readonly></textarea>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+
+/* =========================================================================
+   Deobfuscation passes (ported 1:1 from the app engine)
+   ========================================================================= */
+
+function passUnescape(src) {
+  const decodeEscapes = (body) =>
+    body
+      .replace(/\\x([0-9a-fA-F]{2})/g, (_, h) => String.fromCharCode(parseInt(h, 16)))
+      .replace(/\\(\d{1,3})/g, (m, d) => {
+        const code = parseInt(d, 10);
+        return code <= 255 ? String.fromCharCode(code) : m;
+      })
+      .replace(/\\u\{([0-9a-fA-F]+)\}/g, (m, h) => {
+        try { return String.fromCodePoint(parseInt(h, 16)); } catch { return m; }
+      });
+  return src.replace(/"((?:\\.|[^"\\])*)"|'((?:\\.|[^'\\])*)'/g, (match, dq, sq) => {
+    const quote = dq !== undefined ? '"' : "'";
+    const body = dq !== undefined ? dq : sq;
+    const decoded = decodeEscapes(body);
+    const safe = decoded.replace(/\\(?!["'\\ntr])/g, "\\\\").split(quote).join("\\" + quote);
+    return quote + safe + quote;
+  });
+}
+
+function passStringChar(src) {
+  return src.replace(/string\.char\s*\(([^()]*)\)/g, (match, args) => {
+    const parts = args.split(",").map((p) => p.trim());
+    if (parts.length === 0) return match;
+    let out = "";
+    for (const p of parts) {
+      const n = Number(p);
+      if (!Number.isInteger(n) || n < 0 || n > 255) return match;
+      out += String.fromCharCode(n);
+    }
+    return JSON.stringify(out);
+  });
+}
+
+function passByteTables(src) {
+  return src.replace(/\{\s*((?:\d{1,3}\s*,\s*){2,}\d{1,3})\s*\}/g, (match, body) => {
+    const nums = body.split(",").map((n) => Number(n.trim()));
+    if (nums.some((n) => !Number.isInteger(n) || n < 0 || n > 255)) return match;
+    const printable = nums.every((n) => n === 9 || n === 10 || n === 13 || (n >= 32 && n <= 126));
+    if (!printable) return match;
+    const str = nums.map((n) => String.fromCharCode(n)).join("");
+    return "--[[ decoded byte table ]] " + JSON.stringify(str);
+  });
+}
+
+function b64ToString(b64) {
+  if (typeof atob === "function") return atob(b64);
+  return "";
+}
+
+function passBase64(src) {
+  return src.replace(/(["'])([A-Za-z0-9+/]{24,}={0,2})\1/g, (match, quote, b64) => {
+    if (b64.length % 4 !== 0) return match;
+    try {
+      const decoded = b64ToString(b64);
+      const printable = [...decoded].filter((c) => {
+        const code = c.charCodeAt(0);
+        return code === 9 || code === 10 || code === 13 || (code >= 32 && code <= 126);
+      }).length;
+      if (printable / decoded.length < 0.85) return match;
+      return quote + decoded.replace(/\\/g, "\\\\").split(quote).join("\\" + quote) + quote + " --[[ base64 decoded ]]";
+    } catch { return match; }
+  });
+}
+
+function passHexBlob(src) {
+  return src.replace(/(["'])((?:\\x[0-9a-fA-F]{2}){4,})\1/g, (match, quote, blob) => {
+    const decoded = blob.replace(/\\x([0-9a-fA-F]{2})/g, (_, h) => String.fromCharCode(parseInt(h, 16)));
+    return quote + decoded.replace(/\\/g, "\\\\").split(quote).join("\\" + quote) + quote;
+  });
+}
+
+function passConcat(src) {
+  let prev, out = src, guard = 0;
+  do {
+    prev = out;
+    out = out.replace(/(["'])((?:\\.|(?!\1).)*)\1\s*\.\.\s*(["'])((?:\\.|(?!\3).)*)\3/g,
+      (_, q1, a, _q2, b) => q1 + a + b + q1);
+    guard++;
+  } while (out !== prev && guard < 50);
+  return out;
+}
+
+function unquote(body) {
+  return body
+    .replace(/\\n/g, "\n").replace(/\\t/g, "\t").replace(/\\r/g, "\r")
+    .replace(/\\"/g, '"').replace(/\\'/g, "'").replace(/\\\\/g, "\\");
+}
+
+function passLoadstring(src) {
+  let prev, out = src, guard = 0;
+  const pattern =
+    /\(?\s*(?:loadstring|load)\s*\(\s*(["'])((?:\\.|(?!\1).)*)\1\s*(?:,\s*(["'])(?:\\.|(?!\3).)*\3\s*)?\)\s*\)?\s*\(\s*\)/g;
+  do {
+    prev = out;
+    out = out.replace(pattern, (_m, _q, body) => "--[[ loadstring unwrapped ]]\n" + unquote(body) + "\n");
+    guard++;
+  } while (out !== prev && guard < 25);
+  return out;
+}
+
+function tokenizeForFormat(src) {
+  const tokens = [];
+  let i = 0, code = "";
+  const push = () => { if (code) { tokens.push({ type: "code", value: code }); code = ""; } };
+  while (i < src.length) {
+    const two = src.slice(i, i + 2);
+    const longOpen = src.slice(i).match(/^(--)?\[(=*)\[/);
+    if (longOpen) {
+      const isComment = !!longOpen[1];
+      const level = longOpen[2];
+      const close = "]" + level + "]";
+      const start = i;
+      const end = src.indexOf(close, i + longOpen[0].length);
+      const stop = end === -1 ? src.length : end + close.length;
+      push();
+      tokens.push({ type: isComment ? "comment" : "string", value: src.slice(start, stop) });
+      i = stop; continue;
+    }
+    if (two === "--") {
+      const nl = src.indexOf("\n", i);
+      const stop = nl === -1 ? src.length : nl;
+      push();
+      tokens.push({ type: "comment", value: src.slice(i, stop) });
+      i = stop; continue;
+    }
+    const ch = src[i];
+    if (ch === '"' || ch === "'") {
+      const start = i; i++;
+      while (i < src.length) {
+        if (src[i] === "\\") { i += 2; continue; }
+        if (src[i] === ch) { i++; break; }
+        i++;
+      }
+      push();
+      tokens.push({ type: "string", value: src.slice(start, i) });
+      continue;
+    }
+    code += ch; i++;
+  }
+  push();
+  return tokens;
+}
+
+function indentLua(src) {
+  const lines = src.split("\n").map((l) => l.trim())
+    .filter((l, idx, arr) => !(l === "" && arr[idx - 1] === ""));
+  const opensBlock = (l) =>
+    /(\bthen\b|\bdo\b|\brepeat\b|\belse\b|\bfunction\b|[({])\s*$/.test(l) ||
+    /^function\b/.test(l) || /\bfunction\s*\(/.test(l);
+  const closesBlock = (l) => /^(end|until|else|elseif|[)}])/.test(l);
+  let depth = 0;
+  const out = [];
+  for (const raw of lines) {
+    let line = raw;
+    if (closesBlock(line)) depth = Math.max(0, depth - 1);
+    out.push("  ".repeat(depth) + line);
+    const opens = (line.match(/\b(function|then|do|repeat)\b|[({]/g) || []).length;
+    const closes = (line.match(/\b(end|until)\b|[)}]/g) || []).length;
+    if (opensBlock(line) || opens > closes) depth += Math.max(1, opens - closes);
+    if (/^(else|elseif)/.test(line)) depth += 1;
+  }
+  return out.join("\n").replace(/\n{3,}/g, "\n\n").trim() + "\n";
+}
+
+function passBeautify(src) {
+  const tokens = tokenizeForFormat(src);
+  let result = "";
+  for (const t of tokens) {
+    if (t.type === "string" || t.type === "comment") {
+      result += t.value;
+    } else {
+      result += t.value
+        .replace(/\s+/g, " ")
+        .replace(/\s*;\s*/g, ";\n")
+        .replace(/\bthen\b/g, "then\n")
+        .replace(/\bdo\b/g, "do\n")
+        .replace(/\brepeat\b/g, "repeat\n")
+        .replace(/\belse\b/g, "\nelse\n")
+        .replace(/\belseif\b/g, "\nelseif ")
+        .replace(/\bend\b/g, "\nend\n")
+        .replace(/\buntil\b/g, "\nuntil ")
+        .replace(/\breturn\b/g, "\nreturn ")
+        .replace(/\blocal\b/g, "\nlocal ")
+        .replace(/\bfunction\b/g, "\nfunction ");
+    }
+  }
+  return indentLua(result);
+}
+
+function deobfuscate(source, preset) {
+  const steps = [];
+  let out = source;
+  const p = preset.passes;
+  if (p.unescape)   { out = passUnescape(out);   steps.push("Decoded \\ddd / \\xHH / \\u{...} escapes"); }
+  if (p.hexBlob)    { out = passHexBlob(out);     steps.push("Decoded hex string blobs"); }
+  if (p.stringChar) { out = passStringChar(out);  steps.push("Folded string.char(...) sequences"); }
+  if (p.byteTables) { out = passByteTables(out);  steps.push("Decoded numeric byte tables"); }
+  if (p.base64)     { out = passBase64(out);      steps.push("Decoded base64 literals"); }
+  if (p.concat)     { out = passConcat(out);      steps.push("Folded constant string concatenation"); }
+  if (p.loadstring) { out = passLoadstring(out);  steps.push("Unwrapped loadstring/load payloads"); }
+  if (p.beautify)   { out = passBeautify(out);    steps.push("Reformatted and indented source"); }
+  return { code: out, steps };
+}
+
+/* =========================================================================
+   Presets
+   ========================================================================= */
+const PRESETS = [
+  { id: "auto", label: "Auto (all passes)",
+    description: "Run every decoding + beautify pass. Good starting point for unknown input.",
+    passes: { unescape:true, stringChar:true, byteTables:true, base64:true, hexBlob:true, concat:true, loadstring:true, beautify:true },
+    example: ['local a=string.char(112,114,105,110,116)','local b="\\72\\101\\108\\108\\111"','_G[a](b)'].join("\n") },
+  { id: "moonsec", label: "MoonSec V3",
+    description: "Decodes literal/const layers and beautifies. High-tier MoonSec V3 is VM bytecode and cannot be fully devirtualized client-side.",
+    note: "MoonSec V3 wraps code in a custom VM. This preset decodes every readable literal and reformats the loader/wrapper, but it will not reconstruct the original source from bytecode.",
+    passes: { unescape:true, stringChar:true, byteTables:true, base64:true, hexBlob:true, concat:true, loadstring:true, beautify:true },
+    example: ['local L1_1=string.char(103,101,116,102,101,110,118)','return(function(...)local a="\\108\\111\\97\\100\\115\\116\\114\\105\\110\\103" return a end)()'].join("\n") },
+  { id: "luaobfuscator", label: "luaobfuscator.com",
+    description: "Targets the string-table + escape encoding used by luaobfuscator.com output.",
+    note: "luaobfuscator.com relies heavily on byte tables and escaped strings, which decode cleanly. Deeper 'premium' tiers add VM layers that only partially recover.",
+    passes: { unescape:true, stringChar:true, byteTables:true, base64:true, hexBlob:false, concat:true, loadstring:true, beautify:true },
+    example: ['local v0={104,101,108,108,111}','local v1=\'\'','for i=1,#v0 do v1=v1..string.char(v0[i]) end','print(v1)'].join("\n") },
+  { id: "strings", label: "Strings only (no reformat)",
+    description: "Decode every literal encoding but leave the layout untouched.",
+    passes: { unescape:true, stringChar:true, byteTables:true, base64:true, hexBlob:true, concat:true, loadstring:false, beautify:false },
+    example: 'print("\\72\\101\\108\\108\\111".." "..string.char(87,111,114,108,100))' },
+  { id: "beautify", label: "Beautify only",
+    description: "Just reformat / indent minified Lua without decoding anything.",
+    passes: { unescape:false, stringChar:false, byteTables:false, base64:false, hexBlob:false, concat:false, loadstring:false, beautify:true },
+    example: "local function f(a,b) if a>b then return a else return b end end print(f(1,2))" },
+];
+
+/* =========================================================================
+   Remote loader fetch (best-effort; may be blocked by CORS in a static file)
+   ========================================================================= */
+async function resolveRemoteLoaders(source) {
+  const re = /(?:game:HttpGet|HttpGet|game:HttpGetAsync|syn\.request|request)\s*\(\s*["'](https?:\/\/[^"']+)["']/g;
+  let match, out = source, fetchedAny = false;
+  const urls = [];
+  while ((match = re.exec(source)) !== null) urls.push(match[1]);
+  for (const url of urls) {
+    try {
+      const res = await fetch(url, { method: "GET" });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const body = await res.text();
+      out = "--[[ fetched from " + url + " ]]\n" + body + "\n\n--[[ original loader ]]\n-- " + out.replace(/\n/g, "\n-- ");
+      fetchedAny = true;
+    } catch (e) {
+      out = "--[[ could not fetch " + url + " from a static file (CORS). Open the page it downloads, copy the raw script, and paste it here. ]]\n\n" + out;
+    }
+  }
+  return { code: out, fetchedAny, hadUrls: urls.length > 0 };
+}
+
+/* =========================================================================
+   UI wiring
+   ========================================================================= */
+const $ = (id) => document.getElementById(id);
+const presetSel = $("preset");
+const inputEl = $("input");
+const outputEl = $("output");
+const noteEl = $("presetNote");
+const stepsEl = $("steps");
+const toastEl = $("toast");
+
+// Animated wavy title
+(function buildTitle() {
+  const text = "Quicksilver's Deobf";
+  const el = $("title");
+  [...text].forEach((ch, i) => {
+    const span = document.createElement("span");
+    span.textContent = ch === " " ? "\u00A0" : ch;
+    span.style.animationDelay = (i * 0.06) + "s";
+    el.appendChild(span);
+  });
+})();
+
+PRESETS.forEach((p) => {
+  const opt = document.createElement("option");
+  opt.value = p.id;
+  opt.textContent = p.label;
+  presetSel.appendChild(opt);
+});
+
+function currentPreset() {
+  return PRESETS.find((p) => p.id === presetSel.value) || PRESETS[0];
+}
+function syncNote() {
+  const p = currentPreset();
+  if (p.note) { noteEl.textContent = p.note; noteEl.style.display = "block"; }
+  else { noteEl.style.display = "none"; }
+}
+function toast(msg) {
+  toastEl.textContent = msg;
+  toastEl.classList.add("show");
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => toastEl.classList.remove("show"), 2600);
+}
+
+presetSel.addEventListener("change", syncNote);
+syncNote();
+
+$("loadExample").addEventListener("click", () => {
+  inputEl.value = currentPreset().example;
+});
+
+$("deob").addEventListener("click", async () => {
+  const src = inputEl.value.trim();
+  if (!src) { toast("Paste some code first."); return; }
+  const btn = $("deob");
+  btn.disabled = true; btn.textContent = "Working...";
+  try {
+    let working = src;
+    const remote = await resolveRemoteLoaders(src);
+    if (remote.hadUrls) working = remote.code;
+    const { code, steps } = deobfuscate(working, currentPreset());
+    outputEl.value = code;
+    stepsEl.style.display = "block";
+    stepsEl.innerHTML = "<strong>Applied " + steps.length + " pass" +
+      (steps.length === 1 ? "" : "es") + ":</strong><ul>" +
+      steps.map((s) => "<li>" + s.replace(/</g, "&lt;") + "</li>").join("") + "</ul>";
+    if (remote.hadUrls && !remote.fetchedAny) {
+      toast("Loader detected but the remote script could not be fetched (CORS).");
+    }
+  } catch (e) {
+    toast("Error: " + e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = "Deobfuscate";
+  }
+});
+
+function timestamp() {
+  return new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+}
+
+$("downloadZip").addEventListener("click", async () => {
+  const code = outputEl.value;
+  if (!code) { toast("Nothing to export yet - run Deobfuscate first."); return; }
+  const zip = new JSZip();
+  const folder = zip.folder("quicksilver-deobf");
+  folder.file("deobfuscated.lua", code);
+  folder.file("original.lua", inputEl.value);
+  folder.file("preset.txt", "Preset: " + currentPreset().label + "\nGenerated: " + new Date().toString() + "\nMade by Wraith - Quicksilver's Deobf");
+  const blob = await zip.generateAsync({ type: "blob" });
+  downloadBlob(blob, "quicksilver-deobf-" + timestamp() + ".zip");
+  toast("ZIP created.");
+});
+
+$("downloadLua").addEventListener("click", () => {
+  const code = outputEl.value;
+  if (!code) { toast("Nothing to export yet - run Deobfuscate first."); return; }
+  downloadBlob(new Blob([code], { type: "text/plain" }), "deobfuscated-" + timestamp() + ".lua");
+});
+
+$("copy").addEventListener("click", async () => {
+  if (!outputEl.value) { toast("Nothing to copy yet."); return; }
+  try { await navigator.clipboard.writeText(outputEl.value); toast("Copied to clipboard."); }
+  catch { outputEl.select(); document.execCommand("copy"); toast("Copied."); }
+});
+
+function downloadBlob(blob, name) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+// Preload the auto example so the box is not empty.
+inputEl.value = PRESETS[0].example;
+</script>
+</body>
+</html>
