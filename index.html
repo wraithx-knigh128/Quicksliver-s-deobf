@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Quicksilver's Territory</title>
-<meta name="description" content="Decode string layers, unpack constants, beautify obfuscated Lua & bypass key systems (Polsec, Luarmor, Junkie, Fluxus & more)." />
+<meta name="description" content="Deobfuscator for authorized Lua/JS source-code analysis — auto-detect obfuscators, decode strings, recover structure, and map access-flow / key-gate systems (read-only, no circumvention)." />
 <script>
 /*!
 
@@ -169,7 +169,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   .zip-info code { font-family: ui-monospace, monospace; color: #7dd3fc; }
   footer.page-footer { margin-top: 26px; text-align: center; font-size: 12px; color: var(--muted); }
 
-  /* ---------- Key bypass styles ---------- */
+  /* ---------- Service-detection chip grid (shared) ---------- */
   .bypass-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
   @media (max-width: 600px) { .bypass-grid { grid-template-columns: 1fr; } }
   .bypass-chip {
@@ -209,6 +209,52 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   .bypass-info p { margin: 0; font-size: 12.5px; color: var(--muted); line-height: 1.6; }
   .bypass-info svg { width: 20px; height: 20px; flex-shrink: 0; color: var(--accent); margin-top: 1px; }
 
+  /* ---------- Detection banner ---------- */
+  .detect-banner {
+    margin-top: 10px; font-size: 13px; line-height: 1.5; display: none;
+    border-radius: 10px; padding: 12px 14px;
+    background: rgba(52,211,153,0.08); border: 1px solid rgba(52,211,153,0.35);
+  }
+  .detect-banner.show { display: block; }
+  .detect-banner.none { background: var(--panel-2); border-color: var(--border); }
+  .detect-banner b { color: var(--accent-2); }
+  .detect-banner .conf { color: var(--muted); font-size: 12px; }
+
+  /* ---------- Report card (deobf report + flow report) ---------- */
+  .report-card {
+    border: 1px solid var(--border); background: var(--panel);
+    border-radius: 14px; padding: 4px 18px 16px; margin: 4px 0 22px;
+    font-size: 13px; line-height: 1.6;
+  }
+  .report-card h3 { font-size: 13px; font-weight: 700; color: var(--accent-2); margin: 16px 0 8px; text-transform: uppercase; letter-spacing: .04em; }
+  .report-card h4 { font-size: 13.5px; font-weight: 700; color: var(--text); margin: 14px 0 4px; }
+  .report-card p { margin: 4px 0; color: var(--muted); }
+  .report-card ul { margin: 4px 0 8px; padding-left: 18px; }
+  .report-card li { margin: 3px 0; color: var(--muted); }
+  .report-card code { font-family: ui-monospace, monospace; color: #7dd3fc; background: var(--panel-2); padding: 1px 5px; border-radius: 5px; word-break: break-all; }
+  .report-card .flow-step { display: flex; gap: 10px; align-items: flex-start; margin: 6px 0; }
+  .report-card .flow-step .num {
+    flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%;
+    background: var(--panel-2); border: 1px solid var(--border);
+    color: var(--accent); font-size: 12px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .report-card .sys-block { border-top: 1px solid var(--border); padding-top: 8px; margin-top: 12px; }
+  .report-card .sys-block:first-of-type { border-top: none; }
+  .report-card .tag-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+  .report-card .pill { font-size: 11px; border: 1px solid var(--border); background: var(--panel-2); color: var(--muted); border-radius: 999px; padding: 3px 9px; }
+  .report-card .pill.warn { color: var(--amber); border-color: rgba(251,191,36,0.35); }
+  .report-card .boundary { color: var(--green); font-weight: 600; }
+
+  /* ---------- Flow notice ---------- */
+  .flow-notice {
+    display: flex; gap: 10px; align-items: flex-start;
+    border: 1px solid rgba(52,211,153,0.35); background: rgba(52,211,153,0.07);
+    border-radius: 14px; padding: 14px 16px; margin-bottom: 20px;
+  }
+  .flow-notice p { margin: 0; font-size: 12.5px; color: var(--text); line-height: 1.6; }
+  .flow-notice svg { width: 20px; height: 20px; flex-shrink: 0; color: var(--green); margin-top: 1px; }
+
   @media (max-width: 480px) {
     .wrap { padding: 20px 14px 48px; }
     .mode-tab { padding: 8px 14px; font-size: 13px; }
@@ -219,22 +265,23 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   <div class="wrap">
     <header>
       <h1 class="title" id="title" aria-label="Quicksilver's Territory"></h1>
-      <p class="tagline">Decode string layers, unwrap loadstrings, pull remote Roblox loaders, bypass key systems &amp; export a ZIP for your bot.</p>
+      <p class="tagline">Professional deobfuscator for <b>authorized</b> Lua/JS source-code analysis — auto-detect the obfuscator, decode strings, recover structure, and map access-flow systems. Analysis only; nothing is circumvented.</p>
       <div class="byline">Made by <b>Wraith</b></div>
     </header>
 
     <!-- ========== MODE TABS ========== -->
     <nav class="mode-tabs">
       <button class="mode-tab active" data-mode="deobf">Deobfuscator</button>
-      <button class="mode-tab" data-mode="bypass">Key Bypass</button>
+      <button class="mode-tab" data-mode="flow">Access-Flow Analysis</button>
     </nav>
 
     <!-- =================== MODE: DEOBFUSCATOR =================== -->
     <div class="mode-panel active" id="mode-deobf">
       <div class="field">
-        <div class="row"><label for="preset">Obfuscator preset</label></div>
+        <div class="row"><label for="preset">Obfuscator preset</label><span class="hint" id="autoDetectHint">Auto-detect runs on Deobfuscate</span></div>
         <select id="preset"></select>
         <div class="preset-note" id="presetNote"></div>
+        <div class="detect-banner" id="detectBanner"></div>
       </div>
       <div class="field">
         <div class="row">
@@ -255,63 +302,60 @@ https://github.com/nodeca/pako/blob/main/LICENSE
         <textarea id="output" spellcheck="false" readonly placeholder="Result will appear here after you click Deobfuscate."></textarea>
       </div>
       <ul class="steps-pills" id="stepsPills" style="display:none;"></ul>
+      <div class="report-card" id="deobReport" style="display:none;"></div>
       <section class="zip-info">
-        <h2>ZIP export for your Discord bot</h2>
-        <p><strong>Download ZIP</strong> packages the result into a <code>quicksilver-deobf-*.zip</code> archive containing <code>deobfuscated.lua</code>, <code>original.lua</code>, and a <code>manifest.json</code>. Hand that file to your bot to unarchive and process — nothing is sent anywhere else.</p>
+        <h2>Export cleaned source</h2>
+        <p><strong>Download ZIP</strong> packages the result into a <code>quicksilver-deobf-*.zip</code> archive containing <code>deobfuscated.lua</code> (cleaned), <code>original.lua</code> (for before/after comparison), and a <code>manifest.json</code> recording the detected obfuscator and applied passes. Everything runs locally in your browser — nothing is uploaded or sent anywhere.</p>
       </section>
     </div>
 
-    <!-- =================== MODE: KEY BYPASS =================== -->
-    <div class="mode-panel" id="mode-bypass">
+    <!-- =================== MODE: ACCESS-FLOW ANALYSIS =================== -->
+    <div class="mode-panel" id="mode-flow">
+      <div class="flow-notice">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 3 6v6c0 5 3.5 8 9 10 5.5-2 9-5 9-10V6l-9-4z"/></svg>
+        <p><strong>Read-only analysis.</strong> This module <em>maps and explains</em> monetization / key-gate flows so you can understand untrusted code you are authorized to review. It does not remove, patch, or circumvent any verification step, and it never rewrites the script. It reports structure only.</p>
+      </div>
       <div class="field">
-        <div class="row"><label>Detected key systems</label><span class="hint" id="detectCount">Paste code to scan</span></div>
-        <div class="bypass-grid" id="bypassGrid">
-          <div class="bypass-chip" data-sys="polsec"><span class="chip-dot"></span><span class="chip-label">Polsec</span><span class="chip-tag">—</span></div>
-          <div class="bypass-chip" data-sys="luarmor"><span class="chip-dot"></span><span class="chip-label">Luarmor</span><span class="chip-tag">—</span></div>
-          <div class="bypass-chip" data-sys="junkie"><span class="chip-dot"></span><span class="chip-label">Junkie / JNKIE</span><span class="chip-tag">—</span></div>
-          <div class="bypass-chip" data-sys="fluxus"><span class="chip-dot"></span><span class="chip-label">Fluxus</span><span class="chip-tag">—</span></div>
+        <div class="row"><label>Recognized access-flow services</label><span class="hint" id="flowDetectCount">Paste code to scan</span></div>
+        <div class="bypass-grid" id="flowGrid">
           <div class="bypass-chip" data-sys="linkvertise"><span class="chip-dot"></span><span class="chip-label">Linkvertise</span><span class="chip-tag">—</span></div>
+          <div class="bypass-chip" data-sys="lootlinks"><span class="chip-dot"></span><span class="chip-label">LootLinks / Lootlabs</span><span class="chip-tag">—</span></div>
+          <div class="bypass-chip" data-sys="sub2unlock"><span class="chip-dot"></span><span class="chip-label">Sub2Unlock</span><span class="chip-tag">—</span></div>
+          <div class="bypass-chip" data-sys="boostink"><span class="chip-dot"></span><span class="chip-label">Boost.ink</span><span class="chip-tag">—</span></div>
+          <div class="bypass-chip" data-sys="adfocus"><span class="chip-dot"></span><span class="chip-label">AdFoc.us</span><span class="chip-tag">—</span></div>
           <div class="bypass-chip" data-sys="rekonise"><span class="chip-dot"></span><span class="chip-label">Rekonise</span><span class="chip-tag">—</span></div>
-          <div class="bypass-chip" data-sys="hydrogen"><span class="chip-dot"></span><span class="chip-label">Hydrogen</span><span class="chip-tag">—</span></div>
-          <div class="bypass-chip" data-sys="arceus"><span class="chip-dot"></span><span class="chip-label">Arceus X</span><span class="chip-tag">—</span></div>
-          <div class="bypass-chip" data-sys="delta"><span class="chip-dot"></span><span class="chip-label">Delta</span><span class="chip-tag">—</span></div>
-          <div class="bypass-chip" data-sys="codex"><span class="chip-dot"></span><span class="chip-label">Codex</span><span class="chip-tag">—</span></div>
-          <div class="bypass-chip" data-sys="trigon"><span class="chip-dot"></span><span class="chip-label">Trigon</span><span class="chip-tag">—</span></div>
-          <div class="bypass-chip" data-sys="vegax"><span class="chip-dot"></span><span class="chip-label">VegaX</span><span class="chip-tag">—</span></div>
-          <div class="bypass-chip" data-sys="generic_key"><span class="chip-dot"></span><span class="chip-label">Generic key check</span><span class="chip-tag">—</span></div>
-          <div class="bypass-chip" data-sys="generic_hwid"><span class="chip-dot"></span><span class="chip-label">HWID lock</span><span class="chip-tag">—</span></div>
-          <div class="bypass-chip" data-sys="generic_webhook"><span class="chip-dot"></span><span class="chip-label">Webhook logging</span><span class="chip-tag">—</span></div>
-          <div class="bypass-chip" data-sys="generic_whitelist"><span class="chip-dot"></span><span class="chip-label">Whitelist / auth</span><span class="chip-tag">—</span></div>
-          <div class="bypass-chip" data-sys="generic_antitamper"><span class="chip-dot"></span><span class="chip-label">Anti-tamper / integrity</span><span class="chip-tag">—</span></div>
-          <div class="bypass-chip" data-sys="generic_heartbeat"><span class="chip-dot"></span><span class="chip-label">Periodic re-validation</span><span class="chip-tag">—</span></div>
+          <div class="bypass-chip" data-sys="workink"><span class="chip-dot"></span><span class="chip-label">Work.ink</span><span class="chip-tag">—</span></div>
+          <div class="bypass-chip" data-sys="pandadevelopment"><span class="chip-dot"></span><span class="chip-label">Pandadevelopment / keyless</span><span class="chip-tag">—</span></div>
+          <div class="bypass-chip" data-sys="luarmor"><span class="chip-dot"></span><span class="chip-label">Luarmor (key API)</span><span class="chip-tag">—</span></div>
+          <div class="bypass-chip" data-sys="generic_keygate"><span class="chip-dot"></span><span class="chip-label">Generic key gate</span><span class="chip-tag">—</span></div>
+          <div class="bypass-chip" data-sys="generic_hwid"><span class="chip-dot"></span><span class="chip-label">HWID binding</span><span class="chip-tag">—</span></div>
+          <div class="bypass-chip" data-sys="generic_checkpoint"><span class="chip-dot"></span><span class="chip-label">Checkpoint / ad gate</span><span class="chip-tag">—</span></div>
         </div>
       </div>
       <div class="field">
         <div class="row">
-          <label for="bypassInput">Script with key system</label>
-          <button class="link-btn" id="bypassExample">Load example</button>
+          <label for="flowInput">Script to analyze</label>
+          <span>
+            <button class="link-btn" id="flowExample">Load example</button>
+            <button class="link-btn" id="flowMock">Load mock-gate PoC</button>
+          </span>
         </div>
-        <textarea id="bypassInput" spellcheck="false" placeholder='Paste a Roblox Lua script that has a key system (Polsec, Luarmor, Junkie, Fluxus, etc.)...'></textarea>
+        <textarea id="flowInput" spellcheck="false" placeholder='Paste a script that uses a key/ad-gate system. The analyzer maps how it works — it does not modify it.'></textarea>
       </div>
       <div class="actions">
-        <button class="primary" id="bypassBtn">Bypass Keys</button>
-        <button id="bypassCopy">Copy Result</button>
-        <button id="bypassDownload">Download .lua</button>
+        <button class="primary" id="flowBtn">Analyze Flow</button>
+        <button id="flowCopy">Copy Report</button>
+        <button id="flowDownload">Download report (.md)</button>
       </div>
-      <div class="field">
-        <div class="row"><label for="bypassOutput">Bypassed result</label></div>
-        <textarea id="bypassOutput" spellcheck="false" readonly placeholder="Key-free script will appear here after you click Bypass Keys."></textarea>
-      </div>
-      <ul class="steps-pills" id="bypassPills" style="display:none;"></ul>
-      <div class="bypass-log" id="bypassLog" style="display:none;"></div>
+      <div class="report-card" id="flowReport" style="display:none;"></div>
       <div class="bypass-info">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-        <p>Strips key validation, HWID locks, whitelist auth, webhook logging, ad/linkvertise gates <strong>and anti-tamper / integrity re-checks</strong> from Lua scripts — so the key system can't detect it was removed. Supports Polsec, Luarmor, Junkie, Fluxus, Linkvertise, Rekonise, Hydrogen, Arceus X, Delta, Codex, Trigon, VegaX and generic key patterns. Works best on deobfuscated scripts — run through the Deobfuscator tab first if needed.</p>
+        <p>For each recognized system the report describes the redirect / unlock chain, the parameters and endpoints it depends on, where the authoritative verification happens, and the failure points — so you can document and reason about the flow. It intentionally stops at the verification boundary: it will not tell you how to satisfy or skip a gate. Run code through the Deobfuscator tab first for best results.</p>
       </div>
     </div>
 
     <footer class="page-footer">
-      Best-effort literal decoding, beautifying &amp; key bypass. VM/bytecode obfuscation cannot be fully reversed client-side.
+      Best-effort literal decoding, structural recovery &amp; read-only access-flow mapping. VM/bytecode obfuscation cannot be fully reversed client-side. For authorized analysis only.
     </footer>
   </div>
 
@@ -549,11 +593,51 @@ const PRESETS = [
     note: "MoonSec V3 wraps code in a custom VM. This preset decodes every readable literal and reformats the loader/wrapper, but it will not reconstruct the original source from bytecode.",
     passes: { unescape:true, stringChar:true, byteTables:true, base64:true, hexBlob:true, concat:true, loadstring:true, beautify:true },
     example: ['local L1_1=string.char(103,101,116,102,101,110,118)','return(function(...)local a="\\108\\111\\97\\100\\115\\116\\114\\105\\110\\103" return a end)()'].join("\n") },
-  { id: "luaobfuscator", label: "luaobfuscator.com",
+  { id: "luaobfuscator", label: "LuaObfuscator.com",
     description: "Targets the string-table + escape encoding used by luaobfuscator.com output.",
     note: "luaobfuscator.com relies heavily on byte tables and escaped strings. Deeper 'premium' tiers add VM layers that only partially recover.",
     passes: { unescape:true, stringChar:true, byteTables:true, base64:true, hexBlob:false, concat:true, loadstring:true, beautify:true },
     example: ['local v0={104,101,108,108,111}','local v1=\'\'','for i=1,#v0 do v1=v1..string.char(v0[i]) end','print(v1)'].join("\n") },
+  { id: "luraph", label: "Luraph (LPH) — all versions",
+    description: "Decode readable literals and reformat the Luraph loader/wrapper.",
+    note: "Luraph is a bytecode VM (LPH). Literal layers and the outer loader decode, but the original source cannot be reconstructed from its custom bytecode client-side — expect a partial result plus the unsupported-feature report.",
+    passes: { unescape:true, stringChar:true, byteTables:true, base64:true, hexBlob:true, concat:true, loadstring:true, beautify:true },
+    example: ['-- LPH!ExampleLoader','local LPH_ENCFUNC = function(...) end','return(function(...) local a="\\108\\112\\104" return a end)()'].join("\n") },
+  { id: "ironbrew", label: "IronBrew (IB1 / IB2)",
+    description: "Decode packed constants and reformat the IronBrew VM loader.",
+    note: "IronBrew uses a stack VM with string-packed constants. Constants decode; control flow stays inside the VM interpreter.",
+    passes: { unescape:true, stringChar:true, byteTables:true, base64:true, hexBlob:true, concat:true, loadstring:true, beautify:true },
+    example: ['-- IronBrew IB2','local Returns={}','return function(...) local a=string.char(105,98,50) return a end'].join("\n") },
+  { id: "psu", label: "Prometheus / PSU (4.0A / 4.5A)",
+    description: "Decode string/constant layers; reformat around control-flow flattening.",
+    note: "Prometheus/PSU applies vmify + string encoding + control-flow flattening. String and constant layers recover; flattened flow (dispatcher loops) needs manual analysis and is called out in the report.",
+    passes: { unescape:true, stringChar:true, byteTables:true, base64:true, hexBlob:true, concat:true, loadstring:true, beautify:true },
+    example: ['-- PSU 4.5A','return(function(...) local a=string.char(112,115,117) return a end)()'].join("\n") },
+  { id: "xhider", label: "Xhider",
+    description: "Decode Xhider string layers and reformat the loader.",
+    note: "Xhider layers string encoding over a loader. Strings decode; deeper layers vary by version.",
+    passes: { unescape:true, stringChar:true, byteTables:true, base64:true, hexBlob:true, concat:true, loadstring:true, beautify:true },
+    example: ['-- Xhider','local _xh_ = "\\120\\104\\105\\100\\101\\114"','print(_xh_)'].join("\n") },
+  { id: "hercules", label: "Hercules",
+    description: "Decode string encryption and strip readable junk; reformat.",
+    note: "Hercules applies string encryption, a VM, and junk/opaque predicates. Literals and readable junk help; the VM stays opaque.",
+    passes: { unescape:true, stringChar:true, byteTables:true, base64:true, hexBlob:true, concat:true, loadstring:true, beautify:true },
+    example: ['-- Hercules','local a=string.char(104,101,114,99)','print(a)'].join("\n") },
+  { id: "moonveil", label: "Moonveil 1.4.5",
+    description: "Decode outer literals and reformat the Moonveil loader.",
+    note: "Moonveil 1.4.5 is a VM-based protector. Outer literals decode; the interpreted body cannot be lifted client-side.",
+    passes: { unescape:true, stringChar:true, byteTables:true, base64:true, hexBlob:true, concat:true, loadstring:true, beautify:true },
+    example: ['-- Moonveil 1.4.5 (MV1.4.5)','return(function(...) local a="\\109\\118" return a end)()'].join("\n") },
+  { id: "luaq", label: "LUAQ (Lua bytecode)",
+    description: "Flag precompiled Lua bytecode; text passes do not apply.",
+    note: "LUAQ marks precompiled Lua bytecode chunks — this is compiled bytecode, not source. Only a bytecode decompiler (unluac-style) applies; the report says so rather than producing fake output.",
+    passes: { unescape:false, stringChar:false, byteTables:false, base64:false, hexBlob:false, concat:false, loadstring:false, beautify:false },
+    example: 'LUAQ\\0\\0\\0-- (binary bytecode chunk header; paste real source, not compiled bytecode)' },
+  { id: "obfuscatorio", label: "Obfuscator.io (JavaScript)",
+    description: "Decode string-array literals and reformat hex-identifier JS.",
+    note: "obfuscator.io uses hex identifiers, a rotated string array, and control-flow flattening. String-array literals and escapes decode; self-defending / debug-protection and flattened switch dispatch are reported as partial. Review in a sandbox.",
+    passes: { unescape:true, stringChar:false, byteTables:false, base64:true, hexBlob:true, concat:true, loadstring:false, beautify:false },
+    example: "var _0x1a2b=['\\x48\\x65\\x6c\\x6c\\x6f'];function _0xabcd(_0x1,_0x2){return _0x1a2b[0];}console['log'](_0xabcd(0,1));" },
   { id: "strings", label: "Strings only (no reformat)",
     description: "Decode every literal encoding but leave the layout untouched.",
     passes: { unescape:true, stringChar:true, byteTables:true, base64:true, hexBlob:true, concat:true, loadstring:false, beautify:false },
@@ -591,215 +675,288 @@ async function resolveRemoteLoaders(source) {
 }
 
 /* =========================================================================
-   KEY BYPASS ENGINE
+   OBFUSCATOR AUTO-DETECTION
+   Signature-based. Purely descriptive — nothing is executed.
    ========================================================================= */
-
-const KEY_SYSTEMS = [
-  { id: "polsec", name: "Polsec",
-    patterns: [/getpolsec\.com/i, /polsec[\._]?api/i, /polsec\.auth/i, /polsec[\._]?check/i, /polsec[\._]?validate/i, /polsec[\._]?whitelist/i, /polsec\.net/i],
-    strip: [
-      /(?:local\s+\w+\s*=\s*)?(?:syn\.request|request|http_request|game:GetService\s*\(\s*["']HttpService["']\s*\)\s*:\s*(?:RequestAsync|GetAsync|PostAsync))\s*\(\s*\{[^}]*polsec[^}]*\}\s*\)[^\n]*/gi,
-      /(?:local\s+)?\w+\s*=\s*["'][^"']*polsec[^"']*["'][^\n]*/gi,
-      /if[^t]*polsec[^t]*then[\s\S]*?(?:end|return)/gi,
-    ]},
-  { id: "luarmor", name: "Luarmor",
-    patterns: [/luarmor\.net/i, /luarmor[\._]?api/i, /luarmor\.check/i, /luarmor[\._]?validate/i, /api\.luarmor/i],
-    strip: [
-      /(?:local\s+\w+\s*=\s*)?(?:syn\.request|request|http_request|game:GetService\s*\(\s*["']HttpService["']\s*\)\s*:\s*(?:RequestAsync|GetAsync|PostAsync))\s*\(\s*\{[^}]*luarmor[^}]*\}\s*\)[^\n]*/gi,
-      /(?:local\s+)?\w+\s*=\s*["'][^"']*luarmor[^"']*["'][^\n]*/gi,
-      /if[^t]*luarmor[^t]*then[\s\S]*?(?:end|return)/gi,
-    ]},
-  { id: "junkie", name: "Junkie / JNKIE",
-    patterns: [/jnkie\.com/i, /junkie[\._]?api/i, /Junkie\.check_key/i, /Junkie\.get_key_link/i, /junkie[\._]?auth/i],
-    strip: [
-      /(?:local\s+\w+\s*=\s*)?(?:syn\.request|request|http_request|game:GetService\s*\(\s*["']HttpService["']\s*\)\s*:\s*(?:RequestAsync|GetAsync|PostAsync))\s*\(\s*\{[^}]*jnkie[^}]*\}\s*\)[^\n]*/gi,
-      /(?:local\s+)?\w+\s*=\s*["'][^"']*jnkie[^"']*["'][^\n]*/gi,
-      /Junkie\.\w+\s*\([^)]*\)[^\n]*/gi,
-    ]},
-  { id: "fluxus", name: "Fluxus",
-    patterns: [/flux\.li/i, /fluxus[\._]?key/i, /fluxus[\._]?api/i, /getfluxus/i],
-    strip: [
-      /(?:local\s+\w+\s*=\s*)?(?:syn\.request|request|http_request|game:GetService\s*\(\s*["']HttpService["']\s*\)\s*:\s*(?:RequestAsync|GetAsync|PostAsync))\s*\(\s*\{[^}]*flux[^}]*\}\s*\)[^\n]*/gi,
-      /(?:local\s+)?\w+\s*=\s*["'][^"']*flux\.li[^"']*["'][^\n]*/gi,
-    ]},
-  { id: "linkvertise", name: "Linkvertise",
-    patterns: [/linkvertise\.com/i, /loot-?link/i, /lootdest\.org/i, /link-to\.net/i],
-    strip: [
-      /(?:local\s+)?\w+\s*=\s*["'][^"']*linkvertise[^"']*["'][^\n]*/gi,
-      /(?:local\s+)?\w+\s*=\s*["'][^"']*loot-?link[^"']*["'][^\n]*/gi,
-      /(?:local\s+)?\w+\s*=\s*["'][^"']*lootdest[^"']*["'][^\n]*/gi,
-    ]},
-  { id: "rekonise", name: "Rekonise",
-    patterns: [/rekonise\.com/i, /rekonise[\._]?api/i, /rekonise[\._]?key/i],
-    strip: [
-      /(?:local\s+\w+\s*=\s*)?(?:syn\.request|request|http_request|game:GetService\s*\(\s*["']HttpService["']\s*\)\s*:\s*(?:RequestAsync|GetAsync|PostAsync))\s*\(\s*\{[^}]*rekonise[^}]*\}\s*\)[^\n]*/gi,
-      /(?:local\s+)?\w+\s*=\s*["'][^"']*rekonise[^"']*["'][^\n]*/gi,
-    ]},
-  { id: "hydrogen", name: "Hydrogen",
-    patterns: [/hydrogen[\._]?key/i, /hydrogen[\._]?api/i, /gethydrogen/i],
-    strip: [/(?:local\s+)?\w+\s*=\s*["'][^"']*hydrogen[^"']*["'][^\n]*/gi] },
-  { id: "arceus", name: "Arceus X",
-    patterns: [/arceusx/i, /arceus[\._]?key/i, /arceus[\._]?api/i],
-    strip: [/(?:local\s+)?\w+\s*=\s*["'][^"']*arceus[^"']*["'][^\n]*/gi] },
-  { id: "delta", name: "Delta",
-    patterns: [/delta[\._]?key[\._]?system/i, /delta[\._]?executor[\._]?key/i, /getdelta\.net/i],
-    strip: [/(?:local\s+)?\w+\s*=\s*["'][^"']*getdelta[^"']*["'][^\n]*/gi] },
-  { id: "codex", name: "Codex",
-    patterns: [/codex[\._]?key/i, /codex[\._]?api/i, /usecodex/i],
-    strip: [/(?:local\s+)?\w+\s*=\s*["'][^"']*codex[^"']*["'][^\n]*/gi] },
-  { id: "trigon", name: "Trigon",
-    patterns: [/trigon[\._]?key/i, /trigon[\._]?api/i, /gettrigon/i],
-    strip: [/(?:local\s+)?\w+\s*=\s*["'][^"']*trigon[^"']*["'][^\n]*/gi] },
-  { id: "vegax", name: "VegaX",
-    patterns: [/vegax[\._]?key/i, /vegax[\._]?api/i, /getvegax/i],
-    strip: [/(?:local\s+)?\w+\s*=\s*["'][^"']*vegax[^"']*["'][^\n]*/gi] },
+const OBFUSCATOR_SIGNATURES = [
+  { id: "luraph", name: "Luraph (LPH)", lang: "lua",
+    signatures: [/LPH!/,/LPH_ENCFUNC/i,/getfenv\s*\(\s*\)\s*\.\s*LPH/i,/\bLuraph\b/i,/\\27LPH/,/LPH_JIT/i],
+    recover: "partial",
+    note: "Luraph is a bytecode VM. Readable literals and the outer loader can be cleaned, but the original source cannot be reconstructed from its custom bytecode client-side." },
+  { id: "ironbrew", name: "IronBrew (IB1 / IB2)", lang: "lua",
+    signatures: [/IronBrew/i,/IB2?_/,/return\s+function\s*\(\s*\.\.\.\s*\)\s*local\s+\w+\s*=\s*\{[^}]*\}\s*local\s+\w+\s*=\s*#/, /\bTGuard\b/i,/\bReturns\b\s*=\s*\{/],
+    recover: "partial",
+    note: "IronBrew (IB1/IB2) uses a stack VM with string-packed constants. Constants decode; control flow stays inside the VM interpreter." },
+  { id: "psu", name: "Prometheus / PSU (4.0A / 4.5A)", lang: "lua",
+    signatures: [/PSU[\s_]?4\.[05]A/i,/\bPSU\b/,/Prometheus/i,/\bLuaZ?\b\s*=\s*\{/, /return\(?function\(\.\.\.\)local \w+=string/],
+    recover: "partial",
+    note: "Prometheus/PSU applies vmify + string encoding + control-flow flattening. String and constant layers recover; flattened flow needs manual analysis." },
+  { id: "moonsec", name: "MoonSec (v2 / v3)", lang: "lua",
+    signatures: [/MoonSec/i,/Moonsec/,/return\(function\(\.\.\.\)local \w+=\{\}\s*local \w+=/, /\bl1_1\b/,/L1_1/,/\bMOONSEC\b/i],
+    recover: "partial",
+    note: "MoonSec v2/v3 wraps code in a custom VM. Literal layers decode and the loader reformats; bytecode is not reversed client-side." },
+  { id: "luaobfuscator", name: "LuaObfuscator.com", lang: "lua",
+    signatures: [/luaobfuscator/i,/scriptWarned/i,/local \w+=string\.char\([\d,]+\)\s*local \w+=\{\}/, /-- ?obfuscated by/i],
+    recover: "good",
+    note: "LuaObfuscator.com relies on byte tables + escaped strings on the free tier; those decode well. Premium VM tiers only partially recover." },
+  { id: "xhider", name: "Xhider", lang: "lua",
+    signatures: [/Xhider/i,/xhider/,/_xh_/],
+    recover: "partial",
+    note: "Xhider layers string encoding over a loader. Strings decode; deeper layers vary by version." },
+  { id: "hercules", name: "Hercules", lang: "lua",
+    signatures: [/Hercules/,/hercules[-_]obf/i,/-- ?Hercules/i],
+    recover: "partial",
+    note: "Hercules applies string encryption, VM, and junk/opaque predicates. Literals and junk-stripping help; VM stays opaque." },
+  { id: "moonveil", name: "Moonveil 1.4.5", lang: "lua",
+    signatures: [/Moonveil/i,/moonveil/,/MV1\.4\.5/i,/MoonveilVM/i],
+    recover: "partial",
+    note: "Moonveil 1.4.5 is a VM-based protector. Outer literals decode; the interpreted body cannot be lifted client-side." },
+  { id: "luaq", name: "LUAQ", lang: "lua",
+    signatures: [/\bLUAQ\b/,/\x1bLuaQ/,/LuaQ\b/],
+    recover: "low",
+    note: "LUAQ marks precompiled Lua bytecode chunks. This is compiled bytecode, not source — only a bytecode decompiler (e.g. unluac-style) applies, not text passes." },
+  { id: "obfuscatorio", name: "Obfuscator.io (JavaScript)", lang: "js",
+    signatures: [/_0x[a-f0-9]{4,}/,/var _0x[a-f0-9]{4,}=\['/, /\['push'\]\(\['shift'\]/, /function\s*\(_0x[a-f0-9]+,_0x[a-f0-9]+\)/],
+    recover: "good",
+    note: "obfuscator.io uses hex identifiers, a string array with rotation, and control-flow flattening. String-array decoding and identifier renaming recover much of it; self-defending / debug-protection layers should be reviewed in a sandbox." },
 ];
 
-const GENERIC_PATTERNS = {
-  generic_key: {
-    name: "Generic key check",
-    detect: [/(?:script_?key|SCRIPT_KEY|key_?system|KEY_SYSTEM)/i, /getgenv\(\)\s*\.\s*(?:Key|key|KEY|script_?key)/i, /["']Enter\s+(?:your\s+)?key["']/i, /["']Invalid\s+key["']/i, /["']Wrong\s+key["']/i, /["']Key\s+expired["']/i, /check_?key|validate_?key|verify_?key/i],
-    strip: [
-      /getgenv\(\)\s*\.\s*(?:Key|key|KEY|script_?key)\s*=\s*["'][^"']*["'][^\n]*/gi,
-      /if\s+\w*[Kk]ey\w*\s*[~=]=\s*["'][^"']*["']\s*then\s*[\s\S]*?(?:\breturn\b[^\n]*|end)/gi,
-      /(?:local\s+\w+\s*=\s*)?[\w.:]+\s*\(\s*["'][^"']*(?:[Ee]nter|[Ii]nput|[Pp]aste)\s+(?:your\s+)?[Kk]ey[^"']*["']\s*\)[^\n]*/gi,
-    ]},
-  generic_hwid: {
-    name: "HWID lock",
-    detect: [/RbxAnalyticsService.*GetClientId/i, /HWID|hwid|HardwareId|hardware_id/i, /GetClientId\(\)/i, /hwid_?lock|hwid_?check|hwid_?ban/i],
-    strip: [
-      /(?:local\s+\w+\s*=\s*)?\w*[Hh][Ww][Ii][Dd]\w*\s*=\s*game:GetService\s*\(\s*["']RbxAnalyticsService["']\s*\)\s*:\s*GetClientId\s*\(\s*\)[^\n]*/gi,
-      /if\s+\w*[Hh][Ww][Ii][Dd]\w*\s*[~=]=\s*[^\n]*then\s*[\s\S]*?(?:\breturn\b[^\n]*|end)/gi,
-    ]},
-  generic_webhook: {
-    name: "Webhook logging",
-    detect: [/discord\.com\/api\/webhooks/i, /discordapp\.com\/api\/webhooks/i, /webhook/i],
-    strip: [
-      /(?:local\s+)?\w*[Ww]ebhook\w*\s*=\s*["']https?:\/\/(?:discord|discordapp)\.com\/api\/webhooks\/[^"']*["'][^\n]*/gi,
-      /(?:local\s+)?function\s+\w*[Ww]ebhook\w*\s*\([^)]*\)[\s\S]*?end/gi,
-      /(?:syn\.request|request|http_request)\s*\(\s*\{[^}]*(?:discord|discordapp)\.com\/api\/webhooks[^}]*\}\s*\)[^\n]*/gi,
-    ]},
-  generic_whitelist: {
-    name: "Whitelist / auth",
-    detect: [/whitelist/i, /white_?list/i, /is_?whitelisted/i, /check_?whitelist/i, /auth_?check|authenticate/i],
-    strip: [
-      /if\s+not\s+\w*[Ww]hite[Ll]ist\w*[^\n]*then\s*[\s\S]*?(?:\breturn\b[^\n]*|end)/gi,
-      /if\s+\w*[Ww]hite[Ll]ist\w*\s*==\s*false[^\n]*then\s*[\s\S]*?(?:\breturn\b[^\n]*|end)/gi,
-    ]},
-  generic_antitamper: {
-    name: "Anti-tamper / integrity check",
-    detect: [
-      /debug\.getinfo/i, /debug\.getconstants/i, /debug\.getupvalue(s)?/i, /debug\.getproto(s)?/i,
-      /checksum/i, /integrity/i, /script_?hash|scripthash|GetScriptHash/i, /\btamper(ed|ing)?\b/i,
-      /anti[-_]?bypass|anti[-_]?spoof|anti[-_]?patch/i, /is(l|c)closure/i, /getrawmetatable/i,
-      /hookfunction|hookmetamethod/i, /iskeybypassed|is_?key_?bypassed/i,
-    ],
-    strip: [
-      // static integrity/tamper checks that branch on a hash/debug comparison
-      /if\s+[^\n]*\b(?:debug\.getinfo|debug\.getconstants|debug\.getupvalue|checksum|integrity|scripthash|tamper)\b[^\n]*then\s*[\s\S]*?(?:\bend\b)/gi,
-      // hash/checksum computation assignments
-      /(?:local\s+)?\w*(?:[Cc]hecksum|[Ii]ntegrity|[Ss]criptHash)\w*\s*=\s*[^\n]*/gi,
-      // hookfunction/hookmetamethod based tamper-detection setup
-      /(?:hookfunction|hookmetamethod)\s*\([^)]*\)[^\n]*/gi,
-      // anti-bypass/anti-spoof guard functions
-      /(?:local\s+)?function\s+\w*(?:[Aa]nti[-_]?[Bb]ypass|[Aa]nti[-_]?[Tt]amper|[Aa]nti[-_]?[Ss]poof)\w*\s*\([^)]*\)[\s\S]*?end/gi,
-      // isKeyBypassed style flags
-      /(?:local\s+)?\w*(?:[Ii]s[Kk]ey[Bb]ypassed|is_key_bypassed)\w*\s*=\s*[^\n]*/gi,
-    ]},
-  generic_heartbeat: {
-    name: "Periodic re-validation",
-    detect: [
-      /RunService\.?\s*Heartbeat\s*:\s*Connect/i,
-      /task\.spawn\s*\(\s*function[\s\S]{0,200}[Kk]ey/i,
-      /coroutine\.wrap\s*\(\s*function[\s\S]{0,200}[Kk]ey/i,
-      /while\s+true\s+do[\s\S]{0,200}(?:[Kk]ey|[Hh][Ww][Ii][Dd])[\s\S]{0,200}wait/i,
-    ],
-    strip: [
-      // RunService.Heartbeat re-validation connections
-      /game:GetService\s*\(\s*["']RunService["']\s*\)\s*\.\s*Heartbeat\s*:\s*Connect\s*\(\s*function\s*\([^)]*\)[\s\S]*?(?:[Kk]ey|[Hh][Ww][Ii][Dd])[\s\S]*?end\s*\)/gi,
-      // task.spawn / coroutine.wrap polling loops that re-check the key
-      /task\.spawn\s*\(\s*function\s*\(\s*\)[\s\S]*?(?:[Kk]ey|[Hh][Ww][Ii][Dd])[\s\S]*?end\s*\)/gi,
-      /coroutine\.wrap\s*\(\s*function\s*\(\s*\)[\s\S]*?(?:[Kk]ey|[Hh][Ww][Ii][Dd])[\s\S]*?end\s*\)\s*\(\s*\)/gi,
-      // self-destruct on failed re-check
-      /script\s*:\s*Destroy\s*\(\s*\)[^\n]*/gi,
-    ]},
-};
-
-function detectKeySystems(src) {
-  const found = [];
-  for (const sys of KEY_SYSTEMS) {
-    if (sys.patterns.some(p => p.test(src))) found.push({ id: sys.id, name: sys.name, type: "service" });
+function detectObfuscator(src) {
+  const scored = [];
+  for (const o of OBFUSCATOR_SIGNATURES) {
+    let hits = 0; const matched = [];
+    for (const sig of o.signatures) { if (sig.test(src)) { hits++; matched.push(sig.source.slice(0, 40)); } }
+    if (hits > 0) scored.push({ ...o, hits, matched });
   }
-  for (const [id, gen] of Object.entries(GENERIC_PATTERNS)) {
-    if (gen.detect.some(p => p.test(src))) found.push({ id, name: gen.name, type: "generic" });
+  scored.sort((a, b) => b.hits - a.hits);
+  // nested detection: more than one distinct family with strong hits
+  const nested = scored.filter(s => s.hits >= 1).length > 1;
+  return { candidates: scored, nested, best: scored[0] || null };
+}
+
+/* Unsupported-feature report: flags constructs that text passes cannot fully undo. */
+function unsupportedFeatures(src) {
+  const flags = [];
+  const add = (cond, label) => { if (cond) flags.push(label); };
+  add(/\x1bLua|\x1bLJ|LUAQ|\x1bLuaS/.test(src), "Precompiled Lua bytecode present — needs a bytecode decompiler, not text passes.");
+  add(/return\(function\(\.\.\.\)/.test(src) || /while true do[\s\S]{0,60}elseif/.test(src), "Custom VM / interpreter loop — the real logic runs as VM data and cannot be lifted client-side.");
+  add(/(_0x[a-f0-9]{4,}\[.*\]\(.*\)){3,}/.test(src) || /switch\s*\(_0x/.test(src), "Control-flow flattening (dispatcher/switch) — order is data-driven; manual tracing required.");
+  add(/debug\.getinfo|debugger|self[-_]?defend/i.test(src), "Anti-debug / self-defending code — analyze in a sandbox; do not run it.");
+  add(/loadstring|load\s*\(/.test(src) && /string\.char|\\x[0-9a-f]{2}/i.test(src), "Runtime-assembled loadstring payloads — only literal layers are unwrapped, not runtime-computed ones.");
+  return flags;
+}
+
+/* =========================================================================
+   ACCESS-FLOW ANALYSIS ENGINE  (read-only / descriptive)
+   Recognizes monetization & key-gate systems and DESCRIBES how they work:
+   the redirect/unlock chain, the parameters & endpoints, where the
+   authoritative verification happens, dependencies and failure points.
+   It never removes, patches, or circumvents any step and never rewrites code.
+   ========================================================================= */
+const ACCESS_FLOW_SYSTEMS = [
+  {
+    id: "linkvertise", name: "Linkvertise", kind: "Ad / content-locker",
+    detect: [/linkvertise\.com/i, /linkvertise/i, /publisher\.linkvertise/i, /link-to\.net/i],
+    endpoints: ["linkvertise.com/<userId>/<slug>", "publisher.linkvertise.com/api"],
+    params: ["userId / publisher id", "target destination (often base64 or hashed)", "anti-bypass token"],
+    flow: [
+      "Script (or its site) shows a Linkvertise URL instead of the raw key.",
+      "User visits Linkvertise; the page serves ad steps / a wait timer.",
+      "On completion Linkvertise redirects to the destination carrying a completion token.",
+      "The destination page reveals the key, which the script then validates on its own backend."
+    ],
+    verification: "The final key check is server-side in the script's own backend (or the key provider). Linkvertise only proves ad-view completion; it does not itself unlock the script.",
+    dependencies: ["Linkvertise publisher account", "the destination/key page", "the script's own key-validation endpoint"],
+    failures: ["Linkvertise API/domain down → no token issued", "ad-block or region block → steps won't complete", "expired completion token", "publisher id revoked"]
+  },
+  {
+    id: "lootlinks", name: "LootLinks / Lootlabs", kind: "Ad / content-locker",
+    detect: [/loot-?links?/i, /lootlabs/i, /lootdest\.org/i, /loot-?link\.com/i],
+    endpoints: ["lootlabs.gg / lootdest.org locker URLs", "provider completion callback"],
+    params: ["locker/campaign id", "encoded destination", "completion signature"],
+    flow: [
+      "Script surfaces a LootLinks/Lootlabs locker URL.",
+      "User completes offers/ad steps in the locker.",
+      "Provider issues a completion callback / signed token.",
+      "Destination reveals the key; script validates it server-side."
+    ],
+    verification: "Authoritative validation is on the script's key backend; the locker only attests offer completion.",
+    dependencies: ["Lootlabs campaign", "destination key page", "script key backend"],
+    failures: ["locker campaign disabled", "offer wall unavailable in region", "signature mismatch / replay rejected"]
+  },
+  {
+    id: "sub2unlock", name: "Sub2Unlock", kind: "Social-action gate",
+    detect: [/sub2unlock/i, /sub2get/i, /sub2unlock\.(?:com|net)/i],
+    endpoints: ["sub2unlock.com/<id>", "sub2unlock verify callback"],
+    params: ["unlock id", "required social action (subscribe/join/follow)", "unlock token"],
+    flow: [
+      "Script gives a Sub2Unlock link.",
+      "User performs the required social action (e.g. join Discord / subscribe).",
+      "Sub2Unlock verifies the action via the social platform's OAuth/API.",
+      "On success it releases the destination / key, validated by the script backend."
+    ],
+    verification: "Social action is checked by Sub2Unlock via platform APIs; the key itself is still verified by the script's backend.",
+    dependencies: ["Sub2Unlock project", "the social platform OAuth", "script key backend"],
+    failures: ["social OAuth revoked", "action not detected by API", "unlock token expired"]
+  },
+  {
+    id: "boostink", name: "Boost.ink", kind: "Ad / link-locker",
+    detect: [/boost\.ink/i, /boostink/i, /bst\.gg/i],
+    endpoints: ["boost.ink/<slug>", "boost.ink completion redirect"],
+    params: ["slug", "destination", "completion token"],
+    flow: [
+      "Script exposes a Boost.ink short link.",
+      "User passes the ad/checkpoint steps on Boost.ink.",
+      "Boost.ink redirects to the destination with a completion parameter.",
+      "Destination reveals the key; script validates it server-side."
+    ],
+    verification: "Boost.ink attests ad completion only; the script's own endpoint remains the authority for the key.",
+    dependencies: ["Boost.ink account", "destination page", "script key backend"],
+    failures: ["link disabled", "checkpoint provider outage", "token expired / reused"]
+  },
+  {
+    id: "adfocus", name: "AdFoc.us", kind: "Ad link shortener",
+    detect: [/adfoc\.us/i, /adfocus/i],
+    endpoints: ["adfoc.us/<id>", "adfoc.us skip/continue redirect"],
+    params: ["ad id", "skip timer", "destination url"],
+    flow: [
+      "Script provides an AdFoc.us URL.",
+      "User waits out the interstitial ad timer.",
+      "AdFoc.us enables 'Skip Ad' → redirects to the destination.",
+      "Destination reveals the key; script validates it server-side."
+    ],
+    verification: "AdFoc.us only gates on the ad timer; key validity is decided by the script's backend.",
+    dependencies: ["AdFoc.us account", "destination page", "script key backend"],
+    failures: ["ad fill failure", "timer/redirect blocked", "destination offline"]
+  },
+  {
+    id: "rekonise", name: "Rekonise", kind: "Social-action gate",
+    detect: [/rekonise\.com/i, /rekonise/i],
+    endpoints: ["rekonise.com/<slug>", "rekonise unlock API"],
+    params: ["unlock slug", "required action", "unlock token"],
+    flow: [
+      "Script gives a Rekonise unlock link.",
+      "User completes the required social action.",
+      "Rekonise verifies via the platform API and unlocks the destination.",
+      "Script validates the released key server-side."
+    ],
+    verification: "Rekonise checks the social action; the key remains validated by the script's own backend.",
+    dependencies: ["Rekonise unlock", "social platform API", "script key backend"],
+    failures: ["action not verified", "unlock token expired", "API rate limit"]
+  },
+  {
+    id: "workink", name: "Work.ink", kind: "Ad / link-locker",
+    detect: [/work\.ink/i, /workink/i],
+    endpoints: ["work.ink/<id>", "work.ink completion callback"],
+    params: ["link id", "destination", "completion token"],
+    flow: [
+      "Script exposes a Work.ink link.",
+      "User completes ad/checkpoint steps.",
+      "Work.ink issues a completion token and redirects to the destination.",
+      "Destination reveals the key; script validates it server-side."
+    ],
+    verification: "Work.ink attests completion; script backend remains the key authority.",
+    dependencies: ["Work.ink account", "destination page", "script key backend"],
+    failures: ["link disabled", "checkpoint outage", "token expired"]
+  },
+  {
+    id: "pandadevelopment", name: "Pandadevelopment / keyless", kind: "Key provider",
+    detect: [/pandadevelopment/i, /panda\s*development/i, /keyless/i, /pandadev/i],
+    endpoints: ["pandadevelopment.net / keyless api", "getkey endpoint"],
+    params: ["service id", "hwid", "issued key / session token"],
+    flow: [
+      "Script calls the provider's get-key flow (often behind an ad/social gate).",
+      "Provider issues a key bound to the request (sometimes HWID-scoped).",
+      "Script sends the key back to the provider's validate endpoint.",
+      "Provider responds authorized / unauthorized."
+    ],
+    verification: "The provider's validate endpoint is authoritative and server-side; the key is meaningful only there.",
+    dependencies: ["provider service config", "get-key gate", "validate endpoint"],
+    failures: ["provider outage", "hwid mismatch", "key expired / rate-limited"]
+  },
+  {
+    id: "luarmor", name: "Luarmor (key API)", kind: "Key provider",
+    detect: [/luarmor\.net/i, /luarmor/i, /api\.luarmor/i],
+    endpoints: ["api.luarmor.net/v3/...", "luarmor script_key check"],
+    params: ["script_key", "hwid / client id", "project id"],
+    flow: [
+      "Script embeds a Luarmor project and a script_key field.",
+      "Client sends script_key (+ hwid) to the Luarmor API.",
+      "Luarmor verifies the key against the project and returns the protected payload / authorization.",
+      "The protected script runs only after Luarmor authorizes."
+    ],
+    verification: "Luarmor's API is the authoritative, server-side check; without its authorization the payload is not delivered. This boundary is not something this tool crosses.",
+    dependencies: ["Luarmor project", "valid script_key", "Luarmor API availability"],
+    failures: ["API down", "invalid / expired key", "hwid not whitelisted", "project disabled"]
+  },
+  {
+    id: "generic_keygate", name: "Generic key gate", kind: "Generic",
+    detect: [/script_?key|SCRIPT_KEY|key_?system|KEY_SYSTEM/i, /getgenv\(\)\s*\.\s*[Kk]ey/, /["'](?:Enter|Invalid|Wrong|Expired)[^"']*[Kk]ey["']/i, /check_?key|validate_?key|verify_?key/i],
+    endpoints: ["(script-defined validation endpoint)"],
+    params: ["key string", "possibly hwid", "possibly expiry"],
+    flow: [
+      "Script reads a key (from getgenv or input).",
+      "Key is compared locally and/or sent to a validation endpoint.",
+      "On success the main body runs; on failure it stops / kicks."
+    ],
+    verification: "Where a remote endpoint is used, that endpoint is the authority. Where the check is purely local, note it as a client-side comparison — but this tool still does not alter it.",
+    dependencies: ["the key value", "any remote validator", "the branch that gates the body"],
+    failures: ["validator unreachable", "key format/expiry", "hwid mismatch"]
+  },
+  {
+    id: "generic_hwid", name: "HWID binding", kind: "Generic",
+    detect: [/HWID|hwid|HardwareId|hardware_id/i, /RbxAnalyticsService[\s\S]{0,40}GetClientId/i, /GetClientId\s*\(\s*\)/],
+    endpoints: ["(bound at the key validator)"],
+    params: ["client id / hwid", "expected/whitelisted hwid"],
+    flow: [
+      "Script reads a hardware/client identifier.",
+      "It is compared to an expected value or sent alongside the key.",
+      "Mismatch stops execution."
+    ],
+    verification: "HWID is an input to the authoritative key check; on its own it just narrows a key to a device.",
+    dependencies: ["client id source", "the whitelist / validator"],
+    failures: ["id source unavailable", "device not whitelisted"]
+  },
+  {
+    id: "generic_checkpoint", name: "Checkpoint / ad gate", kind: "Generic",
+    detect: [/checkpoint/i, /ad_?gate|adgate/i, /getgenv\(\)\.Checkpoint/i, /step\s*[12]\b/i],
+    endpoints: ["(links to one of the ad/link services above)"],
+    params: ["checkpoint index", "per-step token", "final destination"],
+    flow: [
+      "Script defines multiple checkpoints, each behind a link/ad service.",
+      "Each completed checkpoint advances state until the last reveals the key.",
+      "The key is then validated as usual."
+    ],
+    verification: "Checkpoints gate progression; the final key check (usually server-side) stays authoritative.",
+    dependencies: ["the linked ad/social service", "per-step state", "final key validator"],
+    failures: ["any linked service outage", "state lost between steps", "final validator down"]
+  }
+];
+
+function detectAccessFlow(src) {
+  const found = [];
+  for (const sys of ACCESS_FLOW_SYSTEMS) {
+    if (sys.detect.some(p => p.test(src))) found.push(sys);
   }
   return found;
 }
 
-function bypassKeySystems(src) {
-  let out = src;
-  const log = [];
-  const steps = [];
-  const detected = detectKeySystems(src);
-
-  if (detected.length === 0) {
-    log.push({ level: "warn", msg: "No key systems detected in this script." });
-    return { code: src, log, steps, detected };
-  }
-
-  log.push({ level: "info", msg: "Detected " + detected.length + " key system(s): " + detected.map(d => d.name).join(", ") });
-
-  // Strip named key systems
-  for (const sys of KEY_SYSTEMS) {
-    if (!detected.find(d => d.id === sys.id)) continue;
-    let count = 0;
-    for (const pat of sys.strip) { out = out.replace(pat, () => { count++; return "--[[ " + sys.name + " key check removed by Quicksilver ]]"; }); }
-    if (count > 0) { log.push({ level: "ok", msg: "Stripped " + count + " " + sys.name + " reference(s)" }); steps.push("Stripped " + sys.name); }
-  }
-
-  // Strip generic patterns
-  for (const [id, gen] of Object.entries(GENERIC_PATTERNS)) {
-    if (!detected.find(d => d.id === id)) continue;
-    let count = 0;
-    for (const pat of gen.strip) { out = out.replace(pat, () => { count++; return "--[[ " + gen.name + " removed by Quicksilver ]]"; }); }
-    if (count > 0) { log.push({ level: "ok", msg: "Stripped " + count + " " + gen.name + " pattern(s)" }); steps.push("Stripped " + gen.name); }
-  }
-
-  // Neutralize Player:Kick() calls related to keys/auth
-  const kickPatterns = [
-    /game:GetService\s*\(\s*["']Players["']\s*\)\s*\.LocalPlayer\s*:\s*Kick\s*\(\s*["'][^"']*(?:[Kk]ey|[Ww]hitelist|HWID|[Ee]xpir|[Ii]nvalid|[Uu]nauthori|[Bb]an)[^"']*["']\s*\)[^\n]*/gi,
-    /game\.Players\.LocalPlayer\s*:\s*Kick\s*\(\s*["'][^"']*(?:[Kk]ey|[Ww]hitelist|HWID|[Ee]xpir|[Ii]nvalid|[Uu]nauthori|[Bb]an)[^"']*["']\s*\)[^\n]*/gi,
-  ];
-  let kickCount = 0;
-  for (const p of kickPatterns) { out = out.replace(p, () => { kickCount++; return "--[[ kick removed by Quicksilver ]]"; }); }
-  if (kickCount > 0) { log.push({ level: "ok", msg: "Neutralized " + kickCount + " Player:Kick() call(s)" }); steps.push("Neutralized Kick calls"); }
-
-  // Remove key wait loops
-  const waitLoops = [
-    /while\s+not\s+\w*[Kk]ey\w*\s+do\s*[\s\S]*?end/gi,
-    /repeat\s*[\s\S]*?\buntil\s+\w*[Kk]ey\w*/gi,
-    /while\s+\w*[Kk]ey\w*\s*==\s*(?:nil|false|"")\s*do\s*[\s\S]*?end/gi,
-  ];
-  let loopCount = 0;
-  for (const p of waitLoops) { out = out.replace(p, () => { loopCount++; return "--[[ key wait loop removed by Quicksilver ]]"; }); }
-  if (loopCount > 0) { log.push({ level: "ok", msg: "Removed " + loopCount + " key wait loop(s)" }); steps.push("Removed key wait loops"); }
-
-  // Strip ad gate functions
-  const adGates = [
-    /(?:local\s+)?function\s+\w*[Cc]heckpoint\w*\s*\([^)]*\)[\s\S]*?end/gi,
-    /(?:local\s+)?function\s+\w*[Aa]d[Gg]ate\w*\s*\([^)]*\)[\s\S]*?end/gi,
-    /(?:local\s+)?function\s+\w*[Ll]ink[Vv]ertise\w*\s*\([^)]*\)[\s\S]*?end/gi,
-  ];
-  let adCount = 0;
-  for (const p of adGates) { out = out.replace(p, () => { adCount++; return "--[[ ad gate removed by Quicksilver ]]"; }); }
-  if (adCount > 0) { log.push({ level: "ok", msg: "Removed " + adCount + " ad gate function(s)" }); steps.push("Removed ad gates"); }
-
-  // Cleanup
-  out = out.replace(/if\s+true\s+then\s*\n?\s*end/gi, "").replace(/if\s+false\s+then\s*[\s\S]*?end/gi, "").replace(/\n{4,}/g, "\n\n");
-
-  log.push({ level: "info", msg: "Bypass complete — " + steps.length + " pass(es) applied" });
-  return { code: out.trim() + "\n", log, steps, detected };
+/* Pulls concrete evidence (URLs / endpoints) actually present in the source,
+   so the report cites real strings rather than only generic descriptions. */
+function extractFlowEvidence(src) {
+  const urls = new Set();
+  const re = /https?:\/\/[^\s"'`)]+/gi; let m;
+  while ((m = re.exec(src)) !== null) { if (urls.size < 40) urls.add(m[0].replace(/[.,)]+$/, "")); }
+  return { urls: [...urls] };
 }
+
+/* Builds a read-only analysis object. No source rewriting occurs. */
+function analyzeAccessFlow(src) {
+  const detected = detectAccessFlow(src);
+  const evidence = extractFlowEvidence(src);
+  return { detected, evidence };
+}
+
 
 /* =========================================================================
    UI wiring
@@ -812,6 +969,10 @@ const noteEl = $("presetNote");
 const fetchedNoteEl = $("fetchedNote");
 const stepsPillsEl = $("stepsPills");
 const toastEl = $("toast");
+const detectBannerEl = $("detectBanner");
+const deobReportEl = $("deobReport");
+
+const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 // Animated title
 (function buildTitle() {
@@ -864,6 +1025,68 @@ $("loadExample").addEventListener("click", () => {
   stepsPillsEl.style.display = "none";
 });
 
+// Render the deobfuscator report: detection, nested layers, before/after, unsupported features.
+function renderDeobReport(original, working, output, warnings) {
+  const det = detectObfuscator(working);
+  const unsupported = unsupportedFeatures(working);
+
+  // Detection banner
+  if (det.best) {
+    const conf = det.best.hits >= 3 ? "high" : det.best.hits === 2 ? "medium" : "low";
+    detectBannerEl.className = "detect-banner show";
+    let html = "Auto-detected: <b>" + esc(det.best.name) + "</b> <span class=\"conf\">(" + esc(det.best.lang.toUpperCase()) + " · " + conf + " confidence)</span>";
+    if (det.nested) {
+      const others = det.candidates.slice(1).map(c => esc(c.name)).join(", ");
+      html += "<br><span class=\"conf\">Possible nested / multiple layers: " + others + "</span>";
+    }
+    detectBannerEl.innerHTML = html;
+  } else {
+    detectBannerEl.className = "detect-banner show none";
+    detectBannerEl.innerHTML = "No known obfuscator signature matched — treating as generic. Literal-decoding and beautify passes still apply.";
+  }
+
+  // Before / after metrics
+  const beforeLines = original.split("\n").length, afterLines = output.split("\n").length;
+  const beforeChars = original.length, afterChars = output.length;
+
+  let r = "<h3>Analysis report</h3>";
+
+  r += "<h4>Detection</h4>";
+  if (det.candidates.length) {
+    r += "<ul>";
+    for (const c of det.candidates) {
+      r += "<li><b>" + esc(c.name) + "</b> — " + esc(c.note) + " <span class=\"pill\">recovery: " + esc(c.recover) + "</span></li>";
+    }
+    r += "</ul>";
+    if (det.nested) r += "<p class=\"boundary\">⚠ Nested obfuscation likely: more than one family matched. Re-run passes on the output, or peel layers one at a time.</p>";
+  } else {
+    r += "<p>No specific obfuscator signature. Generic literal/beautify handling applied.</p>";
+  }
+
+  r += "<h4>Before / after</h4><div class=\"tag-row\">";
+  r += "<span class=\"pill\">lines " + beforeLines + " → " + afterLines + "</span>";
+  r += "<span class=\"pill\">chars " + beforeChars + " → " + afterChars + "</span>";
+  r += "<span class=\"pill\">passes applied: " + (stepsPillsEl.querySelectorAll("li").length) + "</span>";
+  r += "</div>";
+
+  r += "<h4>Unsupported / partial features</h4>";
+  if (unsupported.length) {
+    r += "<ul>" + unsupported.map(u => "<li class=\"pill warn\" style=\"display:inline-block\">" + esc(u) + "</li>").join(" ") + "</ul>";
+    r += "<p>These constructs are reported honestly rather than faked: text passes cannot fully reverse them client-side.</p>";
+  } else {
+    r += "<p>None detected — the input looks fully addressable by literal/structural passes.</p>";
+  }
+
+  if (warnings.length) {
+    r += "<h4>Pass warnings</h4><ul>" + warnings.map(w => "<li>" + esc(w) + "</li>").join("") + "</ul>";
+  }
+
+  r += "<h4>Sandbox note</h4><p>This tool performs <b>static</b> analysis only — it never executes the code you paste. Run anything genuinely untrusted in an isolated VM before trusting these results.</p>";
+
+  deobReportEl.innerHTML = r;
+  deobReportEl.style.display = "block";
+}
+
 $("deob").addEventListener("click", async () => {
   const src = inputEl.value.trim();
   if (!src) { toast("Paste some code first."); return; }
@@ -881,11 +1104,12 @@ $("deob").addEventListener("click", async () => {
         fetchedNoteEl.style.display = "block";
       }
     }
-    const { code, steps } = deobfuscate(working, currentPreset());
+    const { code, steps, warnings } = deobfuscate(working, currentPreset());
     outputEl.value = code;
     const allSteps = stepsPrefix.concat(steps);
-    stepsPillsEl.innerHTML = allSteps.map((s) => "<li>" + s.replace(/</g, "&lt;") + "</li>").join("");
+    stepsPillsEl.innerHTML = allSteps.map((s) => "<li>" + esc(s) + "</li>").join("");
     stepsPillsEl.style.display = allSteps.length ? "flex" : "none";
+    renderDeobReport(src, working, code, warnings || []);
     if (remote.hadUrls && !remote.fetchedAny) toast("Loader detected but the remote script could not be fetched (CORS).");
   } catch (e) { toast("Error: " + e.message); }
   finally { btn.disabled = false; btn.textContent = "Deobfuscate"; }
@@ -914,13 +1138,14 @@ $("downloadZip").addEventListener("click", async () => {
     folder.file("original.lua", inputEl.value);
     folder.file("manifest.json", JSON.stringify({
       tool: "Quicksilver's Territory", author: "Wraith", preset: preset.id, presetLabel: preset.label,
+      detectedObfuscator: (function(){ try { var d = detectObfuscator(inputEl.value); return d.best ? { name: d.best.name, lang: d.best.lang, recovery: d.best.recover, nested: d.nested } : null; } catch(e){ return null; } })(),
       fetchedFrom: fetchedNoteEl.style.display === "block" ? fetchedNoteEl.textContent.replace(/^Downloaded remote script from /, "").replace(/ and deobfuscated it\.$/, "") : null,
       passes: appliedSteps, createdAt: new Date().toISOString(),
       files: { deobfuscated: "deobfuscated.lua", original: "original.lua" },
     }, null, 2));
     const blob = await zip.generateAsync({ type: "blob" });
     downloadBlob(blob, "quicksilver-deobf-" + stamp + ".zip");
-    toast("ZIP created. Feed it straight into your Discord bot.");
+    toast("ZIP created — cleaned source, original, and manifest.");
   } catch (e) { toast("Failed to build ZIP: " + e.message); }
   finally { btn.disabled = false; }
 });
@@ -938,74 +1163,285 @@ $("copy").addEventListener("click", async () => {
 });
 
 /* =========================================================================
-   KEY BYPASS UI
+   ACCESS-FLOW ANALYSIS UI  (read-only)
    ========================================================================= */
-const bypassInputEl = $("bypassInput");
-const bypassOutputEl = $("bypassOutput");
-const bypassPillsEl = $("bypassPills");
-const bypassLogEl = $("bypassLog");
-const bypassGridEl = $("bypassGrid");
+const flowInputEl = $("flowInput");
+const flowReportEl = $("flowReport");
+const flowGridEl = $("flowGrid");
 
-bypassInputEl.addEventListener("input", () => {
-  const src = bypassInputEl.value;
-  const detected = detectKeySystems(src);
-  const detectedIds = new Set(detected.map(d => d.id));
-  bypassGridEl.querySelectorAll(".bypass-chip").forEach(chip => {
-    const sys = chip.dataset.sys;
+function updateFlowChips(detectedIds, tagText) {
+  flowGridEl.querySelectorAll(".bypass-chip").forEach(chip => {
     const tag = chip.querySelector(".chip-tag");
-    if (detectedIds.has(sys)) { chip.classList.add("detected"); tag.textContent = "FOUND"; }
-    else { chip.classList.remove("detected"); tag.textContent = "\u2014"; }
+    if (detectedIds.has(chip.dataset.sys)) { chip.classList.add("detected"); tag.textContent = tagText; }
+    else { chip.classList.remove("detected"); tag.textContent = "—"; }
   });
-  $("detectCount").textContent = detected.length > 0
-    ? detected.length + " system(s) detected"
-    : (src.trim() ? "No key systems found" : "Paste code to scan");
+}
+
+flowInputEl.addEventListener("input", () => {
+  const src = flowInputEl.value;
+  const detected = detectAccessFlow(src);
+  const ids = new Set(detected.map(d => d.id));
+  updateFlowChips(ids, "FOUND");
+  $("flowDetectCount").textContent = detected.length > 0
+    ? detected.length + " system(s) recognized"
+    : (src.trim() ? "No known access-flow systems found" : "Paste code to scan");
 });
 
-const BYPASS_EXAMPLE = "-- Example script with key systems (for testing)\nlocal HttpService = game:GetService(\"HttpService\")\nlocal Players = game:GetService(\"Players\")\nlocal player = Players.LocalPlayer\n\n-- Polsec key check\nlocal polsec_url = \"https://getpolsec.com/api/v1/validate\"\nlocal polsec_response = syn.request({\n  Url = polsec_url,\n  Method = \"POST\",\n  Headers = {[\"Content-Type\"] = \"application/json\"},\n  Body = HttpService:JSONEncode({key = getgenv().Key, hwid = game:GetService(\"RbxAnalyticsService\"):GetClientId()})\n})\n\nif polsec_response.StatusCode ~= 200 then\n  game:GetService(\"Players\").LocalPlayer:Kick(\"Invalid key! Get one at getpolsec.com\")\n  return\nend\n\n-- HWID Lock\nlocal hwid = game:GetService(\"RbxAnalyticsService\"):GetClientId()\nif hwid ~= \"expected_hwid_here\" then\n  game:GetService(\"Players\").LocalPlayer:Kick(\"HWID mismatch - unauthorized device\")\n  return\nend\n\n-- Discord webhook logging\nlocal webhook_url = \"https://discord.com/api/webhooks/123456789/abcdefg\"\nfunction sendWebhook(msg)\n  syn.request({\n    Url = webhook_url,\n    Method = \"POST\",\n    Headers = {[\"Content-Type\"] = \"application/json\"},\n    Body = HttpService:JSONEncode({content = msg})\n  })\nend\n\nsendWebhook(\"Key used by \" .. player.Name)\n\n-- Key wait loop\nwhile not keyValidated do\n  wait(0.5)\nend\n\n-- Anti-tamper integrity check\nlocal scriptHash = game:GetService(\"HttpService\"):GetHashCode(getfenv())\nif debug.getinfo(sendWebhook).source ~= \"expected_source\" then\n  script:Destroy()\nend\n\n-- Periodic re-validation heartbeat\ntask.spawn(function()\n  while true do\n    wait(5)\n    if not keyValidated then\n      script:Destroy()\n    end\n  end\nend)\n\n-- ============ MAIN SCRIPT (survives bypass) ============\nprint(\"Script loaded successfully!\")\nlocal function createESP()\n  for _, v in pairs(Players:GetPlayers()) do\n    if v ~= player then\n      print(\"ESP created for \" .. v.Name)\n    end\n  end\nend\n\ncreateESP()\nPlayers.PlayerAdded:Connect(function(p)\n  createESP()\nend)\n";
+/* Security-research profile: for a recognized system, classify which parts of
+   the flow are client-side (observable/inspectable in the browser) versus
+   server-side (authoritative), and give a secure-design weakness assessment.
+   This is a defensive finding — it names WHERE the trust boundary is and how a
+   correct design should place it. It does NOT provide a per-service procedure
+   to defeat a live gate. */
+function securityProfile(sys) {
+  const byKind = {
+    "Ad / content-locker": {
+      client: [
+        "The ad/offer steps, wait timer, and the redirect chain all execute in the browser and are fully observable to the user.",
+        "Completion parameters and the destination value pass through the client, so they are inspectable in devtools / network logs."
+      ],
+      server: [
+        "Issuing and validating the completion token, and releasing the key, should happen server-side.",
+        "The script's own key-validation endpoint is the authoritative check."
+      ],
+      weakness: "Design weakness class: if the destination page reveals the key without the server re-verifying a single-use, expiring, origin-bound completion token, the gate trusts the client. Secure design: bind key release to a server-verified token; never ship the key to the client before validation."
+    },
+    "Ad / link-locker": {
+      client: [
+        "The interstitial/checkpoint steps and redirect run client-side and are observable.",
+        "Any 'skip' state or completion flag held in the page is client-controlled."
+      ],
+      server: [
+        "The completion attestation and the key release must be validated server-side.",
+        "The script's key backend remains the authority."
+      ],
+      weakness: "Design weakness class: client-held completion flags (a JS boolean, a URL param with no server signature) are not trustworthy. Secure design: require a server-signed, time-limited completion token that the backend validates before releasing anything."
+    },
+    "Social-action gate": {
+      client: [
+        "The unlock UI and 'I did the action' affordance render client-side.",
+        "Any client-side 'action done' flag is user-controllable."
+      ],
+      server: [
+        "The social action itself must be confirmed server-side via the platform's OAuth/API.",
+        "The key remains validated by the script backend."
+      ],
+      weakness: "Design weakness class: trusting a client-side flag that the action happened (instead of confirming via the platform API server-side) is the flaw. Secure design: verify the action through the platform API on the server before unlocking."
+    },
+    "Key provider": {
+      client: [
+        "Sending the key/HWID to the provider happens from the client and is observable.",
+        "Any client-side echo of the validation result is user-controllable."
+      ],
+      server: [
+        "The provider's validate endpoint is the authoritative, server-side check.",
+        "The protected payload should only be delivered after that server validation."
+      ],
+      weakness: "Design weakness class: delivering the protected payload to the client before the server authorizes, or trusting a client-reported validation result, is the flaw. Secure design: gate payload delivery on the server response; never pre-ship it."
+    },
+    "Generic": {
+      client: [
+        "A key/HWID compared inside the script runs on the client and the compared value is present in the source.",
+        "Any branch that gates the body on a local variable is client-controlled."
+      ],
+      server: [
+        "Only a remote validator (if present) is authoritative.",
+        "A purely local comparison has no server-side authority at all."
+      ],
+      weakness: "Design weakness class (classic): a key or HWID compared client-side (e.g. `if key == \"SECRET\" then`) is readable directly in the source and the gating branch runs on the user's machine — this is the textbook client-side-trust flaw. Secure design: perform the comparison server-side and return only an authenticated result; never embed the secret or the decision in shipped code."
+    }
+  };
+  byKind["Ad link shortener"] = byKind["Ad / link-locker"];
+  return byKind[sys.kind] || byKind["Generic"];
+}
 
-$("bypassExample").addEventListener("click", () => {
-  bypassInputEl.value = BYPASS_EXAMPLE;
-  bypassInputEl.dispatchEvent(new Event("input"));
-  bypassOutputEl.value = "";
-  bypassPillsEl.style.display = "none";
-  bypassLogEl.style.display = "none";
-});
+function buildFlowReportHTML(analysis) {
+  const { detected, evidence } = analysis;
+  let r = "<h3>Access-flow analysis</h3>";
+  r += "<p><b>Read-only.</b> This describes how the recognized systems work so you can document and reason about them. It does not defeat, weaken, or bypass any verification, and it produced no modified script.</p>";
 
-$("bypassBtn").addEventListener("click", () => {
-  const src = bypassInputEl.value.trim();
-  if (!src) { toast("Paste a script with a key system first."); return; }
-  const result = bypassKeySystems(src);
-  bypassOutputEl.value = result.code;
-  if (result.steps.length > 0) {
-    bypassPillsEl.innerHTML = result.steps.map(s => "<li>" + s.replace(/</g, "&lt;") + "</li>").join("");
-    bypassPillsEl.style.display = "flex";
-  } else { bypassPillsEl.style.display = "none"; }
-  if (result.log.length > 0) {
-    bypassLogEl.innerHTML = result.log.map(l => {
-      const cls = l.level === "ok" ? "log-ok" : l.level === "warn" ? "log-warn" : "log-info";
-      const prefix = l.level === "ok" ? "\u2713" : l.level === "warn" ? "\u26A0" : "\u2192";
-      return '<span class="' + cls + '">' + prefix + " " + l.msg.replace(/</g, "&lt;") + "</span>";
-    }).join("\n");
-    bypassLogEl.style.display = "block";
+  if (evidence.urls.length) {
+    r += "<h4>Endpoints / URLs found in the source</h4><ul>";
+    evidence.urls.slice(0, 20).forEach(u => { r += "<li><code>" + esc(u) + "</code></li>"; });
+    r += "</ul>";
   }
-  const detectedIds = new Set(result.detected.map(d => d.id));
-  bypassGridEl.querySelectorAll(".bypass-chip").forEach(chip => {
-    const tag = chip.querySelector(".chip-tag");
-    if (detectedIds.has(chip.dataset.sys)) { chip.classList.add("detected"); tag.textContent = "STRIPPED"; }
+
+  if (!detected.length) {
+    r += "<h4>Result</h4><p>No known monetization / key-gate system was recognized. If you believe one is present, deobfuscate the script first (Deobfuscator tab) and re-run.</p>";
+    return r;
+  }
+
+  detected.forEach(sys => {
+    r += "<div class=\"sys-block\">";
+    r += "<h4>" + esc(sys.name) + " <span class=\"pill\">" + esc(sys.kind) + "</span></h4>";
+
+    r += "<p><b>Flow map</b></p>";
+    sys.flow.forEach((step, i) => {
+      r += "<div class=\"flow-step\"><span class=\"num\">" + (i + 1) + "</span><span>" + esc(step) + "</span></div>";
+    });
+
+    r += "<p><b>Known endpoints</b></p><div class=\"tag-row\">" +
+      sys.endpoints.map(e => "<span class=\"pill\"><code>" + esc(e) + "</code></span>").join("") + "</div>";
+
+    r += "<p><b>Parameters it depends on</b></p><ul>" +
+      sys.params.map(p => "<li>" + esc(p) + "</li>").join("") + "</ul>";
+
+    r += "<p><b>Dependencies</b></p><ul>" +
+      sys.dependencies.map(d => "<li>" + esc(d) + "</li>").join("") + "</ul>";
+
+    r += "<p><b>Failure points</b></p><ul>" +
+      sys.failures.map(f => "<li>" + esc(f) + "</li>").join("") + "</ul>";
+
+    r += "<p class=\"boundary\">Verification boundary: " + esc(sys.verification) + "</p>";
+
+    // Security-research subsection: client vs server + weakness assessment
+    const sec = securityProfile(sys);
+    r += "<p><b>Security research — architecture split</b></p>";
+    r += "<p style=\"color:var(--amber)\">Client-side (observable / inspectable, not authoritative):</p><ul>" +
+      sec.client.map(c => "<li>" + esc(c) + "</li>").join("") + "</ul>";
+    r += "<p class=\"boundary\">Server-side (authoritative — client analysis cannot defeat this):</p><ul>" +
+      sec.server.map(s => "<li>" + esc(s) + "</li>").join("") + "</ul>";
+    r += "<p><b>Weakness assessment &amp; secure design</b></p><p>" + esc(sec.weakness) + "</p>";
+    r += "</div>";
   });
-  toast(result.steps.length > 0 ? "Key system bypassed — " + result.steps.length + " pass(es)" : "No key patterns matched to strip.");
+
+  r += "<h4>Scope</h4><p class=\"boundary\">This is a defensive security-research report: it identifies where the trust boundary sits and how a correct design should place it. It deliberately stops at each verification boundary — it does not provide a procedure to satisfy, forge, or skip a real service's check, and it performs no network requests. To see a weakness demonstrated end-to-end, use <b>Load mock-gate PoC</b>, which analyzes a self-contained fake gate rather than any real service.</p>";
+  return r;
+}
+
+function flowReportToMarkdown(analysis) {
+  const { detected, evidence } = analysis;
+  let md = "# Access-flow analysis (read-only)\n\n";
+  md += "> Descriptive analysis only. No verification step was defeated or circumvented; no modified script was produced.\n\n";
+  if (evidence.urls.length) {
+    md += "## Endpoints / URLs found\n";
+    evidence.urls.slice(0, 20).forEach(u => md += "- " + u + "\n");
+    md += "\n";
+  }
+  if (!detected.length) { md += "No known access-flow system recognized.\n"; return md; }
+  detected.forEach(sys => {
+    md += "## " + sys.name + " (" + sys.kind + ")\n\n";
+    md += "**Flow map**\n";
+    sys.flow.forEach((s, i) => md += (i + 1) + ". " + s + "\n");
+    md += "\n**Known endpoints**\n";
+    sys.endpoints.forEach(e => md += "- `" + e + "`\n");
+    md += "\n**Parameters**\n";
+    sys.params.forEach(p => md += "- " + p + "\n");
+    md += "\n**Dependencies**\n";
+    sys.dependencies.forEach(d => md += "- " + d + "\n");
+    md += "\n**Failure points**\n";
+    sys.failures.forEach(f => md += "- " + f + "\n");
+    md += "\n**Verification boundary:** " + sys.verification + "\n\n";
+    const sec = securityProfile(sys);
+    md += "**Security research — client-side (observable, not authoritative)**\n";
+    sec.client.forEach(c => md += "- " + c + "\n");
+    md += "\n**Security research — server-side (authoritative)**\n";
+    sec.server.forEach(s => md += "- " + s + "\n");
+    md += "\n**Weakness assessment & secure design**\n" + sec.weakness + "\n\n";
+  });
+  md += "---\nDefensive report. It identifies where the trust boundary sits and how a correct design should place it; it does not provide a procedure to defeat a real service, and it performs no network requests.\n";
+  return md;
+}
+
+let lastFlowAnalysis = null;
+
+const FLOW_EXAMPLE = [
+  "-- Example loader that uses an ad-gate + key provider (for analysis practice)",
+  "local HttpService = game:GetService(\"HttpService\")",
+  "local getkey_link = \"https://linkvertise.com/123456/get-my-key\"",
+  "local validate_url = \"https://api.luarmor.net/v3/projects/abc/users\"",
+  "",
+  "-- The user is sent through Linkvertise to reveal a key,",
+  "-- then the key is checked against the provider's API.",
+  "local script_key = getgenv().script_key or \"\"",
+  "local hwid = game:GetService(\"RbxAnalyticsService\"):GetClientId()",
+  "",
+  "local res = request({",
+  "  Url = validate_url,",
+  "  Method = \"POST\",",
+  "  Headers = { [\"Content-Type\"] = \"application/json\" },",
+  "  Body = HttpService:JSONEncode({ key = script_key, hwid = hwid })",
+  "})",
+  "",
+  "if res.StatusCode ~= 200 then",
+  "  warn(\"Get a key at \" .. getkey_link)",
+  "  return",
+  "end",
+  "",
+  "print(\"authorized\")"
+].join("\n");
+
+/* Self-contained MOCK gate — a fake, local key check with NO real service and
+   NO real backend. It exists to demonstrate ONE weakness class safely: a key
+   compared client-side is readable in the source and its gating branch runs on
+   the user's machine. Analyzing this teaches "validate server-side" without
+   touching any real gate. */
+const MOCK_GATE = [
+  "-- ============================================================",
+  "-- MOCK GATE (safe proof-of-concept) — NOT a real service.",
+  "-- Everything here is local; there is no backend and no network.",
+  "-- Purpose: show why a CLIENT-SIDE key comparison is a weak design.",
+  "-- ============================================================",
+  "",
+  "-- WEAK PATTERN: the 'secret' and the decision both live on the client.",
+  "local EXPECTED_KEY = \"mock-local-secret-1234\"   -- readable right here in the source",
+  "",
+  "local function checkKeyLocally(entered)",
+  "  -- This comparison runs on the user's machine, so it is not authoritative.",
+  "  if entered == EXPECTED_KEY then",
+  "    return true",
+  "  end",
+  "  return false",
+  "end",
+  "",
+  "local userInput = \"mock-local-secret-1234\"",
+  "if not checkKeyLocally(userInput) then",
+  "  warn(\"Invalid key (mock gate)\")",
+  "  return",
+  "end",
+  "",
+  "print(\"mock gate unlocked (locally) — this proves the check was client-side\")",
+  "",
+  "-- CORRECT DESIGN (commented, for contrast):",
+  "--   send the key to a server; the server holds the secret and returns an",
+  "--   authenticated yes/no; the client never contains the secret or the decision."
+].join("\n");
+
+$("flowExample").addEventListener("click", () => {
+  flowInputEl.value = FLOW_EXAMPLE;
+  flowInputEl.dispatchEvent(new Event("input"));
+  flowReportEl.style.display = "none";
 });
 
-$("bypassCopy").addEventListener("click", async () => {
-  if (!bypassOutputEl.value) { toast("Nothing to copy yet."); return; }
-  try { await navigator.clipboard.writeText(bypassOutputEl.value); toast("Copied to clipboard."); }
-  catch { bypassOutputEl.select(); document.execCommand("copy"); toast("Copied."); }
+$("flowMock").addEventListener("click", () => {
+  flowInputEl.value = MOCK_GATE;
+  flowInputEl.dispatchEvent(new Event("input"));
+  flowReportEl.style.display = "none";
+  toast("Loaded a self-contained mock gate — analyze it to see the weakness class.");
 });
 
-$("bypassDownload").addEventListener("click", () => {
-  const code = bypassOutputEl.value;
-  if (!code) { toast("Run the bypass first."); return; }
-  downloadBlob(new Blob([code], { type: "text/plain" }), "bypassed.lua");
+$("flowBtn").addEventListener("click", () => {
+  const src = flowInputEl.value.trim();
+  if (!src) { toast("Paste a script to analyze first."); return; }
+  lastFlowAnalysis = analyzeAccessFlow(src);
+  flowReportEl.innerHTML = buildFlowReportHTML(lastFlowAnalysis);
+  flowReportEl.style.display = "block";
+  updateFlowChips(new Set(lastFlowAnalysis.detected.map(d => d.id)), "MAPPED");
+  toast(lastFlowAnalysis.detected.length
+    ? "Mapped " + lastFlowAnalysis.detected.length + " access-flow system(s) — read-only."
+    : "No known access-flow system recognized.");
+});
+
+$("flowCopy").addEventListener("click", async () => {
+  if (!lastFlowAnalysis) { toast("Run the analysis first."); return; }
+  const md = flowReportToMarkdown(lastFlowAnalysis);
+  try { await navigator.clipboard.writeText(md); toast("Report copied to clipboard."); }
+  catch { toast("Copy failed — use Download instead."); }
+});
+
+$("flowDownload").addEventListener("click", () => {
+  if (!lastFlowAnalysis) { toast("Run the analysis first."); return; }
+  downloadBlob(new Blob([flowReportToMarkdown(lastFlowAnalysis)], { type: "text/markdown" }), "access-flow-report.md");
 });
 
 // Preload deobf example
