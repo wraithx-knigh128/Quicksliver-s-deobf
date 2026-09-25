@@ -335,7 +335,10 @@ https://github.com/nodeca/pako/blob/main/LICENSE
       <div class="field">
         <div class="row">
           <label for="flowInput">Script to analyze</label>
-          <button class="link-btn" id="flowExample">Load example</button>
+          <span>
+            <button class="link-btn" id="flowExample">Load example</button>
+            <button class="link-btn" id="flowMock">Load mock-gate PoC</button>
+          </span>
         </div>
         <textarea id="flowInput" spellcheck="false" placeholder='Paste a script that uses a key/ad-gate system. The analyzer maps how it works — it does not modify it.'></textarea>
       </div>
@@ -590,11 +593,51 @@ const PRESETS = [
     note: "MoonSec V3 wraps code in a custom VM. This preset decodes every readable literal and reformats the loader/wrapper, but it will not reconstruct the original source from bytecode.",
     passes: { unescape:true, stringChar:true, byteTables:true, base64:true, hexBlob:true, concat:true, loadstring:true, beautify:true },
     example: ['local L1_1=string.char(103,101,116,102,101,110,118)','return(function(...)local a="\\108\\111\\97\\100\\115\\116\\114\\105\\110\\103" return a end)()'].join("\n") },
-  { id: "luaobfuscator", label: "luaobfuscator.com",
+  { id: "luaobfuscator", label: "LuaObfuscator.com",
     description: "Targets the string-table + escape encoding used by luaobfuscator.com output.",
     note: "luaobfuscator.com relies heavily on byte tables and escaped strings. Deeper 'premium' tiers add VM layers that only partially recover.",
     passes: { unescape:true, stringChar:true, byteTables:true, base64:true, hexBlob:false, concat:true, loadstring:true, beautify:true },
     example: ['local v0={104,101,108,108,111}','local v1=\'\'','for i=1,#v0 do v1=v1..string.char(v0[i]) end','print(v1)'].join("\n") },
+  { id: "luraph", label: "Luraph (LPH) — all versions",
+    description: "Decode readable literals and reformat the Luraph loader/wrapper.",
+    note: "Luraph is a bytecode VM (LPH). Literal layers and the outer loader decode, but the original source cannot be reconstructed from its custom bytecode client-side — expect a partial result plus the unsupported-feature report.",
+    passes: { unescape:true, stringChar:true, byteTables:true, base64:true, hexBlob:true, concat:true, loadstring:true, beautify:true },
+    example: ['-- LPH!ExampleLoader','local LPH_ENCFUNC = function(...) end','return(function(...) local a="\\108\\112\\104" return a end)()'].join("\n") },
+  { id: "ironbrew", label: "IronBrew (IB1 / IB2)",
+    description: "Decode packed constants and reformat the IronBrew VM loader.",
+    note: "IronBrew uses a stack VM with string-packed constants. Constants decode; control flow stays inside the VM interpreter.",
+    passes: { unescape:true, stringChar:true, byteTables:true, base64:true, hexBlob:true, concat:true, loadstring:true, beautify:true },
+    example: ['-- IronBrew IB2','local Returns={}','return function(...) local a=string.char(105,98,50) return a end'].join("\n") },
+  { id: "psu", label: "Prometheus / PSU (4.0A / 4.5A)",
+    description: "Decode string/constant layers; reformat around control-flow flattening.",
+    note: "Prometheus/PSU applies vmify + string encoding + control-flow flattening. String and constant layers recover; flattened flow (dispatcher loops) needs manual analysis and is called out in the report.",
+    passes: { unescape:true, stringChar:true, byteTables:true, base64:true, hexBlob:true, concat:true, loadstring:true, beautify:true },
+    example: ['-- PSU 4.5A','return(function(...) local a=string.char(112,115,117) return a end)()'].join("\n") },
+  { id: "xhider", label: "Xhider",
+    description: "Decode Xhider string layers and reformat the loader.",
+    note: "Xhider layers string encoding over a loader. Strings decode; deeper layers vary by version.",
+    passes: { unescape:true, stringChar:true, byteTables:true, base64:true, hexBlob:true, concat:true, loadstring:true, beautify:true },
+    example: ['-- Xhider','local _xh_ = "\\120\\104\\105\\100\\101\\114"','print(_xh_)'].join("\n") },
+  { id: "hercules", label: "Hercules",
+    description: "Decode string encryption and strip readable junk; reformat.",
+    note: "Hercules applies string encryption, a VM, and junk/opaque predicates. Literals and readable junk help; the VM stays opaque.",
+    passes: { unescape:true, stringChar:true, byteTables:true, base64:true, hexBlob:true, concat:true, loadstring:true, beautify:true },
+    example: ['-- Hercules','local a=string.char(104,101,114,99)','print(a)'].join("\n") },
+  { id: "moonveil", label: "Moonveil 1.4.5",
+    description: "Decode outer literals and reformat the Moonveil loader.",
+    note: "Moonveil 1.4.5 is a VM-based protector. Outer literals decode; the interpreted body cannot be lifted client-side.",
+    passes: { unescape:true, stringChar:true, byteTables:true, base64:true, hexBlob:true, concat:true, loadstring:true, beautify:true },
+    example: ['-- Moonveil 1.4.5 (MV1.4.5)','return(function(...) local a="\\109\\118" return a end)()'].join("\n") },
+  { id: "luaq", label: "LUAQ (Lua bytecode)",
+    description: "Flag precompiled Lua bytecode; text passes do not apply.",
+    note: "LUAQ marks precompiled Lua bytecode chunks — this is compiled bytecode, not source. Only a bytecode decompiler (unluac-style) applies; the report says so rather than producing fake output.",
+    passes: { unescape:false, stringChar:false, byteTables:false, base64:false, hexBlob:false, concat:false, loadstring:false, beautify:false },
+    example: 'LUAQ\\0\\0\\0-- (binary bytecode chunk header; paste real source, not compiled bytecode)' },
+  { id: "obfuscatorio", label: "Obfuscator.io (JavaScript)",
+    description: "Decode string-array literals and reformat hex-identifier JS.",
+    note: "obfuscator.io uses hex identifiers, a rotated string array, and control-flow flattening. String-array literals and escapes decode; self-defending / debug-protection and flattened switch dispatch are reported as partial. Review in a sandbox.",
+    passes: { unescape:true, stringChar:false, byteTables:false, base64:true, hexBlob:true, concat:true, loadstring:false, beautify:false },
+    example: "var _0x1a2b=['\\x48\\x65\\x6c\\x6c\\x6f'];function _0xabcd(_0x1,_0x2){return _0x1a2b[0];}console['log'](_0xabcd(0,1));" },
   { id: "strings", label: "Strings only (no reformat)",
     description: "Decode every literal encoding but leave the layout untouched.",
     passes: { unescape:true, stringChar:true, byteTables:true, base64:true, hexBlob:true, concat:true, loadstring:false, beautify:false },
@@ -1144,6 +1187,74 @@ flowInputEl.addEventListener("input", () => {
     : (src.trim() ? "No known access-flow systems found" : "Paste code to scan");
 });
 
+/* Security-research profile: for a recognized system, classify which parts of
+   the flow are client-side (observable/inspectable in the browser) versus
+   server-side (authoritative), and give a secure-design weakness assessment.
+   This is a defensive finding — it names WHERE the trust boundary is and how a
+   correct design should place it. It does NOT provide a per-service procedure
+   to defeat a live gate. */
+function securityProfile(sys) {
+  const byKind = {
+    "Ad / content-locker": {
+      client: [
+        "The ad/offer steps, wait timer, and the redirect chain all execute in the browser and are fully observable to the user.",
+        "Completion parameters and the destination value pass through the client, so they are inspectable in devtools / network logs."
+      ],
+      server: [
+        "Issuing and validating the completion token, and releasing the key, should happen server-side.",
+        "The script's own key-validation endpoint is the authoritative check."
+      ],
+      weakness: "Design weakness class: if the destination page reveals the key without the server re-verifying a single-use, expiring, origin-bound completion token, the gate trusts the client. Secure design: bind key release to a server-verified token; never ship the key to the client before validation."
+    },
+    "Ad / link-locker": {
+      client: [
+        "The interstitial/checkpoint steps and redirect run client-side and are observable.",
+        "Any 'skip' state or completion flag held in the page is client-controlled."
+      ],
+      server: [
+        "The completion attestation and the key release must be validated server-side.",
+        "The script's key backend remains the authority."
+      ],
+      weakness: "Design weakness class: client-held completion flags (a JS boolean, a URL param with no server signature) are not trustworthy. Secure design: require a server-signed, time-limited completion token that the backend validates before releasing anything."
+    },
+    "Social-action gate": {
+      client: [
+        "The unlock UI and 'I did the action' affordance render client-side.",
+        "Any client-side 'action done' flag is user-controllable."
+      ],
+      server: [
+        "The social action itself must be confirmed server-side via the platform's OAuth/API.",
+        "The key remains validated by the script backend."
+      ],
+      weakness: "Design weakness class: trusting a client-side flag that the action happened (instead of confirming via the platform API server-side) is the flaw. Secure design: verify the action through the platform API on the server before unlocking."
+    },
+    "Key provider": {
+      client: [
+        "Sending the key/HWID to the provider happens from the client and is observable.",
+        "Any client-side echo of the validation result is user-controllable."
+      ],
+      server: [
+        "The provider's validate endpoint is the authoritative, server-side check.",
+        "The protected payload should only be delivered after that server validation."
+      ],
+      weakness: "Design weakness class: delivering the protected payload to the client before the server authorizes, or trusting a client-reported validation result, is the flaw. Secure design: gate payload delivery on the server response; never pre-ship it."
+    },
+    "Generic": {
+      client: [
+        "A key/HWID compared inside the script runs on the client and the compared value is present in the source.",
+        "Any branch that gates the body on a local variable is client-controlled."
+      ],
+      server: [
+        "Only a remote validator (if present) is authoritative.",
+        "A purely local comparison has no server-side authority at all."
+      ],
+      weakness: "Design weakness class (classic): a key or HWID compared client-side (e.g. `if key == \"SECRET\" then`) is readable directly in the source and the gating branch runs on the user's machine — this is the textbook client-side-trust flaw. Secure design: perform the comparison server-side and return only an authenticated result; never embed the secret or the decision in shipped code."
+    }
+  };
+  byKind["Ad link shortener"] = byKind["Ad / link-locker"];
+  return byKind[sys.kind] || byKind["Generic"];
+}
+
 function buildFlowReportHTML(analysis) {
   const { detected, evidence } = analysis;
   let r = "<h3>Access-flow analysis</h3>";
@@ -1182,10 +1293,19 @@ function buildFlowReportHTML(analysis) {
       sys.failures.map(f => "<li>" + esc(f) + "</li>").join("") + "</ul>";
 
     r += "<p class=\"boundary\">Verification boundary: " + esc(sys.verification) + "</p>";
+
+    // Security-research subsection: client vs server + weakness assessment
+    const sec = securityProfile(sys);
+    r += "<p><b>Security research — architecture split</b></p>";
+    r += "<p style=\"color:var(--amber)\">Client-side (observable / inspectable, not authoritative):</p><ul>" +
+      sec.client.map(c => "<li>" + esc(c) + "</li>").join("") + "</ul>";
+    r += "<p class=\"boundary\">Server-side (authoritative — client analysis cannot defeat this):</p><ul>" +
+      sec.server.map(s => "<li>" + esc(s) + "</li>").join("") + "</ul>";
+    r += "<p><b>Weakness assessment &amp; secure design</b></p><p>" + esc(sec.weakness) + "</p>";
     r += "</div>";
   });
 
-  r += "<h4>Scope</h4><p class=\"boundary\">The report deliberately stops at each verification boundary. It explains where the authoritative check lives and why the flow depends on it — it does not describe how to satisfy or skip that check.</p>";
+  r += "<h4>Scope</h4><p class=\"boundary\">This is a defensive security-research report: it identifies where the trust boundary sits and how a correct design should place it. It deliberately stops at each verification boundary — it does not provide a procedure to satisfy, forge, or skip a real service's check, and it performs no network requests. To see a weakness demonstrated end-to-end, use <b>Load mock-gate PoC</b>, which analyzes a self-contained fake gate rather than any real service.</p>";
   return r;
 }
 
@@ -1212,8 +1332,14 @@ function flowReportToMarkdown(analysis) {
     md += "\n**Failure points**\n";
     sys.failures.forEach(f => md += "- " + f + "\n");
     md += "\n**Verification boundary:** " + sys.verification + "\n\n";
+    const sec = securityProfile(sys);
+    md += "**Security research — client-side (observable, not authoritative)**\n";
+    sec.client.forEach(c => md += "- " + c + "\n");
+    md += "\n**Security research — server-side (authoritative)**\n";
+    sec.server.forEach(s => md += "- " + s + "\n");
+    md += "\n**Weakness assessment & secure design**\n" + sec.weakness + "\n\n";
   });
-  md += "---\nThe analysis stops at each verification boundary by design.\n";
+  md += "---\nDefensive report. It identifies where the trust boundary sits and how a correct design should place it; it does not provide a procedure to defeat a real service, and it performs no network requests.\n";
   return md;
 }
 
@@ -1245,10 +1371,53 @@ const FLOW_EXAMPLE = [
   "print(\"authorized\")"
 ].join("\n");
 
+/* Self-contained MOCK gate — a fake, local key check with NO real service and
+   NO real backend. It exists to demonstrate ONE weakness class safely: a key
+   compared client-side is readable in the source and its gating branch runs on
+   the user's machine. Analyzing this teaches "validate server-side" without
+   touching any real gate. */
+const MOCK_GATE = [
+  "-- ============================================================",
+  "-- MOCK GATE (safe proof-of-concept) — NOT a real service.",
+  "-- Everything here is local; there is no backend and no network.",
+  "-- Purpose: show why a CLIENT-SIDE key comparison is a weak design.",
+  "-- ============================================================",
+  "",
+  "-- WEAK PATTERN: the 'secret' and the decision both live on the client.",
+  "local EXPECTED_KEY = \"mock-local-secret-1234\"   -- readable right here in the source",
+  "",
+  "local function checkKeyLocally(entered)",
+  "  -- This comparison runs on the user's machine, so it is not authoritative.",
+  "  if entered == EXPECTED_KEY then",
+  "    return true",
+  "  end",
+  "  return false",
+  "end",
+  "",
+  "local userInput = \"mock-local-secret-1234\"",
+  "if not checkKeyLocally(userInput) then",
+  "  warn(\"Invalid key (mock gate)\")",
+  "  return",
+  "end",
+  "",
+  "print(\"mock gate unlocked (locally) — this proves the check was client-side\")",
+  "",
+  "-- CORRECT DESIGN (commented, for contrast):",
+  "--   send the key to a server; the server holds the secret and returns an",
+  "--   authenticated yes/no; the client never contains the secret or the decision."
+].join("\n");
+
 $("flowExample").addEventListener("click", () => {
   flowInputEl.value = FLOW_EXAMPLE;
   flowInputEl.dispatchEvent(new Event("input"));
   flowReportEl.style.display = "none";
+});
+
+$("flowMock").addEventListener("click", () => {
+  flowInputEl.value = MOCK_GATE;
+  flowInputEl.dispatchEvent(new Event("input"));
+  flowReportEl.style.display = "none";
+  toast("Loaded a self-contained mock gate — analyze it to see the weakness class.");
 });
 
 $("flowBtn").addEventListener("click", () => {
