@@ -446,6 +446,7 @@ const PUBLIC_DIR = path.join(__dirname, 'public');
 const STATIC = {
   '/': { file: 'index.html', type: 'text/html; charset=utf-8' },
   '/index.html': { file: 'index.html', type: 'text/html; charset=utf-8' },
+  '/app.js': { file: 'app.js', type: 'text/javascript; charset=utf-8' },
 };
 
 function sendJson(res, code, obj) {
