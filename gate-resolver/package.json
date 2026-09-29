@@ -1,0 +1,14 @@
+{
+  "name": "gate-resolver",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Passive redirect-chain inspector for authorized URLs (SSRF-safe, no bypass).",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test.js"
+  },
+  "license": "MIT"
+}
