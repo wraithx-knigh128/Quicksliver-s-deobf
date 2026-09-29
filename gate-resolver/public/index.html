@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Gate Resolver</title>
+<meta name="description" content="Passive redirect-chain inspector. Follows standard HTTP redirects, shows the chain, and flags — without bypassing — steps that require a human." />
+<style>
+  :root {
+    --bg: #0f1216; --panel: #171b21; --panel2: #1d222a; --border: #2a313b;
+    --text: #e6e9ee; --muted: #9aa4b2; --accent: #6ea8fe; --green: #34d399;
+    --amber: #fbbf24; --red: #f87171; --purple: #c4b5fd;
+    --radius: 10px; --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    line-height: 1.5; padding: 24px 16px;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; }
+  header h1 { margin: 0 0 4px; font-size: 22px; }
+  header p { margin: 0 0 20px; color: var(--muted); font-size: 14px; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 16px; }
+  label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+  .inrow { display: flex; gap: 8px; flex-wrap: wrap; }
+  input[type=url] {
+    flex: 1; min-width: 220px; background: var(--panel2); border: 1px solid var(--border);
+    color: var(--text); border-radius: 8px; padding: 11px 12px; font-size: 14px; font-family: var(--mono);
+  }
+  input[type=url]:focus { outline: none; border-color: var(--accent); }
+  button {
+    background: var(--accent); color: #0b0e12; border: none; border-radius: 8px;
+    padding: 11px 18px; font-size: 14px; font-weight: 600; cursor: pointer;
+  }
+  button:disabled { opacity: .5; cursor: default; }
+  .note { font-size: 12px; color: var(--muted); margin-top: 10px; }
+  .note strong { color: var(--text); }
+  .summary { display: none; gap: 16px; flex-wrap: wrap; margin-bottom: 12px; }
+  .summary .kv { font-size: 13px; }
+  .summary .kv span { color: var(--muted); display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+  .summary .kv b { font-family: var(--mono); word-break: break-all; }
+  .status-pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+  .ok { background: rgba(52,211,153,.15); color: var(--green); }
+  .stopped { background: rgba(251,191,36,.15); color: var(--amber); }
+  .fail { background: rgba(248,113,113,.15); color: var(--red); }
+  ol.chain { list-style: none; margin: 0; padding: 0; }
+  ol.chain li { position: relative; padding: 12px 12px 12px 40px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 8px; background: var(--panel2); }
+  .hopnum { position: absolute; left: 10px; top: 12px; width: 20px; height: 20px; border-radius: 50%; background: var(--border); color: var(--text); font-size: 12px; display: flex; align-items: center; justify-content: center; font-family: var(--mono); }
+  .hopurl { font-family: var(--mono); font-size: 13px; word-break: break-all; }
+  .hopmeta { font-size: 12px; color: var(--muted); margin-top: 4px; display: flex; gap: 12px; flex-wrap: wrap; }
+  .code2 { color: var(--green); } .code3 { color: var(--accent); } .code4 { color: var(--amber); } .code5 { color: var(--red); }
+  .flags { margin-top: 8px; display: flex; flex-direction: column; gap: 5px; }
+  .flag { font-size: 12.5px; padding: 6px 9px; border-radius: 6px; background: rgba(251,191,36,.1); border: 1px solid rgba(251,191,36,.3); color: var(--amber); }
+  .flag.access-control, .flag.auth { background: rgba(248,113,113,.1); border-color: rgba(248,113,113,.3); color: var(--red); }
+  .flag .t { font-weight: 600; }
+  .flag .tgt { font-family: var(--mono); color: var(--muted); word-break: break-all; }
+  .err { color: var(--red); font-size: 13px; font-family: var(--mono); }
+  .banner { font-size: 13px; padding: 10px 12px; border-radius: 8px; margin-top: 10px; }
+  .banner.stopped { background: rgba(251,191,36,.1); border: 1px solid rgba(251,191,36,.3); color: var(--amber); }
+  .banner.ok { background: rgba(52,211,153,.1); border: 1px solid rgba(52,211,153,.3); color: var(--green); }
+  footer { color: var(--muted); font-size: 12px; text-align: center; margin-top: 24px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Gate Resolver</h1>
+    <p>Passive redirect-chain inspector for authorized URLs.</p>
+  </header>
+
+  <div class="card">
+    <label for="u">URL to inspect</label>
+    <div class="inrow">
+      <input id="u" type="url" placeholder="https://example.com/some/link" autocomplete="off" spellcheck="false" />
+      <button id="go">Resolve</button>
+    </div>
+    <p class="note">
+      Follows only standard <strong>HTTP 3xx redirects</strong> and reports the chain, final URL, and status codes.
+      It <strong>detects and clearly flags</strong> — but never bypasses — any step needing a human (CAPTCHA, anti-bot
+      challenge, login, paywall, ad-gate, or JavaScript/meta redirect), and stops there. No JS is executed; no CAPTCHA,
+      auth, or access control is circumvented.
+    </p>
+  </div>
+
+  <div class="summary card" id="summary"></div>
+  <div id="banner"></div>
+  <ol class="chain" id="chain"></ol>
+
+  <footer>Use only on URLs you are authorized to inspect.</footer>
+</div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const input = $('u'), btn = $('go'), chainEl = $('chain'), summaryEl = $('summary'), bannerEl = $('banner');
+
+  function esc(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  function codeClass(s) { if (!s) return ''; return 'code' + String(s)[0]; }
+
+  async function resolve() {
+    const url = input.value.trim();
+    if (!url) return;
+    btn.disabled = true; btn.textContent = 'Resolving…';
+    chainEl.innerHTML = ''; summaryEl.style.display = 'none'; bannerEl.innerHTML = '';
+    try {
+      const r = await fetch('/api/resolve', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url })
+      });
+      const data = await r.json();
+      if (!r.ok) { render_error(data.error || ('HTTP ' + r.status)); return; }
+      render(data);
+    } catch (e) {
+      render_error('Request failed: ' + e.message);
+    } finally {
+      btn.disabled = false; btn.textContent = 'Resolve';
+    }
+  }
+
+  function render_error(msg) {
+    bannerEl.innerHTML = '<div class="banner stopped">' + esc(msg) + '</div>';
+  }
+
+  function render(d) {
+    // summary
+    const statusPill = d.completed
+      ? '<span class="status-pill ok">Reached final URL</span>'
+      : '<span class="status-pill stopped">Stopped early</span>';
+    summaryEl.style.display = 'flex';
+    summaryEl.innerHTML =
+      '<div class="kv"><span>Result</span><b>' + statusPill + '</b></div>' +
+      '<div class="kv"><span>Hops</span><b>' + d.hopCount + '</b></div>' +
+      '<div class="kv" style="flex:1"><span>Final URL</span><b>' + esc(d.finalUrl) + '</b></div>';
+
+    if (d.stopReason) {
+      bannerEl.innerHTML = '<div class="banner stopped">' + esc(d.stopReason) + '</div>';
+    } else if (d.completed) {
+      bannerEl.innerHTML = '<div class="banner ok">Redirect chain fully resolved to the final URL.</div>';
+    }
+
+    // chain
+    chainEl.innerHTML = d.hops.map((h, i) => {
+      let meta = [];
+      if (h.status) meta.push('<span class="' + codeClass(h.status) + '">' + h.status + (h.statusMessage ? ' ' + esc(h.statusMessage) : '') + '</span>');
+      if (h.ip) meta.push('IP ' + esc(h.ip));
+      if (h.server) meta.push('server: ' + esc(h.server));
+      if (h.contentType) meta.push(esc(h.contentType.split(';')[0]));
+      if (h.setCookie) meta.push(h.setCookie + ' cookie(s) set');
+      if (typeof h.elapsedMs === 'number') meta.push(h.elapsedMs + ' ms');
+      if (h.location) meta.push('→ ' + esc(h.location));
+
+      let flagsHtml = '';
+      if (h.flags && h.flags.length) {
+        flagsHtml = '<div class="flags">' + h.flags.map(f =>
+          '<div class="flag ' + esc(f.type) + '"><span class="t">⚠ ' + esc(f.label) + '</span>' +
+          (f.target ? ' <span class="tgt">' + esc(f.target) + '</span>' : '') +
+          ' — requires user action; not automated</div>'
+        ).join('') + '</div>';
+      }
+      const errHtml = h.error ? '<div class="err">✕ ' + esc(h.error) + '</div>' : '';
+
+      return '<li>' +
+        '<div class="hopnum">' + (i + 1) + '</div>' +
+        '<div class="hopurl">' + esc(h.url) + '</div>' +
+        (meta.length ? '<div class="hopmeta">' + meta.join('') + '</div>' : '') +
+        flagsHtml + errHtml +
+      '</li>';
+    }).join('');
+  }
+
+  btn.addEventListener('click', resolve);
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') resolve(); });
+</script>
+</body>
+</html>
