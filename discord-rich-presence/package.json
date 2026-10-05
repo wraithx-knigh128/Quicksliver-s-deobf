@@ -1,0 +1,12 @@
+{
+  "name": "discord-rich-presence",
+  "version": "1.0.0",
+  "description": "Custom Discord Rich Presence (Playing / Watching / Listening) with images, timer and buttons",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@xhayper/discord-rpc": "^1.5.1"
+  }
+}
