@@ -56,7 +56,14 @@ local function run(scenario)
         elseif n == "Stats" and scenario.ping then
             s.Network = {ServerStatsItem = {["Data Ping"] = {GetValue = function() return scenario.ping end}}}
         elseif n == "HttpService" then
-            s.JSONDecode = function() return {url = "https://i.waifu.pics/a.png"} end
+            s.JSONDecode = function(_, raw)
+                if raw == "SETTINGS_RAW" then
+                    if scenario.settingsThrows then error("malformed json") end
+                    return scenario.settings
+                end
+                return {url = "https://i.waifu.pics/a.png"}
+            end
+            s.JSONEncode = function(_, t) ctx.encoded = t; return "{}" end
         end
         return s
     end
@@ -83,6 +90,10 @@ local function run(scenario)
     env.table = setmetatable({find = function(t, v) for i, x in ipairs(t) do if x == v then return i end end end}, {__index = table})
     env._G = genvStore
     env.getgenv = function() return genvStore end
+    if scenario.settings or scenario.settingsThrows then
+        env.isfile = function() return true end
+        env.readfile = function() return "SETTINGS_RAW" end
+    end
     if scenario.executor == "full" then
         env.request = function(req)
             if req.Url:find("api.waifu.pics", 1, true) then return {StatusCode = 200, Body = '{"url":"https://i.waifu.pics/a.png"}'} end
@@ -142,8 +153,11 @@ check(a.textOf("Gaps now"), "effective-gaps label missing")
 check(a.textOf("%(auto%)"), "auto timing should be on by default")
 
 -- every handler twice in a row: toggles flip and flip back, so Auto timing stays ON while the macros run
+local beforeDrawers = #a.ctx.callbacks
 local clicked = clickAll(a, 2)
-print("exercised " .. clicked .. " clicks on " .. #a.ctx.callbacks .. " handlers")
+clicked = clicked + clickAll(a, 2)      -- again: now also reaches the controls inside the option drawers
+print("exercised " .. clicked .. " clicks on " .. #a.ctx.callbacks .. " handlers (" .. (#a.ctx.callbacks - beforeDrawers) .. " created by opening option drawers)")
+check(#a.ctx.callbacks - beforeDrawers > 50, "opening the Opt drawers should create many more controls")
 
 -- macros ran with auto timing: dependent gaps (move 0.5, dash 0.3) must always be shortened,
 -- independent ones (M1 0.2, jump 0.25) untouched, nothing negative
@@ -199,8 +213,32 @@ local d = run({executor = "nofiles", body = PNG})
 for _, e in ipairs(d.errors) do failures[#failures + 1] = "nofiles scenario: " .. e end
 check(#d.writes == 0 and not d.bgSet, "no-file executor must skip the background")
 
+-- 5. saved settings: garbage values are cleaned up, valid ones applied, and the file is re-written
+local g = run({executor = "full", body = PNG, settings = {
+    timing = {m1 = 0.3, dash = "bad"}, auto = {on = false, strength = 99}, speed = 1.4,
+    combos = {Kyoto = {speed = 99, auto = "weird", side = "Right", move = 0.7}, [7] = {speed = 1}},
+}})
+for _, e in ipairs(g.errors) do failures[#failures + 1] = "settings scenario: " .. e end
+for _ = 1, 4 do for _, hb in ipairs(g.ctx.heartbeats) do pcall(hb, 1) end end
+local enc = g.ctx.encoded
+check(type(enc) == "table", "settings were not re-saved")
+if enc then
+    check(enc.timing and enc.timing.m1 == 0.3 and enc.timing.dash == 0.3, "timing: valid value kept, bad value back to default")
+    check(enc.auto and enc.auto.on == false and enc.auto.strength == 1.5, "auto: off kept, strength clamped to 1.5")
+    check(enc.speed == 1.4, "overall speed lost")
+    local k = enc.combos and enc.combos.Kyoto
+    check(k and k.speed == 2 and k.auto == "global" and k.side == "Right" and k.move == 0.7, "per-combo options were not cleaned up / kept")
+    check(not (enc.combos and enc.combos[7]), "non-string combo name must be dropped")
+end
+check(g.textOf("%(manual%)"), "auto timing off in the saved file must show (manual)")
+
+-- 6. unreadable settings file must not stop the script
+local h = run({executor = "full", body = PNG, settingsThrows = true})
+for _, e in ipairs(h.errors) do failures[#failures + 1] = "bad settings file: " .. e end
+check(h.textOf("Gaps now") ~= nil, "script did not finish building with a broken settings file")
+
 if #failures > 0 then
     print("PROBLEMS:"); for _, x in ipairs(failures) do print("  " .. x) end
     os.exit(1)
 end
-print("smoke test passed (4 scenarios)")
+print("smoke test passed (6 scenarios)")

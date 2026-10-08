@@ -17,6 +17,7 @@ local Engine = ex:require("combo_engine.lua")
 local Data = ex:require("tsb_data.lua")
 local Drag = ex:require("drag_tracker.lua")
 local Ping = ex:require("ping_model.lua")
+local CO = ex:require("combo_options.lua")
 Engine.loadData(Data)
 
 local function feedAll(p, tokens, t0, dt)
@@ -263,6 +264,41 @@ test("ping model: explicit dependent flag and fine-tune offset", function()
     near(Ping.adjustDelay(0.5, nil, 1, {dependent = true, offsetMs = 20}), 0.52, 1e-9, "offset works without a ping reading")
     near(Ping.adjustDelay(0.1, 100, 1, {dependent = true, offsetMs = -500}), 0.05, 1e-9, "never below the minimum")
     near(Ping.adjustDelay(0.5, 100, 1, {dependent = false, offsetMs = 80}), 0.5, 0, "offset never touches independent gaps")
+end)
+
+test("combo options: sanitize always returns a complete valid table", function()
+    local o = CO.sanitize(nil)
+    for k, v in pairs(CO.DEFAULTS) do eq(o[k], v, "default " .. k) end
+    local bad = CO.sanitize({speed = 99, m1 = -3, dash = "x", move = 0/0, jump = 5, offsetMs = 1e9, auto = "weird", side = 7})
+    eq(bad.speed, 2); eq(bad.m1, 0); eq(bad.dash, 0); eq(bad.move, 0); eq(bad.jump, 0.6); eq(bad.offsetMs, 100)
+    eq(bad.auto, "global"); eq(bad.side, "Left")
+    local ok = CO.sanitize({speed = 1.25, auto = "off", side = "Right", dash = 0.35, offsetMs = -20})
+    eq(ok.speed, 1.25); eq(ok.auto, "off"); eq(ok.side, "Right"); eq(ok.dash, 0.35); eq(ok.offsetMs, -20)
+    local a, b = CO.sanitize(nil), CO.sanitize(nil)
+    a.speed = 2
+    eq(b.speed, 1, "sanitize must not share tables")
+    eq(CO.DEFAULTS.speed, 1, "defaults must stay untouched")
+end)
+
+test("combo options: isDefault and autoOn", function()
+    assert(CO.isDefault(CO.new()), "fresh options are default")
+    local o = CO.new(); o.speed = 1.1
+    assert(not CO.isDefault(o), "changed options are not default")
+    assert(CO.autoOn(true, CO.new()) and not CO.autoOn(false, CO.new()), "global mode follows the global toggle")
+    o = CO.new(); o.auto = "on";  assert(CO.autoOn(false, o), "forced on")
+    o.auto = "off"; assert(not CO.autoOn(true, o), "forced off")
+end)
+
+test("combo options: per-combo gap overrides the global gap, speeds multiply", function()
+    local timing = {m1 = 0.2, dash = 0.3, move = 0.5, jump = 0.25}
+    local o = CO.new()
+    near(CO.gap("move", timing, o, 1), 0.5, 1e-9, "0 override = global gap")
+    o.move = 0.8
+    near(CO.gap("move", timing, o, 1), 0.8, 1e-9, "own gap wins")
+    near(CO.gap("dash", timing, o, 1), 0.3, 1e-9, "other kinds still global")
+    o.speed = 1.5
+    near(CO.gap("move", timing, o, 2), 2.4, 1e-9, "global speed x combo speed x gap")
+    near(CO.gap("m1", timing, CO.new(), nil), 0.2, 1e-9, "missing global speed = 1")
 end)
 
 test("sandboxed script runs, records key events and virtual time", function()

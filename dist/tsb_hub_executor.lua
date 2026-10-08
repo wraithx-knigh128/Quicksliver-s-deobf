@@ -133,6 +133,65 @@ end
 return M
 
 end)()
+local ComboOptions = (function()
+
+
+local M = {}
+
+M.DEFAULTS = {auto = "global", speed = 1, m1 = 0, dash = 0, move = 0, jump = 0, offsetMs = 0, side = "Left"}
+
+local RANGES = {
+    speed = {0.5, 2}, m1 = {0, 0.6}, dash = {0, 0.8}, move = {0, 1.2}, jump = {0, 0.6}, offsetMs = {-100, 100},
+}
+M.RANGES = RANGES
+
+local AUTO = {global = true, on = true, off = true}
+local SIDE = {Left = true, Right = true}
+
+local function clamp(v, lo, hi, default)
+    if type(v) ~= "number" or v ~= v then return default end      -- not a number / NaN
+    return math.min(math.max(v, lo), hi)
+end
+
+-- Always returns a complete, valid options table, whatever garbage (e.g. a hand-edited save file) goes in.
+function M.sanitize(src)
+    src = type(src) == "table" and src or {}
+    local o = {}
+    for key, range in pairs(RANGES) do
+        o[key] = clamp(src[key], range[1], range[2], M.DEFAULTS[key])
+    end
+    o.auto = AUTO[src.auto] and src.auto or M.DEFAULTS.auto
+    o.side = SIDE[src.side] and src.side or M.DEFAULTS.side
+    return o
+end
+
+function M.new() return M.sanitize(nil) end
+
+function M.isDefault(o)
+    for key, def in pairs(M.DEFAULTS) do
+        if o[key] ~= def then return false end
+    end
+    return true
+end
+
+-- is auto (ping) timing active for this combo?
+function M.autoOn(globalOn, o)
+    if o.auto == "on" then return true end
+    if o.auto == "off" then return false end
+    return globalOn and true or false
+end
+
+-- gap in seconds for a step kind ("m1"|"dash"|"move"|"jump") before the ping adjustment:
+-- the combo's own override if set, else the global gap; then global speed x combo speed
+function M.gap(kind, timing, o, globalSpeed)
+    local own = o[kind]
+    local base = (type(own) == "number" and own > 0) and own or timing[kind]
+    return base * (globalSpeed or 1) * o.speed
+end
+
+return M
+
+end)()
 local Data = (function()
 
 
@@ -950,9 +1009,9 @@ local function __run()
             end)
         end
 
-        function tab:Slider(text, min, max, default, step, cb)
+        function tab:Slider(text, min, max, default, step, cb, parent)
             assert(max > min and step > 0, "Slider: need max > min and step > 0")
-            local r = row(54)
+            local r = row(54, parent)
             label(r, text, 13, Theme.Text, UDim2.fromOffset(12, 4)).Size = UDim2.new(1, -80, 0, 20)
             local val = new("TextLabel", {
                 Font = Enum.Font.GothamMedium, TextSize = 13, TextColor3 = Theme.Accent, BackgroundTransparency = 1,
@@ -993,8 +1052,8 @@ local function __run()
             return api
         end
 
-        function tab:Dropdown(text, options, default, cb)
-            local r = row(40)
+        function tab:Dropdown(text, options, default, cb, parent)
+            local r = row(40, parent)
             label(r, text)
             local i = table.find(options, default) or 1        -- unknown default -> first option (and show it)
             local b = new("TextButton", {
@@ -1008,6 +1067,15 @@ local function __run()
                 task.spawn(cb, options[i])
             end)
             task.spawn(cb, options[i])
+            local api = {}
+            function api:Set(v)
+                local idx = table.find(options, v)
+                if not idx then return end
+                i = idx
+                b.Text = options[i]
+                task.spawn(cb, options[i])
+            end
+            return api
         end
 
         -- collapsible section with card buttons / toggles (like the reference UI)
@@ -1037,25 +1105,30 @@ local function __run()
             end)
 
             local sec = {}
-            function sec:Button(name, desc, cb)
+            -- cb = what a tap does; buildOptions(drawer) (optional) fills an options drawer that opens with "Opt"
+            function sec:Button(name, desc, cb, buildOptions)
+                local holder = new("Frame", {
+                    Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y,
+                    BackgroundTransparency = 1, Parent = body,
+                }, {new("UIListLayout", {Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder})})
                 local card = new("Frame", {
                     Size = UDim2.new(1, 0, 0, 76), BackgroundColor3 = Theme.Item,
-                    BackgroundTransparency = 0.35, Parent = body,
+                    BackgroundTransparency = 0.35, LayoutOrder = 0, Parent = holder,
                 }, {corner(10)})
                 new("TextLabel", {
                     Text = name, Font = Enum.Font.GothamBold, TextSize = 14, TextColor3 = Theme.Text,
                     TextXAlignment = Enum.TextXAlignment.Left, BackgroundTransparency = 1,
-                    Position = UDim2.fromOffset(14, 8), Size = UDim2.new(1, -60, 0, 18), Parent = card,
+                    Position = UDim2.fromOffset(14, 8), Size = UDim2.new(1, -70, 0, 18), Parent = card,
                 })
                 new("TextLabel", {
                     Text = desc or "", Font = Enum.Font.Gotham, TextSize = 12, TextColor3 = Theme.SubText,
                     TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top,
                     TextWrapped = true, TextTruncate = Enum.TextTruncate.AtEnd,
-                    BackgroundTransparency = 1, Position = UDim2.fromOffset(14, 28), Size = UDim2.new(1, -60, 0, 42), Parent = card,
+                    BackgroundTransparency = 1, Position = UDim2.fromOffset(14, 28), Size = UDim2.new(1, -70, 0, 42), Parent = card,
                 })
                 new("TextLabel", {
                     Text = ">", Font = Enum.Font.GothamBold, TextSize = 18, TextColor3 = Theme.Accent,
-                    BackgroundTransparency = 1, Position = UDim2.new(1, -40, 0, 0), Size = UDim2.fromOffset(30, 76), Parent = card,
+                    BackgroundTransparency = 1, Position = UDim2.new(1, -50, 0, 0), Size = UDim2.fromOffset(36, 44), Parent = card,
                 })
                 local hit = new("TextButton", {
                     Text = "", BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1), AutoButtonColor = false, Parent = card,
@@ -1068,6 +1141,30 @@ local function __run()
                     end)
                     task.spawn(cb)
                 end)
+
+                if buildOptions then
+                    local drawer = new("Frame", {
+                        Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y,
+                        BackgroundTransparency = 1, Visible = false, LayoutOrder = 1, Parent = holder,
+                    }, {new("UIListLayout", {Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder})})
+                    local built, open = false, false
+                    local optBtn = new("TextButton", {   -- sits above the hit area so it gets its own tap
+                        Text = "Opt", Font = Enum.Font.GothamBold, TextSize = 12, TextColor3 = Theme.Accent,
+                        BackgroundColor3 = Theme.Panel, AutoButtonColor = false, ZIndex = 3,
+                        Size = UDim2.fromOffset(44, 26), Position = UDim2.new(1, -54, 1, -34), Parent = card,
+                    }, {corner(8)})
+                    optBtn.MouseButton1Click:Connect(function()
+                        open = not open
+                        if open and not built then       -- build lazily: hundreds of sliders up front would be slow on phones
+                            built = true
+                            buildOptions(drawer)
+                        end
+                        drawer.Visible = open
+                        optBtn.Text = open and "Close" or "Opt"
+                        optBtn.BackgroundColor3 = open and Theme.Accent or Theme.Panel
+                        optBtn.TextColor3 = open and Theme.Back or Theme.Accent
+                    end)
+                end
             end
             -- read-only card with wrapped text (used for the tech library)
             function sec:Info(name, desc)
@@ -1177,6 +1274,69 @@ local function __run()
     local Auto = {on = true, strength = 1, offsetMs = 0, manualPing = 0}
     local macroSpeed = 1
     local PingState = {model = PingModel and PingModel.new(0.2)}
+
+    -- saved settings (global timing + every combo's own options) survive leaving the game when the executor has files
+    local SETTINGS_FILE = "animation_hub_settings.json"
+    local function loadSaved()
+        if not (isfile and readfile) then return {} end
+        local raw = safe(function() if isfile(SETTINGS_FILE) then return readfile(SETTINGS_FILE) end end)
+        if type(raw) ~= "string" or raw == "" then return {} end
+        local data = safe(function() return game:GetService("HttpService"):JSONDecode(raw) end)
+        return type(data) == "table" and data or {}
+    end
+    local function num(v, lo, hi, default)
+        if type(v) ~= "number" or v ~= v then return default end
+        return math.min(math.max(v, lo), hi)
+    end
+    local Saved = loadSaved()
+    local ComboOpts = {}                                   -- combo name -> options table (see combo_options.lua)
+    if type(Saved.timing) == "table" then
+        Timing.m1   = num(Saved.timing.m1,   0.08, 0.6, Timing.m1)
+        Timing.dash = num(Saved.timing.dash, 0.08, 0.8, Timing.dash)
+        Timing.move = num(Saved.timing.move, 0.15, 1.2, Timing.move)
+        Timing.jump = num(Saved.timing.jump, 0.08, 0.6, Timing.jump)
+    end
+    if type(Saved.auto) == "table" then
+        Auto.on = Saved.auto.on ~= false
+        Auto.strength = num(Saved.auto.strength, 0, 1.5, Auto.strength)
+        Auto.offsetMs = num(Saved.auto.offsetMs, -100, 100, Auto.offsetMs)
+        Auto.manualPing = num(Saved.auto.manualPing, 0, 400, Auto.manualPing)
+    end
+    macroSpeed = num(Saved.speed, 0.5, 2, macroSpeed)
+    if ComboOptions and type(Saved.combos) == "table" then
+        for name, o in pairs(Saved.combos) do
+            if type(name) == "string" then ComboOpts[name] = ComboOptions.sanitize(o) end
+        end
+    end
+    local function getOpts(name)
+        if not ComboOptions then return nil end
+        if not ComboOpts[name] then ComboOpts[name] = ComboOptions.new() end
+        return ComboOpts[name]
+    end
+
+    local dirty, ready = false, false
+    local function markDirty() if ready then dirty = true end end
+    local function saveNow()
+        dirty = false
+        if not (writefile and ComboOptions) then return end
+        local combos = {}
+        for name, o in pairs(ComboOpts) do
+            if not ComboOptions.isDefault(o) then combos[name] = o end    -- only what differs from the defaults
+        end
+        local data = {version = 1, timing = Timing, speed = macroSpeed, auto = Auto, combos = combos}
+        local json = safe(function() return game:GetService("HttpService"):JSONEncode(data) end)
+        if type(json) == "string" then pcall(writefile, SETTINGS_FILE, json) end
+    end
+    onCleanup[#onCleanup + 1] = function() if dirty then saveNow() end end
+    do
+        local acc = 0
+        connect(RunService.Heartbeat, function(dt)
+            acc = acc + dt
+            if acc < 2 then return end                  -- write at most every 2 s, only when something changed
+            acc = 0
+            if dirty then saveNow() end
+        end)
+    end
     local pingLabel, gapsLabel
 
     local function readPing()
@@ -1188,10 +1348,17 @@ local function __run()
         if Auto.manualPing > 0 then return Auto.manualPing end
         return PingState.model and PingState.model:value()
     end
-    -- final wait for one step: base gap x speed, then (Auto on) the ping adjustment for dependent gaps
-    local function compensate(delay, dependent)
-        if not (Auto.on and PingModel) then return delay end
-        return PingModel.adjustDelay(delay, currentPing(), Auto.strength, {dependent = dependent, offsetMs = Auto.offsetMs})
+    -- final wait for one step. o = that combo's options (nil = defaults): own gap or global gap, x speeds, then
+    -- (auto timing on for this combo) the ping adjustment for gaps that wait for a visible cue
+    local DefaultOpts = ComboOptions and ComboOptions.new()
+    local function stepDelay(kind, dependent, o)
+        o = o or DefaultOpts
+        local gap
+        if o and ComboOptions then gap = ComboOptions.gap(kind, Timing, o, macroSpeed)
+        else gap = Timing[kind] * macroSpeed end
+        local autoOn = (o and ComboOptions) and ComboOptions.autoOn(Auto.on, o) or Auto.on
+        if not (autoOn and PingModel) then return gap end
+        return PingModel.adjustDelay(gap, currentPing(), Auto.strength, {dependent = dependent, offsetMs = Auto.offsetMs + (o and o.offsetMs or 0)})
     end
 
     do
@@ -1216,8 +1383,7 @@ local function __run()
             end
             if gapsLabel then
                 gapsLabel.Text = string.format("Gaps now  M1 %.2fs  dash %.2fs  move %.2fs  jump %.2fs%s",
-                    compensate(Timing.m1 * macroSpeed, false), compensate(Timing.dash * macroSpeed, true),
-                    compensate(Timing.move * macroSpeed, true), compensate(Timing.jump * macroSpeed, false),
+                    stepDelay("m1", false), stepDelay("dash", true), stepDelay("move", true), stepDelay("jump", false),
                     Auto.on and "   (auto)" or "   (manual)")
             end
         end)
@@ -1254,23 +1420,24 @@ local function __run()
     end
     local function canPlay(tok, charName) return KIND[tok] ~= nil or moveKey(tok, charName) ~= nil end
 
-    -- plays one step; returns (gap after it, gap waits for a visible cue?) or nil if the token cannot be played
-    local function playToken(tok, charName)
+    -- plays one step; returns (kind of gap that follows it, whether that gap waits for a visible cue),
+    -- or nil if the token cannot be played. o = this combo's options.
+    local function playToken(tok, charName, o)
         local kind = KIND[tok]
         if tok == "M1" then click()
         elseif tok == "Q" then dash(nil)
         elseif tok == "FRONTDASH" then dash(Enum.KeyCode.W)
         elseif tok == "BACKDASH" then dash(Enum.KeyCode.S)
-        elseif tok == "SIDEDASH" then dash(Enum.KeyCode.A)
+        elseif tok == "SIDEDASH" then dash((o and o.side == "Right") and Enum.KeyCode.D or Enum.KeyCode.A)
         elseif tok == "JUMP" then press(Enum.KeyCode.Space, 0.05)
         elseif tok == "JUMP_M1" then press(Enum.KeyCode.Space, 0.05); task.wait(0.12); click()
         else
             local key = moveKey(tok, charName)
             if not key then return nil end
             press(key, 0.05)
-            return Timing.move, true
+            return "move", true
         end
-        return Timing[kind], kind == "dash"
+        return kind, kind == "dash"
     end
 
     local function stopMacro()
@@ -1279,17 +1446,18 @@ local function __run()
     end
     onCleanup[#onCleanup + 1] = stopMacro
 
-    local function runMacro(steps, charName)
+    local function runMacro(steps, charName, comboName)
         if macroRunning then stopMacro() return end        -- tapping again stops it
         macroId = macroId + 1
         local myId = macroId
         macroRunning = true
+        local opts = comboName and getOpts(comboName) or nil
         task.spawn(function()
             local ok, err = pcall(function()
                 for _, tok in ipairs(steps) do
                     if myId ~= macroId then return end       -- stopped, or replaced by a newer macro
-                    local gap, dependent = playToken(tok, charName)
-                    if gap then task.wait(compensate(gap * macroSpeed, dependent)) end
+                    local kind, dependent = playToken(tok, charName, opts)
+                    if kind then task.wait(stepDelay(kind, dependent, opts)) end
                 end
             end)
             if myId == macroId then macroRunning = false end  -- never clobber a newer macro's flag
@@ -1383,9 +1551,30 @@ local function __run()
             local key, title = "combos", label .. " combos"
             if name:find("Kyoto") then key, title = "kyoto", label .. " kyoto"
             elseif name:find("Catch") then key, title = "tech", label .. " tech" end
+            local o = getOpts(name)
+            local function drawer(parent)                       -- this combo's own options
+                local function set(key) return function(v) if o[key] ~= v then o[key] = v; markDirty() end end end
+                local pickers, sliders = {}, {}
+                pickers.auto = tab:Dropdown("Auto timing", {"global", "on", "off"}, o.auto, set("auto"), parent)
+                sliders.speed = tab:Slider("Speed (higher = slower)", 0.5, 2, o.speed, 0.05, set("speed"), parent)
+                sliders.m1 = tab:Slider("M1 gap (0 = global)", 0, 0.6, o.m1, 0.01, set("m1"), parent)
+                sliders.dash = tab:Slider("Dash gap (0 = global)", 0, 0.8, o.dash, 0.01, set("dash"), parent)
+                sliders.move = tab:Slider("Move gap (0 = global)", 0, 1.2, o.move, 0.01, set("move"), parent)
+                sliders.jump = tab:Slider("Jump gap (0 = global)", 0, 0.6, o.jump, 0.01, set("jump"), parent)
+                sliders.offsetMs = tab:Slider("Fine-tune (ms, + = later)", -100, 100, o.offsetMs, 5, set("offsetMs"), parent)
+                pickers.side = tab:Dropdown("Side dash key", {"Left", "Right"}, o.side, set("side"), parent)
+                local reset = new("TextButton", {
+                    Text = "Reset this combo", Font = Enum.Font.GothamMedium, TextSize = 13, TextColor3 = Theme.Text,
+                    BackgroundColor3 = Theme.Panel, AutoButtonColor = false, Size = UDim2.new(1, 0, 0, 34), Parent = parent,
+                }, {corner(8)})
+                reset.MouseButton1Click:Connect(function()
+                    for key, sl in pairs(sliders) do sl:Set(ComboOptions.DEFAULTS[key]) end
+                    for key, dd in pairs(pickers) do dd:Set(ComboOptions.DEFAULTS[key]) end
+                end)
+            end
             get(key, title):Button(name:gsub("_", " ") .. "  [" .. tostring(c.confidence or "?") .. "]", describe(c.steps, fullName), function()
-                runMacro(c.steps, fullName)
-            end)
+                runMacro(c.steps, fullName, name)
+            end, o and drawer or nil)
         end
         tab:Label("Tap a card to play the combo as inputs, tap again to stop. Moves use hotbar slots 1-4 (unverified order). Steps marked * have no key mapped and are skipped. Gaps: Timing tab.")
     end
@@ -1402,19 +1591,23 @@ local function __run()
     -- Timing tab
     pingLabel = Timing_:Label("Ping: measuring...")
     gapsLabel = Timing_:Label("Gaps now ...")
-    Timing_:Toggle("Auto timing from ping", true, function(on) Auto.on = on end)
-    Timing_:Slider("Auto strength", 0, 1.5, 1, 0.05, function(v) Auto.strength = v end)
-    Timing_:Slider("Fine-tune (ms, + = later)", -100, 100, 0, 5, function(v) Auto.offsetMs = v end)
-    Timing_:Slider("Manual ping ms (0 = measured)", 0, 400, 0, 5, function(v) Auto.manualPing = v end)
+    local function changed(tbl, key) return function(v) if tbl[key] ~= v then tbl[key] = v; markDirty() end end end
+    Timing_:Toggle("Auto timing from ping", Auto.on, changed(Auto, "on"))
+    Timing_:Slider("Auto strength", 0, 1.5, Auto.strength, 0.05, changed(Auto, "strength"))
+    Timing_:Slider("Fine-tune (ms, + = later)", -100, 100, Auto.offsetMs, 5, changed(Auto, "offsetMs"))
+    Timing_:Slider("Manual ping ms (0 = measured)", 0, 400, Auto.manualPing, 5, changed(Auto, "manualPing"))
+    Timing_:Label("These are the global values. Every combo card also has an Opt button with its own overrides (speed, gaps, fine-tune, auto mode, side-dash key).")
     Timing_:Label("Auto timing shortens the gaps that wait for a visible cue (after moves and dashes) by about your ping. Your own ping only: other players' ping can't be read, and the server decides if a hit lands, so tune Fine-tune until it lands for you.")
     Timing_:Label("Base gaps (seconds between steps)")
     local gapSliders = {
-        m1   = Timing_:Slider("M1 gap",   0.08, 0.6, TimingDefaults.m1,   0.01, function(v) Timing.m1 = v end),
-        dash = Timing_:Slider("Dash gap", 0.08, 0.8, TimingDefaults.dash, 0.01, function(v) Timing.dash = v end),
-        move = Timing_:Slider("Move gap", 0.15, 1.2, TimingDefaults.move, 0.01, function(v) Timing.move = v end),
-        jump = Timing_:Slider("Jump gap", 0.08, 0.6, TimingDefaults.jump, 0.01, function(v) Timing.jump = v end),
+        m1   = Timing_:Slider("M1 gap",   0.08, 0.6, Timing.m1,   0.01, changed(Timing, "m1")),
+        dash = Timing_:Slider("Dash gap", 0.08, 0.8, Timing.dash, 0.01, changed(Timing, "dash")),
+        move = Timing_:Slider("Move gap", 0.15, 1.2, Timing.move, 0.01, changed(Timing, "move")),
+        jump = Timing_:Slider("Jump gap", 0.08, 0.6, Timing.jump, 0.01, changed(Timing, "jump")),
     }
-    Timing_:Slider("Overall speed (higher = slower)", 0.5, 2, 1, 0.05, function(v) macroSpeed = v end)
+    Timing_:Slider("Overall speed (higher = slower)", 0.5, 2, macroSpeed, 0.05, function(v)
+        if macroSpeed ~= v then macroSpeed = v; markDirty() end
+    end)
     Timing_:Button("Reset timing to defaults", function()
         for k, sl in pairs(gapSliders) do sl:Set(TimingDefaults[k]) end
     end)
@@ -1646,6 +1839,8 @@ local function __run()
         renderFab()
     end
 
+    ready = true                       -- from here on, changing a slider marks the settings as unsaved
+    dirty = next(Saved) ~= nil         -- a loaded file is re-written once in its cleaned-up form
     Main_:Select()
 
     -- open animation
