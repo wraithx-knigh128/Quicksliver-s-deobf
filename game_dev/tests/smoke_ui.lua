@@ -16,6 +16,7 @@ local function dummy(name, ctx)
             if k == "Connect" or k == "Wait" then
                 return function(_, fn)
                     if type(fn) == "function" and name:find("Click") then ctx.callbacks[#ctx.callbacks + 1] = fn end
+                    if type(fn) == "function" and name:find("Heartbeat") then ctx.heartbeats[#ctx.heartbeats + 1] = fn end
                     ctx.connections = ctx.connections + 1
                     return {Disconnect = function() ctx.disconnects = ctx.disconnects + 1 end}
                 end
@@ -36,7 +37,7 @@ local PNG = "\137PNG\r\n\26\n" .. string.rep("x", 32)
 
 -- scenario = {executor = "full" | "nofiles", body = bytes the image host returns}
 local function run(scenario)
-    local ctx = {callbacks = {}, connections = 0, disconnects = 0}
+    local ctx = {callbacks = {}, heartbeats = {}, waits = {}, connections = 0, disconnects = 0}
     local errors, instances, writes, assets = {}, {}, {}, {}
     local genvStore = {}
     local env = setmetatable({}, {__index = _G})
@@ -52,6 +53,8 @@ local function run(scenario)
                 WaitForChild = function() return dummy("PlayerGui", ctx) end,
                 Idled = dummy("Idled", ctx), CharacterAdded = dummy("CharacterAdded", ctx)}
             s.GetUserThumbnailAsync = function() return "rbx://x" end
+        elseif n == "Stats" and scenario.ping then
+            s.Network = {ServerStatsItem = {["Data Ping"] = {GetValue = function() return scenario.ping end}}}
         elseif n == "HttpService" then
             s.JSONDecode = function() return {url = "https://i.waifu.pics/a.png"} end
         end
@@ -72,7 +75,7 @@ local function run(scenario)
     env.Vector2 = {new = function(x, y) return {X = x or 0, Y = y or 0} end}
     env.task = {
         spawn = function(f, ...) local ok, e = pcall(f, ...); if not ok then errors[#errors + 1] = "task: " .. tostring(e) end end,
-        wait = function() return 0 end,
+        wait = function(t) ctx.waits[#ctx.waits + 1] = t or 0; return 0 end,
     }
     env.warn = function(...) errors[#errors + 1] = "warn: " .. table.concat({...}, " ") end
     env.os = {clock = os.clock}
@@ -95,23 +98,33 @@ local function run(scenario)
     if not ok then errors[#errors + 1] = "top level: " .. tostring(e) end
 
     local bgSet = false
+    local function textOf(pattern)
+        for _, inst in ipairs(instances) do
+            local t = rawget(inst, "Text")
+            if type(t) == "string" and t:find(pattern) then return t end
+        end
+    end
     for _, inst in ipairs(instances) do
         local img = rawget(inst, "Image")
         if type(img) == "string" and img:find("animation_hub_bg_", 1, true) then bgSet = true end
     end
-    return {errors = errors, ctx = ctx, writes = writes, assets = assets, bgSet = bgSet, genv = genvStore, env = env, fn = fn}
+    return {textOf = textOf, errors = errors, ctx = ctx, writes = writes, assets = assets, bgSet = bgSet, genv = genvStore, env = env, fn = fn}
 end
 
 local failures = {}
 local function check(cond, msg) if not cond then failures[#failures + 1] = msg end end
 
 -- 1. normal executor, valid PNG
-local a, synErr = run({executor = "full", body = PNG})
+local a, synErr = run({executor = "full", body = PNG, ping = 100})
 if not a then print(synErr[1]); os.exit(1) end
 for _, e in ipairs(a.errors) do failures[#failures + 1] = e end
 check(#a.writes == 1 and a.writes[1].path:match("%.png$"), "background: expected exactly one .png written (writefile returns nothing on success!)")
 check(a.bgSet, "background: Image was never set from getcustomasset")
 check(type(a.genv.__AnimationHubCleanup) == "function", "cleanup function not registered")
+
+-- ping: feed a few Heartbeat ticks, the label must show the measured 100 ms
+for _ = 1, 6 do for _, hb in ipairs(a.ctx.heartbeats) do pcall(hb, 1) end end
+check(a.textOf("Ping: 100 ms"), "ping label did not show the measured 100 ms; got: " .. tostring(a.textOf("^Ping:")))
 
 -- exercise every click handler (newest first so the Close button runs last)
 local clicked = 0
@@ -121,6 +134,18 @@ for i = #a.ctx.callbacks, 1, -1 do
     if not ok2 then failures[#failures + 1] = "click handler: " .. tostring(e2) end
 end
 print("exercised " .. clicked .. " click handlers")
+
+-- macros ran with ping compensation: a move step (0.5 s) must have been shortened to 0.4 s,
+-- M1 steps (0.2 s) must be untouched, and nothing may be negative
+local sawShortMove, sawM1, bad = false, false, false
+for _, w in ipairs(a.ctx.waits) do
+    if math.abs(w - 0.4) < 1e-9 then sawShortMove = true end
+    if math.abs(w - 0.2) < 1e-9 then sawM1 = true end
+    if w < 0 then bad = true end
+end
+check(sawShortMove, "ping compensation did not shorten the 0.5 s move gap to 0.4 s")
+check(sawM1, "M1 gaps should stay at 0.2 s")
+check(not bad, "negative wait produced")
 
 -- floating bar: lock and minimise clicks must land in the saved state
 local fab = a.genv.__AnimationHubFab

@@ -16,6 +16,7 @@ local ex = Executor.new(".")
 local Engine = ex:require("combo_engine.lua")
 local Data = ex:require("tsb_data.lua")
 local Drag = ex:require("drag_tracker.lua")
+local Ping = ex:require("ping_model.lua")
 Engine.loadData(Data)
 
 local function feedAll(p, tokens, t0, dt)
@@ -216,6 +217,42 @@ test("drag tracker: clamp keeps the box on screen", function()
     eq(x, 626); eq(y, 4)
     x, y = Drag.clamp(10, 10, 900, 600, 800, 450, 4)   -- box bigger than the screen: pin to the margin
     eq(x, 4); eq(y, 4)
+end)
+
+local function near(a, b, tol, msg)
+    if math.abs(a - b) > (tol or 1e-9) then error((msg or "not close") .. ": got " .. tostring(a) .. ", want " .. tostring(b), 2) end
+end
+
+test("ping model: first sample seeds, EWMA converges, garbage is ignored", function()
+    local m = Ping.new(0.5)
+    eq(m:value(), nil)
+    m:sample(100); eq(m:value(), 100)
+    m:sample(0/0); m:sample(-5); m:sample(99999); m:sample("x"); m:sample(nil)
+    eq(m:value(), 100, "garbage must not change the estimate")
+    for _ = 1, 30 do m:sample(200) end
+    near(m:value(), 200, 0.01, "should converge to the new ping")
+end)
+
+test("ping model: jitter and stability", function()
+    local steady = Ping.new(0.3)
+    for _ = 1, 10 do steady:sample(80) end
+    assert(steady:stable(), "constant ping should be stable")
+    local wild = Ping.new(0.3)
+    for i = 1, 10 do wild:sample(i % 2 == 0 and 40 or 400) end
+    assert(not wild:stable(), "swinging ping should not be stable")
+    local fresh = Ping.new(); fresh:sample(50)
+    assert(not fresh:stable(), "too few samples")
+end)
+
+test("ping model: adjustDelay only shifts dependent gaps and is bounded", function()
+    near(Ping.adjustDelay(0.2, 100, 1), 0.2, 0, "M1 spacing (<0.3) must not move")
+    near(Ping.adjustDelay(0.5, 100, 1), 0.4, 1e-9)
+    near(Ping.adjustDelay(0.5, 100, 0), 0.5, 0, "strength 0 = off")
+    near(Ping.adjustDelay(0.5, 0, 1), 0.5, 0, "no ping reading = off")
+    near(Ping.adjustDelay(0.5, 900, 1), 0.3, 1e-9, "capped at 40% of the gap")
+    near(Ping.adjustDelay(0.5, 100, 1.5), 0.35, 1e-9)
+    near(Ping.adjustDelay(0.5, 100, nil), 0.5, 0, "bad strength = off")
+    eq(Ping.adjustDelay(nil, 100, 1), nil)
 end)
 
 test("sandboxed script runs, records key events and virtual time", function()

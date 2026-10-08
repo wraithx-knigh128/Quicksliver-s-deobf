@@ -17,6 +17,13 @@ local BACKGROUND_URL = ""   -- optional fixed image (direct link). "" = pick one
 local BACKGROUND_SOURCE = "waifu.pics"   -- "waifu.pics" or "nekos.best" (SFW endpoints only)
 local BACKGROUND_TRANSPARENCY = 0.55
 
+-- Your own combos, shown as cards in the character tab. "Instant Twisted" has no published inputs, so
+-- add it here once you know them. Tokens: M1 Q FRONTDASH SIDEDASH BACKDASH JUMP or a move name such as
+-- FLOWING_WATER / HUNTERS_GRASP (see tsb_data.lua). Example:
+--   {name = "Instant Twisted", character = "Hero Hunter", steps = {"M1", "M1", "SIDEDASH", "HUNTERS_GRASP"}},
+local CUSTOM_COMBOS = {
+}
+
 local DragTracker = (function()
 
 
@@ -66,6 +73,49 @@ function M.clamp(x, y, w, h, vw, vh, margin)
     local maxX = math.max(margin, vw - w - margin)
     local maxY = math.max(margin, vh - h - margin)
     return math.min(math.max(x, margin), maxX), math.min(math.max(y, margin), maxY)
+end
+
+return M
+
+end)()
+local PingModel = (function()
+
+
+local M = {}
+
+function M.new(alpha)
+    local self = {alpha = alpha or 0.2, ping = nil, jit = 0, n = 0}
+
+    function self:sample(ms)
+        if type(ms) ~= "number" or ms ~= ms or ms < 0 or ms > 5000 then return end   -- NaN / garbage
+        if not self.ping then
+            self.ping = ms
+        else
+            self.jit = self.jit + self.alpha * (math.abs(ms - self.ping) - self.jit)
+            self.ping = self.ping + self.alpha * (ms - self.ping)
+        end
+        self.n = self.n + 1
+    end
+
+    function self:value() return self.ping end
+    function self:jitter() return self.jit end
+
+    -- enough samples and the connection is not swinging wildly
+    function self:stable()
+        return self.n >= 5 and self.jit <= math.max(10, 0.35 * (self.ping or 0))
+    end
+
+    return self
+end
+
+-- Seconds. Only "dependent" gaps (>= minDependent, i.e. after a move or dash) are shortened, and never by
+-- more than maxFraction of the planned gap, so a bad ping reading can't collapse the timing.
+function M.adjustDelay(base, pingMs, strength, opts)
+    opts = opts or {}
+    if type(base) ~= "number" or base < (opts.minDependent or 0.3) then return base end
+    if type(pingMs) ~= "number" or pingMs <= 0 or type(strength) ~= "number" or strength <= 0 then return base end
+    local lead = math.min((pingMs / 1000) * strength, base * (opts.maxFraction or 0.4))
+    return base - lead
 end
 
 return M
@@ -1000,6 +1050,49 @@ local function __run()
         wasKnocked = knocked
     end)
 
+    ---------------------------------------------------------------- ping
+    -- Your own ping, smoothed. Steps that wait for a visible cue (after a move or dash) are sent a little
+    -- earlier by about that ping (see ping_model.lua). Heuristic, tunable, can be switched off.
+    local Ping = {model = PingModel and PingModel.new(0.2), comp = true, strength = 1, manual = 0}
+    local pingLabel
+
+    local function readPing()
+        local item = safe(function() return game:GetService("Stats").Network.ServerStatsItem["Data Ping"] end)
+        local v = item and safe(function() return item:GetValue() end)
+        if type(v) == "number" then return v end
+    end
+    local function currentPing()                       -- ms, or nil when unknown
+        if Ping.manual > 0 then return Ping.manual end
+        return Ping.model and Ping.model:value()
+    end
+    local function compensate(delay)
+        if not (Ping.comp and PingModel) then return delay end
+        return PingModel.adjustDelay(delay, currentPing(), Ping.strength)
+    end
+
+    do
+        local acc = 0
+        connect(RunService.Heartbeat, function(dt)
+            acc = acc + dt
+            if acc < 0.25 then return end              -- 4 samples per second is plenty
+            acc = 0
+            if Ping.model then
+                local v = readPing()
+                if v then Ping.model:sample(v) end
+            end
+            if pingLabel then
+                local p = currentPing()
+                if p then
+                    local j = Ping.model and Ping.model:jitter() or 0
+                    local note = (Ping.model and Ping.manual <= 0 and not Ping.model:stable()) and "  (unstable)" or ""
+                    pingLabel.Text = string.format("Ping: %d ms   jitter: %d ms%s", math.floor(p + 0.5), math.floor(j + 0.5), note)
+                else
+                    pingLabel.Text = "Ping: unknown - set Manual ping below"
+                end
+            end
+        end)
+    end
+
     ---------------------------------------------------------------- macro runner
     -- Plays a combo from tsb_data as real inputs. Move slots assume the hotbar order = the move list
     -- order in tsb_data (1..4). That order is UNVERIFIED: if a move fires the wrong skill, edit MoveSlots.
@@ -1052,7 +1145,7 @@ local function __run()
                 for _, tok in ipairs(steps) do
                     if myId ~= macroId then return end       -- stopped, or replaced by a newer macro
                     local d = playToken(tok, charName)
-                    task.wait((d or 0) * macroSpeed)
+                    task.wait(compensate((d or 0) * macroSpeed))
                 end
             end)
             if myId == macroId then macroRunning = false end  -- never clobber a newer macro's flag
@@ -1108,6 +1201,11 @@ local function __run()
     end)
     Main_:Toggle("Anti AFK", true, function(on) antiAfk = on end)
     Main_:Slider("Macro speed (higher = slower)", 0.5, 2, 1, 0.05, function(v) macroSpeed = v end)
+    pingLabel = Main_:Label("Ping: measuring...")
+    Main_:Toggle("Ping compensation", true, function(on) Ping.comp = on end)
+    Main_:Slider("Compensation strength", 0, 1.5, 1, 0.05, function(v) Ping.strength = v end)
+    Main_:Slider("Manual ping ms (0 = auto)", 0, 400, 0, 5, function(v) Ping.manual = v end)
+    Main_:Label("Shifts combo steps that wait for a visible cue (after moves/dashes) earlier by about your ping. It cannot read other players' ping and cannot guarantee a hit - the server decides.")
     Main_:Button("Reset Character", function()
         local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
         if hum then hum.Health = 0 end
@@ -1136,6 +1234,13 @@ local function __run()
             end)
         end
         tab:Label("Tap a card to play the combo as inputs, tap again to stop. Moves use hotbar slots 1-4 (unverified order). Speed: Main tab.")
+    end
+    if Data then
+        for _, c in ipairs(CUSTOM_COMBOS) do
+            if type(c) == "table" and type(c.name) == "string" and type(c.steps) == "table" and #c.steps > 0 then
+                Data.Combos[c.name] = {character = c.character or "Hero Hunter", confidence = c.confidence or "custom", steps = c.steps}
+            end
+        end
     end
     buildCharacter(Main_, "Universal", "Universal")
     buildCharacter(Saitama, "The Strongest Hero", "Saitama")
