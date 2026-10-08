@@ -3,6 +3,8 @@ import sys
 from lupa import LuaRuntime
 lua = LuaRuntime()
 lua.execute("os.exit = function(c) EXIT = c; error('__exit__') end")
+if len(sys.argv) > 1:
+    lua.globals().SCRIPT_PATH = sys.argv[1]
 try:
     lua.execute(open("tests/smoke_ui.lua").read())
 except Exception as e:
