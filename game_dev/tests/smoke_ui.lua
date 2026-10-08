@@ -54,7 +54,7 @@ env.math = setmetatable({clamp = function(v, lo, hi) return math.max(lo, math.mi
 env.table = setmetatable({find = function(t, v) for i, x in ipairs(t) do if x == v then return i end end end}, {__index = table})
 env.gethui = nil; env.request = nil; env.getcustomasset = nil; env.writefile = nil
 
-local f = assert(io.open(ARGV or "../tsb_animation_hub.lua", "r")); local src = f:read("a"); f:close()
+local f = assert(io.open(ARGV or "../dist/tsb_hub_executor.lua", "r")); local src = f:read("a"); f:close()
 local fn, err = load(src, "@tsb_animation_hub.lua", "t", env)
 if not fn then print("SYNTAX ERROR: " .. err); os.exit(1) end
 local ok, e = pcall(fn)
