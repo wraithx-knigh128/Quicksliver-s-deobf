@@ -25,6 +25,24 @@ Engine.Combos = {
             "M1", "SIDEDASH", "UPPERCUT", "Q",
         },
     },
+    -- Garou variant listed by Gamezebo (unverified):
+    KyotoGarou = {
+        maxGap = 1.2,
+        steps = {
+            "Q", "M1", "M1", "M1", "FLOWING_WATER", "SIDEDASH", "HUNTERS_GRASP",
+            "Q", "M1", "M1", "M1", "LETHAL_WHIRLWIND",
+        },
+    },
+}
+
+-- Game numbers gathered from fan wikis/guides (see RESEARCH.md). Several sources disagree,
+-- so these are tunable defaults for YOUR game, not verified TSB data.
+Engine.Mechanics = {
+    m1Chain          = {3, 3, 4, 5},   -- % damage per hit, 4th launches
+    wallComboDamage  = 12,             -- % (4th M1 near wall + forward dash)
+    sideDashCooldown = 2,              -- s (one wiki; another says ~1)
+    frontDashCooldown = 5,             -- s, shared with back dash
+    ragdollCancelCooldown = 30,        -- s (sources say 20-30)
 }
 
 -- Register / replace a combo (this is where "Oreo" and your own combos go).
