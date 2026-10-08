@@ -6,7 +6,10 @@ local function dummy(name)
     return setmetatable(t, {
         __index = function(self, k)
             if k == "Connect" or k == "Wait" then
-                return function() return dummy(name .. "." .. k) end
+                return function(_, fn)
+                    if type(fn) == "function" and name:find("Click") then CALLBACKS[#CALLBACKS + 1] = fn end
+                    return dummy(name .. "." .. k)
+                end
             end
             local v = dummy(name .. "." .. tostring(k)); rawset(self, k, v); return v
         end,
@@ -20,6 +23,7 @@ local function dummy(name)
 end
 
 local errors = {}
+CALLBACKS = {}
 local env = setmetatable({}, {__index = _G})
 local function fake(n) return dummy(n) end
 env.game = dummy("game"); env.workspace = dummy("workspace")
@@ -59,5 +63,13 @@ local fn, err = load(src, "@tsb_animation_hub.lua", "t", env)
 if not fn then print("SYNTAX ERROR: " .. err); os.exit(1) end
 local ok, e = pcall(fn)
 if not ok then errors[#errors + 1] = tostring(e) end
+-- exercise every click handler once (cards, toggles, macros, buttons)
+local clicked = 0
+for _, cb in ipairs(CALLBACKS) do
+    local ok2, e2 = pcall(cb)
+    clicked = clicked + 1
+    if not ok2 then errors[#errors + 1] = "click handler: " .. tostring(e2) end
+end
+print("exercised " .. clicked .. " click handlers")
 if #errors > 0 then print("RUNTIME PROBLEMS:"); for _, x in ipairs(errors) do print("  " .. x) end; os.exit(1) end
 print("smoke test passed: script loads and builds the UI without Lua errors")

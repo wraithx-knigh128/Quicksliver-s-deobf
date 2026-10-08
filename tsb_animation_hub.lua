@@ -3,17 +3,18 @@
     Smooth sidebar UI + Auto Tech
 
     Setup:
-      * Set BACKGROUND_URL to a direct link to an image you have the right to use
-        (public domain / CC0 / your own art). Leave it "" for a plain gradient.
-      * Run in your executor. Needs getcustomasset + writefile for the image;
-        everything else works without them.
+      * Background: a random SFW anime image is fetched from waifu.pics / nekos.best.
+        NOTE: those are community fan-art images, NOT copyright-free. For art you may
+        legally redistribute, set BACKGROUND_URL to your own / CC0 image.
+      * Needs request + writefile + getcustomasset for the image; everything else works without them.
 
     Auto Tech: when you get knocked down / ragdolled it waits a short delay and
     presses the dash key in the chosen direction so you recover instantly.
     Delay / cooldown / direction are adjustable in the "Auto Tech" tab.
 ]]
 
-local BACKGROUND_URL = ""   -- e.g. "https://example.com/my_cc0_image.png"
+local BACKGROUND_URL = ""   -- optional fixed image (direct link). "" = pick one from the waifu API below
+local BACKGROUND_SOURCE = "waifu.pics"   -- "waifu.pics" or "nekos.best" (SFW endpoints only)
 local BACKGROUND_TRANSPARENCY = 0.55
 
 if not game:IsLoaded() then game.Loaded:Wait() end
@@ -62,15 +63,44 @@ local function __run()
         return new("UIStroke", {Color = color, Thickness = thick or 1, Transparency = trans or 0})
     end
 
-    local function loadBackground()
-        if BACKGROUND_URL == "" or not (getcustomasset and writefile) then return nil end
-        local req = request or http_request or (syn and syn.request)
-        if not req then return nil end
-        local res = safe(req, {Url = BACKGROUND_URL, Method = "GET"})
-        if not res or res.StatusCode ~= 200 then return nil end
-        local path = "animation_hub_bg.png"
-        if not safe(writefile, path, res.Body) then return nil end
+    local httpRequest = request or http_request or (syn and syn.request)
+    local function httpGet(url)
+        if httpRequest then
+            local res = safe(httpRequest, {Url = url, Method = "GET"})
+            if res and res.StatusCode == 200 then return res.Body end
+        end
+        return safe(function() return game:HttpGet(url) end)
+    end
+
+    local BgSources = {
+        ["waifu.pics"] = {api = "https://api.waifu.pics/sfw/waifu", parse = function(j) return j.url end},
+        ["nekos.best"] = {api = "https://nekos.best/api/v2/waifu", parse = function(j) return j.results and j.results[1] and j.results[1].url end},
+    }
+    local bgCounter = 0
+
+    -- download one image url -> executor asset id (png/jpg only, Roblox cannot show gif/webp)
+    local function imageToAsset(url)
+        local ext = url:match("%.(%w+)$") and url:match("%.(%w+)$"):lower()
+        if ext ~= "png" and ext ~= "jpg" and ext ~= "jpeg" then return nil end
+        if not (getcustomasset and writefile) then return nil end
+        local body = httpGet(url)
+        if not body then return nil end
+        bgCounter = bgCounter + 1
+        local path = ("animation_hub_bg_%d.%s"):format(bgCounter, ext)
+        if not safe(writefile, path, body) then return nil end
         return safe(getcustomasset, path)
+    end
+
+    local function loadBackground(sourceName)
+        if BACKGROUND_URL ~= "" and not sourceName then return imageToAsset(BACKGROUND_URL) end
+        local src = BgSources[sourceName or BACKGROUND_SOURCE] or BgSources["waifu.pics"]
+        for _ = 1, 4 do                                   -- retry: the API may hand back a gif/webp
+            local raw = httpGet(src.api)
+            local data = raw and safe(function() return game:GetService("HttpService"):JSONDecode(raw) end)
+            local url = data and safe(src.parse, data)
+            local asset = url and imageToAsset(url)
+            if asset then return asset end
+        end
     end
 
     ---------------------------------------------------------------- theme
@@ -110,10 +140,13 @@ local function __run()
         ScaleType = Enum.ScaleType.Crop, ImageTransparency = BACKGROUND_TRANSPARENCY,
         ZIndex = 0, Parent = Main,
     }, {corner(14)})
-    task.spawn(function()
-        local asset = loadBackground()
-        if asset then Background.Image = asset end
-    end)
+    local function refreshBackground(sourceName)
+        task.spawn(function()
+            local asset = loadBackground(sourceName)
+            if asset then Background.Image = asset end
+        end)
+    end
+    refreshBackground()
 
     -- title bar
     local TopBar = new("Frame", {Size = UDim2.new(1, 0, 0, 52), BackgroundTransparency = 1, Parent = Main})
@@ -250,13 +283,13 @@ local function __run()
             new("UIPadding", {PaddingRight = UDim.new(0, 6), PaddingTop = UDim.new(0, 2)}),
         })
 
-        local tab = {Button = btn, Page = page}
+        local tab = {Btn = btn, Page = page}
         function tab:Select()
             if currentTab then
                 local c = currentTab
                 c.Page.Visible = false
-                tween(c.Button, {BackgroundTransparency = 1, TextColor3 = Theme.SubText}, 0.2)
-                tween(c.Button:FindFirstChildOfClass("Frame"), {Size = UDim2.fromOffset(3, 0)}, 0.2)
+                tween(c.Btn, {BackgroundTransparency = 1, TextColor3 = Theme.SubText}, 0.2)
+                tween(c.Btn:FindFirstChildOfClass("Frame"), {Size = UDim2.fromOffset(3, 0)}, 0.2)
             end
             currentTab = tab
             page.Visible = true
@@ -268,10 +301,10 @@ local function __run()
         btn.MouseLeave:Connect(function() if currentTab ~= tab then tween(btn, {BackgroundTransparency = 1}, 0.15) end end)
 
         -- elements ------------------------------------------------------
-        local function row(height)
+        local function row(height, parent)
             return new("Frame", {
                 Size = UDim2.new(1, 0, 0, height or 40), BackgroundColor3 = Theme.Item,
-                BackgroundTransparency = 0.25, Parent = page,
+                BackgroundTransparency = 0.25, Parent = parent or page,
             }, {corner(8)})
         end
         local function label(parent, text, size, color, pos, font)
@@ -293,8 +326,8 @@ local function __run()
             return l
         end
 
-        function tab:Toggle(text, default, cb)
-            local r = row(40)
+        function tab:Toggle(text, default, cb, parent)
+            local r = row(40, parent)
             label(r, text)
             local track = new("TextButton", {
                 Text = "", AutoButtonColor = false, Size = UDim2.fromOffset(40, 20),
@@ -392,6 +425,68 @@ local function __run()
             task.spawn(cb, options[i])
         end
 
+        -- collapsible section with card buttons / toggles (like the reference UI)
+        function tab:Section(title)
+            local holder = new("Frame", {
+                Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y,
+                BackgroundTransparency = 1, Parent = page,
+            }, {new("UIListLayout", {Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder})})
+            local head = new("TextButton", {
+                Text = title, Font = Enum.Font.GothamBold, TextSize = 16, TextColor3 = Theme.Text,
+                TextXAlignment = Enum.TextXAlignment.Left, BackgroundTransparency = 1,
+                Size = UDim2.new(1, 0, 0, 30), AutoButtonColor = false, LayoutOrder = 0, Parent = holder,
+            })
+            local arrow = new("TextLabel", {
+                Text = "^", Font = Enum.Font.GothamBold, TextSize = 14, TextColor3 = Theme.Accent,
+                BackgroundTransparency = 1, Position = UDim2.new(1, -24, 0, 0), Size = UDim2.fromOffset(20, 30), Parent = head,
+            })
+            local body = new("Frame", {
+                Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y,
+                BackgroundTransparency = 1, LayoutOrder = 1, Parent = holder,
+            }, {new("UIListLayout", {Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder})})
+            local open = true
+            head.MouseButton1Click:Connect(function()
+                open = not open
+                body.Visible = open
+                arrow.Text = open and "^" or "v"
+            end)
+
+            local sec = {}
+            function sec:Button(name, desc, cb)
+                local card = new("Frame", {
+                    Size = UDim2.new(1, 0, 0, 58), BackgroundColor3 = Theme.Item,
+                    BackgroundTransparency = 0.35, Parent = body,
+                }, {corner(10)})
+                new("TextLabel", {
+                    Text = name, Font = Enum.Font.GothamBold, TextSize = 14, TextColor3 = Theme.Text,
+                    TextXAlignment = Enum.TextXAlignment.Left, BackgroundTransparency = 1,
+                    Position = UDim2.fromOffset(14, 8), Size = UDim2.new(1, -60, 0, 18), Parent = card,
+                })
+                new("TextLabel", {
+                    Text = desc or "", Font = Enum.Font.Gotham, TextSize = 12, TextColor3 = Theme.SubText,
+                    TextXAlignment = Enum.TextXAlignment.Left, TextTruncate = Enum.TextTruncate.AtEnd,
+                    BackgroundTransparency = 1, Position = UDim2.fromOffset(14, 28), Size = UDim2.new(1, -60, 0, 18), Parent = card,
+                })
+                new("TextLabel", {
+                    Text = ">", Font = Enum.Font.GothamBold, TextSize = 18, TextColor3 = Theme.Accent,
+                    BackgroundTransparency = 1, Position = UDim2.new(1, -40, 0, 0), Size = UDim2.fromOffset(30, 58), Parent = card,
+                })
+                local hit = new("TextButton", {
+                    Text = "", BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1), AutoButtonColor = false, Parent = card,
+                })
+                hit.MouseEnter:Connect(function() tween(card, {BackgroundTransparency = 0.15}, 0.15) end)
+                hit.MouseLeave:Connect(function() tween(card, {BackgroundTransparency = 0.35}, 0.15) end)
+                hit.MouseButton1Click:Connect(function()
+                    tween(card, {BackgroundColor3 = Theme.Accent}, 0.1).Completed:Connect(function()
+                        tween(card, {BackgroundColor3 = Theme.Item}, 0.25)
+                    end)
+                    task.spawn(cb)
+                end)
+            end
+            function sec:Toggle(name, default, cb) return tab:Toggle(name, default, cb, body) end
+            return sec
+        end
+
         Tabs[#Tabs + 1] = tab
         return tab
     end
@@ -453,29 +548,103 @@ local function __run()
         wasKnocked = knocked
     end)
 
+    ---------------------------------------------------------------- macro runner
+    -- Plays a combo from tsb_data as real inputs. Move slots assume the hotbar order = the move list
+    -- order in tsb_data (1..4). That order is UNVERIFIED: if a move fires the wrong skill, edit MoveSlots.
+    local MoveSlots = {Enum.KeyCode.One, Enum.KeyCode.Two, Enum.KeyCode.Three, Enum.KeyCode.Four}
+    local macroSpeed, macroRunning = 1, false
+
+    local function click()
+        local c = Camera.ViewportSize / 2
+        VirtualInput:SendMouseButtonEvent(c.X, c.Y, 0, true, game, 0)
+        task.wait(0.03)
+        VirtualInput:SendMouseButtonEvent(c.X, c.Y, 0, false, game, 0)
+    end
+    local function hold(key, t) press(key, t) end
+    local function dash(dirKey)
+        if dirKey then VirtualInput:SendKeyEvent(true, dirKey, false, game) end
+        press(Enum.KeyCode.Q, 0.04)
+        if dirKey then task.wait(0.03); VirtualInput:SendKeyEvent(false, dirKey, false, game) end
+    end
+
+    -- returns the delay after the step, or nil if this token cannot be played
+    local function playToken(tok, charName)
+        if tok == "M1" then click() return 0.2 end
+        if tok == "Q" then dash(nil) return 0.3 end
+        if tok == "FRONTDASH" then dash(Enum.KeyCode.W) return 0.3 end
+        if tok == "BACKDASH" then dash(Enum.KeyCode.S) return 0.3 end
+        if tok == "SIDEDASH" then dash(Enum.KeyCode.A) return 0.3 end
+        if tok == "JUMP" then hold(Enum.KeyCode.Space, 0.05) return 0.25 end
+        local char = Data and Data.Characters[charName]
+        if char and char.moves then
+            for i, mv in ipairs(char.moves) do
+                if mv == tok and MoveSlots[i] then hold(MoveSlots[i], 0.05) return 0.5 end
+            end
+        end
+        return nil
+    end
+
+    local function runMacro(steps, charName)
+        if macroRunning then macroRunning = false return end   -- press again to stop
+        macroRunning = true
+        task.spawn(function()
+            for _, tok in ipairs(steps) do
+                if not macroRunning then break end
+                local d = playToken(tok, charName)
+                task.wait((d or 0) * macroSpeed)
+            end
+            macroRunning = false
+        end)
+    end
+
+    local function describe(steps)   -- "M1 x3 > SIDEDASH > FLOWING WATER ..."
+        local out, i = {}, 1
+        while i <= #steps do
+            local j = i
+            while steps[j + 1] == steps[i] do j = j + 1 end
+            local name = steps[i]:gsub("_", " ")
+            out[#out + 1] = (j > i) and (name .. " x" .. (j - i + 1)) or name
+            i = j + 1
+        end
+        return table.concat(out, " > ")
+    end
+
     ---------------------------------------------------------------- tabs
     local Main_  = createTab("Main", "#")
+    local Credit = createTab("Credit", "+")
+    local Saitama = Data and createTab("Saitama", "S")
+    local Garou   = Data and createTab("Garou", "G")
     local Tech   = createTab("Auto Tech", "*")
     local Tele   = createTab("Teleports", "@")
-    local Credit = createTab("Credit", "+")
+    local Effects = createTab("Effects Preset", "~")
 
-    -- Main
-    Main_:Label("General utilities")
-    Main_:Slider("WalkSpeed", 16, 120, 16, 1, function(v)
-        local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-        if hum then hum.WalkSpeed = v end
-    end)
-    Main_:Toggle("Anti AFK", true, function(on)
-        if not on then return end
-        LocalPlayer.Idled:Connect(function()
-            VirtualInput:SendKeyEvent(true, Enum.KeyCode.Space, false, game)
-            VirtualInput:SendKeyEvent(false, Enum.KeyCode.Space, false, game)
-        end)
-    end)
-    Main_:Button("Reset Character", function()
-        local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-        if hum then hum.Health = 0 end
-    end)
+    -- character tabs built from tsb_data (only when bundled in)
+    local function buildCharacter(tab, fullName, label, sectionNames)
+        if not tab then return end
+        local sec = {}
+        local function get(key, title)
+            if not sec[key] then sec[key] = tab:Section(title) end
+            return sec[key]
+        end
+        local names = {}
+        for name, c in pairs(Data.Combos) do
+            if c.character == fullName then names[#names + 1] = name end
+        end
+        table.sort(names)
+        for _, name in ipairs(names) do
+            local c = Data.Combos[name]
+            local key, title = "combos", label .. " combos"
+            if name:find("Kyoto") then key, title = "kyoto", label .. " kyoto"
+            elseif name:find("Catch") then key, title = "tech", label .. " tech" end
+            get(key, title):Button(name:gsub("_", " ") .. "  [" .. c.confidence .. "]", describe(c.steps), function()
+                runMacro(c.steps, fullName)
+            end)
+        end
+        tab:Slider("Macro speed (higher = slower)", 0.5, 2, 1, 0.05, function(v) macroSpeed = v end)
+        tab:Label("Tap a card to play the combo as inputs, tap again to stop. Moves use hotbar slots 1-4 (unverified order).", 40)
+    end
+    buildCharacter(Saitama, "The Strongest Hero", "Saitama")
+    buildCharacter(Garou, "Hero Hunter", "Garou")
 
     -- Auto Tech
     Tech:Label("Recovers automatically when you get knocked down.")
@@ -508,7 +677,16 @@ local function __run()
     -- Credit
     Credit:Label("Animation Hub UI")
     Credit:Label("Toggle menu: RightShift")
-    Credit:Label("Background: set BACKGROUND_URL at the top of the script.")
+    Credit:Label("Background: random SFW image from waifu.pics / nekos.best (fan art, not copyright-free).", 40)
+
+    -- Effects Preset
+    Effects:Label("Background image", 24)
+    Effects:Slider("Image opacity", 0.1, 1, 1 - BACKGROUND_TRANSPARENCY, 0.05, function(v)
+        Background.ImageTransparency = 1 - v
+    end)
+    Effects:Dropdown("Source", {"waifu.pics", "nekos.best"}, BACKGROUND_SOURCE, function(v) BACKGROUND_SOURCE = v end)
+    Effects:Button("New random background", function() refreshBackground(BACKGROUND_SOURCE) end)
+    Effects:Label("Images come from public waifu APIs (SFW endpoints). They are community fan art, so the artists keep the copyright - use your own CC0 image via BACKGROUND_URL if you need that.", 60)
 
     -- Predictor tab: only when combo_engine/tsb_data were bundled in (see game_dev/build_executor.py)
     if Engine and Data then
