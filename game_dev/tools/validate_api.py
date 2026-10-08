@@ -62,6 +62,12 @@ def visit(n):
                         if w not in (None, 'None'): problems.append(f"{loc(n)}: {cls}.{k} write security {w}")
                         tags = p.get('Tags', [])
                         if 'ReadOnly' in tags or 'NotScriptable' in tags: problems.append(f"{loc(n)}: {cls}.{k} is {tags}")
+        # event hookups: something.Event:Connect(fn) -> Event must exist on some Roblox class
+        if f.get('type') == 'AstExprIndexName' and f.get('op') == ':' and f['index'] == 'Connect' and f['expr'].get('type') == 'AstExprIndexName':
+            ev = f['expr']['index']
+            seen[('event', ev)] += 1
+            if ev not in all_events:
+                problems.append(f"{loc(n)}: '{ev}' is not an event of any Roblox class")
         if f.get('type') == 'AstExprIndexName' and f.get('op') == ':':
             m = f['index']
             seen[('method', m)] += 1
@@ -87,6 +93,7 @@ walk(ast, visit)
 
 print("classes/props checked:", sum(1 for k in seen if len(k) == 2 and k[0] != 'method'))
 print("enum references checked:", sum(1 for k in seen if k[0] == 'enum'))
+print("events hooked up:", sorted({k[1] for k in seen if k[0] == 'event'}))
 print("distinct methods called with ':':", sorted({k[1] for k in seen if k[0] == 'method'}))
 print("distinct assignment targets (.X =):", sorted({k[1] for k in seen if k[0] == 'assign'}))
 print()

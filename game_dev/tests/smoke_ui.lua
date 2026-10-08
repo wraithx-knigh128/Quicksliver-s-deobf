@@ -101,6 +101,7 @@ local function run(scenario)
         wait = function(t) ctx.waits[#ctx.waits + 1] = t or 0; return 0 end,
     }
     env.warn = function(...) errors[#errors + 1] = "warn: " .. table.concat({...}, " ") end
+    env.print = function() end
     env.os = {clock = os.clock}
     if not math.clamp then   -- stock Lua lacks the Luau additions the script uses; real Luau already has them
         env.math = setmetatable({clamp = function(v, lo, hi) return math.max(lo, math.min(hi, v)) end}, {__index = math})
@@ -139,7 +140,12 @@ local function run(scenario)
         local img = rawget(inst, "Image")
         if type(img) == "string" and img:find("animation_hub_bg_", 1, true) then bgSet = true end
     end
-    return {textOf = textOf, errors = errors, ctx = ctx, writes = writes, assets = assets, bgSet = bgSet, genv = genvStore, env = env, fn = fn}
+    local function findButton(text)             -- a real TextButton (not a label) showing this text
+        for _, inst in ipairs(instances) do
+            if rawget(inst, "__name") == "TextButton" and rawget(inst, "Text") == text then return inst end
+        end
+    end
+    return {findButton = findButton, textOf = textOf, errors = errors, ctx = ctx, writes = writes, assets = assets, bgSet = bgSet, genv = genvStore, env = env, fn = fn}
 end
 
 local failures = {}
@@ -237,6 +243,7 @@ check(#d.writes == 0 and not d.bgSet, "no-file executor must skip the background
 local g = run({executor = "full", body = PNG, settings = {
     timing = {m1 = 0.3, dash = "bad"}, auto = {on = false, strength = 99}, speed = 1.4,
     combos = {Kyoto = {speed = 99, auto = "weird", side = "Right", move = 0.7}, [7] = {speed = 1}},
+    pins = {Kyoto = {x = 120, y = 80}, Bogus = {x = "a"}, NoSuchCombo = {x = 5, y = 6}},
 }})
 for _, e in ipairs(g.errors) do failures[#failures + 1] = "settings scenario: " .. e end
 for _ = 1, 4 do for _, hb in ipairs(g.ctx.heartbeats) do pcall(hb, 1) end end
@@ -251,6 +258,16 @@ if enc then
     check(not (enc.combos and enc.combos[7]), "non-string combo name must be dropped")
 end
 check(g.textOf("%(manual%)"), "auto timing off in the saved file must show (manual)")
+local pinBtn = g.findButton("Kyoto")
+check(pinBtn ~= nil, "a pin saved in the file must come back as an on-screen button")
+check(pinBtn and rawget(pinBtn, "Visible") == true, "restored pin button must be visible")
+check(g.textOf("Pins 1"), "the floating bar must show how many pins exist")
+if enc then
+    local pk = enc.pins and enc.pins.Kyoto
+    check(pk and pk.x == 120 and pk.y == 80, "a pinned combo and its position must survive a save/load")
+    check(enc.pins and enc.pins.Bogus == nil, "a pin with garbage coordinates must be dropped")
+    check(enc.pins and enc.pins.NoSuchCombo and enc.pins.NoSuchCombo.x == 5, "a valid pin for an unknown combo is kept untouched")
+end
 
 -- 6. unreadable settings file must not stop the script
 local h = run({executor = "full", body = PNG, settingsThrows = true})
