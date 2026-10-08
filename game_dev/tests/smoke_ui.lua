@@ -2,10 +2,26 @@
 -- Catches syntax errors, nil-call / undefined-variable bugs and crashes in our own logic, exercises every
 -- click handler, the background-image pipeline and the clean-up / re-run behaviour.
 -- It does NOT validate real Roblox property names - only a real executor can do that.
+-- Runs on Lua 5.x (via lupa) and on real Luau (the language Roblox uses): SCRIPT_SOURCE is set by the Luau wrapper.
 local SCRIPT = SCRIPT_PATH or "../dist/tsb_hub_executor.lua"
 
 local function readScript()
+    if SCRIPT_SOURCE then return SCRIPT_SOURCE end
     local f = assert(io.open(SCRIPT, "r")); local s = f:read("a"); f:close(); return s
+end
+
+local function compile(src, chunk, env)
+    if loadstring and setfenv then                       -- Luau / Lua 5.1
+        local fn, err = loadstring(src, chunk)
+        if not fn then return nil, err end
+        setfenv(fn, env)
+        return fn
+    end
+    return load(src, chunk, "t", env)
+end
+
+local function finish(code)
+    if os.exit then os.exit(code) elseif code ~= 0 then error("smoke test failed") end
 end
 
 -- an object that answers every index / call with another dummy (so unknown Roblox APIs do not crash the test)
@@ -86,8 +102,12 @@ local function run(scenario)
     }
     env.warn = function(...) errors[#errors + 1] = "warn: " .. table.concat({...}, " ") end
     env.os = {clock = os.clock}
-    env.math = setmetatable({clamp = function(v, lo, hi) return math.max(lo, math.min(hi, v)) end}, {__index = math})
-    env.table = setmetatable({find = function(t, v) for i, x in ipairs(t) do if x == v then return i end end end}, {__index = table})
+    if not math.clamp then   -- stock Lua lacks the Luau additions the script uses; real Luau already has them
+        env.math = setmetatable({clamp = function(v, lo, hi) return math.max(lo, math.min(hi, v)) end}, {__index = math})
+    end
+    if not table.find then
+        env.table = setmetatable({find = function(t, v) for i, x in ipairs(t) do if x == v then return i end end end}, {__index = table})
+    end
     env._G = genvStore
     env.getgenv = function() return genvStore end
     if scenario.settings or scenario.settingsThrows then
@@ -103,7 +123,7 @@ local function run(scenario)
         env.getcustomasset = function(p) assets[#assets + 1] = p; return "rbxasset://" .. p end
     end
 
-    local fn, err = load(readScript(), "@" .. SCRIPT, "t", env)
+    local fn, err = compile(readScript(), "@" .. SCRIPT, env)
     if not fn then return nil, {"SYNTAX ERROR: " .. err} end
     local ok, e = pcall(fn)
     if not ok then errors[#errors + 1] = "top level: " .. tostring(e) end
@@ -140,7 +160,7 @@ end
 
 -- 1. normal executor, valid PNG, 100 ms ping
 local a, synErr = run({executor = "full", body = PNG, ping = 100})
-if not a then print(synErr[1]); os.exit(1) end
+if not a then print(synErr[1]); finish(1) end
 for _, e in ipairs(a.errors) do failures[#failures + 1] = e end
 check(#a.writes == 1 and a.writes[1].path:match("%.png$"), "background: expected exactly one .png written (writefile returns nothing on success!)")
 check(a.bgSet, "background: Image was never set from getcustomasset")
@@ -239,6 +259,7 @@ check(h.textOf("Gaps now") ~= nil, "script did not finish building with a broken
 
 if #failures > 0 then
     print("PROBLEMS:"); for _, x in ipairs(failures) do print("  " .. x) end
-    os.exit(1)
+    finish(1)
+    return
 end
 print("smoke test passed (6 scenarios)")

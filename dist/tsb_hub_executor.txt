@@ -16,6 +16,7 @@
 local BACKGROUND_URL = ""   -- optional fixed image (direct link). "" = pick one from the waifu API below
 local BACKGROUND_SOURCE = "waifu.pics"   -- "waifu.pics" or "nekos.best" (SFW endpoints only)
 local BACKGROUND_TRANSPARENCY = 0.55
+local GUI_PARENT = "auto"   -- "auto" (gethui, CoreGui, PlayerGui) | "coregui" | "playergui". If the menu never shows, try "playergui".
 
 -- Your own combos, shown as cards in the character tab. "Instant Twisted" has no published inputs, so
 -- add it here once you know them. Tokens: M1 Q FRONTDASH SIDEDASH BACKDASH JUMP or a move name such as
@@ -23,6 +24,17 @@ local BACKGROUND_TRANSPARENCY = 0.55
 --   {name = "Instant Twisted", character = "Hero Hunter", steps = {"M1", "M1", "SIDEDASH", "HUNTERS_GRASP"}},
 local CUSTOM_COMBOS = {
 }
+
+-- Feedback so you always know how far it got: "Loading" = the script started, "Ready" = the menu was built,
+-- a red "error" notification = it failed (and says why). Seeing nothing at all means the executor never ran it
+-- (pasted text cut off, or too long) - use the short loadstring link instead of pasting.
+local function notify(title, text, duration)
+    pcall(function()
+        game:GetService("StarterGui"):SetCore("SendNotification", {Title = title, Text = text, Duration = duration or 4})
+    end)
+end
+print("[Animation Hub] starting")
+notify("Animation Hub", "Loading...", 3)
 
 local DragTracker = (function()
 
@@ -610,6 +622,8 @@ local function __run()
     end
 
     local function guiParent()
+        if GUI_PARENT == "playergui" then return LocalPlayer:WaitForChild("PlayerGui") end
+        if GUI_PARENT == "coregui" then return CoreGui end
         local p = safe(function() return gethui() end)
         if p then return p end
         p = safe(function() return CoreGui end)
@@ -712,7 +726,9 @@ local function __run()
         Name = "AnimationHubTSB", ResetOnSpawn = false,
         ZIndexBehavior = Enum.ZIndexBehavior.Sibling, IgnoreGuiInset = true,
     })
+    Gui.DisplayOrder = 999999          -- above the game's own UI
     Gui.Parent = guiParent()
+    if not Gui.Parent then Gui.Parent = LocalPlayer:WaitForChild("PlayerGui") end   -- the chosen container refused it
 
     -- every global listener goes through connect() so cleanup() can remove it
     local alive, conns, onCleanup = true, {}, {}
@@ -1842,6 +1858,8 @@ local function __run()
     ready = true                       -- from here on, changing a slider marks the settings as unsaved
     dirty = next(Saved) ~= nil         -- a loaded file is re-written once in its cleaned-up form
     Main_:Select()
+    notify("Animation Hub", "Ready - tap the Menu button on the left (or press RightShift)", 6)
+    print("[Animation Hub] ready, UI parent: " .. tostring(Gui.Parent and Gui.Parent.Name))
 
     -- open animation
     Main.Size = UDim2.fromOffset(fullSize.X.Offset, 0)

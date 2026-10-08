@@ -1,8 +1,16 @@
 local BACKGROUND_URL = ""
 local BACKGROUND_SOURCE = "waifu.pics"
 local BACKGROUND_TRANSPARENCY = 0.55
+local GUI_PARENT = "auto"
 local CUSTOM_COMBOS = {
 }
+local function notify(title, text, duration)
+pcall(function()
+game:GetService("StarterGui"):SetCore("SendNotification", {Title = title, Text = text, Duration = duration or 4})
+end)
+end
+print("[Animation Hub] starting")
+notify("Animation Hub", "Loading...", 3)
 local DragTracker = (function()
 local M = {}
 function M.new(threshold)
@@ -473,6 +481,8 @@ local ok, res = pcall(fn, ...)
 if ok then return res end
 end
 local function guiParent()
+if GUI_PARENT == "playergui" then return LocalPlayer:WaitForChild("PlayerGui") end
+if GUI_PARENT == "coregui" then return CoreGui end
 local p = safe(function() return gethui() end)
 if p then return p end
 p = safe(function() return CoreGui end)
@@ -556,7 +566,9 @@ local Gui = new("ScreenGui", {
 Name = "AnimationHubTSB", ResetOnSpawn = false,
 ZIndexBehavior = Enum.ZIndexBehavior.Sibling, IgnoreGuiInset = true,
 })
+Gui.DisplayOrder = 999999
 Gui.Parent = guiParent()
+if not Gui.Parent then Gui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
 local alive, conns, onCleanup = true, {}, {}
 local function connect(signal, fn)
 local c = signal:Connect(fn)
@@ -1574,6 +1586,8 @@ end
 ready = true
 dirty = next(Saved) ~= nil
 Main_:Select()
+notify("Animation Hub", "Ready - tap the Menu button on the left (or press RightShift)", 6)
+print("[Animation Hub] ready, UI parent: " .. tostring(Gui.Parent and Gui.Parent.Name))
 Main.Size = UDim2.fromOffset(fullSize.X.Offset, 0)
 tween(Main, {Size = fullSize}, 0.45, Enum.EasingStyle.Back)
 task.spawn(function()
