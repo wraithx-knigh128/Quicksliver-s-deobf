@@ -108,14 +108,26 @@ function M.new(alpha)
     return self
 end
 
--- Seconds. Only "dependent" gaps (>= minDependent, i.e. after a move or dash) are shortened, and never by
--- more than maxFraction of the planned gap, so a bad ping reading can't collapse the timing.
+-- Seconds. base = planned gap after a step.
+--   opts.dependent  true/false: does this gap wait for a visible cue (after a move or dash)? When nil it is
+--                   guessed from the size of the gap (>= minDependent, default 0.3 s).
+--   opts.offsetMs   manual fine-tune added to dependent gaps (+ later / - earlier).
+--   opts.maxFraction / opts.minDelay  bounds: never shorten by more than 40% of the gap, never below 0.05 s.
+-- Independent gaps (M1 spacing, jump) are returned unchanged.
 function M.adjustDelay(base, pingMs, strength, opts)
     opts = opts or {}
-    if type(base) ~= "number" or base < (opts.minDependent or 0.3) then return base end
-    if type(pingMs) ~= "number" or pingMs <= 0 or type(strength) ~= "number" or strength <= 0 then return base end
-    local lead = math.min((pingMs / 1000) * strength, base * (opts.maxFraction or 0.4))
-    return base - lead
+    if type(base) ~= "number" then return base end
+    local dependent = opts.dependent
+    if dependent == nil then dependent = base >= (opts.minDependent or 0.3) end
+    if not dependent then return base end
+
+    local d = base
+    if type(pingMs) == "number" and pingMs > 0 and type(strength) == "number" and strength > 0 then
+        d = base - math.min((pingMs / 1000) * strength, base * (opts.maxFraction or 0.4))
+    end
+    if type(opts.offsetMs) == "number" then d = d + opts.offsetMs / 1000 end
+    if d == base then return base end
+    return math.max(d, opts.minDelay or 0.05)
 end
 
 return M
@@ -184,7 +196,14 @@ Data.Characters = {
         }},
         notes = "Buffed in Cosmic Update (guide claim). Numbers vary by source/patch." },
     ["Undying Hero"] = { alias = "Zombie Man", moves = {"GRAVE_MAKER"}, notes = "Added May 2026: axe + guns, 119 Robux early access." },
-    ["Suiryu"]        = { notes = "Only a TikTok 'Suiryu bug' mention found - nothing verified." },
+    ["Martial Artist"] = { alias = "Suiryu",
+        moves     = {"BULLET_BARRAGE", "VANISHING_KICK", "WHIRLWIND_DROP", "HEAD_FIRST"},
+        ultimates = {"GRAND_FISSURE", "TWIN_FANGS", "EARTH_SPLITTING_STRIKE", "LAST_BREATH"},
+        notes = "Added Dec 2024 (undated Techwiser table). Fast M1s + AoE; double-tap Vanishing Kick reportedly bypasses block. Slightly nerfed in Cosmic Update (guide claim)." },
+    ["KJ"] = { alias = "KJ", counter = "SPIRALING_STORM",
+        moves     = {},
+        ultimates = {"FIVE_SEASONS", "COLLATERAL_RUIN", "STOIC_BOMB"},
+        notes = "Only partial info found. Collateral Ruin reportedly cancels many ultimates/base/counter moves; also a '20-20-20 Dropkick'." },
 }
 
 ---------------------------------------------------------------- game numbers
@@ -235,8 +254,58 @@ Data.Techs = {
      desc = "Side dash right after Foul Ball then Homerun facing the player for a true Homerun."},
     {name = "Death Counter / counters", character = "Various", confidence = "high",
      desc = "5 counters: Death Counter, Prey's Peril, Death Blow, Split Second Counter, Spiraling Storm (KJ)."},
-    {name = "Oreo Tech", character = "?", confidence = "none",
-     desc = "Only short videos found (a Saitama-labelled tutorial and a 'blade master' variant). No written inputs - not modelled."},
+    {name = "Oreo Tech", character = "Universal", confidence = "low",
+     desc = "Community TikTok description (unverified, timing windows not published): 3 M1, hold jump and release M1, press attack again while airborne and front dash, hold M1 again with another front dash, then flick the camera right and turn back to the opponent. There are separate low-ping and high-ping versions ('Oreo Dash') and a Garou variant. Not on the wiki's universal list."},
+    {name = "Twisted Dash", character = "Universal", confidence = "medium",
+     desc = "Dash at the opponent right after landing the 4th M1: they take less knockback so you can extend. Land the forward dash ASAP; usually you step back a little first. Hitting the legs shortens the knockback further (full hit = opponent spins in place)."},
+    {name = "Instant / True Twisted", character = "Hero Hunter", confidence = "low",
+     desc = "Faster Twisted: turn the camera left or right and then back into the twisted dash. Quicker and harder to predict a ragdoll cancel. The camera flick cannot be automated here, so the macro only does 4 M1 -> back dash -> front dash."},
+    {name = "Garou full twisted combo", character = "Hero Hunter", confidence = "low",
+     desc = "Nov 2025 fan guide: 4 M1, curved dash into Flowing Water, Hunter's Grasp catch, Grasp punch, Lethal Whirlwind Stream, downslam. ~90% (98.6% best); optional evade bait to waste their ragdoll cancel, ~84% without. Needs similar internet connections on both sides."},
+    {name = "Micro Dash", character = "Universal", confidence = "medium",
+     desc = "Use a move right after a side dash to cancel it and shorten its travel (a cancelled side dash goes ~2 blocks, a front dash ~5). Plain M1 does not cancel it."},
+    {name = "Backdash Cancel extension", character = "Universal", confidence = "medium",
+     desc = "Jump before backdashing: the momentum lasts longer in the air so the backdash goes further. Using a move during the backdash cancels it."},
+    {name = "M1 Reset (Saitama bug)", character = "The Strongest Hero", confidence = "low",
+     desc = "Do 1-3 M1, use Consecutive Punches while holding M1 through the animation: the M1 chain resets and you get 4 M1 again. Listed as a bug, may be patched."},
+    {name = "M1 Reset (shove variant)", character = "Universal", confidence = "low",
+     desc = "TikTok demonstrations of a reset built from delayed shoves and side dashes. No written inputs."},
+    {name = "Mini uppercut + downslam", character = "Universal", confidence = "low",
+     desc = "Mini uppercut then downslam (also taught for mobile). Used to waste or beat the opponent's ragdoll cancel."},
+    {name = "Downslam > Weboom extend", character = "Tech Prodigy", confidence = "low",
+     desc = "Downslam into Weboom to waste the opponent's ragdoll cancel or stall for cooldowns."},
+    {name = "Ignition Burst Extension", character = "Destructive Cyborg", confidence = "low",
+     desc = "Full M1 string, cast Ignition Burst to hit them while ragdolled, immediately dash toward where they landed and start another M1 string."},
+    {name = "Genos Barrage", character = "Destructive Cyborg", confidence = "low",
+     desc = "Cast Machine Gun Blows and turn around right before the punch + kick launcher. (Camera turn is not automated.)"},
+    {name = "Genos 'Explosive Fart'", character = "Destructive Cyborg", confidence = "low",
+     desc = "Turn around while casting Ignition Burst to burn the target, then very quickly turn back. An uppercut can be done first. (Camera turn not automated.)"},
+    {name = "Uppercut > Blitz Shot", character = "Destructive Cyborg", confidence = "low",
+     desc = "Fire Blitz Shot as an uppercutted opponent falls. A commenter said it is not new."},
+    {name = "Flash Strike extension", character = "Deadly Ninja", confidence = "low",
+     desc = "Forum proposal (unverified): 3 M1, side dash away into Flash Strike, come back and M1 while they are still stunned. Older patches allowed Flash Strike after M1 shove as an inescapable extend."},
+    {name = "Foul Ball catch", character = "Brutal Demon", confidence = "low",
+     desc = "After an M1, step forward and aim Foul Ball: it knocks them far enough to side dash in and catch them. Forum post (2024) says it can act weird."},
+    {name = "Death Blow evasion", character = "Brutal Demon", confidence = "low",
+     desc = "GINX guide: getting hit at the start of the Death Blow animation lets Metal Bat evade, then finish the opponent."},
+    {name = "Grand Slam dodge", character = "Brutal Demon", confidence = "medium",
+     desc = "A well-timed Grand Slam avoids the damage of Hero Hunter's and Blade Master's awakening startup (they need a grounded target)."},
+    {name = "Quick Slice Spin", character = "Blade Master", confidence = "low",
+     desc = "Land 3 M1, turn around, cast Quick Slice: you dash behind the target. (Camera turn not automated.)"},
+    {name = "Pinpoint Cut extension", character = "Blade Master", confidence = "low",
+     desc = "After Pinpoint Cut lands, dash toward where the opponent was knocked and catch them with M1s."},
+    {name = "Stone Grave cancel", character = "Wild Psychic", confidence = "low",
+     desc = "Dash into the stone grave rock just as the enemy emerges: cancels their roll animation and allows extra M1s."},
+    {name = "Windstorm loop-dash", character = "Wild Psychic", confidence = "low",
+     desc = "Loop-dash right after Windstorm Fury ends, uppercut shortly after: about 54% total per one guide. Windstorm Fury is not a true combo."},
+    {name = "Windstorm Extend", character = "Wild Psychic", confidence = "low",
+     desc = "Dash around to the opponent's back after Windstorm and M1 (lower damage). Listed on the wiki techs page."},
+    {name = "Vanishing Kick double tap", character = "Martial Artist", confidence = "low",
+     desc = "Double tapping Vanishing Kick can get past blocks (tier-list note)."},
+    {name = "Collateral Ruin (ult cancel)", character = "KJ", confidence = "low",
+     desc = "KJ's Collateral Ruin can cancel many ultimate, base and counter moves (Five Seasons, 20-20-20 Dropkick, Stoic Bomb)."},
+    {name = "Cancel your own ultimate", character = "Universal", confidence = "none",
+     desc = "A low-quality site claims you can cancel straight into an M1 string after the first ultimate strike. Unverified, not modelled."},
 }
 
 ---------------------------------------------------------------- combos (token sequences)
@@ -272,7 +341,30 @@ Data.Combos = {
     Tatsu_Safe       = {character = "Wild Psychic", confidence = "low", steps = {"STONE_COFFIN", "CRUSHING_PULL"}},
     -- Tech Prodigy
     TechProdigy_Det  = {character = "Tech Prodigy", confidence = "low", steps = seq(M1x4, "WEBOOM", "WALL_COMBO", "SIDEDASH", "M1")},
+    -- Garou (more)
+    Garou_Medium     = {character = "Hero Hunter", confidence = "medium", steps = seq("Q", M1x3, "LETHAL_WHIRLWIND_STREAM", M1x3, "JUMP_M1", "HUNTERS_GRASP", "Q", M1x3, "FLOWING_WATER", M1x3, "JUMP_M1")},
+    Garou_InstantTwisted = {character = "Hero Hunter", confidence = "low", steps = seq(M1x4, "BACKDASH", "FRONTDASH")},
+    Garou_TwistedFull = {character = "Hero Hunter", confidence = "low", steps = seq(M1x4, "SIDEDASH", "FLOWING_WATER", "HUNTERS_GRASP", "M1", "LETHAL_WHIRLWIND_STREAM", "DOWNSLAM")},
+    -- Saitama (more)
+    Saitama_Medium   = {character = "The Strongest Hero", confidence = "low", steps = seq(M1x3, "CONSECUTIVE_PUNCHES", "JUMP_M1", "SHOVE", "Q", M1x4, "NORMAL_PUNCH")},
+    Saitama_M1ResetBug = {character = "The Strongest Hero", confidence = "low", steps = seq("M1", "M1", "CONSECUTIVE_PUNCHES", M1x4)},
+    -- Genos (more)
+    Genos_IgnitionExtend = {character = "Destructive Cyborg", confidence = "low", steps = seq(M1x4, "IGNITION_BURST", "FRONTDASH", M1x4)},
+    Genos_UppercutBlitz = {character = "Destructive Cyborg", confidence = "low", steps = seq(M1x3, "UPPERCUT", "BLITZ_SHOT")},
+    -- Sonic (more)
+    Sonic_FlashExtend = {character = "Deadly Ninja", confidence = "low", steps = seq(M1x3, "SIDEDASH", "FLASH_STRIKE", "M1")},
+    Sonic_Guide      = {character = "Deadly Ninja", confidence = "low", steps = seq(M1x3, "FLASH_STRIKE", "SCATTER", "UPPERCUT", "EXPLOSIVE_SHURIKEN", "WHIRLWIND_KICK")},
+    -- Metal Bat (more)
+    MetalBat_FoulBallCatch = {character = "Brutal Demon", confidence = "low", steps = {"M1", "FOUL_BALL", "SIDEDASH", "M1"}},
+    -- Atomic Samurai (more)
+    Samurai_QuickSliceSpin = {character = "Blade Master", confidence = "low", steps = seq(M1x3, "QUICK_SLICE")},
+    Samurai_PinpointExtend = {character = "Blade Master", confidence = "low", steps = seq("PINPOINT_CUT", "FRONTDASH", M1x3)},
+    -- Tatsumaki (more)
+    Tatsu_WindstormLoop = {character = "Wild Psychic", confidence = "low", steps = {"WINDSTORM_FURY", "FRONTDASH", "UPPERCUT"}},
+    Tatsu_StoneGraveCancel = {character = "Wild Psychic", confidence = "low", steps = {"STONE_COFFIN", "FRONTDASH", "M1", "M1"}},
     -- Universal
+    TwistedDash      = {character = "Universal", confidence = "medium", steps = seq(M1x4, "FRONTDASH")},
+    Oreo             = {character = "Universal", confidence = "low", steps = seq(M1x3, "JUMP", "JUMP_M1", "FRONTDASH", "M1", "FRONTDASH")},
     TrueDownslam     = {character = "Universal", confidence = "medium", steps = {"M1", "M1", "JUMP", "JUMP_M1", "DOWNSLAM"}},
     UppercutDash     = {character = "Universal", confidence = "medium", steps = {"MINI_UPPERCUT", "FRONTDASH", "SIDEDASH", "FRONTDASH"}},
     M1Reset          = {character = "Universal", confidence = "medium", steps = seq(M1x3, "SIDEDASH", "FRONTDASH", "M1")},
@@ -896,6 +988,9 @@ local function __run()
             connect(UserInputService.InputChanged, function(i)
                 if dragging and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then fromInput(i) end
             end)
+            local api = {}
+            function api:Set(v) set(v, true) end
+            return api
         end
 
         function tab:Dropdown(text, options, default, cb)
@@ -944,7 +1039,7 @@ local function __run()
             local sec = {}
             function sec:Button(name, desc, cb)
                 local card = new("Frame", {
-                    Size = UDim2.new(1, 0, 0, 58), BackgroundColor3 = Theme.Item,
+                    Size = UDim2.new(1, 0, 0, 76), BackgroundColor3 = Theme.Item,
                     BackgroundTransparency = 0.35, Parent = body,
                 }, {corner(10)})
                 new("TextLabel", {
@@ -954,12 +1049,13 @@ local function __run()
                 })
                 new("TextLabel", {
                     Text = desc or "", Font = Enum.Font.Gotham, TextSize = 12, TextColor3 = Theme.SubText,
-                    TextXAlignment = Enum.TextXAlignment.Left, TextTruncate = Enum.TextTruncate.AtEnd,
-                    BackgroundTransparency = 1, Position = UDim2.fromOffset(14, 28), Size = UDim2.new(1, -60, 0, 18), Parent = card,
+                    TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top,
+                    TextWrapped = true, TextTruncate = Enum.TextTruncate.AtEnd,
+                    BackgroundTransparency = 1, Position = UDim2.fromOffset(14, 28), Size = UDim2.new(1, -60, 0, 42), Parent = card,
                 })
                 new("TextLabel", {
                     Text = ">", Font = Enum.Font.GothamBold, TextSize = 18, TextColor3 = Theme.Accent,
-                    BackgroundTransparency = 1, Position = UDim2.new(1, -40, 0, 0), Size = UDim2.fromOffset(30, 58), Parent = card,
+                    BackgroundTransparency = 1, Position = UDim2.new(1, -40, 0, 0), Size = UDim2.fromOffset(30, 76), Parent = card,
                 })
                 local hit = new("TextButton", {
                     Text = "", BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1), AutoButtonColor = false, Parent = card,
@@ -972,6 +1068,28 @@ local function __run()
                     end)
                     task.spawn(cb)
                 end)
+            end
+            -- read-only card with wrapped text (used for the tech library)
+            function sec:Info(name, desc)
+                local card = new("Frame", {
+                    Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y,
+                    BackgroundColor3 = Theme.Item, BackgroundTransparency = 0.35, Parent = body,
+                }, {
+                    corner(10),
+                    new("UIPadding", {PaddingLeft = UDim.new(0, 12), PaddingRight = UDim.new(0, 12), PaddingTop = UDim.new(0, 8), PaddingBottom = UDim.new(0, 8)}),
+                    new("UIListLayout", {Padding = UDim.new(0, 3), SortOrder = Enum.SortOrder.LayoutOrder}),
+                })
+                new("TextLabel", {
+                    Text = name, Font = Enum.Font.GothamBold, TextSize = 13, TextColor3 = Theme.Text,
+                    TextXAlignment = Enum.TextXAlignment.Left, TextWrapped = true, BackgroundTransparency = 1,
+                    Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, LayoutOrder = 0, Parent = card,
+                })
+                new("TextLabel", {
+                    Text = desc or "", Font = Enum.Font.Gotham, TextSize = 12, TextColor3 = Theme.SubText,
+                    TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top,
+                    TextWrapped = true, BackgroundTransparency = 1,
+                    Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, LayoutOrder = 1, Parent = card,
+                })
             end
             function sec:Toggle(name, default, cb) return tab:Toggle(name, default, cb, body) end
             function sec:Clear()
@@ -1050,11 +1168,16 @@ local function __run()
         wasKnocked = knocked
     end)
 
-    ---------------------------------------------------------------- ping
-    -- Your own ping, smoothed. Steps that wait for a visible cue (after a move or dash) are sent a little
-    -- earlier by about that ping (see ping_model.lua). Heuristic, tunable, can be switched off.
-    local Ping = {model = PingModel and PingModel.new(0.2), comp = true, strength = 1, manual = 0}
-    local pingLabel
+    ---------------------------------------------------------------- timing + ping
+    -- Gaps (seconds) after each kind of step. Adjustable in the Timing tab. With "Auto timing" on, the gaps
+    -- that wait for a visible cue (after a move or dash) are additionally shortened by about your ping
+    -- (see ping_model.lua). Heuristic: it cannot read other players' ping and cannot guarantee a hit.
+    local TimingDefaults = {m1 = 0.2, dash = 0.3, move = 0.5, jump = 0.25}
+    local Timing = {m1 = 0.2, dash = 0.3, move = 0.5, jump = 0.25}
+    local Auto = {on = true, strength = 1, offsetMs = 0, manualPing = 0}
+    local macroSpeed = 1
+    local PingState = {model = PingModel and PingModel.new(0.2)}
+    local pingLabel, gapsLabel
 
     local function readPing()
         local item = safe(function() return game:GetService("Stats").Network.ServerStatsItem["Data Ping"] end)
@@ -1062,12 +1185,13 @@ local function __run()
         if type(v) == "number" then return v end
     end
     local function currentPing()                       -- ms, or nil when unknown
-        if Ping.manual > 0 then return Ping.manual end
-        return Ping.model and Ping.model:value()
+        if Auto.manualPing > 0 then return Auto.manualPing end
+        return PingState.model and PingState.model:value()
     end
-    local function compensate(delay)
-        if not (Ping.comp and PingModel) then return delay end
-        return PingModel.adjustDelay(delay, currentPing(), Ping.strength)
+    -- final wait for one step: base gap x speed, then (Auto on) the ping adjustment for dependent gaps
+    local function compensate(delay, dependent)
+        if not (Auto.on and PingModel) then return delay end
+        return PingModel.adjustDelay(delay, currentPing(), Auto.strength, {dependent = dependent, offsetMs = Auto.offsetMs})
     end
 
     do
@@ -1076,19 +1200,25 @@ local function __run()
             acc = acc + dt
             if acc < 0.25 then return end              -- 4 samples per second is plenty
             acc = 0
-            if Ping.model then
+            if PingState.model then
                 local v = readPing()
-                if v then Ping.model:sample(v) end
+                if v then PingState.model:sample(v) end
             end
             if pingLabel then
                 local p = currentPing()
                 if p then
-                    local j = Ping.model and Ping.model:jitter() or 0
-                    local note = (Ping.model and Ping.manual <= 0 and not Ping.model:stable()) and "  (unstable)" or ""
+                    local j = PingState.model and PingState.model:jitter() or 0
+                    local note = (PingState.model and Auto.manualPing <= 0 and not PingState.model:stable()) and "  (unstable)" or ""
                     pingLabel.Text = string.format("Ping: %d ms   jitter: %d ms%s", math.floor(p + 0.5), math.floor(j + 0.5), note)
                 else
                     pingLabel.Text = "Ping: unknown - set Manual ping below"
                 end
+            end
+            if gapsLabel then
+                gapsLabel.Text = string.format("Gaps now  M1 %.2fs  dash %.2fs  move %.2fs  jump %.2fs%s",
+                    compensate(Timing.m1 * macroSpeed, false), compensate(Timing.dash * macroSpeed, true),
+                    compensate(Timing.move * macroSpeed, true), compensate(Timing.jump * macroSpeed, false),
+                    Auto.on and "   (auto)" or "   (manual)")
             end
         end)
     end
@@ -1097,7 +1227,7 @@ local function __run()
     -- Plays a combo from tsb_data as real inputs. Move slots assume the hotbar order = the move list
     -- order in tsb_data (1..4). That order is UNVERIFIED: if a move fires the wrong skill, edit MoveSlots.
     local MoveSlots = {Enum.KeyCode.One, Enum.KeyCode.Two, Enum.KeyCode.Three, Enum.KeyCode.Four}
-    local macroSpeed, macroId = 1, 0
+    local macroId = 0
 
     local function click()
         local vw, vh = viewport()
@@ -1112,21 +1242,35 @@ local function __run()
         if dirKey then task.wait(0.03); keyEvent(false, dirKey) end
     end
 
-    -- returns the delay after the step, or nil if this token cannot be played
-    local function playToken(tok, charName)
-        if tok == "M1" then click() return 0.2 end
-        if tok == "Q" then dash(nil) return 0.3 end
-        if tok == "FRONTDASH" then dash(Enum.KeyCode.W) return 0.3 end
-        if tok == "BACKDASH" then dash(Enum.KeyCode.S) return 0.3 end
-        if tok == "SIDEDASH" then dash(Enum.KeyCode.A) return 0.3 end
-        if tok == "JUMP" then press(Enum.KeyCode.Space, 0.05) return 0.25 end
+    -- which timing category a generic token belongs to
+    local KIND = {M1 = "m1", JUMP_M1 = "m1", JUMP = "jump", Q = "dash", FRONTDASH = "dash", BACKDASH = "dash", SIDEDASH = "dash"}
+    local function moveKey(tok, charName)
         local char = Data and Data.Characters[charName]
         if char and type(char.moves) == "table" then
             for i, mv in ipairs(char.moves) do
-                if mv == tok and MoveSlots[i] then press(MoveSlots[i], 0.05) return 0.5 end
+                if mv == tok then return MoveSlots[i] end
             end
         end
-        return nil
+    end
+    local function canPlay(tok, charName) return KIND[tok] ~= nil or moveKey(tok, charName) ~= nil end
+
+    -- plays one step; returns (gap after it, gap waits for a visible cue?) or nil if the token cannot be played
+    local function playToken(tok, charName)
+        local kind = KIND[tok]
+        if tok == "M1" then click()
+        elseif tok == "Q" then dash(nil)
+        elseif tok == "FRONTDASH" then dash(Enum.KeyCode.W)
+        elseif tok == "BACKDASH" then dash(Enum.KeyCode.S)
+        elseif tok == "SIDEDASH" then dash(Enum.KeyCode.A)
+        elseif tok == "JUMP" then press(Enum.KeyCode.Space, 0.05)
+        elseif tok == "JUMP_M1" then press(Enum.KeyCode.Space, 0.05); task.wait(0.12); click()
+        else
+            local key = moveKey(tok, charName)
+            if not key then return nil end
+            press(key, 0.05)
+            return Timing.move, true
+        end
+        return Timing[kind], kind == "dash"
     end
 
     local function stopMacro()
@@ -1144,8 +1288,8 @@ local function __run()
             local ok, err = pcall(function()
                 for _, tok in ipairs(steps) do
                     if myId ~= macroId then return end       -- stopped, or replaced by a newer macro
-                    local d = playToken(tok, charName)
-                    task.wait(compensate((d or 0) * macroSpeed))
+                    local gap, dependent = playToken(tok, charName)
+                    if gap then task.wait(compensate(gap * macroSpeed, dependent)) end
                 end
             end)
             if myId == macroId then macroRunning = false end  -- never clobber a newer macro's flag
@@ -1153,23 +1297,39 @@ local function __run()
         end)
     end
 
-    local function describe(steps)   -- "M1 x3 > SIDEDASH > FLOWING WATER ..."
-        local out, i = {}, 1
+    -- "M1 x3 > SIDEDASH > FLOWING WATER ...", plus how many steps cannot be played automatically
+    local function describe(steps, charName)
+        local out, i, skipped = {}, 1, 0
         while i <= #steps do
             local j = i
             while steps[j + 1] == steps[i] do j = j + 1 end
             local name = steps[i]:gsub("_", " ")
+            local playable = canPlay(steps[i], charName)
+            if not playable then skipped = skipped + (j - i + 1); name = name .. "*" end
             out[#out + 1] = (j > i) and (name .. " x" .. (j - i + 1)) or name
             i = j + 1
         end
-        return table.concat(out, " > ")
+        local text = table.concat(out, " > ")
+        if skipped > 0 then text = text .. "   (* " .. skipped .. " step(s) skipped: no key mapped)" end
+        return text
     end
 
     ---------------------------------------------------------------- tabs
     local Main_  = createTab("Main", "#")
     local Credit = createTab("Credit", "+")
-    local Saitama = Data and createTab("Saitama", "S")
-    local Garou   = Data and createTab("Garou", "G")
+    local CharList = {
+        {"The Strongest Hero", "Saitama"}, {"Hero Hunter", "Garou"}, {"Destructive Cyborg", "Genos"},
+        {"Deadly Ninja", "Sonic"}, {"Brutal Demon", "Metal Bat"}, {"Wild Psychic", "Tatsumaki"},
+        {"Blade Master", "Atomic Samurai"}, {"Tech Prodigy", "Tech Prodigy"},
+    }
+    local CharTabs = {}
+    if Data then
+        for _, ch in ipairs(CharList) do
+            CharTabs[#CharTabs + 1] = {tab = createTab(ch[2], ch[2]:sub(1, 1)), full = ch[1], short = ch[2]}
+        end
+    end
+    local Timing_ = createTab("Timing", "T")
+    local TechLib = Data and createTab("Techs", "?")
     local Tech   = createTab("Auto Tech", "*")
     local Tele   = createTab("Teleports", "@")
     local Effects = createTab("Effects Preset", "~")
@@ -1200,12 +1360,6 @@ local function __run()
         end
     end)
     Main_:Toggle("Anti AFK", true, function(on) antiAfk = on end)
-    Main_:Slider("Macro speed (higher = slower)", 0.5, 2, 1, 0.05, function(v) macroSpeed = v end)
-    pingLabel = Main_:Label("Ping: measuring...")
-    Main_:Toggle("Ping compensation", true, function(on) Ping.comp = on end)
-    Main_:Slider("Compensation strength", 0, 1.5, 1, 0.05, function(v) Ping.strength = v end)
-    Main_:Slider("Manual ping ms (0 = auto)", 0, 400, 0, 5, function(v) Ping.manual = v end)
-    Main_:Label("Shifts combo steps that wait for a visible cue (after moves/dashes) earlier by about your ping. It cannot read other players' ping and cannot guarantee a hit - the server decides.")
     Main_:Button("Reset Character", function()
         local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
         if hum then hum.Health = 0 end
@@ -1229,11 +1383,11 @@ local function __run()
             local key, title = "combos", label .. " combos"
             if name:find("Kyoto") then key, title = "kyoto", label .. " kyoto"
             elseif name:find("Catch") then key, title = "tech", label .. " tech" end
-            get(key, title):Button(name:gsub("_", " ") .. "  [" .. tostring(c.confidence or "?") .. "]", describe(c.steps), function()
+            get(key, title):Button(name:gsub("_", " ") .. "  [" .. tostring(c.confidence or "?") .. "]", describe(c.steps, fullName), function()
                 runMacro(c.steps, fullName)
             end)
         end
-        tab:Label("Tap a card to play the combo as inputs, tap again to stop. Moves use hotbar slots 1-4 (unverified order). Speed: Main tab.")
+        tab:Label("Tap a card to play the combo as inputs, tap again to stop. Moves use hotbar slots 1-4 (unverified order). Steps marked * have no key mapped and are skipped. Gaps: Timing tab.")
     end
     if Data then
         for _, c in ipairs(CUSTOM_COMBOS) do
@@ -1243,8 +1397,49 @@ local function __run()
         end
     end
     buildCharacter(Main_, "Universal", "Universal")
-    buildCharacter(Saitama, "The Strongest Hero", "Saitama")
-    buildCharacter(Garou, "Hero Hunter", "Garou")
+    for _, ct in ipairs(CharTabs) do buildCharacter(ct.tab, ct.full, ct.short) end
+
+    -- Timing tab
+    pingLabel = Timing_:Label("Ping: measuring...")
+    gapsLabel = Timing_:Label("Gaps now ...")
+    Timing_:Toggle("Auto timing from ping", true, function(on) Auto.on = on end)
+    Timing_:Slider("Auto strength", 0, 1.5, 1, 0.05, function(v) Auto.strength = v end)
+    Timing_:Slider("Fine-tune (ms, + = later)", -100, 100, 0, 5, function(v) Auto.offsetMs = v end)
+    Timing_:Slider("Manual ping ms (0 = measured)", 0, 400, 0, 5, function(v) Auto.manualPing = v end)
+    Timing_:Label("Auto timing shortens the gaps that wait for a visible cue (after moves and dashes) by about your ping. Your own ping only: other players' ping can't be read, and the server decides if a hit lands, so tune Fine-tune until it lands for you.")
+    Timing_:Label("Base gaps (seconds between steps)")
+    local gapSliders = {
+        m1   = Timing_:Slider("M1 gap",   0.08, 0.6, TimingDefaults.m1,   0.01, function(v) Timing.m1 = v end),
+        dash = Timing_:Slider("Dash gap", 0.08, 0.8, TimingDefaults.dash, 0.01, function(v) Timing.dash = v end),
+        move = Timing_:Slider("Move gap", 0.15, 1.2, TimingDefaults.move, 0.01, function(v) Timing.move = v end),
+        jump = Timing_:Slider("Jump gap", 0.08, 0.6, TimingDefaults.jump, 0.01, function(v) Timing.jump = v end),
+    }
+    Timing_:Slider("Overall speed (higher = slower)", 0.5, 2, 1, 0.05, function(v) macroSpeed = v end)
+    Timing_:Button("Reset timing to defaults", function()
+        for k, sl in pairs(gapSliders) do sl:Set(TimingDefaults[k]) end
+    end)
+
+    -- Tech library: every tech found in research, with how sure the sources are
+    if TechLib then
+        local byChar, order = {}, {}
+        for _, t in ipairs(Data.Techs or {}) do
+            local who = t.character or "Universal"
+            if not byChar[who] then byChar[who] = {}; order[#order + 1] = who end
+            table.insert(byChar[who], t)
+        end
+        table.sort(order, function(a, b)
+            if a == "Universal" then return b ~= "Universal" end
+            if b == "Universal" then return false end
+            return a < b
+        end)
+        TechLib:Label("Everything found in research (fan wikis, guides, forum posts, videos). Confidence shows how well sourced it is; a lot of it is unverified and the game is patched often.")
+        for _, who in ipairs(order) do
+            local sec = TechLib:Section(who .. " (" .. #byChar[who] .. ")")
+            for _, t in ipairs(byChar[who]) do
+                sec:Info(t.name .. "  [" .. tostring(t.confidence or "?") .. "]", t.desc)
+            end
+        end
+    end
 
     -- Auto Tech
     Tech:Label("Recovers automatically when you get knocked down.")

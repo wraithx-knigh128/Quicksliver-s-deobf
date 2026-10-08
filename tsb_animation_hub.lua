@@ -482,6 +482,9 @@ local function __run()
             connect(UserInputService.InputChanged, function(i)
                 if dragging and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then fromInput(i) end
             end)
+            local api = {}
+            function api:Set(v) set(v, true) end
+            return api
         end
 
         function tab:Dropdown(text, options, default, cb)
@@ -530,7 +533,7 @@ local function __run()
             local sec = {}
             function sec:Button(name, desc, cb)
                 local card = new("Frame", {
-                    Size = UDim2.new(1, 0, 0, 58), BackgroundColor3 = Theme.Item,
+                    Size = UDim2.new(1, 0, 0, 76), BackgroundColor3 = Theme.Item,
                     BackgroundTransparency = 0.35, Parent = body,
                 }, {corner(10)})
                 new("TextLabel", {
@@ -540,12 +543,13 @@ local function __run()
                 })
                 new("TextLabel", {
                     Text = desc or "", Font = Enum.Font.Gotham, TextSize = 12, TextColor3 = Theme.SubText,
-                    TextXAlignment = Enum.TextXAlignment.Left, TextTruncate = Enum.TextTruncate.AtEnd,
-                    BackgroundTransparency = 1, Position = UDim2.fromOffset(14, 28), Size = UDim2.new(1, -60, 0, 18), Parent = card,
+                    TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top,
+                    TextWrapped = true, TextTruncate = Enum.TextTruncate.AtEnd,
+                    BackgroundTransparency = 1, Position = UDim2.fromOffset(14, 28), Size = UDim2.new(1, -60, 0, 42), Parent = card,
                 })
                 new("TextLabel", {
                     Text = ">", Font = Enum.Font.GothamBold, TextSize = 18, TextColor3 = Theme.Accent,
-                    BackgroundTransparency = 1, Position = UDim2.new(1, -40, 0, 0), Size = UDim2.fromOffset(30, 58), Parent = card,
+                    BackgroundTransparency = 1, Position = UDim2.new(1, -40, 0, 0), Size = UDim2.fromOffset(30, 76), Parent = card,
                 })
                 local hit = new("TextButton", {
                     Text = "", BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1), AutoButtonColor = false, Parent = card,
@@ -558,6 +562,28 @@ local function __run()
                     end)
                     task.spawn(cb)
                 end)
+            end
+            -- read-only card with wrapped text (used for the tech library)
+            function sec:Info(name, desc)
+                local card = new("Frame", {
+                    Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y,
+                    BackgroundColor3 = Theme.Item, BackgroundTransparency = 0.35, Parent = body,
+                }, {
+                    corner(10),
+                    new("UIPadding", {PaddingLeft = UDim.new(0, 12), PaddingRight = UDim.new(0, 12), PaddingTop = UDim.new(0, 8), PaddingBottom = UDim.new(0, 8)}),
+                    new("UIListLayout", {Padding = UDim.new(0, 3), SortOrder = Enum.SortOrder.LayoutOrder}),
+                })
+                new("TextLabel", {
+                    Text = name, Font = Enum.Font.GothamBold, TextSize = 13, TextColor3 = Theme.Text,
+                    TextXAlignment = Enum.TextXAlignment.Left, TextWrapped = true, BackgroundTransparency = 1,
+                    Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, LayoutOrder = 0, Parent = card,
+                })
+                new("TextLabel", {
+                    Text = desc or "", Font = Enum.Font.Gotham, TextSize = 12, TextColor3 = Theme.SubText,
+                    TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top,
+                    TextWrapped = true, BackgroundTransparency = 1,
+                    Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, LayoutOrder = 1, Parent = card,
+                })
             end
             function sec:Toggle(name, default, cb) return tab:Toggle(name, default, cb, body) end
             function sec:Clear()
@@ -636,11 +662,16 @@ local function __run()
         wasKnocked = knocked
     end)
 
-    ---------------------------------------------------------------- ping
-    -- Your own ping, smoothed. Steps that wait for a visible cue (after a move or dash) are sent a little
-    -- earlier by about that ping (see ping_model.lua). Heuristic, tunable, can be switched off.
-    local Ping = {model = PingModel and PingModel.new(0.2), comp = true, strength = 1, manual = 0}
-    local pingLabel
+    ---------------------------------------------------------------- timing + ping
+    -- Gaps (seconds) after each kind of step. Adjustable in the Timing tab. With "Auto timing" on, the gaps
+    -- that wait for a visible cue (after a move or dash) are additionally shortened by about your ping
+    -- (see ping_model.lua). Heuristic: it cannot read other players' ping and cannot guarantee a hit.
+    local TimingDefaults = {m1 = 0.2, dash = 0.3, move = 0.5, jump = 0.25}
+    local Timing = {m1 = 0.2, dash = 0.3, move = 0.5, jump = 0.25}
+    local Auto = {on = true, strength = 1, offsetMs = 0, manualPing = 0}
+    local macroSpeed = 1
+    local PingState = {model = PingModel and PingModel.new(0.2)}
+    local pingLabel, gapsLabel
 
     local function readPing()
         local item = safe(function() return game:GetService("Stats").Network.ServerStatsItem["Data Ping"] end)
@@ -648,12 +679,13 @@ local function __run()
         if type(v) == "number" then return v end
     end
     local function currentPing()                       -- ms, or nil when unknown
-        if Ping.manual > 0 then return Ping.manual end
-        return Ping.model and Ping.model:value()
+        if Auto.manualPing > 0 then return Auto.manualPing end
+        return PingState.model and PingState.model:value()
     end
-    local function compensate(delay)
-        if not (Ping.comp and PingModel) then return delay end
-        return PingModel.adjustDelay(delay, currentPing(), Ping.strength)
+    -- final wait for one step: base gap x speed, then (Auto on) the ping adjustment for dependent gaps
+    local function compensate(delay, dependent)
+        if not (Auto.on and PingModel) then return delay end
+        return PingModel.adjustDelay(delay, currentPing(), Auto.strength, {dependent = dependent, offsetMs = Auto.offsetMs})
     end
 
     do
@@ -662,19 +694,25 @@ local function __run()
             acc = acc + dt
             if acc < 0.25 then return end              -- 4 samples per second is plenty
             acc = 0
-            if Ping.model then
+            if PingState.model then
                 local v = readPing()
-                if v then Ping.model:sample(v) end
+                if v then PingState.model:sample(v) end
             end
             if pingLabel then
                 local p = currentPing()
                 if p then
-                    local j = Ping.model and Ping.model:jitter() or 0
-                    local note = (Ping.model and Ping.manual <= 0 and not Ping.model:stable()) and "  (unstable)" or ""
+                    local j = PingState.model and PingState.model:jitter() or 0
+                    local note = (PingState.model and Auto.manualPing <= 0 and not PingState.model:stable()) and "  (unstable)" or ""
                     pingLabel.Text = string.format("Ping: %d ms   jitter: %d ms%s", math.floor(p + 0.5), math.floor(j + 0.5), note)
                 else
                     pingLabel.Text = "Ping: unknown - set Manual ping below"
                 end
+            end
+            if gapsLabel then
+                gapsLabel.Text = string.format("Gaps now  M1 %.2fs  dash %.2fs  move %.2fs  jump %.2fs%s",
+                    compensate(Timing.m1 * macroSpeed, false), compensate(Timing.dash * macroSpeed, true),
+                    compensate(Timing.move * macroSpeed, true), compensate(Timing.jump * macroSpeed, false),
+                    Auto.on and "   (auto)" or "   (manual)")
             end
         end)
     end
@@ -683,7 +721,7 @@ local function __run()
     -- Plays a combo from tsb_data as real inputs. Move slots assume the hotbar order = the move list
     -- order in tsb_data (1..4). That order is UNVERIFIED: if a move fires the wrong skill, edit MoveSlots.
     local MoveSlots = {Enum.KeyCode.One, Enum.KeyCode.Two, Enum.KeyCode.Three, Enum.KeyCode.Four}
-    local macroSpeed, macroId = 1, 0
+    local macroId = 0
 
     local function click()
         local vw, vh = viewport()
@@ -698,21 +736,35 @@ local function __run()
         if dirKey then task.wait(0.03); keyEvent(false, dirKey) end
     end
 
-    -- returns the delay after the step, or nil if this token cannot be played
-    local function playToken(tok, charName)
-        if tok == "M1" then click() return 0.2 end
-        if tok == "Q" then dash(nil) return 0.3 end
-        if tok == "FRONTDASH" then dash(Enum.KeyCode.W) return 0.3 end
-        if tok == "BACKDASH" then dash(Enum.KeyCode.S) return 0.3 end
-        if tok == "SIDEDASH" then dash(Enum.KeyCode.A) return 0.3 end
-        if tok == "JUMP" then press(Enum.KeyCode.Space, 0.05) return 0.25 end
+    -- which timing category a generic token belongs to
+    local KIND = {M1 = "m1", JUMP_M1 = "m1", JUMP = "jump", Q = "dash", FRONTDASH = "dash", BACKDASH = "dash", SIDEDASH = "dash"}
+    local function moveKey(tok, charName)
         local char = Data and Data.Characters[charName]
         if char and type(char.moves) == "table" then
             for i, mv in ipairs(char.moves) do
-                if mv == tok and MoveSlots[i] then press(MoveSlots[i], 0.05) return 0.5 end
+                if mv == tok then return MoveSlots[i] end
             end
         end
-        return nil
+    end
+    local function canPlay(tok, charName) return KIND[tok] ~= nil or moveKey(tok, charName) ~= nil end
+
+    -- plays one step; returns (gap after it, gap waits for a visible cue?) or nil if the token cannot be played
+    local function playToken(tok, charName)
+        local kind = KIND[tok]
+        if tok == "M1" then click()
+        elseif tok == "Q" then dash(nil)
+        elseif tok == "FRONTDASH" then dash(Enum.KeyCode.W)
+        elseif tok == "BACKDASH" then dash(Enum.KeyCode.S)
+        elseif tok == "SIDEDASH" then dash(Enum.KeyCode.A)
+        elseif tok == "JUMP" then press(Enum.KeyCode.Space, 0.05)
+        elseif tok == "JUMP_M1" then press(Enum.KeyCode.Space, 0.05); task.wait(0.12); click()
+        else
+            local key = moveKey(tok, charName)
+            if not key then return nil end
+            press(key, 0.05)
+            return Timing.move, true
+        end
+        return Timing[kind], kind == "dash"
     end
 
     local function stopMacro()
@@ -730,8 +782,8 @@ local function __run()
             local ok, err = pcall(function()
                 for _, tok in ipairs(steps) do
                     if myId ~= macroId then return end       -- stopped, or replaced by a newer macro
-                    local d = playToken(tok, charName)
-                    task.wait(compensate((d or 0) * macroSpeed))
+                    local gap, dependent = playToken(tok, charName)
+                    if gap then task.wait(compensate(gap * macroSpeed, dependent)) end
                 end
             end)
             if myId == macroId then macroRunning = false end  -- never clobber a newer macro's flag
@@ -739,23 +791,39 @@ local function __run()
         end)
     end
 
-    local function describe(steps)   -- "M1 x3 > SIDEDASH > FLOWING WATER ..."
-        local out, i = {}, 1
+    -- "M1 x3 > SIDEDASH > FLOWING WATER ...", plus how many steps cannot be played automatically
+    local function describe(steps, charName)
+        local out, i, skipped = {}, 1, 0
         while i <= #steps do
             local j = i
             while steps[j + 1] == steps[i] do j = j + 1 end
             local name = steps[i]:gsub("_", " ")
+            local playable = canPlay(steps[i], charName)
+            if not playable then skipped = skipped + (j - i + 1); name = name .. "*" end
             out[#out + 1] = (j > i) and (name .. " x" .. (j - i + 1)) or name
             i = j + 1
         end
-        return table.concat(out, " > ")
+        local text = table.concat(out, " > ")
+        if skipped > 0 then text = text .. "   (* " .. skipped .. " step(s) skipped: no key mapped)" end
+        return text
     end
 
     ---------------------------------------------------------------- tabs
     local Main_  = createTab("Main", "#")
     local Credit = createTab("Credit", "+")
-    local Saitama = Data and createTab("Saitama", "S")
-    local Garou   = Data and createTab("Garou", "G")
+    local CharList = {
+        {"The Strongest Hero", "Saitama"}, {"Hero Hunter", "Garou"}, {"Destructive Cyborg", "Genos"},
+        {"Deadly Ninja", "Sonic"}, {"Brutal Demon", "Metal Bat"}, {"Wild Psychic", "Tatsumaki"},
+        {"Blade Master", "Atomic Samurai"}, {"Tech Prodigy", "Tech Prodigy"},
+    }
+    local CharTabs = {}
+    if Data then
+        for _, ch in ipairs(CharList) do
+            CharTabs[#CharTabs + 1] = {tab = createTab(ch[2], ch[2]:sub(1, 1)), full = ch[1], short = ch[2]}
+        end
+    end
+    local Timing_ = createTab("Timing", "T")
+    local TechLib = Data and createTab("Techs", "?")
     local Tech   = createTab("Auto Tech", "*")
     local Tele   = createTab("Teleports", "@")
     local Effects = createTab("Effects Preset", "~")
@@ -786,12 +854,6 @@ local function __run()
         end
     end)
     Main_:Toggle("Anti AFK", true, function(on) antiAfk = on end)
-    Main_:Slider("Macro speed (higher = slower)", 0.5, 2, 1, 0.05, function(v) macroSpeed = v end)
-    pingLabel = Main_:Label("Ping: measuring...")
-    Main_:Toggle("Ping compensation", true, function(on) Ping.comp = on end)
-    Main_:Slider("Compensation strength", 0, 1.5, 1, 0.05, function(v) Ping.strength = v end)
-    Main_:Slider("Manual ping ms (0 = auto)", 0, 400, 0, 5, function(v) Ping.manual = v end)
-    Main_:Label("Shifts combo steps that wait for a visible cue (after moves/dashes) earlier by about your ping. It cannot read other players' ping and cannot guarantee a hit - the server decides.")
     Main_:Button("Reset Character", function()
         local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
         if hum then hum.Health = 0 end
@@ -815,11 +877,11 @@ local function __run()
             local key, title = "combos", label .. " combos"
             if name:find("Kyoto") then key, title = "kyoto", label .. " kyoto"
             elseif name:find("Catch") then key, title = "tech", label .. " tech" end
-            get(key, title):Button(name:gsub("_", " ") .. "  [" .. tostring(c.confidence or "?") .. "]", describe(c.steps), function()
+            get(key, title):Button(name:gsub("_", " ") .. "  [" .. tostring(c.confidence or "?") .. "]", describe(c.steps, fullName), function()
                 runMacro(c.steps, fullName)
             end)
         end
-        tab:Label("Tap a card to play the combo as inputs, tap again to stop. Moves use hotbar slots 1-4 (unverified order). Speed: Main tab.")
+        tab:Label("Tap a card to play the combo as inputs, tap again to stop. Moves use hotbar slots 1-4 (unverified order). Steps marked * have no key mapped and are skipped. Gaps: Timing tab.")
     end
     if Data then
         for _, c in ipairs(CUSTOM_COMBOS) do
@@ -829,8 +891,49 @@ local function __run()
         end
     end
     buildCharacter(Main_, "Universal", "Universal")
-    buildCharacter(Saitama, "The Strongest Hero", "Saitama")
-    buildCharacter(Garou, "Hero Hunter", "Garou")
+    for _, ct in ipairs(CharTabs) do buildCharacter(ct.tab, ct.full, ct.short) end
+
+    -- Timing tab
+    pingLabel = Timing_:Label("Ping: measuring...")
+    gapsLabel = Timing_:Label("Gaps now ...")
+    Timing_:Toggle("Auto timing from ping", true, function(on) Auto.on = on end)
+    Timing_:Slider("Auto strength", 0, 1.5, 1, 0.05, function(v) Auto.strength = v end)
+    Timing_:Slider("Fine-tune (ms, + = later)", -100, 100, 0, 5, function(v) Auto.offsetMs = v end)
+    Timing_:Slider("Manual ping ms (0 = measured)", 0, 400, 0, 5, function(v) Auto.manualPing = v end)
+    Timing_:Label("Auto timing shortens the gaps that wait for a visible cue (after moves and dashes) by about your ping. Your own ping only: other players' ping can't be read, and the server decides if a hit lands, so tune Fine-tune until it lands for you.")
+    Timing_:Label("Base gaps (seconds between steps)")
+    local gapSliders = {
+        m1   = Timing_:Slider("M1 gap",   0.08, 0.6, TimingDefaults.m1,   0.01, function(v) Timing.m1 = v end),
+        dash = Timing_:Slider("Dash gap", 0.08, 0.8, TimingDefaults.dash, 0.01, function(v) Timing.dash = v end),
+        move = Timing_:Slider("Move gap", 0.15, 1.2, TimingDefaults.move, 0.01, function(v) Timing.move = v end),
+        jump = Timing_:Slider("Jump gap", 0.08, 0.6, TimingDefaults.jump, 0.01, function(v) Timing.jump = v end),
+    }
+    Timing_:Slider("Overall speed (higher = slower)", 0.5, 2, 1, 0.05, function(v) macroSpeed = v end)
+    Timing_:Button("Reset timing to defaults", function()
+        for k, sl in pairs(gapSliders) do sl:Set(TimingDefaults[k]) end
+    end)
+
+    -- Tech library: every tech found in research, with how sure the sources are
+    if TechLib then
+        local byChar, order = {}, {}
+        for _, t in ipairs(Data.Techs or {}) do
+            local who = t.character or "Universal"
+            if not byChar[who] then byChar[who] = {}; order[#order + 1] = who end
+            table.insert(byChar[who], t)
+        end
+        table.sort(order, function(a, b)
+            if a == "Universal" then return b ~= "Universal" end
+            if b == "Universal" then return false end
+            return a < b
+        end)
+        TechLib:Label("Everything found in research (fan wikis, guides, forum posts, videos). Confidence shows how well sourced it is; a lot of it is unverified and the game is patched often.")
+        for _, who in ipairs(order) do
+            local sec = TechLib:Section(who .. " (" .. #byChar[who] .. ")")
+            for _, t in ipairs(byChar[who]) do
+                sec:Info(t.name .. "  [" .. tostring(t.confidence or "?") .. "]", t.desc)
+            end
+        end
+    end
 
     -- Auto Tech
     Tech:Label("Recovers automatically when you get knocked down.")

@@ -255,6 +255,16 @@ test("ping model: adjustDelay only shifts dependent gaps and is bounded", functi
     eq(Ping.adjustDelay(nil, 100, 1), nil)
 end)
 
+test("ping model: explicit dependent flag and fine-tune offset", function()
+    near(Ping.adjustDelay(0.2, 100, 1, {dependent = true}), 0.12, 1e-9, "flagged dependent; shortening capped at 40% of 0.2 s")
+    near(Ping.adjustDelay(0.5, 100, 1, {dependent = false}), 0.5, 0, "flagged independent never moves")
+    near(Ping.adjustDelay(0.5, 100, 1, {dependent = true, offsetMs = 30}), 0.43, 1e-9, "+30 ms later")
+    near(Ping.adjustDelay(0.5, 100, 1, {dependent = true, offsetMs = -50}), 0.35, 1e-9, "-50 ms earlier")
+    near(Ping.adjustDelay(0.5, nil, 1, {dependent = true, offsetMs = 20}), 0.52, 1e-9, "offset works without a ping reading")
+    near(Ping.adjustDelay(0.1, 100, 1, {dependent = true, offsetMs = -500}), 0.05, 1e-9, "never below the minimum")
+    near(Ping.adjustDelay(0.5, 100, 1, {dependent = false, offsetMs = 80}), 0.5, 0, "offset never touches independent gaps")
+end)
+
 test("sandboxed script runs, records key events and virtual time", function()
     local ok, err = ex:run([[
         local vim = game:GetService("VirtualInputManager")

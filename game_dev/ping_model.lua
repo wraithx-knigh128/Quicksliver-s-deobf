@@ -38,14 +38,26 @@ function M.new(alpha)
     return self
 end
 
--- Seconds. Only "dependent" gaps (>= minDependent, i.e. after a move or dash) are shortened, and never by
--- more than maxFraction of the planned gap, so a bad ping reading can't collapse the timing.
+-- Seconds. base = planned gap after a step.
+--   opts.dependent  true/false: does this gap wait for a visible cue (after a move or dash)? When nil it is
+--                   guessed from the size of the gap (>= minDependent, default 0.3 s).
+--   opts.offsetMs   manual fine-tune added to dependent gaps (+ later / - earlier).
+--   opts.maxFraction / opts.minDelay  bounds: never shorten by more than 40% of the gap, never below 0.05 s.
+-- Independent gaps (M1 spacing, jump) are returned unchanged.
 function M.adjustDelay(base, pingMs, strength, opts)
     opts = opts or {}
-    if type(base) ~= "number" or base < (opts.minDependent or 0.3) then return base end
-    if type(pingMs) ~= "number" or pingMs <= 0 or type(strength) ~= "number" or strength <= 0 then return base end
-    local lead = math.min((pingMs / 1000) * strength, base * (opts.maxFraction or 0.4))
-    return base - lead
+    if type(base) ~= "number" then return base end
+    local dependent = opts.dependent
+    if dependent == nil then dependent = base >= (opts.minDependent or 0.3) end
+    if not dependent then return base end
+
+    local d = base
+    if type(pingMs) == "number" and pingMs > 0 and type(strength) == "number" and strength > 0 then
+        d = base - math.min((pingMs / 1000) * strength, base * (opts.maxFraction or 0.4))
+    end
+    if type(opts.offsetMs) == "number" then d = d + opts.offsetMs / 1000 end
+    if d == base then return base end
+    return math.max(d, opts.minDelay or 0.05)
 end
 
 return M

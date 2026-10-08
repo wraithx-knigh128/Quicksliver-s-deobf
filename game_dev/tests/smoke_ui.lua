@@ -114,7 +114,20 @@ end
 local failures = {}
 local function check(cond, msg) if not cond then failures[#failures + 1] = msg end end
 
--- 1. normal executor, valid PNG
+-- click every handler, newest first (so the Close button runs last); `times` = clicks per handler
+local function clickAll(r, times)
+    local n = 0
+    for i = #r.ctx.callbacks, 1, -1 do
+        for _ = 1, times do
+            local ok2, e2 = pcall(r.ctx.callbacks[i])
+            n = n + 1
+            if not ok2 then failures[#failures + 1] = "click handler: " .. tostring(e2) end
+        end
+    end
+    return n
+end
+
+-- 1. normal executor, valid PNG, 100 ms ping
 local a, synErr = run({executor = "full", body = PNG, ping = 100})
 if not a then print(synErr[1]); os.exit(1) end
 for _, e in ipairs(a.errors) do failures[#failures + 1] = e end
@@ -125,30 +138,36 @@ check(type(a.genv.__AnimationHubCleanup) == "function", "cleanup function not re
 -- ping: feed a few Heartbeat ticks, the label must show the measured 100 ms
 for _ = 1, 6 do for _, hb in ipairs(a.ctx.heartbeats) do pcall(hb, 1) end end
 check(a.textOf("Ping: 100 ms"), "ping label did not show the measured 100 ms; got: " .. tostring(a.textOf("^Ping:") or "no label"))
+check(a.textOf("Gaps now"), "effective-gaps label missing")
+check(a.textOf("%(auto%)"), "auto timing should be on by default")
 
--- exercise every click handler (newest first so the Close button runs last)
-local clicked = 0
-for i = #a.ctx.callbacks, 1, -1 do
-    local ok2, e2 = pcall(a.ctx.callbacks[i])
-    clicked = clicked + 1
-    if not ok2 then failures[#failures + 1] = "click handler: " .. tostring(e2) end
-end
-print("exercised " .. clicked .. " click handlers")
+-- every handler twice in a row: toggles flip and flip back, so Auto timing stays ON while the macros run
+local clicked = clickAll(a, 2)
+print("exercised " .. clicked .. " clicks on " .. #a.ctx.callbacks .. " handlers")
 
--- macros ran with ping compensation: a move step (0.5 s) must have been shortened to 0.4 s,
--- M1 steps (0.2 s) must be untouched, and nothing may be negative
-local sawShortMove, sawM1, bad = false, false, false
+-- macros ran with auto timing: dependent gaps (move 0.5, dash 0.3) must always be shortened,
+-- independent ones (M1 0.2, jump 0.25) untouched, nothing negative
+local saw = {short_move = false, m1 = false, raw_move = false, raw_dash = false, neg = false, jump = false}
 for _, w in ipairs(a.ctx.waits) do
-    if math.abs(w - 0.4) < 1e-9 then sawShortMove = true end
-    if math.abs(w - 0.2) < 1e-9 then sawM1 = true end
-    if w < 0 then bad = true end
+    if math.abs(w - 0.4) < 1e-9 then saw.short_move = true end   -- 0.5 s move gap minus min(100 ms, 40%)
+    if math.abs(w - 0.2) < 1e-9 then saw.m1 = true end
+    if math.abs(w - 0.25) < 1e-9 then saw.jump = true end
+    if math.abs(w - 0.5) < 1e-9 then saw.raw_move = true end
+    if math.abs(w - 0.3) < 1e-9 then saw.raw_dash = true end
+    if w < 0 then saw.neg = true end
 end
-check(sawShortMove, "ping compensation did not shorten the 0.5 s move gap to 0.4 s")
-check(sawM1, "M1 gaps should stay at 0.2 s")
-check(not bad, "negative wait produced")
+check(saw.short_move, "auto timing did not shorten the 0.5 s move gap to 0.4 s")
+check(saw.m1, "M1 gaps should stay at 0.2 s")
+check(saw.jump, "jump gaps should stay at 0.25 s")
+check(not saw.raw_move, "a move gap went out uncompensated (0.5 s)")
+check(not saw.raw_dash, "a dash gap went out uncompensated (0.3 s)")
+check(not saw.neg, "negative wait produced")
 
--- floating bar: lock and minimise clicks must land in the saved state
-local fab = a.genv.__AnimationHubFab
+-- 1b. single clicks: floating bar state + clean-up
+local f = run({executor = "full", body = PNG})
+for _, e in ipairs(f.errors) do failures[#failures + 1] = "scenario f: " .. e end
+clickAll(f, 1)
+local fab = f.genv.__AnimationHubFab
 check(type(fab) == "table", "floating bar state was not saved")
 if fab then
     check(fab.locked == true, "Lock button did not lock")
@@ -156,10 +175,8 @@ if fab then
     check(type(fab.x) == "number" and fab.x >= 4 and fab.x <= 800, "bar x is off screen: " .. tostring(fab.x))
     check(type(fab.y) == "number" and fab.y >= 4 and fab.y <= 450, "bar y is off screen: " .. tostring(fab.y))
 end
-
--- Close button must have run cleanup: global listeners disconnected, cleanup unregistered
-check(a.ctx.disconnects > 0, "cleanup did not disconnect any listener")
-check(a.genv.__AnimationHubCleanup == nil, "cleanup should unregister itself")
+check(f.ctx.disconnects > 0, "cleanup did not disconnect any listener")
+check(f.genv.__AnimationHubCleanup == nil, "cleanup should unregister itself")
 
 -- 2. re-running the script must clean the previous copy first
 local b = run({executor = "full", body = PNG})

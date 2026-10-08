@@ -69,3 +69,25 @@ Backdash/Side-dash/Jump cancels, 3M1 reset, Uppercut Dash, anti-cancel string, S
 (3) many combos share the "M1 x3 -> X" prefix, so the predictor tracks all candidates and weights next inputs.
 **Unreliable/ignored:** a wiki page claiming a 25% meter ult-cancel and "40% frame reduction" ragdoll cancel; exploit-script pages.
 **Still missing:** Oreo tech inputs, Twisted combo inputs, Suiryu kit, Genos/Sonic/Suiryu-specific techs, official patch notes.
+
+---
+## Round 4 (all encoded in `tsb_data.lua`, shown in the Techs tab and as combo cards)
+Same limits: search-result summaries only, many sources old/unverified, game patched often.
+
+**Oreo tech** (still no wiki entry): TikTok caption says 3 M1 -> hold jump + release M1 -> press attack again airborne and front dash ->
+hold M1 + front dash -> flick camera right and turn back. Separate low-ping / high-ping "Oreo Dash" tutorials exist; a Garou 6.2 variant.
+Modelled as a low-confidence combo `Oreo` (camera flick not automated).
+**Twisted**: "Twisted Dash" = dash at the opponent right after the 4th M1 (often a small step back first); hitting the legs shortens
+knockback. "Instant / True Twisted" = camera flick left/right and back into the twist (not automatable). Nov 2025 fan guide: 4 M1, curved dash,
+Flowing Water, Hunter's Grasp catch, grasp punch, Lethal Whirlwind Stream, downslam (~90%, 98.6% best, ~84% without evade bait); needs similar
+connections on both sides.
+**Per-character techs added:** Genos (Ignition Burst extension, Barrage, "Explosive Fart", uppercut > Blitz Shot), Sonic (Flash Strike extension),
+Metal Bat (Foul Ball catch, Death Blow evasion, Grand Slam dodge), Atomic Samurai (Quick Slice Spin, Pinpoint Cut extension),
+Tatsumaki (Stone Grave cancel, Windstorm loop-dash / extend), Suiryu (Martial Artist: Bullet Barrage, Vanishing Kick, Whirlwind Drop, Head First;
+ults Grand Fissure, Twin Fangs, Earth Splitting Strike, Last Breath; double-tap Vanishing Kick bypasses block), KJ (Collateral Ruin cancels ults).
+**Universal:** Micro Dash (move right after a side dash; cancelled side dash ~2 blocks vs front dash ~5), backdash-cancel extension (jump first),
+Saitama M1-reset bug (Consecutive Punches while holding M1), mini uppercut > downslam, downslam > Weboom to waste ragdoll cancel.
+**Not found / unverified:** exact timing windows for Oreo/Twisted, official per-character tech lists, a real "jump cancel" definition,
+"cancel your own ultimate" (single low-quality source), Genos/Sonic tech frame data.
+**Timing note:** with a fixed open-loop macro, ping mostly shifts everything equally; it matters for steps that react to what you SEE
+(a move ending, the opponent landing). Auto timing shortens only those gaps by ~ping (capped at 40% of the gap) and has a fine-tune offset.
