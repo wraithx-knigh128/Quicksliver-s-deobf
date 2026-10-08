@@ -5,7 +5,7 @@ CH.page('tools', function (root) {
   var tools = CH.routes.filter(function (r) { return r.tool; });
   var cat = 'All', q = '';
 
-  root.appendChild(ui.pageHead({ icon: 'grid', title: 'Tools', desc: 'Everything in Creator Hub. Press ' + (/Mac/.test(navigator.platform) ? '⌘K' : 'Ctrl K') + ' anywhere to jump straight to a tool.' }));
+  root.appendChild(ui.pageHead({ icon: 'grid', title: 'Tools', desc: 'Everything in CordX. Press ' + (/Mac/.test(navigator.platform) ? '⌘K' : 'Ctrl K') + ' anywhere to jump straight to a tool.' }));
 
   var search = ui.field({ placeholder: 'Filter tools…', type: 'search', onInput: function (v) { q = v.toLowerCase().trim(); paint(); } });
   search.input.setAttribute('aria-label', 'Filter tools');

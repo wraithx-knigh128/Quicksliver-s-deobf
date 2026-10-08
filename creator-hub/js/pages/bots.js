@@ -43,7 +43,7 @@ CH.page('bots', function (root) {
 
   var cat = 'All', q = '';
   root.appendChild(ui.pageHead({ icon: 'bot', title: 'Bot Directory', desc: 'A starter list of well-known bots, and the built-in Discord features that can replace many of them.' }));
-  root.appendChild(ui.callout('info', el('strong', null, 'Not an endorsement. '), 'Creator Hub isn’t affiliated with these bots. Features, pricing and availability change often — confirm on each bot’s own page before inviting it.'));
+  root.appendChild(ui.callout('info', el('strong', null, 'Not an endorsement. '), 'CordX isn’t affiliated with these bots. Features, pricing and availability change often — confirm on each bot’s own page before inviting it.'));
 
   var search = ui.field({ type: 'search', placeholder: 'Search bots…', onInput: function (v) { q = v.toLowerCase().trim(); paint(); } });
   search.input.setAttribute('aria-label', 'Search bots');

@@ -3,7 +3,7 @@ CH.page('pro', function (root) {
   var el = CH.el, ui = CH.ui, icon = CH.icon;
   function li(text, soon) { return el('li', { class: soon ? 'soon' : '' }, icon(soon ? 'sparkle' : 'check'), el('span', null, text)); }
 
-  root.appendChild(ui.pageHead({ icon: 'crown', title: 'Pricing & Pro', badge: 'Pro is planned', badgeKind: 'warn', desc: 'Everything on Creator Hub is free today. Pro is an idea for people who want sync and team features — it isn’t on sale yet.' }));
+  root.appendChild(ui.pageHead({ icon: 'crown', title: 'Pricing & Pro', badge: 'Pro is planned', badgeKind: 'warn', desc: 'Everything on CordX is free today. Pro is an idea for people who want sync and team features — it isn’t on sale yet.' }));
   root.appendChild(ui.callout('info', el('strong', null, 'No payments here. '), 'This site has no checkout, no accounts and no way to charge you. If Pro launches, it will be announced clearly and the free tools will stay free.'));
   root.appendChild(el('div', { style: { height: '20px' } }));
 
@@ -32,5 +32,5 @@ CH.page('pro', function (root) {
     ui.acc('What does “interest noted” do?', el('p', null, 'It saves a flag in your browser’s local storage so the button remembers your choice. Nothing is sent to a server — there’s no list to join yet.')),
     ui.acc('Will free tools become paid?', el('p', null, 'That’s not the plan. Pro is meant to add things that need servers (sync, sharing) rather than lock the generators.')),
     ui.acc('How is my data handled?', el('p', null, 'Saved items, settings and drafts live in this browser’s localStorage. Clearing site data removes them. The only network requests are the font stylesheet, images you choose to preview, and a webhook post if you explicitly send one.')),
-    ui.acc('Is this affiliated with Discord?', el('p', null, 'No. Creator Hub is an independent project. Discord is a trademark of Discord Inc.'))));
+    ui.acc('Is this affiliated with Discord?', el('p', null, 'No. CordX is an independent project. Discord is a trademark of Discord Inc.'))));
 });

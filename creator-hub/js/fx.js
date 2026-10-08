@@ -1,4 +1,4 @@
-/* Creator Hub — visual effects. Loaded lazily after first paint.
+/* CordX — visual effects. Loaded lazily after first paint.
    • Particle field (single canvas, pre-rendered sprites, capped DPR)
    • Cursor light, card spotlight, subtle 3D tilt (transform-only, rAF-throttled)
    • Frame-time governor: drops particles, then stops, if the device can't keep up
@@ -21,12 +21,20 @@
   function makeSprites() {
     var cs = getComputedStyle(root);
     var cols = [cs.getPropertyValue('--accent-rgb').trim() || '124,108,255', cs.getPropertyValue('--accent-2-rgb').trim() || '53,212,255', '200,210,255'];
-    P.sprites = cols.map(function (c) {
+    var soft = cols.map(function (c) {
       var s = document.createElement('canvas'); s.width = s.height = 32;
       var x = s.getContext('2d'), g = x.createRadialGradient(16, 16, 0, 16, 16, 16);
       g.addColorStop(0, 'rgba(' + c + ',1)'); g.addColorStop(.35, 'rgba(' + c + ',.55)'); g.addColorStop(1, 'rgba(' + c + ',0)');
       x.fillStyle = g; x.fillRect(0, 0, 32, 32); return s;
     });
+    // four-point twinkle stars with a soft halo and a bright core
+    var stars = cols.map(function (c, i) {
+      var s = document.createElement('canvas'); s.width = s.height = 48; var x = s.getContext('2d');
+      var h = x.createRadialGradient(24, 24, 0, 24, 24, 24); h.addColorStop(0, 'rgba(' + c + ',.45)'); h.addColorStop(1, 'rgba(' + c + ',0)'); x.fillStyle = h; x.fillRect(0, 0, 48, 48);
+      x.fillStyle = i === 2 ? '#fff' : 'rgba(255,255,255,.95)'; x.beginPath(); x.moveTo(24, 2); x.quadraticCurveTo(26.5, 21.5, 46, 24); x.quadraticCurveTo(26.5, 26.5, 24, 46); x.quadraticCurveTo(21.5, 26.5, 2, 24); x.quadraticCurveTo(21.5, 21.5, 24, 2); x.fill();
+      x.globalCompositeOperation = 'source-atop'; x.fillStyle = 'rgba(' + c + ',.55)'; x.fillRect(0, 0, 48, 48); return s;
+    });
+    P.sprites = soft.concat(stars);
   }
   function resize() {
     // Soft glows don't need pixel-perfect output: render at half resolution and let CSS scale it up (4× fewer pixels to composite).
@@ -43,7 +51,7 @@
     return {
       x: Math.random() * P.w, y: anywhere ? Math.random() * P.h : P.h + 10, z: z,
       vx: (Math.random() - .5) * .012, vy: -(.006 + Math.random() * .018) * (.5 + z),
-      r: 5 + z * 11, a: .12 + Math.random() * .38, s: Math.floor(Math.random() * 3), t: Math.random() * 6.28
+      r: 5 + z * 11, a: .12 + Math.random() * .38, s: Math.random() < .4 ? 3 + Math.floor(Math.random() * 3) : Math.floor(Math.random() * 3), t: Math.random() * 6.28
     };
   }
   function frame(now) {
@@ -68,7 +76,7 @@
       p.vx *= .995; p.vy = p.vy * .995 + (-.012 - p.z * .006) * .0025;
       p.x += p.vx * dt; p.y += p.vy * dt; p.t += dt * .0012;
       if (p.y < -12) { P.list[i] = p = spawn(false); } if (p.x < -12) p.x = W + 12; else if (p.x > W + 12) p.x = -12;
-      ctx.globalAlpha = p.a * (.7 + .3 * Math.sin(p.t * 3));
+      ctx.globalAlpha = p.s > 2 ? Math.min(1, p.a * 2.2) * (.15 + .85 * Math.pow(Math.max(0, Math.sin(p.t * 3)), 2)) : p.a * (.7 + .3 * Math.sin(p.t * 3));
       var s = p.r * 2;
       ctx.drawImage(P.sprites[p.s], p.x - p.r - px * p.z, p.y - p.r - py * p.z, s, s);
     }

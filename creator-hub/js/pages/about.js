@@ -3,7 +3,7 @@ CH.page('about', function (root) {
   var el = CH.el, ui = CH.ui, icon = CH.icon;
   var mac = /Mac|iPhone|iPad/.test(navigator.platform || '');
 
-  root.appendChild(ui.pageHead({ icon: 'info', title: 'About Creator Hub', desc: 'A small, fast toolkit for people who run Discord communities. Built to be useful, private and honest.' }));
+  root.appendChild(ui.pageHead({ icon: 'info', title: 'About CordX', desc: 'A small, fast toolkit for people who run Discord communities. Built to be useful, private and honest.' }));
 
   function pr(t, d) { return el('div', { class: 'card card-pad reveal' }, el('h3', { class: 'card-title' }, t), el('p', { class: 'card-sub', style: { marginTop: '6px', fontSize: '14px', lineHeight: '1.6' } }, d)); }
   root.appendChild(el('div', { class: 'grid g3' },
@@ -36,7 +36,7 @@ CH.page('about', function (root) {
   root.appendChild(el('section', { class: 'section' },
     el('div', { class: 'section-head' }, el('h2', null, 'Privacy')),
     el('div', { class: 'prose' },
-      el('p', null, 'No accounts, analytics or cookies. Creator Hub stores your settings, drafts and saved items in this browser’s localStorage. The network is used for: the web font stylesheet, images you paste into the embed preview (loaded directly from their hosts), custom emoji in the preview (loaded from Discord’s CDN), and a webhook post only when you press “Send message”.'),
+      el('p', null, 'No accounts, analytics or cookies. CordX stores your settings, drafts and saved items in this browser’s localStorage. The network is used for: the web font stylesheet, images you paste into the embed preview (loaded directly from their hosts), custom emoji in the preview (loaded from Discord’s CDN), and a webhook post only when you press “Send message”.'),
       el('p', null, 'Webhook URLs typed into the builder are held in memory only and cleared when you leave the page.'))));
 
   root.appendChild(el('section', { class: 'section' },
@@ -46,5 +46,5 @@ CH.page('about', function (root) {
         return el('div', { class: 'row-between' }, el('span', null, s[1]), el('kbd', { class: 'kbd' }, s[0]));
       })))));
 
-  root.appendChild(el('p', { class: 'hint', style: { marginTop: '34px' } }, 'Creator Hub is an independent project and is not affiliated with, sponsored or endorsed by Discord Inc. “Discord” is a trademark of Discord Inc. Bot names belong to their owners.'));
+  root.appendChild(el('p', { class: 'hint', style: { marginTop: '34px' } }, 'CordX is an independent project and is not affiliated with, sponsored or endorsed by Discord Inc. “Discord” is a trademark of Discord Inc. Bot names belong to their owners.'));
 });

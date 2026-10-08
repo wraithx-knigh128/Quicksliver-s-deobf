@@ -1,4 +1,4 @@
-# Creator Hub
+# CordX by Wraith
 
 A fast, private toolkit for Discord server owners and creators. Static site — no build step, no backend, no tracking.
 
@@ -25,6 +25,7 @@ It works from `file://` as well (classic scripts and hash routing, no ES modules
 | `#/channels` | Category + channel layouts per server type with topics, read-only/staff hints, JSON export and a setup guide |
 | `#/bots`, `#/ideas`, `#/templates` | Bot directory (plus Discord's built-in alternatives), server ideas + roulette, 14 ready-made embed templates |
 | `#/saved` | Library of everything saved — search, favourites, export / import backup |
+| `#/legal` | © Terms of use, privacy, copyright, trademarks and credits |
 | `#/pro`, `#/about`, `#/settings` | Honest pricing page (no payments exist), privacy + Discord limits, effects/accent/density/data controls |
 
 Global search: <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>K</kbd> or <kbd>/</kbd>.
@@ -63,3 +64,26 @@ js/pages/*.js         one lazy-loaded script per route
 ```
 
 Adding a tool: create `js/pages/<id>.js` calling `CH.page('<id>', function (root) { … })`, then add the route to `ROUTES` in `js/app.js`.
+
+## Interfaces (themes)
+
+Pick one on the home page or in **Settings**. Each changes colours, the 3D lettering materials, the sticker character and the cursor effect:
+
+| Interface | Inspired by | Cursor effect |
+| --- | --- | --- |
+| Wraith (default) | — | sparkle trail, star bursts |
+| Optic | Cyclops | red laser trail; a visor beam, flash and screen shake on click / Generate |
+| Speed | Quicksilver | white speed streaks behind the cursor; sonic ring on click |
+| Claw | Wolverine | steel sparks; three claw slashes on click |
+
+The stickers (characters, emblems, phrases) are original vector art — **no film stills or official artwork are included.** To use your own licensed images instead, list them in `js/config.js` under `characterImages` (for example `optic: ['assets/characters/optic-1.png']`). Only use images you have the right to publish.
+
+Hero phrases and sticker angles "teleport" every ~1.5 s with a paper-tear transition (full/lite effects only; static under reduced motion). Movement effects run in Full mode with a mouse; clicks/taps also work in Lite mode.
+
+## Deploying (Vercel)
+
+It's a static site — no build step. In Vercel, import the repository and set **Root Directory** to `creator-hub`, Framework Preset **Other**, leave Build Command empty. `vercel.json` adds security headers and clean URLs.
+
+## Tests used during development
+
+Headless-Chromium scripts covered: all routes at three viewport sizes, ~1,000 generated bios (≤ 190 characters), username validity, embed builder export/import/validation, XSS escaping, reduced-motion / mobile (lite) modes, the theme switcher, sticker + tape teleporting, and the cursor-effect canvas.

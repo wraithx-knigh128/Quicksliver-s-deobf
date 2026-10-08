@@ -1,4 +1,4 @@
-/* Creator Hub — Discord-flavoured markdown → safe HTML.
+/* CordX — Discord-flavoured markdown → safe HTML.
    Everything is HTML-escaped first; only a fixed set of tags is ever produced. */
 (function () {
   'use strict';

@@ -1,4 +1,4 @@
-/* Creator Hub — shared utilities. Exposes window.CH. No dependencies. */
+/* CordX — shared utilities. Exposes window.CH. No dependencies. */
 (function () {
   'use strict';
   var CH = window.CH = window.CH || {};

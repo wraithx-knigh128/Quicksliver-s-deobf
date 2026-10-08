@@ -1,4 +1,4 @@
-/* Creator Hub — renders a Discord-style message from a webhook-shaped payload.
+/* CordX — renders a Discord-style message from a webhook-shaped payload.
    payload = { username, avatar_url, content, embeds:[Discord embed objects], components:[action rows] } */
 (function () {
   'use strict';

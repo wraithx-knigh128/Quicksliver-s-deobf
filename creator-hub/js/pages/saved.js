@@ -19,13 +19,13 @@ CH.page('saved', function (root) {
         var cur = CH.Saved.all(), ids = {}; cur.forEach(function (x) { ids[x.id] = 1; });
         var add = items.filter(function (x) { return x && typeof x.body === 'string' && x.type && !ids[x.id]; }).map(function (x) { return { id: String(x.id || CH.uid()), type: String(x.type), title: String(x.title || '').slice(0, 120), body: x.body, data: x.data, fav: !!x.fav, ts: +x.ts || Date.now() }; });
         CH.Saved.replaceAll(cur.concat(add).sort(function (a, b) { return b.ts - a.ts; }).slice(0, 500)); CH.toast('Imported ' + add.length + ' item' + (add.length === 1 ? '' : 's')); paint();
-      } catch (e) { CH.toast('That file isn’t a Creator Hub backup', 'bad'); }
+      } catch (e) { CH.toast('That file isn’t a CordX backup', 'bad'); }
       fileIn.value = '';
     };
     rd.readAsText(f);
   });
   var tools = el('div', { class: 'row' },
-    ui.btn('Export', { icon: 'download', sm: true, onclick: function () { CH.download('creator-hub-backup.json', JSON.stringify({ app: 'creator-hub', version: 1, exported: new Date().toISOString(), saved: CH.Saved.all() }, null, 2), 'application/json'); } }),
+    ui.btn('Export', { icon: 'download', sm: true, onclick: function () { CH.download('cordx-backup.json', JSON.stringify({ app: 'creator-hub', version: 1, exported: new Date().toISOString(), saved: CH.Saved.all() }, null, 2), 'application/json'); } }),
     ui.btn('Import', { icon: 'upload', sm: true, onclick: function () { fileIn.click(); } }),
     ui.btn('Clear all', { icon: 'trash', sm: true, kind: 'danger', onclick: function () { if (CH.Saved.all().length && confirm('Delete every saved item? This can’t be undone — export a backup first if you might want them.')) { CH.Saved.replaceAll([]); paint(); } } }), fileIn);
   root.appendChild(el('div', { class: 'row-between', style: { marginBottom: '14px' } }, el('div', { style: { minWidth: '240px', flex: '1', maxWidth: '360px' } }, search.el), tools));

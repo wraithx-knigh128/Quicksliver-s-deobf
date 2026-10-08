@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Creator Hub — design system
+   CordX — design system
    Sections: tokens · base · layout · components · tools · discord preview ·
    pages · effects · responsive · reduced motion
    ========================================================================== */
@@ -52,6 +52,12 @@
 [data-accent="rose"]    { --accent: #fb6f92; --accent-2: #ffb454; --accent-rgb: 251, 111, 146; --accent-2-rgb: 255, 180, 84; }
 [data-accent="amber"]   { --accent: #f5b84b; --accent-2: #ff7a8a; --accent-rgb: 245, 184, 75; --accent-2-rgb: 255, 122, 138; }
 
+/* ---------- Character interfaces (override the accent) ---------- */
+:root { --on-accent: #fff; }
+[data-theme="optic"] { --accent: #ff2d44; --accent-2: #ffb62e; --accent-rgb: 255, 45, 68; --accent-2-rgb: 255, 182, 46; --bg: #090506; --bg-2: #0e0809; }
+[data-theme="speed"] { --accent: #9cc0ff; --accent-2: #e8f3ff; --accent-rgb: 156, 192, 255; --accent-2-rgb: 232, 243, 255; --on-accent: #07101f; --bg: #06080d; }
+[data-theme="claw"]  { --accent: #ffc21a; --accent-2: #ff7a1a; --accent-rgb: 255, 194, 26; --accent-2-rgb: 255, 122, 26; --on-accent: #1a1200; --bg: #09080a; }
+
 /* ---------- Base ---------- */
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
@@ -95,6 +101,7 @@ svg.i, .icon-btn svg, .btn svg, .search-trigger svg, .nav-link svg, .pal-top svg
 ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, .14); border-radius: 10px; border: 2px solid transparent; background-clip: content-box; }
 
 /* ---------- Background FX layers ---------- */
+.scroll-progress { position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 70; transform-origin: 0 50%; transform: scaleX(var(--sp, 0)); background: linear-gradient(90deg, var(--accent), var(--accent-2)); pointer-events: none; }
 #fx-canvas { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: .9; }
 html:not([data-fx="full"]) #fx-canvas { display: none; }
 .cursor-glow {
@@ -115,7 +122,9 @@ html:not([data-fx="full"]) .cursor-glow { display: none; }
   box-shadow: 0 1px 0 rgba(255, 255, 255, .03) inset;
 }
 /* Note: no backdrop-filter on the bar — blurring a moving particle canvas every frame is the single most expensive effect on weak GPUs. */
-.brand { display: inline-flex; align-items: center; gap: 10px; font-family: var(--font-d); font-weight: 600; font-size: 17px; letter-spacing: -.02em; flex: none; }
+.brand { display: inline-flex; align-items: center; gap: 10px; font-family: var(--font-d); font-weight: 600; font-size: 18px; letter-spacing: -.02em; flex: none; }
+.brand-name { display: inline-flex; flex-direction: column; line-height: 1; white-space: nowrap; } .bn-w { display: block; }
+.brand-name small { font: 600 9px/1 var(--font); letter-spacing: .24em; text-transform: uppercase; color: var(--text-3); margin-top: 4px; }
 .brand b { font-weight: 700; background: linear-gradient(120deg, var(--accent), var(--accent-2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .brand-mark {
   width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center;
@@ -233,7 +242,7 @@ html:not([data-fx="full"]) .cursor-glow { display: none; }
 .btn-sm { height: 34px; padding: 0 12px; font-size: 13px; border-radius: 9px; gap: 6px; }
 .btn-sm svg { width: 16px; height: 16px; }
 .btn-primary {
-  border-color: transparent; color: #fff;
+  border-color: transparent; color: var(--on-accent);
   background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 55%, var(--accent-2)));
   box-shadow: 0 8px 22px -8px rgba(var(--accent-rgb), .85), inset 0 1px 0 rgba(255, 255, 255, .3);
 }
@@ -695,3 +704,17 @@ html[data-fx="off"] .tilt { transform: none !important; }
 html[data-fx="off"] .scene-in { transform: none !important; }
 html[data-fx="lite"] .tilt { transform: none !important; }
 html[data-fx="lite"] .scene-in { transform: none !important; }
+
+/* ---------- Smoother interfaces ---------- */
+@keyframes shake { 0%, 100% { transform: translate3d(0, 0, 0); } 20% { transform: translate3d(-4px, 2px, 0); } 40% { transform: translate3d(5px, -2px, 0); } 60% { transform: translate3d(-3px, -1px, 0); } 80% { transform: translate3d(2px, 2px, 0); } }
+.view.fx-shake { animation: shake .2s linear; }
+::view-transition-old(root) { animation: vtOut .22s cubic-bezier(.4, 0, 1, 1) both; }
+::view-transition-new(root) { animation: vtIn .34s cubic-bezier(.2, .8, .2, 1) both; }
+@keyframes vtOut { to { opacity: 0; transform: translateY(-6px) scale(.995); } }
+@keyframes vtIn { from { opacity: 0; transform: translateY(10px) scale(1.004); } }
+.btn, .chip, .card, .act, .nav-link, .tag, .seg button { transition-timing-function: cubic-bezier(.2, .8, .2, 1); }
+.card { transition: border-color .25s, box-shadow .3s, transform .35s cubic-bezier(.2, .8, .2, 1); }
+a.card:hover, .item-card:hover { border-color: rgba(var(--accent-rgb), .35); }
+.btn-primary { background-size: 160% 100%; transition: transform .2s cubic-bezier(.2, .8, .2, 1), box-shadow .25s, filter .2s, background-position .5s; }
+.btn-primary:hover { background-position: 100% 0; transform: translateY(-1px); }
+@media (prefers-reduced-motion: reduce) { ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; } }

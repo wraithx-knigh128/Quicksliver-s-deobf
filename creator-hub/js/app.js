@@ -1,18 +1,18 @@
-/* Creator Hub — app core: settings, routing, navigation, global search, shared UI kit. */
+/* CordX — app core: settings, routing, navigation, global search, shared UI kit. */
 (function () {
   'use strict';
-  var CH = window.CH, el = CH.el, $ = CH.$, icon = CH.icon;
+  var CH = window.CH, CORDX = window.CORDX, el = CH.el, $ = CH.$, icon = CH.icon;
   var root = document.documentElement;
 
   /* ======================================================================
      Routes (single source of truth for nav, search and the Tools page)
      ====================================================================== */
   var ROUTES = [
-    { id: 'home', title: 'Home', group: 'Discover', icon: 'home', desc: 'Your Discord creator toolkit at a glance', kw: 'start dashboard overview welcome' },
+    { id: 'home', title: 'Home', group: 'Discover', icon: 'home', css: 'css/home.css', deps: ['js/gen/username.js', 'js/theme-art.js'], desc: 'Your Discord creator toolkit at a glance', kw: 'start dashboard overview welcome' },
     { id: 'tools', title: 'Tools', group: 'Discover', icon: 'grid', desc: 'Every builder and generator in one place', kw: 'all tools list browse directory' },
     { id: 'embeds', title: 'Discord Embeds', group: 'Build', icon: 'embed', tool: true, desc: 'Live embed builder with webhook JSON, code export and Discord-style preview', kw: 'embed webhook json builder message rich preview button discord.js discord.py curl markdown' },
     { id: 'bio', title: 'Bio Generator', group: 'Build', icon: 'user', tool: true, desc: '15 styles, 3 lengths and Unicode fonts — bios that fit the 190-character limit', kw: 'about me profile bio description unicode font symbols anime gamer aesthetic' },
-    { id: 'username', title: 'Username Generator', group: 'Build', icon: 'at', tool: true, desc: 'Original usernames from your name, interests and theme, checked against Discord rules', kw: 'name nickname handle gamer og short clean tag generator random display name' },
+    { id: 'username', title: 'Username Generator', group: 'Build', icon: 'at', tool: true, deps: ['js/gen/username.js'], desc: 'Original usernames from your name, interests and theme, checked against Discord rules', kw: 'name nickname handle gamer og short clean tag generator random display name' },
     { id: 'rules', title: 'Server Rules Generator', group: 'Build', icon: 'shield', tool: true, desc: 'Rules, tone, strictness and a moderation policy for any kind of server', kw: 'rules guidelines moderation staff punishment policy warnings ban appeal community' },
     { id: 'announcements', title: 'Announcement Generator', group: 'Build', icon: 'megaphone', tool: true, desc: 'Events, updates, giveaways and more — with Discord timestamp tags', kw: 'announcement event update giveaway maintenance patch notes ping everyone timestamp news' },
     { id: 'description', title: 'Server Description Generator', group: 'Build', icon: 'text', tool: true, desc: 'Short, medium and long descriptions for Discovery, listings and your about page', kw: 'server description about discovery listing bio blurb pitch' },
@@ -24,6 +24,7 @@
     { id: 'saved', title: 'Saved Creations', group: 'Library', icon: 'bookmark', desc: 'Everything you saved, stored privately in this browser', kw: 'saved favorites library history export import backup' },
     { id: 'pro', title: 'Pricing / Pro', group: 'Account', icon: 'crown', desc: 'What is free, what Pro will add, and how we handle your data', kw: 'pricing pro plan premium upgrade free waitlist' },
     { id: 'about', title: 'About', group: 'Account', icon: 'info', desc: 'How it works, privacy, and what Discord does and does not support', kw: 'about privacy limitations faq help discord limits shortcuts' },
+    { id: 'legal', title: 'Terms & Policies', group: 'Account', icon: 'file', desc: 'Terms of use, privacy, trademarks and credits', kw: 'terms policy privacy legal copyright trademark license disclaimer credits' },
     { id: 'settings', title: 'Settings', group: 'Account', icon: 'settings', desc: 'Effects, accent colour, density and your data', kw: 'settings preferences effects motion accent theme data reset performance' }
   ];
   var GROUPS = ['Discover', 'Build', 'Explore', 'Library', 'Account'];
@@ -49,7 +50,7 @@
   /* ======================================================================
      Settings + effects level
      ====================================================================== */
-  var DEF = { fx: 'auto', particles: true, glow: true, tilt: true, accent: 'violet', density: 'comfortable', previewTheme: 'dark' };
+  var DEF = { fx: 'auto', particles: true, glow: true, tilt: true, theme: 'wraith', themeFx: true, accent: 'violet', density: 'comfortable', previewTheme: 'dark' };
   var settings = Object.assign({}, DEF, CH.Store.get('settings', {}));
   var mqReduce = window.matchMedia ? matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
   var mqCoarse = window.matchMedia ? matchMedia('(pointer: coarse)') : { matches: false };
@@ -63,6 +64,9 @@
   }
   function level() { return settings.fx === 'auto' ? autoLevel() : settings.fx; }
   function applySettings() {
+    if (!CORDX.themes[settings.theme]) settings.theme = 'wraith';
+    root.setAttribute('data-theme', settings.theme);
+    root.setAttribute('data-themefx', settings.themeFx ? '1' : '0');
     root.setAttribute('data-accent', settings.accent);
     root.setAttribute('data-density', settings.density);
     root.setAttribute('data-fx', level());
@@ -333,6 +337,15 @@
     }));
   }
   CH.loadScript = loadScript;
+  var cssLoaded = {};
+  function loadCss(href) {
+    if (cssLoaded[href]) return cssLoaded[href];
+    return (cssLoaded[href] = new Promise(function (res) {
+      var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href;
+      l.onload = res; l.onerror = res; document.head.appendChild(l);   // never block the page on a stylesheet
+    }));
+  }
+  CH.loadCss = loadCss;
 
   var view = $('#view'), cleanup = null, navToken = 0, first = true;
 
@@ -348,9 +361,13 @@
     closeNav();
     setActive(r ? r.id : null);
     if (!r) { mount(null, p, token); return; }
-    var need = !pages[r.id];
+    var jobs = [];
+    if (!pages[r.id]) jobs.push(loadScript('js/pages/' + r.id + '.js'));
+    (r.deps || []).forEach(function (d) { jobs.push(loadScript(d)); });
+    if (r.css) jobs.push(loadCss(r.css));
+    var need = jobs.length > 0;
     var slow = setTimeout(function () { if (token === navToken && need) view.setAttribute('aria-busy', 'true'); }, 120);
-    (need ? loadScript('js/pages/' + r.id + '.js') : Promise.resolve()).then(function () {
+    Promise.all(jobs).then(function () {
       clearTimeout(slow); if (token !== navToken) return; mount(r, p, token);
     }).catch(function (err) {
       clearTimeout(slow); if (token !== navToken) return;
@@ -359,9 +376,15 @@
     });
   }
   function mount(r, p, token) {
+    var lvl = html_fx();
+    if (document.startViewTransition && lvl === 'full' && !first) { document.startViewTransition(function () { doMount(r, p, token); }); return; }
+    doMount(r, p, token);
+  }
+  function html_fx() { return root.getAttribute('data-fx'); }
+  function doMount(r, p, token) {
     CH.clear(view); view.setAttribute('aria-busy', 'false');
     view.className = 'view enter';
-    document.title = (r ? r.title : 'Page not found') + ' — Creator Hub';
+    document.title = (r && r.id !== 'home' ? r.title + ' — ' : '') + 'CordX by Wraith';
     try {
       if (!r) notFound(p);
       else cleanup = pages[r.id](view, { params: p.params, route: r }) || null;
@@ -523,6 +546,14 @@
     else if (e.key === 'Escape') closeNav();
   });
 
+  /* Scroll progress bar — a single transform, updated at most once per frame. */
+  var spEl = $('#scroll-progress'), spTick = CH.raf(function () {
+    var d = document.documentElement, max = d.scrollHeight - innerHeight;
+    spEl.style.setProperty('--sp', max > 0 ? Math.min(1, scrollY / max).toFixed(4) : 0);
+  });
+  window.addEventListener('scroll', spTick, { passive: true }); window.addEventListener('resize', spTick);
+  document.addEventListener('ch:route', spTick);
+
   /* ======================================================================
      Boot
      ====================================================================== */
@@ -534,6 +565,6 @@
   route();
 
   // Heavy visual effects are loaded after first paint, only when the level allows.
-  function loadFx() { loadScript('js/fx.js').catch(function () {}); }
+  function loadFx() { loadScript('js/fx.js').then(function () { return loadScript('js/theme-fx.js'); }).catch(function () {}); }
   if ('requestIdleCallback' in window) requestIdleCallback(loadFx, { timeout: 1800 }); else setTimeout(loadFx, 600);
 })();
