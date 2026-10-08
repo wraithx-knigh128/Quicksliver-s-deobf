@@ -20,90 +20,103 @@ Engine.Mechanics = {}
 Engine.Techs = {}
 Engine.Characters = {}
 
+local function validSteps(steps)
+    if type(steps) ~= "table" or #steps == 0 then return false end
+    for i = 1, #steps do
+        if type(steps[i]) ~= "string" or steps[i] == "" then return false end
+    end
+    return true
+end
+
 -- Load tsb_data.lua (or your own table with the same shape).
+-- Malformed combos are skipped; the names of skipped ones are returned as a list.
 function Engine.loadData(data, defaultGap)
+    local skipped = {}
     for name, c in pairs(data.Combos or {}) do
-        Engine.Combos[name] = {
-            steps = c.steps, maxGap = c.maxGap or defaultGap or 1.2,
-            character = c.character, confidence = c.confidence,
-        }
+        if type(name) == "string" and type(c) == "table" and validSteps(c.steps) then
+            Engine.Combos[name] = {
+                steps = c.steps, maxGap = c.maxGap or defaultGap or 1.2,
+                character = c.character, confidence = c.confidence,
+            }
+        else
+            skipped[#skipped + 1] = tostring(name)
+        end
     end
     for k, v in pairs(data.Mechanics or {}) do Engine.Mechanics[k] = v end
     Engine.Techs, Engine.Characters = data.Techs or {}, data.Characters or {}
-    return Engine
+    table.sort(skipped)
+    return Engine, skipped
 end
 
 -- Register / replace a combo (this is where "Oreo" and your own combos go).
 function Engine.define(name, steps, maxGap)
-    assert(type(name) == "string" and #steps > 0, "define(name, steps, maxGap)")
+    assert(type(name) == "string" and name ~= "", "define: name must be a non-empty string")
+    assert(validSteps(steps), "define: steps must be a non-empty list of non-empty strings")
+    assert(maxGap == nil or (type(maxGap) == "number" and maxGap > 0), "define: maxGap must be a positive number")
     Engine.Combos[name] = {steps = steps, maxGap = maxGap or 1.2}
 end
 
 ----------------------------------------------------------------- predictor
+-- For every combo we keep ALL alignments that are still alive (not just one counter), so a combo
+-- is found even when it starts in the middle of a longer run of the same input
+-- (e.g. M1 M1 M1 SIDEDASH still matches a combo that is "M1 M1 SIDEDASH").
 local Predictor = {}
 Predictor.__index = Predictor
 
 function Engine.newPredictor(combos)
-    local self = setmetatable({
+    return setmetatable({
         combos = combos or Engine.Combos,
-        progress = {},   -- name -> {index, lastTime}
+        state = {},          -- name -> {t = time of last matched input, at = {[stepIndex] = true}}
         onComplete = nil,
     }, Predictor)
-    return self
 end
 
 function Predictor:reset()
-    self.progress = {}
+    self.state = {}
 end
 
 function Predictor:feed(token, now)
+    if type(token) ~= "string" or type(now) ~= "number" then return end
     for name, combo in pairs(self.combos) do
-        local p = self.progress[name]
-        if p and now - p.t > combo.maxGap then p = nil end   -- window expired
+        local steps = combo.steps
+        local st = self.state[name]
+        local live = (st and now - st.t <= combo.maxGap) and st.at or nil   -- window expired -> nothing alive
 
-        local nextIndex = p and p.i + 1 or 1
-        if combo.steps[nextIndex] == token then
-            p = {i = nextIndex, t = now}
-        elseif combo.steps[1] == token then
-            p = {i = 1, t = now}                               -- restart on a fresh opener
-        else
-            p = nil
+        local nextAt, any, completed = {}, false, false
+        if live then
+            for idx in pairs(live) do
+                if steps[idx + 1] == token then
+                    if idx + 1 == #steps then completed = true else nextAt[idx + 1] = true; any = true end
+                end
+            end
         end
-        self.progress[name] = p
+        if steps[1] == token then                      -- a fresh start is always possible
+            if #steps == 1 then completed = true else nextAt[1] = true; any = true end
+        end
 
-        if p and p.i == #combo.steps then
-            self.progress[name] = nil
-            if self.onComplete then self.onComplete(name) end
-        end
+        self.state[name] = any and {t = now, at = nextAt} or nil
+        if completed and self.onComplete then self.onComplete(name) end
     end
 end
 
--- Aggregate "what input comes next?" over every live candidate: {token -> weight}, plus best token.
-function Predictor:nextInputs(now)
-    local weights, best, bestW = {}, nil, 0
-    for _, r in ipairs(self:predict(now)) do
-        if r.next then
-            weights[r.next] = (weights[r.next] or 0) + r.confidence
-            if weights[r.next] > bestW then best, bestW = r.next, weights[r.next] end
-        end
-    end
-    return weights, best
-end
-
--- Likely combos right now, best first.
+-- Likely combos right now, best first. One entry per combo (its furthest alignment).
 function Predictor:predict(now)
     local out = {}
-    for name, p in pairs(self.progress) do
+    for name, st in pairs(self.state) do
         local combo = self.combos[name]
-        if now - p.t <= combo.maxGap then
-            out[#out + 1] = {
-                name       = name,
-                progress   = p.i,
-                total      = #combo.steps,
-                confidence = p.i / #combo.steps,
-                next       = combo.steps[p.i + 1],
-                expiresIn  = combo.maxGap - (now - p.t),
-            }
+        if combo and now - st.t <= combo.maxGap then
+            local best = 0
+            for idx in pairs(st.at) do if idx > best then best = idx end end
+            if best > 0 then
+                out[#out + 1] = {
+                    name       = name,
+                    progress   = best,
+                    total      = #combo.steps,
+                    confidence = best / #combo.steps,
+                    next       = combo.steps[best + 1],
+                    expiresIn  = combo.maxGap - (now - st.t),
+                }
+            end
         end
     end
     table.sort(out, function(a, b)
@@ -113,17 +126,34 @@ function Predictor:predict(now)
     return out
 end
 
+-- Aggregate "what input comes next?" over every live candidate: {token -> weight}, plus best token.
+function Predictor:nextInputs(now)
+    local weights, best, bestW = {}, nil, 0
+    for _, r in ipairs(self:predict(now)) do
+        if r.next then
+            local w = (weights[r.next] or 0) + r.confidence
+            weights[r.next] = w
+            if w > bestW or (w == bestW and best and r.next < best) then best, bestW = r.next, w end
+        end
+    end
+    return weights, best
+end
+
 ----------------------------------------------------------------- tech recovery
 -- state = {knockback = {x, z}, facing = {x, z}, wallAhead = bool}
 -- returns "Back" | "Forward" | "Left" | "Right"
 function Engine.chooseTechDirection(state)
-    local kb, f = state.knockback, state.facing
-    local mag = math.sqrt(kb.x * kb.x + kb.z * kb.z)
-    if mag < 1e-6 then return "Back" end
+    local kb, f = state and state.knockback, state and state.facing
+    if type(kb) ~= "table" or type(f) ~= "table" then return "Back" end
+    local kx, kz, fx, fz = kb.x or 0, kb.z or 0, f.x or 0, f.z or 0
+    local kmag = math.sqrt(kx * kx + kz * kz)
+    local fmag = math.sqrt(fx * fx + fz * fz)
+    if kmag < 1e-6 then return "Back" end
     if state.wallAhead then return "Left" end   -- slide off the wall instead of into it
+    if fmag < 1e-6 then return "Back" end
 
-    local dot   = (kb.x * f.x + kb.z * f.z) / mag
-    local cross = (f.x * kb.z - f.z * kb.x) / mag
+    local dot   = (kx * fx + kz * fz) / (kmag * fmag)       -- both vectors normalised
+    local cross = (fx * kz - fz * kx) / (kmag * fmag)
     if math.abs(dot) >= math.abs(cross) then
         -- thrown backwards relative to facing -> dash forward to close, else back away
         return dot < 0 and "Forward" or "Back"

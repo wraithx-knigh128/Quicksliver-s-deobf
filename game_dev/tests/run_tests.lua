@@ -117,6 +117,55 @@ test("mechanics loaded", function()
     eq(Engine.Mechanics.ragdollCancelCooldown, 30); eq(Engine.Mechanics.m1Chain[4], 5)
 end)
 
+test("overlapping prefix: M1 M1 M1 SIDEDASH still matches a combo 'M1 M1 SIDEDASH'", function()
+    local p, done = Engine.newPredictor({Short = {steps = {"M1", "M1", "SIDEDASH"}, maxGap = 1}}), nil
+    p.onComplete = function(n) done = n end
+    feedAll(p, {"M1", "M1", "M1", "SIDEDASH"}, 0, 0.2)
+    eq(done, "Short", "suffix alignment lost (KMP bug)")
+end)
+
+test("repeated openers keep the furthest alignment", function()
+    local p = Engine.newPredictor({A = {steps = {"M1", "M1", "M1", "Q"}, maxGap = 1}})
+    feedAll(p, {"M1", "M1", "M1", "M1", "M1"}, 0, 0.2)   -- more M1s than needed: still 3 in a row
+    local r = p:predict(0.8)[1]
+    assert(r and r.progress == 3 and r.next == "Q", "expected progress 3 waiting for Q")
+end)
+
+test("single-step combo completes; bad input is ignored", function()
+    local p, n = Engine.newPredictor({One = {steps = {"Q"}, maxGap = 1}}), 0
+    p.onComplete = function() n = n + 1 end
+    p:feed("Q", 0); p:feed(nil, 0.1); p:feed("Q", "x"); p:feed("Q", 0.2)
+    eq(n, 2)
+end)
+
+test("expired gap clears every alignment, boundary is inclusive", function()
+    local p, done = Engine.newPredictor({A = {steps = {"M1", "Q"}, maxGap = 1}}), nil
+    p.onComplete = function(x) done = x end
+    p:feed("M1", 0); p:feed("Q", 1.0)
+    eq(done, "A", "gap == maxGap should still count")
+    done = nil
+    p:feed("M1", 5); p:feed("Q", 6.5)
+    eq(done, nil, "gap > maxGap must not count")
+end)
+
+test("loadData skips malformed combos and define validates", function()
+    local e = Engine.loadData({Combos = {Bad = {steps = {}}, Worse = {steps = {1, 2}}, Good = {steps = {"M1", "Q"}}}})
+    local _, skipped = Engine.loadData({Combos = {Bad = {steps = {}}, Worse = {steps = {1}}}})
+    eq(#skipped, 2)
+    assert(not pcall(Engine.define, "x", {}), "empty steps accepted")
+    assert(not pcall(Engine.define, "", {"M1"}), "empty name accepted")
+    assert(not pcall(Engine.define, "x", {"M1"}, -1), "negative gap accepted")
+    Engine.Combos.Good = nil
+    Engine.loadData(Data)
+end)
+
+test("tech direction tolerates missing/unnormalised input", function()
+    eq(Engine.chooseTechDirection(nil), "Back")
+    eq(Engine.chooseTechDirection({}), "Back")
+    eq(Engine.chooseTechDirection({knockback = {x = 0, z = 5}, facing = {x = 0, z = -10}}), "Forward")
+    eq(Engine.chooseTechDirection({knockback = {x = 0, z = 5}, facing = {x = 0, z = 0}}), "Back")
+end)
+
 test("sandboxed script runs, records key events and virtual time", function()
     local ok, err = ex:run([[
         local vim = game:GetService("VirtualInputManager")

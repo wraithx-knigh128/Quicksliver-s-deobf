@@ -189,90 +189,103 @@ Engine.Mechanics = {}
 Engine.Techs = {}
 Engine.Characters = {}
 
+local function validSteps(steps)
+    if type(steps) ~= "table" or #steps == 0 then return false end
+    for i = 1, #steps do
+        if type(steps[i]) ~= "string" or steps[i] == "" then return false end
+    end
+    return true
+end
+
 -- Load tsb_data.lua (or your own table with the same shape).
+-- Malformed combos are skipped; the names of skipped ones are returned as a list.
 function Engine.loadData(data, defaultGap)
+    local skipped = {}
     for name, c in pairs(data.Combos or {}) do
-        Engine.Combos[name] = {
-            steps = c.steps, maxGap = c.maxGap or defaultGap or 1.2,
-            character = c.character, confidence = c.confidence,
-        }
+        if type(name) == "string" and type(c) == "table" and validSteps(c.steps) then
+            Engine.Combos[name] = {
+                steps = c.steps, maxGap = c.maxGap or defaultGap or 1.2,
+                character = c.character, confidence = c.confidence,
+            }
+        else
+            skipped[#skipped + 1] = tostring(name)
+        end
     end
     for k, v in pairs(data.Mechanics or {}) do Engine.Mechanics[k] = v end
     Engine.Techs, Engine.Characters = data.Techs or {}, data.Characters or {}
-    return Engine
+    table.sort(skipped)
+    return Engine, skipped
 end
 
 -- Register / replace a combo (this is where "Oreo" and your own combos go).
 function Engine.define(name, steps, maxGap)
-    assert(type(name) == "string" and #steps > 0, "define(name, steps, maxGap)")
+    assert(type(name) == "string" and name ~= "", "define: name must be a non-empty string")
+    assert(validSteps(steps), "define: steps must be a non-empty list of non-empty strings")
+    assert(maxGap == nil or (type(maxGap) == "number" and maxGap > 0), "define: maxGap must be a positive number")
     Engine.Combos[name] = {steps = steps, maxGap = maxGap or 1.2}
 end
 
 ----------------------------------------------------------------- predictor
+-- For every combo we keep ALL alignments that are still alive (not just one counter), so a combo
+-- is found even when it starts in the middle of a longer run of the same input
+-- (e.g. M1 M1 M1 SIDEDASH still matches a combo that is "M1 M1 SIDEDASH").
 local Predictor = {}
 Predictor.__index = Predictor
 
 function Engine.newPredictor(combos)
-    local self = setmetatable({
+    return setmetatable({
         combos = combos or Engine.Combos,
-        progress = {},   -- name -> {index, lastTime}
+        state = {},          -- name -> {t = time of last matched input, at = {[stepIndex] = true}}
         onComplete = nil,
     }, Predictor)
-    return self
 end
 
 function Predictor:reset()
-    self.progress = {}
+    self.state = {}
 end
 
 function Predictor:feed(token, now)
+    if type(token) ~= "string" or type(now) ~= "number" then return end
     for name, combo in pairs(self.combos) do
-        local p = self.progress[name]
-        if p and now - p.t > combo.maxGap then p = nil end   -- window expired
+        local steps = combo.steps
+        local st = self.state[name]
+        local live = (st and now - st.t <= combo.maxGap) and st.at or nil   -- window expired -> nothing alive
 
-        local nextIndex = p and p.i + 1 or 1
-        if combo.steps[nextIndex] == token then
-            p = {i = nextIndex, t = now}
-        elseif combo.steps[1] == token then
-            p = {i = 1, t = now}                               -- restart on a fresh opener
-        else
-            p = nil
+        local nextAt, any, completed = {}, false, false
+        if live then
+            for idx in pairs(live) do
+                if steps[idx + 1] == token then
+                    if idx + 1 == #steps then completed = true else nextAt[idx + 1] = true; any = true end
+                end
+            end
         end
-        self.progress[name] = p
+        if steps[1] == token then                      -- a fresh start is always possible
+            if #steps == 1 then completed = true else nextAt[1] = true; any = true end
+        end
 
-        if p and p.i == #combo.steps then
-            self.progress[name] = nil
-            if self.onComplete then self.onComplete(name) end
-        end
+        self.state[name] = any and {t = now, at = nextAt} or nil
+        if completed and self.onComplete then self.onComplete(name) end
     end
 end
 
--- Aggregate "what input comes next?" over every live candidate: {token -> weight}, plus best token.
-function Predictor:nextInputs(now)
-    local weights, best, bestW = {}, nil, 0
-    for _, r in ipairs(self:predict(now)) do
-        if r.next then
-            weights[r.next] = (weights[r.next] or 0) + r.confidence
-            if weights[r.next] > bestW then best, bestW = r.next, weights[r.next] end
-        end
-    end
-    return weights, best
-end
-
--- Likely combos right now, best first.
+-- Likely combos right now, best first. One entry per combo (its furthest alignment).
 function Predictor:predict(now)
     local out = {}
-    for name, p in pairs(self.progress) do
+    for name, st in pairs(self.state) do
         local combo = self.combos[name]
-        if now - p.t <= combo.maxGap then
-            out[#out + 1] = {
-                name       = name,
-                progress   = p.i,
-                total      = #combo.steps,
-                confidence = p.i / #combo.steps,
-                next       = combo.steps[p.i + 1],
-                expiresIn  = combo.maxGap - (now - p.t),
-            }
+        if combo and now - st.t <= combo.maxGap then
+            local best = 0
+            for idx in pairs(st.at) do if idx > best then best = idx end end
+            if best > 0 then
+                out[#out + 1] = {
+                    name       = name,
+                    progress   = best,
+                    total      = #combo.steps,
+                    confidence = best / #combo.steps,
+                    next       = combo.steps[best + 1],
+                    expiresIn  = combo.maxGap - (now - st.t),
+                }
+            end
         end
     end
     table.sort(out, function(a, b)
@@ -282,17 +295,34 @@ function Predictor:predict(now)
     return out
 end
 
+-- Aggregate "what input comes next?" over every live candidate: {token -> weight}, plus best token.
+function Predictor:nextInputs(now)
+    local weights, best, bestW = {}, nil, 0
+    for _, r in ipairs(self:predict(now)) do
+        if r.next then
+            local w = (weights[r.next] or 0) + r.confidence
+            weights[r.next] = w
+            if w > bestW or (w == bestW and best and r.next < best) then best, bestW = r.next, w end
+        end
+    end
+    return weights, best
+end
+
 ----------------------------------------------------------------- tech recovery
 -- state = {knockback = {x, z}, facing = {x, z}, wallAhead = bool}
 -- returns "Back" | "Forward" | "Left" | "Right"
 function Engine.chooseTechDirection(state)
-    local kb, f = state.knockback, state.facing
-    local mag = math.sqrt(kb.x * kb.x + kb.z * kb.z)
-    if mag < 1e-6 then return "Back" end
+    local kb, f = state and state.knockback, state and state.facing
+    if type(kb) ~= "table" or type(f) ~= "table" then return "Back" end
+    local kx, kz, fx, fz = kb.x or 0, kb.z or 0, f.x or 0, f.z or 0
+    local kmag = math.sqrt(kx * kx + kz * kz)
+    local fmag = math.sqrt(fx * fx + fz * fz)
+    if kmag < 1e-6 then return "Back" end
     if state.wallAhead then return "Left" end   -- slide off the wall instead of into it
+    if fmag < 1e-6 then return "Back" end
 
-    local dot   = (kb.x * f.x + kb.z * f.z) / mag
-    local cross = (f.x * kb.z - f.z * kb.x) / mag
+    local dot   = (kx * fx + kz * fz) / (kmag * fmag)       -- both vectors normalised
+    local cross = (fx * kz - fz * kx) / (kmag * fmag)
     if math.abs(dot) >= math.abs(cross) then
         -- thrown backwards relative to facing -> dash forward to close, else back away
         return dot < 0 and "Forward" or "Back"
@@ -354,9 +384,12 @@ local function __run()
     local function httpGet(url)
         if httpRequest then
             local res = safe(httpRequest, {Url = url, Method = "GET"})
-            if res and res.StatusCode == 200 then return res.Body end
+            if res and (res.StatusCode == 200 or (res.StatusCode == nil and res.Success)) and type(res.Body) == "string" then
+                return res.Body
+            end
         end
-        return safe(function() return game:HttpGet(url) end)
+        local body = safe(function() return game:HttpGet(url) end)
+        if type(body) == "string" then return body end
     end
 
     local BgSources = {
@@ -365,27 +398,39 @@ local function __run()
     }
     local bgCounter = 0
 
-    -- download one image url -> executor asset id (png/jpg only, Roblox cannot show gif/webp)
+    -- identify the real file type from its first bytes (Roblox can only show png/jpg; this also
+    -- rejects gif/webp and HTML error pages that would otherwise be saved as "images")
+    local function imageKind(body)
+        if type(body) ~= "string" or #body < 16 or #body > 12 * 1024 * 1024 then return nil end
+        if body:sub(1, 8) == "\137PNG\r\n\26\n" then return "png" end
+        if body:sub(1, 3) == "\255\216\255" then return "jpg" end
+    end
+
+    -- download one image url -> executor asset id
     local function imageToAsset(url)
-        local ext = url:match("%.(%w+)$") and url:match("%.(%w+)$"):lower()
-        if ext ~= "png" and ext ~= "jpg" and ext ~= "jpeg" then return nil end
-        if not (getcustomasset and writefile) then return nil end
+        if type(url) ~= "string" or url:sub(1, 4) ~= "http" then return nil end
         local body = httpGet(url)
-        if not body then return nil end
+        local kind = imageKind(body)
+        if not kind then return nil end
         bgCounter = bgCounter + 1
-        local path = ("animation_hub_bg_%d.%s"):format(bgCounter, ext)
-        if not safe(writefile, path, body) then return nil end
+        local path = ("animation_hub_bg_%d.%s"):format(bgCounter, kind)
+        -- writefile returns nothing on success, so test with pcall (NOT safe(), which returns the value)
+        if not pcall(writefile, path, body) then return nil end
         return safe(getcustomasset, path)
     end
 
     local function loadBackground(sourceName)
-        if BACKGROUND_URL ~= "" and not sourceName then return imageToAsset(BACKGROUND_URL) end
+        if not (getcustomasset and writefile) then return nil end   -- executor cannot show downloaded files
+        if BACKGROUND_URL ~= "" and not sourceName then
+            local fixed = imageToAsset(BACKGROUND_URL)
+            if fixed then return fixed end                            -- else fall through to the API
+        end
         local src = BgSources[sourceName or BACKGROUND_SOURCE] or BgSources["waifu.pics"]
-        for _ = 1, 4 do                                   -- retry: the API may hand back a gif/webp
+        for _ = 1, 4 do                                               -- retry: the API may hand back a gif/webp
             local raw = httpGet(src.api)
             local data = raw and safe(function() return game:GetService("HttpService"):JSONDecode(raw) end)
-            local url = data and safe(src.parse, data)
-            local asset = url and imageToAsset(url)
+            local url = type(data) == "table" and safe(src.parse, data)
+            local asset = imageToAsset(url)
             if asset then return asset end
         end
     end
@@ -401,6 +446,9 @@ local function __run()
     }
 
     ---------------------------------------------------------------- cleanup old
+    -- re-running the script must not leave the old copy's listeners (Auto Tech, predictor...) alive
+    local genv = safe(function() return getgenv() end) or _G
+    if type(genv.__AnimationHubCleanup) == "function" then pcall(genv.__AnimationHubCleanup) end
     local old = guiParent():FindFirstChild("AnimationHubTSB")
     if old then old:Destroy() end
 
@@ -411,8 +459,41 @@ local function __run()
     })
     Gui.Parent = guiParent()
 
+    -- every global listener goes through connect() so cleanup() can remove it
+    local alive, conns, onCleanup = true, {}, {}
+    local function connect(signal, fn)
+        local c = signal:Connect(fn)
+        conns[#conns + 1] = c
+        return c
+    end
+    local function cleanup()
+        if not alive then return end
+        alive = false
+        for _, f in ipairs(onCleanup) do pcall(f) end
+        for _, c in ipairs(conns) do pcall(function() c:Disconnect() end) end
+        pcall(function() Gui:Destroy() end)
+        if genv.__AnimationHubCleanup == cleanup then genv.__AnimationHubCleanup = nil end
+    end
+    genv.__AnimationHubCleanup = cleanup
+
+    -- fit small phone screens: never taller/wider than the viewport
+    local function viewport()
+        local cam = workspace.CurrentCamera
+        local vp = cam and cam.ViewportSize
+        if vp and type(vp.X) == "number" and type(vp.Y) == "number" and vp.X > 0 and vp.Y > 0 then return vp.X, vp.Y end
+    end
+    local WIN_W, WIN_H = 580, 380
+    do
+        local vw, vh = viewport()
+        if vw then
+            WIN_W = math.max(360, math.min(WIN_W, vw - 24))
+            WIN_H = math.max(240, math.min(WIN_H, vh - 24))
+        end
+    end
+
     local Main = new("Frame", {
-        Size = UDim2.fromOffset(580, 380), Position = UDim2.new(0.5, -290, 0.5, -190),
+        AnchorPoint = Vector2.new(0.5, 0),     -- top edge stays put when minimising / opening
+        Size = UDim2.fromOffset(WIN_W, WIN_H), Position = UDim2.new(0.5, 0, 0.5, -WIN_H / 2),
         BackgroundColor3 = Theme.Back, BorderSizePixel = 0, ClipsDescendants = true,
         Parent = Gui,
     }, {corner(14), stroke(Theme.Accent, 1.5, 0.6)})
@@ -427,10 +508,13 @@ local function __run()
         ScaleType = Enum.ScaleType.Crop, ImageTransparency = BACKGROUND_TRANSPARENCY,
         ZIndex = 0, Parent = Main,
     }, {corner(14)})
+    local bgGen = 0
     local function refreshBackground(sourceName)
+        bgGen = bgGen + 1
+        local mine = bgGen                       -- only the newest request may set the image
         task.spawn(function()
             local asset = loadBackground(sourceName)
-            if asset then Background.Image = asset end
+            if asset and mine == bgGen and alive then Background.Image = asset end
         end)
     end
     refreshBackground()
@@ -451,8 +535,8 @@ local function __run()
     local function topButton(text, xOff, cb)
         local b = new("TextButton", {
             Text = text, Font = Enum.Font.GothamBold, TextSize = 18, TextColor3 = Theme.Accent,
-            BackgroundTransparency = 1, Size = UDim2.fromOffset(32, 32),
-            Position = UDim2.new(1, xOff, 0, 10), AutoButtonColor = false, Parent = TopBar,
+            BackgroundTransparency = 1, Size = UDim2.fromOffset(36, 36),
+            Position = UDim2.new(1, xOff, 0, 8), AutoButtonColor = false, Parent = TopBar,
         })
         b.MouseEnter:Connect(function() tween(b, {TextColor3 = Theme.Text}, 0.15) end)
         b.MouseLeave:Connect(function() tween(b, {TextColor3 = Theme.Accent}, 0.15) end)
@@ -461,37 +545,47 @@ local function __run()
     end
 
     local minimized = false
-    local fullSize = Main.Size
-    topButton("-", -108, function()
+    local fullSize = UDim2.fromOffset(WIN_W, WIN_H)
+    topButton("-", -88, function()
         minimized = not minimized
-        tween(Main, {Size = minimized and UDim2.fromOffset(fullSize.X.Offset, 52) or fullSize}, 0.3)
+        tween(Main, {Size = minimized and UDim2.fromOffset(WIN_W, 52) or fullSize}, 0.3)
     end)
-    topButton("X", -40, function()
-        tween(Main, {Size = UDim2.fromOffset(fullSize.X.Offset, 0)}, 0.25).Completed:Wait()
-        Gui:Destroy()
+    topButton("X", -46, function()
+        tween(Main, {Size = UDim2.fromOffset(WIN_W, 0)}, 0.25)
+        task.spawn(function() task.wait(0.27); cleanup() end)
     end)
 
-    -- dragging
+    -- dragging (keeps the title bar on screen)
     do
-        local dragging, dragStart, startPos
+        local dragging, dragStart, startPos = false, nil, nil
+        local function isPointer(i)
+            return i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch
+        end
         TopBar.InputBegan:Connect(function(i)
-            if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+            if isPointer(i) then
                 dragging, dragStart, startPos = true, i.Position, Main.Position
-                i.Changed:Connect(function()
-                    if i.UserInputState == Enum.UserInputState.End then dragging = false end
-                end)
             end
         end)
-        UserInputService.InputChanged:Connect(function(i)
-            if dragging and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
-                local d = i.Position - dragStart
-                tween(Main, {Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + d.X, startPos.Y.Scale, startPos.Y.Offset + d.Y)}, 0.08, Enum.EasingStyle.Linear)
+        connect(UserInputService.InputEnded, function(i)
+            if isPointer(i) then dragging = false end
+        end)
+        connect(UserInputService.InputChanged, function(i)
+            if not dragging then return end
+            if i.UserInputType ~= Enum.UserInputType.MouseMovement and i.UserInputType ~= Enum.UserInputType.Touch then return end
+            local d = i.Position - dragStart
+            local ox, oy = startPos.X.Offset + d.X, startPos.Y.Offset + d.Y
+            local vw, vh = viewport()
+            if vw then
+                local mx = vw / 2 + WIN_W / 2 - 60
+                ox = math.clamp(ox, -mx, mx)
+                oy = math.clamp(oy, -vh / 2, vh / 2 - 52)       -- title bar always reachable
             end
+            Main.Position = UDim2.new(startPos.X.Scale, ox, startPos.Y.Scale, oy)
         end)
     end
 
     -- toggle UI with RightShift
-    UserInputService.InputBegan:Connect(function(i, gp)
+    connect(UserInputService.InputBegan, function(i, gp)
         if not gp and i.KeyCode == Enum.KeyCode.RightShift then Main.Visible = not Main.Visible end
     end)
 
@@ -570,13 +664,13 @@ local function __run()
             new("UIPadding", {PaddingRight = UDim.new(0, 6), PaddingTop = UDim.new(0, 2)}),
         })
 
-        local tab = {Btn = btn, Page = page}
+        local tab = {Btn = btn, Bar = bar, Page = page}
         function tab:Select()
             if currentTab then
                 local c = currentTab
                 c.Page.Visible = false
                 tween(c.Btn, {BackgroundTransparency = 1, TextColor3 = Theme.SubText}, 0.2)
-                tween(c.Btn:FindFirstChildOfClass("Frame"), {Size = UDim2.fromOffset(3, 0)}, 0.2)
+                tween(c.Bar, {Size = UDim2.fromOffset(3, 0)}, 0.2)
             end
             currentTab = tab
             page.Visible = true
@@ -603,22 +697,24 @@ local function __run()
             })
         end
 
-        function tab:Label(text, height)
-            local r = row(height or 28)
-            r.BackgroundTransparency = 1
-            local l = label(r, text, 12, Theme.SubText, UDim2.fromOffset(4, 0), Enum.Font.Gotham)
-            l.Size = UDim2.new(1, -8, 1, 0)
-            l.TextWrapped = true
-            l.TextYAlignment = Enum.TextYAlignment.Top
-            return l
+        -- wrapped text that grows with its content (the old fixed-height rows clipped long lines)
+        function tab:Label(text)
+            return new("TextLabel", {
+                Text = text, Font = Enum.Font.Gotham, TextSize = 12, TextColor3 = Theme.SubText,
+                TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top,
+                TextWrapped = true, BackgroundTransparency = 1,
+                Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, Parent = page,
+            }, {new("UIPadding", {
+                PaddingLeft = UDim.new(0, 4), PaddingRight = UDim.new(0, 4),
+                PaddingTop = UDim.new(0, 2), PaddingBottom = UDim.new(0, 2),
+            })})
         end
 
         function tab:Toggle(text, default, cb, parent)
             local r = row(40, parent)
             label(r, text)
-            local track = new("TextButton", {
-                Text = "", AutoButtonColor = false, Size = UDim2.fromOffset(40, 20),
-                Position = UDim2.new(1, -52, 0.5, -10), BackgroundColor3 = Theme.Panel, Parent = r,
+            local track = new("Frame", {
+                Size = UDim2.fromOffset(40, 20), Position = UDim2.new(1, -52, 0.5, -10), BackgroundColor3 = Theme.Panel, Parent = r,
             }, {corner(10)})
             local knob = new("Frame", {
                 Size = UDim2.fromOffset(14, 14), Position = UDim2.fromOffset(3, 3),
@@ -631,7 +727,9 @@ local function __run()
                 tween(knob, {Position = state and UDim2.fromOffset(23, 3) or UDim2.fromOffset(3, 3)}, t)
             end
             render(false)
-            track.MouseButton1Click:Connect(function()
+            -- the whole row is the hit area (the 40x20 switch alone is too small for a finger)
+            local hit = new("TextButton", {Text = "", BackgroundTransparency = 1, AutoButtonColor = false, Size = UDim2.fromScale(1, 1), Parent = r})
+            hit.MouseButton1Click:Connect(function()
                 state = not state
                 render(true)
                 task.spawn(cb, state)
@@ -656,6 +754,7 @@ local function __run()
         end
 
         function tab:Slider(text, min, max, default, step, cb)
+            assert(max > min and step > 0, "Slider: need max > min and step > 0")
             local r = row(54)
             label(r, text, 13, Theme.Text, UDim2.fromOffset(12, 4)).Size = UDim2.new(1, -80, 0, 20)
             local val = new("TextLabel", {
@@ -664,33 +763,32 @@ local function __run()
                 Size = UDim2.fromOffset(60, 20), Parent = r,
             })
             local rail = new("TextButton", {
-                Text = "", AutoButtonColor = false, Position = UDim2.new(0, 12, 1, -16),
-                Size = UDim2.new(1, -24, 0, 6), BackgroundColor3 = Theme.Panel, Parent = r,
-            }, {corner(3)})
-            local fill = new("Frame", {Size = UDim2.fromScale(0, 1), BackgroundColor3 = Theme.Accent, BorderSizePixel = 0, Parent = rail}, {corner(3)})
-            local value = default
+                Text = "", AutoButtonColor = false, Position = UDim2.new(0, 12, 1, -18),
+                Size = UDim2.new(1, -24, 0, 10), BackgroundColor3 = Theme.Panel, Parent = r,
+            }, {corner(5)})
+            local fill = new("Frame", {Size = UDim2.fromScale(0, 1), BackgroundColor3 = Theme.Accent, BorderSizePixel = 0, Parent = rail}, {corner(5)})
             local function set(v, fire)
-                v = math.clamp(math.floor(v / step + 0.5) * step, min, max)
-                value = v
-                val.Text = tostring(math.floor(v * 100 + 0.5) / 100)
+                v = math.floor((v - min) / step + 0.5) * step + min       -- snap relative to min
+                v = math.clamp(tonumber(string.format("%.4f", v)), min, max)   -- no float noise in callbacks
+                val.Text = tostring(v)
                 tween(fill, {Size = UDim2.fromScale((v - min) / (max - min), 1)}, 0.08, Enum.EasingStyle.Linear)
                 if fire then task.spawn(cb, v) end
             end
             set(default, true)
             local dragging = false
             local function fromInput(i)
-                local a = math.clamp((i.Position.X - rail.AbsolutePosition.X) / rail.AbsoluteSize.X, 0, 1)
-                set(min + (max - min) * a, true)
+                local w = rail.AbsoluteSize.X
+                if w <= 0 then return end
+                set(min + (max - min) * math.clamp((i.Position.X - rail.AbsolutePosition.X) / w, 0, 1), true)
+            end
+            local function isPointer(i)
+                return i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch
             end
             rail.InputBegan:Connect(function(i)
-                if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
-                    dragging = true; fromInput(i)
-                end
+                if isPointer(i) then dragging = true; fromInput(i) end
             end)
-            UserInputService.InputEnded:Connect(function(i)
-                if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then dragging = false end
-            end)
-            UserInputService.InputChanged:Connect(function(i)
+            connect(UserInputService.InputEnded, function(i) if isPointer(i) then dragging = false end end)
+            connect(UserInputService.InputChanged, function(i)
                 if dragging and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then fromInput(i) end
             end)
         end
@@ -698,12 +796,12 @@ local function __run()
         function tab:Dropdown(text, options, default, cb)
             local r = row(40)
             label(r, text)
+            local i = table.find(options, default) or 1        -- unknown default -> first option (and show it)
             local b = new("TextButton", {
-                Text = default, Font = Enum.Font.GothamMedium, TextSize = 12, TextColor3 = Theme.Accent,
+                Text = options[i], Font = Enum.Font.GothamMedium, TextSize = 12, TextColor3 = Theme.Accent,
                 BackgroundColor3 = Theme.Panel, AutoButtonColor = false,
-                Size = UDim2.fromOffset(110, 26), Position = UDim2.new(1, -122, 0.5, -13), Parent = r,
+                Size = UDim2.fromOffset(110, 30), Position = UDim2.new(1, -122, 0.5, -15), Parent = r,
             }, {corner(6)})
-            local i = table.find(options, default) or 1
             b.MouseButton1Click:Connect(function()
                 i = i % #options + 1
                 b.Text = options[i]
@@ -771,6 +869,11 @@ local function __run()
                 end)
             end
             function sec:Toggle(name, default, cb) return tab:Toggle(name, default, cb, body) end
+            function sec:Clear()
+                for _, ch in ipairs(body:GetChildren()) do
+                    if not ch:IsA("UIListLayout") then ch:Destroy() end
+                end
+            end
             return sec
         end
 
@@ -795,10 +898,11 @@ local function __run()
         Left    = Enum.KeyCode.A, Right = Enum.KeyCode.D,
     }
 
+    local function keyEvent(down, key) VirtualInput:SendKeyEvent(down, key, false, game) end
     local function press(key, hold)
-        VirtualInput:SendKeyEvent(true, key, false, game)
+        keyEvent(true, key)
         task.wait(hold or 0.03)
-        VirtualInput:SendKeyEvent(false, key, false, game)
+        keyEvent(false, key)
     end
 
     local function isKnocked(char)
@@ -815,20 +919,26 @@ local function __run()
             or char:FindFirstChild("Ragdolled") ~= nil
     end
 
+    local macroRunning = false   -- set by the macro runner below; Auto Tech stays quiet while a macro plays
+
     local function doTech()
-        if os.clock() - lastTech < Settings.TechCooldown then return end
-        lastTech = os.clock()
-        task.wait(Settings.TechDelay)
-        local dir = DirectionKeys[Settings.TechDirection]
+        if macroRunning then return end
+        local now = os.clock()
+        if now - lastTech < Settings.TechCooldown then return end
+        lastTech = now
         task.spawn(function()
-            if dir then VirtualInput:SendKeyEvent(true, dir, false, game) end
-            press(Settings.TechKey, 0.04)
-            if dir then task.wait(0.05); VirtualInput:SendKeyEvent(false, dir, false, game) end
+            task.wait(Settings.TechDelay)
+            -- the world may have changed during the delay: toggled off, UI closed, or already recovered
+            if not (alive and Settings.AutoTech and isKnocked(LocalPlayer.Character)) then return end
+            local dir = DirectionKeys[Settings.TechDirection]
+            if dir then keyEvent(true, dir) end
+            pcall(press, Settings.TechKey, 0.04)
+            if dir then task.wait(0.05); keyEvent(false, dir) end   -- always release the direction key
         end)
     end
 
     local wasKnocked = false
-    RunService.Heartbeat:Connect(function()
+    connect(RunService.Heartbeat, function()
         if not Settings.AutoTech then wasKnocked = false return end
         local knocked = isKnocked(LocalPlayer.Character)
         if knocked and not wasKnocked then doTech() end
@@ -839,19 +949,19 @@ local function __run()
     -- Plays a combo from tsb_data as real inputs. Move slots assume the hotbar order = the move list
     -- order in tsb_data (1..4). That order is UNVERIFIED: if a move fires the wrong skill, edit MoveSlots.
     local MoveSlots = {Enum.KeyCode.One, Enum.KeyCode.Two, Enum.KeyCode.Three, Enum.KeyCode.Four}
-    local macroSpeed, macroRunning = 1, false
+    local macroSpeed, macroId = 1, 0
 
     local function click()
-        local c = Camera.ViewportSize / 2
-        VirtualInput:SendMouseButtonEvent(c.X, c.Y, 0, true, game, 0)
+        local vw, vh = viewport()
+        vw, vh = vw or 400, vh or 300
+        VirtualInput:SendMouseButtonEvent(vw / 2, vh / 2, 0, true, game, 0)
         task.wait(0.03)
-        VirtualInput:SendMouseButtonEvent(c.X, c.Y, 0, false, game, 0)
+        VirtualInput:SendMouseButtonEvent(vw / 2, vh / 2, 0, false, game, 0)
     end
-    local function hold(key, t) press(key, t) end
     local function dash(dirKey)
-        if dirKey then VirtualInput:SendKeyEvent(true, dirKey, false, game) end
-        press(Enum.KeyCode.Q, 0.04)
-        if dirKey then task.wait(0.03); VirtualInput:SendKeyEvent(false, dirKey, false, game) end
+        if dirKey then keyEvent(true, dirKey) end
+        pcall(press, Enum.KeyCode.Q, 0.04)
+        if dirKey then task.wait(0.03); keyEvent(false, dirKey) end
     end
 
     -- returns the delay after the step, or nil if this token cannot be played
@@ -861,26 +971,37 @@ local function __run()
         if tok == "FRONTDASH" then dash(Enum.KeyCode.W) return 0.3 end
         if tok == "BACKDASH" then dash(Enum.KeyCode.S) return 0.3 end
         if tok == "SIDEDASH" then dash(Enum.KeyCode.A) return 0.3 end
-        if tok == "JUMP" then hold(Enum.KeyCode.Space, 0.05) return 0.25 end
+        if tok == "JUMP" then press(Enum.KeyCode.Space, 0.05) return 0.25 end
         local char = Data and Data.Characters[charName]
-        if char and char.moves then
+        if char and type(char.moves) == "table" then
             for i, mv in ipairs(char.moves) do
-                if mv == tok and MoveSlots[i] then hold(MoveSlots[i], 0.05) return 0.5 end
+                if mv == tok and MoveSlots[i] then press(MoveSlots[i], 0.05) return 0.5 end
             end
         end
         return nil
     end
 
+    local function stopMacro()
+        macroId = macroId + 1          -- any running macro thread notices the new id and exits
+        macroRunning = false
+    end
+    onCleanup[#onCleanup + 1] = stopMacro
+
     local function runMacro(steps, charName)
-        if macroRunning then macroRunning = false return end   -- press again to stop
+        if macroRunning then stopMacro() return end        -- tapping again stops it
+        macroId = macroId + 1
+        local myId = macroId
         macroRunning = true
         task.spawn(function()
-            for _, tok in ipairs(steps) do
-                if not macroRunning then break end
-                local d = playToken(tok, charName)
-                task.wait((d or 0) * macroSpeed)
-            end
-            macroRunning = false
+            local ok, err = pcall(function()
+                for _, tok in ipairs(steps) do
+                    if myId ~= macroId then return end       -- stopped, or replaced by a newer macro
+                    local d = playToken(tok, charName)
+                    task.wait((d or 0) * macroSpeed)
+                end
+            end)
+            if myId == macroId then macroRunning = false end  -- never clobber a newer macro's flag
+            if not ok then warn("[Animation Hub] macro failed: " .. tostring(err)) end
         end)
     end
 
@@ -905,8 +1026,40 @@ local function __run()
     local Tele   = createTab("Teleports", "@")
     local Effects = createTab("Effects Preset", "~")
 
+    -- Main
+    Main_:Label("General utilities")
+    local wantSpeed
+    local function applySpeed()
+        local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if hum and wantSpeed then hum.WalkSpeed = wantSpeed end
+    end
+    Main_:Slider("WalkSpeed", 16, 120, 16, 1, function(v)
+        if v ~= 16 or wantSpeed then wantSpeed = v; applySpeed() end   -- leave the game's own speed alone until touched
+    end)
+    connect(LocalPlayer.CharacterAdded, function(char)
+        char:WaitForChild("Humanoid", 5)
+        if alive then applySpeed() end                                  -- survive respawns
+    end)
+    local antiAfk = true
+    connect(LocalPlayer.Idled, function()          -- one listener for the whole session; the toggle just gates it
+        if not antiAfk then return end
+        local vu = safe(function() return game:GetService("VirtualUser") end)
+        if vu then
+            vu:CaptureController()
+            vu:ClickButton2(Vector2.new())
+        else
+            pcall(press, Enum.KeyCode.Space, 0.03)
+        end
+    end)
+    Main_:Toggle("Anti AFK", true, function(on) antiAfk = on end)
+    Main_:Slider("Macro speed (higher = slower)", 0.5, 2, 1, 0.05, function(v) macroSpeed = v end)
+    Main_:Button("Reset Character", function()
+        local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if hum then hum.Health = 0 end
+    end)
+
     -- character tabs built from tsb_data (only when bundled in)
-    local function buildCharacter(tab, fullName, label, sectionNames)
+    local function buildCharacter(tab, fullName, label)
         if not tab then return end
         local sec = {}
         local function get(key, title)
@@ -923,13 +1076,13 @@ local function __run()
             local key, title = "combos", label .. " combos"
             if name:find("Kyoto") then key, title = "kyoto", label .. " kyoto"
             elseif name:find("Catch") then key, title = "tech", label .. " tech" end
-            get(key, title):Button(name:gsub("_", " ") .. "  [" .. c.confidence .. "]", describe(c.steps), function()
+            get(key, title):Button(name:gsub("_", " ") .. "  [" .. tostring(c.confidence or "?") .. "]", describe(c.steps), function()
                 runMacro(c.steps, fullName)
             end)
         end
-        tab:Slider("Macro speed (higher = slower)", 0.5, 2, 1, 0.05, function(v) macroSpeed = v end)
-        tab:Label("Tap a card to play the combo as inputs, tap again to stop. Moves use hotbar slots 1-4 (unverified order).", 40)
+        tab:Label("Tap a card to play the combo as inputs, tap again to stop. Moves use hotbar slots 1-4 (unverified order). Speed: Main tab.")
     end
+    buildCharacter(Main_, "Universal", "Universal")
     buildCharacter(Saitama, "The Strongest Hero", "Saitama")
     buildCharacter(Garou, "Hero Hunter", "Garou")
 
@@ -941,20 +1094,27 @@ local function __run()
     Tech:Slider("Cooldown (s)", 0.1, 3, 0.6, 0.05, function(v) Settings.TechCooldown = v end)
     Tech:Label("Dash key defaults to Q - change Settings.TechKey if you rebound it.")
 
-    -- Teleports
-    Tele:Label("Teleport to a player")
-    local function refreshPlayers()
+    -- Teleports (list follows players joining / leaving)
+    local playerSec = Tele:Section("Players")
+    local function teleportTo(p)
+        local mine = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        local theirs = p.Character and p.Character:FindFirstChild("HumanoidRootPart")
+        if mine and theirs then mine.CFrame = theirs.CFrame * CFrame.new(0, 0, 4) end
+    end
+    local function refreshPlayers(leaving)
+        playerSec:Clear()
+        local list = {}
         for _, p in ipairs(Players:GetPlayers()) do
-            if p ~= LocalPlayer then
-                Tele:Button(p.DisplayName .. " (@" .. p.Name .. ")", function()
-                    local mine = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                    local theirs = p.Character and p.Character:FindFirstChild("HumanoidRootPart")
-                    if mine and theirs then mine.CFrame = theirs.CFrame * CFrame.new(0, 0, 4) end
-                end)
-            end
+            if p ~= LocalPlayer and p ~= leaving then list[#list + 1] = p end
+        end
+        table.sort(list, function(a, b) return a.DisplayName:lower() < b.DisplayName:lower() end)
+        for _, p in ipairs(list) do
+            playerSec:Button(p.DisplayName, "@" .. p.Name, function() teleportTo(p) end)
         end
     end
     refreshPlayers()
+    connect(Players.PlayerAdded, function() refreshPlayers() end)
+    connect(Players.PlayerRemoving, function(p) refreshPlayers(p) end)
     Tele:Button("Teleport to Spawn", function()
         local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
         local spawn = workspace:FindFirstChildWhichIsA("SpawnLocation", true)
@@ -980,7 +1140,7 @@ local function __run()
         Engine.loadData(Data)
         local Pred = createTab("Predictor", "?")
         Pred:Label("Guesses which combo you are doing from your M1 / dash / jump inputs and what usually comes next.", 40)
-        local out = Pred:Label("Waiting for input...", 120)
+        local out = Pred:Label("Waiting for input...")
         out.TextSize = 13
         out.TextColor3 = Theme.Text
         local predictor = Engine.newPredictor()
@@ -996,13 +1156,13 @@ local function __run()
                 return "Q"
             end
         end
-        UserInputService.InputBegan:Connect(function(input, gp)
+        connect(UserInputService.InputBegan, function(input, gp)
             if gp then return end
             local t = token(input)
             if t then predictor:feed(t, os.clock()) end
         end)
         local acc = 0
-        RunService.Heartbeat:Connect(function(dt)
+        connect(RunService.Heartbeat, function(dt)
             acc = acc + dt
             if acc < 0.1 then return end
             acc = 0
