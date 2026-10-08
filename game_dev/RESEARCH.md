@@ -48,3 +48,24 @@ Character Creator V1 / skill builder; Tech Prodigy buffed, Brutal Demon & Martia
 - https://en.namu.wiki/w/The%20Strongest%20Battlegrounds/%ED%8C%81%20%EB%B0%8F%20%EC%BD%A4%EB%B3%B4
 - https://earnaldo.com/blog/the-strongest-battlegrounds-update-may-2026
 - YouTube: "How to Do Oreo Tech in The Strongest Battlegrounds (Easy Tutorial)" BhaNF2-v8N0; "GAROU ALL TECHS TUTORIAL + KYOTO COMBO AND TWISTED COMBO" mVbSgpfVkQ0
+
+---
+## Round 3 additions (all now encoded in `tsb_data.lua`)
+Same limit applies: search-result summaries only, no full page reads; fan guides disagree.
+
+**Rosters** (names differ between guides): Saitama/The Strongest Hero, Garou/Hero Hunter (+Monster form), Genos/Destructive Cyborg,
+Sonic/Deadly Ninja, Metal Bat/Brutal Demon, Tatsumaki/Wild Psychic, Atomic Samurai/Blade Master, Tech Prodigy (gamepass),
+Undying Hero (May 2026). Suiryu: nothing verified. Child Emperor = Tech Prodigy's source character.
+Tech Prodigy numbers (Deltia's/games.gg/wiki): Weboom 16.5% 18.3s, Plasma Cannon 10.1/35.2% 20.7s, Trinity Tear 20% 19.5s,
+Twin Burst 15.6% 21.5s, M1 "Mechanical Combat" 14% 4 hits; Iron Giant awakening 25%, +115 HP, Photon Edge 51.5% 8s,
+Photon Dive 65% 25s, Missiles 15x2.2%, Conquest 100s cd.
+
+**Per-character combos found:** Saitama (beginner/basic/quick/advanced), Genos (easy, ult string), Sonic (easy/extended),
+Metal Bat (2 fan routes), Atomic Samurai (3 variants), Tatsumaki (2 + safer Stone Coffin route), Garou (Kyoto variants).
+**Universal techs found:** Ragdoll Cancel, Wall Combo/Extend/Tech, True Downslam, Upside Down Ragdoll, M1 Shove, Delayed M1s,
+Backdash/Side-dash/Jump cancels, 3M1 reset, Uppercut Dash, anti-cancel string, Saitama/Garou catches.
+**Mechanic insights used for prediction:** (1) M1 stun blocks dashing - so true combos are those ending in an M1 stun;
+(2) ragdoll cancel is once per ~30s, so predict a cancel attempt on the first ragdoll and a true punish on the second;
+(3) many combos share the "M1 x3 -> X" prefix, so the predictor tracks all candidates and weights next inputs.
+**Unreliable/ignored:** a wiki page claiming a 25% meter ult-cancel and "40% frame reduction" ragdoll cancel; exploit-script pages.
+**Still missing:** Oreo tech inputs, Twisted combo inputs, Suiryu kit, Genos/Sonic/Suiryu-specific techs, official patch notes.

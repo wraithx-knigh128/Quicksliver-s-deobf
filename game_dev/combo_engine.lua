@@ -10,40 +10,28 @@
     (itemlevel.net) found by search; I could not open the page to double-check it and
     TSB gets patched often, so treat it as a starting point. No reliable source for an
     "Oreo" combo was found, so none is invented - add it with Engine.define(...).
+    Data lives in tsb_data.lua: Engine.loadData(require("tsb_data")).
 ]]
 
 local Engine = {}
 
-Engine.Combos = {
-    Kyoto = {
-        maxGap = 1.2,
-        steps = {
-            "M1", "M1", "M1",
-            "SIDEDASH", "FLOWING_WATER",
-            "LETHAL_WHIRLWIND",
-            "HOLD_SPACE+HUNTERS_GRASP",
-            "M1", "SIDEDASH", "UPPERCUT", "Q",
-        },
-    },
-    -- Garou variant listed by Gamezebo (unverified):
-    KyotoGarou = {
-        maxGap = 1.2,
-        steps = {
-            "Q", "M1", "M1", "M1", "FLOWING_WATER", "SIDEDASH", "HUNTERS_GRASP",
-            "Q", "M1", "M1", "M1", "LETHAL_WHIRLWIND",
-        },
-    },
-}
+Engine.Combos = {}
+Engine.Mechanics = {}
+Engine.Techs = {}
+Engine.Characters = {}
 
--- Game numbers gathered from fan wikis/guides (see RESEARCH.md). Several sources disagree,
--- so these are tunable defaults for YOUR game, not verified TSB data.
-Engine.Mechanics = {
-    m1Chain          = {3, 3, 4, 5},   -- % damage per hit, 4th launches
-    wallComboDamage  = 12,             -- % (4th M1 near wall + forward dash)
-    sideDashCooldown = 2,              -- s (one wiki; another says ~1)
-    frontDashCooldown = 5,             -- s, shared with back dash
-    ragdollCancelCooldown = 30,        -- s (sources say 20-30)
-}
+-- Load tsb_data.lua (or your own table with the same shape).
+function Engine.loadData(data, defaultGap)
+    for name, c in pairs(data.Combos or {}) do
+        Engine.Combos[name] = {
+            steps = c.steps, maxGap = c.maxGap or defaultGap or 1.2,
+            character = c.character, confidence = c.confidence,
+        }
+    end
+    for k, v in pairs(data.Mechanics or {}) do Engine.Mechanics[k] = v end
+    Engine.Techs, Engine.Characters = data.Techs or {}, data.Characters or {}
+    return Engine
+end
 
 -- Register / replace a combo (this is where "Oreo" and your own combos go).
 function Engine.define(name, steps, maxGap)
@@ -88,6 +76,18 @@ function Predictor:feed(token, now)
             if self.onComplete then self.onComplete(name) end
         end
     end
+end
+
+-- Aggregate "what input comes next?" over every live candidate: {token -> weight}, plus best token.
+function Predictor:nextInputs(now)
+    local weights, best, bestW = {}, nil, 0
+    for _, r in ipairs(self:predict(now)) do
+        if r.next then
+            weights[r.next] = (weights[r.next] or 0) + r.confidence
+            if weights[r.next] > bestW then best, bestW = r.next, weights[r.next] end
+        end
+    end
+    return weights, best
 end
 
 -- Likely combos right now, best first.
