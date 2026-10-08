@@ -85,6 +85,7 @@ CH.page('roles', function (root) {
       var pg = th.pings.slice(); (TYPE_ROLES[f.type] || []).filter(function (x) { return x.ping; }).forEach(function (x) { pg.unshift(x.n); });
       pg.slice(0, alloc.pings).forEach(function (nm) { add('pings', nm, { mentionable: true, perms: [], note: 'Opt-in notification role. Make it mentionable and let members self-assign.' }); });
     }
+    var seen = {}; roles = roles.filter(function (r) { var k = r.name.toLowerCase(); if (seen[k]) return false; seen[k] = 1; return true; });
     // naming style
     roles.forEach(function (r, i) {
       var nm = r.name;
@@ -112,14 +113,14 @@ CH.page('roles', function (root) {
   /* ---------------- UI ---------------- */
   var form = Object.assign({ type: 'community', theme: 'minimal', cats: ['staff', 'special', 'levels', 'cosmetic', 'pings'], count: 16, style: 'plain', colors: 'themed' }, CH.Store.get('form:roles', {}));
   function persist() { CH.Store.set('form:roles', form); }
-  var roles = [], tab = 'list';
+  var roles = [], tab = 'list'; form.count = Math.min(form.count, 26);
 
   root.appendChild(ui.pageHead({ icon: 'tag', title: 'Role Generator', desc: 'A themed role hierarchy — names, colours and the least permissions each role needs.' }));
 
   var typeChips = ui.chips({ label: 'Server type', sm: true, value: form.type, options: TYPES.map(function (t) { return { value: t[0], label: t[1] }; }), onChange: function (v) { form.type = v; persist(); } });
   var themeChips = ui.chips({ label: 'Theme', sm: true, value: form.theme, options: Object.keys(THEMES).map(function (k) { return { value: k, label: THEMES[k].label }; }), onChange: function (v) { form.theme = v; persist(); } });
   var catChips = ui.chips({ label: 'Role groups', multi: true, sm: true, value: form.cats, options: CATS.map(function (c) { return { value: c[0], label: c[1] }; }), onChange: function (v) { form.cats = v; persist(); } });
-  var countR = ui.range({ label: 'Number of roles', min: 6, max: 40, value: form.count, onInput: function (v) { form.count = v; persist(); } });
+  var countR = ui.range({ label: 'Number of roles', min: 6, max: 26, value: form.count, onInput: function (v) { form.count = v; persist(); } });
   var styleF = ui.field({ label: 'Name style', type: 'select', value: form.style, options: [{ value: 'plain', label: 'Plain' }, { value: 'emoji', label: 'Emoji prefix' }, { value: 'symbol', label: 'Symbol prefix (✦ Name)' }, { value: 'upper', label: 'UPPERCASE' }, { value: 'bracket', label: '「 Bracketed 」' }], onInput: function (v) { form.style = v; persist(); } });
   var colorF = ui.field({ label: 'Colours', type: 'select', value: form.colors, options: [{ value: 'themed', label: 'Themed palette' }, { value: 'mono', label: 'Single hue' }, { value: 'rainbow', label: 'Rainbow' }], onInput: function (v) { form.colors = v; persist(); } });
 
