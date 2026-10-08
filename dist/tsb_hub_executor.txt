@@ -17,6 +17,8 @@ local BACKGROUND_URL = ""   -- optional fixed image (direct link). "" = pick one
 local BACKGROUND_SOURCE = "waifu.pics"   -- "waifu.pics" or "nekos.best" (SFW endpoints only)
 local BACKGROUND_TRANSPARENCY = 0.55
 local GUI_PARENT = "auto"   -- "auto" (gethui, CoreGui, PlayerGui) | "coregui" | "playergui". If the menu never shows, try "playergui".
+-- ...or set it before running without editing anything:  getgenv().AH_GUI_PARENT = "playergui"
+pcall(function() if getgenv and getgenv().AH_GUI_PARENT then GUI_PARENT = getgenv().AH_GUI_PARENT end end)
 
 -- Your own combos, shown as cards in the character tab. "Instant Twisted" has no published inputs, so
 -- add it here once you know them. Tokens: M1 Q FRONTDASH SIDEDASH BACKDASH JUMP or a move name such as

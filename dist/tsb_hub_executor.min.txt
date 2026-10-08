@@ -2,6 +2,7 @@ local BACKGROUND_URL = ""
 local BACKGROUND_SOURCE = "waifu.pics"
 local BACKGROUND_TRANSPARENCY = 0.55
 local GUI_PARENT = "auto"
+pcall(function() if getgenv and getgenv().AH_GUI_PARENT then GUI_PARENT = getgenv().AH_GUI_PARENT end end)
 local CUSTOM_COMBOS = {
 }
 local function notify(title, text, duration)
