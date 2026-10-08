@@ -12,6 +12,7 @@ ui = rd("tsb_animation_hub.lua")
 marker = "if not game:IsLoaded()"
 i = ui.index(marker)
 out = (ui[:i]
+       + as_module("DragTracker", rd("game_dev/drag_tracker.lua"))
        + as_module("Data", rd("game_dev/tsb_data.lua"))
        + as_module("Engine", rd("game_dev/combo_engine.lua"))
        + "\n" + ui[i:])

@@ -122,6 +122,16 @@ for i = #a.ctx.callbacks, 1, -1 do
 end
 print("exercised " .. clicked .. " click handlers")
 
+-- floating bar: lock and minimise clicks must land in the saved state
+local fab = a.genv.__AnimationHubFab
+check(type(fab) == "table", "floating bar state was not saved")
+if fab then
+    check(fab.locked == true, "Lock button did not lock")
+    check(fab.minimized == true, "minimise button did not minimise")
+    check(type(fab.x) == "number" and fab.x >= 4 and fab.x <= 800, "bar x is off screen: " .. tostring(fab.x))
+    check(type(fab.y) == "number" and fab.y >= 4 and fab.y <= 450, "bar y is off screen: " .. tostring(fab.y))
+end
+
 -- Close button must have run cleanup: global listeners disconnected, cleanup unregistered
 check(a.ctx.disconnects > 0, "cleanup did not disconnect any listener")
 check(a.genv.__AnimationHubCleanup == nil, "cleanup should unregister itself")
@@ -129,9 +139,13 @@ check(a.genv.__AnimationHubCleanup == nil, "cleanup should unregister itself")
 -- 2. re-running the script must clean the previous copy first
 local b = run({executor = "full", body = PNG})
 local before = b.ctx.disconnects
+b.genv.__AnimationHubFab = {x = 300, y = 200, locked = true, minimized = true}   -- pretend the user set this up
 local ok3 = pcall(b.fn)                      -- second execution in the same environment
 check(ok3, "second execution crashed")
 check(b.ctx.disconnects > before, "re-run did not clean up the previous instance")
+local fb = b.genv.__AnimationHubFab
+check(fb and fb.locked == true and fb.minimized == true and fb.x == 300 and fb.y == 200,
+    "re-run did not restore the floating bar's position / lock / minimised state")
 
 -- 3. image host returns an HTML error page -> nothing written, no crash
 local c = run({executor = "full", body = "<html>429 Too Many Requests</html>"})

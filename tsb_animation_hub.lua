@@ -267,20 +267,15 @@ local function __run()
         end)
     end
 
-    -- toggle UI with RightShift
-    connect(UserInputService.InputBegan, function(i, gp)
-        if not gp and i.KeyCode == Enum.KeyCode.RightShift then Main.Visible = not Main.Visible end
-    end)
-
-    -- floating button for touch devices (no keyboard to press RightShift)
-    do
-        local fab = new("TextButton", {
-            Text = "AH", Font = Enum.Font.GothamBold, TextSize = 14, TextColor3 = Theme.Text,
-            Size = UDim2.fromOffset(44, 44), Position = UDim2.new(0, 12, 0.5, -22),
-            BackgroundColor3 = Theme.Accent, AutoButtonColor = true, ZIndex = 10, Parent = Gui,
-        }, {corner(22)})
-        fab.MouseButton1Click:Connect(function() Main.Visible = not Main.Visible end)
+    -- show / hide the menu (RightShift on PC, the floating bar on touch devices)
+    local renderFab   -- assigned by the floating bar further down
+    local function toggleMenu()
+        Main.Visible = not Main.Visible
+        if renderFab then renderFab() end
     end
+    connect(UserInputService.InputBegan, function(i, gp)
+        if not gp and i.KeyCode == Enum.KeyCode.RightShift then toggleMenu() end
+    end)
 
     ---------------------------------------------------------------- sidebar / pages
     local Sidebar = new("ScrollingFrame", {
@@ -412,12 +407,18 @@ local function __run()
             render(false)
             -- the whole row is the hit area (the 40x20 switch alone is too small for a finger)
             local hit = new("TextButton", {Text = "", BackgroundTransparency = 1, AutoButtonColor = false, Size = UDim2.fromScale(1, 1), Parent = r})
-            hit.MouseButton1Click:Connect(function()
-                state = not state
+            local api = {}
+            function api:Get() return state end
+            function api:Set(v)
+                v = v and true or false
+                if v == state then return end
+                state = v
                 render(true)
                 task.spawn(cb, state)
-            end)
+            end
+            hit.MouseButton1Click:Connect(function() api:Set(not state) end)
             task.spawn(cb, state)
+            return api
         end
 
         function tab:Button(text, cb)
@@ -771,7 +772,10 @@ local function __run()
 
     -- Auto Tech
     Tech:Label("Recovers automatically when you get knocked down.")
-    Tech:Toggle("Auto Tech", false, function(on) Settings.AutoTech = on end)
+    local techToggle = Tech:Toggle("Auto Tech", false, function(on)
+        Settings.AutoTech = on
+        if renderFab then renderFab() end
+    end)
     Tech:Dropdown("Direction", {"Back", "Forward", "Left", "Right"}, "Back", function(v) Settings.TechDirection = v end)
     Tech:Slider("Reaction Delay (s)", 0, 0.5, 0.05, 0.01, function(v) Settings.TechDelay = v end)
     Tech:Slider("Cooldown (s)", 0.1, 3, 0.6, 0.05, function(v) Settings.TechCooldown = v end)
@@ -806,7 +810,7 @@ local function __run()
 
     -- Credit
     Credit:Label("Animation Hub UI")
-    Credit:Label("Toggle menu: RightShift")
+    Credit:Label("Toggle menu: RightShift, or the floating bar: Menu = show/hide, Tech = Auto Tech on/off, Lock = pin it in place, - = shrink it to a dot. Drag it anywhere.")
     Credit:Label("Background: random SFW image from waifu.pics / nekos.best (fan art, not copyright-free).", 40)
 
     -- Effects Preset
@@ -861,6 +865,114 @@ local function __run()
             lines[#lines + 1] = "Best guess next: " .. tostring(best)
             out.Text = table.concat(lines, "\n")
         end)
+    end
+
+    ---------------------------------------------------------------- floating bar (touch "keybind")
+    -- [Menu] [Tech] [Lock] [-]  - drag to move, Lock pins it, "-" shrinks it to a dot (tap the dot to expand).
+    -- Position / lock / minimised state survive re-running the script in the same game session.
+    do
+        local BAR_W, BAR_H, DOT = 196, 44, 36
+        local saved = genv.__AnimationHubFab or {}
+        local fabState = {x = saved.x, y = saved.y, locked = saved.locked == true, minimized = saved.minimized == true}
+        local vw0, vh0 = viewport()
+        fabState.x = fabState.x or 12
+        fabState.y = fabState.y or ((vh0 or 450) / 2 - BAR_H / 2)
+
+        local tracker = DragTracker and DragTracker.new(8)    -- no tracker (unbundled file): bar is simply fixed
+        if tracker then tracker:setLocked(fabState.locked) end
+
+        local fab = new("Frame", {
+            Size = UDim2.fromOffset(BAR_W, BAR_H), Position = UDim2.fromOffset(fabState.x, fabState.y),
+            BackgroundColor3 = Theme.Panel, BackgroundTransparency = 0.1, ZIndex = 10, Parent = Gui,
+        }, {corner(22), stroke(Theme.Accent, 1.5, 0.3)})
+
+        local function isPointer(i)
+            return i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch
+        end
+        local function attachDrag(obj)
+            if not tracker then return end
+            obj.InputBegan:Connect(function(i)
+                if isPointer(i) then tracker:begin(i.Position.X, i.Position.Y, fabState.x, fabState.y) end
+            end)
+        end
+        local function paint(btn, on)
+            btn.BackgroundColor3 = on and Theme.Accent or Theme.Item
+            btn.TextColor3 = on and Theme.Back or Theme.Text
+        end
+        local function tappable(onTap)
+            return function()
+                if tracker and tracker:suppressClick(os.clock()) then return end   -- that "click" was the end of a drag
+                onTap()
+            end
+        end
+        local function barButton(text, x, w, onTap)
+            local b = new("TextButton", {
+                Text = text, Font = Enum.Font.GothamBold, TextSize = 11, TextColor3 = Theme.Text,
+                BackgroundColor3 = Theme.Item, AutoButtonColor = false,
+                Size = UDim2.fromOffset(w, BAR_H - 8), Position = UDim2.fromOffset(x, 4), ZIndex = 11, Parent = fab,
+            }, {corner(14)})
+            b.MouseButton1Click:Connect(tappable(onTap))
+            attachDrag(b)
+            return b
+        end
+
+        local menuBtn, techBtn, lockBtn, minBtn, dot
+        local function place()
+            local w, h = BAR_W, BAR_H
+            if fabState.minimized then w, h = DOT, DOT end
+            local vw, vh = viewport()
+            if DragTracker and vw then
+                fabState.x, fabState.y = DragTracker.clamp(fabState.x, fabState.y, w, h, vw, vh, 4)
+            end
+            fab.Size = UDim2.fromOffset(w, h)
+            fab.Position = UDim2.fromOffset(fabState.x, fabState.y)
+            genv.__AnimationHubFab = fabState
+        end
+        renderFab = function()
+            paint(menuBtn, Main.Visible)
+            paint(techBtn, Settings.AutoTech)
+            techBtn.Text = Settings.AutoTech and "Tech ON" or "Tech OFF"
+            paint(lockBtn, fabState.locked)
+            lockBtn.Text = fabState.locked and "Locked" or "Lock"
+            for _, b in ipairs({menuBtn, techBtn, lockBtn, minBtn}) do b.Visible = not fabState.minimized end
+            dot.Visible = fabState.minimized
+            place()
+        end
+
+        menuBtn = barButton("Menu", 4, 46, toggleMenu)
+        techBtn = barButton("Tech OFF", 54, 54, function() techToggle:Set(not techToggle:Get()) end)
+        lockBtn = barButton("Lock", 112, 48, function()
+            fabState.locked = not fabState.locked
+            if tracker then tracker:setLocked(fabState.locked) end
+            renderFab()
+        end)
+        minBtn = barButton("-", 164, 28, function() fabState.minimized = true; renderFab() end)
+        dot = new("TextButton", {
+            Text = "AH", Font = Enum.Font.GothamBold, TextSize = 12, TextColor3 = Theme.Back,
+            BackgroundColor3 = Theme.Accent, AutoButtonColor = false, Visible = false,
+            Size = UDim2.fromOffset(DOT - 8, DOT - 8), Position = UDim2.fromOffset(4, 4), ZIndex = 11, Parent = fab,
+        }, {corner(14)})
+        dot.MouseButton1Click:Connect(tappable(function() fabState.minimized = false; renderFab() end))
+        attachDrag(dot)
+        attachDrag(fab)
+
+        if tracker then
+            connect(UserInputService.InputChanged, function(i)
+                if i.UserInputType ~= Enum.UserInputType.MouseMovement and i.UserInputType ~= Enum.UserInputType.Touch then return end
+                local nx, ny = tracker:move(i.Position.X, i.Position.Y)
+                if nx then fabState.x, fabState.y = nx, ny; place() end
+            end)
+            connect(UserInputService.InputEnded, function(i)
+                if isPointer(i) then tracker:finish(os.clock()) end
+            end)
+        end
+
+        -- keep it on screen when the screen rotates / resizes
+        local cam = workspace.CurrentCamera
+        local sig = cam and safe(function() return cam:GetPropertyChangedSignal("ViewportSize") end)
+        if sig then connect(sig, place) end
+
+        renderFab()
     end
 
     Main_:Select()
