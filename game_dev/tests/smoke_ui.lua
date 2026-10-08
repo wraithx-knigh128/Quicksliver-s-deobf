@@ -124,7 +124,7 @@ check(type(a.genv.__AnimationHubCleanup) == "function", "cleanup function not re
 
 -- ping: feed a few Heartbeat ticks, the label must show the measured 100 ms
 for _ = 1, 6 do for _, hb in ipairs(a.ctx.heartbeats) do pcall(hb, 1) end end
-check(a.textOf("Ping: 100 ms"), "ping label did not show the measured 100 ms; got: " .. tostring(a.textOf("^Ping:")))
+check(a.textOf("Ping: 100 ms"), "ping label did not show the measured 100 ms; got: " .. tostring(a.textOf("^Ping:") or "no label"))
 
 -- exercise every click handler (newest first so the Close button runs last)
 local clicked = 0
