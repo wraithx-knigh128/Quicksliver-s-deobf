@@ -4,7 +4,7 @@ Single-file executor script: `dist/tsb_hub_executor.min.txt` (built by `python3 
 
 Short loader (no pasting a 77 KB file):
 ```lua
-loadstring(game:HttpGet("https://raw.githubusercontent.com/wraithx-knigh128/Quicksliver-s-deobf/5f35d87f228b081bd1a9c847e04fb1ae5666b80b/dist/tsb_hub_executor.min.txt"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/wraithx-knigh128/Quicksliver-s-deobf/577f7fd3be2a2cea2407d5d9167c122666bd3301/dist/tsb_hub_executor.min.txt"))()
 ```
 
 Checks (from `game_dev/`):
