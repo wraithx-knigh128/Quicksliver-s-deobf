@@ -146,24 +146,33 @@ local function __run()
 
     ---------------------------------------------------------------- saved settings (loaded first: the theme needs them)
     local genv = safe(function() return getgenv() end) or _G
-    local SETTINGS_FILE = "animation_hub_settings.json"
-    local function loadSaved()
+    -- NOTHING is saved automatically. The only file is the config YOU make with "Save config" (Config tab); it is loaded
+    -- when the hub starts. (The old auto-saved animation_hub_settings.json is ignored.)
+    local CONFIG_FILE = "animation_hub_config.json"
+    local SESSION_KEY = "__AnimationHubSession"   -- in-memory hand-over for "Apply theme" / "Reload config": used once, then gone
+    local function readConfigFile()
         if not (isfile and readfile) then return {} end
-        local raw = safe(function() if isfile(SETTINGS_FILE) then return readfile(SETTINGS_FILE) end end)
+        local raw = safe(function() if isfile(CONFIG_FILE) then return readfile(CONFIG_FILE) end end)
         if type(raw) ~= "string" or raw == "" then return {} end
         local data = safe(function() return game:GetService("HttpService"):JSONDecode(raw) end)
         return type(data) == "table" and data or {}
+    end
+    local function loadSaved()
+        local carried, fromFile = genv[SESSION_KEY], genv[SESSION_KEY .. "FromFile"]
+        genv[SESSION_KEY], genv[SESSION_KEY .. "FromFile"] = nil, nil
+        if type(carried) == "table" then return carried, fromFile and "file" or "carried over" end
+        local data = readConfigFile()
+        return data, next(data) ~= nil and "file" or "none"
     end
     local function num(v, lo, hi, default)
         if type(v) ~= "number" or v ~= v then return default end
         return math.min(math.max(v, lo), hi)
     end
-    local Saved = loadSaved()
+    local Saved, SavedFrom = loadSaved()
 
     ---------------------------------------------------------------- theme
-    -- menu look: saved in the file, or (executors without files) kept in memory for the rebuild
-    local UiSaved = type(genv.__AnimationHubUi) == "table" and genv.__AnimationHubUi
-        or (type(Saved.ui) == "table" and Saved.ui) or {}
+    -- menu look: from your config (or carried over for a rebuild)
+    local UiSaved = type(Saved.ui) == "table" and Saved.ui or {}
     local Themes = {
         ["Rose Gold"] = {Back = {30, 20, 46}, Panel = {54, 38, 78}, Item = {76, 56, 106}, Hover = {98, 74, 136},
             Accent = {255, 112, 176}, Accent2 = {160, 112, 255}, Gold = {255, 214, 150}, WinA = {104, 62, 142}, WinB = {34, 22, 56}},
@@ -638,7 +647,7 @@ local function __run()
                 Text = text, Font = Enum.Font.Gotham, TextSize = 12, TextColor3 = Theme.SubText,
                 TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top,
                 TextWrapped = true, BackgroundTransparency = 1,
-                Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, Parent = parent or page,
+                Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, Parent = (typeof(parent) == "Instance") and parent or page,
             }, {new("UIPadding", {
                 PaddingLeft = UDim.new(0, 4), PaddingRight = UDim.new(0, 4),
                 PaddingTop = UDim.new(0, 2), PaddingBottom = UDim.new(0, 2),
@@ -714,6 +723,7 @@ local function __run()
                 end)
                 task.spawn(cb)
             end)
+            return r
         end
 
         function tab:Slider(text, min, max, default, step, cb, parent)
@@ -1089,7 +1099,13 @@ local function __run()
     local SavedPins = type(Saved.pins) == "table" and Saved.pins or {}
     local Armed, armedOrder = {}, {}                       -- Assist: armed combos (never saved: you start disarmed)
     -- auto block: grace = how long after their attack ends I keep F down, maxHold = never hold longer than this
-    local Block = {on = false, range = 14, aim = 60, delay = 0.10, grace = 0.15, maxHold = 1.0, minHold = 0.12, punchPause = 0.4, usePing = true}
+    local Block = {on = false, range = 14, aim = 60, delay = 0.10, grace = 0.15, maxHold = 1.0, minHold = 0.12, punchPause = 0.4, usePing = true,
+        lead = 0.05, learn = true, useLearned = true, chain = false, floater = true, style = "Balanced", pierceMode = "block"}
+    -- how early F goes down before a learned hit: Safe = comfortably early, Perfect = at the last moment (the "perfect block" crit)
+    local BlockStyles = {Safe = 0.12, Balanced = 0.05, Perfect = 0.02}
+    local BlockStyleNames = {"Safe", "Balanced", "Perfect"}
+    local PierceModes = {["Do nothing"] = "skip", ["Side dash"] = "dash", ["Block anyway"] = "block"}
+    local PierceNames = {"Do nothing", "Side dash", "Block anyway"}
     if type(Saved.block) == "table" then
         local sb = Saved.block
         Block.range = num(sb.range, 6, 30, Block.range)
@@ -1098,6 +1114,18 @@ local function __run()
         Block.grace = num(sb.grace, 0.05, 0.5, Block.grace)
         Block.maxHold = num(sb.maxHold, 0.3, 2, Block.maxHold)
         Block.usePing = sb.usePing ~= false
+        if BlockStyles[sb.style] then Block.style = sb.style; Block.lead = BlockStyles[sb.style] end
+        if sb.pierceMode == "skip" or sb.pierceMode == "dash" or sb.pierceMode == "block" then Block.pierceMode = sb.pierceMode end
+        Block.learn = sb.learn ~= false
+        Block.useLearned = sb.useLearned ~= false
+        Block.chain = sb.chain == true
+        Block.floater = sb.floater ~= false
+    end
+    -- the learner: how long after an enemy animation starts do I actually get hurt? (kept only if you press Save config)
+    local Learner = BlockPredict and BlockPredict.new()
+    if Learner then Learner:import(Saved.learned) end
+    if type(Saved.floater) == "table" and type(Saved.floater.x) == "number" and type(Saved.floater.y) == "number" then
+        Block.floaterPos = {x = Saved.floater.x, y = Saved.floater.y}
     end
     local SideAuto = {on = false, dir = "Closest", delay = 0.25, cooldown = 0.8, anims = {}}   -- auto side dash after your moves
     if type(Saved.sideAuto) == "table" then
@@ -1139,15 +1167,27 @@ local function __run()
         return ComboOpts[name]
     end
 
+    -- "dirty" only drives the status line in the Config tab ("unsaved changes"); it never writes anything
     local dirty, ready = false, false
-    local function markDirty() if ready then dirty = true end end
-    local function saveNow()
-        dirty = false
-        genv.__AnimationHubUi = {theme = pendingTheme, scale = uiScale, glass = glass}
-        if not (writefile and ComboOptions) then return end
+    local configStatus, fabRef
+    local function refreshConfigStatus()
+        if not configStatus then return end
+        local where = SavedFrom == "file" and "A config file was found and loaded when the hub started."
+            or (SavedFrom == "carried over" and "Your settings were carried over from the menu rebuild (they are not on disk)." or "No config file loaded - everything is at its defaults.")
+        configStatus.Text = where .. (dirty and "  You have changes that are NOT saved." or "")
+    end
+    local function markDirty()
+        if not ready or dirty then return end
+        dirty = true
+        refreshConfigStatus()
+    end
+    -- everything the hub remembers, as plain data (used by Save config and by the menu rebuild)
+    local function buildSnapshot()
         local combos = {}
-        for name, o in pairs(ComboOpts) do
-            if not ComboOptions.isDefault(o) then combos[name] = o end    -- only what differs from the defaults
+        if ComboOptions then
+            for name, o in pairs(ComboOpts) do
+                if not ComboOptions.isDefault(o) then combos[name] = o end    -- only what differs from the defaults
+            end
         end
         local pinData = {}
         if Pins then
@@ -1159,23 +1199,35 @@ local function __run()
                 pinData[name] = {x = pos.x, y = pos.y}
             end
         end
-        local uiData = {theme = pendingTheme, scale = uiScale, glass = glass}
-        genv.__AnimationHubUi = uiData                    -- also kept in memory so executors without files can rebuild
-        local data = {version = 1, timing = Timing, speed = macroSpeed, auto = Auto, combos = combos, pins = pinData, ui = uiData,
-            block = {range = Block.range, aim = Block.aim, delay = Block.delay, grace = Block.grace, maxHold = Block.maxHold, usePing = Block.usePing},
+        return {version = 2, timing = Timing, speed = macroSpeed, auto = Auto, combos = combos, pins = pinData,
+            ui = {theme = pendingTheme, scale = uiScale, glass = glass},
+            block = {range = Block.range, aim = Block.aim, delay = Block.delay, grace = Block.grace, maxHold = Block.maxHold, usePing = Block.usePing,
+                style = Block.style, pierceMode = Block.pierceMode, learn = Block.learn, useLearned = Block.useLearned, chain = Block.chain, floater = Block.floater},
+            learned = Learner and Learner:export() or nil,
+            floater = Block.floaterPos,
+            fab = fabRef and {x = fabRef.x, y = fabRef.y, locked = fabRef.locked, minimized = fabRef.minimized} or nil,
             sideAuto = {dir = SideAuto.dir, delay = SideAuto.delay, cooldown = SideAuto.cooldown, anims = SideAuto.anims}}
-        local json = safe(function() return game:GetService("HttpService"):JSONEncode(data) end)
-        if type(json) == "string" then pcall(writefile, SETTINGS_FILE, json) end
     end
-    onCleanup[#onCleanup + 1] = function() if dirty then saveNow() end end
-    do
-        local acc = 0
-        connect(RunService.Heartbeat, function(dt)
-            acc = acc + dt
-            if acc < 2 then return end                  -- write at most every 2 s, only when something changed
-            acc = 0
-            if dirty then saveNow() end
-        end)
+    -- returns true when the file was written
+    local function saveConfig()
+        if not writefile then return false, "Your executor cannot write files, so nothing can be saved." end
+        local json = safe(function() return game:GetService("HttpService"):JSONEncode(buildSnapshot()) end)
+        if type(json) ~= "string" then return false, "Could not turn the settings into a file." end
+        if not pcall(writefile, CONFIG_FILE, json) then return false, "Your executor refused to write the file." end
+        dirty = false
+        SavedFrom = "file"
+        refreshConfigStatus()
+        return true
+    end
+    local function deleteConfig()
+        local existed = isfile and safe(function() return isfile(CONFIG_FILE) end)
+        if delfile and existed then
+            pcall(delfile, CONFIG_FILE)
+        elseif writefile then
+            pcall(writefile, CONFIG_FILE, "")                  -- no delfile: an empty file counts as "no config"
+        end
+        SavedFrom = "none"
+        refreshConfigStatus()
     end
     local pingLabel, gapsLabel
 
@@ -1536,12 +1588,17 @@ local function __run()
 
     ---------------------------------------------------------------- auto block
     -- Blocks EVERY hit and lets go again quickly so you can punch:
-    --   * another player in front of you starts an attack aimed at you -> F goes down after a short delay
-    --     (shortened by your ping), is held through their attack animation, and is released a moment after it ends
+    --   * another player in front of you starts an attack aimed at you -> F goes down, is held through the hit,
+    --     and is released a moment after their attack ends
     --   * the next hit of a combo extends the hold, so there is no gap - but never longer than "Longest hold"
     --   * the moment YOU press M1 or a move key, the block drops and does not come back for a split second
+    -- WHEN F goes down: the first time an attack animation is seen it uses your "Delay". Every time one of those
+    -- animations actually hurts you, the script times "animation start -> damage" and remembers it (kept only with Save config; between
+    -- sessions). From then on F goes down just before that hit ("Perfect lead"), minus your ping - that is the
+    -- prediction. "Predict chain hits" also remembers which animation follows which (M1 1 -> 2 -> 3) and blocks the
+    -- NEXT punch of a chain before its animation even shows up.
     -- Only attacks that CAN be blocked are answered: in range, aimed at you, in front of you (hits from behind always
-    -- connect, charged hits and grabs ignore block). I cannot read a move's real hit frame, so tune "Delay".
+    -- connect, charged hits and grabs ignore block).
     do
         local state = BlockState and BlockState.new(Block)           -- reads Block.grace / maxHold / minHold / punchPause live
         local lastSwing = setmetatable({}, {__mode = "k"})
@@ -1549,8 +1606,28 @@ local function __run()
             if action == "press" then keyEvent(true, Enum.KeyCode.F)
             elseif action == "release" then keyEvent(false, Enum.KeyCode.F) end
         end
+        -- seconds from now until F should go down to be up at `hitIn` seconds from now (minus lead and ping)
+        local function pressIn(hitIn)
+            local base = math.max(hitIn - Block.lead, 0)
+            if not (Block.usePing and PingModel) then return base end
+            return PingModel.adjustDelay(base, currentPing(), Auto.strength, {dependent = true, offsetMs = Auto.offsetMs, minDelay = 0, maxFraction = 0.8})
+        end
+        -- an attack that ignores block: a side dash away from the closest player, timed like the block would have been
+        local dodgeUntil = 0
+        local function dodge(hitIn)
+            local now = os.clock()
+            if now < dodgeUntil or macroRunning then return end
+            dodgeUntil = now + 1.0                                    -- the dash has its own cooldown; never spam it
+            local wait = pressIn(hitIn)
+            task.spawn(function()
+                task.wait(wait)
+                if not (alive and Block.on) or macroRunning or isKnocked(LocalPlayer.Character) then return end
+                dash(resolveSide("Closest") == "Right" and Enum.KeyCode.A or Enum.KeyCode.D)
+            end)
+        end
         local function onEnemyAnimation(player, track)
-            if not (Block.on and CombatMath and state) or macroRunning then return end
+            if not (CombatMath and state) or macroRunning then return end
+            if not (Block.on or Block.learn) then return end
             local now = os.clock()
             if safe(function() return track.Looped end) == true then return end                  -- walk / idle loops
             local prio = safe(function() return track.Priority.Value end)
@@ -1560,22 +1637,144 @@ local function __run()
             local mine = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
             local theirs = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
             if not (mine and theirs) then return end
-            local ok = safe(function()
-                return CombatMath.shouldBlock(vec3(mine.Position), vec3(mine.CFrame.LookVector),
-                    vec3(theirs.Position), vec3(theirs.CFrame.LookVector), Block.range, Block.aim)
+            local snap = safe(function()
+                return {mp = vec3(mine.Position), ml = vec3(mine.CFrame.LookVector), tp = vec3(theirs.Position), tl = vec3(theirs.CFrame.LookVector)}
             end)
-            if not ok or isKnocked(LocalPlayer.Character) then return end
+            if not snap then return end
+            local dist = CombatMath.distance(snap.mp, snap.tp)
+            if not (dist and dist <= Block.range + 4 and CombatMath.facing(snap.tp, snap.tl, snap.mp, Block.aim)) then return end   -- not aimed at me
             lastSwing[player] = now
-            local delay = Block.delay
-            if Block.usePing and PingModel then
-                delay = PingModel.adjustDelay(delay, currentPing(), Auto.strength, {dependent = true, offsetMs = Auto.offsetMs, minDelay = 0})
-            end
+            local id = safe(function() return track.Animation.AnimationId end)
+            if type(id) ~= "string" then id = nil end
             local length = safe(function() return track.Length end)                               -- how long their swing lasts
-            if type(length) ~= "number" or length <= 0 then length = 0.35 end
-            state:threat(now, delay, math.min(length, 1.2))
+            if type(length) ~= "number" or length <= 0 then length = nil end
+            if Learner and Block.learn and id then Learner:swing(player, id, now, length) end     -- remember it for the damage that follows
+            if not Block.on then return end
+            if not CombatMath.shouldBlock(snap.mp, snap.ml, snap.tp, snap.tl, Block.range, Block.aim) or isKnocked(LocalPlayer.Character) then return end
+
+            local learned = Learner and Block.useLearned and id and Learner:offset(id)
+            if Learner and id and Block.pierceMode ~= "block" and Learner:isPierce(id) then       -- this attack went through F before: F is wasted on it
+                if Block.pierceMode == "dash" then dodge(learned or 0.3) end
+                return
+            end
+            if learned then
+                state:threat(now, pressIn(learned), Block.lead + 0.10)                            -- down just before the hit, up just after
+            else
+                local delay = Block.delay
+                if Block.usePing and PingModel then
+                    delay = PingModel.adjustDelay(delay, currentPing(), Auto.strength, {dependent = true, offsetMs = Auto.offsetMs, minDelay = 0})
+                end
+                state:threat(now, delay, math.min(length or 0.35, 1.2))
+            end
+            if Block.chain and Learner and id then                                                 -- predict the NEXT punch of the chain
+                local nextId, gap, seen = Learner:next(id)
+                local nextHit = nextId and seen >= 3 and Learner:offset(nextId)
+                if nextHit then state:threat(now, pressIn(gap + nextHit), Block.lead + 0.10) end
+            end
         end
-        connect(RunService.Heartbeat, function()
+        -- every time you lose health, learn how long after which enemy animation it happened
+        local function hookMyHealth(char)
+            task.spawn(function()
+                local hum = char:WaitForChild("Humanoid", 10)
+                if not (hum and alive) then return end
+                local last = hum.Health
+                connect(hum.HealthChanged, function(h)
+                    if type(h) == "number" and type(last) == "number" and h < last - 0.01 and Learner and Block.learn then
+                        local now = os.clock()
+                        local heldFor = (state and state.holding and state.holdStart) and (now - state.holdStart) or 0
+                        local id, offset = Learner:damage(now)
+                        if id then
+                            markDirty(); Block.lastLearned = {id = id, offset = offset}
+                            -- F was already down for ping + 60 ms (so the server had it up before the hit) and it still hurt:
+                            -- this attack ignores block (grab, downslam, charged hit, unblockable move)
+                            if heldFor >= (currentPing() or 0) / 1000 + 0.06 then Learner:pierced(id) end
+                        end
+                    end
+                    last = h
+                end)
+            end)
+        end
+        if LocalPlayer.Character then hookMyHealth(LocalPlayer.Character) end
+        connect(LocalPlayer.CharacterAdded, hookMyHealth)
+
+        -- the floater: a small round indicator you can drag anywhere. Ring colour = state (grey off, green armed,
+        -- pink while F is held). Tap it to switch Auto block on / off. The Lock button freezes it with the other buttons.
+        local floater, floaterRing, shown
+        local fTracker = DragTracker and DragTracker.new(8)
+        do
+            local vw, vh = viewport()
+            local fx = Block.floaterPos and Block.floaterPos.x or 14
+            local fy = Block.floaterPos and Block.floaterPos.y or math.floor((vh or 450) / 2 - 32)
+            floater = new("TextButton", {
+                Text = "BLOCK\nOFF", Font = Enum.Font.GothamBold, TextSize = 11, TextColor3 = Theme.Text, TextWrapped = true,
+                BackgroundColor3 = Theme.Panel, BackgroundTransparency = 0.1, AutoButtonColor = false,
+                Size = UDim2.fromOffset(64, 64), Position = UDim2.fromOffset(fx, fy), ZIndex = 9, Visible = Block.floater, Parent = Gui,
+            }, {corner(32), gloss(nil, 32, 1)})
+            floaterRing = stroke(Theme.SubText, 2.2, 0.15)
+            floaterRing.Parent = floater
+            local fScale = new("UIScale", {Scale = 0, Parent = floater})
+            tween(fScale, {Scale = 1}, 0.5, Enum.EasingStyle.Back)
+            local function place()
+                if DragTracker and vw then
+                    fx, fy = DragTracker.clamp(fx, fy, 64, 64, vw, vh, 4)
+                end
+                floater.Position = UDim2.fromOffset(fx, fy)
+                Block.floaterPos = {x = fx, y = fy}
+            end
+            place()
+            floater.InputBegan:Connect(function(i)
+                if fTracker and (i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch) then
+                    fTracker:begin(i.Position.X, i.Position.Y, fx, fy)
+                end
+            end)
+            floater.MouseButton1Down:Connect(function() tween(fScale, {Scale = 0.92}, 0.08) end)
+            floater.MouseButton1Up:Connect(function() tween(fScale, {Scale = 1}, 0.2, Enum.EasingStyle.Back) end)
+            floater.MouseButton1Click:Connect(function()
+                if fTracker and fTracker:suppressClick(os.clock()) then return end              -- that "click" ended a drag
+                if Block.flip then Block.flip() end
+            end)
+            connect(UserInputService.InputChanged, function(i)
+                if not fTracker then return end
+                if i.UserInputType ~= Enum.UserInputType.MouseMovement and i.UserInputType ~= Enum.UserInputType.Touch then return end
+                local nx, ny = fTracker:move(i.Position.X, i.Position.Y)
+                if nx then fx, fy = nx, ny; place() end
+            end)
+            connect(UserInputService.InputEnded, function(i)
+                if fTracker and (i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch) then
+                    local moved = fTracker.moved
+                    fTracker:finish(os.clock())
+                    if moved then markDirty() end
+                end
+            end)
+            local cam = workspace.CurrentCamera
+            local vsig = cam and safe(function() return cam:GetPropertyChangedSignal("ViewportSize") end)
+            if vsig then connect(vsig, place) end
+        end
+        local function paintFloater()
+            local mode = (not Block.on) and "off" or (state and state.holding and "hold" or "ready")
+            if mode == shown then return end
+            shown = mode
+            floater.Text = mode == "off" and "BLOCK\nOFF" or (mode == "hold" and "BLOCK\nHOLD" or "BLOCK\nREADY")
+            tween(floaterRing, {Color = mode == "off" and Theme.SubText or (mode == "hold" and Theme.Accent or Theme.Good)}, 0.15)
+            tween(floater, {BackgroundColor3 = mode == "hold" and Theme.Accent or Theme.Panel}, 0.12)
+            floater.TextColor3 = mode == "hold" and Theme.Back or Theme.Text
+        end
+        local learnTimer = 0
+        connect(RunService.Heartbeat, function(dt)
             if state then apply(state:tick(os.clock())) end
+            paintFloater()
+            learnTimer = learnTimer + dt
+            if learnTimer >= 1 then
+                learnTimer = 0
+                local lbl = Block.learnLabel
+                if lbl and Learner then
+                    local animCount, hitCount, ignoring = Learner:stats()
+                    local last = Block.lastLearned
+                    lbl.Text = string.format("Learned: %d attack animation(s) from %d hit(s) you took.%s%s", animCount, hitCount,
+                        last and string.format("  Last: hit %d ms after the swing started.", math.floor(last.offset * 1000 + 0.5)) or "",
+                        ignoring > 0 and string.format("  %d of them ignore block.", ignoring) or "")
+                end
+            end
         end)
         -- you want to hit: your M1 or a move key drops the block right now
         connect(UserInputService.InputBegan, function(input, gp)
@@ -1588,6 +1787,8 @@ local function __run()
         end)
         Block.reset = function() if state then apply(state:reset()) end end      -- switched off: let go of F
         Block.punch = function() if state then apply(state:punch(os.clock())) end end   -- a combo / assist starts: let go of F
+        Block.setLocked = function(v) if fTracker then fTracker:setLocked(v) end end
+        Block.setFloaterVisible = function(v) floater.Visible = v and true or false end
         local function hookEnemy(player)
             if player == LocalPlayer then return end
             local function hookChar(char)
@@ -1608,7 +1809,7 @@ local function __run()
     ---------------------------------------------------------------- pinned on-screen buttons
     -- Turn a combo's "On screen" switch on and a button for it appears on your screen. Tap it to run the combo
     -- (tap again to stop), drag it anywhere, the Lock button on the floating bar pins them in place, and the
-    -- Pins button on the bar hides / shows all of them. Pinned combos and their positions are saved.
+    -- Pins button on the bar hides / shows all of them. Pinned combos and their positions are only kept if you press Save config.
     local PinLayer = new("Frame", {Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, ZIndex = 8, Parent = Gui})
     local pinOrder = {}                            -- Pins: name -> {btn, scale, stroke, tracker, x, y}
     local pinsVisible, pinsLocked = true, false
@@ -1643,6 +1844,7 @@ local function __run()
     end
     local function setPinsLocked(v)
         pinsLocked = v and true or false
+        if Block.setLocked then Block.setLocked(pinsLocked) end
         for _, p in pairs(Pins) do if p.tracker then p.tracker:setLocked(pinsLocked) end end
     end
     local function setPinsVisible(v)
@@ -1764,6 +1966,7 @@ local function __run()
     local Tech   = createTab("Auto Tech", "*")
     local Tele   = createTab("Teleports", "@")
     local Effects = createTab("Effects Preset", "~")
+    local ConfigTab = createTab("Config", "=")
 
     -- Main
     Main_:Label("General utilities")
@@ -1820,37 +2023,53 @@ local function __run()
             ComboInfo[name] = {steps = c.steps, charName = fullName}
             local function drawer(parent)                       -- this combo's own options
                 local function set(key) return function(v) if o[key] ~= v then o[key] = v; markDirty() end end end
+                -- only the adjustments that change something for THIS combo are shown
+                local need = ComboOptions.needs(c.steps, function(tok)
+                    local k = KIND[tok]
+                    if k == "m1" or k == "jump" or k == "dash" then return k end
+                    if moveKey(tok, fullName) then return "move" end
+                end)
                 local pickers, sliders = {}, {}
-                pickers.auto = tab:Dropdown("Auto timing", {"global", "on", "off"}, o.auto, set("auto"), parent)
-                sliders.speed = tab:Slider("Speed (higher = slower)", 0.5, 2, o.speed, 0.05, set("speed"), parent)
-                sliders.m1 = tab:Slider("M1 gap (0 = global)", 0, 0.6, o.m1, 0.01, set("m1"), parent)
-                sliders.dash = tab:Slider("Dash gap (0 = global)", 0, 0.8, o.dash, 0.01, set("dash"), parent)
-                sliders.move = tab:Slider("Move gap (0 = global)", 0, 1.2, o.move, 0.01, set("move"), parent)
-                sliders.jump = tab:Slider("Jump gap (0 = global)", 0, 0.6, o.jump, 0.01, set("jump"), parent)
-                sliders.offsetMs = tab:Slider("Fine-tune (ms, + = later)", -100, 100, o.offsetMs, 5, set("offsetMs"), parent)
-                pickers.side = tab:Dropdown("Side dash goes", {"Closest", "Left", "Right"}, o.side, set("side"), parent)
+                if need.dependent then
+                    pickers.auto = tab:Dropdown("Auto timing", {"global", "on", "off"}, o.auto, set("auto"), parent)
+                end
+                if need.played >= 2 then
+                    sliders.speed = tab:Slider("Speed (higher = slower)", 0.5, 2, o.speed, 0.05, set("speed"), parent)
+                end
+                if need.m1 then sliders.m1 = tab:Slider("M1 gap (0 = global)", 0, 0.6, o.m1, 0.01, set("m1"), parent) end
+                if need.dash then sliders.dash = tab:Slider("Dash gap (0 = global)", 0, 0.8, o.dash, 0.01, set("dash"), parent) end
+                if need.move then sliders.move = tab:Slider("Move gap (0 = global)", 0, 1.2, o.move, 0.01, set("move"), parent) end
+                if need.jump then sliders.jump = tab:Slider("Jump gap (0 = global)", 0, 0.6, o.jump, 0.01, set("jump"), parent) end
+                if need.dependent then
+                    sliders.offsetMs = tab:Slider("Fine-tune (ms, + = later)", -100, 100, o.offsetMs, 5, set("offsetMs"), parent)
+                end
+                if need.side then pickers.side = tab:Dropdown("Side dash goes", {"Closest", "Left", "Right"}, o.side, set("side"), parent) end
                 pickers.pinMode = tab:Dropdown("Pinned button does", {"assist", "run"}, o.pinMode, function(v)
                     if o.pinMode ~= v then o.pinMode = v; markDirty(); if renderPins then renderPins() end end
                 end, parent)
                 -- Assist: which step is YOURS (everything after it is played for you)
                 local trigText = tab:Label("", parent)
+                local forgetRow
                 local function refreshTrig()
                     local idx, tok = triggerOf(name)
                     trigText.Text = idx and ("Trigger: step " .. idx .. " (" .. shortLabel(tok) .. ") - you cast it, I play the rest."
                         .. (o.trigAnim ~= "" and " Touch animation learned." or "")) or "No trigger"
+                    if forgetRow then forgetRow.Visible = o.trigAnim ~= "" end
                 end
-                sliders.trigger = tab:Slider("Trigger step # (0 = your first move)", 0, #c.steps, o.trigger, 1, function(v)
-                    if o.trigger ~= v then o.trigger = v; markDirty() end
-                    refreshTrig()
-                end, parent)
-                refreshTrig()
+                if need.choosable then
+                    sliders.trigger = tab:Slider("Trigger step # (0 = your first move)", 0, #c.steps, o.trigger, 1, function(v)
+                        if o.trigger ~= v then o.trigger = v; markDirty() end
+                        refreshTrig()
+                    end, parent)
+                end
                 tab:Button("Learn trigger (for on-screen touch buttons)", function()
                     local _, tok = triggerOf(name)
                     startLearning("combo", name, "Now cast " .. (tok and shortLabel(tok) or "the trigger move") .. " yourself, once")
                 end, parent)
-                tab:Button("Forget learned trigger", function()
+                forgetRow = tab:Button("Forget learned trigger", function()
                     if o.trigAnim ~= "" then o.trigAnim = ""; markDirty(); refreshTrig(); toast("Trigger forgotten") end
                 end, parent)
+                refreshTrig()
                 local reset = new("TextButton", {
                     Text = "Reset this combo", Font = Enum.Font.GothamMedium, TextSize = 13, TextColor3 = Theme.Text,
                     BackgroundColor3 = Theme.Panel, AutoButtonColor = false, Size = UDim2.new(1, 0, 0, 34), Parent = parent,
@@ -2017,6 +2236,30 @@ local function __run()
     Tech:Slider("Let go after their attack ends (s)", 0.05, 0.5, Block.grace, 0.01, blockSet("grace"))
     Tech:Slider("Longest hold (s)", 0.3, 2, Block.maxHold, 0.05, blockSet("maxHold"))
     Tech:Toggle("Shorten the delay by my ping", Block.usePing, blockSet("usePing"))
+    Tech:Label("LEARNING - every time a player's attack hurts you, I time how long after their animation started. Next time F goes down just before that hit instead of using the Delay above. It only sees hits that reach you (a blocked hit teaches nothing), so to teach it quickly spar for a bit with Auto block OFF. Learned timings are forgotten when you re-run unless you press Save config.")
+    Tech:Toggle("Learn from hits I take", Block.learn, blockSet("learn"))
+    Tech:Toggle("Use learned timing (predict the punch)", Block.useLearned, blockSet("useLearned"))
+    Tech:Dropdown("Block style", BlockStyleNames, Block.style, function(v)
+        if BlockStyles[v] and Block.style ~= v then Block.style = v; Block.lead = BlockStyles[v]; markDirty() end
+    end)
+    Tech:Label("Safe = F down early (hard to miss). Balanced = just before the hit. Perfect = at the last moment, for the perfect-block critical.")
+    local pierceDefault = "Block anyway"
+    for label, mode in pairs(PierceModes) do if mode == Block.pierceMode then pierceDefault = label end end
+    Tech:Dropdown("When an attack ignores block", PierceNames, pierceDefault, function(v)
+        local mode = PierceModes[v]
+        if mode and Block.pierceMode ~= mode then Block.pierceMode = mode; markDirty() end
+    end)
+    Tech:Label("An attack that still hurts although F was already down (grab, downslam, charged hit, unblockable move) is learned after 2 times. Block anyway = never skip (safest), Do nothing = keep your hands free, Side dash = dodge it.")
+    Tech:Toggle("Predict chain hits (experimental)", Block.chain, blockSet("chain"))
+    Block.learnLabel = Tech:Label("Learned: 0 attack animation(s) from 0 hit(s) you took.")
+    Tech:Button("Forget learned timings", function()
+        if Learner then Learner:forget(); Block.lastLearned = nil; markDirty(); toast("Forgot all learned timings") end
+    end)
+    Tech:Toggle("Show the block floater", Block.floater, function(v)
+        if Block.floater ~= v then Block.floater = v; markDirty() end
+        if Block.setFloaterVisible then Block.setFloaterVisible(v) end
+    end)
+    Block.flip = function() blockToggle:Set(not blockToggle:Get()) end
     Tech:Label("Perfect block timing depends on each move's hit frame, which I cannot read. Delay is shortened by your ping (Auto timing strength / fine-tune apply). Start at 0.10 s and nudge it: lower = blocks sooner. Longest hold caps one block, so you are never stuck blocking.")
 
     -- Teleports (list follows players joining / leaving)
@@ -2051,16 +2294,17 @@ local function __run()
 
     -- Credit
     Credit:Label("Animation Hub UI")
+    Credit:Label("Settings are NOT saved automatically - use the Config tab (Save config) when you want to keep them.")
     Credit:Label("Toggle menu: RightShift, or the floating bar: Menu = show/hide, Tech = Auto Tech on/off, Pins = show/hide pinned buttons, Lock = freeze bar and pinned buttons, - = shrink to a dot.")
-    Credit:Label("Background: random SFW image from waifu.pics / nekos.best (fan art, not copyright-free).", 40)
+    Credit:Label("Background: random SFW image from waifu.pics / nekos.best (fan art, not copyright-free).")
 
     -- Effects Preset: look + menu adjustments
     Effects:Label("Menu look")
     Effects:Dropdown("Theme", ThemeNames, themeName, function(v) pendingTheme = v end)
-    local function rebuild()                          -- rebuild the whole menu so a new theme applies everywhere
+    -- throw the menu away and build it again from `data` (a snapshot / config table); `data` is used once
+    local function restartWith(data, fromFile)
         if genv.AH_DISABLE_REBUILD then toast("Rebuild is disabled") return end
-        saveNow()
-        genv.__AnimationHubUi = {theme = pendingTheme, scale = uiScale, glass = glass}
+        genv[SESSION_KEY], genv[SESSION_KEY .. "FromFile"] = data, fromFile and true or nil
         cleanup()
         task.spawn(function()
             task.wait(0.4)
@@ -2071,6 +2315,7 @@ local function __run()
             end
         end)
     end
+    local function rebuild() restartWith(buildSnapshot()) end       -- keeps everything you have set in this session
     Effects:Button("Apply theme (rebuilds the menu)", rebuild)
     Effects:Slider("Menu size", 0.7, 1.25, uiScale, 0.05, function(v)
         if uiScale ~= v then
@@ -2082,19 +2327,38 @@ local function __run()
     Effects:Slider("Glass (higher = clearer picture)", 0.4, 0.95, glass, 0.01, function(v)
         if glass ~= v then glass = v; Veil.BackgroundTransparency = v; markDirty() end
     end)
-    Effects:Label("Background image", 24)
+    Effects:Label("Background image")
     Effects:Slider("Image opacity", 0.1, 1, 1 - BACKGROUND_TRANSPARENCY, 0.05, function(v)
         Background.ImageTransparency = 1 - v
     end)
     Effects:Dropdown("Source", {"waifu.pics", "nekos.best"}, BACKGROUND_SOURCE, function(v) BACKGROUND_SOURCE = v end)
     Effects:Button("New random background", function() refreshBackground(BACKGROUND_SOURCE) end)
-    Effects:Label("Images come from public waifu APIs (SFW endpoints). They are community fan art, so the artists keep the copyright - use your own CC0 image via BACKGROUND_URL if you need that.", 60)
+    Effects:Label("Images come from public waifu APIs (SFW endpoints). They are community fan art, so the artists keep the copyright - use your own CC0 image via BACKGROUND_URL if you need that.")
+
+    -- Config: the ONLY way anything is remembered between runs
+    ConfigTab:Label("NOTHING is saved automatically. Pinned buttons, armed combos, timings, Auto block settings, learned punch timings, the floater and bar positions and the theme all start fresh every time you run the script - unless you press Save config. A saved config is loaded the next time the hub starts.")
+    configStatus = ConfigTab:Label("")
+    ConfigTab:Button("Save config", function()
+        local ok, why = saveConfig()
+        toast(ok and "Config saved - it will be loaded next time" or ("Not saved: " .. tostring(why)))
+    end)
+    ConfigTab:Button("Reload saved config (rebuilds the menu)", function()
+        local data = readConfigFile()
+        if next(data) == nil then toast("There is no saved config to load") return end
+        restartWith(data, true)
+    end)
+    ConfigTab:Button("Delete saved config", function()
+        deleteConfig()
+        toast("Saved config deleted - the next start is clean")
+    end)
+    ConfigTab:Label("Reload throws away what you changed since the last Save and rebuilds the menu from the file. Delete only removes the file; what is on screen now stays until you re-run.")
+    refreshConfigStatus()
 
     -- Predictor tab: only when combo_engine/tsb_data were bundled in (see game_dev/build_executor.py)
     if Engine and Data then
         Engine.loadData(Data)
         local Pred = createTab("Predictor", "?")
-        Pred:Label("Guesses which combo you are doing from your M1 / dash / jump inputs and what usually comes next.", 40)
+        Pred:Label("Guesses which combo you are doing from your M1 / dash / jump inputs and what usually comes next.")
         local out = Pred:Label("Waiting for input...")
         out.TextSize = 13
         out.TextColor3 = Theme.Text
@@ -2140,11 +2404,13 @@ local function __run()
     --   Menu  show / hide this window          Tech  Auto Tech on / off
     --   Pins  show / hide the pinned buttons   Lock  freeze the bar AND the pinned buttons in place
     --   -     shrink the bar to a dot (tap the dot to bring it back). Drag the bar anywhere.
-    -- Position / lock / minimised state survive re-running the script in the same game session.
+    -- Position / lock / minimised state are part of your config (Config tab) - they are not remembered on their own.
     do
         local BAR_W, BAR_H, DOT = 304, 46, 38
-        local saved = genv.__AnimationHubFab or {}
-        local fabState = {x = saved.x, y = saved.y, locked = saved.locked == true, minimized = saved.minimized == true}
+        local saved = type(Saved.fab) == "table" and Saved.fab or {}
+        local fabState = {x = type(saved.x) == "number" and saved.x or nil, y = type(saved.y) == "number" and saved.y or nil,
+            locked = saved.locked == true, minimized = saved.minimized == true}
+        fabRef = fabState
         local vw0 = viewport()
         fabState.x = fabState.x or math.floor(((vw0 or 800) - BAR_W) / 2)     -- top centre: clear of the thumbsticks
         fabState.y = fabState.y or 10
@@ -2205,7 +2471,6 @@ local function __run()
             end
             fab.Size = UDim2.fromOffset(w, h)
             fab.Position = UDim2.fromOffset(fabState.x, fabState.y)
-            genv.__AnimationHubFab = fabState
         end
         renderFab = function()
             paint(menuBtn, menuOpen)
@@ -2235,15 +2500,16 @@ local function __run()
             if tracker then tracker:setLocked(fabState.locked) end
             setPinsLocked(fabState.locked)
             toast(fabState.locked and "Locked: the bar and pinned buttons stay where they are" or "Unlocked: drag them anywhere")
+            markDirty()
             renderFab()
         end)
-        minBtn = barButton("-", 276, 24, function() fabState.minimized = true; renderFab() end)
+        minBtn = barButton("-", 276, 24, function() fabState.minimized = true; markDirty(); renderFab() end)
         dot = new("TextButton", {
             Text = "AH", Font = Enum.Font.GothamBold, TextSize = 12, TextColor3 = Theme.Back,
             BackgroundColor3 = Theme.White, AutoButtonColor = false, Visible = false,
             Size = UDim2.fromOffset(DOT - 8, DOT - 8), Position = UDim2.fromOffset(4, 4), ZIndex = 11, Parent = fab,
         }, {corner(15), accentGradient(nil, 0)})
-        dot.MouseButton1Click:Connect(tappable(function() fabState.minimized = false; renderFab() end))
+        dot.MouseButton1Click:Connect(tappable(function() fabState.minimized = false; markDirty(); renderFab() end))
         attachDrag(dot)
         attachDrag(fab)
 
@@ -2254,7 +2520,10 @@ local function __run()
                 if nx then fabState.x, fabState.y = nx, ny; place() end
             end)
             connect(UserInputService.InputEnded, function(i)
-                if isPointer(i) then tracker:finish(os.clock()) end
+                if isPointer(i) then
+                    if tracker.moved then markDirty() end
+                    tracker:finish(os.clock())
+                end
             end)
         end
 
@@ -2272,8 +2541,9 @@ local function __run()
         tween(fabScale, {Scale = 1}, 0.55, Enum.EasingStyle.Back)       -- pops in so you notice it
     end
 
-    ready = true                       -- from here on, changing a slider marks the settings as unsaved
-    dirty = next(Saved) ~= nil         -- a loaded file is re-written once in its cleaned-up form
+    ready = true                       -- from here on, changing something marks the config as "not saved" (nothing is written)
+    dirty = SavedFrom == "carried over"   -- carried-over settings live in memory only
+    refreshConfigStatus()
     Main_:Select()
     setMenu(true)                      -- fade + scale the window in
     notify("Animation Hub", "Ready - the floating bar is at the top of your screen (Menu / Tech / Pins / Lock). RightShift also toggles the menu.", 7)

@@ -7,7 +7,9 @@ src = open(script, encoding="utf-8").read()
 assert "]====]" not in src
 smoke = open("tests/smoke_ui.lua", encoding="utf-8").read()
 with tempfile.NamedTemporaryFile("w", suffix=".lua", delete=False, encoding="utf-8") as f:
-    f.write("SCRIPT_SOURCE = [====[" + src + "]====]\n" + smoke)
+    types = open("tests/prop_types.lua", encoding="utf-8").read()
+    assert "]====]" not in types
+    f.write("SCRIPT_SOURCE = [====[" + src + "]====]\nPROP_TYPES_SOURCE = [====[" + types + "]====]\n" + smoke)
     path = f.name
 r = subprocess.run([os.environ.get("LUAU", "luau"), path], capture_output=True, text=True, timeout=300)
 print(r.stdout.strip()); print(r.stderr.strip()[:2000])

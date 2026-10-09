@@ -88,6 +88,13 @@ Data.Mechanics = {
     frontDashCooldown     = 5,     -- shared with back dash
     ragdollCancelCooldown = 30,    -- sources say 20-30
     deathCounterWindow    = 10,
+    -- combat timing facts used by Auto block (fan wikis / guides; the perfect-block window is an unverified blog claim)
+    m1StartupFramesSaitama = 11,   -- The Strongest Hero wiki entry
+    m1StartupFramesMartialArtist = 12,
+    blockLockoutAfterM1   = 0.2,   -- cannot block for ~0.2 s after throwing an M1 (two sources agree)
+    blockedFourthM1Stun   = 1.0,   -- a blocked / missed 4th punch stuns you ~1 s (games.gg)
+    perfectBlockFramesClaim = 3,   -- ~50 ms at 60 fps (dungeonpath blog, unverified)
+    critWindow            = 4,     -- Black Flash needs the 2nd perfect block within ~4 s of the 1st
 }
 
 ---------------------------------------------------------------- techs (non-linear descriptions)
@@ -181,6 +188,12 @@ Data.Techs = {
      desc = "Hold F: arms up, covers 180 degrees in front, stops all M1s and many specials. You move slowly and cannot act. ~0.2s block lockout after your own M1. Charged (held) hits break block, grabs ignore it, attacks from behind always connect. Tap block, do not hold."},
     {name = "Perfect Block -> Critical Hit", character = "Universal", confidence = "medium",
      desc = "Blocking an M1 at the last moment gives your next basic attack a Critical Hit (about triple damage, cracking sound). It stays until you are ragdolled (one source says ~4 s). Only works on real players, not dummies."},
+    {name = "M1 timing facts (for blocking)", character = "Universal", confidence = "low",
+     desc = "Saitama's M1 starts up in ~11 frames, Martial Artist's ~12 (about 0.18-0.2 s at 60 fps). After throwing an M1 you cannot block for ~0.2 s - opponents dash in then. A blocked or missed 4th punch stuns you ~1 s. A blog claims the perfect-block window is only ~3 frames (~50 ms) - unverified; nothing found gives per-move hit frames, which is why Auto block LEARNS the hit time from the damage you take."},
+    {name = "M1 Hold vs Tap", character = "Universal", confidence = "low",
+     desc = "Settings > M1 Mode: Hold keeps punching while held, Tap = one punch per press. Tap gives control over when the 4th punch lands. Delayed M1s use the M1 stun to space hits."},
+    {name = "Latency and blocking", character = "Universal", confidence = "low",
+     desc = "Block and damage are decided by the server, so what you see is already late by about your ping and your key press arrives a ping later. That is why the script presses F earlier by roughly your ping and why timings are learned per animation."},
     {name = "Black Flash", character = "Universal", confidence = "low",
      desc = "A perfect block while a Critical Hit is active, before you ragdoll: the next hit is a Black Flash (about double a Critical Hit; sources say up to 18%). It can be passed to a different target with your next hit."},
     {name = "Uppercut-shove reset", character = "The Strongest Hero", confidence = "low",

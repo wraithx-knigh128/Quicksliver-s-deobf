@@ -21,6 +21,7 @@ local CO = ex:require("combo_options.lua")
 local Assist = ex:require("assist.lua")
 local CM = ex:require("combat_math.lua")
 local BS = ex:require("block_state.lua")
+local BP = ex:require("block_predict.lua")
 Engine.loadData(Data)
 
 local function feedAll(p, tokens, t0, dt)
@@ -481,6 +482,113 @@ test("block state: several attacks before the press, bad input, reset", function
     eq(b:reset(), "release")
     eq(b:reset(), nil)
     eq(b:tick(5), nil)
+end)
+
+test("block predict: learns the hit offset of an animation from the damage that follows it", function()
+    local p = BP.new()
+    eq(p:offset("a"), nil)
+    p:swing("E", "a", 10.00, 0.4); eq(p:damage(10.22) ~= nil, true)                 -- hit 0.22 s after the swing started
+    eq(p:offset("a"), nil, "one sample is not enough")
+    p:swing("E", "a", 20.00, 0.4); p:damage(20.24)
+    local off, spread, n = p:offset("a")
+    near(off, 0.22 + 0.3 * (0.24 - 0.22), 1e-9); eq(n, 2); assert(spread > 0)
+    for i = 1, 20 do p:swing("E", "a", 30 + i * 3, 0.4); p:damage(30 + i * 3 + 0.25) end
+    near(p:offset("a"), 0.25, 0.01, "converges on the true offset")
+    eq(select(1, p:stats()), 1)
+end)
+
+test("block predict: damage is attributed to the swing that fits, outliers and old swings are ignored", function()
+    local p = BP.new()
+    for i = 1, 5 do p:swing("E", "slow", i * 4, 0.5); p:damage(i * 4 + 0.40) end      -- slow move: ~0.40 s
+    for i = 1, 5 do p:swing("E", "fast", 40 + i * 4, 0.3); p:damage(40 + i * 4 + 0.15) end
+    -- both swings are in flight; the damage 0.41 s after "slow" started and 0.16 s after "fast" must go to the better fit
+    p:swing("E", "slow", 100.00, 0.5); p:swing("F", "fast", 100.25, 0.3)
+    local id = p:damage(100.41)                                                       -- slow at 0.41, fast at 0.16
+    assert(id == "slow" or id == "fast", "attributed to something")
+    local before = select(3, p:offset("fast"))
+    p:swing("E", "fast", 200, 0.3)
+    eq(p:damage(201.9), nil, "1.9 s after the swing is too late to be its hit")
+    eq(p:damage(200.0), nil, "damage at the same instant (0 s) is not a hit from that swing")
+    p:swing("E", "fast", 300, 0.3); p:damage(300.9)                                   -- an ult / poison tick: 0.9 s, a big outlier
+    eq(select(3, p:offset("fast")), before, "an outlier must not move a well-known animation")
+    eq(p:damage("x"), nil)
+end)
+
+test("block predict: remembers which animation follows which (a chain) and how long after", function()
+    local p = BP.new()
+    for round = 0, 3 do
+        local t = round * 10
+        p:swing("E", "m1a", t, 0.3); p:swing("E", "m1b", t + 0.30, 0.3); p:swing("E", "m1c", t + 0.62, 0.3)
+    end
+    local nid, dt, n = p:next("m1a")
+    eq(nid, "m1b"); near(dt, 0.30, 0.01); assert(n >= 3)
+    eq(p:next("m1b"), "m1c"); eq(p:next("m1c"), nil, "the next round starts 9 s later: not a chain")
+    eq(p:next("unknown"), nil)
+    local q = BP.new(); q:swing("E", "a", 0, 0.3); q:swing("E", "b", 0.3, 0.3)
+    eq(q:next("a"), nil, "seen only once: not trusted")
+    q:swing("X", "a", 5, 0.3); q:swing("Y", "b", 5.3, 0.3)
+    eq(q:next("a"), nil, "different enemies do not form a chain")
+end)
+
+test("block predict: export / import round-trips and import sanitises garbage", function()
+    local p = BP.new()
+    for i = 1, 3 do p:swing("E", "a", i * 5, 0.4); p:damage(i * 5 + 0.2) end
+    local data = p:export()
+    local q = BP.new(); q:import(data)
+    near(q:offset("a"), p:offset("a"), 1e-9); near(q:length("a"), 0.4, 1e-9)
+    local bad = BP.new()
+    bad:import({a = {n = 99999, offset = 99, spread = -3, length = "x"}, [5] = {n = 1}, b = "x", [string.rep("z", 500)] = {n = 2, offset = 0.2}, c = {n = 3, offset = 0/0}})
+    local o, sp, n = bad:offset("a")
+    near(o, 1.3, 1e-9); eq(sp, 0); eq(n, 500)
+    assert(bad:offset("b") == nil and bad:offset(5) == nil and bad:offset(string.rep("z", 500)) == nil, "garbage entries dropped")
+    near(bad:offset("c"), 0.2, 1e-9, "NaN offset replaced by a sane default")
+    bad:import("not a table"); bad:import(nil)
+    p:forget(); eq(p:offset("a"), nil); eq(select(2, p:stats()), 0)
+    local big = {}
+    for i = 1, 300 do big["id" .. i] = {n = 3, offset = 0.2} end
+    local r = BP.new(); r:import(big)
+    local cnt = 0
+    for _ in pairs(r:export()) do cnt = cnt + 1 end
+    assert(cnt <= 120, "never keep more than 120 animations")
+end)
+
+test("block predict: attacks that hit through a held block are remembered as unblockable (2 times)", function()
+    local p = BP.new()
+    eq(p:isPierce("g"), false, "unknown animation is not unblockable")
+    eq(p:pierced("g"), 1)
+    eq(p:isPierce("g"), false, "one sighting is not enough")
+    eq(p:pierced("g"), 2)
+    eq(p:isPierce("g"), true)
+    eq(p:isPierce("other"), false)
+    local learned, hits, piercing = p:stats()
+    eq(piercing, 1, "stats count unblockable animations")
+    eq(p:pierced(42), 0, "non-string id ignored"); eq(p:pierced(""), 0)
+    for _ = 1, 100 do p:pierced("g") end
+    local q = BP.new(); q:import(p:export())
+    eq(q:isPierce("g"), true, "export / import keeps it")
+    local bad = BP.new(); bad:import({x = {n = 0, pierce = 99999}, y = {n = 1, offset = 0.2, pierce = "no"}, z = {n = 0, pierce = -5}})
+    eq(bad:isPierce("x"), true); eq(bad:isPierce("y"), false); eq(bad:isPierce("z"), false)
+    p:forget(); eq(p:isPierce("g"), false, "forget wipes it")
+end)
+
+test("combo options: only the adjustments a combo needs are offered", function()
+    local kinds = {M1 = "m1", JUMP_M1 = "m1", JUMP = "jump", Q = "dash", FRONTDASH = "dash", SIDEDASH = "dash", BACKDASH = "dash", Flowing = "move", Lethal = "move"}
+    local function kindOf(tok) return kinds[tok] end
+    local n = CO.needs({"M1", "M1", "M1"}, kindOf)
+    eq(n.m1, true); eq(n.dash, false); eq(n.move, false); eq(n.jump, false); eq(n.side, false); eq(n.dependent, false, "M1 gaps do not wait for a cue")
+    n = CO.needs({"Flowing", "SIDEDASH", "Lethal"}, kindOf)
+    eq(n.move, true); eq(n.dash, true); eq(n.side, true); eq(n.dependent, true); eq(n.m1, false); eq(n.choosable, true)
+    eq(n.played, 3)
+    n = CO.needs({"M1", "SIDEDASH"}, kindOf)
+    eq(n.dash, false, "the wait after the LAST step changes nothing"); eq(n.side, true, "but a side dash still needs the side choice")
+    eq(n.m1, true); eq(n.dependent, false); eq(n.choosable, false)
+    n = CO.needs({"JUMP", "M1", "Unmapped", "M1"}, kindOf)
+    eq(n.jump, true); eq(n.m1, true); eq(n.played, 3, "an unplayable step is not counted"); eq(n.choosable, true)
+    n = CO.needs({"SIDEDASH"}, kindOf)
+    eq(n.side, true); eq(n.m1, false); eq(n.dash, false); eq(n.played, 1)
+    n = CO.needs({"Unmapped", "Other"}, kindOf)
+    eq(n.played, 0); eq(n.m1, false); eq(n.dependent, false)
+    eq(CO.needs(nil, kindOf).played, 0); eq(CO.needs({}, kindOf).m1, false)
 end)
 
 test("sandboxed script runs, records key events and virtual time", function()

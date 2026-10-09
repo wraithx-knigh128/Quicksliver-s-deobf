@@ -109,3 +109,47 @@ Foul Ball extensions, Genos Longer Jet Dive, Saitama uppercut-shove reset and Up
 Monster Hammer Heel launch, Suiryu two-skill combo, Sonic "unpunishable" strings, universal Uppercut Jump / Flick / Stun Negation (no steps).
 
 **UI:** the screenshot style matches script-hub libraries (WindUI, Fluent, Rayfield, Luna); WindUI is the best documented. See `UI_GUIDE.md`.
+
+---
+## Round 6 - block timing, "predicting" the punch, floater
+(Search-result summaries only; fan wikis / guides / forum posts, not game code. Encoded as constants in `tsb_data.lua` Mechanics and as
+the learning logic in `block_predict.lua`.)
+
+**What is known about block timing**
+* Block (F) is 180 degrees in front; M1s are stopped, charged hits break it, grabs ignore it, hits from behind always connect.
+* M1 start-up is roughly 11-12 frames (~0.18-0.2 s at 60 fps). You cannot block for ~0.2 s after your own M1.
+* A blocked / missed 4th M1 leaves the attacker stunned ~1 s, which is why "hold block forever" and "hold block never" both lose.
+* A well-timed block (right before contact) gives the Critical Hit -> Black Flash chain; a "3-frame perfect block window" is claimed in
+  places but unsourced, so the script does not rely on it.
+* Damage and block are server-authoritative: the server decides if the F key was down when the hit was evaluated. What the client can
+  control is only WHEN the key goes down, and your own ping decides how early that must be.
+* **No public per-move hit-frame table exists** (animation ids / hit frames are not on any wiki). Hard-coding hit times would be invented data.
+
+**Design consequence: learn instead of guess.** Each time you lose health the script finds the enemy attack animation that started
+shortly before (0.03-1.3 s), and EWMA-averages "animation start -> damage" per animation id (outliers beyond 3x spread are ignored).
+That offset already contains network delay in both directions, so it is the number that actually matters. Once an animation has >= 2
+samples, F goes down at `offset - lead - ping` (lead default 0.05 s, ping share capped at 80% of the wait) and is held through the hit plus
+the "let go" grace. Unknown animations still use the fixed Delay slider. "Predict chain hits" remembers which animation follows which
+(M1 1 -> 2 -> 3, seen >= 3 times) and covers the next punch before it shows up. Everything is saved between sessions (max 120 animations).
+* Limits: damage from poison / falls / ults can be mis-attributed (an outlier filter and a distance + aim gate reduce this); a move whose
+  hit time varies (charged) will learn an average; the first 2 hits per animation are always taken because nothing is known yet.
+
+**"Floater":** no feature called "floater" was found for TSB (searches return only unrelated results). It was implemented as a small round
+draggable Auto-block indicator button (grey = off, green = armed, pink = holding; tap = on/off; the Lock button freezes it). If a
+hover / float MOVEMENT feature was meant, that is a different thing and was not built.
+
+**Platform note:** the instant "drop block when I punch" works on keyboard/mouse (M1 / move keys). On a phone the quick-release timing
+(~1 s cap) is what frees you, because touch buttons cannot be observed the same way.
+
+**Round 6b - what blocks cannot stop (third-party guides, unverified)**
+* Unblockable / guard-ignoring according to guides: Downslam (aerial M1 finisher), Ragdoll Cancel's direct hit, Martial Artist's Vanishing Kick,
+  Head First (damage only reduced), Grand Fissure / Twin Fangs / Earth Splitting Strike / Last Breath, Whirlwind Drop (hits through guard without
+  breaking it), Brutal Demon Homerun / Grand Slam / Foul Ball unblockable options (mostly at M1 range), charged hits, grabs, anything from behind.
+* Side dashes are the usual answer to linear attacks, which is why Auto block can optionally side dash instead of holding F.
+* **Design consequence:** no animation ids for these moves are public, so the script finds them itself: if you take damage while F had already been
+  down for `ping + 60 ms` (so the server must have seen it), that animation is counted; after 2 sightings it is "ignores block" and Auto block can
+  Block anyway (default, safest) / Do nothing / Side dash. A false flag can only cost you a skipped block, which is why the default never skips.
+* **What learning cannot see:** a blocked hit deals no damage, so it teaches nothing. Learned timings therefore come from hits that reach you
+  (Auto block off, or attacks that ignore block). That is why the Tech tab tells you to spar with Auto block OFF for a while to teach it.
+* Searches found no frame data, no perfect-block window length and no published hit offsets - none of these numbers are invented.
+* The Fandom wiki was not reachable from the build environment this round, so its pages were not read directly.

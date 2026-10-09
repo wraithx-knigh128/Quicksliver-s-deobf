@@ -52,6 +52,28 @@ end
 
 function M.new() return M.sanitize(nil) end
 
+-- Which adjustments make sense for a combo? Only the ones that change what it actually does.
+--   steps   the combo's tokens
+--   kindOf  function(token) -> "m1" | "jump" | "dash" | "move" | nil (nil = cannot be played, so it has no timing)
+-- Returns {m1, jump, dash, move = bool (a gap of that kind is waited between steps), dependent = bool (some gap waits for a
+-- visible cue, so Auto timing / fine-tune matter), side = bool (has a SIDEDASH), played = playable step count, choosable = trigger can be picked}.
+-- The wait after the LAST step changes nothing, so it does not count.
+function M.needs(steps, kindOf)
+    local n = {m1 = false, jump = false, dash = false, move = false, dependent = false, side = false, played = 0, choosable = false}
+    if type(steps) ~= "table" then return n end
+    for i, tok in ipairs(steps) do
+        local kind = kindOf(tok)
+        if kind then n.played = n.played + 1 end
+        if tok == "SIDEDASH" then n.side = true end
+        if kind and i < #steps then
+            n[kind] = true
+            if kind == "dash" or kind == "move" then n.dependent = true end
+        end
+    end
+    n.choosable = #steps >= 3 and n.played >= 3        -- a trigger step only has a choice to make when there are several
+    return n
+end
+
 function M.isDefault(o)
     for key, def in pairs(M.DEFAULTS) do
         if o[key] ~= def then return false end
