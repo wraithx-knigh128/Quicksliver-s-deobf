@@ -7,7 +7,8 @@
       speed     0.5..2     multiplies every gap of this combo
       m1/dash/move/jump  0..max   gap override in seconds, 0 = use the global gap from the Timing tab
       offsetMs  -100..100  fine-tune added (in auto mode) to gaps that wait for a visible cue
-      side      "Left" | "Right"  which key a SIDEDASH step uses (A or D)
+      side      "Closest" | "Left" | "Right"   which way a SIDEDASH step goes: toward the nearest player (no teleport -
+                                  it just picks the A or D key), or always left / right
       trigger   0..64      Assist mode: after WHICH step (1-based) the script takes over; 0 = after your first move
       pinMode   "assist" | "run"   what the on-screen button does: arm / disarm Assist, or run the whole combo
       trigAnim  string     animation id learned for the trigger move (lets Assist work with on-screen touch buttons)
@@ -15,7 +16,7 @@
 
 local M = {}
 
-M.DEFAULTS = {auto = "global", speed = 1, m1 = 0, dash = 0, move = 0, jump = 0, offsetMs = 0, side = "Left",
+M.DEFAULTS = {auto = "global", speed = 1, m1 = 0, dash = 0, move = 0, jump = 0, offsetMs = 0, side = "Closest",
     trigger = 0, pinMode = "assist", trigAnim = ""}
 
 local RANGES = {
@@ -24,7 +25,7 @@ local RANGES = {
 M.RANGES = RANGES
 
 local AUTO = {global = true, on = true, off = true}
-local SIDE = {Left = true, Right = true}
+local SIDE = {Closest = true, Left = true, Right = true}
 local PINMODE = {assist = true, run = true}
 
 local function clamp(v, lo, hi, default)

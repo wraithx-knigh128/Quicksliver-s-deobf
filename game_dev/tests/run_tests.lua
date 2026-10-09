@@ -19,6 +19,7 @@ local Drag = ex:require("drag_tracker.lua")
 local Ping = ex:require("ping_model.lua")
 local CO = ex:require("combo_options.lua")
 local Assist = ex:require("assist.lua")
+local CM = ex:require("combat_math.lua")
 Engine.loadData(Data)
 
 local function feedAll(p, tokens, t0, dt)
@@ -106,6 +107,31 @@ test("every combo in the data is well-formed and uses known tokens", function()
         end
     end
     assert(n >= 25, "expected the full combo set, got " .. n)
+end)
+
+test("every tech assist is well-formed and uses known tokens", function()
+    local generic = {M1=1, Q=1, FRONTDASH=1, SIDEDASH=1, BACKDASH=1, JUMP=1, JUMP_M1=1, UPPERCUT=1, MINI_UPPERCUT=1, DOWNSLAM=1}
+    local conf = {high=1, medium=1, low=1}
+    local names = {}
+    assert(#Data.TechAssists >= 15, "expected the full tech list")
+    for _, t in ipairs(Data.TechAssists) do
+        assert(type(t.name) == "string" and t.name ~= "", "tech without a name")
+        assert(not names[t.name .. t.character], t.name .. " listed twice for " .. t.character); names[t.name .. t.character] = true
+        assert(conf[t.confidence], t.name .. " bad confidence")
+        assert(#t.steps >= 2, t.name .. " needs a trigger and at least one follow-up")
+        assert(type(t.desc) == "string" and #t.desc > 0, t.name .. " has no description")
+        local char = Data.Characters[t.character]
+        assert(char or t.character == "Universal", t.name .. " unknown character " .. tostring(t.character))
+        local known = {}
+        if char then
+            for _, list in ipairs({char.moves or {}, char.ultimates or {}}) do
+                for k, v in pairs(list) do known[type(k) == "string" and k or v] = true end
+            end
+        end
+        for i, tok in ipairs(t.steps) do
+            assert(generic[tok] or known[tok], ("%s step %d: unknown token %s"):format(t.name, i, tok))
+        end
+    end
 end)
 
 test("no combo is a strict duplicate of another", function()
@@ -272,7 +298,8 @@ test("combo options: sanitize always returns a complete valid table", function()
     for k, v in pairs(CO.DEFAULTS) do eq(o[k], v, "default " .. k) end
     local bad = CO.sanitize({speed = 99, m1 = -3, dash = "x", move = 0/0, jump = 5, offsetMs = 1e9, auto = "weird", side = 7})
     eq(bad.speed, 2); eq(bad.m1, 0); eq(bad.dash, 0); eq(bad.move, 0); eq(bad.jump, 0.6); eq(bad.offsetMs, 100)
-    eq(bad.auto, "global"); eq(bad.side, "Left")
+    eq(bad.auto, "global"); eq(bad.side, "Closest")
+    eq(CO.sanitize({side = "Left"}).side, "Left"); eq(CO.sanitize({side = "Closest"}).side, "Closest")
     local ok = CO.sanitize({speed = 1.25, auto = "off", side = "Right", dash = 0.35, offsetMs = -20})
     eq(ok.speed, 1.25); eq(ok.auto, "off"); eq(ok.side, "Right"); eq(ok.dash, 0.35); eq(ok.offsetMs, -20)
     local a, b = CO.sanitize(nil), CO.sanitize(nil)
@@ -335,6 +362,44 @@ test("assist: newest armed combo wins, side alternates", function()
     eq(Assist.pick({}, function() return true end), nil)
     eq(Assist.nextSide("Left"), "Left"); eq(Assist.nextSide("Right", "Right"), "Right")
     eq(Assist.nextSide("Alternate", nil), "Left"); eq(Assist.nextSide("Alternate", "Left"), "Right"); eq(Assist.nextSide("Alternate", "Right"), "Left")
+end)
+
+test("combat math: closest player ignores myself, respects range, survives garbage", function()
+    local me = {x = 0, y = 0, z = 0}
+    local list = {{x = 0, y = 0, z = 0, id = "me"}, {x = 30, y = 0, z = 0, id = "far"}, {x = 5, y = 0, z = 5, id = "near"}, {x = 0/0, y = 0, z = 0, id = "nan"}}
+    local c, d = CM.closest(me, list)
+    eq(c.id, "near"); near(d, math.sqrt(50), 1e-9)
+    eq(CM.closest(me, list, 4), nil, "nothing within 4 studs")
+    eq(CM.closest(me, {}), nil); eq(CM.closest(nil, list), nil); eq(CM.closest(me, nil), nil)
+    eq(CM.distance({x = 1, y = 2, z = 3}, {x = 1, y = 2}), nil)
+end)
+
+test("combat math: side toward the target uses the camera's right vector", function()
+    local me, right = {x = 0, y = 0, z = 0}, {x = 1, y = 0, z = 0}
+    eq(CM.sideToward(me, right, {x = 10, y = 0, z = 3}), "Right")
+    eq(CM.sideToward(me, right, {x = -10, y = 0, z = -3}), "Left")
+    eq(CM.sideToward(me, right, {x = 0, y = 0, z = 10}), nil, "dead ahead / behind has no side")
+    eq(CM.sideToward(me, right, {x = 10, y = 99, z = 0}), "Right", "height is ignored")
+    local rotated = {x = 0, y = 0, z = 1}                       -- camera turned: right now points along +Z
+    eq(CM.sideToward(me, rotated, {x = 0, y = 0, z = 8}), "Right"); eq(CM.sideToward(me, rotated, {x = 8, y = 0, z = 0}), nil)
+    eq(CM.sideToward(me, {x = 0, y = 5, z = 0}, {x = 3, y = 0, z = 3}), nil, "degenerate right vector")
+    eq(CM.sideToward(me, right, me), nil, "target on top of me")
+    eq(CM.sideToward(nil, right, me), nil)
+end)
+
+test("combat math: facing / shouldBlock only block what can be blocked", function()
+    local me, look = {x = 0, y = 0, z = 0}, {x = 0, y = 0, z = -1}          -- I look toward -Z
+    local front = {x = 0, y = 0, z = -6}                                      -- attacker in front of me ...
+    local aimedAtMe = {x = 0, y = 0, z = 1}                                   -- ... looking back toward me (+Z)
+    assert(CM.shouldBlock(me, look, front, aimedAtMe, 14, 60), "front + aimed + in range must block")
+    assert(not CM.shouldBlock(me, look, front, aimedAtMe, 4, 60), "out of range")
+    assert(not CM.shouldBlock(me, look, front, {x = 0, y = 0, z = -1}, 14, 60), "attacker looks away")
+    assert(not CM.shouldBlock(me, look, front, {x = 1, y = 0, z = 0}, 14, 60), "attacker aims sideways")
+    assert(CM.shouldBlock(me, look, front, {x = 0.5, y = 0, z = 1}, 14, 60), "within the aim cone")
+    local behind = {x = 0, y = 0, z = 6}
+    assert(not CM.shouldBlock(me, look, behind, {x = 0, y = 0, z = -1}, 14, 60), "from behind always connects: do not waste a block")
+    assert(not CM.shouldBlock(me, look, front, aimedAtMe, nil, 60) and not CM.shouldBlock(nil, look, front, aimedAtMe, 14, 60))
+    assert(not CM.facing(me, {x = 0, y = 5, z = 0}, front, 60), "vertical look vector has no heading")
 end)
 
 test("sandboxed script runs, records key events and virtual time", function()

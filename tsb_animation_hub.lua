@@ -50,7 +50,6 @@ local function __run()
     local CoreGui           = game:GetService("CoreGui")
 
     local LocalPlayer = Players.LocalPlayer
-    local Camera      = workspace.CurrentCamera
 
     ---------------------------------------------------------------- helpers
     local function safe(fn, ...)
@@ -86,6 +85,8 @@ local function __run()
         return new("UIStroke", {Color = color, Thickness = thick or 1, Transparency = trans or 0})
     end
 
+    local loadBackground
+    do
     local httpRequest = request or http_request or (syn and syn.request)
     local function httpGet(url)
         if httpRequest then
@@ -125,7 +126,7 @@ local function __run()
         return safe(getcustomasset, path)
     end
 
-    local function loadBackground(sourceName)
+    function loadBackground(sourceName)
         if not (getcustomasset and writefile) then return nil end   -- executor cannot show downloaded files
         if BACKGROUND_URL ~= "" and not sourceName then
             local fixed = imageToAsset(BACKGROUND_URL)
@@ -141,15 +142,50 @@ local function __run()
         end
     end
 
+    end
+
+    ---------------------------------------------------------------- saved settings (loaded first: the theme needs them)
+    local genv = safe(function() return getgenv() end) or _G
+    local SETTINGS_FILE = "animation_hub_settings.json"
+    local function loadSaved()
+        if not (isfile and readfile) then return {} end
+        local raw = safe(function() if isfile(SETTINGS_FILE) then return readfile(SETTINGS_FILE) end end)
+        if type(raw) ~= "string" or raw == "" then return {} end
+        local data = safe(function() return game:GetService("HttpService"):JSONDecode(raw) end)
+        return type(data) == "table" and data or {}
+    end
+    local function num(v, lo, hi, default)
+        if type(v) ~= "number" or v ~= v then return default end
+        return math.min(math.max(v, lo), hi)
+    end
+    local Saved = loadSaved()
+
     ---------------------------------------------------------------- theme
+    -- menu look: saved in the file, or (executors without files) kept in memory for the rebuild
+    local UiSaved = type(genv.__AnimationHubUi) == "table" and genv.__AnimationHubUi
+        or (type(Saved.ui) == "table" and Saved.ui) or {}
+    local Themes = {
+        ["Rose Gold"] = {Back = {30, 20, 46}, Panel = {54, 38, 78}, Item = {76, 56, 106}, Hover = {98, 74, 136},
+            Accent = {255, 112, 176}, Accent2 = {160, 112, 255}, Gold = {255, 214, 150}, WinA = {104, 62, 142}, WinB = {34, 22, 56}},
+        ["Ocean"] = {Back = {14, 26, 46}, Panel = {26, 48, 84}, Item = {38, 68, 112}, Hover = {54, 92, 146},
+            Accent = {90, 200, 255}, Accent2 = {124, 140, 255}, Gold = {196, 242, 255}, WinA = {40, 98, 156}, WinB = {12, 24, 50}},
+        ["Violet"] = {Back = {24, 16, 48}, Panel = {46, 32, 90}, Item = {66, 48, 124}, Hover = {90, 68, 160},
+            Accent = {190, 120, 255}, Accent2 = {255, 120, 220}, Gold = {255, 222, 255}, WinA = {94, 60, 174}, WinB = {28, 18, 62}},
+        ["Emerald"] = {Back = {12, 32, 30}, Panel = {24, 58, 54}, Item = {34, 82, 74}, Hover = {48, 106, 96},
+            Accent = {90, 235, 170}, Accent2 = {90, 190, 255}, Gold = {222, 255, 204}, WinA = {36, 112, 98}, WinB = {10, 30, 30}},
+        ["Sunset"] = {Back = {42, 18, 30}, Panel = {78, 34, 54}, Item = {106, 50, 72}, Hover = {132, 68, 92},
+            Accent = {255, 140, 90}, Accent2 = {255, 100, 150}, Gold = {255, 228, 164}, WinA = {152, 60, 82}, WinB = {46, 18, 32}},
+    }
+    local ThemeNames = {"Rose Gold", "Ocean", "Violet", "Emerald", "Sunset"}
+    local themeName = Themes[UiSaved.theme] and UiSaved.theme or "Rose Gold"
+    local pendingTheme = themeName                    -- picked in Effects Preset; applied by "Apply theme"
+    local uiScale = num(UiSaved.scale, 0.7, 1.25, 1)  -- menu size
+    local glass = num(UiSaved.glass, 0.4, 0.95, 0.72) -- how see-through the dark veil over the picture is
+    local TH = Themes[themeName]
+    local function rgb(c) return Color3.fromRGB(c[1], c[2], c[3]) end
     local Theme = {
-        Back     = Color3.fromRGB(30, 20, 46),
-        Panel    = Color3.fromRGB(54, 38, 78),
-        Item     = Color3.fromRGB(76, 56, 106),
-        Hover    = Color3.fromRGB(98, 74, 136),
-        Accent   = Color3.fromRGB(255, 112, 176),
-        Accent2  = Color3.fromRGB(160, 112, 255),
-        Gold     = Color3.fromRGB(255, 214, 150),
+        Back = rgb(TH.Back), Panel = rgb(TH.Panel), Item = rgb(TH.Item), Hover = rgb(TH.Hover),
+        Accent = rgb(TH.Accent), Accent2 = rgb(TH.Accent2), Gold = rgb(TH.Gold),
         Text     = Color3.fromRGB(252, 246, 254),
         SubText  = Color3.fromRGB(200, 182, 218),
         Good     = Color3.fromRGB(120, 235, 175),
@@ -160,6 +196,23 @@ local function __run()
     end
     local function hairline(parent, transparency)     -- subtle glass border
         return new("UIStroke", {Color = Theme.White, Thickness = 1, Transparency = transparency or 0.9, Parent = parent})
+    end
+    -- shiny sweep: a soft diagonal highlight that glides across a surface; call the returned function to play it
+    local function sheen(parent, radius)
+        local grad = new("UIGradient", {
+            Rotation = 25, Offset = Vector2.new(-1, 0),
+            Transparency = NumberSequence.new({
+                NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.4, 1), NumberSequenceKeypoint.new(0.5, 0.78),
+                NumberSequenceKeypoint.new(0.6, 1), NumberSequenceKeypoint.new(1, 1),
+            }),
+        })
+        new("Frame", {
+            Name = "Sheen", Size = UDim2.fromScale(1, 1), BackgroundColor3 = Theme.White, BorderSizePixel = 0, ZIndex = 0, Parent = parent,
+        }, {new("UICorner", {CornerRadius = UDim.new(0, radius or 12)}), grad})
+        return function()
+            grad.Offset = Vector2.new(-1, 0)
+            tween(grad, {Offset = Vector2.new(1, 0)}, 0.7, Enum.EasingStyle.Quad)
+        end
     end
     -- glossy sheen: a white film that is strongest at the top edge and fades out (the "glass" look)
     local function gloss(parent, radius, strength)
@@ -181,7 +234,6 @@ local function __run()
 
     ---------------------------------------------------------------- cleanup old
     -- re-running the script must not leave the old copy's listeners (Auto Tech, predictor...) alive
-    local genv = safe(function() return getgenv() end) or _G
     if type(genv.__AnimationHubCleanup) == "function" then pcall(genv.__AnimationHubCleanup) end
     local old = guiParent():FindFirstChild("AnimationHubTSB")
     if old then old:Destroy() end
@@ -236,10 +288,15 @@ local function __run()
         BackgroundColor3 = Theme.Back, BorderSizePixel = 0, GroupTransparency = 1,
         Parent = Gui,
     }, {corner(18)})
-    local MainScale = new("UIScale", {Scale = 0.92, Parent = Main})
+    local function fitScale()           -- the menu size the user asked for, never bigger than the screen
+        local vw, vh = viewport()
+        if not vw then return uiScale end
+        return math.max(0.5, math.min(uiScale, (vw - 8) / WIN_W, (vh - 8) / WIN_H))
+    end
+    local MainScale = new("UIScale", {Scale = 0.92 * fitScale(), Parent = Main})
     local MainStroke = stroke(Theme.White, 1.6, 0.15)
     MainStroke.Parent = Main
-    new("UIGradient", {      -- gold -> rose -> violet rim
+    local BorderGrad = new("UIGradient", {      -- gold -> accent -> accent2 rim that slowly rotates
         Color = ColorSequence.new({
             ColorSequenceKeypoint.new(0, Theme.Gold), ColorSequenceKeypoint.new(0.5, Theme.Accent), ColorSequenceKeypoint.new(1, Theme.Accent2),
         }),
@@ -248,7 +305,7 @@ local function __run()
 
     -- background: tinted gradient, optional image, and a dark veil so text stays readable
     new("UIGradient", {
-        Color = ColorSequence.new(Color3.fromRGB(104, 62, 142), Color3.fromRGB(34, 22, 56)),
+        Color = ColorSequence.new(rgb(TH.WinA), rgb(TH.WinB)),
         Rotation = 60, Parent = Main,
     })
     local Background = new("ImageLabel", {
@@ -256,8 +313,8 @@ local function __run()
         ScaleType = Enum.ScaleType.Crop, ImageTransparency = BACKGROUND_TRANSPARENCY,
         ZIndex = 0, Parent = Main,
     })
-    new("Frame", {                                   -- veil
-        Size = UDim2.fromScale(1, 1), BackgroundColor3 = Theme.Back, BackgroundTransparency = 0.72,
+    local Veil = new("Frame", {                      -- dark veil over the picture (the "Glass" slider)
+        Size = UDim2.fromScale(1, 1), BackgroundColor3 = Theme.Back, BackgroundTransparency = glass,
         BorderSizePixel = 0, ZIndex = 0, Parent = Main,
     })
     gloss(Main, 18, 1)
@@ -276,6 +333,8 @@ local function __run()
     end
     refreshBackground()
 
+    local toast
+    do
     -- toast: a small message that slides up from the bottom (pins, errors, confirmations)
     local Toast = new("CanvasGroup", {
         AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -40),
@@ -286,7 +345,7 @@ local function __run()
         Size = UDim2.fromScale(1, 1), TextTruncate = Enum.TextTruncate.AtEnd, Parent = Toast,
     })
     local toastId = 0
-    local function toast(text)
+    function toast(text)
         toastId = toastId + 1
         local mine = toastId
         ToastText.Text = tostring(text)
@@ -300,6 +359,8 @@ local function __run()
         end)
     end
 
+    end
+
     -- title bar
     local pingPill                                   -- small live ping readout, filled in by the ping block
     local TopBar = new("Frame", {Size = UDim2.new(1, 0, 0, 56), BackgroundTransparency = 1, Parent = Main})
@@ -308,7 +369,7 @@ local function __run()
         TextXAlignment = Enum.TextXAlignment.Left, BackgroundTransparency = 1,
         Position = UDim2.fromOffset(20, 9), Size = UDim2.new(1, -230, 0, 22), Parent = TopBar,
     })
-    new("UIGradient", {
+    local TitleGrad = new("UIGradient", {
         Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Theme.Gold), ColorSequenceKeypoint.new(1, Theme.Accent)}),
         Parent = Title,
     })
@@ -349,10 +410,10 @@ local function __run()
         if menuOpen then
             Main.Visible = true
             tween(Main, {GroupTransparency = 0}, 0.25)
-            tween(MainScale, {Scale = 1}, 0.4, Enum.EasingStyle.Back)
+            tween(MainScale, {Scale = fitScale()}, 0.4, Enum.EasingStyle.Back)
         else
             tween(Main, {GroupTransparency = 1}, 0.18)
-            tween(MainScale, {Scale = 0.94}, 0.18)
+            tween(MainScale, {Scale = 0.94 * fitScale()}, 0.18)
             task.spawn(function()
                 task.wait(0.2)
                 if mine == menuTok and alive then Main.Visible = false end
@@ -362,6 +423,7 @@ local function __run()
     end
     local function toggleMenu() setMenu(not menuOpen) end
 
+    do
     local minimized = false
     local fullSize = UDim2.fromOffset(WIN_W, WIN_H)
     topButton("-", -84, Theme.Hover, function()
@@ -373,6 +435,8 @@ local function __run()
         tween(MainScale, {Scale = 0.9}, 0.2)
         task.spawn(function() task.wait(0.24); cleanup() end)
     end)
+
+    end
 
     -- dragging (keeps the title bar on screen)
     do
@@ -427,6 +491,7 @@ local function __run()
     })
 
     -- footer: player card
+    do
     local Card = new("Frame", {
         Position = UDim2.new(0, 8, 1, -58), Size = UDim2.fromOffset(SIDE_W - 16, 46),
         BackgroundColor3 = Theme.Panel, BackgroundTransparency = 0.2, Parent = Main,
@@ -453,6 +518,8 @@ local function __run()
         local img = safe(Players.GetUserThumbnailAsync, Players, LocalPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size48x48)
         if img then avatar.Image = img end
     end)
+
+    end
 
     local Tabs, currentTab, sideOrder = {}, nil, 0
 
@@ -539,7 +606,11 @@ local function __run()
             end)
         end
         btn.MouseButton1Click:Connect(function() tab:Select() end)
-        btn.MouseEnter:Connect(function() if currentTab ~= tab then tween(btn, {BackgroundTransparency = 0.7}, 0.15) end end)
+        local sweepTab = sheen(btn, 12)
+        btn.MouseEnter:Connect(function()
+            sweepTab()
+            if currentTab ~= tab then tween(btn, {BackgroundTransparency = 0.7}, 0.15) end
+        end)
         btn.MouseLeave:Connect(function() if currentTab ~= tab then tween(btn, {BackgroundTransparency = 1}, 0.2) end end)
 
         -- elements ------------------------------------------------------
@@ -595,9 +666,19 @@ local function __run()
             return sw
         end
 
-        function tab:Toggle(text, default, cb, parent)
-            local r = row(44, parent)
-            label(r, text)
+        function tab:Toggle(text, default, cb, parent, subtitle)
+            local r = row(subtitle and 58 or 44, parent)
+            local main = label(r, text)
+            if subtitle then
+                main.Position = UDim2.fromOffset(14, 7)
+                main.Size = UDim2.new(1, -90, 0, 22)
+                new("TextLabel", {
+                    Text = subtitle, Font = Enum.Font.Gotham, TextSize = 11, TextColor3 = Theme.SubText,
+                    TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top, TextWrapped = true,
+                    TextTruncate = Enum.TextTruncate.AtEnd, BackgroundTransparency = 1,
+                    Position = UDim2.fromOffset(14, 29), Size = UDim2.new(1, -90, 0, 24), Parent = r,
+                })
+            end
             local state = default and true or false
             local sw = makeSwitch(r, UDim2.new(1, -60, 0.5, -12), 46, 24)
             sw.render(state, false)
@@ -775,6 +856,7 @@ local function __run()
                     BackgroundTransparency = 0.25, LayoutOrder = 0, Parent = holder2,
                 }, {corner(14), gloss(nil, 14, 1)})
                 local cardStroke = hairline(card, 0.82)
+                local sweepCard = sheen(card, 14)
                 new("Frame", {                           -- confidence colour strip
                     Size = UDim2.fromOffset(4, 70), Position = UDim2.fromOffset(0, 18), BackgroundColor3 = confColor,
                     BorderSizePixel = 0, Parent = card,
@@ -843,6 +925,7 @@ local function __run()
                 end)
                 card.MouseEnter:Connect(function()
                     tween(card, {BackgroundTransparency = 0.12}, 0.18); tween(cardStroke, {Transparency = 0.5}, 0.18)
+                    sweepCard()
                 end)
                 card.MouseLeave:Connect(function()
                     tween(card, {BackgroundTransparency = 0.25}, 0.25); tween(cardStroke, {Transparency = 0.82}, 0.25)
@@ -899,7 +982,7 @@ local function __run()
                     Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, LayoutOrder = 1, Parent = card,
                 })
             end
-            function sec:Toggle(name, default, cb) return tab:Toggle(name, default, cb, body) end
+            function sec:Toggle(name, default, cb, subtitle) return tab:Toggle(name, default, cb, body, subtitle) end
             function sec:Clear()
                 for _, ch in ipairs(body:GetChildren()) do
                     if not ch:IsA("UIListLayout") then ch:Destroy() end
@@ -910,6 +993,21 @@ local function __run()
 
         Tabs[#Tabs + 1] = tab
         return tab
+    end
+
+    -- ambient shine: the border rotates slowly, and every ~6 s a shimmer runs over the title
+    do
+        local shimmerAcc = 0
+        connect(RunService.Heartbeat, function(dt)
+            if not menuOpen then return end
+            BorderGrad.Rotation = (BorderGrad.Rotation + dt * 24) % 360
+            shimmerAcc = shimmerAcc + dt
+            if shimmerAcc >= 6 then
+                shimmerAcc = 0
+                TitleGrad.Offset = Vector2.new(-0.7, 0)
+                tween(TitleGrad, {Offset = Vector2.new(0.7, 0)}, 1.1, Enum.EasingStyle.Sine)
+            end
+        end)
     end
 
     ---------------------------------------------------------------- state
@@ -986,28 +1084,24 @@ local function __run()
     local macroSpeed = 1
     local PingState = {model = PingModel and PingModel.new(0.2)}
 
-    -- saved settings (global timing + every combo's own options) survive leaving the game when the executor has files
-    local SETTINGS_FILE = "animation_hub_settings.json"
-    local function loadSaved()
-        if not (isfile and readfile) then return {} end
-        local raw = safe(function() if isfile(SETTINGS_FILE) then return readfile(SETTINGS_FILE) end end)
-        if type(raw) ~= "string" or raw == "" then return {} end
-        local data = safe(function() return game:GetService("HttpService"):JSONDecode(raw) end)
-        return type(data) == "table" and data or {}
-    end
-    local function num(v, lo, hi, default)
-        if type(v) ~= "number" or v ~= v then return default end
-        return math.min(math.max(v, lo), hi)
-    end
-    local Saved = loadSaved()
     local ComboOpts = {}                                   -- combo name -> options table (see combo_options.lua)
     local Pins = {}                                        -- pinned on-screen buttons (see the manager further down)
     local SavedPins = type(Saved.pins) == "table" and Saved.pins or {}
     local Armed, armedOrder = {}, {}                       -- Assist: armed combos (never saved: you start disarmed)
-    local SideAuto = {on = false, dir = "Alternate", delay = 0.25, cooldown = 0.8, anims = {}}   -- auto side dash after your moves
+    local Block = {on = false, range = 14, aim = 60, delay = 0.10, hold = 0.35, cooldown = 0.25, usePing = true}   -- auto block
+    if type(Saved.block) == "table" then
+        local sb = Saved.block
+        Block.range = num(sb.range, 6, 30, Block.range)
+        Block.aim = num(sb.aim, 20, 120, Block.aim)
+        Block.delay = num(sb.delay, 0, 0.4, Block.delay)
+        Block.hold = num(sb.hold, 0.1, 1, Block.hold)
+        Block.cooldown = num(sb.cooldown, 0.1, 1, Block.cooldown)
+        Block.usePing = sb.usePing ~= false
+    end
+    local SideAuto = {on = false, dir = "Closest", delay = 0.25, cooldown = 0.8, anims = {}}   -- auto side dash after your moves
     if type(Saved.sideAuto) == "table" then
         local sa = Saved.sideAuto
-        if sa.dir == "Left" or sa.dir == "Right" or sa.dir == "Alternate" then SideAuto.dir = sa.dir end
+        if sa.dir == "Left" or sa.dir == "Right" or sa.dir == "Alternate" or sa.dir == "Closest" then SideAuto.dir = sa.dir end
         SideAuto.delay = num(sa.delay, 0, 1, SideAuto.delay)
         SideAuto.cooldown = num(sa.cooldown, 0.2, 3, SideAuto.cooldown)
         if type(sa.anims) == "table" then
@@ -1048,6 +1142,7 @@ local function __run()
     local function markDirty() if ready then dirty = true end end
     local function saveNow()
         dirty = false
+        genv.__AnimationHubUi = {theme = pendingTheme, scale = uiScale, glass = glass}
         if not (writefile and ComboOptions) then return end
         local combos = {}
         for name, o in pairs(ComboOpts) do
@@ -1063,7 +1158,10 @@ local function __run()
                 pinData[name] = {x = pos.x, y = pos.y}
             end
         end
-        local data = {version = 1, timing = Timing, speed = macroSpeed, auto = Auto, combos = combos, pins = pinData,
+        local uiData = {theme = pendingTheme, scale = uiScale, glass = glass}
+        genv.__AnimationHubUi = uiData                    -- also kept in memory so executors without files can rebuild
+        local data = {version = 1, timing = Timing, speed = macroSpeed, auto = Auto, combos = combos, pins = pinData, ui = uiData,
+            block = {range = Block.range, aim = Block.aim, delay = Block.delay, hold = Block.hold, cooldown = Block.cooldown, usePing = Block.usePing},
             sideAuto = {dir = SideAuto.dir, delay = SideAuto.delay, cooldown = SideAuto.cooldown, anims = SideAuto.anims}}
         local json = safe(function() return game:GetService("HttpService"):JSONEncode(data) end)
         if type(json) == "string" then pcall(writefile, SETTINGS_FILE, json) end
@@ -1166,13 +1264,44 @@ local function __run()
     local KIND = {M1 = "m1", JUMP_M1 = "m1", JUMP = "jump", Q = "dash", FRONTDASH = "dash", BACKDASH = "dash", SIDEDASH = "dash"}
     local function moveKey(tok, charName)
         local char = Data and Data.Characters[charName]
-        if char and type(char.moves) == "table" then
-            for i, mv in ipairs(char.moves) do
+        local list = char and (char.moveList or char.moves)          -- moveList = hotbar order for characters whose moves carry stats
+        if type(list) == "table" then
+            for i, mv in ipairs(list) do
                 if mv == tok then return MoveSlots[i] end
             end
         end
     end
     local function canPlay(tok, charName) return KIND[tok] ~= nil or moveKey(tok, charName) ~= nil end
+
+    local function vec3(v)
+        if v == nil then return nil end
+        local x, y, z = v.X, v.Y, v.Z
+        if type(x) == "number" and type(y) == "number" and type(z) == "number" then return {x = x, y = y, z = z} end
+    end
+    -- Which way a SIDEDASH goes. "Left" / "Right" are fixed; "Closest" looks at where the nearest player is
+    -- compared with your camera and picks the side that moves you toward them. It only chooses between the A
+    -- and D key - it never moves or teleports your character.
+    local function resolveSide(mode)
+        if mode == "Left" or mode == "Right" then return mode end
+        local cam = workspace.CurrentCamera
+        local mine = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        local right = cam and safe(function() return vec3(cam.CFrame.RightVector) end)
+        local myPos = mine and safe(function() return vec3(mine.Position) end)
+        if not (CombatMath and right and myPos) then return "Left" end
+        local list = {}
+        for _, p in ipairs(Players:GetPlayers()) do
+            if p ~= LocalPlayer then
+                local c = p.Character
+                local hrp = c and c:FindFirstChild("HumanoidRootPart")
+                local hum = c and c:FindFirstChildOfClass("Humanoid")
+                local pos = hrp and safe(function() return vec3(hrp.Position) end)
+                local hp = hum and hum.Health
+                if pos and (type(hp) ~= "number" or hp > 0) then list[#list + 1] = pos end
+            end
+        end
+        local target = CombatMath.closest(myPos, list, 250)
+        return (target and CombatMath.sideToward(myPos, right, target)) or "Left"
+    end
 
     -- plays one step; returns (kind of gap that follows it, whether that gap waits for a visible cue),
     -- or nil if the token cannot be played. o = this combo's options.
@@ -1182,7 +1311,7 @@ local function __run()
         elseif tok == "Q" then dash(nil)
         elseif tok == "FRONTDASH" then dash(Enum.KeyCode.W)
         elseif tok == "BACKDASH" then dash(Enum.KeyCode.S)
-        elseif tok == "SIDEDASH" then dash((o and o.side == "Right") and Enum.KeyCode.D or Enum.KeyCode.A)
+        elseif tok == "SIDEDASH" then dash(resolveSide(o and o.side or "Closest") == "Right" and Enum.KeyCode.D or Enum.KeyCode.A)
         elseif tok == "JUMP" then press(Enum.KeyCode.Space, 0.05)
         elseif tok == "JUMP_M1" then press(Enum.KeyCode.Space, 0.05); task.wait(0.12); click()
         else
@@ -1255,10 +1384,12 @@ local function __run()
     local function shortLabel(name) return (name:gsub("_", " ")) end
     local ComboInfo = {}             -- name -> {steps, charName}, filled in when the cards are built
     local ArmHandles = {}            -- name -> card handle (keeps the Assist switch in step with the pinned button)
+    local triggerOf, setArmed, startLearning     -- the only pieces the cards need; the rest lives in the block below
+    do
     local learning, learnGen = nil, 0
 
     local function moveTester(charName) return function(tok) return moveKey(tok, charName) ~= nil end end
-    local function triggerOf(name)   -- index, token, options of the step YOU perform
+    function triggerOf(name)   -- index, token, options of the step YOU perform
         local info = ComboInfo[name]
         if not (info and Assist) then return nil end
         local o = getOpts(name)
@@ -1298,7 +1429,7 @@ local function __run()
         runMacro(rest, info.charName, name, {kind = kind, dependent = dependent})
     end
 
-    local function setArmed(name, on)
+    function setArmed(name, on)
         on = on and true or false
         if (Armed[name] == true) == on then return end
         Armed[name] = on or nil
@@ -1323,7 +1454,8 @@ local function __run()
         local now = os.clock()
         if now - lastSideAuto < SideAuto.cooldown then return end
         lastSideAuto = now
-        local side = Assist.nextSide(SideAuto.dir, lastSide)
+        local side
+        if SideAuto.dir == "Alternate" then side = Assist.nextSide("Alternate", lastSide) else side = resolveSide(SideAuto.dir) end
         lastSide = side
         task.spawn(function()
             task.wait(adjustGap(SideAuto.delay, true, nil))
@@ -1379,7 +1511,7 @@ local function __run()
         if name then startAssist(name) return end
         if SideAuto.on and SideAuto.anims[id] then performSideAuto() end
     end
-    local function startLearning(kind, name, hint)
+    function startLearning(kind, name, hint)
         learning = {kind = kind, name = name}
         learnGen = learnGen + 1
         local mine = learnGen
@@ -1398,6 +1530,63 @@ local function __run()
     end
     if LocalPlayer.Character then hookCharacter(LocalPlayer.Character) end
     connect(LocalPlayer.CharacterAdded, hookCharacter)
+    end
+
+    ---------------------------------------------------------------- auto block
+    -- When another player in front of you starts an attack animation aimed at you, hold F for a moment.
+    -- Only attacks that CAN be blocked are answered: in range, aimed at you, in front of you (hits from behind
+    -- always connect, charged hits and grabs ignore block). The delay is shortened by your ping so the block lands
+    -- when the hit does - but I cannot read the move's real hit frame, so tune "Delay" until it blocks in time.
+    do
+        local blockBusyUntil = 0
+        local lastSwing = setmetatable({}, {__mode = "k"})
+        local function onEnemyAnimation(player, track)
+            if not (Block.on and CombatMath) then return end
+            local now = os.clock()
+            if now < blockBusyUntil or macroRunning then return end
+            if safe(function() return track.Looped end) == true then return end                  -- walk / idle loops
+            local prio = safe(function() return track.Priority.Value end)
+            local minPrio = safe(function() return Enum.AnimationPriority.Action.Value end)
+            if type(prio) == "number" and type(minPrio) == "number" and prio < minPrio then return end   -- not an action layer
+            if lastSwing[player] and now - lastSwing[player] < 0.12 then return end                 -- same swing, several tracks
+            local mine = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            local theirs = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+            if not (mine and theirs) then return end
+            local ok = safe(function()
+                return CombatMath.shouldBlock(vec3(mine.Position), vec3(mine.CFrame.LookVector),
+                    vec3(theirs.Position), vec3(theirs.CFrame.LookVector), Block.range, Block.aim)
+            end)
+            if not ok or isKnocked(LocalPlayer.Character) then return end
+            lastSwing[player] = now
+            local delay = Block.delay
+            if Block.usePing and PingModel then
+                delay = PingModel.adjustDelay(delay, currentPing(), Auto.strength, {dependent = true, offsetMs = Auto.offsetMs, minDelay = 0})
+            end
+            blockBusyUntil = now + delay + Block.hold + Block.cooldown
+            task.spawn(function()
+                if delay > 0 then task.wait(delay) end
+                if not (alive and Block.on) or macroRunning then return end
+                keyEvent(true, Enum.KeyCode.F)
+                task.wait(Block.hold)
+                keyEvent(false, Enum.KeyCode.F)                                                 -- always let go
+            end)
+        end
+        local function hookEnemy(player)
+            if player == LocalPlayer then return end
+            local function hookChar(char)
+                task.spawn(function()
+                    local hum = char:WaitForChild("Humanoid", 10)
+                    local animator = hum and (hum:FindFirstChildOfClass("Animator") or hum:WaitForChild("Animator", 10))
+                    if animator and alive then connect(animator.AnimationPlayed, function(track) onEnemyAnimation(player, track) end) end
+                end)
+            end
+            if player.Character then hookChar(player.Character) end
+            connect(player.CharacterAdded, hookChar)
+        end
+        for _, p in ipairs(Players:GetPlayers()) do hookEnemy(p) end
+        connect(Players.PlayerAdded, hookEnemy)
+        onCleanup[#onCleanup + 1] = function() Block.on = false end
+    end
 
     ---------------------------------------------------------------- pinned on-screen buttons
     -- Turn a combo's "On screen" switch on and a button for it appears on your screen. Tap it to run the combo
@@ -1417,7 +1606,7 @@ local function __run()
     end
     local function placePin(p)
         local vw, vh = viewport()
-        if DragTracker and vw then p.x, p.y = DragTracker.clamp(p.x, p.y, PIN_W, PIN_H, vw, vh, 4) end
+        if DragTracker and vw then p.x, p.y = DragTracker.clamp(p.x, p.y, p.w or PIN_W, p.h or PIN_H, vw, vh, 4) end
         p.btn.Position = UDim2.fromOffset(p.x, p.y)
     end
     renderPins = function()
@@ -1445,7 +1634,7 @@ local function __run()
         if renderFab then renderFab() end
     end
 
-    local function setPinned(name, on, steps, charName)
+    local function setPinned(name, on, steps, charName, shape, caption)
         local p = Pins[name]
         if not on then
             if p then
@@ -1469,20 +1658,24 @@ local function __run()
         else
             x, y = pinDefaultPos(#pinOrder)
         end
+        local circle = shape == "circle"
+        local pw, ph = PIN_W, PIN_H
+        if circle then pw, ph = 70, 70 end
+        local radius = circle and 35 or 16
         local btn = new("TextButton", {
-            Text = shortLabel(name), Font = Enum.Font.GothamBold, TextSize = 11, TextColor3 = Theme.Text,
+            Text = caption or shortLabel(name), Font = Enum.Font.GothamBold, TextSize = 11, TextColor3 = Theme.Text,
             TextWrapped = true, TextTruncate = Enum.TextTruncate.AtEnd,
             BackgroundColor3 = Theme.Panel, BackgroundTransparency = 0.12, AutoButtonColor = false,
-            Size = UDim2.fromOffset(PIN_W, PIN_H), Visible = pinsVisible, Parent = PinLayer,
-        }, {corner(16), new("UIPadding", {PaddingLeft = UDim.new(0, 6), PaddingRight = UDim.new(0, 6)}), gloss(nil, 16, 1)})
+            Size = UDim2.fromOffset(pw, ph), Visible = pinsVisible, Parent = PinLayer,
+        }, {corner(radius), new("UIPadding", {PaddingLeft = UDim.new(0, circle and 12 or 6), PaddingRight = UDim.new(0, circle and 12 or 6)}), gloss(nil, radius, 1)})
         local pinStroke = stroke(Theme.Accent, 1.6, 0.35)
         pinStroke.Parent = btn
         local pinDot = new("Frame", {                   -- green = armed (Assist mode only)
-            Size = UDim2.fromOffset(9, 9), Position = UDim2.new(1, -16, 0, 7), BackgroundColor3 = Theme.SubText,
+            Size = UDim2.fromOffset(9, 9), Position = circle and UDim2.new(0.5, -4, 0, 5) or UDim2.new(1, -16, 0, 7), BackgroundColor3 = Theme.SubText,
             BorderSizePixel = 0, ZIndex = 3, Parent = btn,
         }, {corner(5)})
         local scale = new("UIScale", {Scale = 0, Parent = btn})
-        p = {btn = btn, scale = scale, stroke = pinStroke, dot = pinDot, x = x, y = y}
+        p = {btn = btn, scale = scale, stroke = pinStroke, dot = pinDot, x = x, y = y, w = pw, h = ph}
         p.tracker = DragTracker and DragTracker.new(8)
         if p.tracker then p.tracker:setLocked(pinsLocked) end
         Pins[name] = p
@@ -1537,7 +1730,7 @@ local function __run()
     local Main_  = createTab("Main", "#")
     local Credit = createTab("Credit", "+")
     local CharList = {
-        {"The Strongest Hero", "Saitama"}, {"Hero Hunter", "Garou"}, {"Destructive Cyborg", "Genos"},
+        {"The Strongest Hero", "Saitama"}, {"Hero Hunter", "Garou"}, {"Hero Hunter (Monster form)", "Garou Monster"}, {"Destructive Cyborg", "Genos"},
         {"Deadly Ninja", "Sonic"}, {"Brutal Demon", "Metal Bat"}, {"Wild Psychic", "Tatsumaki"},
         {"Blade Master", "Atomic Samurai"}, {"Tech Prodigy", "Tech Prodigy"},
     }
@@ -1557,6 +1750,7 @@ local function __run()
 
     -- Main
     Main_:Label("General utilities")
+    do
     local wantSpeed
     local function applySpeed()
         local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
@@ -1581,6 +1775,7 @@ local function __run()
         end
     end)
     Main_:Toggle("Anti AFK", true, function(on) antiAfk = on end)
+    end
     Main_:Button("Reset Character", function()
         local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
         if hum then hum.Health = 0 end
@@ -1603,7 +1798,7 @@ local function __run()
             local c = Data.Combos[name]
             local key, title = "combos", label .. " combos"
             if name:find("Kyoto") then key, title = "kyoto", label .. " kyoto"
-            elseif name:find("Catch") then key, title = "tech", label .. " tech" end
+            elseif name:find("Catch") then key, title = "tech", label .. " Tech" end
             local o = getOpts(name)
             ComboInfo[name] = {steps = c.steps, charName = fullName}
             local function drawer(parent)                       -- this combo's own options
@@ -1616,7 +1811,7 @@ local function __run()
                 sliders.move = tab:Slider("Move gap (0 = global)", 0, 1.2, o.move, 0.01, set("move"), parent)
                 sliders.jump = tab:Slider("Jump gap (0 = global)", 0, 0.6, o.jump, 0.01, set("jump"), parent)
                 sliders.offsetMs = tab:Slider("Fine-tune (ms, + = later)", -100, 100, o.offsetMs, 5, set("offsetMs"), parent)
-                pickers.side = tab:Dropdown("Side dash key", {"Left", "Right"}, o.side, set("side"), parent)
+                pickers.side = tab:Dropdown("Side dash goes", {"Closest", "Left", "Right"}, o.side, set("side"), parent)
                 pickers.pinMode = tab:Dropdown("Pinned button does", {"assist", "run"}, o.pinMode, function(v)
                     if o.pinMode ~= v then o.pinMode = v; markDirty(); if renderPins then renderPins() end end
                 end, parent)
@@ -1662,6 +1857,19 @@ local function __run()
                 assist = {onChange = function(on) setArmed(name, on) end},
             })
         end
+        -- the Tech section: one on/off switch per tech. Switch it on, cast the first move yourself, the rest is played.
+        local techs = {}
+        for _, t in ipairs(Data.TechAssists or {}) do
+            if t.character == fullName then techs[#techs + 1] = t end
+        end
+        if #techs > 0 then
+            local techSec = get("tech", label .. " Tech")
+            for _, t in ipairs(techs) do
+                local key = "Tech_" .. (t.name:gsub("[^%w]+", "_"))
+                ComboInfo[key] = {steps = t.steps, charName = fullName}
+                techSec:Toggle(t.name, false, function(on) setArmed(key, on) end, t.desc .. "  [" .. tostring(t.confidence) .. "]")
+            end
+        end
         tab:Label("ASSIST: switch it on, then cast the first move yourself - I play everything after it (Kyoto: you cast Flowing Water, I do Lethal Whirlwind and the rest). Run plays the whole combo for you. On screen adds a button for it. Moves use hotbar slots 1-4 (unverified order); on a phone use Opt > Learn trigger once. Steps marked * have no key mapped and are skipped.")
     end
     if Data then
@@ -1671,29 +1879,31 @@ local function __run()
             end
         end
     end
-    -- Side dash: one-tap buttons you can put on screen, plus an automatic side dash after your own moves
+    -- Side dash: round one-tap buttons you can put on screen, plus an automatic side dash after your own moves.
+    -- None of this teleports you: it presses Q + A or Q + D. "Closest" chooses A or D by where the nearest player is.
     do
         local sideSec = Main_:Section("Side dash")
-        local function sideCard(name, title, desc, side)
+        local function sideCard(name, title, desc, side, caption)
             local o = getOpts(name)
-            if o then o.side = side; o.pinMode = "run" end            -- fixed: always this side, button runs it
+            if o then o.side = side; o.pinMode = "run" end            -- fixed: always this way, the button runs it
             ComboInfo[name] = {steps = {"SIDEDASH"}, charName = "Universal"}
             sideSec:Button(title, desc, function() runMacro({"SIDEDASH"}, "Universal", name) end, {
                 conf = "custom",
                 pin = {
                     default = SavedPins[name] ~= nil,
-                    onChange = function(on) setPinned(name, on, {"SIDEDASH"}, "Universal") end,
+                    onChange = function(on) setPinned(name, on, {"SIDEDASH"}, "Universal", "circle", caption) end,
                 },
             })
         end
-        sideCard("SideDash_Left", "Side dash left", "Q + A in one tap. Turn On screen on to get a button for it.", "Left")
-        sideCard("SideDash_Right", "Side dash right", "Q + D in one tap. Turn On screen on to get a button for it.", "Right")
+        sideCard("SideDash_Closest", "Side dash toward closest player", "Q + A or Q + D, whichever side the nearest player is on. No teleport - it only dashes. On screen = round button.", "Closest", "Side Dash")
+        sideCard("SideDash_Left", "Side dash left", "Q + A in one tap. On screen = round button.", "Left", "Dash Left")
+        sideCard("SideDash_Right", "Side dash right", "Q + D in one tap. On screen = round button.", "Right", "Dash Right")
     end
     Main_:Toggle("Auto side dash after my moves", false, function(on)
         SideAuto.on = on
         if ready then toast(on and "Auto side dash ON - cast a move and I dash" or "Auto side dash OFF") end
     end)
-    Main_:Dropdown("Side", {"Alternate", "Left", "Right"}, SideAuto.dir, function(v)
+    Main_:Dropdown("Side", {"Closest", "Alternate", "Left", "Right"}, SideAuto.dir, function(v)
         if SideAuto.dir ~= v then SideAuto.dir = v; markDirty() end
     end)
     Main_:Slider("Delay after my move (s)", 0, 1, SideAuto.delay, 0.05, function(v)
@@ -1717,6 +1927,7 @@ local function __run()
     -- Timing tab
     pingLabel = Timing_:Label("Ping: measuring...")
     gapsLabel = Timing_:Label("Gaps now ...")
+    do
     local function changed(tbl, key) return function(v) if tbl[key] ~= v then tbl[key] = v; markDirty() end end end
     Timing_:Toggle("Auto timing from ping", Auto.on, changed(Auto, "on"))
     Timing_:Slider("Auto strength", 0, 1.5, Auto.strength, 0.05, changed(Auto, "strength"))
@@ -1737,6 +1948,8 @@ local function __run()
     Timing_:Button("Reset timing to defaults", function()
         for k, sl in pairs(gapSliders) do sl:Set(TimingDefaults[k]) end
     end)
+
+    end
 
     -- Tech library: every tech found in research, with how sure the sources are
     if TechLib then
@@ -1761,6 +1974,7 @@ local function __run()
     end
 
     -- Auto Tech
+    local blockToggle
     Tech:Label("Recovers automatically when you get knocked down.")
     local techToggle = Tech:Toggle("Auto Tech", false, function(on)
         Settings.AutoTech = on
@@ -1771,7 +1985,24 @@ local function __run()
     Tech:Slider("Cooldown (s)", 0.1, 3, 0.6, 0.05, function(v) Settings.TechCooldown = v end)
     Tech:Label("Dash key defaults to Q - change Settings.TechKey if you rebound it.")
 
+    -- Auto block
+    Tech:Label("AUTO BLOCK - holds F for you when a player in front of you starts an attack aimed at you. Hits from behind, charged hits and grabs cannot be blocked, so those are skipped.")
+    blockToggle = Tech:Toggle("Auto block", false, function(on)
+        Block.on = on
+        if renderFab then renderFab() end
+        if ready then toast(on and "Auto block ON" or "Auto block OFF") end
+    end)
+    local function blockSet(key) return function(v) if Block[key] ~= v then Block[key] = v; markDirty() end end end
+    Tech:Slider("Range (studs)", 6, 30, Block.range, 1, blockSet("range"))
+    Tech:Slider("Aim cone (+- degrees)", 20, 120, Block.aim, 5, blockSet("aim"))
+    Tech:Slider("Delay after their swing starts (s)", 0, 0.4, Block.delay, 0.01, blockSet("delay"))
+    Tech:Slider("Hold block (s)", 0.1, 1, Block.hold, 0.05, blockSet("hold"))
+    Tech:Slider("Cooldown (s)", 0.1, 1, Block.cooldown, 0.05, blockSet("cooldown"))
+    Tech:Toggle("Shorten the delay by my ping", Block.usePing, blockSet("usePing"))
+    Tech:Label("Perfect block timing depends on each move's hit frame, which I cannot read. Delay is shortened by your ping (Auto timing strength / fine-tune apply). Start at 0.10 s and nudge it: lower = blocks sooner.")
+
     -- Teleports (list follows players joining / leaving)
+    do
     local playerSec = Tele:Section("Players")
     local function teleportTo(p)
         local mine = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
@@ -1798,12 +2029,41 @@ local function __run()
         if hrp and spawn then hrp.CFrame = spawn.CFrame + Vector3.new(0, 5, 0) end
     end)
 
+    end
+
     -- Credit
     Credit:Label("Animation Hub UI")
     Credit:Label("Toggle menu: RightShift, or the floating bar: Menu = show/hide, Tech = Auto Tech on/off, Pins = show/hide pinned buttons, Lock = freeze bar and pinned buttons, - = shrink to a dot.")
     Credit:Label("Background: random SFW image from waifu.pics / nekos.best (fan art, not copyright-free).", 40)
 
-    -- Effects Preset
+    -- Effects Preset: look + menu adjustments
+    Effects:Label("Menu look")
+    Effects:Dropdown("Theme", ThemeNames, themeName, function(v) pendingTheme = v end)
+    local function rebuild()                          -- rebuild the whole menu so a new theme applies everywhere
+        if genv.AH_DISABLE_REBUILD then toast("Rebuild is disabled") return end
+        saveNow()
+        genv.__AnimationHubUi = {theme = pendingTheme, scale = uiScale, glass = glass}
+        cleanup()
+        task.spawn(function()
+            task.wait(0.4)
+            local ok, err = pcall(__run)
+            if not ok then
+                warn("[Animation Hub] rebuild failed: " .. tostring(err))
+                notify("Animation Hub error", tostring(err):sub(1, 180), 15)
+            end
+        end)
+    end
+    Effects:Button("Apply theme (rebuilds the menu)", rebuild)
+    Effects:Slider("Menu size", 0.7, 1.25, uiScale, 0.05, function(v)
+        if uiScale ~= v then
+            uiScale = v
+            if menuOpen then MainScale.Scale = fitScale() end
+            markDirty()
+        end
+    end)
+    Effects:Slider("Glass (higher = clearer picture)", 0.4, 0.95, glass, 0.01, function(v)
+        if glass ~= v then glass = v; Veil.BackgroundTransparency = v; markDirty() end
+    end)
     Effects:Label("Background image", 24)
     Effects:Slider("Image opacity", 0.1, 1, 1 - BACKGROUND_TRANSPARENCY, 0.05, function(v)
         Background.ImageTransparency = 1 - v
@@ -1864,7 +2124,7 @@ local function __run()
     --   -     shrink the bar to a dot (tap the dot to bring it back). Drag the bar anywhere.
     -- Position / lock / minimised state survive re-running the script in the same game session.
     do
-        local BAR_W, BAR_H, DOT = 250, 46, 38
+        local BAR_W, BAR_H, DOT = 304, 46, 38
         local saved = genv.__AnimationHubFab or {}
         local fabState = {x = saved.x, y = saved.y, locked = saved.locked == true, minimized = saved.minimized == true}
         local vw0 = viewport()
@@ -1917,7 +2177,7 @@ local function __run()
             return b
         end
 
-        local menuBtn, techBtn, pinsBtn, lockBtn, minBtn, dot
+        local menuBtn, techBtn, blockBtn, pinsBtn, lockBtn, minBtn, dot
         local function place()
             local w, h = BAR_W, BAR_H
             if fabState.minimized then w, h = DOT, DOT end
@@ -1933,30 +2193,33 @@ local function __run()
             paint(menuBtn, menuOpen)
             paint(techBtn, Settings.AutoTech)
             techBtn.Text = Settings.AutoTech and "Tech ON" or "Tech OFF"
+            paint(blockBtn, Block.on)
+            blockBtn.Text = Block.on and "Block ON" or "Block"
             paint(pinsBtn, pinsVisible and #pinOrder > 0)
             pinsBtn.Text = #pinOrder > 0 and ("Pins " .. #pinOrder) or "Pins"
             paint(lockBtn, fabState.locked)
             lockBtn.Text = fabState.locked and "Locked" or "Lock"
-            for _, b in ipairs({menuBtn, techBtn, pinsBtn, lockBtn, minBtn}) do b.Visible = not fabState.minimized end
+            for _, b in ipairs({menuBtn, techBtn, blockBtn, pinsBtn, lockBtn, minBtn}) do b.Visible = not fabState.minimized end
             dot.Visible = fabState.minimized
             place()
         end
 
         menuBtn = barButton("Menu", 4, 46, toggleMenu)
         techBtn = barButton("Tech OFF", 54, 56, function() techToggle:Set(not techToggle:Get()) end)
-        pinsBtn = barButton("Pins", 114, 46, function()
+        blockBtn = barButton("Block", 114, 54, function() blockToggle:Set(not blockToggle:Get()) end)
+        pinsBtn = barButton("Pins", 172, 46, function()
             if #pinOrder == 0 then toast("Nothing pinned yet - turn On screen on for a combo") return end
             setPinsVisible(not pinsVisible)
             toast(pinsVisible and "Pinned buttons shown" or "Pinned buttons hidden")
         end)
-        lockBtn = barButton("Lock", 164, 50, function()
+        lockBtn = barButton("Lock", 222, 50, function()
             fabState.locked = not fabState.locked
             if tracker then tracker:setLocked(fabState.locked) end
             setPinsLocked(fabState.locked)
             toast(fabState.locked and "Locked: the bar and pinned buttons stay where they are" or "Unlocked: drag them anywhere")
             renderFab()
         end)
-        minBtn = barButton("-", 218, 28, function() fabState.minimized = true; renderFab() end)
+        minBtn = barButton("-", 276, 24, function() fabState.minimized = true; renderFab() end)
         dot = new("TextButton", {
             Text = "AH", Font = Enum.Font.GothamBold, TextSize = 12, TextColor3 = Theme.Back,
             BackgroundColor3 = Theme.White, AutoButtonColor = false, Visible = false,

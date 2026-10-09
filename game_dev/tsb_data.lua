@@ -61,6 +61,7 @@ Data.Characters = {
             DOUBLE_TROUBLE  = {dmg = 17.5},
             PINCER_BARRAGE  = {dmg = 12, cd = 6},
         },
+        moveList = {"WEBOOM", "PLASMA_CANNON", "TRINITY_TEAR", "TWIN_BURST"},   -- hotbar order (unverified)
         m1 = {name = "MECHANICAL_COMBAT", dmg = 14, hits = 4, note = "hit1 rolls, hit2 ragdolls; air m1 = uppercut, landing m1 = stomp"},
         awakening = {name = "IRON_GIANT", dmg = 25, hp = 115, moves = {
             PHOTON_EDGE = {dmg = 51.5, cd = 8}, PHOTON_DIVE = {dmg = 65, cd = 25},
@@ -176,6 +177,40 @@ Data.Techs = {
      desc = "Double tapping Vanishing Kick can get past blocks (tier-list note)."},
     {name = "Collateral Ruin (ult cancel)", character = "KJ", confidence = "low",
      desc = "KJ's Collateral Ruin can cancel many ultimate, base and counter moves (Five Seasons, 20-20-20 Dropkick, Stoic Bomb)."},
+    {name = "Block (F) basics", character = "Universal", confidence = "medium",
+     desc = "Hold F: arms up, covers 180 degrees in front, stops all M1s and many specials. You move slowly and cannot act. ~0.2s block lockout after your own M1. Charged (held) hits break block, grabs ignore it, attacks from behind always connect. Tap block, do not hold."},
+    {name = "Perfect Block -> Critical Hit", character = "Universal", confidence = "medium",
+     desc = "Blocking an M1 at the last moment gives your next basic attack a Critical Hit (about triple damage, cracking sound). It stays until you are ragdolled (one source says ~4 s). Only works on real players, not dummies."},
+    {name = "Black Flash", character = "Universal", confidence = "low",
+     desc = "A perfect block while a Critical Hit is active, before you ragdoll: the next hit is a Black Flash (about double a Critical Hit; sources say up to 18%). It can be passed to a different target with your next hit."},
+    {name = "Uppercut-shove reset", character = "The Strongest Hero", confidence = "low",
+     desc = "3 M1, jump + uppercut, time the shove, then dash: M1 reset. Being airborne makes the shove knock back less - just enough for a front dash."},
+    {name = "Uppercut > Shove > M1", character = "The Strongest Hero", confidence = "low",
+     desc = "Hit Uppercut, then Shove as the target hits the ground, then M1."},
+    {name = "Ground Punch tech", character = "Universal", confidence = "low",
+     desc = "Use the 4th M1 to ragdoll an opponent again the moment they get up from their ragdoll."},
+    {name = "Consecutive Punches vs side dash", character = "The Strongest Hero", confidence = "low",
+     desc = "If the enemy side dashes toward you, Consecutive Punches catches them (forum tip)."},
+    {name = "Hammer Heel launch", character = "Hero Hunter (Monster form)", confidence = "low",
+     desc = "Aim Hammer Heel upward to launch them; when they land, loop-dash under them for a free M1 extend."},
+    {name = "Longer Jet Dive", character = "Destructive Cyborg", confidence = "low",
+     desc = "Turn around before the Jet Dive jump to get more range. (Camera turn is not automated.)"},
+    {name = "Homerun > Grand Slam", character = "Brutal Demon", confidence = "low",
+     desc = "After a Homerun knock-up, land a well-aimed Grand Slam in mid-air to push them back down."},
+    {name = "Foul Ball extension", character = "Brutal Demon", confidence = "low",
+     desc = "Land the Foul Ball grab variant and quickly dash into the ragdoll for M1s. Variant 2: downslam, dash away to land a normal Foul Ball, then dash to the ragdoll for more M1s."},
+    {name = "Weboom Extend V2", character = "Tech Prodigy", confidence = "low",
+     desc = "Downslam, turn back, Weboom so they roll forward, side dash ASAP (not too far behind them), then a forward dash to extend. A later patch reduced Weboom's range, which hurt this."},
+    {name = "Twin Burst rebound", character = "Tech Prodigy", confidence = "none",
+     desc = "A video tutorial exists for extending with Twin Burst; no written inputs found."},
+    {name = "Child combo (forum)", character = "Tech Prodigy", confidence = "low",
+     desc = "3 M1, uppercut, 4th move, 2nd move, side dash, front dash. Unverified single post - test in the lab first."},
+    {name = "Suiryu two-skill combo", character = "Martial Artist", confidence = "low",
+     desc = "A tip says Suiryu can chain two skills in one combo with the Uppercut Dash technique."},
+    {name = "Unpunishable Sonic strings", character = "Deadly Ninja", confidence = "low",
+     desc = "Fan guide: in a Sonic combo 3 of 4 moves cannot be punished with an evasive."},
+    {name = "Uppercut Jump / Uppercut Flick / Stun Negation", character = "Universal", confidence = "none",
+     desc = "Listed on the wiki's universal techs page; no written steps found."},
     {name = "Cancel your own ultimate", character = "Universal", confidence = "none",
      desc = "A low-quality site claims you can cancel straight into an M1 string after the first ultimate strike. Unverified, not modelled."},
 }
@@ -234,6 +269,15 @@ Data.Combos = {
     -- Tatsumaki (more)
     Tatsu_WindstormLoop = {character = "Wild Psychic", confidence = "low", steps = {"WINDSTORM_FURY", "FRONTDASH", "UPPERCUT"}},
     Tatsu_StoneGraveCancel = {character = "Wild Psychic", confidence = "low", steps = {"STONE_COFFIN", "FRONTDASH", "M1", "M1"}},
+    -- research round 5
+    TechProdigy_WeboomExtend = {character = "Tech Prodigy", confidence = "low", steps = {"DOWNSLAM", "WEBOOM", "SIDEDASH", "FRONTDASH"}},
+    TechProdigy_Child = {character = "Tech Prodigy", confidence = "low", steps = seq(M1x3, "UPPERCUT", "TWIN_BURST", "PLASMA_CANNON", "SIDEDASH", "FRONTDASH")},
+    MetalBat_HomerunSlam = {character = "Brutal Demon", confidence = "low", steps = {"HOMERUN", "GRAND_SLAM"}},
+    MetalBat_FoulBallExtend = {character = "Brutal Demon", confidence = "low", steps = seq("FOUL_BALL", "FRONTDASH", M1x3)},
+    MetalBat_FoulBallExtend2 = {character = "Brutal Demon", confidence = "low", steps = seq("DOWNSLAM", "BACKDASH", "FOUL_BALL", "FRONTDASH", M1x3)},
+    Saitama_UppercutShoveReset = {character = "The Strongest Hero", confidence = "low", steps = seq(M1x3, "JUMP", "UPPERCUT", "SHOVE", "FRONTDASH")},
+    Saitama_UppercutShoveM1 = {character = "The Strongest Hero", confidence = "low", steps = {"UPPERCUT", "SHOVE", "M1"}},
+    GarouMonster_HammerHeel = {character = "Hero Hunter (Monster form)", confidence = "low", steps = {"HAMMER_HEEL", "FRONTDASH", "M1"}},
     -- Universal
     TwistedDash      = {character = "Universal", confidence = "medium", steps = seq(M1x4, "FRONTDASH")},
     Oreo             = {character = "Universal", confidence = "low", steps = seq(M1x3, "JUMP", "JUMP_M1", "FRONTDASH", "M1", "FRONTDASH")},
@@ -242,6 +286,57 @@ Data.Combos = {
     M1Reset          = {character = "Universal", confidence = "medium", steps = seq(M1x3, "SIDEDASH", "FRONTDASH", "M1")},
     WallTech         = {character = "Universal", confidence = "medium", steps = seq(M1x3, "FRONTDASH", "M1")},
     AntiCancel       = {character = "Universal", confidence = "low", steps = seq(M1x3, "MINI_UPPERCUT", "SIDEDASH", "FRONTDASH")},
+}
+
+---------------------------------------------------------------- tech assists (the on/off toggles)
+-- Same engine as the combos: switch one on, cast the FIRST move yourself, the script plays the rest.
+-- steps[1] is normally the move you cast; everything after it is played for you.
+Data.TechAssists = {
+    -- Garou
+    {name = "Flowing + Grasp", character = "Hero Hunter", confidence = "medium", steps = {"FLOWING_WATER", "SIDEDASH", "HUNTERS_GRASP"},
+     desc = "You cast Flowing Water -> side dash -> Hunter's Grasp"},
+    {name = "Flowing + Lethal", character = "Hero Hunter", confidence = "medium", steps = {"FLOWING_WATER", "SIDEDASH", "LETHAL_WHIRLWIND_STREAM"},
+     desc = "You cast Flowing Water -> side dash -> Lethal Whirlwind Stream (the Kyoto core)"},
+    {name = "Grasp catch", character = "Hero Hunter", confidence = "low", steps = {"HUNTERS_GRASP", "SIDEDASH", "M1"},
+     desc = "You cast Hunter's Grasp -> side dash -> M1"},
+    {name = "Lethal + Grasp", character = "Hero Hunter", confidence = "low", steps = {"LETHAL_WHIRLWIND_STREAM", "HUNTERS_GRASP"},
+     desc = "You cast Lethal Whirlwind -> Hunter's Grasp"},
+    -- Saitama
+    {name = "Shove + M1", character = "The Strongest Hero", confidence = "medium", steps = {"SHOVE", "M1"},
+     desc = "You Shove -> instant M1 (works after 0-2 M1s)"},
+    {name = "Uppercut catch", character = "The Strongest Hero", confidence = "low", steps = {"UPPERCUT", "FRONTDASH", "M1"},
+     desc = "You Uppercut -> front dash -> M1"},
+    {name = "Consecutive + Uppercut", character = "The Strongest Hero", confidence = "low", steps = {"CONSECUTIVE_PUNCHES", "UPPERCUT"},
+     desc = "You cast Consecutive Punches -> Uppercut"},
+    -- Genos
+    {name = "Machine Gun + Ignition", character = "Destructive Cyborg", confidence = "medium", steps = {"MACHINE_GUN_BLOWS", "IGNITION_BURST"},
+     desc = "You cast Machine Gun Blows -> Ignition Burst"},
+    {name = "Ignition + dash", character = "Destructive Cyborg", confidence = "low", steps = {"IGNITION_BURST", "FRONTDASH", "M1", "M1", "M1"},
+     desc = "You cast Ignition Burst -> dash to the ragdoll -> M1 string"},
+    -- Sonic
+    {name = "Scatter + Whirlwind", character = "Deadly Ninja", confidence = "medium", steps = {"SCATTER", "M1", "M1", "M1", "WHIRLWIND_KICK"},
+     desc = "You cast Scatter -> 3 M1 -> Whirlwind Kick"},
+    {name = "Flash Strike + M1", character = "Deadly Ninja", confidence = "low", steps = {"FLASH_STRIKE", "M1"},
+     desc = "You cast Flash Strike -> M1 while they are stunned"},
+    -- Metal Bat
+    {name = "Foul Ball catch", character = "Brutal Demon", confidence = "low", steps = {"FOUL_BALL", "SIDEDASH", "M1"},
+     desc = "You cast Foul Ball -> side dash -> M1"},
+    {name = "Beatdown + Homerun", character = "Brutal Demon", confidence = "low", steps = {"BEATDOWN", "HOMERUN"},
+     desc = "You cast Beatdown -> Homerun"},
+    -- Atomic Samurai
+    {name = "Pinpoint extend", character = "Blade Master", confidence = "low", steps = {"PINPOINT_CUT", "FRONTDASH", "M1", "M1", "M1"},
+     desc = "You cast Pinpoint Cut -> dash after them -> M1s"},
+    -- Tatsumaki
+    {name = "Windstorm loop", character = "Wild Psychic", confidence = "low", steps = {"WINDSTORM_FURY", "FRONTDASH", "UPPERCUT"},
+     desc = "You cast Windstorm Fury -> loop dash -> uppercut"},
+    {name = "Coffin + Pull", character = "Wild Psychic", confidence = "low", steps = {"STONE_COFFIN", "CRUSHING_PULL"},
+     desc = "You cast Stone Coffin -> Crushing Pull"},
+    -- Tech Prodigy
+    {name = "Weboom + dashes", character = "Tech Prodigy", confidence = "low", steps = {"WEBOOM", "SIDEDASH", "FRONTDASH"},
+     desc = "You cast Weboom -> side dash -> front dash"},
+    -- Universal
+    {name = "Twisted dash", character = "Universal", confidence = "medium", steps = {"M1", "FRONTDASH"},
+     desc = "After your 4th M1 -> front dash right away (set Opt > Trigger step to your M1)"},
 }
 
 return Data

@@ -91,3 +91,21 @@ Saitama M1-reset bug (Consecutive Punches while holding M1), mini uppercut > dow
 "cancel your own ultimate" (single low-quality source), Genos/Sonic tech frame data.
 **Timing note:** with a fixed open-loop macro, ping mostly shifts everything equally; it matters for steps that react to what you SEE
 (a move ending, the opponent landing). Auto timing shortens only those gaps by ~ping (capped at 40% of the gap) and has a fine-tune offset.
+
+---
+## Round 5 - block mechanics, more techs, UI library
+(Search-result summaries only; many sources are fan posts. Encoded in `tsb_data.lua`.)
+
+**Block / perfect block** (games.gg, fandom Basic Combat, bloxspot): hold F = arms up, 180 degrees in front, stops all M1s and
+many specials, you move slowly and cannot act. ~0.2 s lockout after your own M1. Charged (held) hits break block, grabs ignore it,
+attacks from behind always connect. Blocking an M1 at the last moment = a Critical Hit on your next basic (about triple, cracking
+sound, lasts until you are ragdolled - one source says ~4 s). A perfect block while a crit is active = Black Flash (about double a
+crit, can be passed to another target). Only works on real players. Exact frame windows ("3-frame") are unsourced - ignored.
+-> Auto block only answers attacks that can be blocked (in range, aimed at you, in front of you) and shortens its delay by ping.
+
+**More techs found:** Tech Prodigy Weboom Extend V2 (downslam, turn, Weboom, side dash ASAP, forward dash; range nerfed later),
+"Child combo" (3 M1, uppercut, 4th move, 2nd move, side dash, front dash - unverified), Metal Bat Homerun > Grand Slam and two
+Foul Ball extensions, Genos Longer Jet Dive, Saitama uppercut-shove reset and Uppercut > Shove > M1, Ground Punch tech, Garou
+Monster Hammer Heel launch, Suiryu two-skill combo, Sonic "unpunishable" strings, universal Uppercut Jump / Flick / Stun Negation (no steps).
+
+**UI:** the screenshot style matches script-hub libraries (WindUI, Fluent, Rayfield, Luna); WindUI is the best documented. See `UI_GUIDE.md`.

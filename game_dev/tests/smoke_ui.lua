@@ -61,22 +61,52 @@ end
 
 local PNG = "\137PNG\r\n\26\n" .. string.rep("x", 32)
 
+-- a plain-Lua character (real numbers, not dummies) so geometry code can be tested: pos / look = {x=, y=, z=}
+local function fakeChar(pos, look, animFns, writes)
+    -- a proxy: every WRITE to the character's root part (even re-assigning an existing field) is recorded
+    local data = {Position = {X = pos.x, Y = pos.y, Z = pos.z}, CFrame = {LookVector = {X = look.x, Y = look.y, Z = look.z}}}
+    local hrp = setmetatable({}, {__index = data, __newindex = function(_, k, v) writes[#writes + 1] = k; data[k] = v end})
+    local animator = {AnimationPlayed = {Connect = function(_, fn) animFns[#animFns + 1] = fn; return {Disconnect = function() end} end}}
+    local hum = {Health = 100, GetState = function() return "Running" end,
+                 FindFirstChildOfClass = function() return animator end, WaitForChild = function() return animator end}
+    local char = {
+        FindFirstChild = function(_, n) if n == "HumanoidRootPart" then return hrp end end,
+        FindFirstChildOfClass = function(_, c) if c == "Humanoid" then return hum end end,
+        WaitForChild = function(_, n) if n == "Humanoid" then return hum end return hrp end,
+        GetAttribute = function() return nil end,
+    }
+    return char, hrp
+end
+
 -- scenario = {executor = "full" | "nofiles", body = bytes the image host returns}
 local function run(scenario)
     local ctx = {callbacks = {}, heartbeats = {}, inputBegan = {}, animPlayed = {}, keys = {}, mouse = {}, waits = {},
                  connections = 0, disconnects = 0}
     local errors, instances, writes, assets = {}, {}, {}, {}
-    local genvStore = {}
+    local genvStore = {AH_DISABLE_REBUILD = not scenario.allowRebuild}   -- clicking every button must not rebuild the menu mid-test
     local env = setmetatable({}, {__index = _G})
 
     env.game = dummy("game", ctx); env.workspace = dummy("workspace", ctx)
-    env.workspace.CurrentCamera = {ViewportSize = {X = 800, Y = 450}}
+    env.workspace.CurrentCamera = {ViewportSize = {X = 800, Y = 450}, CFrame = {RightVector = {X = 1, Y = 0, Z = 0}}}
+    local world = scenario.world            -- optional: {me = {pos, look}, enemies = {{name, pos, look}...}, right = {x,y,z}}
+    local myAnim, myWrites, enemyAnim, enemies = {}, {}, {}, {}
+    local myChar, myHrp
+    if world then
+        myChar, myHrp = fakeChar(world.me.pos, world.me.look, myAnim, myWrites)
+        if world.right then env.workspace.CurrentCamera.CFrame = {RightVector = {X = world.right.x, Y = world.right.y, Z = world.right.z}} end
+        for i, e in ipairs(world.enemies or {}) do
+            enemyAnim[i] = {}
+            local c = fakeChar(e.pos, e.look, enemyAnim[i], {})
+            enemies[i] = {Name = e.name, DisplayName = e.name, Character = c, CharacterAdded = {Connect = function() return {Disconnect = function() end} end}}
+        end
+    end
     env.workspace.FindFirstChildWhichIsA = function() return nil end
     env.game.IsLoaded = function() return true end
     env.game.GetService = function(_, n)
         local s = dummy(n, ctx)
         if n == "Players" then
-            s.LocalPlayer = {DisplayName = "Tester", Name = "tester", UserId = 1, Character = dummy("Character", ctx),
+            s.GetPlayers = function() return enemies end
+            s.LocalPlayer = {DisplayName = "Tester", Name = "tester", UserId = 1, Character = myChar or dummy("Character", ctx),
                 WaitForChild = function() return dummy("PlayerGui", ctx) end,
                 Idled = dummy("Idled", ctx), CharacterAdded = dummy("CharacterAdded", ctx)}
             s.GetUserThumbnailAsync = function() return "rbx://x" end
@@ -118,6 +148,7 @@ local function run(scenario)
         env[n] = dummy(n, ctx)
     end
     env.Vector2 = {new = function(x, y) return {X = x or 0, Y = y or 0} end}
+    env.Enum.AnimationPriority.Action = {Value = 2}                      -- real Roblox: Idle 0, Movement 1, Action 2, Action2 3 ...
     env.task = {
         spawn = function(f, ...) local ok, e = pcall(f, ...); if not ok then errors[#errors + 1] = "task: " .. tostring(e) end end,
         wait = function(t) ctx.waits[#ctx.waits + 1] = t or 0; ctx.now = ctx.now + (t or 0); return 0 end,
@@ -198,7 +229,13 @@ local function run(scenario)
         end
     end
     local function advance(seconds) ctx.now = ctx.now + seconds end
-    return {advance = advance, tap = tap, toggleRowHit = toggleRowHit, fireKey = fireKey, playAnimation = playAnimation,
+    local function swing(i, priority, looped)                              -- enemy i starts an attack animation
+        for _, fn in ipairs(enemyAnim[i] or {}) do
+            local ok, e = pcall(fn, {Animation = {AnimationId = "rbxassetid://777"}, Looped = looped or false, Priority = {Value = priority or 3}})
+            if not ok then errors[#errors + 1] = "enemy AnimationPlayed handler: " .. tostring(e) end
+        end
+    end
+    return {swing = swing, myWrites = myWrites, advance = advance, tap = tap, toggleRowHit = toggleRowHit, fireKey = fireKey, playAnimation = playAnimation,
             findButton = findButton, textOf = textOf, errors = errors, ctx = ctx, writes = writes, assets = assets, bgSet = bgSet, genv = genvStore, env = env, fn = fn}
 end
 
@@ -362,7 +399,7 @@ check(#as.ctx.keys == afterSecond, "assist: once disarmed, your casts must not t
 -- 7b. run-mode pin (side dash left) runs immediately; assist-mode pins never do
 local sd = run({executor = "full", body = PNG, settings = {pins = {SideDash_Left = {x = 90, y = 90}}}})
 for _, e in ipairs(sd.errors) do failures[#failures + 1] = "side dash scenario: " .. e end
-local sdBtn = sd.findButton("SideDash Left")
+local sdBtn = sd.findButton("Dash Left")
 check(sdBtn ~= nil, "side dash: pinned button missing")
 if sdBtn then sd.tap(sdBtn) end
 check(pressed(sd, sd.env.Enum.KeyCode.Q) and pressed(sd, sd.env.Enum.KeyCode.A), "side dash left button must press Q + A")
@@ -395,9 +432,116 @@ check(#au.ctx.keys == 0, "auto side dash: a non-move key must not trigger it")
 au.fireKey(au.env.Enum.KeyCode.One)                                     -- you cast move 1
 check(pressed(au, au.env.Enum.KeyCode.Q) and pressed(au, au.env.Enum.KeyCode.A), "auto side dash: first dash goes Left (Alternate starts Left)")
 
+-- 8. SIDE DASH toward the closest player: picks the A or D key, never moves you
+local ME, LOOK = {x = 0, y = 0, z = 0}, {x = 0, y = 0, z = -1}
+local function keyNamed(r, name) return r.env.Enum.KeyCode[name] end
+local rightSide = run({executor = "full", body = PNG, settings = {pins = {SideDash_Closest = {x = 90, y = 90}}}, world = {
+    me = {pos = ME, look = LOOK}, right = {x = 1, y = 0, z = 0},
+    enemies = {{name = "Far", pos = {x = -80, y = 0, z = 0}, look = LOOK}, {name = "Near", pos = {x = 12, y = 0, z = -4}, look = LOOK}}}})
+for _, e in ipairs(rightSide.errors) do failures[#failures + 1] = "closest side dash (right): " .. e end
+local closeBtn = rightSide.findButton("Side Dash")
+check(closeBtn ~= nil, "closest side dash: the round button is missing")
+if closeBtn then rightSide.tap(closeBtn) end
+check(pressed(rightSide, keyNamed(rightSide, "D")) and pressed(rightSide, keyNamed(rightSide, "Q")), "closest side dash: nearest player is on my right -> Q + D")
+check(not pressed(rightSide, keyNamed(rightSide, "A")), "closest side dash: must not press A when the nearest player is on the right")
+check(#rightSide.myWrites == 0, "closest side dash: it must NOT move / teleport me - my character was written to: " .. table.concat(rightSide.myWrites, ","))
+
+local leftSide = run({executor = "full", body = PNG, settings = {pins = {SideDash_Closest = {x = 90, y = 90}}}, world = {
+    me = {pos = ME, look = LOOK}, right = {x = 1, y = 0, z = 0},
+    enemies = {{name = "Near", pos = {x = -9, y = 0, z = -2}, look = LOOK}, {name = "Far", pos = {x = 70, y = 0, z = 0}, look = LOOK}}}})
+local lb = leftSide.findButton("Side Dash")
+if lb then leftSide.tap(lb) end
+check(pressed(leftSide, keyNamed(leftSide, "A")) and not pressed(leftSide, keyNamed(leftSide, "D")), "closest side dash: nearest player on my left -> Q + A")
+
+local nobody = run({executor = "full", body = PNG, settings = {pins = {SideDash_Closest = {x = 90, y = 90}}}, world = {
+    me = {pos = ME, look = LOOK}, enemies = {}}})
+local nb = nobody.findButton("Side Dash")
+if nb then nobody.tap(nb) end
+check(pressed(nobody, keyNamed(nobody, "A")), "closest side dash: with nobody around it falls back to Left (A) instead of failing")
+
+-- every side dash inside a tech / combo follows the same rule (default side = Closest)
+local techDash = run({executor = "full", body = PNG, settings = {pins = {Garou_Catch = {x = 100, y = 100}}}, world = {
+    me = {pos = ME, look = LOOK}, right = {x = 1, y = 0, z = 0}, enemies = {{name = "Near", pos = {x = 10, y = 0, z = 0}, look = LOOK}}}})
+local tdBtn = techDash.findButton("Garou Catch")
+if tdBtn then techDash.tap(tdBtn) end
+techDash.fireKey(techDash.env.Enum.KeyCode.Three)
+check(pressed(techDash, keyNamed(techDash, "D")), "assist combos: their SIDEDASH steps must also go toward the closest player")
+check(#techDash.myWrites == 0, "assist combos: side dash must not move me")
+
+-- 9. AUTO BLOCK
+local BLOCKER = {x = 0, y = 0, z = -6}
+local TOWARD_ME = {x = 0, y = 0, z = 1}                                    -- enemy looks back at me (I am at the origin)
+local function blockWorld(enemyPos, enemyLook)
+    return {me = {pos = ME, look = LOOK}, enemies = {{name = "Enemy", pos = enemyPos, look = enemyLook}}}
+end
+local ab = run({executor = "full", body = PNG, ping = 100, world = blockWorld(BLOCKER, TOWARD_ME)})
+for _, e in ipairs(ab.errors) do failures[#failures + 1] = "auto block scenario: " .. e end
+for _ = 1, 6 do for _, hb in ipairs(ab.ctx.heartbeats) do pcall(hb, 1) end end      -- let it measure the 100 ms ping
+local F = keyNamed(ab, "F")
+ab.swing(1)
+check(not pressed(ab, F), "auto block: off by default - it must not block")
+local blockHit = ab.toggleRowHit("Auto block")
+check(blockHit ~= nil, "auto block: toggle not found")
+if blockHit then ab.tap(blockHit) end
+ab.swing(1, 3, true)
+check(not pressed(ab, F), "auto block: a looping animation (walk / idle) is not an attack")
+ab.swing(1, 1, false)
+check(not pressed(ab, F), "auto block: a low-priority animation layer is not an attack")
+ab.swing(1, 3, false)
+check(pressed(ab, F), "auto block: an attack aimed at me from in front must be blocked (F held)")
+local released = false
+for _, k in ipairs(ab.ctx.keys) do if k.key == F and not k.down then released = true end end
+check(released, "auto block: F must always be released again")
+local shortened = false
+for _, w in ipairs(ab.ctx.waits) do if math.abs(w - 0.06) < 1e-9 then shortened = true end end     -- 0.10 s - min(100 ms, 40%) = 0.06 s
+check(shortened, "auto block: the 0.10 s delay must be shortened by the 100 ms ping to 0.06 s")
+local fCount = 0
+for _, k in ipairs(ab.ctx.keys) do if k.key == F and k.down then fCount = fCount + 1 end end
+ab.swing(1, 3, false)
+local fCount2 = 0
+for _, k in ipairs(ab.ctx.keys) do if k.key == F and k.down then fCount2 = fCount2 + 1 end end
+check(fCount2 == fCount, "auto block: a second swing inside the cooldown must not stack another block")
+
+local function blockedWith(world, label)
+    local r = run({executor = "full", body = PNG, world = world})
+    local hit = r.toggleRowHit("Auto block")
+    if hit then r.tap(hit) end
+    r.swing(1, 3, false)
+    return pressed(r, keyNamed(r, "F"))
+end
+check(not blockedWith(blockWorld({x = 0, y = 0, z = -40}, TOWARD_ME)), "auto block: attacker out of range must be ignored")
+check(not blockedWith(blockWorld(BLOCKER, {x = 0, y = 0, z = -1})), "auto block: attacker looking away must be ignored")
+check(not blockedWith(blockWorld({x = 0, y = 0, z = 6}, {x = 0, y = 0, z = -1})), "auto block: an attack from BEHIND cannot be blocked - do not waste F")
+check(blockedWith(blockWorld({x = 3, y = 0, z = -5}, {x = -0.5, y = 0, z = 1})), "auto block: slightly off-centre but aimed at me must still block")
+
+-- 10. TECH TOGGLES: every tech in the character tab is an on/off switch that arms Assist
+local tg = run({executor = "full", body = PNG, world = {me = {pos = ME, look = LOOK}, enemies = {}}})
+for _, e in ipairs(tg.errors) do failures[#failures + 1] = "tech toggle scenario: " .. e end
+local flowHit = tg.toggleRowHit("Flowing + Grasp")
+check(flowHit ~= nil, "tech toggles: the Garou 'Flowing + Grasp' switch is missing")
+tg.fireKey(tg.env.Enum.KeyCode.One)
+check(#tg.ctx.keys == 0, "tech toggles: off by default")
+if flowHit then tg.tap(flowHit) end
+tg.fireKey(tg.env.Enum.KeyCode.Two)                                              -- not the trigger (Lethal)
+check(#tg.ctx.keys == 0, "tech toggles: a different move must not trigger it")
+tg.fireKey(tg.env.Enum.KeyCode.One)                                              -- YOU cast Flowing Water
+check(pressed(tg, keyNamed(tg, "Q")) and pressed(tg, tg.env.Enum.KeyCode.Three), "tech toggles: after your Flowing Water it must side dash and cast Hunter's Grasp")
+check(not pressed(tg, tg.env.Enum.KeyCode.One), "tech toggles: it must not press Flowing Water itself")
+
+-- 11. MENU REBUILD with a new theme (rebuild enabled in this one scenario)
+local rb = run({executor = "full", body = PNG, allowRebuild = true, settings = {ui = {theme = "Ocean", scale = 1.1, glass = 0.6}}})
+for _, e in ipairs(rb.errors) do failures[#failures + 1] = "rebuild scenario: " .. e end
+check(rb.genv.__AnimationHubCleanup ~= nil, "rebuild scenario: menu did not start with a saved theme")
+local applyBtn = rb.findButton("Apply theme (rebuilds the menu)")
+check(applyBtn ~= nil, "rebuild: the Apply theme button is missing")
+local cleanupBefore = rb.genv.__AnimationHubCleanup
+if applyBtn then rb.tap(applyBtn) end
+check(rb.genv.__AnimationHubCleanup ~= nil and rb.genv.__AnimationHubCleanup ~= cleanupBefore, "rebuild: a fresh menu instance must replace the old one")
+check(type(rb.genv.__AnimationHubUi) == "table" and rb.genv.__AnimationHubUi.theme == "Ocean", "rebuild: the chosen theme must survive the rebuild")
+
 if #failures > 0 then
     print("PROBLEMS:"); for _, x in ipairs(failures) do print("  " .. x) end
     finish(1)
     return
 end
-print("smoke test passed (10 scenarios)")
+print("smoke test passed (20 scenarios)")

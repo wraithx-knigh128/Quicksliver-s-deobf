@@ -12,3 +12,6 @@ Checks (from `game_dev/`):
 - `python3 tests/run_smoke.py [file]`    UI smoke test on Lua 5.x via lupa
 - `LUAU=/path/to/luau python3 tests/run_smoke_luau.py [file]`   same smoke test on real Luau (what Roblox runs)
 - `tools/validate_api.py`                every Roblox property/enum/service used vs Roblox's real API dump
+
+Also here: `UI_GUIDE.md` (how to build this kind of menu, where), `examples/mini_ui.lua` (a small complete menu for Roblox Studio),
+`tools/validate_api.py` (checks Roblox property / enum / event names against the real API list).

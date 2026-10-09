@@ -16,6 +16,7 @@ out = (ui[:i]
        + as_module("PingModel", rd("game_dev/ping_model.lua"))
        + as_module("ComboOptions", rd("game_dev/combo_options.lua"))
        + as_module("Assist", rd("game_dev/assist.lua"))
+       + as_module("CombatMath", rd("game_dev/combat_math.lua"))
        + as_module("Data", rd("game_dev/tsb_data.lua"))
        + as_module("Engine", rd("game_dev/combo_engine.lua"))
        + "\n" + ui[i:])
