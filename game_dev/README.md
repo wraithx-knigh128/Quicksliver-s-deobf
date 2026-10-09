@@ -4,7 +4,7 @@ Single-file executor script: `dist/tsb_hub_executor.min.txt` (built by `python3 
 
 Short loader (no pasting a 77 KB file):
 ```lua
-loadstring(game:HttpGet("https://raw.githubusercontent.com/wraithx-knigh128/Quicksliver-s-deobf/f0073c4241368fd300fe714609d2a4358e09a329/dist/tsb_hub_executor.min.txt"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/wraithx-knigh128/Quicksliver-s-deobf/b602b7a5fd5cb5a9b0661a7e722337f1250f617d/dist/tsb_hub_executor.min.txt"))()
 ```
 
 Nothing is saved automatically. The Config tab has Save config / Reload / Delete; the only file is `animation_hub_config.json`, loaded when
