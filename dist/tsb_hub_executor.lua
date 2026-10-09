@@ -152,7 +152,8 @@ local ComboOptions = (function()
 
 local M = {}
 
-M.DEFAULTS = {auto = "global", speed = 1, m1 = 0, dash = 0, move = 0, jump = 0, offsetMs = 0, side = "Left"}
+M.DEFAULTS = {auto = "global", speed = 1, m1 = 0, dash = 0, move = 0, jump = 0, offsetMs = 0, side = "Left",
+    trigger = 0, pinMode = "assist", trigAnim = ""}
 
 local RANGES = {
     speed = {0.5, 2}, m1 = {0, 0.6}, dash = {0, 0.8}, move = {0, 1.2}, jump = {0, 0.6}, offsetMs = {-100, 100},
@@ -161,6 +162,7 @@ M.RANGES = RANGES
 
 local AUTO = {global = true, on = true, off = true}
 local SIDE = {Left = true, Right = true}
+local PINMODE = {assist = true, run = true}
 
 local function clamp(v, lo, hi, default)
     if type(v) ~= "number" or v ~= v then return default end      -- not a number / NaN
@@ -176,6 +178,11 @@ function M.sanitize(src)
     end
     o.auto = AUTO[src.auto] and src.auto or M.DEFAULTS.auto
     o.side = SIDE[src.side] and src.side or M.DEFAULTS.side
+    o.pinMode = PINMODE[src.pinMode] and src.pinMode or M.DEFAULTS.pinMode
+    o.trigger = math.floor(clamp(src.trigger, 0, 64, M.DEFAULTS.trigger))
+    -- an animation id is plain text like "rbxassetid://123"; anything odd or huge is thrown away
+    local anim = src.trigAnim
+    if type(anim) == "string" and #anim <= 120 and not anim:find("[%c]") then o.trigAnim = anim else o.trigAnim = M.DEFAULTS.trigAnim end
     return o
 end
 
@@ -201,6 +208,48 @@ function M.gap(kind, timing, o, globalSpeed)
     local own = o[kind]
     local base = (type(own) == "number" and own > 0) and own or timing[kind]
     return base * (globalSpeed or 1) * o.speed
+end
+
+return M
+
+end)()
+local Assist = (function()
+
+
+local M = {}
+
+-- override >= 1 wins (clamped to the combo length); otherwise the first step that is a character move
+-- (that is the thing you do yourself); a combo without any move starts after step 1.
+function M.triggerIndex(steps, isMove, override)
+    if type(steps) ~= "table" or #steps == 0 then return nil end
+    if type(override) == "number" and override >= 1 then return math.min(math.floor(override), #steps) end
+    for i, tok in ipairs(steps) do
+        if isMove and isMove(tok) then return i end
+    end
+    return 1
+end
+
+-- steps after the trigger, or nil when there is nothing left to play
+function M.remaining(steps, index)
+    if type(steps) ~= "table" or type(index) ~= "number" or index >= #steps then return nil end
+    local out = {}
+    for i = index + 1, #steps do out[#out + 1] = steps[i] end
+    return out
+end
+
+-- armedOrder: names, oldest first. Returns the most recently armed name that matches.
+function M.pick(armedOrder, matches)
+    for i = #armedOrder, 1, -1 do
+        if matches(armedOrder[i]) then return armedOrder[i] end
+    end
+    return nil
+end
+
+-- "Left"/"Right" are fixed; "Alternate" flips from the side used last time (starting with Left)
+function M.nextSide(direction, last)
+    if direction == "Right" then return "Right" end
+    if direction == "Alternate" then return last == "Left" and "Right" or "Left" end
+    return "Left"
 end
 
 return M
@@ -708,15 +757,16 @@ local function __run()
 
     ---------------------------------------------------------------- theme
     local Theme = {
-        Back     = Color3.fromRGB(16, 12, 22),
-        Panel    = Color3.fromRGB(30, 22, 38),
-        Item     = Color3.fromRGB(46, 34, 56),
-        Hover    = Color3.fromRGB(62, 46, 76),
-        Accent   = Color3.fromRGB(255, 120, 180),
-        Accent2  = Color3.fromRGB(176, 120, 255),
-        Text     = Color3.fromRGB(246, 238, 248),
-        SubText  = Color3.fromRGB(176, 158, 190),
-        Good     = Color3.fromRGB(120, 230, 170),
+        Back     = Color3.fromRGB(30, 20, 46),
+        Panel    = Color3.fromRGB(54, 38, 78),
+        Item     = Color3.fromRGB(76, 56, 106),
+        Hover    = Color3.fromRGB(98, 74, 136),
+        Accent   = Color3.fromRGB(255, 112, 176),
+        Accent2  = Color3.fromRGB(160, 112, 255),
+        Gold     = Color3.fromRGB(255, 214, 150),
+        Text     = Color3.fromRGB(252, 246, 254),
+        SubText  = Color3.fromRGB(200, 182, 218),
+        Good     = Color3.fromRGB(120, 235, 175),
         White    = Color3.fromRGB(255, 255, 255),
     }
     local function accentGradient(parent, rotation)
@@ -724,6 +774,23 @@ local function __run()
     end
     local function hairline(parent, transparency)     -- subtle glass border
         return new("UIStroke", {Color = Theme.White, Thickness = 1, Transparency = transparency or 0.9, Parent = parent})
+    end
+    -- glossy sheen: a white film that is strongest at the top edge and fades out (the "glass" look)
+    local function gloss(parent, radius, strength)
+        local top = 0.80 + (1 - (strength or 1)) * 0.2          -- strength 1 = brightest sheen
+        return new("Frame", {
+            Name = "Gloss", Size = UDim2.fromScale(1, 1), BackgroundColor3 = Theme.White, BorderSizePixel = 0,
+            ZIndex = 0, Parent = parent,
+        }, {
+            new("UICorner", {CornerRadius = UDim.new(0, radius or 12)}),
+            new("UIGradient", {
+                Rotation = 90,
+                Transparency = NumberSequence.new({
+                    NumberSequenceKeypoint.new(0, top), NumberSequenceKeypoint.new(0.5, 0.96), NumberSequenceKeypoint.new(1, 1),
+                }),
+                Parent = nil,
+            }),
+        })
     end
 
     ---------------------------------------------------------------- cleanup old
@@ -784,13 +851,18 @@ local function __run()
         Parent = Gui,
     }, {corner(18)})
     local MainScale = new("UIScale", {Scale = 0.92, Parent = Main})
-    local MainStroke = stroke(Theme.White, 1.5, 0.35)
+    local MainStroke = stroke(Theme.White, 1.6, 0.15)
     MainStroke.Parent = Main
-    accentGradient(MainStroke, 45)
+    new("UIGradient", {      -- gold -> rose -> violet rim
+        Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Theme.Gold), ColorSequenceKeypoint.new(0.5, Theme.Accent), ColorSequenceKeypoint.new(1, Theme.Accent2),
+        }),
+        Rotation = 45, Parent = MainStroke,
+    })
 
     -- background: tinted gradient, optional image, and a dark veil so text stays readable
     new("UIGradient", {
-        Color = ColorSequence.new(Color3.fromRGB(52, 30, 66), Color3.fromRGB(14, 10, 20)),
+        Color = ColorSequence.new(Color3.fromRGB(104, 62, 142), Color3.fromRGB(34, 22, 56)),
         Rotation = 60, Parent = Main,
     })
     local Background = new("ImageLabel", {
@@ -799,9 +871,10 @@ local function __run()
         ZIndex = 0, Parent = Main,
     })
     new("Frame", {                                   -- veil
-        Size = UDim2.fromScale(1, 1), BackgroundColor3 = Theme.Back, BackgroundTransparency = 0.45,
+        Size = UDim2.fromScale(1, 1), BackgroundColor3 = Theme.Back, BackgroundTransparency = 0.72,
         BorderSizePixel = 0, ZIndex = 0, Parent = Main,
     })
+    gloss(Main, 18, 1)
     local bgGen = 0
     local function refreshBackground(sourceName)
         bgGen = bgGen + 1
@@ -821,7 +894,7 @@ local function __run()
     local Toast = new("CanvasGroup", {
         AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -40),
         Size = UDim2.fromOffset(280, 38), BackgroundColor3 = Theme.Panel, GroupTransparency = 1, ZIndex = 50, Parent = Gui,
-    }, {corner(12), hairline(nil, 0.7)})
+    }, {corner(12), hairline(nil, 0.6), gloss(nil, 12, 1)})
     local ToastText = new("TextLabel", {
         Text = "", Font = Enum.Font.GothamMedium, TextSize = 13, TextColor3 = Theme.Text, BackgroundTransparency = 1,
         Size = UDim2.fromScale(1, 1), TextTruncate = Enum.TextTruncate.AtEnd, Parent = Toast,
@@ -849,7 +922,10 @@ local function __run()
         TextXAlignment = Enum.TextXAlignment.Left, BackgroundTransparency = 1,
         Position = UDim2.fromOffset(20, 9), Size = UDim2.new(1, -230, 0, 22), Parent = TopBar,
     })
-    accentGradient(Title, 0)
+    new("UIGradient", {
+        Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Theme.Gold), ColorSequenceKeypoint.new(1, Theme.Accent)}),
+        Parent = Title,
+    })
     new("TextLabel", {
         Text = "The Strongest Battlegrounds", Font = Enum.Font.Gotham, TextSize = 11, TextColor3 = Theme.SubText,
         TextXAlignment = Enum.TextXAlignment.Left, BackgroundTransparency = 1,
@@ -946,6 +1022,10 @@ local function __run()
     end)
 
     ---------------------------------------------------------------- sidebar / pages
+    new("Frame", {                                   -- frosted glass panel behind the sidebar
+        Position = UDim2.fromOffset(6, 60), Size = UDim2.new(0, SIDE_W + 2, 1, -124),
+        BackgroundColor3 = Theme.Panel, BackgroundTransparency = 0.45, BorderSizePixel = 0,
+    }, {corner(16), hairline(nil, 0.84), gloss(nil, 16, 0.9)}).Parent = Main
     local Sidebar = new("ScrollingFrame", {
         Position = UDim2.fromOffset(0, 62), Size = UDim2.new(0, SIDE_W, 1, -126),
         BackgroundTransparency = 1, ScrollBarThickness = 0, CanvasSize = UDim2.new(), BorderSizePixel = 0,
@@ -963,8 +1043,8 @@ local function __run()
     -- footer: player card
     local Card = new("Frame", {
         Position = UDim2.new(0, 8, 1, -58), Size = UDim2.fromOffset(SIDE_W - 16, 46),
-        BackgroundColor3 = Theme.Panel, BackgroundTransparency = 0.25, Parent = Main,
-    }, {corner(12), hairline(nil, 0.88)})
+        BackgroundColor3 = Theme.Panel, BackgroundTransparency = 0.2, Parent = Main,
+    }, {corner(12), hairline(nil, 0.8), gloss(nil, 12, 1)})
     local avatar = new("ImageLabel", {
         Size = UDim2.fromOffset(32, 32), Position = UDim2.fromOffset(7, 7),
         BackgroundColor3 = Theme.Item, Parent = Card,
@@ -1080,8 +1160,8 @@ local function __run()
         local function row(height, parent)
             return new("Frame", {
                 Size = UDim2.new(1, 0, 0, height or 44), BackgroundColor3 = Theme.Item,
-                BackgroundTransparency = 0.35, Parent = parent or page,
-            }, {corner(12), hairline(nil, 0.9)})
+                BackgroundTransparency = 0.28, Parent = parent or page,
+            }, {corner(12), hairline(nil, 0.82), gloss(nil, 12, 0.8)})
         end
         local function label(parent, text, size, color, pos, font)
             return new("TextLabel", {
@@ -1096,12 +1176,12 @@ local function __run()
         end
 
         -- wrapped text that grows with its content
-        function tab:Label(text)
+        function tab:Label(text, parent)
             return new("TextLabel", {
                 Text = text, Font = Enum.Font.Gotham, TextSize = 12, TextColor3 = Theme.SubText,
                 TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top,
                 TextWrapped = true, BackgroundTransparency = 1,
-                Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, Parent = page,
+                Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, Parent = parent or page,
             }, {new("UIPadding", {
                 PaddingLeft = UDim.new(0, 4), PaddingRight = UDim.new(0, 4),
                 PaddingTop = UDim.new(0, 2), PaddingBottom = UDim.new(0, 2),
@@ -1153,8 +1233,8 @@ local function __run()
             return api
         end
 
-        function tab:Button(text, cb)
-            local r = row(42)
+        function tab:Button(text, cb, parent)
+            local r = row(42, parent)
             local b = new("TextButton", {
                 Text = text, Font = Enum.Font.GothamMedium, TextSize = 13, TextColor3 = Theme.Text,
                 Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, AutoButtonColor = false, Parent = r,
@@ -1291,11 +1371,12 @@ local function __run()
 
             local sec = {}
             -- cb = what "Run" does. extra (optional) = {
-            --   conf = "high|medium|low",
-            --   options = function(drawer) ... end        fills an options drawer that opens with "Opt"
-            --   pin = {default = bool, onChange = function(on)}   the "On screen" switch
+            --   conf = "high|medium|low|custom",
+            --   options = function(drawer) ... end                  fills an options drawer that opens with "Opt"
+            --   pin = {default = bool, onChange = function(on)}     the "On screen" switch
+            --   assist = {default = bool, onChange = function(on)}  the "Assist" (armed) switch
             -- }
-            -- returns a handle with :SetPinned(bool)
+            -- returns a handle with :SetPinned(bool) and :SetArmed(bool) (they never fire onChange)
             function sec:Button(name, desc, cb, extra)
                 extra = extra or {}
                 local confColor = extra.conf == "high" and Theme.Good or (extra.conf == "medium" and Theme.Accent2 or Theme.SubText)
@@ -1304,12 +1385,12 @@ local function __run()
                     BackgroundTransparency = 1, Parent = body,
                 }, {new("UIListLayout", {Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder})})
                 local card = new("Frame", {
-                    Size = UDim2.new(1, 0, 0, 92), BackgroundColor3 = Theme.Item,
-                    BackgroundTransparency = 0.35, LayoutOrder = 0, Parent = holder2,
-                }, {corner(14)})
-                local cardStroke = hairline(card, 0.9)
+                    Size = UDim2.new(1, 0, 0, 114), BackgroundColor3 = Theme.Item,
+                    BackgroundTransparency = 0.25, LayoutOrder = 0, Parent = holder2,
+                }, {corner(14), gloss(nil, 14, 1)})
+                local cardStroke = hairline(card, 0.82)
                 new("Frame", {                           -- confidence colour strip
-                    Size = UDim2.fromOffset(4, 60), Position = UDim2.fromOffset(0, 16), BackgroundColor3 = confColor,
+                    Size = UDim2.fromOffset(4, 70), Position = UDim2.fromOffset(0, 18), BackgroundColor3 = confColor,
                     BorderSizePixel = 0, Parent = card,
                 }, {corner(2)})
                 new("TextLabel", {
@@ -1321,37 +1402,47 @@ local function __run()
                     Text = desc or "", Font = Enum.Font.Gotham, TextSize = 11, TextColor3 = Theme.SubText,
                     TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top,
                     TextWrapped = true, TextTruncate = Enum.TextTruncate.AtEnd, BackgroundTransparency = 1,
-                    Position = UDim2.fromOffset(16, 30), Size = UDim2.new(1, -146, 0, 56), Parent = card,
+                    Position = UDim2.fromOffset(16, 30), Size = UDim2.new(1, -146, 0, 78), Parent = card,
                 })
-                -- right column: confidence chip, "On screen" switch, Run / Opt
+                -- right column: confidence chip, two switches, Run / Opt
                 new("TextLabel", {
                     Text = extra.conf or "?", Font = Enum.Font.GothamBold, TextSize = 10, TextColor3 = confColor,
                     BackgroundColor3 = Theme.Panel, BackgroundTransparency = 0.2,
                     Position = UDim2.new(1, -124, 0, 8), Size = UDim2.fromOffset(112, 18), Parent = card,
                 }, {corner(9)})
-                local pinHandle = {}
-                local pinState = false
-                if extra.pin then
+                local handle = {}
+                function handle:SetPinned() end
+                function handle:SetArmed() end
+                local function switchRow(labelText, y, spec)
+                    local state = false
                     new("TextLabel", {
-                        Text = "On screen", Font = Enum.Font.GothamMedium, TextSize = 11, TextColor3 = Theme.SubText,
+                        Text = labelText, Font = Enum.Font.GothamMedium, TextSize = 11, TextColor3 = Theme.SubText,
                         TextXAlignment = Enum.TextXAlignment.Left, BackgroundTransparency = 1,
-                        Position = UDim2.new(1, -124, 0, 32), Size = UDim2.fromOffset(62, 20), Parent = card,
+                        Position = UDim2.new(1, -124, 0, y), Size = UDim2.fromOffset(62, 20), Parent = card,
                     })
-                    local sw = makeSwitch(card, UDim2.new(1, -52, 0, 32), 40, 20)
-                    local pinHit = new("TextButton", {
+                    local sw = makeSwitch(card, UDim2.new(1, -52, 0, y), 40, 20)
+                    local hit = new("TextButton", {
                         Text = "", BackgroundTransparency = 1, AutoButtonColor = false,
-                        Position = UDim2.new(1, -126, 0, 28), Size = UDim2.fromOffset(116, 28), Parent = card,
+                        Position = UDim2.new(1, -126, 0, y - 4), Size = UDim2.fromOffset(116, 28), Parent = card,
                     })
                     local function apply(v, silent)
                         v = v and true or false
-                        if v == pinState then return end
-                        pinState = v
+                        if v == state then return end
+                        state = v
                         sw.render(v, true)
-                        if not silent then task.spawn(extra.pin.onChange, v) end
+                        if not silent then task.spawn(spec.onChange, v) end
                     end
-                    pinHit.MouseButton1Click:Connect(function() apply(not pinState) end)
-                    function pinHandle:SetPinned(v) apply(v, true) end
-                    if extra.pin.default then pinState = true; sw.render(true, false); task.spawn(extra.pin.onChange, true) end
+                    hit.MouseButton1Click:Connect(function() apply(not state) end)
+                    if spec.default then state = true; sw.render(true, false); task.spawn(spec.onChange, true) end
+                    return apply
+                end
+                if extra.pin then
+                    local apply = switchRow("On screen", 32, extra.pin)
+                    function handle:SetPinned(v) apply(v, true) end
+                end
+                if extra.assist then
+                    local apply = switchRow("Assist", 56, extra.assist)
+                    function handle:SetArmed(v) apply(v, true) end
                 end
                 local run = new("TextButton", {
                     Text = "Run", Font = Enum.Font.GothamBold, TextSize = 12, TextColor3 = Theme.Back,
@@ -1365,10 +1456,10 @@ local function __run()
                     task.spawn(cb)
                 end)
                 card.MouseEnter:Connect(function()
-                    tween(card, {BackgroundTransparency = 0.2}, 0.18); tween(cardStroke, {Transparency = 0.6}, 0.18)
+                    tween(card, {BackgroundTransparency = 0.12}, 0.18); tween(cardStroke, {Transparency = 0.5}, 0.18)
                 end)
                 card.MouseLeave:Connect(function()
-                    tween(card, {BackgroundTransparency = 0.35}, 0.25); tween(cardStroke, {Transparency = 0.9}, 0.25)
+                    tween(card, {BackgroundTransparency = 0.25}, 0.25); tween(cardStroke, {Transparency = 0.82}, 0.25)
                 end)
 
                 if extra.options then
@@ -1397,7 +1488,7 @@ local function __run()
                             TextColor3 = open2 and Theme.Back or Theme.Accent}, 0.2)
                     end)
                 end
-                return pinHandle
+                return handle
             end
 
             -- read-only card with wrapped text (used for the tech library)
@@ -1526,6 +1617,23 @@ local function __run()
     local ComboOpts = {}                                   -- combo name -> options table (see combo_options.lua)
     local Pins = {}                                        -- pinned on-screen buttons (see the manager further down)
     local SavedPins = type(Saved.pins) == "table" and Saved.pins or {}
+    local Armed, armedOrder = {}, {}                       -- Assist: armed combos (never saved: you start disarmed)
+    local SideAuto = {on = false, dir = "Alternate", delay = 0.25, cooldown = 0.8, anims = {}}   -- auto side dash after your moves
+    if type(Saved.sideAuto) == "table" then
+        local sa = Saved.sideAuto
+        if sa.dir == "Left" or sa.dir == "Right" or sa.dir == "Alternate" then SideAuto.dir = sa.dir end
+        SideAuto.delay = num(sa.delay, 0, 1, SideAuto.delay)
+        SideAuto.cooldown = num(sa.cooldown, 0.2, 3, SideAuto.cooldown)
+        if type(sa.anims) == "table" then
+            local n = 0
+            for id, v in pairs(sa.anims) do
+                if v == true and type(id) == "string" and #id <= 120 and not id:find("%c") and n < 24 then
+                    SideAuto.anims[id] = true
+                    n = n + 1
+                end
+            end
+        end
+    end
     if type(Saved.timing) == "table" then
         Timing.m1   = num(Saved.timing.m1,   0.08, 0.6, Timing.m1)
         Timing.dash = num(Saved.timing.dash, 0.08, 0.8, Timing.dash)
@@ -1569,7 +1677,8 @@ local function __run()
                 pinData[name] = {x = pos.x, y = pos.y}
             end
         end
-        local data = {version = 1, timing = Timing, speed = macroSpeed, auto = Auto, combos = combos, pins = pinData}
+        local data = {version = 1, timing = Timing, speed = macroSpeed, auto = Auto, combos = combos, pins = pinData,
+            sideAuto = {dir = SideAuto.dir, delay = SideAuto.delay, cooldown = SideAuto.cooldown, anims = SideAuto.anims}}
         local json = safe(function() return game:GetService("HttpService"):JSONEncode(data) end)
         if type(json) == "string" then pcall(writefile, SETTINGS_FILE, json) end
     end
@@ -1597,14 +1706,19 @@ local function __run()
     -- final wait for one step. o = that combo's options (nil = defaults): own gap or global gap, x speeds, then
     -- (auto timing on for this combo) the ping adjustment for gaps that wait for a visible cue
     local DefaultOpts = ComboOptions and ComboOptions.new()
+    -- the ping adjustment alone, for one gap in seconds (o = combo options; nil = defaults)
+    local function adjustGap(gap, dependent, o)
+        o = o or DefaultOpts
+        local autoOn = (o and ComboOptions) and ComboOptions.autoOn(Auto.on, o) or Auto.on
+        if not (autoOn and PingModel) then return gap end
+        return PingModel.adjustDelay(gap, currentPing(), Auto.strength, {dependent = dependent, offsetMs = Auto.offsetMs + (o and o.offsetMs or 0)})
+    end
     local function stepDelay(kind, dependent, o)
         o = o or DefaultOpts
         local gap
         if o and ComboOptions then gap = ComboOptions.gap(kind, Timing, o, macroSpeed)
         else gap = Timing[kind] * macroSpeed end
-        local autoOn = (o and ComboOptions) and ComboOptions.autoOn(Auto.on, o) or Auto.on
-        if not (autoOn and PingModel) then return gap end
-        return PingModel.adjustDelay(gap, currentPing(), Auto.strength, {dependent = dependent, offsetMs = Auto.offsetMs + (o and o.offsetMs or 0)})
+        return adjustGap(gap, dependent, o)
     end
 
     do
@@ -1645,6 +1759,7 @@ local function __run()
     -- order in tsb_data (1..4). That order is UNVERIFIED: if a move fires the wrong skill, edit MoveSlots.
     local MoveSlots = {Enum.KeyCode.One, Enum.KeyCode.Two, Enum.KeyCode.Three, Enum.KeyCode.Four}
     local macroId = 0
+    local assistBlockedUntil = 0 -- our own inputs must not re-trigger Assist: ignore triggers until this time
     local runningName            -- name of the combo currently playing (pinned buttons light up)
     local renderPins             -- assigned by the pinned-buttons manager below
 
@@ -1701,7 +1816,8 @@ local function __run()
     end
     onCleanup[#onCleanup + 1] = stopMacro
 
-    local function runMacro(steps, charName, comboName)
+    -- lead (optional) = {kind, dependent}: wait out the gap that follows the step YOU just did, then play steps
+    local function runMacro(steps, charName, comboName, lead)
         if macroRunning then stopMacro() return end        -- tapping again stops it
         macroId = macroId + 1
         local myId = macroId
@@ -1711,12 +1827,14 @@ local function __run()
         local opts = comboName and getOpts(comboName) or nil
         task.spawn(function()
             local ok, err = pcall(function()
+                if lead then task.wait(stepDelay(lead.kind, lead.dependent, opts)) end
                 for _, tok in ipairs(steps) do
                     if myId ~= macroId then return end       -- stopped, or replaced by a newer macro
                     local kind, dependent = playToken(tok, charName, opts)
                     if kind then task.wait(stepDelay(kind, dependent, opts)) end
                 end
             end)
+            assistBlockedUntil = os.clock() + 0.6
             if myId == macroId then                            -- never clobber a newer macro's flag
                 macroRunning = false
                 runningName = nil
@@ -1743,6 +1861,158 @@ local function __run()
         return text
     end
 
+    ---------------------------------------------------------------- assist: arm a combo, YOU do the first move
+    -- Arming a combo does NOT run it. It waits until you cast the trigger move yourself (by default the first
+    -- move of the combo, e.g. Flowing Water for Kyoto, Hunter's Grasp for the Garou catch) and then plays
+    -- everything that comes after it. Your cast is recognised from the keyboard (hotbar keys 1-4) or, for
+    -- on-screen touch buttons, from the animation that move plays (taught once with "Learn trigger").
+    local function shortLabel(name) return (name:gsub("_", " ")) end
+    local ComboInfo = {}             -- name -> {steps, charName}, filled in when the cards are built
+    local ArmHandles = {}            -- name -> card handle (keeps the Assist switch in step with the pinned button)
+    local learning, learnGen = nil, 0
+
+    local function moveTester(charName) return function(tok) return moveKey(tok, charName) ~= nil end end
+    local function triggerOf(name)   -- index, token, options of the step YOU perform
+        local info = ComboInfo[name]
+        if not (info and Assist) then return nil end
+        local o = getOpts(name)
+        local idx = Assist.triggerIndex(info.steps, moveTester(info.charName), o and o.trigger)
+        if not idx then return nil end
+        return idx, info.steps[idx], o
+    end
+    local function gapKindOf(tok, charName)          -- (kind, dependent) of the gap that follows a step
+        if KIND[tok] then return KIND[tok], KIND[tok] == "dash" end
+        if moveKey(tok, charName) then return "move", true end
+        return "m1", false
+    end
+    local function matchesToken(input, tok, charName)
+        local kc = input.KeyCode
+        if tok == "M1" then return input.UserInputType == Enum.UserInputType.MouseButton1 end
+        if tok == "JUMP" or tok == "JUMP_M1" then return kc == Enum.KeyCode.Space end
+        if KIND[tok] == "dash" then
+            if kc ~= Enum.KeyCode.Q then return false end
+            local function down(k) return UserInputService:IsKeyDown(k) end
+            if tok == "FRONTDASH" then return down(Enum.KeyCode.W) end
+            if tok == "BACKDASH" then return down(Enum.KeyCode.S) end
+            if tok == "SIDEDASH" then return down(Enum.KeyCode.A) or down(Enum.KeyCode.D) end
+            return not (down(Enum.KeyCode.W) or down(Enum.KeyCode.A) or down(Enum.KeyCode.S) or down(Enum.KeyCode.D))
+        end
+        local key = moveKey(tok, charName)
+        return key ~= nil and kc == key
+    end
+
+    local function startAssist(name)
+        if macroRunning or os.clock() < assistBlockedUntil then return end
+        local idx, trigTok = triggerOf(name)
+        if not idx then return end
+        local info = ComboInfo[name]
+        local rest = Assist.remaining(info.steps, idx)
+        if not rest then return end
+        local kind, dependent = gapKindOf(trigTok, info.charName)
+        runMacro(rest, info.charName, name, {kind = kind, dependent = dependent})
+    end
+
+    local function setArmed(name, on)
+        on = on and true or false
+        if (Armed[name] == true) == on then return end
+        Armed[name] = on or nil
+        for i, n in ipairs(armedOrder) do if n == name then table.remove(armedOrder, i) break end end
+        if on then armedOrder[#armedOrder + 1] = name end
+        if ArmHandles[name] then ArmHandles[name]:SetArmed(on) end
+        if renderPins then renderPins() end
+        if ready then
+            local idx, trigTok = triggerOf(name)
+            local info = ComboInfo[name]
+            if not on then toast(shortLabel(name) .. " disarmed")
+            elseif idx and info and Assist.remaining(info.steps, idx) then
+                toast(shortLabel(name) .. " armed - cast " .. shortLabel(trigTok) .. " yourself, I do the rest")
+            else toast(shortLabel(name) .. " has nothing after its trigger step") end
+        end
+    end
+    onCleanup[#onCleanup + 1] = function() armedOrder = {}; Armed = {} end
+
+    -- auto side dash: after one of YOUR moves (hotbar key, or an animation you taught it) it dashes sideways
+    local lastSideAuto, lastSide = 0, nil
+    local function performSideAuto()
+        local now = os.clock()
+        if now - lastSideAuto < SideAuto.cooldown then return end
+        lastSideAuto = now
+        local side = Assist.nextSide(SideAuto.dir, lastSide)
+        lastSide = side
+        task.spawn(function()
+            task.wait(adjustGap(SideAuto.delay, true, nil))
+            if not (alive and SideAuto.on) or macroRunning then return end
+            dash(side == "Right" and Enum.KeyCode.D or Enum.KeyCode.A)
+            assistBlockedUntil = os.clock() + 0.5
+        end)
+    end
+
+    local function isSlotKey(kc)
+        for _, k in ipairs(MoveSlots) do if k == kc then return true end end
+        return false
+    end
+    connect(UserInputService.InputBegan, function(input, gp)
+        if gp or macroRunning or os.clock() < assistBlockedUntil then return end
+        if #armedOrder > 0 then
+            local name = Assist.pick(armedOrder, function(n)
+                local idx, tok = triggerOf(n)
+                return idx ~= nil and matchesToken(input, tok, ComboInfo[n].charName)
+            end)
+            if name then startAssist(name) return end
+        end
+        if SideAuto.on and isSlotKey(input.KeyCode) then performSideAuto() end
+    end)
+
+    -- touch players: the game's own skill buttons are not keyboard keys, so watch the animation your move plays
+    local function shortId(id) return (id:gsub("^rbxassetid://", "")) end
+    local function onAnimationPlayed(track)
+        local id = safe(function() return track.Animation.AnimationId end)
+        if type(id) ~= "string" or id == "" or #id > 120 then return end
+        if safe(function() return track.Looped end) == true then return end        -- walking / idle loops are not moves
+        if learning then
+            local what = learning
+            learning = nil
+            learnGen = learnGen + 1
+            if what.kind == "combo" then
+                local o = getOpts(what.name)
+                if o then o.trigAnim = id; markDirty() end
+                toast("Learned the trigger for " .. shortLabel(what.name))
+            else
+                local n = 0
+                for _ in pairs(SideAuto.anims) do n = n + 1 end
+                if n < 24 then SideAuto.anims[id] = true; markDirty() end
+                toast("Learned a move for auto side dash (" .. shortId(id) .. ")")
+            end
+            return
+        end
+        if macroRunning or os.clock() < assistBlockedUntil then return end
+        local name = Assist.pick(armedOrder, function(n)
+            local o = getOpts(n)
+            return o ~= nil and o.trigAnim ~= "" and o.trigAnim == id
+        end)
+        if name then startAssist(name) return end
+        if SideAuto.on and SideAuto.anims[id] then performSideAuto() end
+    end
+    local function startLearning(kind, name, hint)
+        learning = {kind = kind, name = name}
+        learnGen = learnGen + 1
+        local mine = learnGen
+        toast(hint)
+        task.spawn(function()
+            task.wait(10)
+            if learning and mine == learnGen and alive then learning = nil; toast("Learning timed out - tap Learn again") end
+        end)
+    end
+    local function hookCharacter(char)
+        task.spawn(function()
+            local hum = char:WaitForChild("Humanoid", 10)
+            local animator = hum and (hum:FindFirstChildOfClass("Animator") or hum:WaitForChild("Animator", 10))
+            if animator and alive then connect(animator.AnimationPlayed, onAnimationPlayed) end
+        end)
+    end
+    if LocalPlayer.Character then hookCharacter(LocalPlayer.Character) end
+    connect(LocalPlayer.CharacterAdded, hookCharacter)
+
     ---------------------------------------------------------------- pinned on-screen buttons
     -- Turn a combo's "On screen" switch on and a button for it appears on your screen. Tap it to run the combo
     -- (tap again to stop), drag it anywhere, the Lock button on the floating bar pins them in place, and the
@@ -1766,10 +2036,16 @@ local function __run()
     end
     renderPins = function()
         for name, p in pairs(Pins) do
+            local o = getOpts(name)
+            local assistMode = o == nil or o.pinMode ~= "run"
             local running = runningName == name
-            tween(p.btn, {BackgroundColor3 = running and Theme.Accent or Theme.Panel}, 0.18)
-            tween(p.stroke, {Transparency = running and 0 or 0.35}, 0.18)
+            local armed = Armed[name] == true
+            local lit = running or (assistMode and armed)
+            tween(p.btn, {BackgroundColor3 = running and Theme.Accent or (lit and Theme.Hover or Theme.Panel)}, 0.18)
+            tween(p.stroke, {Transparency = lit and 0 or 0.4}, 0.18)
             p.btn.TextColor3 = running and Theme.Back or Theme.Text
+            p.dot.Visible = assistMode
+            tween(p.dot, {BackgroundColor3 = armed and Theme.Good or Theme.SubText}, 0.18)
             p.btn.Visible = pinsVisible
         end
     end
@@ -1782,8 +2058,6 @@ local function __run()
         renderPins()
         if renderFab then renderFab() end
     end
-
-    local function shortLabel(name) return (name:gsub("_", " ")) end
 
     local function setPinned(name, on, steps, charName)
         local p = Pins[name]
@@ -1814,11 +2088,15 @@ local function __run()
             TextWrapped = true, TextTruncate = Enum.TextTruncate.AtEnd,
             BackgroundColor3 = Theme.Panel, BackgroundTransparency = 0.12, AutoButtonColor = false,
             Size = UDim2.fromOffset(PIN_W, PIN_H), Visible = pinsVisible, Parent = PinLayer,
-        }, {corner(16), new("UIPadding", {PaddingLeft = UDim.new(0, 6), PaddingRight = UDim.new(0, 6)})})
+        }, {corner(16), new("UIPadding", {PaddingLeft = UDim.new(0, 6), PaddingRight = UDim.new(0, 6)}), gloss(nil, 16, 1)})
         local pinStroke = stroke(Theme.Accent, 1.6, 0.35)
         pinStroke.Parent = btn
+        local pinDot = new("Frame", {                   -- green = armed (Assist mode only)
+            Size = UDim2.fromOffset(9, 9), Position = UDim2.new(1, -16, 0, 7), BackgroundColor3 = Theme.SubText,
+            BorderSizePixel = 0, ZIndex = 3, Parent = btn,
+        }, {corner(5)})
         local scale = new("UIScale", {Scale = 0, Parent = btn})
-        p = {btn = btn, scale = scale, stroke = pinStroke, x = x, y = y}
+        p = {btn = btn, scale = scale, stroke = pinStroke, dot = pinDot, x = x, y = y}
         p.tracker = DragTracker and DragTracker.new(8)
         if p.tracker then p.tracker:setLocked(pinsLocked) end
         Pins[name] = p
@@ -1834,10 +2112,15 @@ local function __run()
         btn.MouseButton1Up:Connect(function() tween(scale, {Scale = 1}, 0.2, Enum.EasingStyle.Back) end)
         btn.MouseButton1Click:Connect(function()
             if p.tracker and p.tracker:suppressClick(os.clock()) then return end     -- that "click" ended a drag
-            runMacro(steps, charName, name)
+            local o = getOpts(name)
+            if o and o.pinMode == "run" then runMacro(steps, charName, name)      -- run mode: play the whole combo
+            else setArmed(name, not Armed[name]) end                              -- assist mode: arm / disarm
         end)
         renderPins()
-        if ready then toast(shortLabel(name) .. " pinned - tap it on screen to run") end
+        if ready then
+            local o = getOpts(name)
+            toast(shortLabel(name) .. ((o and o.pinMode == "run") and " pinned - tap it to run" or " pinned - tap it to arm Assist"))
+        end
         markDirty()
     end
 
@@ -1936,6 +2219,7 @@ local function __run()
             if name:find("Kyoto") then key, title = "kyoto", label .. " kyoto"
             elseif name:find("Catch") then key, title = "tech", label .. " tech" end
             local o = getOpts(name)
+            ComboInfo[name] = {steps = c.steps, charName = fullName}
             local function drawer(parent)                       -- this combo's own options
                 local function set(key) return function(v) if o[key] ~= v then o[key] = v; markDirty() end end end
                 local pickers, sliders = {}, {}
@@ -1947,6 +2231,28 @@ local function __run()
                 sliders.jump = tab:Slider("Jump gap (0 = global)", 0, 0.6, o.jump, 0.01, set("jump"), parent)
                 sliders.offsetMs = tab:Slider("Fine-tune (ms, + = later)", -100, 100, o.offsetMs, 5, set("offsetMs"), parent)
                 pickers.side = tab:Dropdown("Side dash key", {"Left", "Right"}, o.side, set("side"), parent)
+                pickers.pinMode = tab:Dropdown("Pinned button does", {"assist", "run"}, o.pinMode, function(v)
+                    if o.pinMode ~= v then o.pinMode = v; markDirty(); if renderPins then renderPins() end end
+                end, parent)
+                -- Assist: which step is YOURS (everything after it is played for you)
+                local trigText = tab:Label("", parent)
+                local function refreshTrig()
+                    local idx, tok = triggerOf(name)
+                    trigText.Text = idx and ("Trigger: step " .. idx .. " (" .. shortLabel(tok) .. ") - you cast it, I play the rest."
+                        .. (o.trigAnim ~= "" and " Touch animation learned." or "")) or "No trigger"
+                end
+                sliders.trigger = tab:Slider("Trigger step # (0 = your first move)", 0, #c.steps, o.trigger, 1, function(v)
+                    if o.trigger ~= v then o.trigger = v; markDirty() end
+                    refreshTrig()
+                end, parent)
+                refreshTrig()
+                tab:Button("Learn trigger (for on-screen touch buttons)", function()
+                    local _, tok = triggerOf(name)
+                    startLearning("combo", name, "Now cast " .. (tok and shortLabel(tok) or "the trigger move") .. " yourself, once")
+                end, parent)
+                tab:Button("Forget learned trigger", function()
+                    if o.trigAnim ~= "" then o.trigAnim = ""; markDirty(); refreshTrig(); toast("Trigger forgotten") end
+                end, parent)
                 local reset = new("TextButton", {
                     Text = "Reset this combo", Font = Enum.Font.GothamMedium, TextSize = 13, TextColor3 = Theme.Text,
                     BackgroundColor3 = Theme.Panel, AutoButtonColor = false, Size = UDim2.new(1, 0, 0, 34), Parent = parent,
@@ -1954,9 +2260,11 @@ local function __run()
                 reset.MouseButton1Click:Connect(function()
                     for key, sl in pairs(sliders) do sl:Set(ComboOptions.DEFAULTS[key]) end
                     for key, dd in pairs(pickers) do dd:Set(ComboOptions.DEFAULTS[key]) end
+                    if o.trigAnim ~= "" then o.trigAnim = ""; markDirty() end
+                    refreshTrig()
                 end)
             end
-            get(key, title):Button((name:gsub("_", " ")), describe(c.steps, fullName), function()
+            ArmHandles[name] = get(key, title):Button((name:gsub("_", " ")), describe(c.steps, fullName), function()
                 runMacro(c.steps, fullName, name)
             end, {
                 conf = c.confidence,
@@ -1965,9 +2273,10 @@ local function __run()
                     default = SavedPins[name] ~= nil,                       -- pinned last time -> pinned again
                     onChange = function(on) setPinned(name, on, c.steps, fullName) end,
                 },
+                assist = {onChange = function(on) setArmed(name, on) end},
             })
         end
-        tab:Label("Run plays a combo as inputs (tap again to stop). Turn On screen on and a button for it appears on your screen. Moves use hotbar slots 1-4 (unverified order). Steps marked * have no key mapped and are skipped. Gaps: Timing tab.")
+        tab:Label("ASSIST: switch it on, then cast the first move yourself - I play everything after it (Kyoto: you cast Flowing Water, I do Lethal Whirlwind and the rest). Run plays the whole combo for you. On screen adds a button for it. Moves use hotbar slots 1-4 (unverified order); on a phone use Opt > Learn trigger once. Steps marked * have no key mapped and are skipped.")
     end
     if Data then
         for _, c in ipairs(CUSTOM_COMBOS) do
@@ -1976,6 +2285,46 @@ local function __run()
             end
         end
     end
+    -- Side dash: one-tap buttons you can put on screen, plus an automatic side dash after your own moves
+    do
+        local sideSec = Main_:Section("Side dash")
+        local function sideCard(name, title, desc, side)
+            local o = getOpts(name)
+            if o then o.side = side; o.pinMode = "run" end            -- fixed: always this side, button runs it
+            ComboInfo[name] = {steps = {"SIDEDASH"}, charName = "Universal"}
+            sideSec:Button(title, desc, function() runMacro({"SIDEDASH"}, "Universal", name) end, {
+                conf = "custom",
+                pin = {
+                    default = SavedPins[name] ~= nil,
+                    onChange = function(on) setPinned(name, on, {"SIDEDASH"}, "Universal") end,
+                },
+            })
+        end
+        sideCard("SideDash_Left", "Side dash left", "Q + A in one tap. Turn On screen on to get a button for it.", "Left")
+        sideCard("SideDash_Right", "Side dash right", "Q + D in one tap. Turn On screen on to get a button for it.", "Right")
+    end
+    Main_:Toggle("Auto side dash after my moves", false, function(on)
+        SideAuto.on = on
+        if ready then toast(on and "Auto side dash ON - cast a move and I dash" or "Auto side dash OFF") end
+    end)
+    Main_:Dropdown("Side", {"Alternate", "Left", "Right"}, SideAuto.dir, function(v)
+        if SideAuto.dir ~= v then SideAuto.dir = v; markDirty() end
+    end)
+    Main_:Slider("Delay after my move (s)", 0, 1, SideAuto.delay, 0.05, function(v)
+        if SideAuto.delay ~= v then SideAuto.delay = v; markDirty() end
+    end)
+    Main_:Slider("Cooldown (s)", 0.2, 3, SideAuto.cooldown, 0.1, function(v)
+        if SideAuto.cooldown ~= v then SideAuto.cooldown = v; markDirty() end
+    end)
+    Main_:Button("Learn a move for auto side dash (cast it once)", function()
+        startLearning("side", nil, "Now cast one of your moves, once")
+    end)
+    Main_:Button("Forget learned moves", function()
+        SideAuto.anims = {}
+        markDirty()
+        toast("Forgot the learned moves")
+    end)
+    Main_:Label("Auto side dash: on a PC your hotbar keys 1-4 trigger it. On a phone tap Learn, then cast each move once so it recognises the animation. Delay is adjusted by Auto timing like the combo gaps.")
     buildCharacter(Main_, "Universal", "Universal")
     for _, ct in ipairs(CharTabs) do buildCharacter(ct.tab, ct.full, ct.short) end
 
@@ -2065,7 +2414,7 @@ local function __run()
 
     -- Credit
     Credit:Label("Animation Hub UI")
-    Credit:Label("Toggle menu: RightShift, or the floating bar: Menu = show/hide, Tech = Auto Tech on/off, Lock = pin it in place, - = shrink it to a dot. Drag it anywhere.")
+    Credit:Label("Toggle menu: RightShift, or the floating bar: Menu = show/hide, Tech = Auto Tech on/off, Pins = show/hide pinned buttons, Lock = freeze bar and pinned buttons, - = shrink to a dot.")
     Credit:Label("Background: random SFW image from waifu.pics / nekos.best (fan art, not copyright-free).", 40)
 
     -- Effects Preset
@@ -2143,7 +2492,7 @@ local function __run()
         local fab = new("Frame", {
             Size = UDim2.fromOffset(BAR_W, BAR_H), Position = UDim2.fromOffset(fabState.x, fabState.y),
             BackgroundColor3 = Theme.Panel, BackgroundTransparency = 0.08, ZIndex = 10, Parent = Gui,
-        }, {corner(23)})
+        }, {corner(23), gloss(nil, 23, 1)})
         local fabScale = new("UIScale", {Scale = 0, Parent = fab})
         local fabStroke = stroke(Theme.White, 1.5, 0.2)
         fabStroke.Parent = fab

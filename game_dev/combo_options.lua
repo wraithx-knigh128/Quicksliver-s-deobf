@@ -8,11 +8,15 @@
       m1/dash/move/jump  0..max   gap override in seconds, 0 = use the global gap from the Timing tab
       offsetMs  -100..100  fine-tune added (in auto mode) to gaps that wait for a visible cue
       side      "Left" | "Right"  which key a SIDEDASH step uses (A or D)
+      trigger   0..64      Assist mode: after WHICH step (1-based) the script takes over; 0 = after your first move
+      pinMode   "assist" | "run"   what the on-screen button does: arm / disarm Assist, or run the whole combo
+      trigAnim  string     animation id learned for the trigger move (lets Assist work with on-screen touch buttons)
 ]]
 
 local M = {}
 
-M.DEFAULTS = {auto = "global", speed = 1, m1 = 0, dash = 0, move = 0, jump = 0, offsetMs = 0, side = "Left"}
+M.DEFAULTS = {auto = "global", speed = 1, m1 = 0, dash = 0, move = 0, jump = 0, offsetMs = 0, side = "Left",
+    trigger = 0, pinMode = "assist", trigAnim = ""}
 
 local RANGES = {
     speed = {0.5, 2}, m1 = {0, 0.6}, dash = {0, 0.8}, move = {0, 1.2}, jump = {0, 0.6}, offsetMs = {-100, 100},
@@ -21,6 +25,7 @@ M.RANGES = RANGES
 
 local AUTO = {global = true, on = true, off = true}
 local SIDE = {Left = true, Right = true}
+local PINMODE = {assist = true, run = true}
 
 local function clamp(v, lo, hi, default)
     if type(v) ~= "number" or v ~= v then return default end      -- not a number / NaN
@@ -36,6 +41,11 @@ function M.sanitize(src)
     end
     o.auto = AUTO[src.auto] and src.auto or M.DEFAULTS.auto
     o.side = SIDE[src.side] and src.side or M.DEFAULTS.side
+    o.pinMode = PINMODE[src.pinMode] and src.pinMode or M.DEFAULTS.pinMode
+    o.trigger = math.floor(clamp(src.trigger, 0, 64, M.DEFAULTS.trigger))
+    -- an animation id is plain text like "rbxassetid://123"; anything odd or huge is thrown away
+    local anim = src.trigAnim
+    if type(anim) == "string" and #anim <= 120 and not anim:find("[%c]") then o.trigAnim = anim else o.trigAnim = M.DEFAULTS.trigAnim end
     return o
 end
 

@@ -18,6 +18,7 @@ local Data = ex:require("tsb_data.lua")
 local Drag = ex:require("drag_tracker.lua")
 local Ping = ex:require("ping_model.lua")
 local CO = ex:require("combo_options.lua")
+local Assist = ex:require("assist.lua")
 Engine.loadData(Data)
 
 local function feedAll(p, tokens, t0, dt)
@@ -299,6 +300,41 @@ test("combo options: per-combo gap overrides the global gap, speeds multiply", f
     o.speed = 1.5
     near(CO.gap("move", timing, o, 2), 2.4, 1e-9, "global speed x combo speed x gap")
     near(CO.gap("m1", timing, CO.new(), nil), 0.2, 1e-9, "missing global speed = 1")
+end)
+
+test("combo options: trigger step, pin mode and learned animation are sanitised", function()
+    local o = CO.sanitize({trigger = 7.9, pinMode = "run", trigAnim = "rbxassetid://123"})
+    eq(o.trigger, 7); eq(o.pinMode, "run"); eq(o.trigAnim, "rbxassetid://123")
+    local bad = CO.sanitize({trigger = -4, pinMode = "banana", trigAnim = "x\ny"})
+    eq(bad.trigger, 0); eq(bad.pinMode, "assist"); eq(bad.trigAnim, "")
+    eq(CO.sanitize({trigger = 9999}).trigger, 64); eq(CO.sanitize({trigAnim = string.rep("a", 500)}).trigAnim, "")
+    eq(CO.sanitize({trigAnim = 5}).trigAnim, "")
+    assert(not CO.isDefault(CO.sanitize({pinMode = "run"})), "pin mode run is a non-default setting")
+end)
+
+test("assist: trigger is the first move; remaining steps follow it", function()
+    local moves = {FLOWING_WATER = true, HUNTERS_GRASP = true}
+    local isMove = function(t) return moves[t] end
+    local catch = {"DOWNSLAM", "HUNTERS_GRASP", "SIDEDASH", "M1"}
+    eq(Assist.triggerIndex(catch, isMove), 2)
+    local rest = Assist.remaining(catch, 2)
+    eq(#rest, 2); eq(rest[1], "SIDEDASH"); eq(rest[2], "M1")
+    eq(Assist.triggerIndex({"M1", "M1", "SIDEDASH"}, isMove), 1, "no move at all -> after step 1")
+    eq(Assist.triggerIndex(catch, isMove, 3), 3, "override wins")
+    eq(Assist.triggerIndex(catch, isMove, 99), 4, "override clamped to the length")
+    eq(Assist.triggerIndex(catch, isMove, 0), 2, "0 = auto")
+    eq(Assist.triggerIndex({}, isMove), nil); eq(Assist.triggerIndex(nil, isMove), nil)
+    eq(Assist.remaining(catch, 4), nil, "nothing after the last step")
+    eq(Assist.remaining(catch, "x"), nil)
+end)
+
+test("assist: newest armed combo wins, side alternates", function()
+    local order = {"A", "B", "C"}
+    eq(Assist.pick(order, function(n) return n ~= "C" end), "B")
+    eq(Assist.pick(order, function() return false end), nil)
+    eq(Assist.pick({}, function() return true end), nil)
+    eq(Assist.nextSide("Left"), "Left"); eq(Assist.nextSide("Right", "Right"), "Right")
+    eq(Assist.nextSide("Alternate", nil), "Left"); eq(Assist.nextSide("Alternate", "Left"), "Right"); eq(Assist.nextSide("Alternate", "Right"), "Left")
 end)
 
 test("sandboxed script runs, records key events and virtual time", function()

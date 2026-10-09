@@ -33,12 +33,22 @@ local function dummy(name, ctx)
                 return function(_, fn)
                     if type(fn) == "function" and name:find("Click") then ctx.callbacks[#ctx.callbacks + 1] = fn end
                     if type(fn) == "function" and name:find("Heartbeat") then ctx.heartbeats[#ctx.heartbeats + 1] = fn end
+                    if type(fn) == "function" and name == "UserInputService.InputBegan" then ctx.inputBegan[#ctx.inputBegan + 1] = fn end
+                    if type(fn) == "function" and name:find("AnimationPlayed") then ctx.animPlayed[#ctx.animPlayed + 1] = fn end
                     ctx.connections = ctx.connections + 1
                     return {Disconnect = function() ctx.disconnects = ctx.disconnects + 1 end}
                 end
             end
             if k == "GetChildren" or k == "GetPlayers" then return function() return {} end end
             local v = dummy(name .. "." .. tostring(k), ctx); rawset(self, k, v); return v
+        end,
+        __newindex = function(t, k, v)
+            rawset(t, k, v)
+            if k == "Parent" and type(v) == "table" then          -- remember who is whose child, so tests can walk the UI
+                local kids = rawget(v, "__children")
+                if not kids then kids = {}; rawset(v, "__children", kids) end
+                kids[#kids + 1] = t
+            end
         end,
         __call = function() return dummy(name .. "()", ctx) end,
         __add = function(a) return a end, __sub = function(a) return a end, __mul = function(a) return a end,
@@ -53,7 +63,8 @@ local PNG = "\137PNG\r\n\26\n" .. string.rep("x", 32)
 
 -- scenario = {executor = "full" | "nofiles", body = bytes the image host returns}
 local function run(scenario)
-    local ctx = {callbacks = {}, heartbeats = {}, waits = {}, connections = 0, disconnects = 0}
+    local ctx = {callbacks = {}, heartbeats = {}, inputBegan = {}, animPlayed = {}, keys = {}, mouse = {}, waits = {},
+                 connections = 0, disconnects = 0}
     local errors, instances, writes, assets = {}, {}, {}, {}
     local genvStore = {}
     local env = setmetatable({}, {__index = _G})
@@ -65,10 +76,13 @@ local function run(scenario)
     env.game.GetService = function(_, n)
         local s = dummy(n, ctx)
         if n == "Players" then
-            s.LocalPlayer = {DisplayName = "Tester", Name = "tester", UserId = 1, Character = nil,
+            s.LocalPlayer = {DisplayName = "Tester", Name = "tester", UserId = 1, Character = dummy("Character", ctx),
                 WaitForChild = function() return dummy("PlayerGui", ctx) end,
                 Idled = dummy("Idled", ctx), CharacterAdded = dummy("CharacterAdded", ctx)}
             s.GetUserThumbnailAsync = function() return "rbx://x" end
+        elseif n == "VirtualInputManager" then
+            s.SendKeyEvent = function(_, down, key) ctx.keys[#ctx.keys + 1] = {down = down, key = key} end
+            s.SendMouseButtonEvent = function(_, _, _, _, down) ctx.mouse[#ctx.mouse + 1] = {down = down} end
         elseif n == "Stats" and scenario.ping then
             s.Network = {ServerStatsItem = {["Data Ping"] = {GetValue = function() return scenario.ping end}}}
         elseif n == "HttpService" then
@@ -90,19 +104,28 @@ local function run(scenario)
         rawset(inst, "FindFirstChild", function() return nil end)
         rawset(inst, "Destroy", function() end)
         rawset(inst, "IsA", function() return false end)
+        rawset(inst, "MouseButton1Click", {Connect = function(_, fn)       -- keep each button's own handlers reachable
+            ctx.callbacks[#ctx.callbacks + 1] = fn
+            local mine = rawget(inst, "__clicks") or {}
+            rawset(inst, "__clicks", mine)
+            mine[#mine + 1] = fn
+            return {Disconnect = function() ctx.disconnects = ctx.disconnects + 1 end}
+        end})
         return inst
     end}
-    for _, n in ipairs({"UDim2", "UDim", "Color3", "ColorSequence", "TweenInfo", "CFrame", "Enum", "Vector3"}) do
+    for _, n in ipairs({"UDim2", "UDim", "Color3", "ColorSequence", "ColorSequenceKeypoint", "NumberSequence", "NumberSequenceKeypoint",
+                        "TweenInfo", "CFrame", "Enum", "Vector3"}) do
         env[n] = dummy(n, ctx)
     end
     env.Vector2 = {new = function(x, y) return {X = x or 0, Y = y or 0} end}
     env.task = {
         spawn = function(f, ...) local ok, e = pcall(f, ...); if not ok then errors[#errors + 1] = "task: " .. tostring(e) end end,
-        wait = function(t) ctx.waits[#ctx.waits + 1] = t or 0; return 0 end,
+        wait = function(t) ctx.waits[#ctx.waits + 1] = t or 0; ctx.now = ctx.now + (t or 0); return 0 end,
     }
     env.warn = function(...) errors[#errors + 1] = "warn: " .. table.concat({...}, " ") end
     env.print = function() end
-    env.os = {clock = os.clock}
+    ctx.now = 1000                                                      -- fake clock: only task.wait / advance() move it
+    env.os = {clock = function() return ctx.now end}
     if not math.clamp then   -- stock Lua lacks the Luau additions the script uses; real Luau already has them
         env.math = setmetatable({clamp = function(v, lo, hi) return math.max(lo, math.min(hi, v)) end}, {__index = math})
     end
@@ -145,7 +168,38 @@ local function run(scenario)
             if rawget(inst, "__name") == "TextButton" and rawget(inst, "Text") == text then return inst end
         end
     end
-    return {findButton = findButton, textOf = textOf, errors = errors, ctx = ctx, writes = writes, assets = assets, bgSet = bgSet, genv = genvStore, env = env, fn = fn}
+    local function tap(inst)                                               -- fire a real button's click handlers
+        for _, fn in ipairs(rawget(inst, "__clicks") or {}) do
+            local ok, e = pcall(fn)
+            if not ok then errors[#errors + 1] = "tap: " .. tostring(e) end
+        end
+    end
+    local function toggleRowHit(labelText)                                 -- the full-row hit area of a Toggle
+        for _, inst in ipairs(instances) do
+            if rawget(inst, "__name") == "TextLabel" and rawget(inst, "Text") == labelText then
+                local row = rawget(inst, "Parent")
+                for _, kid in ipairs(row and rawget(row, "__children") or {}) do
+                    if rawget(kid, "__name") == "TextButton" and rawget(kid, "Text") == "" then return kid end
+                end
+            end
+        end
+    end
+    local function fireKey(keyCode, gameProcessed)                         -- a real key press reaches UserInputService.InputBegan
+        local input = {KeyCode = keyCode, UserInputType = env.Enum.UserInputType.Keyboard}
+        for _, fn in ipairs(ctx.inputBegan) do
+            local ok, e = pcall(fn, input, gameProcessed or false)
+            if not ok then errors[#errors + 1] = "InputBegan handler: " .. tostring(e) end
+        end
+    end
+    local function playAnimation(id, looped)
+        for _, fn in ipairs(ctx.animPlayed) do
+            local ok, e = pcall(fn, {Animation = {AnimationId = id}, Looped = looped})
+            if not ok then errors[#errors + 1] = "AnimationPlayed handler: " .. tostring(e) end
+        end
+    end
+    local function advance(seconds) ctx.now = ctx.now + seconds end
+    return {advance = advance, tap = tap, toggleRowHit = toggleRowHit, fireKey = fireKey, playAnimation = playAnimation,
+            findButton = findButton, textOf = textOf, errors = errors, ctx = ctx, writes = writes, assets = assets, bgSet = bgSet, genv = genvStore, env = env, fn = fn}
 end
 
 local failures = {}
@@ -274,9 +328,76 @@ local h = run({executor = "full", body = PNG, settingsThrows = true})
 for _, e in ipairs(h.errors) do failures[#failures + 1] = "bad settings file: " .. e end
 check(h.textOf("Gaps now") ~= nil, "script did not finish building with a broken settings file")
 
+-- 7. ASSIST: arm the Garou catch, then cast Hunter's Grasp "yourself" - the script must play only what comes after
+local function pressed(r, key) for _, k in ipairs(r.ctx.keys) do if k.down and k.key == key then return true end end return false end
+local as = run({executor = "full", body = PNG, settings = {pins = {Garou_Catch = {x = 100, y = 100}}}})
+for _, e in ipairs(as.errors) do failures[#failures + 1] = "assist scenario: " .. e end
+local K, UIT = as.env.Enum.KeyCode, as.env.Enum.UserInputType
+local catchBtn = as.findButton("Garou Catch")
+check(catchBtn ~= nil, "assist: the pinned Garou catch button is missing")
+as.fireKey(K.Three)
+check(#as.ctx.keys == 0 and #as.ctx.mouse == 0, "assist: a combo that is NOT armed must never react to your casts")
+if catchBtn then as.tap(catchBtn) end                                   -- arm it (assist-mode pin = on/off toggle)
+as.fireKey(K.Two)
+check(#as.ctx.keys == 0, "assist: casting a move that is not the trigger must do nothing")
+as.fireKey(K.Three, true)
+check(#as.ctx.keys == 0, "assist: input the game already consumed (gameProcessed) must be ignored")
+as.fireKey(K.Three)                                                     -- YOU cast Hunter's Grasp
+check(pressed(as, K.Q), "assist: after your Hunter's Grasp it must side dash (Q)")
+check(pressed(as, K.A), "assist: the side dash must use the Left (A) key by default")
+check(#as.ctx.mouse >= 2, "assist: the M1 after the side dash was not clicked")
+check(not pressed(as, K.Three), "assist: the script pressed Hunter's Grasp itself - that step is YOURS")
+local afterFirst = #as.ctx.keys
+as.fireKey(K.Three)
+check(#as.ctx.keys == afterFirst, "assist: its own inputs / a quick repeat must not re-trigger (cooldown)")
+as.advance(2)                                                           -- cooldown over, still armed
+as.fireKey(K.Three)
+check(#as.ctx.keys > afterFirst, "assist: after the cooldown a new cast must trigger it again")
+local afterSecond = #as.ctx.keys
+if catchBtn then as.tap(catchBtn) end                                   -- DISARM
+as.advance(2)
+as.fireKey(K.Three)
+check(#as.ctx.keys == afterSecond, "assist: once disarmed, your casts must not trigger anything")
+
+-- 7b. run-mode pin (side dash left) runs immediately; assist-mode pins never do
+local sd = run({executor = "full", body = PNG, settings = {pins = {SideDash_Left = {x = 90, y = 90}}}})
+for _, e in ipairs(sd.errors) do failures[#failures + 1] = "side dash scenario: " .. e end
+local sdBtn = sd.findButton("SideDash Left")
+check(sdBtn ~= nil, "side dash: pinned button missing")
+if sdBtn then sd.tap(sdBtn) end
+check(pressed(sd, sd.env.Enum.KeyCode.Q) and pressed(sd, sd.env.Enum.KeyCode.A), "side dash left button must press Q + A")
+check(not pressed(sd, sd.env.Enum.KeyCode.D), "side dash left must not press D")
+
+-- 7c. learned animation trigger (touch players)
+local an = run({executor = "full", body = PNG, settings = {
+    pins = {Garou_Catch = {x = 100, y = 100}}, combos = {Garou_Catch = {trigAnim = "rbxassetid://99"}},
+}})
+for _, e in ipairs(an.errors) do failures[#failures + 1] = "animation scenario: " .. e end
+local anBtn = an.findButton("Garou Catch")
+if anBtn then an.tap(anBtn) end
+an.playAnimation("rbxassetid://99", true)
+check(#an.ctx.keys == 0, "animation trigger: a LOOPED animation (walk / idle) must be ignored")
+an.playAnimation("rbxassetid://5", false)
+check(#an.ctx.keys == 0, "animation trigger: a different animation must be ignored")
+an.playAnimation("rbxassetid://99", false)
+check(pressed(an, an.env.Enum.KeyCode.Q), "animation trigger: the learned animation must start the follow-up")
+
+-- 7d. auto side dash after my moves
+local au = run({executor = "full", body = PNG})
+for _, e in ipairs(au.errors) do failures[#failures + 1] = "auto side dash scenario: " .. e end
+au.fireKey(au.env.Enum.KeyCode.One)
+check(#au.ctx.keys == 0, "auto side dash: off by default")
+local hit = au.toggleRowHit("Auto side dash after my moves")
+check(hit ~= nil, "auto side dash: toggle not found")
+if hit then au.tap(hit) end
+au.fireKey(au.env.Enum.KeyCode.Q)                                       -- Q is not a move key
+check(#au.ctx.keys == 0, "auto side dash: a non-move key must not trigger it")
+au.fireKey(au.env.Enum.KeyCode.One)                                     -- you cast move 1
+check(pressed(au, au.env.Enum.KeyCode.Q) and pressed(au, au.env.Enum.KeyCode.A), "auto side dash: first dash goes Left (Alternate starts Left)")
+
 if #failures > 0 then
     print("PROBLEMS:"); for _, x in ipairs(failures) do print("  " .. x) end
     finish(1)
     return
 end
-print("smoke test passed (6 scenarios)")
+print("smoke test passed (10 scenarios)")
