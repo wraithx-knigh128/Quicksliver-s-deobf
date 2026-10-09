@@ -209,7 +209,7 @@ local function run(scenario)
             end
         elseif n == "VirtualInputManager" then
             s.SendKeyEvent = function(_, down, key) ctx.keys[#ctx.keys + 1] = {down = down, key = key, t = ctx.now} end
-            s.SendMouseButtonEvent = function(_, _, _, _, down) ctx.mouse[#ctx.mouse + 1] = {down = down} end
+            s.SendMouseButtonEvent = function(_, _, _, _, down) ctx.mouse[#ctx.mouse + 1] = {down = down, t = ctx.now} end
         elseif n == "Stats" and scenario.ping then
             s.Network = {ServerStatsItem = {["Data Ping"] = {GetValue = function() return scenario.ping end}}}
         elseif n == "HttpService" then
@@ -697,10 +697,40 @@ local b10 = behindRun(FRONT_POS, {x = 0, y = 0, z = 1}, {behind = {count = 99, g
 check(countKey(b10, "Q") == 3 and #b10.ctx.mouse == 0, "behind: garbage settings are clamped (max 3 dashes, m1 must be true)")
 local b12 = behindRun(FRONT_POS, {x = 0, y = 0, z = -1}, {behind = {m1 = "yes"}, pins = {SideDash_Behind = {x = 90, y = 90}}})
 check(#keysDown(b12) == 0 and #b12.ctx.mouse == 0, "behind: M1 is only on when the saved value is exactly true, not any truthy garbage")
--- the camera decides which KEY goes round him: camera turned to look along +x -> the same circle needs W / S instead of A / D
-local b11 = behindRun(FRONT_POS, {x = 0, y = 0, z = 1}, nil, behindWorld(FRONT_POS, {x = 0, y = 0, z = 1}, {right = {x = 0, y = 0, z = 1}, camLook = {x = 1, y = 0, z = 0}}))
-check(pressed(b11, keyNamed(b11, "Q")) and (pressed(b11, keyNamed(b11, "W")) or pressed(b11, keyNamed(b11, "S"))) and not (pressed(b11, keyNamed(b11, "A")) or pressed(b11, keyNamed(b11, "D"))),
-    "behind: movement keys are camera relative: with the camera turned 90 degrees the dash uses W / S")
+-- ALWAYS a side dash: Q + A or Q + D, never W / S (those are the front / back dashes), whatever the camera does
+local poses = {
+    {{x = 0, y = 0, z = -6}, {x = 0, y = 0, z = 1}}, {{x = 7, y = 0, z = -2}, {x = -1, y = 0, z = 0}}, {{x = -7, y = 0, z = 1}, {x = 1, y = 0, z = 0}},
+    {{x = 4, y = 0, z = 5}, {x = 0, y = 0, z = -1}}, {{x = 0, y = 0, z = -14}, {x = 0.3, y = 0, z = 1}}, {{x = -9, y = 0, z = -9}, {x = 1, y = 0, z = 1}},
+}
+local cameras = {{right = {x = 1, y = 0, z = 0}, camLook = {x = 0, y = 0, z = -1}}, {right = {x = 0, y = 0, z = 1}, camLook = {x = 1, y = 0, z = 0}},
+                 {right = {x = -1, y = 0, z = 0}, camLook = {x = 0, y = 0, z = 1}}, {right = {x = 0.7, y = 0, z = 0.7}, camLook = {x = 0.7, y = 0, z = -0.7}}}
+local wrong, dashed = 0, 0
+for _, cam in ipairs(cameras) do
+    for _, pose in ipairs(poses) do
+        local r = behindRun(nil, nil, nil, behindWorld(pose[1], pose[2], cam))
+        local sideKeys = countKey(r, "A") + countKey(r, "D")
+        if sideKeys + countKey(r, "W") + countKey(r, "S") > 0 then dashed = dashed + 1 end
+        if countKey(r, "W") + countKey(r, "S") > 0 or sideKeys > 1 or (sideKeys == 1 and countKey(r, "Q") ~= 1) then wrong = wrong + 1 end
+    end
+end
+check(dashed > 15 and wrong == 0, "behind: in " .. dashed .. " dashing situations it must be one side dash (Q + A/D) every time, never W / S; wrong in " .. wrong)
+-- a side dash has a ~2 s cooldown: a second dash waits for it
+local b13 = behindRun(FRONT_POS, {x = 0, y = 0, z = 1}, {behind = {count = 2}, pins = {SideDash_Behind = {x = 90, y = 90}}})
+local qTimes = {}
+for _, k in ipairs(b13.ctx.keys) do if k.down and k.key == keyNamed(b13, "Q") then qTimes[#qTimes + 1] = k.t end end
+check(#qTimes == 2 and qTimes[2] - qTimes[1] >= 2.05, "behind: the second dash waits out the 2 s side dash cooldown, gap was " .. tostring(#qTimes == 2 and (qTimes[2] - qTimes[1])))
+local b14 = behindRun(FRONT_POS, {x = 0, y = 0, z = 1}, {behind = {count = 1, gap = 0.01, settle = 99}, pins = {SideDash_Behind = {x = 90, y = 90}}})
+check(countKey(b14, "Q") == 1, "behind: the cooldown / settle settings are clamped too")
+local b15 = run({executor = "full", body = PNG, settings = {behind = {m1 = true, settle = 99}, pins = {SideDash_Behind = {x = 90, y = 90}}},
+    world = behindWorld(FRONT_POS, {x = 0, y = 0, z = -1})})
+local b15t0 = b15.ctx.now
+local b15btn = b15.findButton("Behind"); if b15btn then b15.tap(b15btn) end
+check(#b15.ctx.mouse >= 2 and b15.ctx.mouse[1].t - b15t0 <= 1.05, "behind: the wait before the M1 is clamped to 1 s, was " .. tostring(b15.ctx.mouse[1] and (b15.ctx.mouse[1].t - b15t0)))
+local b16 = run({executor = "full", body = PNG, settings = {behind = {m1 = true}, pins = {SideDash_Behind = {x = 90, y = 90}}},
+    world = behindWorld(FRONT_POS, {x = 0, y = 0, z = -1})})
+local b16t0 = b16.ctx.now
+local b16btn = b16.findButton("Behind"); if b16btn then b16.tap(b16btn) end
+check(#b16.ctx.mouse >= 2 and math.abs((b16.ctx.mouse[1].t - b16t0) - 0.3) < 0.05, "behind: the default wait for the dash to finish is 0.3 s, was " .. tostring(b16.ctx.mouse[1] and (b16.ctx.mouse[1].t - b16t0)))
 
 -- every SIDEDASH inside a tech / combo goes behind the closest player by default, "Toward" / Left / Right still work
 local function techDashRun(enemyPos, enemyLook, comboSide)
@@ -716,8 +746,10 @@ local td1 = techDashRun(FRONT_POS, {x = 0.447, y = 0, z = 0.894})
 check(pressed(td1, keyNamed(td1, "A")) and not pressed(td1, keyNamed(td1, "D")), "assist combos: their SIDEDASH steps go round the closest player toward his back by default")
 check(#td1.myWrites == 0, "assist combos: side dash must not move me")
 local td5 = techDashRun({x = 10, y = 0, z = 0}, LOOK)                       -- he stands to my right and looks along -z (my own look direction)
-check(pressed(td5, keyNamed(td5, "S")) and not pressed(td5, keyNamed(td5, "D")),
-    "assist combos: default = round him toward his back: his back is behind me (+z), so with this camera it is the back key S, NOT a dash at him (D)")
+check(pressed(td5, keyNamed(td5, "D")) and not pressed(td5, keyNamed(td5, "S")) and not pressed(td5, keyNamed(td5, "W")),
+    "assist combos: default = a SIDE dash round him toward his back: he is on my right, the side dash that gets me closest is D (never W / S)")
+local td6 = techDashRun({x = -10, y = 0, z = 0}, LOOK)
+check(pressed(td6, keyNamed(td6, "A")) and not pressed(td6, keyNamed(td6, "S")), "assist combos: mirrored -> A")
 local td2 = techDashRun({x = 10, y = 0, z = 0}, LOOK, "Toward")
 check(pressed(td2, keyNamed(td2, "D")), "assist combos: side = Toward still dashes at the closest player")
 local td3 = techDashRun(FRONT_POS, {x = 0, y = 0, z = 1}, "Left")

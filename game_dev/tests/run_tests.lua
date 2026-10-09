@@ -676,16 +676,20 @@ test("combat math: orbitStep goes round the player towards his back", function()
     end
 end)
 
-test("combat math: dominantKey picks the one key that moves me closest to a direction", function()
-    local look, right = {x = 0, y = 0, z = -1}, {x = 1, y = 0, z = 0}     -- camera looks to -z, its right is +x
-    eq((CM.dominantKey(0, -1, look, right)), "W"); eq((CM.dominantKey(0, 1, look, right)), "S")
-    eq((CM.dominantKey(1, 0, look, right)), "D"); eq((CM.dominantKey(-1, 0, look, right)), "A")
-    eq((CM.dominantKey(0.8, -0.6, look, right)), "D", "more sideways than forward")
-    eq((CM.dominantKey(0.5, -0.9, look, right)), "W")
-    local look2, right2 = {x = 1, y = 0, z = 0}, {x = 0, y = 0, z = 1}     -- camera turned: looks to +x
-    eq((CM.dominantKey(1, 0, look2, right2)), "W"); eq((CM.dominantKey(0, 1, look2, right2)), "D")
-    eq((CM.dominantKey(0, 1, {x = 0, y = -1, z = 0}, right)), "S", "camera looking straight down: forward comes from the right vector")
-    eq(CM.dominantKey(0, 1, nil, right), nil); eq(CM.dominantKey(0, 1, look, {x = 0, y = 1, z = 0}), nil); eq(CM.dominantKey("x", 1, look, right), nil)
+test("combat math: sideKey picks the SIDE dash key (A or D) that goes furthest toward a direction", function()
+    local right = {x = 1, y = 0, z = 0}                                   -- the camera's right is +x
+    local k, share = CM.sideKey(1, 0, right); eq(k, "D"); near(share, 1, 1e-9)
+    k, share = CM.sideKey(-1, 0, right); eq(k, "A"); near(share, -1, 1e-9)
+    k, share = CM.sideKey(0.6, -0.8, right); eq(k, "D"); near(share, 0.6, 1e-9)
+    k, share = CM.sideKey(-0.2, 0.9, right); eq(k, "A"); assert(share < 0 and share > -0.3, "mostly forward / back: poor for a side dash")
+    k, share = CM.sideKey(0, 1, right); eq(k, "D", "no sideways part at all: D by convention"); near(share, 0, 1e-9)
+    eq((CM.sideKey(3, 4, {x = 0, y = 0, z = 2})), "D", "any length of vectors works"); eq((CM.sideKey(3, -4, {x = 0, y = 0, z = 2})), "A")
+    eq(CM.sideKey(0, 0, right), nil); eq(CM.sideKey(1, 0, {x = 0, y = 1, z = 0}), nil, "camera right must have a horizontal part")
+    eq(CM.sideKey(1, 0, nil), nil); eq(CM.sideKey("x", 0, right), nil)
+    eq(CM.BEHIND_ANGLE, 105)
+    eq(CM.orbitStep({x = 5.5, y = 0, z = -1.2}, {x = 0, y = 0, z = 0}, {x = 0, y = 0, z = 1}).behind, false, "about 102 degrees: not yet")
+    eq(CM.orbitStep({x = 5, y = 0, z = -3}, {x = 0, y = 0, z = 0}, {x = 0, y = 0, z = 1}).behind, true, "~121 degrees: behind")
+    eq(CM.orbitStep({x = 5, y = 0, z = -2}, {x = 0, y = 0, z = 0}, {x = 0, y = 0, z = 1}).behind, true, "~112 degrees: already past the 90 degree edge of his block (+ a margin)")
 end)
 
 test("block info: which moves ignore block (names only, never from the game)", function()

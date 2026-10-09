@@ -1135,10 +1135,13 @@ local function __run()
         Block.floaterPos = {x = Saved.floater.x, y = Saved.floater.y}
     end
     local SideAuto = {on = false, dir = "Behind", delay = 0.25, cooldown = 0.8, anims = {}}   -- auto side dash after your moves
-    local Behind = {count = 2, gap = 0.45, m1 = false}      -- "dash behind the closest player": how many dashes, wait between, M1 once behind
+    -- "dash behind the closest player": most dashes, wait between them (a side dash has a ~2 s cooldown), time for a dash to finish
+    -- before checking / hitting, M1 once behind
+    local Behind = {count = 1, gap = 2.1, settle = 0.3, m1 = false}
     if type(Saved.behind) == "table" then
         Behind.count = math.floor(num(Saved.behind.count, 1, 3, Behind.count))
-        Behind.gap = num(Saved.behind.gap, 0.2, 1.5, Behind.gap)
+        Behind.gap = num(Saved.behind.gap, 0.5, 4, Behind.gap)
+        Behind.settle = num(Saved.behind.settle, 0.1, 1, Behind.settle)
         Behind.m1 = Saved.behind.m1 == true
     end
     if type(Saved.sideAuto) == "table" then
@@ -1220,7 +1223,7 @@ local function __run()
             learned = Learner and Learner:export() or nil,
             floater = Block.floaterPos,
             fab = fabRef and {x = fabRef.x, y = fabRef.y, locked = fabRef.locked, minimized = fabRef.minimized} or nil,
-            behind = {count = Behind.count, gap = Behind.gap, m1 = Behind.m1},
+            behind = {count = Behind.count, gap = Behind.gap, settle = Behind.settle, m1 = Behind.m1},
             sideAuto = {dir = SideAuto.dir, delay = SideAuto.delay, cooldown = SideAuto.cooldown, anims = SideAuto.anims}}
     end
     -- returns true when the file was written
@@ -1395,16 +1398,16 @@ local function __run()
         end
         return best, myPos
     end
-    -- the key for ONE dash round the closest player toward his back, and whether I am already behind him
+    -- the SIDE dash key (A or D - never W / S, those are the front and back dashes) for ONE dash round the closest player toward his
+    -- back, and whether I am already behind him
     local function behindDashKey()
         local target, myPos = closestTarget()
         local cam = workspace.CurrentCamera
-        local camLook = cam and safe(function() return vec3(cam.CFrame.LookVector) end)
         local camRight = cam and safe(function() return vec3(cam.CFrame.RightVector) end)
-        if not (target and target.look and camLook and camRight) then return nil end
+        if not (target and target.look and camRight) then return nil end
         local st = CombatMath.orbitStep(myPos, target.pos, target.look, camRight)
         if not st then return nil end
-        local name = CombatMath.dominantKey(st.dx, st.dz, camLook, camRight)
+        local name = CombatMath.sideKey(st.dx, st.dz, camRight)
         return name and Enum.KeyCode[name], st.behind
     end
     -- the key for a SIDEDASH step: Behind (round the closest player), Toward (at him), Left, Right
@@ -1432,7 +1435,7 @@ local function __run()
                 if i < Behind.count then task.wait(Behind.gap) end
             end
             if Behind.m1 then
-                task.wait(Behind.gap)                                                     -- let the last dash finish first
+                task.wait(Behind.settle)                                                  -- let the last dash finish first
                 local _, already = behindDashKey()
                 if already then click() end                                               -- only if it worked: never hit from the front by accident
             end
@@ -2288,7 +2291,7 @@ local function __run()
         local bo = getOpts("SideDash_Behind")
         if bo then bo.pinMode = "run" end
         ComboInfo.SideDash_Behind = {steps = {"BEHINDDASH"}, charName = "Universal"}
-        sideSec:Button("Dash behind the closest player", "Dashes round the nearest player toward his back so you can hit him from behind (hits from behind cannot be blocked). No teleport: only Q + a direction key, chosen from where he stands and which way he faces. On screen = round button.",
+        sideSec:Button("Dash behind the closest player", "A real side dash (Q + A or Q + D) round the nearest player toward his back, so you can hit him from behind (hits from behind cannot be blocked). No teleport: only the key is chosen, from where he stands and which way he faces. On screen = round button.",
             function() runMacro({"BEHINDDASH"}, "Universal", "SideDash_Behind") end, {
             conf = "custom",
             pin = {
@@ -2303,13 +2306,16 @@ local function __run()
     Main_:Slider("Behind dash: most dashes", 1, 3, Behind.count, 1, function(v)
         if Behind.count ~= v then Behind.count = v; markDirty() end
     end)
-    Main_:Slider("Behind dash: wait between dashes (s)", 0.2, 1.5, Behind.gap, 0.05, function(v)
+    Main_:Slider("Behind dash: wait between dashes (s)", 0.5, 4, Behind.gap, 0.1, function(v)
         if Behind.gap ~= v then Behind.gap = v; markDirty() end
+    end)
+    Main_:Slider("Behind dash: time for the dash to finish before the M1 (s)", 0.1, 1, Behind.settle, 0.05, function(v)
+        if Behind.settle ~= v then Behind.settle = v; markDirty() end
     end)
     Main_:Toggle("Behind dash: M1 once I am behind him", Behind.m1, function(v)
         if Behind.m1 ~= v then Behind.m1 = v; markDirty() end
     end)
-    Main_:Label("Behind dash goes round the nearest player with up to that many dashes and stops as soon as you are behind him. A second dash of the same kind may still be on cooldown (guides say ~1-2 s for side dashes); front / back dashes have their own.")
+    Main_:Label("BEHIND DASH = a real side dash (Q + A or Q + D), never a teleport. It picks the side that takes you round the nearest player toward his back (hits from behind cannot be blocked) and stops as soon as you are behind him. Guides: a side dash has a 2 s cooldown, so a second dash waits that long. Works best when your camera looks at him. Tip from the guides: hit once or twice, then dash to the back of someone who keeps blocking.")
     Main_:Toggle("Auto side dash after my moves", false, function(on)
         SideAuto.on = on
         if ready then toast(on and "Auto side dash ON - cast a move and I dash" or "Auto side dash OFF") end

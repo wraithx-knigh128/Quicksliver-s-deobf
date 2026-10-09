@@ -8,10 +8,13 @@
       CombatMath.shouldBlock(...)                              attacker close enough, aimed at me, and in front of me
       CombatMath.assess(o)                                     the same, but looks ahead: "block" or "far" | "unaimed" | "behind"
       CombatMath.orbitStep(myPos, theirPos, theirLook, prefer) how far round the player I already am, and which way to dash next
-      CombatMath.dominantKey(dx, dz, camLook, camRight)        "W" | "A" | "S" | "D": the key that moves me closest to that direction
+      CombatMath.sideKey(dx, dz, camRight)                     "A" | "D": the SIDE dash key that goes furthest toward that direction
 ]]
 
 local M = {}
+
+-- his block covers the 180 degrees in front of him (+-90); past that, plus a margin because he turns while I dash, a hit cannot be blocked
+M.BEHIND_ANGLE = 105
 
 local function num(v) return type(v) == "number" and v == v end
 local function valid(p) return type(p) == "table" and num(p.x) and num(p.y) and num(p.z) end
@@ -101,7 +104,7 @@ function M.assess(o)
 end
 
 -- Going round a player to reach his back. How far round am I already, and which way along the circle is next?
---   returns {angle = 0..180 (0 = right in front of him, 180 = exactly behind), behind = angle >= 120, dx, dz = unit direction of the
+--   returns {angle = 0..180 (0 = right in front of him, 180 = exactly behind), behind = angle >= 105, dx, dz = unit direction of the
 --            next dash (along the circle, pulled in when far away), radius}
 --   prefer ("Left" | "Right" | nil) + camRight only decide which way to start when I am exactly in front of him.
 function M.orbitStep(myPos, theirPos, theirLook, camRight)
@@ -130,22 +133,19 @@ function M.orbitStep(myPos, theirPos, theirLook, camRight)
     if r > 8 then px, pz = tx - vx * 0.8, tz - vz * 0.8                 -- far away: close in while going round
     elseif r < 3 then px, pz = tx + vx * 0.3, tz + vz * 0.3 end         -- very close: do not run into him
     local pl = math.sqrt(px * px + pz * pz)
-    return {angle = angle, behind = angle >= 120, dx = px / pl, dz = pz / pl, radius = r}
+    return {angle = angle, behind = angle >= M.BEHIND_ANGLE, dx = px / pl, dz = pz / pl, radius = r}
 end
 
--- The key that moves me closest to the world direction (dx, dz), given the camera (movement keys are camera relative).
--- Returns the key and the two components (forward, right). A dash goes the way of ONE key, so the strongest axis wins.
-function M.dominantKey(dx, dz, camLook, camRight)
-    if not (num(dx) and num(dz) and valid(camLook) and valid(camRight)) then return nil end
+-- Which SIDE dash key (A or D, the only keys a side dash uses) goes furthest toward the world direction (dx, dz), given the camera's
+-- right vector (movement keys are camera relative). Returns the key and how sideways that direction is (-1 .. 1; near 0 means a
+-- side dash is a poor way to go there, e.g. the camera is turned away from him).
+function M.sideKey(dx, dz, camRight)
+    if not (num(dx) and num(dz) and valid(camRight)) then return nil end
     local rl = math.sqrt(camRight.x * camRight.x + camRight.z * camRight.z)
-    if rl < 1e-6 then return nil end
-    local rx, rz = camRight.x / rl, camRight.z / rl
-    local fx, fz = camLook.x, camLook.z
-    local fl = math.sqrt(fx * fx + fz * fz)
-    if fl < 1e-6 then fx, fz = rz, -rx else fx, fz = fx / fl, fz / fl end   -- looking straight up / down: forward from the right vector
-    local f, r = dx * fx + dz * fz, dx * rx + dz * rz
-    if math.abs(r) >= math.abs(f) then return r >= 0 and "D" or "A", f, r end
-    return f >= 0 and "W" or "S", f, r
+    local dl = math.sqrt(dx * dx + dz * dz)
+    if rl < 1e-6 or dl < 1e-6 then return nil end
+    local lateral = (dx * camRight.x + dz * camRight.z) / (dl * rl)
+    return lateral >= 0 and "D" or "A", lateral
 end
 
 return M

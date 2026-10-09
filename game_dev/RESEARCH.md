@@ -196,3 +196,23 @@ Honest limit: none of this could be run against the real game here; the readout 
   be on cooldown; "most dashes" (1-3) and the wait between them are adjustable and the loop stops as soon as you are behind him.
 
 **Menu**: measured luminance of the old window 0.03 -> new ~0.16 with text contrast >= 4.5 : 1 (details and references in `UI_GUIDE.md`).
+
+---
+## Round 8 - the "side dash to the back" (what the guides say) and what changed
+(Search summaries only; the Fandom / Bloxodes / NamuWiki pages are blocked from the build environment, so they could not be read directly.
+Several sources are TikTok-style tips or SEO guides - treat them as unverified. The YouTube video titled "SIDE DASH TRICKS PRO PLAYERS DONT TELL
+YOU ABOUT" has no written source; only its thumbnail (an arrow curving round a dummy) was seen.)
+* The inputs are plain: **Q + A = side dash left, Q + D = side dash right** (itemlevel combo guide). There is no separate "behind" input.
+* **Cooldowns:** a side dash ~**2 s**, a forward dash ~**5 s** (back dash shares the forward one); Ragdoll Cancel (side / back dash while ragdolled) ~20-30 s.
+* **Why the back:** block covers only the 180 degrees in front; a player who keeps blocking is beaten by "hit them once or twice, then side dash to
+  their back" (games.gg-based summary). Everyone side dashes, so speed and mixing up the direction matter.
+* **Side dash cancel:** side dash, then use a move / M1 immediately - the dash is cut short and you hit from an unexpected angle.
+* Also described: side dash on the 4th M1 to escape its stun; Sonic orbits an opponent with side dashes; "long arm" / "hook dash" are named
+  advanced side dashes (one unverified coaching listing); Deadly Ninja is the only character with special side dashes.
+* **What this means for the button:** it must be a real SIDE dash (A or D) - round 7 could also pick W / S (front / back dash) when the camera was turned
+  away from the player. Now it only ever chooses between A and D: the one whose direction (round him toward his back, pulled in when far)
+  has the larger sideways part for the current camera. Because the side dash cooldown is ~2 s, the default wait before a second dash is 2.1 s and
+  the default is a single dash; the stop test counts "behind" from 105 degrees (his block ends at 90). After the dash it waits for the dash to finish
+  (0.3 s) and only then hits, and only if it really ended up behind him (it never punches from the front by mistake).
+* Not known: whether TSB's side dash curves round a target by itself (the thumbnail arrow suggests a hook) or is camera-lateral only. The maths assumes
+  camera-lateral, which is also the best case when your camera looks at him (then A / D is exactly "round him").
