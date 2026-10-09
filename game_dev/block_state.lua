@@ -5,7 +5,8 @@
     the instant YOU want to punch.
 
       local b = BlockState.new(cfg)       cfg (read live, so sliders can change it): {grace, maxHold, minHold, punchPause}
-      b:threat(now, delay, duration)      an attack will land ~`delay` s from now and its animation lasts `duration` s
+      b:threat(now, delay, duration, g)   an attack will land ~`delay` s from now and its animation lasts `duration` s; g (optional) = how long to
+                                          stay blocked after it instead of cfg.grace (a combo's next hit is coming: stay up)
       b:punch(now)                        you want to attack: drop the block now; no block can come up for `punchPause` s (the game's
                                           lockout after your own M1), but an attack that lands after that is still blocked
       b:tick(now)  -> "press" | "release" | nil     call every frame; the caller presses / releases F
@@ -26,7 +27,7 @@ function M.new(cfg)
     local function maxHold() return math.max(cfg.maxHold or 1.0, cfg.minHold or 0.12) end
     local function minHold() return cfg.minHold or 0.12 end
 
-    function self:threat(now, delay, duration)
+    function self:threat(now, delay, duration, graceOverride)
         if type(now) ~= "number" then return end
         delay = math.max(tonumber(delay) or 0, 0)
         duration = math.max(tonumber(duration) or 0, 0)
@@ -38,7 +39,7 @@ function M.new(cfg)
             delay = math.max(delay, self.pausedUntil - now)
             duration = math.max(attackEnds - (now + delay), 0.1)           -- the attack still ends when it ends
         end
-        local hitEnd = now + delay + duration + grace()
+        local hitEnd = now + delay + duration + (type(graceOverride) == "number" and math.max(graceOverride, 0) or grace())
         if self.holding then
             -- keep blocking through the next hit, but never longer than maxHold from the start of this block
             self.releaseAt = math.min(math.max(self.releaseAt, hitEnd), self.holdStart + maxHold())

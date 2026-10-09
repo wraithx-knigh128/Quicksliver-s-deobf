@@ -7,7 +7,7 @@ Short loader (no pasting a 77 KB file):
 loadstring(game:HttpGet("https://raw.githubusercontent.com/wraithx-knigh128/Quicksliver-s-deobf/1f20edbc580cded09ed9c9a676238e2c5d6f07a0/dist/tsb_hub_executor.min.txt"))()
 ```
 
-Nothing is saved automatically. The Config tab has Save config / Reload / Delete; the only file is `animation_hub_config.json`, loaded when
+Nothing is saved automatically (that includes your own menu picture: Save config keeps it). The Config tab has Save config / Reload / Delete; the only file is `animation_hub_config.json`, loaded when
 the hub starts (an old `animation_hub_settings.json` from earlier versions is ignored).
 
 Checks (from `game_dev/`):

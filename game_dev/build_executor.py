@@ -20,6 +20,8 @@ out = (ui[:i]
        + as_module("BlockState", rd("game_dev/block_state.lua"))
        + as_module("BlockPredict", rd("game_dev/block_predict.lua"))
        + as_module("BlockInfo", rd("game_dev/block_info.lua"))
+       + as_module("KyotoPlan", rd("game_dev/kyoto_plan.lua"))
+       + as_module("BlockSense", rd("game_dev/block_sense.lua"))
        + as_module("Data", rd("game_dev/tsb_data.lua"))
        + as_module("Engine", rd("game_dev/combo_engine.lua"))
        + "\n" + ui[i:])

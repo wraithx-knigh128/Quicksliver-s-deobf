@@ -368,7 +368,7 @@ function M.assess(o)
         if sp >= 8 and dl > 1e-6 and (o.tv.x * dx + o.tv.z * dz) / (sp * dl) >= 0.7 then aimed = true end
     end
     if not aimed then return "unaimed" end
-    if not M.facing(o.mp, o.ml, o.tp, 90) and not M.facing(o.mp, o.ml, predTheirs, 90) then return "behind" end
+    if not M.facing(o.mp, o.ml, o.tp, 90) then return "behind" end             -- where he IS (a runner that will pass through me is no help)
     return "block"
 end
 
@@ -417,6 +417,21 @@ function M.sideKey(dx, dz, camRight)
     return lateral >= 0 and "D" or "A", lateral
 end
 
+-- Is the other player closing in fast enough that a punch is about to follow? Positions / his velocity are {x=,y=,z=} (horizontal only).
+--   opts = {range = studs he must be within (default 12), speed = closing speed needed in studs/s (default 9), reach = striking distance (default 4.5)}
+-- returns nil (no) or the seconds until he is within striking distance (0 when he already is)
+function M.rushing(mp, tp, tv, opts)
+    if not (valid(mp) and valid(tp) and valid(tv)) then return nil end
+    opts = type(opts) == "table" and opts or {}
+    local range, need, reach = opts.range or 12, opts.speed or 9, opts.reach or 4.5
+    local dx, dz = mp.x - tp.x, mp.z - tp.z
+    local d = math.sqrt(dx * dx + dz * dz)
+    if d < 1e-6 or d > range then return nil end
+    local closing = (tv.x * dx + tv.z * dz) / d                    -- his velocity along the line to me: positive = coming at me
+    if closing < need then return nil end
+    return math.max(d - reach, 0) / closing
+end
+
 return M
 
 end)()
@@ -433,7 +448,7 @@ function M.new(cfg)
     local function maxHold() return math.max(cfg.maxHold or 1.0, cfg.minHold or 0.12) end
     local function minHold() return cfg.minHold or 0.12 end
 
-    function self:threat(now, delay, duration)
+    function self:threat(now, delay, duration, graceOverride)
         if type(now) ~= "number" then return end
         delay = math.max(tonumber(delay) or 0, 0)
         duration = math.max(tonumber(duration) or 0, 0)
@@ -445,7 +460,7 @@ function M.new(cfg)
             delay = math.max(delay, self.pausedUntil - now)
             duration = math.max(attackEnds - (now + delay), 0.1)           -- the attack still ends when it ends
         end
-        local hitEnd = now + delay + duration + grace()
+        local hitEnd = now + delay + duration + (type(graceOverride) == "number" and math.max(graceOverride, 0) or grace())
         if self.holding then
             -- keep blocking through the next hit, but never longer than maxHold from the start of this block
             self.releaseAt = math.min(math.max(self.releaseAt, hitEnd), self.holdStart + maxHold())
@@ -727,6 +742,162 @@ end
 
 -- kinds that make holding F pointless (or worse)
 function M.ignoresBlock(kind) return kind == "unblockable" or kind == "guardbreak" end
+
+return M
+
+end)()
+local KyotoPlan = (function()
+
+
+local M = {}
+
+M.DEFAULTS = {m1 = 3, wait = 0.30, whirl = true, twisted = true, side = "Toward"}
+local SIDES = {Behind = true, Toward = true, Left = true, Right = true}
+
+-- timings of the fixed parts (seconds)
+M.CATCH = 0.12       -- after the side dash: Lethal Whirlwind Stream right away (it is what catches them)
+M.WHIRL = 0.12       -- after the Stream: the whirlwind dash "as early as possible"
+M.LAND = 0.30        -- after the whirlwind dash: let it land before the first M1
+M.STEP_BACK = 0.14   -- the small step back before the twisted dash
+
+function M.clean(src)
+    src = type(src) == "table" and src or {}
+    local o = {}
+    local m1 = tonumber(src.m1)
+    o.m1 = (m1 and m1 == m1) and math.min(math.max(math.floor(m1), 1), 3) or M.DEFAULTS.m1
+    local wait = tonumber(src.wait)
+    o.wait = (wait and wait == wait) and math.min(math.max(wait, 0.05), 1.0) or M.DEFAULTS.wait
+    o.whirl = src.whirl == nil and M.DEFAULTS.whirl or src.whirl == true
+    o.twisted = src.twisted == nil and M.DEFAULTS.twisted or src.twisted == true
+    o.side = SIDES[src.side] and src.side or (src.side == "Closest" and "Toward" or M.DEFAULTS.side)
+    return o
+end
+
+function M.build(opts)
+    local o = M.clean(opts)
+    local steps, gaps = {"FLOWING_WATER", "SIDEDASH", "LETHAL_WHIRLWIND_STREAM"}, {}
+    gaps[1] = o.wait
+    gaps[2] = M.CATCH
+    if o.whirl then
+        gaps[3] = M.WHIRL
+        steps[#steps + 1] = "FRONTDASH"
+        gaps[#steps] = M.LAND
+    end
+    for _ = 1, o.m1 do steps[#steps + 1] = "M1" end                  -- gaps after M1: the normal M1 gap of the Timing tab
+    if o.twisted then
+        steps[#steps + 1] = "BACKDASH"
+        gaps[#steps] = M.STEP_BACK
+        steps[#steps + 1] = "FRONTDASH"
+    end
+    return steps, gaps, o
+end
+
+return M
+
+end)()
+local BlockSense = (function()
+
+
+local M = {}
+
+local MAX_FEATURES, MAX_LEN = 12, 100
+
+local function ok(str) return type(str) == "string" and #str > 0 and #str <= MAX_LEN and not str:find("%c") end
+
+-- the set of facts one snapshot is made of
+function M.features(snap)
+    local out = {}
+    if type(snap) ~= "table" then return out end
+    if type(snap.ws) == "number" and snap.ws == snap.ws then out["ws:" .. math.floor(snap.ws + 0.5)] = true end
+    if type(snap.attrs) == "table" then
+        for name, v in pairs(snap.attrs) do
+            local t = type(v)
+            if type(name) == "string" and (t == "boolean" or t == "number" or t == "string") then
+                local f = "attr:" .. name .. "=" .. tostring(v)
+                if ok(f) then out[f] = true end
+            end
+        end
+    end
+    if type(snap.tracks) == "table" then
+        for id in pairs(snap.tracks) do
+            local f = "anim:" .. tostring(id)
+            if type(id) == "string" and ok(f) then out[f] = true end
+        end
+    end
+    return out
+end
+
+function M.new()
+    local self = {samples = {}, sig = nil}
+
+    local function recompute()
+        local n = #self.samples
+        if n < 2 then self.sig = nil return end
+        local sig
+        for _, set in ipairs(self.samples) do
+            if not sig then
+                sig = {}
+                for f in pairs(set) do sig[f] = true end
+            else
+                for f in pairs(sig) do if not set[f] then sig[f] = nil end end
+            end
+        end
+        self.sig = next(sig) ~= nil and sig or nil
+    end
+
+    -- what appeared while blocking and was not there before; returns true when the signature is ready
+    function self:observe(rest, blocking)
+        local before, after = M.features(rest), M.features(blocking)
+        local news = {}
+        for f in pairs(after) do if not before[f] then news[f] = true end end
+        if next(news) == nil then return self:ready() end                    -- nothing changed: the press did not take, learn nothing
+        self.samples[#self.samples + 1] = news
+        while #self.samples > 4 do table.remove(self.samples, 1) end
+        recompute()
+        if not self.sig and #self.samples >= 2 then self.samples = {news} end   -- the samples disagree: start over from the newest
+        return self:ready()
+    end
+
+    function self:ready() return self.sig ~= nil end
+
+    function self:isUp(snap)
+        if not self.sig then return nil end
+        for f in pairs(M.features(snap)) do
+            if self.sig[f] then return true end
+        end
+        return false
+    end
+
+    function self:describe()
+        if not self.sig then return "not learned yet (" .. #self.samples .. " sample(s))" end
+        local list = {}
+        for f in pairs(self.sig) do list[#list + 1] = f end
+        table.sort(list)
+        return table.concat(list, ", ")
+    end
+
+    function self:forget() self.samples, self.sig = {}, nil end
+
+    function self:export()
+        if not self.sig then return nil end
+        local list = {}
+        for f in pairs(self.sig) do list[#list + 1] = f end
+        table.sort(list)
+        while #list > MAX_FEATURES do table.remove(list) end
+        return list
+    end
+
+    function self:import(list)
+        if type(list) ~= "table" then return end
+        local sig, n = {}, 0
+        for _, f in ipairs(list) do
+            if n < MAX_FEATURES and ok(f) and (f:sub(1, 3) == "ws:" or f:sub(1, 5) == "attr:" or f:sub(1, 5) == "anim:") then sig[f] = true; n = n + 1 end
+        end
+        if next(sig) ~= nil then self.sig, self.samples = sig, {sig, sig} end
+    end
+
+    return self
+end
 
 return M
 
@@ -1034,8 +1205,9 @@ Data.TechAssists = {
     -- Garou
     {name = "Flowing + Grasp", character = "Hero Hunter", confidence = "medium", steps = {"FLOWING_WATER", "SIDEDASH", "HUNTERS_GRASP"},
      desc = "You cast Flowing Water -> side dash -> Hunter's Grasp"},
-    {name = "Flowing + Lethal", character = "Hero Hunter", confidence = "medium", steps = {"FLOWING_WATER", "SIDEDASH", "LETHAL_WHIRLWIND_STREAM"},
-     desc = "You cast Flowing Water -> side dash -> Lethal Whirlwind Stream (the Kyoto core)"},
+    {name = "Flowing Water -> Kyoto", character = "Hero Hunter", confidence = "medium", kyoto = true,
+     steps = {"FLOWING_WATER", "SIDEDASH", "LETHAL_WHIRLWIND_STREAM", "FRONTDASH", "M1", "M1", "M1", "BACKDASH", "FRONTDASH"},
+     desc = "You cast Flowing Water -> side dash (Kyoto) -> Lethal Whirlwind Stream -> whirlwind dash -> 1-3 M1 -> instant twisted. The steps and waits come from the options below."},
     {name = "Grasp catch", character = "Hero Hunter", confidence = "low", steps = {"HUNTERS_GRASP", "SIDEDASH", "M1"},
      desc = "You cast Hunter's Grasp -> side dash -> M1"},
     {name = "Lethal + Grasp", character = "Hero Hunter", confidence = "low", steps = {"LETHAL_WHIRLWIND_STREAM", "HUNTERS_GRASP"},
@@ -1283,7 +1455,7 @@ local function __run()
         return new("UIStroke", {Color = color, Thickness = thick or 1, Transparency = trans or 0})
     end
 
-    local loadBackground
+    local loadBackground, loadCustom
     do
     local httpRequest = request or http_request or (syn and syn.request)
     local function httpGet(url)
@@ -1297,9 +1469,17 @@ local function __run()
         if type(body) == "string" then return body end
     end
 
-    local BgSources = {
-        ["waifu.pics"] = {api = "https://api.waifu.pics/sfw/waifu", parse = function(j) return j.url end},
-        ["nekos.best"] = {api = "https://nekos.best/api/v2/waifu", parse = function(j) return j.results and j.results[1] and j.results[1].url end},
+    local function pictureOf(j) return j.url end                                         -- waifu.pics answers {"url": ...}
+    local function firstResult(j) return j.results and j.results[1] and j.results[1].url end   -- nekos.best answers {"results": [{"url": ...}]}
+    local BgSources = {                                                                        -- SFW endpoints only
+        ["waifu.pics"] = {api = "https://api.waifu.pics/sfw/waifu", parse = pictureOf},
+        ["waifu.pics / neko"] = {api = "https://api.waifu.pics/sfw/neko", parse = pictureOf},
+        ["waifu.pics / shinobu"] = {api = "https://api.waifu.pics/sfw/shinobu", parse = pictureOf},
+        ["waifu.pics / megumin"] = {api = "https://api.waifu.pics/sfw/megumin", parse = pictureOf},
+        ["nekos.best"] = {api = "https://nekos.best/api/v2/waifu", parse = firstResult},
+        ["nekos.best / neko"] = {api = "https://nekos.best/api/v2/neko", parse = firstResult},
+        ["nekos.best / kitsune"] = {api = "https://nekos.best/api/v2/kitsune", parse = firstResult},
+        ["nekos.best / husbando"] = {api = "https://nekos.best/api/v2/husbando", parse = firstResult},
     }
     local bgCounter = 0
 
@@ -1322,6 +1502,28 @@ local function __run()
         -- writefile returns nothing on success, so test with pcall (NOT safe(), which returns the value)
         if not pcall(writefile, path, body) then return nil end
         return safe(getcustomasset, path)
+    end
+
+    -- YOUR picture: a direct link to a PNG / JPG, the name of a PNG / JPG in the executor's workspace folder, or a Roblox image id.
+    -- returns the asset, or nil and a sentence that says what is wrong
+    function loadCustom(text)
+        if type(text) ~= "string" then return nil, "type a link or a file name first" end
+        text = (text:gsub("^%s+", ""):gsub("%s+$", ""))
+        if text == "" or #text > 300 or text:find("%c") then return nil, "that is not a usable link or file name" end
+        local id = text:match("^rbxassetid://(%d+)$") or text:match("^(%d+)$")
+        if id then return "rbxassetid://" .. id end                              -- an image already on Roblox: used as it is
+        if text:sub(1, 4):lower() == "http" then
+            if not (getcustomasset and writefile) then return nil, "your executor cannot show downloaded pictures (getcustomasset / writefile are missing)" end
+            local asset = imageToAsset(text)
+            if not asset then return nil, "that link did not give a PNG or JPG picture (gif, webp and web pages do not work)" end
+            return asset
+        end
+        if not (isfile and readfile and getcustomasset) then return nil, "your executor cannot read files" end
+        if not safe(isfile, text) then return nil, "there is no file called '" .. text .. "' in your executor's workspace folder" end
+        if not imageKind(safe(readfile, text)) then return nil, "that file is not a PNG or JPG picture" end
+        local asset = safe(getcustomasset, text)
+        if not asset then return nil, "the executor could not turn that file into a picture" end
+        return asset
     end
 
     function loadBackground(sourceName)
@@ -1367,6 +1569,8 @@ local function __run()
         return math.min(math.max(v, lo), hi)
     end
     local Saved, SavedFrom = loadSaved()
+    -- your own menu picture (link / workspace file / image id); "" = random anime pictures. Part of the config.
+    local Picture = {source = type(Saved.picture) == "string" and #Saved.picture <= 300 and not Saved.picture:find("%c") and Saved.picture or ""}
 
     ---------------------------------------------------------------- theme
     -- menu look: from your config (or carried over for a rebuild)
@@ -1532,16 +1736,30 @@ local function __run()
     })
     gloss(Main, 18, 1)
     local bgGen = 0
+    local Banners = {}                                -- the hero banners (Main tab...) show the same picture
+    local pictureNote, pictureStatus                  -- Effects tab label + the text it should show (the load may finish before the label exists)
+    local function noteAboutPicture(text)
+        pictureStatus = text
+        if pictureNote then pictureNote.Text = text end
+    end
+    local function setPicture(asset)
+        Background.Image = asset
+        Background.ImageTransparency = 1                 -- fade the new picture in
+        tween(Background, {ImageTransparency = BACKGROUND_TRANSPARENCY}, 0.8)
+        for _, b in ipairs(Banners) do b.Image = asset end
+    end
+    -- sourceName nil = your own picture if you set one, else a random one from the current source; a name = a random one from that source
     local function refreshBackground(sourceName)
         bgGen = bgGen + 1
         local mine = bgGen                       -- only the newest request may set the image
         task.spawn(function()
-            local asset = loadBackground(sourceName)
-            if asset and mine == bgGen and alive then
-                Background.Image = asset
-                Background.ImageTransparency = 1                 -- fade the new picture in
-                tween(Background, {ImageTransparency = BACKGROUND_TRANSPARENCY}, 0.8)
+            local asset, why
+            if Picture.source ~= "" and not sourceName then asset, why = loadCustom(Picture.source) end
+            if not asset then asset = loadBackground(sourceName) end
+            if Picture.source ~= "" and not sourceName then
+                noteAboutPicture(why and ("Your picture did not load: " .. why .. " (a random one is shown instead).") or "Your picture is on.")
             end
+            if asset and mine == bgGen and alive then setPicture(asset) end
         end)
     end
     refreshBackground()
@@ -1913,6 +2131,59 @@ local function __run()
             return api
         end
 
+        -- a text box: the label on top, the box under it. cb(text, enterPressed) runs when the box loses focus
+        function tab:Input(text, placeholder, default, cb, parent)
+            local r = row(72, parent)
+            label(r, text, 13, nil, UDim2.fromOffset(14, 5)).Size = UDim2.new(1, -28, 0, 24)
+            local box = new("TextBox", {
+                Text = default or "", PlaceholderText = placeholder or "", PlaceholderColor3 = Theme.SubText, ClearTextOnFocus = false,
+                Font = Enum.Font.Gotham, TextSize = 12, TextColor3 = Theme.Text, TextXAlignment = Enum.TextXAlignment.Left,
+                BackgroundColor3 = Theme.Panel, Size = UDim2.new(1, -28, 0, 30), Position = UDim2.fromOffset(14, 33), Parent = r,
+            }, {corner(10), hairline(nil, 0.85), new("UIPadding", {PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 10)})})
+            box.FocusLost:Connect(function(enter) task.spawn(cb, box.Text, enter) end)
+            local api = {}
+            function api:Get() return box.Text end
+            function api:Set(v) box.Text = tostring(v) end
+            return api
+        end
+
+        -- hero banner: your picture across the top of a page, with the title over a soft shadow
+        function tab:Banner(title, subtitle, tag)
+            local f = new("Frame", {
+                Size = UDim2.new(1, 0, 0, 118), BackgroundColor3 = Theme.Panel, ClipsDescendants = true, Parent = page,
+            }, {corner(16), hairline(nil, 0.7)})
+            local img = new("ImageLabel", {
+                Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Image = Background.Image, ScaleType = Enum.ScaleType.Crop, Parent = f,
+            })
+            Banners[#Banners + 1] = img
+            new("Frame", {                               -- shadow from the left so the title stays readable on any picture
+                Size = UDim2.fromScale(1, 1), BackgroundColor3 = Theme.Back, BorderSizePixel = 0, ZIndex = 2, Parent = f,
+            }, {new("UIGradient", {
+                Transparency = NumberSequence.new({NumberSequenceKeypoint.new(0, 0.1), NumberSequenceKeypoint.new(0.55, 0.5), NumberSequenceKeypoint.new(1, 0.92)}),
+            })})
+            local head = new("TextLabel", {
+                Text = title, Font = Enum.Font.GothamBold, TextSize = 24, TextColor3 = Theme.White, BackgroundTransparency = 1,
+                TextXAlignment = Enum.TextXAlignment.Left, Position = UDim2.fromOffset(18, 22), Size = UDim2.new(1, -120, 0, 30), ZIndex = 3, Parent = f,
+            })
+            new("UIGradient", {Color = ColorSequence.new({ColorSequenceKeypoint.new(0, Theme.White), ColorSequenceKeypoint.new(1, Theme.Gold)}), Parent = head})
+            new("TextLabel", {
+                Text = subtitle or "", Font = Enum.Font.Gotham, TextSize = 12, TextColor3 = Theme.SubText, BackgroundTransparency = 1,
+                TextXAlignment = Enum.TextXAlignment.Left, TextWrapped = true, TextYAlignment = Enum.TextYAlignment.Top,
+                Position = UDim2.fromOffset(18, 56), Size = UDim2.new(1, -120, 0, 40), ZIndex = 3, Parent = f,
+            })
+            if tag then
+                new("TextLabel", {
+                    Text = tag, Font = Enum.Font.GothamBold, TextSize = 11, TextColor3 = Theme.Ink, BackgroundColor3 = Theme.Gold,
+                    Size = UDim2.fromOffset(54, 22), Position = UDim2.new(1, -70, 0, 14), ZIndex = 4, Parent = f,
+                }, {corner(11)})
+            end
+            new("Frame", {                               -- thin accent line under the picture
+                Size = UDim2.new(1, 0, 0, 3), Position = UDim2.new(0, 0, 1, -3), BorderSizePixel = 0, BackgroundColor3 = Theme.White, ZIndex = 4, Parent = f,
+            }, {accentGradient(nil, 0)})
+            gloss(f, 16, 1)
+            return f
+        end
+
         function tab:Button(text, cb, parent)
             local r = row(42, parent)
             local b = new("TextButton", {
@@ -2197,6 +2468,9 @@ local function __run()
                 })
             end
             function sec:Toggle(name, default, cb, subtitle) return tab:Toggle(name, default, cb, body, subtitle) end
+            function sec:Slider(text, min, max, default, step, cb) return tab:Slider(text, min, max, default, step, cb, body) end
+            function sec:Dropdown(text, options, default, cb) return tab:Dropdown(text, options, default, cb, body) end
+            function sec:Label(text) return tab:Label(text, body) end
             function sec:Clear()
                 for _, ch in ipairs(body:GetChildren()) do
                     if not ch:IsA("UIListLayout") then ch:Destroy() end
@@ -2234,13 +2508,6 @@ local function __run()
     }
 
     ---------------------------------------------------------------- Auto Tech
-    local lastTech = 0
-
-    local DirectionKeys = {
-        Forward = Enum.KeyCode.W, Back = Enum.KeyCode.S,
-        Left    = Enum.KeyCode.A, Right = Enum.KeyCode.D,
-    }
-
     local function keyEvent(down, key) VirtualInput:SendKeyEvent(down, key, false, game) end
     local function press(key, hold)
         keyEvent(true, key)
@@ -2264,6 +2531,12 @@ local function __run()
 
     local macroRunning = false   -- set by the macro runner below; Auto Tech stays quiet while a macro plays
 
+    do   -- (own scope: a function may only hold 200 locals)
+    local lastTech = 0
+    local DirectionKeys = {
+        Forward = Enum.KeyCode.W, Back = Enum.KeyCode.S,
+        Left    = Enum.KeyCode.A, Right = Enum.KeyCode.D,
+    }
     local function doTech()
         if macroRunning then return end
         local now = os.clock()
@@ -2287,6 +2560,7 @@ local function __run()
         if knocked and not wasKnocked then doTech() end
         wasKnocked = knocked
     end)
+    end
 
     ---------------------------------------------------------------- timing + ping
     -- Gaps (seconds) after each kind of step. Adjustable in the Timing tab. With "Auto timing" on, the gaps
@@ -2303,14 +2577,15 @@ local function __run()
     local SavedPins = type(Saved.pins) == "table" and Saved.pins or {}
     local Armed, armedOrder = {}, {}                       -- Assist: armed combos (never saved: you start disarmed)
     -- auto block: grace = how long after their attack ends I keep F down, maxHold = never hold longer than this
-    local Block = {on = false, range = 16, aim = 90, delay = 0.05, grace = 0.15, maxHold = 1.0, minHold = 0.12, punchPause = 0.22, usePing = true,
+    local Block = {on = false, range = 16, aim = 90, delay = 0, grace = 0.15, maxHold = 1.0, minHold = 0.12, punchPause = 0.22, usePing = true,
         lead = 0.12, learn = true, useLearned = true, chain = false, floater = true, style = "Safe", pierceMode = "block",
-        stats = {seen = 0, blocked = 0, why = {}}, lastDecision = "nothing seen yet"}
+        chainGrace = 0.35, rush = true, verify = true,
+        stats = {seen = 0, blocked = 0, why = {}, rush = 0, retries = 0, senseOk = 0, senseMiss = 0}, lastDecision = "nothing seen yet"}
     -- how early F goes down before a learned hit: Safe = comfortably early, Perfect = at the last moment (the "perfect block" crit)
-    local BlockStyles = {Safe = 0.12, Balanced = 0.05, Perfect = 0.02}
-    local BlockStyleNames = {"Safe", "Balanced", "Perfect"}
-    local PierceModes = {["Do nothing"] = "skip", ["Side dash"] = "dash", ["Block anyway"] = "block"}
-    local PierceNames = {"Do nothing", "Side dash", "Block anyway"}
+    local BlockOpts = {
+        styles = {Safe = 0.12, Balanced = 0.05, Perfect = 0.02}, styleNames = {"Safe", "Balanced", "Perfect"},
+        pierceModes = {["Do nothing"] = "skip", ["Side dash"] = "dash", ["Block anyway"] = "block"}, pierceNames = {"Do nothing", "Side dash", "Block anyway"},
+    }
     if type(Saved.block) == "table" then
         local sb = Saved.block
         Block.range = num(sb.range, 6, 30, Block.range)
@@ -2319,14 +2594,20 @@ local function __run()
         Block.grace = num(sb.grace, 0.05, 0.5, Block.grace)
         Block.maxHold = num(sb.maxHold, 0.3, 2, Block.maxHold)
         Block.usePing = sb.usePing ~= false
-        if BlockStyles[sb.style] then Block.style = sb.style; Block.lead = BlockStyles[sb.style] end
+        if BlockOpts.styles[sb.style] then Block.style = sb.style; Block.lead = BlockOpts.styles[sb.style] end
         if sb.pierceMode == "skip" or sb.pierceMode == "dash" or sb.pierceMode == "block" then Block.pierceMode = sb.pierceMode end
         Block.learn = sb.learn ~= false
         Block.useLearned = sb.useLearned ~= false
         Block.chain = sb.chain == true
         Block.floater = sb.floater ~= false
+        Block.chainGrace = num(sb.chainGrace, 0, 0.8, Block.chainGrace)
+        Block.rush = sb.rush ~= false
+        Block.verify = sb.verify ~= false
     end
     -- the learner: how long after an enemy animation starts do I actually get hurt? (kept only if you press Save config)
+    -- what blocking looks like on this game (a new animation, a changed attribute, a slower walk): learned from your own presses
+    local Sense = BlockSense and BlockSense.new()
+    if Sense and type(Saved.block) == "table" then Sense:import(Saved.block.sense) end
     local Learner = BlockPredict and BlockPredict.new()
     if Learner then Learner:import(Saved.learned) end
     if type(Saved.floater) == "table" and type(Saved.floater.x) == "number" and type(Saved.floater.y) == "number" then
@@ -2336,6 +2617,9 @@ local function __run()
     -- "dash behind the closest player": most dashes, wait between them (a side dash has a ~2 s cooldown), time for a dash to finish
     -- before checking / hitting, M1 once behind
     local Behind = {count = 1, gap = 2.1, settle = 0.3, m1 = false}
+    -- Garou "Flowing Water -> Kyoto" assist options (see kyoto_plan.lua): M1s, wait after Flowing Water, whirlwind dash, twisted, side dash way
+    local Kyoto = KyotoPlan and KyotoPlan.clean(type(Saved.kyoto) == "table" and Saved.kyoto or nil)
+        or {m1 = 3, wait = 0.3, whirl = true, twisted = true, side = "Toward"}
     if type(Saved.behind) == "table" then
         Behind.count = math.floor(num(Saved.behind.count, 1, 3, Behind.count))
         Behind.gap = num(Saved.behind.gap, 0.5, 4, Behind.gap)
@@ -2417,11 +2701,14 @@ local function __run()
         return {version = 2, timing = Timing, speed = macroSpeed, auto = Auto, combos = combos, pins = pinData,
             ui = {theme = pendingTheme, scale = uiScale, glass = glass, bright = bright},
             block = {range = Block.range, aim = Block.aim, delay = Block.delay, grace = Block.grace, maxHold = Block.maxHold, usePing = Block.usePing,
-                style = Block.style, pierceMode = Block.pierceMode, learn = Block.learn, useLearned = Block.useLearned, chain = Block.chain, floater = Block.floater},
+                style = Block.style, pierceMode = Block.pierceMode, learn = Block.learn, useLearned = Block.useLearned, chain = Block.chain, floater = Block.floater,
+                chainGrace = Block.chainGrace, rush = Block.rush, verify = Block.verify, sense = Sense and Sense:export() or nil},
             learned = Learner and Learner:export() or nil,
             floater = Block.floaterPos,
             fab = fabRef and {x = fabRef.x, y = fabRef.y, locked = fabRef.locked, minimized = fabRef.minimized} or nil,
             behind = {count = Behind.count, gap = Behind.gap, settle = Behind.settle, m1 = Behind.m1},
+            kyoto = {m1 = Kyoto.m1, wait = Kyoto.wait, whirl = Kyoto.whirl, twisted = Kyoto.twisted, side = Kyoto.side},
+            picture = Picture.source,
             sideAuto = {dir = SideAuto.dir, delay = SideAuto.delay, cooldown = SideAuto.cooldown, anims = SideAuto.anims}}
     end
     -- returns true when the file was written
@@ -2447,11 +2734,6 @@ local function __run()
     end
     local pingLabel, gapsLabel
 
-    local function readPing()
-        local item = safe(function() return game:GetService("Stats").Network.ServerStatsItem["Data Ping"] end)
-        local v = item and safe(function() return item:GetValue() end)
-        if type(v) == "number" then return v end
-    end
     local function currentPing()                       -- ms, or nil when unknown
         if Auto.manualPing > 0 then return Auto.manualPing end
         return PingState.model and PingState.model:value()
@@ -2475,6 +2757,11 @@ local function __run()
     end
 
     do
+        local function readPing()
+            local item = safe(function() return game:GetService("Stats").Network.ServerStatsItem["Data Ping"] end)
+            local v = item and safe(function() return item:GetValue() end)
+            if type(v) == "number" then return v end
+        end
         local acc = 0
         connect(RunService.Heartbeat, function(dt)
             acc = acc + dt
@@ -2574,6 +2861,8 @@ local function __run()
 
     -- Dashes that go ROUND a player to reach his back (hits from behind cannot be blocked). They never move or teleport you:
     -- they only choose which direction key goes with Q. Movement keys are camera relative, so the camera is part of the maths.
+    local behindDashKey
+    do
     local function closestTarget()
         local mine = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
         local myPos = mine and safe(function() return vec3(mine.Position) end)
@@ -2598,7 +2887,7 @@ local function __run()
     end
     -- the SIDE dash key (A or D - never W / S, those are the front and back dashes) for ONE dash round the closest player toward his
     -- back, and whether I am already behind him
-    local function behindDashKey()
+    function behindDashKey()
         local target, myPos = closestTarget()
         local cam = workspace.CurrentCamera
         local camRight = cam and safe(function() return vec3(cam.CFrame.RightVector) end)
@@ -2607,6 +2896,7 @@ local function __run()
         if not st then return nil end
         local name = CombatMath.sideKey(st.dx, st.dz, camRight)
         return name and Enum.KeyCode[name], st.behind
+    end
     end
     -- the key for a SIDEDASH step: Behind (round the closest player), Toward (at him), Left, Right
     local function sideDashKey(mode)
@@ -2657,8 +2947,13 @@ local function __run()
     onCleanup[#onCleanup + 1] = stopMacro
 
     -- lead (optional) = {kind, dependent}: wait out the gap that follows the step YOU just did, then play steps
-    local function runMacro(steps, charName, comboName, lead)
+    -- gaps (optional) = {[i] = seconds to wait after step i}: fixed waits for steps whose timing is not the generic "move" gap
+    -- (e.g. the whirlwind dash must come "as early as possible"). They still follow the speed settings and the ping adjustment.
+    local function runMacro(steps, charName, comboName, lead, gaps)
         if macroRunning then stopMacro() return end        -- tapping again stops it
+        local function fixedGap(seconds, dependent, o)
+            return adjustGap(seconds * macroSpeed * ((o and o.speed) or 1), dependent, o)
+        end
         macroId = macroId + 1
         local myId = macroId
         macroRunning = true
@@ -2668,11 +2963,14 @@ local function __run()
         local opts = comboName and getOpts(comboName) or nil
         task.spawn(function()
             local ok, err = pcall(function()
-                if lead then task.wait(stepDelay(lead.kind, lead.dependent, opts)) end
-                for _, tok in ipairs(steps) do
+                if lead then task.wait(lead.fixed and fixedGap(lead.fixed, lead.dependent, opts) or stepDelay(lead.kind, lead.dependent, opts)) end
+                for i, tok in ipairs(steps) do
                     if myId ~= macroId then return end       -- stopped, or replaced by a newer macro
                     local kind, dependent = playToken(tok, charName, opts)
-                    if kind then task.wait(stepDelay(kind, dependent, opts)) end
+                    if kind then
+                        local fixed = gaps and gaps[i]
+                        task.wait(type(fixed) == "number" and fixedGap(fixed, dependent, opts) or stepDelay(kind, dependent, opts))
+                    end
                 end
             end)
             assistBlockedUntil = os.clock() + 0.6
@@ -2752,7 +3050,13 @@ local function __run()
         local rest = Assist.remaining(info.steps, idx)
         if not rest then return end
         local kind, dependent = gapKindOf(trigTok, info.charName)
-        runMacro(rest, info.charName, name, {kind = kind, dependent = dependent})
+        local restGaps, leadGap
+        if info.gaps then                                 -- fixed waits, indexed by the FULL step list: shift them to the steps after the trigger
+            restGaps = {}
+            for i = idx + 1, #info.steps do restGaps[i - idx] = info.gaps[i] end
+            leadGap = info.gaps[idx]
+        end
+        runMacro(rest, info.charName, name, {kind = kind, dependent = dependent, fixed = leadGap}, restGaps)
     end
 
     function setArmed(name, on)
@@ -2874,9 +3178,68 @@ local function __run()
         local state = BlockState and BlockState.new(Block)           -- reads Block.grace / maxHold / minHold / punchPause live
         local lastSwing = setmetatable({}, {__mode = "k"})
         local pollTargets = {}                                      -- player -> that player's Animator (checked 10x a second as a backup)
+        -- Is the block really up? The hub learns what changes on you while you block (see block_sense.lua). Once it knows, a press
+        -- that did not take (your own M1 lockout, a stun, a dropped input) is repeated instead of letting the hit through.
+        local verify                                                -- {due, tries, rest, hurt, repressAt} for the press being checked
+        local function snapshotMe()
+            local char = LocalPlayer.Character
+            local hum = char and char:FindFirstChildOfClass("Humanoid")
+            if not hum then return nil end
+            local snap = {ws = safe(function() return hum.WalkSpeed end), attrs = {}, tracks = {}}
+            local attrs = safe(function() return char:GetAttributes() end)
+            if type(attrs) == "table" then for k, v in pairs(attrs) do snap.attrs[k] = v end end
+            local animator = safe(function() return hum:FindFirstChildOfClass("Animator") end)
+            local list = animator and safe(function() return animator:GetPlayingAnimationTracks() end)
+            if type(list) == "table" then
+                for _, tr in ipairs(list) do
+                    local id = safe(function() return tr.Animation.AnimationId end)
+                    if type(id) == "string" then snap.tracks[id] = true end
+                end
+            end
+            return snap
+        end
         local function apply(action)
-            if action == "press" then keyEvent(true, Enum.KeyCode.F)
-            elseif action == "release" then keyEvent(false, Enum.KeyCode.F) end
+            if action == "press" then
+                if Sense and Block.verify and not Block.senseOff then
+                    verify = {due = os.clock() + 0.12, tries = 0, rest = snapshotMe(), hurt = false}
+                end
+                keyEvent(true, Enum.KeyCode.F)
+            elseif action == "release" then
+                verify = nil
+                keyEvent(false, Enum.KeyCode.F)
+            end
+        end
+        local function verifyTick(now)
+            local v = verify
+            if not v then return end
+            if not (state and state.holding) then verify = nil return end
+            if v.repressAt then
+                if now >= v.repressAt then
+                    v.repressAt = nil; v.tries = v.tries + 1; v.due = now + 0.12
+                    keyEvent(true, Enum.KeyCode.F)
+                end
+                return
+            end
+            if now < v.due then return end
+            local snap = snapshotMe()
+            if not snap then verify = nil return end
+            if Sense:ready() then
+                if Sense:isUp(snap) then
+                    Block.stats.senseOk = Block.stats.senseOk + 1
+                    verify = nil
+                elseif v.tries < 2 then
+                    Block.stats.retries = Block.stats.retries + 1
+                    keyEvent(false, Enum.KeyCode.F)                 -- let go and press again
+                    v.repressAt = now + 0.03
+                else
+                    Block.stats.senseMiss = Block.stats.senseMiss + 1
+                    verify = nil
+                    if Block.stats.senseOk == 0 and Block.stats.senseMiss >= 3 then Block.senseOff = true end   -- it never sees the block: stop second-guessing it
+                end
+            else
+                if not v.hurt and v.rest then Sense:observe(v.rest, snap) end   -- still learning what blocking looks like
+                verify = nil
+            end
         end
         -- seconds from now until F should go down to be up at `hitIn` seconds from now (minus lead and ping)
         local function pressIn(hitIn)
@@ -2910,10 +3273,39 @@ local function __run()
             local parts = {}
             for why, n in pairs(st.why) do parts[#parts + 1] = n .. "x " .. why end
             table.sort(parts)
-            return string.format("Last: %s. Seen %d attacks: %d answered%s.", Block.lastDecision, st.seen, st.blocked,
-                #parts > 0 and (", " .. table.concat(parts, ", ")) or "")
+            return string.format("Last: %s. Seen %d attacks: %d answered%s%s%s.", Block.lastDecision, st.seen, st.blocked,
+                #parts > 0 and (", " .. table.concat(parts, ", ")) or "",
+                st.rush > 0 and (", " .. st.rush .. " pre-block(s) on rushers") or "",
+                st.retries > 0 and (", " .. st.retries .. " press(es) repeated because the block was not up") or "")
         end
         Block.summary = summary
+        -- Predict the punch: somebody running / dashing straight at you is about to throw one. A reactive block only starts when his
+        -- animation reaches you, a whole round trip (your ping) later - for a first hit that is often too late, so F goes down as he arrives.
+        local lastRush = setmetatable({}, {__mode = "k"})
+        local function rushCheck(now)
+            local mine = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            local mp = mine and safe(function() return vec3(mine.Position) end)
+            if not mp or isKnocked(LocalPlayer.Character) then return end
+            for _, p in ipairs(Players:GetPlayers()) do
+                if p ~= LocalPlayer and not (lastRush[p] and now - lastRush[p] < 0.8) then
+                    local theirs = p.Character and p.Character:FindFirstChild("HumanoidRootPart")
+                    local snap = theirs and safe(function()
+                        return {mp = mp, ml = vec3(mine.CFrame.LookVector), mv = vec3(mine.AssemblyLinearVelocity),
+                                tp = vec3(theirs.Position), tl = vec3(theirs.CFrame.LookVector), tv = vec3(theirs.AssemblyLinearVelocity)}
+                    end)
+                    local eta = snap and snap.tv and CombatMath.rushing(mp, snap.tp, snap.tv, {range = Block.range})
+                    if eta and eta <= 0.45 then
+                        snap.range, snap.aim, snap.hitIn = Block.range, Block.aim, eta + 0.2
+                        if CombatMath.assess(snap) == "block" then
+                            lastRush[p] = now
+                            state:threat(now, math.max(eta - 0.05, 0), 0.5)
+                            Block.stats.rush = Block.stats.rush + 1
+                            decide("block", nil, tostring(safe(function() return p.DisplayName end) or "?"), "rushing at you (pre-block)")
+                        end
+                    end
+                end
+            end
+        end
         local seenTracks = setmetatable({}, {__mode = "k"})       -- the event AND the polling below see the same track: act once
         local function onEnemyAnimation(player, track, fromPoll)
             if not (CombatMath and state) then return end
@@ -2940,6 +3332,7 @@ local function __run()
             local last = lastSwing[player]
             if last and last.key == key and now - last.t < 0.12 then return end                -- the same swing seen twice
             local otherRecent = last and now - last.t < 0.12                                    -- another track of the same swing
+            local chained = last ~= nil and now - last.t >= 0.12 and now - last.t <= 1.0         -- his next hit in a combo: stay up between hits
             lastSwing[player] = {key = key, t = now}
             local who = tostring(safe(function() return player.DisplayName end) or "?")
             local label = animName ~= "" and animName or (id and id:match("%d+")) or "?"
@@ -2977,18 +3370,18 @@ local function __run()
             if learned then
                 local hit = learned - elapsed
                 if hit < -0.05 then decide("ignored", "its hit already landed", who, label) return end
-                state:threat(now, pressIn(math.max(hit, 0)), Block.lead + 0.10)                -- down just before the hit, up just after
+                state:threat(now, pressIn(math.max(hit, 0)), Block.lead + 0.10, chained and Block.chainGrace or nil)   -- down just before the hit, up just after
             else
                 local delay = math.max(Block.delay - elapsed, 0)
                 if Block.usePing and PingModel then
                     delay = PingModel.adjustDelay(delay, currentPing(), Auto.strength, {dependent = true, offsetMs = Auto.offsetMs, minDelay = 0})
                 end
-                state:threat(now, delay, math.max(math.min((length or 0.35) - elapsed, 1.2), 0.1))
+                state:threat(now, delay, math.max(math.min((length or 0.35) - elapsed, 1.2), 0.1), chained and Block.chainGrace or nil)
             end
             if Block.chain and Learner and id then                                               -- predict the NEXT punch of the chain
                 local nextId, gap, seen = Learner:next(id)
                 local nextHit = nextId and seen >= 3 and Learner:offset(nextId)
-                if nextHit then state:threat(now, pressIn(gap + nextHit), Block.lead + 0.10) end
+                if nextHit then state:threat(now, pressIn(gap + nextHit), Block.lead + 0.10, Block.chainGrace) end
             end
             decide("block", nil, who, label)
         end
@@ -2999,6 +3392,7 @@ local function __run()
                 if not (hum and alive) then return end
                 local last = hum.Health
                 connect(hum.HealthChanged, function(h)
+                    if verify and type(h) == "number" and type(last) == "number" and h < last - 0.01 then verify.hurt = true end   -- a hit would muddy what we learn
                     if type(h) == "number" and type(last) == "number" and h < last - 0.01 and Learner and Block.learn then
                         local now = os.clock()
                         local heldFor = (state and state.holding and state.holdStart) and (now - state.holdStart) or 0
@@ -3016,6 +3410,56 @@ local function __run()
         end
         if LocalPlayer.Character then hookMyHealth(LocalPlayer.Character) end
         connect(LocalPlayer.CharacterAdded, hookMyHealth)
+
+        -- how much time is left to react: a normal M1 lands ~0.18 s after it starts, and its animation reaches you a whole round trip later
+        local function budgetText()
+            local ping = currentPing()
+            local m1 = (((Data and Data.Mechanics and Data.Mechanics.m1StartupFramesSaitama) or 11) / 60) * 1000
+            if not ping then return "Reaction time: your ping is not known yet." end
+            local left = m1 - ping - Block.delay * 1000
+            return string.format("Reaction time: a basic M1 lands ~%d ms after it starts; your ping is %d ms, so ~%d ms are left to press F.%s", math.floor(m1 + 0.5),
+                math.floor(ping + 0.5), math.floor(math.max(left, 0) + 0.5),
+                left < 60 and "  That is too little for the FIRST hit of a combo, so rely on 'Pre-block rushers' and 'Stay blocked between hits' (the later hits are covered)." or "")
+        end
+        local function senseText()
+            if not Sense then return "Block check: not available." end
+            local st = Block.stats
+            if not Block.verify then return "Block check: off." end
+            if Block.senseOff then return "Block check: switched off - the block never seemed to come up, so I stopped second-guessing it (Forget to retry)." end
+            if Sense:ready() then
+                return string.format("Block check: I know what blocking looks like (%s). Confirmed %d, pressed again %d time(s).", Sense:describe(), st.senseOk, st.retries)
+            end
+            return "Block check: still learning what blocking looks like - it watches your next presses (or press the Teach button)."
+        end
+        Block.budgetText, Block.senseText = budgetText, senseText
+        local teaching = false
+        -- stand still and press the Teach button: three short blocks, compared with the moments before - that is how it learns
+        Block.teach = function()
+            if teaching or not Sense or macroRunning then return end
+            if Block.on and state and state.holding then toast("Wait until the block lets go, then try again") return end
+            teaching = true
+            task.spawn(function()
+                for _ = 1, 3 do
+                    local rest = snapshotMe()
+                    keyEvent(true, Enum.KeyCode.F)
+                    task.wait(0.35)
+                    local snap = snapshotMe()
+                    keyEvent(false, Enum.KeyCode.F)
+                    task.wait(0.45)
+                    if rest and snap then Sense:observe(rest, snap) end
+                    if not alive then break end
+                end
+                teaching = false
+                Block.senseOff = false
+                toast(Sense:ready() and "Learned what blocking looks like" or "I could not see anything change when you block - stand still, out of a fight, and try again")
+            end)
+        end
+        Block.forgetSense = function()
+            if Sense then Sense:forget() end
+            Block.senseOff = false
+            Block.stats.senseOk, Block.stats.senseMiss, Block.stats.retries = 0, 0, 0
+            markDirty()
+        end
 
         -- the floater: a small round indicator you can drag anywhere. Ring colour = state (grey off, green armed,
         -- pink while F is held). Tap it to switch Auto block on / off. The Lock button freezes it with the other buttons.
@@ -3083,9 +3527,11 @@ local function __run()
         connect(RunService.Heartbeat, function(dt)
             if state then apply(state:tick(os.clock())) end
             paintFloater()
+            if Sense then verifyTick(os.clock()) end
             pollTimer = pollTimer + dt
             if pollTimer >= 0.1 then                          -- backup for animations that never fire AnimationPlayed
                 pollTimer = 0
+                if Block.on and Block.rush and CombatMath and not macroRunning then rushCheck(os.clock()) end
                 if Block.on or Block.learn then
                     for player, animator in pairs(pollTargets) do
                         local list = safe(function() return animator:GetPlayingAnimationTracks() end)
@@ -3099,6 +3545,8 @@ local function __run()
             if learnTimer >= 0.5 then
                 learnTimer = 0
                 if Block.decisionLabel and Block.summary then Block.decisionLabel.Text = Block.summary() end
+                if Block.budgetLabel then Block.budgetLabel.Text = budgetText() end
+                if Block.senseLabel then Block.senseLabel.Text = senseText() end
                 local lbl = Block.learnLabel
                 if lbl and Learner then
                     local animCount, hitCount, ignoring = Learner:stats()
@@ -3306,6 +3754,7 @@ local function __run()
     local ConfigTab = createTab("Config", "=")
 
     -- Main
+    Main_:Banner("Animation Hub", "Auto block  |  Garou Kyoto assist  |  Dash behind the closest player  |  your own picture (Effects tab)", "TSB")
     Main_:Label("General utilities")
     do
     local wantSpeed
@@ -3440,7 +3889,26 @@ local function __run()
             for _, t in ipairs(techs) do
                 local key = "Tech_" .. (t.name:gsub("[^%w]+", "_"))
                 ComboInfo[key] = {steps = t.steps, charName = fullName}
+                local techOpts = getOpts(key)
+                if techOpts then techOpts.side = "Toward" end            -- a side dash inside a tech is a catch-up: it must end up facing him
                 techSec:Toggle(t.name, false, function(on) setArmed(key, on) end, t.desc .. "  [" .. tostring(t.confidence) .. "]")
+                if t.kyoto and KyotoPlan then
+                    -- the steps and waits follow these options; changing one rebuilds the plan at once
+                    local function plan()
+                        local steps, gaps, o = KyotoPlan.build(Kyoto)
+                        ComboInfo[key].steps, ComboInfo[key].gaps = steps, gaps
+                        local opts = getOpts(key)
+                        if opts then opts.side = o.side end
+                    end
+                    local function set(field) return function(v) if Kyoto[field] ~= v then Kyoto[field] = v; markDirty() end plan() end end
+                    plan()
+                    techSec:Dropdown("Kyoto: M1s before the twisted dash", {"1", "2", "3"}, tostring(Kyoto.m1), function(v) set("m1")(tonumber(v)) end)
+                    techSec:Slider("Kyoto: wait after Flowing Water (s)", 0.05, 1, Kyoto.wait, 0.05, set("wait"))
+                    techSec:Toggle("Lethal Whirlwind Dash (forward dash right after the Stream)", Kyoto.whirl, set("whirl"))
+                    techSec:Toggle("Instant Twisted in the air (step back, dash at him)", Kyoto.twisted, set("twisted"))
+                    techSec:Dropdown("Kyoto side dash goes", {"Toward", "Behind", "Left", "Right"}, Kyoto.side, set("side"))
+                    techSec:Label("Switch the first toggle on, then cast Flowing Water YOURSELF - I do the rest: side dash (Kyoto), Lethal Whirlwind Stream, the whirlwind dash, your number of M1s, then the instant twisted. Waits follow Auto timing and the Speed setting; change 'wait after Flowing Water' if the side dash comes too early or late.")
+                end
             end
         end
         -- what the guides say block can / cannot stop for this character (names only - see block_info.lua)
@@ -3611,21 +4079,29 @@ local function __run()
     local function blockSet(key) return function(v) if Block[key] ~= v then Block[key] = v; markDirty() end end end
     Tech:Slider("Range (studs)", 6, 30, Block.range, 1, blockSet("range"))
     Tech:Slider("Aim cone (+- degrees)", 20, 120, Block.aim, 5, blockSet("aim"))
-    Tech:Slider("Delay after their swing starts (s)", 0, 0.4, Block.delay, 0.01, blockSet("delay"))
+    Tech:Slider("Delay after their swing starts (s) - 0 = press at once", 0, 0.4, Block.delay, 0.01, blockSet("delay"))
     Tech:Slider("Let go after their attack ends (s)", 0.05, 0.5, Block.grace, 0.01, blockSet("grace"))
     Tech:Slider("Longest hold (s)", 0.3, 2, Block.maxHold, 0.05, blockSet("maxHold"))
     Tech:Toggle("Shorten the delay by my ping", Block.usePing, blockSet("usePing"))
+    Tech:Slider("Stay blocked between hits of a combo (s)", 0, 0.8, Block.chainGrace, 0.05, blockSet("chainGrace"))
+    Tech:Toggle("Pre-block players rushing at me (predict the punch)", Block.rush, blockSet("rush"))
+    Block.budgetLabel = Tech:Label("Reaction time: your ping is not known yet.")
+    Tech:Toggle("Check the block came up and press again if not", Block.verify, blockSet("verify"))
+    Block.senseLabel = Tech:Label("Block check: still learning what blocking looks like.")
+    Tech:Button("Teach it what blocking looks like (stand still)", function() if Block.teach then Block.teach() end end)
+    Tech:Button("Forget what blocking looks like", function() if Block.forgetSense then Block.forgetSense() end; toast("Forgot - it will learn again") end)
     Tech:Label("LEARNING - every time a player's attack hurts you, I time how long after their animation started. Next time F goes down just before that hit instead of using the Delay above. It only sees hits that reach you (a blocked hit teaches nothing), so to teach it quickly spar for a bit with Auto block OFF. Learned timings are forgotten when you re-run unless you press Save config.")
     Tech:Toggle("Learn from hits I take", Block.learn, blockSet("learn"))
     Tech:Toggle("Use learned timing (predict the punch)", Block.useLearned, blockSet("useLearned"))
-    Tech:Dropdown("Block style", BlockStyleNames, Block.style, function(v)
-        if BlockStyles[v] and Block.style ~= v then Block.style = v; Block.lead = BlockStyles[v]; markDirty() end
+    Tech:Dropdown("Block style", BlockOpts.styleNames, Block.style, function(v)
+        if BlockOpts.styles[v] and Block.style ~= v then Block.style = v; Block.lead = BlockOpts.styles[v]; markDirty() end
     end)
     Tech:Label("Safe = F down early (hard to miss). Balanced = just before the hit. Perfect = at the last moment, for the perfect-block critical.")
-    local pierceDefault = "Block anyway"
-    for label, mode in pairs(PierceModes) do if mode == Block.pierceMode then pierceDefault = label end end
-    Tech:Dropdown("When an attack ignores block", PierceNames, pierceDefault, function(v)
-        local mode = PierceModes[v]
+    Tech:Dropdown("When an attack ignores block", BlockOpts.pierceNames, (function()
+        for label, mode in pairs(BlockOpts.pierceModes) do if mode == Block.pierceMode then return label end end
+        return "Block anyway"
+    end)(), function(v)
+        local mode = BlockOpts.pierceModes[v]
         if mode and Block.pierceMode ~= mode then Block.pierceMode = mode; markDirty() end
     end)
     Tech:Label("An attack that still hurts although F was already down (grab, downslam, charged hit, unblockable move) is learned after 2 times. Block anyway = never skip (safest), Do nothing = keep your hands free, Side dash = dodge it.")
@@ -3633,7 +4109,7 @@ local function __run()
     Block.learnLabel = Tech:Label("Learned: 0 attack animation(s) from 0 hit(s) you took.")
     Block.decisionLabel = Tech:Label("Last: nothing seen yet.")
     Tech:Button("Reset the attack counters", function()
-        Block.stats.seen, Block.stats.blocked, Block.stats.why = 0, 0, {}
+        Block.stats.seen, Block.stats.blocked, Block.stats.why, Block.stats.rush = 0, 0, {}, 0
         Block.lastDecision = "nothing seen yet"
         if Block.summary then Block.decisionLabel.Text = Block.summary() end
     end)
@@ -3700,8 +4176,7 @@ local function __run()
             end
         end)
     end
-    local function rebuild() restartWith(buildSnapshot()) end       -- keeps everything you have set in this session
-    Effects:Button("Apply theme (rebuilds the menu)", rebuild)
+    Effects:Button("Apply theme (rebuilds the menu)", function() restartWith(buildSnapshot()) end)    -- keeps everything you have set in this session
     Effects:Slider("Menu size", 0.7, 1.25, uiScale, 0.05, function(v)
         if uiScale ~= v then
             uiScale = v
@@ -3719,8 +4194,33 @@ local function __run()
     Effects:Slider("Image opacity", 0.1, 1, 1 - BACKGROUND_TRANSPARENCY, 0.05, function(v)
         Background.ImageTransparency = 1 - v
     end)
-    Effects:Dropdown("Source", {"waifu.pics", "nekos.best"}, BACKGROUND_SOURCE, function(v) BACKGROUND_SOURCE = v end)
-    Effects:Button("New random background", function() refreshBackground(BACKGROUND_SOURCE) end)
+    Effects:Dropdown("Random picture from", {"waifu.pics", "waifu.pics / neko", "waifu.pics / shinobu", "waifu.pics / megumin", "nekos.best",
+        "nekos.best / neko", "nekos.best / kitsune", "nekos.best / husbando"}, BACKGROUND_SOURCE, function(v) BACKGROUND_SOURCE = v end)
+    Effects:Button("New random picture", function() Picture.source = ""; refreshBackground(BACKGROUND_SOURCE) end)
+    Effects:Label("YOUR OWN PICTURE: type a direct link to a PNG / JPG (the link must end in the picture itself), or the name of a PNG / JPG you put in your executor's workspace folder, or a Roblox image id. It becomes the window background and the banner, and is kept if you Save config.")
+    pictureNote = Effects:Label(pictureStatus or (Picture.source ~= "" and ("Your picture: " .. Picture.source) or "Random anime pictures are on."))
+    local pictureBox = Effects:Input("Picture link, file name or image id", "https://... .png   |   my_picture.png   |   123456789", Picture.source, function() end)
+    Effects:Button("Use this picture", function()
+        local text = (pictureBox:Get():gsub("^%s+", ""):gsub("%s+$", ""))
+        local asset, why = loadCustom(text)
+        if not asset then
+            noteAboutPicture("Not changed: " .. tostring(why))
+            toast("That picture did not load")
+            return
+        end
+        Picture.source = text
+        markDirty()
+        setPicture(asset)
+        noteAboutPicture("Your picture is on.")
+        toast("Picture changed")
+    end)
+    Effects:Button("Back to random anime pictures", function()
+        Picture.source = ""
+        pictureBox:Set("")
+        markDirty()
+        noteAboutPicture("Random anime pictures are on.")
+        refreshBackground(BACKGROUND_SOURCE)
+    end)
     Effects:Label("Images come from public waifu APIs (SFW endpoints). They are community fan art, so the artists keep the copyright - use your own CC0 image via BACKGROUND_URL if you need that.")
 
     -- Config: the ONLY way anything is remembered between runs

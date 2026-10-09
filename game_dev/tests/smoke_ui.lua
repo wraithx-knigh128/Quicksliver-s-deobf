@@ -97,6 +97,7 @@ local function dummy(name, ctx)
                 end
             end
             if k == "GetChildren" or k == "GetPlayers" then return function() return {} end end
+            if type(k) == "number" then return nil end                    -- a fake "list" ends: ipairs() over it must terminate
             local v = dummy(name .. "." .. tostring(k), ctx); rawset(self, k, v); return v
         end,
         __newindex = function(t, k, v)
@@ -143,7 +144,7 @@ local function fakeChar(pos, look, animFns, writes, healthFns, vel)
     local animator = {AnimationPlayed = {Connect = function(_, fn) animFns[#animFns + 1] = fn; return {Disconnect = function() end} end},
                       playing = playing,
                       GetPlayingAnimationTracks = function() local copy = {} for i, t in ipairs(playing) do copy[i] = t end return copy end}
-    local hum = {Health = 100, GetState = function() return "Running" end,
+    local hum = {Health = 100, WalkSpeed = 16, GetState = function() return "Running" end,
                  HealthChanged = {Connect = function(_, fn) healthFns[#healthFns + 1] = fn; return {Disconnect = function() end} end},
                  FindFirstChildOfClass = function() return animator end, WaitForChild = function() return animator end}
     local char = {
@@ -151,6 +152,7 @@ local function fakeChar(pos, look, animFns, writes, healthFns, vel)
         FindFirstChildOfClass = function(_, c) if c == "Humanoid" then return hum end end,
         WaitForChild = function(_, n) if n == "Humanoid" then return hum end return hrp end,
         GetAttribute = function() return nil end,
+        GetAttributes = function() return {} end,
     }
     return char, hrp, hum, animator
 end
@@ -170,6 +172,7 @@ local function run(scenario)
 
     env.game = dummy("game", ctx); env.workspace = dummy("workspace", ctx)
     env.workspace.CurrentCamera = {ViewportSize = {X = 800, Y = 450}, CFrame = {RightVector = {X = 1, Y = 0, Z = 0}, LookVector = {X = 0, Y = 0, Z = -1}}}
+    ctx.blockSim = scenario.blockSim
     local world = scenario.world            -- optional: {me = {pos, look}, enemies = {{name, pos, look}...}, right = {x,y,z}}
     local myAnim, myWrites, enemyAnim, enemies, myHealth, enemyAnimators = {}, {}, {}, {}, {}, {}
     local myChar, myHrp, myHum
@@ -208,8 +211,18 @@ local function run(scenario)
                 return dummy("Tween", ctx)
             end
         elseif n == "VirtualInputManager" then
-            s.SendKeyEvent = function(_, down, key) ctx.keys[#ctx.keys + 1] = {down = down, key = key, t = ctx.now} end
-            s.SendMouseButtonEvent = function(_, _, _, _, down) ctx.mouse[#ctx.mouse + 1] = {down = down, t = ctx.now} end
+            s.SendKeyEvent = function(_, down, key)
+                ctx.seq = (ctx.seq or 0) + 1
+                ctx.keys[#ctx.keys + 1] = {down = down, key = key, t = ctx.now, n = ctx.seq}
+                local sim = ctx.blockSim                              -- the fake game: F makes you slow (= blocking) unless it is ignored
+                if sim and myHum and key == env.Enum.KeyCode.F then
+                    if down then
+                        if not sim.never and ctx.now >= (sim.lockoutUntil or 0) then myHum.WalkSpeed = 6; sim.up = true; sim.ups = (sim.ups or 0) + 1
+                        else sim.dropped = (sim.dropped or 0) + 1 end
+                    else myHum.WalkSpeed = 16; sim.up = false end
+                end
+            end
+            s.SendMouseButtonEvent = function(_, _, _, _, down) ctx.seq = (ctx.seq or 0) + 1; ctx.mouse[#ctx.mouse + 1] = {down = down, t = ctx.now, n = ctx.seq} end
         elseif n == "Stats" and scenario.ping then
             s.Network = {ServerStatsItem = {["Data Ping"] = {GetValue = function() return scenario.ping end}}}
         elseif n == "HttpService" then
@@ -232,6 +245,7 @@ local function run(scenario)
         rawset(inst, "Destroy", function() end)
         rawset(inst, "IsA", function() return false end)
         rawset(inst, "InputBegan", {Connect = function(_, fn) rawset(inst, "__inputBegan", fn); return {Disconnect = function() end} end})
+        rawset(inst, "FocusLost", {Connect = function(_, fn) rawset(inst, "__focusLost", fn); return {Disconnect = function() end} end})
         rawset(inst, "MouseButton1Click", {Connect = function(_, fn)       -- keep each button's own handlers reachable
             ctx.callbacks[#ctx.callbacks + 1] = fn
             local mine = rawget(inst, "__clicks") or {}
@@ -270,13 +284,22 @@ local function run(scenario)
     env._G = genvStore
     env.getgenv = function() return genvStore end
     ctx.readPaths, ctx.deleted = {}, {}
-    if scenario.settings or scenario.settingsThrows then
-        env.isfile = function() return true end
-        env.readfile = function(path) ctx.readPaths[#ctx.readPaths + 1] = path; return "SETTINGS_RAW" end
+    if scenario.settings or scenario.settingsThrows or scenario.files then
+        env.isfile = function(path)
+            if scenario.files and scenario.files[path] ~= nil then return true end
+            return path == "animation_hub_config.json" and (scenario.settings ~= nil or scenario.settingsThrows == true)
+        end
+        env.readfile = function(path)
+            ctx.readPaths[#ctx.readPaths + 1] = path
+            if scenario.files and scenario.files[path] ~= nil then return scenario.files[path] end
+            return "SETTINGS_RAW"
+        end
     end
     if not scenario.noDelfile then env.delfile = function(path) ctx.deleted[#ctx.deleted + 1] = path end end
     if scenario.executor == "full" then
+        ctx.requests = {}
         env.request = function(req)
+            ctx.requests[#ctx.requests + 1] = req.Url
             if req.Url:find("api.waifu.pics", 1, true) then return {StatusCode = 200, Body = '{"url":"https://i.waifu.pics/a.png"}'} end
             return {StatusCode = 200, Body = scenario.body}
         end
@@ -340,6 +363,20 @@ local function run(scenario)
             if not ok then errors[#errors + 1] = "AnimationPlayed handler: " .. tostring(e) end
         end
     end
+    local function typeInto(placeholderStart, text)                        -- type into the TextBox whose placeholder starts with this, then leave it
+        for _, inst in ipairs(instances) do
+            if rawget(inst, "__name") == "TextBox" then
+                local ph = rawget(inst, "PlaceholderText")
+                if type(ph) == "string" and ph:sub(1, #placeholderStart) == placeholderStart then
+                    rawset(inst, "Text", text)
+                    local fn = rawget(inst, "__focusLost")
+                    if fn then local ok, e = pcall(fn, true); if not ok then errors[#errors + 1] = "FocusLost: " .. tostring(e) end end
+                    return true
+                end
+            end
+        end
+        errors[#errors + 1] = "no TextBox with placeholder " .. placeholderStart
+    end
     local function advance(seconds) ctx.now = ctx.now + seconds end
     local function save()                                                  -- press "Save config"; returns the table that was written
         ctx.encoded = nil
@@ -399,7 +436,7 @@ local function run(scenario)
         end
         for _, fn in ipairs(ctx.inputEnded) do pcall(fn, {UserInputType = M1, Position = {X = toX, Y = toY}}) end
     end
-    return {silentSwing = silentSwing, instances = instances, save = save, findLastButton = findLastButton, hurt = hurt, drag = drag, frames = frames, fireInput = fireInput, swing = swing, myWrites = myWrites, advance = advance, tap = tap, toggleRowHit = toggleRowHit, fireKey = fireKey, playAnimation = playAnimation,
+    return {typeInto = typeInto, silentSwing = silentSwing, instances = instances, save = save, findLastButton = findLastButton, hurt = hurt, drag = drag, frames = frames, fireInput = fireInput, swing = swing, myWrites = myWrites, advance = advance, tap = tap, toggleRowHit = toggleRowHit, fireKey = fireKey, playAnimation = playAnimation,
             findButton = findButton, textOf = textOf, errors = errors, ctx = ctx, writes = writes, assets = assets, bgSet = bgSet, genv = genvStore, env = env, fn = fn}
 end
 
@@ -1355,11 +1392,9 @@ do
     do -- new defaults: early and generous
     local d1, DF = defaultBlocker()
     local d1t = d1.ctx.now
-    d1.swing(1, 3, false, XID, 0.5); d1.frames(0.03)
-    check(#fEvents(d1, DF) == 0, "defaults: F waits the (short) default delay of 0.05 s")
-    d1.frames(0.05)
+    d1.swing(1, 3, false, XID, 0.5); d1.frames(0.05)
     local d1p = firstDown(d1, DF, d1t)
-    check(d1p and d1p >= 0.04 and d1p <= 0.1, "defaults: F must go down ~0.05 s after the swing starts, got " .. tostring(d1p))
+    check(d1p and d1p <= 0.04, "defaults: F goes down AT ONCE when an attack is seen (no delay - the animation already arrives a round trip late), got " .. tostring(d1p))
     d1.frames(0.7)
     check(d1.textOf("%-> block"), "diagnostics: the readout must say the attack was answered; got: " .. tostring(d1.textOf("^Last:")))
 
@@ -1476,6 +1511,287 @@ do
 end
 
 
+-- 18. GAROU "Flowing Water -> Kyoto": you cast Flowing Water, the script does side dash -> Lethal Whirlwind Stream -> whirlwind dash -> M1s -> instant twisted
+do
+    local KC = {}
+    local function kyotoRun(kyoto, enemyPos)
+        local r = run({executor = "full", body = PNG, settings = {kyoto = kyoto},
+            world = {me = {pos = ME, look = LOOK}, right = {x = 1, y = 0, z = 0}, enemies = {{name = "Target", pos = enemyPos or {x = 10, y = 0, z = 0}, look = LOOK}}}})
+        for _, e in ipairs(r.errors) do failures[#failures + 1] = "kyoto scenario: " .. e end
+        local hit = r.toggleRowHit("Flowing Water -> Kyoto")
+        if hit then r.tap(hit) else failures[#failures + 1] = "kyoto: the 'Flowing Water -> Kyoto' switch is missing" end
+        r.ctx.keys, r.ctx.mouse = {}, {}
+        local t0 = r.ctx.now
+        r.fireKey(r.env.Enum.KeyCode.One)                                    -- YOU cast Flowing Water
+        -- what was pressed, in order: key names for key downs, "M1" for clicks
+        local seq, times = {}, {}
+        local names = {}
+        for name, code in pairs({A = "A", D = "D", W = "W", S = "S", Q = "Q", One = "One", Two = "Two", Three = "Three"}) do names[r.env.Enum.KeyCode[name]] = code end
+        local events = {}
+        for _, k in ipairs(r.ctx.keys) do if k.down then events[#events + 1] = {t = k.t, n = k.n, name = names[k.key] or "?"} end end
+        for _, m in ipairs(r.ctx.mouse) do if m.down then events[#events + 1] = {t = m.t, n = m.n, name = "M1"} end end
+        table.sort(events, function(a, b) return a.n < b.n end)
+        for _, e in ipairs(events) do seq[#seq + 1] = e.name; times[#times + 1] = e.t - t0 end
+        return r, seq, times
+    end
+    local r1, seq1, t1 = kyotoRun({})
+    check(not seq1 or #seq1 > 0, "kyoto: nothing happened after casting Flowing Water")
+    check(table.concat(seq1, " ") == "D Q Two W Q M1 M1 M1 S Q W Q",
+        "kyoto (defaults): side dash toward him (D+Q), Lethal Whirlwind Stream (key 2), whirlwind dash (W+Q), 3 M1, step back (S+Q), twisted dash (W+Q); got: " .. table.concat(seq1, " "))
+    check(math.abs(t1[1] - 0.30) < 0.02, "kyoto: the side dash comes 0.30 s after Flowing Water, got " .. tostring(t1[1]))
+    check(math.abs((t1[3] - t1[1]) - 0.19) < 0.03, "kyoto: Lethal Whirlwind Stream right after the side dash (0.07 dash + 0.12 catch), got " .. tostring(t1[3] - t1[1]))
+    check(math.abs((t1[4] - t1[3]) - 0.17) < 0.03, "kyoto: the whirlwind dash 'as early as possible' (0.05 cast + 0.12), got " .. tostring(t1[4] - t1[3]))
+    check(math.abs((t1[6] - t1[4]) - 0.37) < 0.03, "kyoto: the first M1 comes after the whirlwind dash has landed (0.07 + 0.30), got " .. tostring(t1[6] - t1[4]))
+    check(#r1.myWrites == 0, "kyoto: nothing may move / teleport me")
+    for n = 1, 3 do
+        local _, seq = kyotoRun({m1 = n})
+        local want = "D Q Two W Q " .. string.rep("M1 ", n) .. "S Q W Q"
+        check(table.concat(seq, " ") == want, "kyoto: M1 option " .. n .. " -> " .. want .. "; got: " .. table.concat(seq, " "))
+    end
+    local _, seqNoWhirl = kyotoRun({whirl = false, m1 = 2})
+    check(table.concat(seqNoWhirl, " ") == "D Q Two M1 M1 S Q W Q", "kyoto: without the whirlwind dash; got: " .. table.concat(seqNoWhirl, " "))
+    local _, seqNoTwist = kyotoRun({twisted = false, m1 = 2})
+    check(table.concat(seqNoTwist, " ") == "D Q Two W Q M1 M1", "kyoto: without the instant twisted; got: " .. table.concat(seqNoTwist, " "))
+    local _, seqBare = kyotoRun({whirl = false, twisted = false, m1 = 1})
+    check(table.concat(seqBare, " ") == "D Q Two M1", "kyoto: the bare Kyoto + one M1; got: " .. table.concat(seqBare, " "))
+    local _, seqLeft, tLeft = kyotoRun({side = "Left", wait = 0.6})
+    check(seqLeft[1] == "A" and math.abs(tLeft[1] - 0.6) < 0.02, "kyoto: side = Left and wait 0.6 s; got " .. tostring(seqLeft[1]) .. " at " .. tostring(tLeft[1]))
+    local _, seqBehind = kyotoRun({side = "Behind"}, {x = 0, y = 0, z = -6})
+    check(seqBehind[1] == "D" or seqBehind[1] == "A", "kyoto: side = Behind is still a side dash")
+    local _, seqLeftEnemy = kyotoRun({}, {x = -10, y = 0, z = 0})
+    check(seqLeftEnemy[1] == "A", "kyoto: toward an enemy on my left -> A")
+    -- garbage in the config is cleaned
+    local _, seqBad = kyotoRun({m1 = 99, wait = "x", whirl = "no", twisted = 5, side = "Up"})
+    check(table.concat(seqBad, " ") == "D Q Two M1 M1 M1", "kyoto: garbage options are cleaned (m1 3, default wait, whirl / twisted need exactly true); got: " .. table.concat(seqBad, " "))
+    -- not armed -> nothing; only the trigger starts it
+    local ra = run({executor = "full", body = PNG, world = {me = {pos = ME, look = LOOK}, enemies = {}}})
+    ra.fireKey(ra.env.Enum.KeyCode.One)
+    check(#ra.ctx.keys == 0, "kyoto: not armed -> casting Flowing Water must do nothing")
+    local rb = run({executor = "full", body = PNG, world = {me = {pos = ME, look = LOOK}, enemies = {}}})
+    local rbHit = rb.toggleRowHit("Flowing Water -> Kyoto"); if rbHit then rb.tap(rbHit) end
+    rb.fireKey(rb.env.Enum.KeyCode.Two)
+    check(#rb.ctx.keys == 0, "kyoto: only Flowing Water (key 1) starts it, not another move")
+    -- the options are saved with the config
+    local rc = run({executor = "full", body = PNG, settings = {kyoto = {m1 = 2, wait = 0.45, whirl = false, twisted = true, side = "Left"}}})
+    local rcEnc = rc.save()
+    check(rcEnc and rcEnc.kyoto and rcEnc.kyoto.m1 == 2 and rcEnc.kyoto.wait == 0.45 and rcEnc.kyoto.whirl == false and rcEnc.kyoto.twisted == true and rcEnc.kyoto.side == "Left",
+        "kyoto: options must be part of the saved config")
+    local rd = run({executor = "full", body = PNG}); local rdEnc = rd.save()
+    check(rdEnc and rdEnc.kyoto and rdEnc.kyoto.m1 == 3 and rdEnc.kyoto.whirl == true and rdEnc.kyoto.twisted == true and rdEnc.kyoto.side == "Toward", "kyoto: defaults 3 M1, whirl on, twisted on, Toward")
+    check(rd.textOf("Kyoto: M1s before the twisted dash"), "kyoto: the M1 option is shown in the Garou tab")
+end
+
+-- 19. BLOCK AGAINST LATENCY: stay up between a combo's hits, pre-block rushers, say how much time is left, and check the block really came up
+do
+    local function blocker(settings, opts)
+        opts = opts or {}
+        local enemy = opts.enemy or {name = "Enemy", pos = BLOCKER, look = TOWARD_ME}
+        local r = run({executor = "full", body = PNG, ping = opts.ping, settings = settings, blockSim = opts.sim,
+            world = {me = {pos = ME, look = LOOK}, enemies = {enemy}}})
+        for _, e in ipairs(r.errors) do failures[#failures + 1] = "latency scenario: " .. e end
+        if opts.ping then r.frames(2) end
+        local hit = r.toggleRowHit("Auto block"); if hit then r.tap(hit) end
+        return r, keyNamed(r, "F")
+    end
+    local function downs(r, F) local n = 0 for _, k in ipairs(fEvents(r, F)) do if k.down then n = n + 1 end end return n end
+    local ID = "rbxassetid://901"
+
+    do -- a combo's next hits keep the block up between them (default 0.35 s); with 0 the block lets go and presses again for every hit
+        local function comboDowns(settings)
+            local r, F = blocker(settings)
+            for _ = 1, 4 do r.swing(1, 3, false, ID, 0.3); r.frames(0.5) end                -- an M1 chain: a swing every 0.5 s
+            r.frames(1.0)
+            return downs(r, F), r, F
+        end
+        local withChain, rc, FC = comboDowns(nil)
+        local without = comboDowns({block = {chainGrace = 0}})
+        check(withChain == 2, "chain hold (default 0.35 s): hit 1 is blocked, then F stays up through hits 2-4: expected 2 presses, got " .. withChain)
+        check(without == 4, "chain hold off (0 s): every swing needs its own press: expected 4, got " .. without)
+        local lastEv = fEvents(rc, FC)
+        check(not lastEv[#lastEv].down, "chain hold: it still lets go after the combo")
+        local rs = run({executor = "full", body = PNG, settings = {block = {chainGrace = 99}}})
+        local enc = rs.save()
+        check(enc and enc.block.chainGrace == 0.8, "chain hold: garbage is clamped to 0.8 s, got " .. tostring(enc and enc.block.chainGrace))
+    end
+
+    do -- pre-block: he dashes at me, F goes down BEFORE any swing; it can be switched off
+        local dasher = {name = "Dasher", pos = {x = 0, y = 0, z = -14}, look = TOWARD_ME, vel = {x = 0, y = 0, z = 80}}
+        local r, F = blocker(nil, {enemy = dasher})
+        local t0 = r.ctx.now
+        r.frames(0.4)
+        local first = fEvents(r, F)[1]
+        check(first and first.down and first.t - t0 <= 0.2, "pre-block: a player dashing at me at 80 studs/s gets F down before he even swings, at " .. tostring(first and (first.t - t0)))
+        r.frames(0.2)
+        check(r.textOf("1 pre%-block%(s%) on rushers"), "pre-block: the readout counts it; got: " .. tostring(r.textOf("^Last:")))
+        local r2, F2 = blocker({block = {rush = false}}, {enemy = dasher})
+        r2.frames(1.0)
+        check(#fEvents(r2, F2) == 0, "pre-block: switched off -> nothing happens until he swings")
+        local rSlow, FSlow = blocker(nil, {enemy = {name = "Jogger", pos = {x = 0, y = 0, z = -14}, look = TOWARD_ME, vel = {x = 0, y = 0, z = 10}}})
+        rSlow.frames(1.5)
+        check(#fEvents(rSlow, FSlow) == 0, "pre-block: he would need ~1 s to arrive (10 studs/s): too early to hold F")
+        local r3, F3 = blocker(nil, {enemy = {name = "Walker", pos = {x = 0, y = 0, z = -9}, look = TOWARD_ME, vel = {x = 0, y = 0, z = 6}}})
+        r3.frames(1.0)
+        check(#fEvents(r3, F3) == 0, "pre-block: somebody just walking at me is not a rush")
+        local r4, F4 = blocker(nil, {enemy = {name = "Passer", pos = {x = 0, y = 0, z = -9}, look = {x = 1, y = 0, z = 0}, vel = {x = 40, y = 0, z = 0}}})
+        r4.frames(1.0)
+        check(#fEvents(r4, F4) == 0, "pre-block: running past me sideways is not a rush")
+        local r5, F5 = blocker(nil, {enemy = {name = "Far", pos = {x = 0, y = 0, z = -40}, look = TOWARD_ME, vel = {x = 0, y = 0, z = 80}}})
+        r5.frames(0.2)
+        check(#fEvents(r5, F5) == 0, "pre-block: still 40 studs away (outside the range) -> wait")
+        local r6, F6 = blocker(nil, {enemy = {name = "Behind", pos = {x = 0, y = 0, z = 10}, look = LOOK, vel = {x = 0, y = 0, z = -60}}})
+        r6.frames(0.5)
+        check(#fEvents(r6, F6) == 0, "pre-block: a rusher BEHIND me cannot be blocked: no press")
+        local r7 = run({executor = "full", body = PNG, settings = {block = {rush = 0}}}); local e7 = r7.save()
+        check(e7 and e7.block.rush == true, "pre-block: garbage in the saved value falls back to on")
+    end
+
+    do -- the reaction-time readout is honest about the ping
+        local r = blocker(nil, {ping = 100}); r.frames(1.0)
+        check(r.textOf("your ping is 100 ms, so ~83 ms are left"), "budget: 183 ms M1 - 100 ms ping = 83 ms; got: " .. tostring(r.textOf("^Reaction time")))
+        check(not r.textOf("too little for the FIRST hit"), "budget: 83 ms is enough, no warning")
+        local r2 = blocker(nil, {ping = 150}); r2.frames(1.0)
+        check(r2.textOf("your ping is 150 ms, so ~33 ms are left"), "budget: 33 ms left at 150 ms ping; got: " .. tostring(r2.textOf("^Reaction time")))
+        check(r2.textOf("too little for the FIRST hit"), "budget: it says the first hit of a combo is the problem")
+        local r3 = blocker(nil); r3.frames(1.0)
+        check(r3.textOf("your ping is not known yet"), "budget: no ping -> says so")
+    end
+
+    do -- does the block really come up? teach it, learn it from presses, repeat a press that did not take
+        local function senseOf(r) local e = r.save() return e and e.block and e.block.sense end
+        local function has(list, f) for _, x in ipairs(list or {}) do if x == f then return true end end return false end
+        -- Teach button
+        local rt = blocker(nil, {sim = {}})
+        local teach = rt.findButton("Teach it what blocking looks like (stand still)"); if teach then rt.tap(teach) end
+        rt.frames(1.0)
+        check(has(senseOf(rt), "ws:6"), "teach: the walk-speed change while blocking (ws:6) must be learned from the Teach button")
+        check(rt.textOf("I know what blocking looks like %(ws:6%)"), "teach: the readout says what it learned; got: " .. tostring(rt.textOf("^Block check")))
+        check(rt.ctx.blockSim.up == false, "teach: it lets go of F afterwards")
+        -- passive learning from two real blocks
+        local rp, FP = blocker(nil, {sim = {}})
+        for _ = 1, 2 do rp.swing(1, 3, false, ID, 0.5); rp.frames(1.0) end
+        check(has(senseOf(rp), "ws:6"), "passive: two real blocks teach it what blocking looks like")
+        -- a press that does not take (your own M1 lockout) is repeated
+        local sim = {}
+        local rr, FR = blocker({block = {sense = {"ws:6"}}}, {sim = sim})
+        sim.lockoutUntil = rr.ctx.now + 0.2
+        rr.swing(1, 3, false, ID, 0.5); rr.frames(1.0)
+        check(sim.dropped and sim.dropped >= 2, "retry: the first presses fall into the lockout and are dropped; dropped = " .. tostring(sim.dropped))
+        check((sim.ups or 0) >= 1, "retry: ... and a later press takes (the block really came up)")
+        check(downs(rr, FR) >= 3, "retry: F was pressed again, presses = " .. downs(rr, FR))
+        check(rr.textOf("press%(es%) repeated because the block was not up"), "retry: the readout says so; got: " .. tostring(rr.textOf("^Last:")))
+        local ev = fEvents(rr, FR)
+        check(not ev[#ev].down and sim.up == false, "retry: and it still lets go at the end")
+        -- a press that took is not repeated
+        local sim2 = {}
+        local ro, FO = blocker({block = {sense = {"ws:6"}}}, {sim = sim2})
+        ro.swing(1, 3, false, ID, 0.5); ro.frames(1.0)
+        check(downs(ro, FO) == 1 and (sim2.dropped or 0) == 0, "retry: a block that came up is left alone, presses = " .. downs(ro, FO))
+        check(ro.textOf("Confirmed 1"), "retry: the readout counts the confirmation; got: " .. tostring(ro.textOf("^Block check")))
+        -- switched off in the settings -> no repeats even when dropped
+        local sim3 = {}
+        local rv, FV = blocker({block = {sense = {"ws:6"}, verify = false}}, {sim = sim3})
+        sim3.lockoutUntil = rv.ctx.now + 0.2
+        rv.swing(1, 3, false, ID, 0.5); rv.frames(1.0)
+        check(downs(rv, FV) == 1, "verify off: no repeated presses, presses = " .. downs(rv, FV))
+        check(rv.textOf("Block check: off"), "verify off: the readout says so")
+        -- if it NEVER comes up it stops second-guessing after 3 tries
+        local sim4 = {never = true}
+        local rn, FN = blocker({block = {sense = {"ws:6"}}}, {sim = sim4})
+        for _ = 1, 3 do rn.swing(1, 3, false, ID, 0.5); rn.frames(1.5) end
+        rn.frames(1.0)
+        check(rn.textOf("switched off"), "never: after 3 holds where the block never came up it switches the check off; got: " .. tostring(rn.textOf("^Block check")))
+        local before = downs(rn, FN)
+        rn.swing(1, 3, false, ID, 0.5); rn.frames(1.5)
+        check(downs(rn, FN) == before + 1, "never: once off, one press per attack again (no repeats)")
+        -- forget
+        local rf = blocker({block = {sense = {"ws:6"}}}, {sim = {}})
+        rf.frames(1.0)
+        check(rf.textOf("I know what blocking looks like"), "forget: starts learned from the saved config")
+        local fb = rf.findButton("Forget what blocking looks like"); if fb then rf.tap(fb) end
+        rf.frames(1.0)
+        check(rf.textOf("still learning what blocking looks like"), "forget: the Forget button wipes it; got: " .. tostring(rf.textOf("^Block check")))
+        -- garbage in the saved signature is cleaned
+        local rg = run({executor = "full", body = PNG, settings = {block = {sense = {"junk", 5, "ws:6", string.rep("x", 300), "anim:ok"}}}})
+        local sg = senseOf(rg)
+        check(has(sg, "ws:6") and has(sg, "anim:ok") and #sg == 2, "saved signature: only valid features survive, got " .. tostring(sg and #sg))
+    end
+end
+
+-- 20. YOUR OWN PICTURE + the hero banner
+do
+    local function pictureImages(r)                                           -- every ImageLabel showing a downloaded / chosen picture
+        local out = {}
+        for _, inst in ipairs(r.instances) do
+            local img = rawget(inst, "Image")
+            if rawget(inst, "__name") == "ImageLabel" and type(img) == "string" and (img:find("animation_hub_bg_", 1, true) or img:find("mine.png", 1, true) or img:find("rbxassetid://", 1, true)) then out[#out + 1] = img end
+        end
+        return out
+    end
+    local function lastPicture(r) local l = pictureImages(r) return l[#l] end
+    local function use(r, text) r.typeInto("https://", text); local b = r.findButton("Use this picture"); if b then r.tap(b) end r.frames(0.1) end
+    local base = run({executor = "full", body = PNG})
+    for _, e in ipairs(base.errors) do failures[#failures + 1] = "picture scenario: " .. e end
+    check(#pictureImages(base) >= 2, "banner: the window background AND the hero banner show the picture, got " .. #pictureImages(base) .. " image(s)")
+
+    local r1 = run({executor = "full", body = PNG})
+    use(r1, "https://example.com/my picture.png")
+    check(r1.textOf("Your picture is on%."), "picture: a link to a PNG is accepted; got: " .. tostring(r1.textOf("^Your picture") or r1.textOf("Not changed")))
+    local e1 = r1.save()
+    check(e1 and e1.picture == "https://example.com/my picture.png", "picture: the link is kept in the config, got " .. tostring(e1 and e1.picture))
+    local imgs = pictureImages(r1)
+    check(#imgs >= 2 and imgs[#imgs]:find("animation_hub_bg_", 1, true), "picture: background and banner switch to the new picture")
+    local backBtn = r1.findButton("Back to random anime pictures"); if backBtn then r1.tap(backBtn) end
+    local e1b = r1.save()
+    check(e1b and e1b.picture == "", "picture: 'Back to random anime pictures' clears it")
+
+    local r2 = run({executor = "full", body = "<html>404</html>"})
+    use(r2, "https://example.com/not-a-picture")
+    check(r2.textOf("did not give a PNG or JPG"), "picture: a link that is not a PNG / JPG is refused with a reason; got: " .. tostring(r2.textOf("Not changed")))
+    check((r2.save() or {}).picture == "", "picture: a refused link is not saved")
+
+    local r3 = run({executor = "full", body = PNG, files = {["mine.png"] = PNG, ["notes.txt"] = "hello hello hello hello"}})
+    use(r3, "mine.png")
+    check(lastPicture(r3) == "rbxasset://mine.png", "picture: a file in the workspace folder is used as it is, got " .. tostring(lastPicture(r3)))
+    check((r3.save() or {}).picture == "mine.png", "picture: the file name is kept in the config")
+    use(r3, "missing.png")
+    check(r3.textOf("there is no file called 'missing.png'"), "picture: a missing file says so; got: " .. tostring(r3.textOf("Not changed")))
+    use(r3, "notes.txt")
+    check(r3.textOf("that file is not a PNG or JPG"), "picture: a text file is refused; got: " .. tostring(r3.textOf("Not changed")))
+    check((r3.save() or {}).picture == "mine.png", "picture: refused entries leave the picture and the config as they were")
+
+    local r4 = run({executor = "full", body = PNG})
+    use(r4, "rbxassetid://5551212")
+    check(lastPicture(r4) == "rbxassetid://5551212", "picture: a Roblox image id works")
+    use(r4, "  4242  ")
+    check(lastPicture(r4) == "rbxassetid://4242", "picture: plain digits are an image id too (spaces trimmed)")
+    use(r4, "")
+    check(r4.textOf("not a usable link or file name"), "picture: nothing typed is refused")
+    use(r4, string.rep("a", 400))
+    check(r4.textOf("not a usable link or file name"), "picture: a 400 character entry is refused")
+    use(r4, "bad\1name")
+    check(r4.textOf("not a usable link or file name"), "picture: control characters are refused")
+
+    local r5 = run({executor = "nofiles", body = PNG})
+    use(r5, "https://example.com/x.png")
+    check(r5.textOf("cannot show downloaded pictures"), "picture: an executor without file functions says so; got: " .. tostring(r5.textOf("Not changed")))
+
+    -- a saved picture is loaded at start (instead of a random one); a broken one falls back with a note; garbage is dropped
+    local r6 = run({executor = "full", body = PNG, settings = {picture = "https://example.com/saved.png"}})
+    local usedSaved, usedRandom = false, false
+    for _, u in ipairs(r6.ctx.requests) do
+        if u == "https://example.com/saved.png" then usedSaved = true end
+        if u:find("waifu.pics", 1, true) then usedRandom = true end
+    end
+    check(usedSaved and not usedRandom, "picture: a saved picture is loaded at start, not a random one")
+    local r7 = run({executor = "full", body = "<html>gone</html>", settings = {picture = "https://example.com/gone.png"}})
+    r7.frames(0.2)
+    check(r7.textOf("Your picture did not load"), "picture: a saved picture that no longer loads says so; got: " .. tostring(r7.textOf("^Your picture") or r7.textOf("Random")))
+    local r8 = run({executor = "full", body = PNG, settings = {picture = 5}})
+    check((r8.save() or {}).picture == "", "picture: a non-text saved value is dropped")
+    local r9 = run({executor = "full", body = PNG, settings = {picture = "bad\1"}})
+    check((r9.save() or {}).picture == "", "picture: control characters in the saved value are dropped")
+end
+
 do   -- anything that went wrong at any time in any scenario (taps, frames, drags, ...) fails the run
     local seen = {}
     for _, list in ipairs(ALL_ERRORS) do
@@ -1490,4 +1806,4 @@ if #failures > 0 then
     finish(1)
     return
 end
-print("smoke test passed (29 scenarios)")
+print("smoke test passed (32 scenarios)")

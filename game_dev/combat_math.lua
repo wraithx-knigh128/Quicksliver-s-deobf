@@ -9,6 +9,7 @@
       CombatMath.assess(o)                                     the same, but looks ahead: "block" or "far" | "unaimed" | "behind"
       CombatMath.orbitStep(myPos, theirPos, theirLook, prefer) how far round the player I already am, and which way to dash next
       CombatMath.sideKey(dx, dz, camRight)                     "A" | "D": the SIDE dash key that goes furthest toward that direction
+      CombatMath.rushing(mp, tp, tv, opts)                     is he running / dashing at me, and in how many seconds is he in striking range?
 ]]
 
 local M = {}
@@ -99,7 +100,7 @@ function M.assess(o)
         if sp >= 8 and dl > 1e-6 and (o.tv.x * dx + o.tv.z * dz) / (sp * dl) >= 0.7 then aimed = true end
     end
     if not aimed then return "unaimed" end
-    if not M.facing(o.mp, o.ml, o.tp, 90) and not M.facing(o.mp, o.ml, predTheirs, 90) then return "behind" end
+    if not M.facing(o.mp, o.ml, o.tp, 90) then return "behind" end             -- where he IS (a runner that will pass through me is no help)
     return "block"
 end
 
@@ -146,6 +147,21 @@ function M.sideKey(dx, dz, camRight)
     if rl < 1e-6 or dl < 1e-6 then return nil end
     local lateral = (dx * camRight.x + dz * camRight.z) / (dl * rl)
     return lateral >= 0 and "D" or "A", lateral
+end
+
+-- Is the other player closing in fast enough that a punch is about to follow? Positions / his velocity are {x=,y=,z=} (horizontal only).
+--   opts = {range = studs he must be within (default 12), speed = closing speed needed in studs/s (default 9), reach = striking distance (default 4.5)}
+-- returns nil (no) or the seconds until he is within striking distance (0 when he already is)
+function M.rushing(mp, tp, tv, opts)
+    if not (valid(mp) and valid(tp) and valid(tv)) then return nil end
+    opts = type(opts) == "table" and opts or {}
+    local range, need, reach = opts.range or 12, opts.speed or 9, opts.reach or 4.5
+    local dx, dz = mp.x - tp.x, mp.z - tp.z
+    local d = math.sqrt(dx * dx + dz * dz)
+    if d < 1e-6 or d > range then return nil end
+    local closing = (tv.x * dx + tv.z * dz) / d                    -- his velocity along the line to me: positive = coming at me
+    if closing < need then return nil end
+    return math.max(d - reach, 0) / closing
 end
 
 return M

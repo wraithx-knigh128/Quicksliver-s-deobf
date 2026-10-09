@@ -23,6 +23,8 @@ local CM = ex:require("combat_math.lua")
 local BS = ex:require("block_state.lua")
 local BP = ex:require("block_predict.lua")
 local BI = ex:require("block_info.lua")
+local KP = ex:require("kyoto_plan.lua")
+local BSense = ex:require("block_sense.lua")
 Engine.loadData(Data)
 
 local function feedAll(p, tokens, t0, dt)
@@ -632,6 +634,7 @@ test("combat math: assess looks ahead (running attackers, snapping M1s) and says
     eq(A({tl = {x = 0, y = 0, z = -1}, tv = {x = 0, y = 0, z = 14}}), "block", "running at me counts as aimed at me")
     eq(A({tl = {x = 0, y = 0, z = -1}, tv = {x = 0, y = 0, z = -14}}), "unaimed", "running away does not")
     eq(A({tp = {x = 0, y = 0, z = 6}, tl = {x = 0, y = 0, z = -1}}), "behind", "from behind: a block would be wasted")
+    eq(A({tp = {x = 0, y = 0, z = 10}, tl = {x = 0, y = 0, z = -1}, tv = {x = 0, y = 0, z = -60}}), "behind", "running at me from behind: he will go THROUGH me, not hit me from the front")
     eq(A({tp = {x = 5, y = 0, z = -5}, tl = {x = -1, y = 0, z = 1}}), "block", "diagonal in front")
     eq(A({mv = {x = 0, y = 0, z = -30}, tp = {x = 0, y = 0, z = -25}, tl = {x = 0, y = 0, z = 1}, hitIn = 0.3}), "block", "I run toward him")
     eq(CM.assess({mp = me, ml = look, tp = {x = 0, y = 0, z = -6}, tl = {x = 0, y = 0, z = 1}, aim = 90}), "unknown", "no range")
@@ -709,6 +712,106 @@ test("block info: which moves ignore block (names only, never from the game)", f
         assert(type(e[1]) == "string" and #e == 4 and (e[4] == "medium" or e[4] == "low"), "entry shape: " .. tostring(e[1]))
         assert(BI.classify(e[1]) ~= nil, "every listed name must classify: " .. e[1])
     end
+end)
+
+test("kyoto plan: Flowing Water -> side dash -> Lethal Whirlwind Stream -> whirlwind dash -> M1s -> instant twisted", function()
+    local steps, gaps, o = KP.build({})
+    local expect = {"FLOWING_WATER", "SIDEDASH", "LETHAL_WHIRLWIND_STREAM", "FRONTDASH", "M1", "M1", "M1", "BACKDASH", "FRONTDASH"}
+    eq(#steps, #expect, "default plan length")
+    for i, t in ipairs(expect) do eq(steps[i], t, "step " .. i) end
+    near(gaps[1], 0.30, 1e-9, "wait after Flowing Water"); near(gaps[2], KP.CATCH, 1e-9); near(gaps[3], KP.WHIRL, 1e-9, "whirlwind dash as early as possible")
+    near(gaps[4], KP.LAND, 1e-9); eq(gaps[5], nil, "M1 gaps are the engine's own"); near(gaps[8], KP.STEP_BACK, 1e-9)
+    eq(o.side, "Toward")
+    for n = 1, 3 do
+        local s2 = KP.build({m1 = n})
+        local count = 0
+        for _, t in ipairs(s2) do if t == "M1" then count = count + 1 end end
+        eq(count, n, n .. " M1 option")
+    end
+    local noWhirl = KP.build({whirl = false})
+    eq(table.concat(noWhirl, ","), "FLOWING_WATER,SIDEDASH,LETHAL_WHIRLWIND_STREAM,M1,M1,M1,BACKDASH,FRONTDASH")
+    local noTwist, g3 = KP.build({twisted = false, m1 = 1})
+    eq(table.concat(noTwist, ","), "FLOWING_WATER,SIDEDASH,LETHAL_WHIRLWIND_STREAM,FRONTDASH,M1")
+    eq(g3[8], nil, "no step-back gap without the twisted dash")
+    local bare = KP.build({whirl = false, twisted = false, m1 = 2})
+    eq(table.concat(bare, ","), "FLOWING_WATER,SIDEDASH,LETHAL_WHIRLWIND_STREAM,M1,M1")
+    local c = KP.clean({m1 = 99, wait = -5, whirl = "yes", twisted = 0, side = "Closest"})
+    eq(c.m1, 3); near(c.wait, 0.05, 1e-9); eq(c.whirl, false, "only true counts"); eq(c.twisted, false); eq(c.side, "Toward", "old name")
+    local d = KP.clean({m1 = 0, wait = 0/0, side = "Sideways"})
+    eq(d.m1, 1); near(d.wait, 0.30, 1e-9, "NaN -> default"); eq(d.side, "Toward"); eq(d.whirl, true); eq(d.twisted, true)
+    eq(KP.clean(nil).m1, 3); eq(KP.clean("junk").side, "Toward")
+    eq(KP.clean({m1 = 2.9}).m1, 2, "floors")
+end)
+
+test("block state: a combo's next hit keeps the block up (grace override)", function()
+    local b = BS.new({grace = 0.15, maxHold = 2.0, minHold = 0.1})
+    b:threat(0, 0, 0.3, 0.5)                                         -- another hit is coming: stay up 0.5 s after this one
+    eq(b:tick(0), "press")
+    eq(b:tick(0.7), nil, "0.3 + 0.5 = 0.8: still blocking at 0.7 (the normal grace would have ended it at 0.45)")
+    eq(b:tick(0.81), "release")
+    local c = BS.new({grace = 0.15, maxHold = 2.0, minHold = 0.1})
+    c:threat(0, 0, 0.3)
+    eq(c:tick(0), "press"); eq(c:tick(0.44), nil); eq(c:tick(0.46), "release", "without the override: the normal 0.15 s")
+    local d = BS.new({grace = 0.15, maxHold = 0.6, minHold = 0.1})
+    d:threat(0, 0, 0.3, 5)
+    eq(d:tick(0), "press"); eq(d:tick(0.59), nil); eq(d:tick(0.61), "release", "the longest hold still caps it")
+    local e = BS.new({grace = 0.15, maxHold = 2.0, minHold = 0.1})
+    e:threat(0, 0, 0.3, "x"); eq(e:tick(0), "press"); eq(e:tick(0.46), "release", "a non-number override is ignored")
+    local f = BS.new({grace = 0.15, maxHold = 2.0, minHold = 0.1})
+    f:threat(0, 0, 0.3, -3); eq(f:tick(0), "press"); eq(f:tick(0.31), "release", "negative becomes 0")
+end)
+
+test("combat math: rushing = he is closing in fast, and when he is in striking range", function()
+    local me = {x = 0, y = 0, z = 0}
+    local function R(tp, tv, o) return CM.rushing(me, tp, tv, o) end
+    near(R({x = 0, y = 0, z = -14}, {x = 0, y = 0, z = 80}, {range = 20}), (14 - 4.5) / 80, 1e-9, "14 studs away at 80 studs/s")
+    eq(R({x = 0, y = 0, z = -14}, {x = 0, y = 0, z = 80}), nil, "default range is 12")
+    near(R({x = 0, y = 0, z = -10}, {x = 0, y = 0, z = 50}), 5.5 / 50, 1e-9)
+    eq(R({x = 0, y = 0, z = -3}, {x = 0, y = 0, z = 30}), 0, "already in striking range and still coming: 0 s")
+    eq(R({x = 0, y = 0, z = -10}, {x = 0, y = 0, z = 6}), nil, "too slow (walking)")
+    eq(R({x = 0, y = 0, z = -10}, {x = 0, y = 0, z = -40}), nil, "running away")
+    eq(R({x = 0, y = 0, z = -10}, {x = 40, y = 0, z = 0}), nil, "running past (sideways)")
+    assert(R({x = 0, y = 0, z = -10}, {x = 20, y = 0, z = 40}) ~= nil, "diagonal but mostly toward me")
+    eq(R({x = 0, y = 0, z = -10}, {x = 0, y = 0, z = 12}, {speed = 20}), nil, "custom speed threshold")
+    eq(R({x = 0, y = 0, z = 0}, {x = 0, y = 0, z = 50}), nil, "on top of me: no direction")
+    eq(CM.rushing(nil, {x = 0, y = 0, z = -5}, {x = 0, y = 0, z = 50}), nil); eq(R({x = 0, y = 0, z = -5}, nil), nil)
+    near(R({x = 0, y = 90, z = -10}, {x = 0, y = 90, z = 50}), 5.5 / 50, 1e-9, "height is ignored")
+end)
+
+test("block sense: learns what blocking looks like and says whether the block is up", function()
+    local S = BSense.new()
+    local function snap(ws, attrs, tracks) return {ws = ws, attrs = attrs or {}, tracks = tracks or {}} end
+    eq(S:ready(), false); eq(S:isUp(snap(16)), nil, "does not know yet")
+    S:observe(snap(16, {}, {idle = true}), snap(6, {}, {idle = true, blockAnim = true}))
+    eq(S:ready(), false, "one sample is not enough")
+    eq(S:observe(snap(16, {}, {idle = true, walk = true}), snap(6, {Hit = 1}, {idle = true, blockAnim = true, hurt = true})), true,
+        "the second sample agrees on ws:6 and the block animation; the hurt animation was a coincidence")
+    eq(S:isUp(snap(6)), true); eq(S:isUp(snap(16, {}, {blockAnim = true})), true); eq(S:isUp(snap(16, {}, {idle = true})), false)
+    assert(S:describe():find("ws:6") and S:describe():find("anim:blockAnim") and not S:describe():find("hurt"), S:describe())
+    local out = S:export()
+    local T = BSense.new(); T:import(out)
+    eq(T:ready(), true); eq(T:isUp(snap(6)), true); eq(T:isUp(snap(16)), false)
+    S:forget(); eq(S:ready(), false); eq(S:isUp(snap(6)), nil)
+    -- a press that did not take (nothing new) teaches nothing, disagreeing samples start over
+    local U = BSense.new()
+    U:observe(snap(16), snap(16)); U:observe(snap(16), snap(16)); eq(U:ready(), false)
+    U:observe(snap(16), snap(6)); U:observe(snap(16), snap(9, {}, {x = true}))
+    eq(U:ready(), false, "ws:6 vs ws:9 + anim: nothing in common")
+    U:observe(snap(16), snap(9)); eq(U:ready(), true, "the newest two agree on ws:9")
+    -- attributes
+    local V = BSense.new()
+    V:observe(snap(16, {Blocking = false}), snap(16, {Blocking = true})); V:observe(snap(16, {Blocking = false}), snap(16, {Blocking = true}))
+    eq(V:ready(), true); eq(V:isUp(snap(16, {Blocking = true})), true); eq(V:isUp(snap(16, {Blocking = false})), false)
+    assert(V:describe():find("attr:Blocking=true"))
+    -- garbage
+    local W = BSense.new()
+    eq(W:observe(nil, nil), false); eq(W:observe("x", 5), false); W:import("junk"); W:import({5, {}, string.rep("x", 500), "bad:thing", "ws:6"})
+    eq(W:ready(), true); eq(W:isUp(snap(6)), true); eq(#W:export(), 1, "only the valid feature is kept")
+    local X = BSense.new()
+    local many = {}
+    for i = 1, 40 do many[i] = "anim:id" .. i end
+    X:import(many); eq(#X:export(), 12, "at most 12 features")
+    eq(BSense.features({ws = 0/0}).x, nil); eq(next(BSense.features({ws = 0/0})), nil, "NaN walk speed is not a feature")
 end)
 
 test("sandboxed script runs, records key events and virtual time", function()

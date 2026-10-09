@@ -308,8 +308,9 @@ Data.TechAssists = {
     -- Garou
     {name = "Flowing + Grasp", character = "Hero Hunter", confidence = "medium", steps = {"FLOWING_WATER", "SIDEDASH", "HUNTERS_GRASP"},
      desc = "You cast Flowing Water -> side dash -> Hunter's Grasp"},
-    {name = "Flowing + Lethal", character = "Hero Hunter", confidence = "medium", steps = {"FLOWING_WATER", "SIDEDASH", "LETHAL_WHIRLWIND_STREAM"},
-     desc = "You cast Flowing Water -> side dash -> Lethal Whirlwind Stream (the Kyoto core)"},
+    {name = "Flowing Water -> Kyoto", character = "Hero Hunter", confidence = "medium", kyoto = true,
+     steps = {"FLOWING_WATER", "SIDEDASH", "LETHAL_WHIRLWIND_STREAM", "FRONTDASH", "M1", "M1", "M1", "BACKDASH", "FRONTDASH"},
+     desc = "You cast Flowing Water -> side dash (Kyoto) -> Lethal Whirlwind Stream -> whirlwind dash -> 1-3 M1 -> instant twisted. The steps and waits come from the options below."},
     {name = "Grasp catch", character = "Hero Hunter", confidence = "low", steps = {"HUNTERS_GRASP", "SIDEDASH", "M1"},
      desc = "You cast Hunter's Grasp -> side dash -> M1"},
     {name = "Lethal + Grasp", character = "Hero Hunter", confidence = "low", steps = {"LETHAL_WHIRLWIND_STREAM", "HUNTERS_GRASP"},

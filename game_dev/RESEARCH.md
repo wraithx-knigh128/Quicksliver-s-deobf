@@ -216,3 +216,42 @@ YOU ABOUT" has no written source; only its thumbnail (an arrow curving round a d
   (0.3 s) and only then hits, and only if it really ended up behind him (it never punches from the front by mistake).
 * Not known: whether TSB's side dash curves round a target by itself (the thumbnail arrow suggests a hook) or is camera-lateral only. The maths assumes
   camera-lateral, which is also the best case when your camera looks at him (then A / D is exactly "round him").
+
+---
+## Round 9 - Garou "Flowing Water -> Kyoto", and a latency model for blocking
+(Search summaries only; the Fandom wiki and games.gg could not be opened from the build environment. Several sources are community posts.)
+
+**Kyoto / Whirlwind Dash / Twisted - what the sources define**
+* **Kyoto** (wiki, Techniques): "side dash right after Flowing Water to catch them with Lethal Whirlwind Stream". Flowing Water is a block-breaking
+  combo ender / extender; Lethal Whirlwind Stream is the extender that does not break block.
+* **Lethal Whirlwind Dash / Whirlwind Dash**: "right after using Lethal Whirlwind Stream, forward dash in a circle ... as EARLY AS POSSIBLE; they take
+  less knockback and are within side dash reach to combo extend". Example string from a community guide: M1 x3, Uppercut, Whirlwind Dash, M1 x3,
+  Downslam, Side Dash, M1 x3, Uppercut, Downslam. A coach listing also names "long arm" and "hook" dashes (unverified).
+* **Twisted**: the M1 string's last hit launches; Twisted Dash = a dash at them right after the 4th M1, often after a small step back; "Instant Twisted" is
+  the faster, camera-flick version (a TikTok tutorial exists; the exact inputs were not readable). Garou techs are very ping sensitive.
+* Nothing I could read defines "1 M1 / 2 M1 / 3 M1 Kyoto". The assist therefore has a **number of M1s (1-3) between the whirlwind dash and the twisted dash**
+  (default 3). If you meant something else, say so - the plan is one small pure function (`kyoto_plan.lua`).
+
+**What the Garou toggle plays now (after YOU cast Flowing Water):**
+`side dash (toward him: catches up and faces him) -> Lethal Whirlwind Stream (key 2) -> forward dash (whirlwind dash, 0.12 s after the Stream) ->
+1-3 M1 -> step back (back dash) -> dash at him (front dash)`. The wait after Flowing Water (default 0.30 s), the side dash direction, the whirlwind dash and
+the twisted dash are options. Fixed waits ("as early as possible") bypass the generic 0.5 s move gap but still follow Speed and Auto timing.
+Earlier versions made every in-combo side dash go BEHIND the player (round 7); Kyoto needs the opposite (catch up), so this assist uses "Toward".
+
+**Blocking: a latency model (reasoning from the replication design, NOT measured in TSB)**
+* An attacker's animation reaches you after one trip (attacker -> server -> you). The server decides the hit about one M1 start-up (11 frames = ~0.18 s per
+  the wiki) after the attacker pressed. Your F press needs a trip back to the server. So you must press within `0.18 s - your ping`. At 100 ms ping that is
+  ~80 ms; at 150 ms ~30 ms; above ~180 ms a purely reactive block cannot beat a basic M1 at all.
+* That explains "sometimes works": it depends on ping and on which hit of a combo it is. The first hit is the problem; once F is up the later hits are covered.
+* Consequences implemented: (1) no delay before pressing by default; (2) stay blocked between a combo's hits (0.35 s, adjustable); (3) pre-block players
+  who run / dash at you and are about to be in range (so F is already up when the first swing arrives); (4) a live "reaction time" line that does the maths
+  with your ping; (5) learned hit times are subtracted by the full ping (a round trip), see Round 6.
+* A press can also be swallowed (your own M1 lockout ~0.2 s, stun, dropped input). Nobody publishes what the game changes while you block, so the hub learns
+  it: it compares your character just before a press with a moment after (a new animation, a changed attribute, a different WalkSpeed), trusts only what
+  shows up every time, and then checks each press ~0.12 s later and presses again (max twice) if the block is not up. If it never sees the block come up
+  three times it switches itself off. The Teach button learns it in three short blocks.
+* Duel servers are reported to have higher ping than public ones (routed via Japan), and "ghost hits" from lag are common: practice where the ping is steady.
+* Sources again give no frame data, perfect-block window (one site says "~0.2 s active frames", weak) or block start-up time. None of those numbers are used.
+
+**Menu**: custom picture (link to a PNG / JPG, a file in the executor's workspace folder, or a Roblox image id), a hero banner that shows it, and eight
+random-picture categories (waifu.pics: waifu / neko / shinobu / megumin; nekos.best: waifu / neko / kitsune / husbando - SFW endpoints only).
