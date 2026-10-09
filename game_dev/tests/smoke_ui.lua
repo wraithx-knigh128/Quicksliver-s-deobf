@@ -111,7 +111,7 @@ local function run(scenario)
                 Idled = dummy("Idled", ctx), CharacterAdded = dummy("CharacterAdded", ctx)}
             s.GetUserThumbnailAsync = function() return "rbx://x" end
         elseif n == "VirtualInputManager" then
-            s.SendKeyEvent = function(_, down, key) ctx.keys[#ctx.keys + 1] = {down = down, key = key} end
+            s.SendKeyEvent = function(_, down, key) ctx.keys[#ctx.keys + 1] = {down = down, key = key, t = ctx.now} end
             s.SendMouseButtonEvent = function(_, _, _, _, down) ctx.mouse[#ctx.mouse + 1] = {down = down} end
         elseif n == "Stats" and scenario.ping then
             s.Network = {ServerStatsItem = {["Data Ping"] = {GetValue = function() return scenario.ping end}}}
@@ -229,13 +229,28 @@ local function run(scenario)
         end
     end
     local function advance(seconds) ctx.now = ctx.now + seconds end
+    local function frames(seconds, step)                                   -- run the game loop: clock moves, Heartbeat fires
+        step = step or 0.016
+        local n = math.max(1, math.floor(seconds / step + 0.5))
+        for _ = 1, n do
+            ctx.now = ctx.now + step
+            for _, hb in ipairs(ctx.heartbeats) do pcall(hb, step) end
+        end
+    end
+    local function fireInput(userInputType, keyCode, gameProcessed)
+        local input = {UserInputType = userInputType, KeyCode = keyCode or env.Enum.KeyCode.Unknown}
+        for _, fn in ipairs(ctx.inputBegan) do
+            local ok, e = pcall(fn, input, gameProcessed or false)
+            if not ok then errors[#errors + 1] = "InputBegan handler: " .. tostring(e) end
+        end
+    end
     local function swing(i, priority, looped)                              -- enemy i starts an attack animation
         for _, fn in ipairs(enemyAnim[i] or {}) do
             local ok, e = pcall(fn, {Animation = {AnimationId = "rbxassetid://777"}, Looped = looped or false, Priority = {Value = priority or 3}})
             if not ok then errors[#errors + 1] = "enemy AnimationPlayed handler: " .. tostring(e) end
         end
     end
-    return {swing = swing, myWrites = myWrites, advance = advance, tap = tap, toggleRowHit = toggleRowHit, fireKey = fireKey, playAnimation = playAnimation,
+    return {frames = frames, fireInput = fireInput, swing = swing, myWrites = myWrites, advance = advance, tap = tap, toggleRowHit = toggleRowHit, fireKey = fireKey, playAnimation = playAnimation,
             findButton = findButton, textOf = textOf, errors = errors, ctx = ctx, writes = writes, assets = assets, bgSet = bgSet, genv = genvStore, env = env, fn = fn}
 end
 
@@ -468,46 +483,117 @@ techDash.fireKey(techDash.env.Enum.KeyCode.Three)
 check(pressed(techDash, keyNamed(techDash, "D")), "assist combos: their SIDEDASH steps must also go toward the closest player")
 check(#techDash.myWrites == 0, "assist combos: side dash must not move me")
 
--- 9. AUTO BLOCK
+-- 9. AUTO BLOCK: blocks every hit, lets go quickly, drops the moment I punch
 local BLOCKER = {x = 0, y = 0, z = -6}
 local TOWARD_ME = {x = 0, y = 0, z = 1}                                    -- enemy looks back at me (I am at the origin)
 local function blockWorld(enemyPos, enemyLook)
     return {me = {pos = ME, look = LOOK}, enemies = {{name = "Enemy", pos = enemyPos, look = enemyLook}}}
 end
-local ab = run({executor = "full", body = PNG, ping = 100, world = blockWorld(BLOCKER, TOWARD_ME)})
-for _, e in ipairs(ab.errors) do failures[#failures + 1] = "auto block scenario: " .. e end
-for _ = 1, 6 do for _, hb in ipairs(ab.ctx.heartbeats) do pcall(hb, 1) end end      -- let it measure the 100 ms ping
-local F = keyNamed(ab, "F")
-ab.swing(1)
-check(not pressed(ab, F), "auto block: off by default - it must not block")
-local blockHit = ab.toggleRowHit("Auto block")
-check(blockHit ~= nil, "auto block: toggle not found")
-if blockHit then ab.tap(blockHit) end
-ab.swing(1, 3, true)
-check(not pressed(ab, F), "auto block: a looping animation (walk / idle) is not an attack")
-ab.swing(1, 1, false)
-check(not pressed(ab, F), "auto block: a low-priority animation layer is not an attack")
-ab.swing(1, 3, false)
-check(pressed(ab, F), "auto block: an attack aimed at me from in front must be blocked (F held)")
-local released = false
-for _, k in ipairs(ab.ctx.keys) do if k.key == F and not k.down then released = true end end
-check(released, "auto block: F must always be released again")
-local shortened = false
-for _, w in ipairs(ab.ctx.waits) do if math.abs(w - 0.06) < 1e-9 then shortened = true end end     -- 0.10 s - min(100 ms, 40%) = 0.06 s
-check(shortened, "auto block: the 0.10 s delay must be shortened by the 100 ms ping to 0.06 s")
-local fCount = 0
-for _, k in ipairs(ab.ctx.keys) do if k.key == F and k.down then fCount = fCount + 1 end end
-ab.swing(1, 3, false)
-local fCount2 = 0
-for _, k in ipairs(ab.ctx.keys) do if k.key == F and k.down then fCount2 = fCount2 + 1 end end
-check(fCount2 == fCount, "auto block: a second swing inside the cooldown must not stack another block")
-
-local function blockedWith(world, label)
-    local r = run({executor = "full", body = PNG, world = world})
+local function fEvents(r, F)                                               -- list of {down=bool, t=time} for the F key
+    local out = {}
+    for _, k in ipairs(r.ctx.keys) do if k.key == F then out[#out + 1] = k end end
+    return out
+end
+local function newBlocker(world, extra)
+    local r = run({executor = "full", body = PNG, ping = extra and extra.ping, world = world or blockWorld(BLOCKER, TOWARD_ME)})
+    for _, e in ipairs(r.errors) do failures[#failures + 1] = "auto block scenario: " .. e end
+    if extra and extra.ping then r.frames(2) end                              -- let it measure the ping
     local hit = r.toggleRowHit("Auto block")
     if hit then r.tap(hit) end
-    r.swing(1, 3, false)
-    return pressed(r, keyNamed(r, "F"))
+    return r, keyNamed(r, "F")
+end
+
+-- off by default
+local off = run({executor = "full", body = PNG, world = blockWorld(BLOCKER, TOWARD_ME)})
+off.swing(1); off.frames(1)
+check(#fEvents(off, keyNamed(off, "F")) == 0, "auto block: off by default - it must not block")
+
+-- one hit: press after the (ping-shortened) delay, release shortly after the attack
+local ab, F = newBlocker(nil, {ping = 100})
+local t0 = ab.ctx.now
+ab.swing(1, 3, true);  ab.frames(0.5)
+check(#fEvents(ab, F) == 0, "auto block: a looping animation (walk / idle) is not an attack")
+ab.swing(1, 1, false); ab.frames(0.5)
+check(#fEvents(ab, F) == 0, "auto block: a low-priority animation layer is not an attack")
+t0 = ab.ctx.now
+ab.swing(1, 3, false)                                                      -- their attack starts now
+ab.frames(0.03)
+check(#fEvents(ab, F) == 0, "auto block: it must wait for the delay (0.10 s shortened by the 100 ms ping = 0.06 s)")
+ab.frames(0.06)
+local ev = fEvents(ab, F)
+check(#ev == 1 and ev[1].down, "auto block: F must go down after ~0.06 s")
+check(ev[1] and math.abs((ev[1].t - t0) - 0.06) < 0.03, "auto block: F went down at the wrong time: " .. tostring(ev[1] and (ev[1].t - t0)))
+ab.frames(1.0)
+ev = fEvents(ab, F)
+check(#ev == 2 and not ev[2].down, "auto block: F must be released again once their attack is over")
+check(ev[2] and (ev[2].t - t0) < 0.8, "auto block: it must let go within a second so I can punch - held until " .. tostring(ev[2] and (ev[2].t - t0)))
+
+-- every hit of a combo: one continuous block (no gap, no re-press), released after the last hit
+local combo, F2 = newBlocker()
+local c0 = combo.ctx.now
+combo.swing(1, 3, false); combo.frames(0.30)
+combo.swing(1, 3, false); combo.frames(0.30)
+combo.swing(1, 3, false); combo.frames(0.30)
+local downs = 0
+for _, k in ipairs(fEvents(combo, F2)) do if k.down then downs = downs + 1 end end
+check(downs == 1, "auto block: a combo must be ONE continuous block, F went down " .. downs .. " times")
+local stillHeld = true
+for _, k in ipairs(fEvents(combo, F2)) do if not k.down then stillHeld = false end end
+check(stillHeld, "auto block: it released in the middle of a combo - a hit would have gone through")
+combo.frames(1.0)
+local lastEv = fEvents(combo, F2)
+check(not lastEv[#lastEv].down, "auto block: it must let go after the combo ends")
+
+-- never holds longer than the cap, even if they never stop
+local chain, F3 = newBlocker()
+for _ = 1, 14 do chain.swing(1, 3, false); chain.frames(0.25) end
+local longest, pressedAt = 0, nil
+for _, k in ipairs(fEvents(chain, F3)) do
+    if k.down then pressedAt = k.t elseif pressedAt then longest = math.max(longest, k.t - pressedAt); pressedAt = nil end
+end
+check(longest > 0 and longest <= 1.05, "auto block: one block must never be held longer than ~1 s, longest was " .. longest)
+
+-- I punch: M1 drops the block at once; no instant re-block; later hits are blocked again
+local pu, F4 = newBlocker()
+pu.swing(1, 3, false); pu.frames(0.2)
+check(#fEvents(pu, F4) == 1, "auto block (punch): should be blocking now")
+pu.fireInput(pu.env.Enum.UserInputType.MouseButton1)
+local pe = fEvents(pu, F4)
+check(#pe == 2 and not pe[2].down, "auto block (punch): M1 must drop the block immediately")
+pu.swing(1, 3, false); pu.frames(0.2)
+check(#fEvents(pu, F4) == 2, "auto block (punch): right after my punch it must not clamp down again")
+pu.frames(0.5)
+pu.swing(1, 3, false); pu.frames(0.2)
+check(#fEvents(pu, F4) == 3, "auto block (punch): after the short pause it must block the next hit")
+local pg = newBlocker()
+pg.swing(1, 3, false); pg.frames(0.2)
+pg.fireInput(pg.env.Enum.UserInputType.MouseButton1, nil, true)           -- consumed by the game's UI: not a real punch
+check(#fEvents(pg, keyNamed(pg, "F")) == 1, "auto block (punch): input already consumed by the game must not count")
+
+-- switching it off while holding lets go of F
+local sw, F5 = newBlocker()
+sw.swing(1, 3, false); sw.frames(0.2)
+local swHit = sw.toggleRowHit("Auto block")
+if swHit then sw.tap(swHit) end
+local se = fEvents(sw, F5)
+check(#se == 2 and not se[2].down, "auto block: switching it off while blocking must release F")
+
+-- a combo / assist starting lets go of F as well (otherwise its own inputs run into the held block)
+local am = run({executor = "full", body = PNG, settings = {pins = {SideDash_Left = {x = 90, y = 90}}}, world = blockWorld(BLOCKER, TOWARD_ME)})
+local amHit = am.toggleRowHit("Auto block")
+if amHit then am.tap(amHit) end
+local AF = keyNamed(am, "F")
+am.swing(1, 3, false); am.frames(0.2)
+check(#fEvents(am, AF) == 1, "auto block (macro): should be blocking before the combo starts")
+local dashBtn = am.findButton("Dash Left")
+if dashBtn then am.tap(dashBtn) end
+local ae = fEvents(am, AF)
+check(#ae == 2 and not ae[2].down, "auto block (macro): starting a combo / side dash must let go of F first")
+
+local function blockedWith(world)
+    local r, f = newBlocker(world)
+    r.swing(1, 3, false); r.frames(0.6)
+    return #fEvents(r, f) > 0
 end
 check(not blockedWith(blockWorld({x = 0, y = 0, z = -40}, TOWARD_ME)), "auto block: attacker out of range must be ignored")
 check(not blockedWith(blockWorld(BLOCKER, {x = 0, y = 0, z = -1})), "auto block: attacker looking away must be ignored")

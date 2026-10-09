@@ -216,6 +216,59 @@ return M.facing(myPos, myLook, attackerPos, 90)
 end
 return M
 end)()
+local BlockState = (function()
+local M = {}
+function M.new(cfg)
+cfg = cfg or {}
+local self = {holding = false, pressAt = nil, pendingRelease = nil, releaseAt = nil, holdStart = nil, pausedUntil = -math.huge}
+local function grace() return cfg.grace or 0.15 end
+local function maxHold() return math.max(cfg.maxHold or 1.0, cfg.minHold or 0.12) end
+local function minHold() return cfg.minHold or 0.12 end
+function self:threat(now, delay, duration)
+if type(now) ~= "number" or now < self.pausedUntil then return end
+delay = math.max(tonumber(delay) or 0, 0)
+duration = math.max(tonumber(duration) or 0, 0)
+local hitEnd = now + delay + duration + grace()
+if self.holding then
+self.releaseAt = math.min(math.max(self.releaseAt, hitEnd), self.holdStart + maxHold())
+else
+local at = now + delay
+if not self.pressAt or at < self.pressAt then self.pressAt = at end
+self.pendingRelease = math.max(self.pendingRelease or 0, hitEnd)
+end
+end
+function self:punch(now)
+self.pausedUntil = now + (cfg.punchPause or 0.4)
+self.pressAt, self.pendingRelease = nil, nil
+if self.holding then
+self.holding, self.releaseAt = false, nil
+return "release"
+end
+end
+function self:tick(now)
+if self.holding then
+if now >= self.releaseAt then
+self.holding, self.releaseAt = false, nil
+return "release"
+end
+elseif self.pressAt and now >= self.pressAt then
+local release = self.pendingRelease or 0
+self.pressAt, self.pendingRelease = nil, nil
+if now < self.pausedUntil then return nil end
+self.holding, self.holdStart = true, now
+self.releaseAt = math.min(math.max(release, now + minHold()), now + maxHold())
+return "press"
+end
+end
+function self:reset()
+local was = self.holding
+self.holding, self.pressAt, self.pendingRelease, self.releaseAt = false, nil, nil, nil
+if was then return "release" end
+end
+return self
+end
+return M
+end)()
 local Data = (function()
 local function rep(token, n) local t = {} for i = 1, n do t[i] = token end return t end
 local function seq(...)
@@ -1572,14 +1625,14 @@ local ComboOpts = {}
 local Pins = {}
 local SavedPins = type(Saved.pins) == "table" and Saved.pins or {}
 local Armed, armedOrder = {}, {}
-local Block = {on = false, range = 14, aim = 60, delay = 0.10, hold = 0.35, cooldown = 0.25, usePing = true}
+local Block = {on = false, range = 14, aim = 60, delay = 0.10, grace = 0.15, maxHold = 1.0, minHold = 0.12, punchPause = 0.4, usePing = true}
 if type(Saved.block) == "table" then
 local sb = Saved.block
 Block.range = num(sb.range, 6, 30, Block.range)
 Block.aim = num(sb.aim, 20, 120, Block.aim)
 Block.delay = num(sb.delay, 0, 0.4, Block.delay)
-Block.hold = num(sb.hold, 0.1, 1, Block.hold)
-Block.cooldown = num(sb.cooldown, 0.1, 1, Block.cooldown)
+Block.grace = num(sb.grace, 0.05, 0.5, Block.grace)
+Block.maxHold = num(sb.maxHold, 0.3, 2, Block.maxHold)
 Block.usePing = sb.usePing ~= false
 end
 local SideAuto = {on = false, dir = "Closest", delay = 0.25, cooldown = 0.8, anims = {}}
@@ -1644,7 +1697,7 @@ end
 local uiData = {theme = pendingTheme, scale = uiScale, glass = glass}
 genv.__AnimationHubUi = uiData
 local data = {version = 1, timing = Timing, speed = macroSpeed, auto = Auto, combos = combos, pins = pinData, ui = uiData,
-block = {range = Block.range, aim = Block.aim, delay = Block.delay, hold = Block.hold, cooldown = Block.cooldown, usePing = Block.usePing},
+block = {range = Block.range, aim = Block.aim, delay = Block.delay, grace = Block.grace, maxHold = Block.maxHold, usePing = Block.usePing},
 sideAuto = {dir = SideAuto.dir, delay = SideAuto.delay, cooldown = SideAuto.cooldown, anims = SideAuto.anims}}
 local json = safe(function() return game:GetService("HttpService"):JSONEncode(data) end)
 if type(json) == "string" then pcall(writefile, SETTINGS_FILE, json) end
@@ -1798,6 +1851,7 @@ if macroRunning then stopMacro() return end
 macroId = macroId + 1
 local myId = macroId
 macroRunning = true
+if Block.punch then Block.punch() end
 runningName = comboName
 if renderPins then renderPins() end
 local opts = comboName and getOpts(comboName) or nil
@@ -1977,12 +2031,15 @@ if LocalPlayer.Character then hookCharacter(LocalPlayer.Character) end
 connect(LocalPlayer.CharacterAdded, hookCharacter)
 end
 do
-local blockBusyUntil = 0
+local state = BlockState and BlockState.new(Block)
 local lastSwing = setmetatable({}, {__mode = "k"})
+local function apply(action)
+if action == "press" then keyEvent(true, Enum.KeyCode.F)
+elseif action == "release" then keyEvent(false, Enum.KeyCode.F) end
+end
 local function onEnemyAnimation(player, track)
-if not (Block.on and CombatMath) then return end
+if not (Block.on and CombatMath and state) or macroRunning then return end
 local now = os.clock()
-if now < blockBusyUntil or macroRunning then return end
 if safe(function() return track.Looped end) == true then return end
 local prio = safe(function() return track.Priority.Value end)
 local minPrio = safe(function() return Enum.AnimationPriority.Action.Value end)
@@ -2001,15 +2058,23 @@ local delay = Block.delay
 if Block.usePing and PingModel then
 delay = PingModel.adjustDelay(delay, currentPing(), Auto.strength, {dependent = true, offsetMs = Auto.offsetMs, minDelay = 0})
 end
-blockBusyUntil = now + delay + Block.hold + Block.cooldown
-task.spawn(function()
-if delay > 0 then task.wait(delay) end
-if not (alive and Block.on) or macroRunning then return end
-keyEvent(true, Enum.KeyCode.F)
-task.wait(Block.hold)
-keyEvent(false, Enum.KeyCode.F)
-end)
+local length = safe(function() return track.Length end)
+if type(length) ~= "number" or length <= 0 then length = 0.35 end
+state:threat(now, delay, math.min(length, 1.2))
 end
+connect(RunService.Heartbeat, function()
+if state then apply(state:tick(os.clock())) end
+end)
+connect(UserInputService.InputBegan, function(input, gp)
+if gp or not (Block.on and state) then return end
+local punching = input.UserInputType == Enum.UserInputType.MouseButton1
+if not punching then
+for _, k in ipairs(MoveSlots) do if k == input.KeyCode then punching = true end end
+end
+if punching then apply(state:punch(os.clock())) end
+end)
+Block.reset = function() if state then apply(state:reset()) end end
+Block.punch = function() if state then apply(state:punch(os.clock())) end end
 local function hookEnemy(player)
 if player == LocalPlayer then return end
 local function hookChar(char)
@@ -2024,7 +2089,7 @@ connect(player.CharacterAdded, hookChar)
 end
 for _, p in ipairs(Players:GetPlayers()) do hookEnemy(p) end
 connect(Players.PlayerAdded, hookEnemy)
-onCleanup[#onCleanup + 1] = function() Block.on = false end
+onCleanup[#onCleanup + 1] = function() Block.on = false; Block.reset() end
 end
 local PinLayer = new("Frame", {Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, ZIndex = 8, Parent = Gui})
 local pinOrder = {}
@@ -2397,9 +2462,10 @@ Tech:Dropdown("Direction", {"Back", "Forward", "Left", "Right"}, "Back", functio
 Tech:Slider("Reaction Delay (s)", 0, 0.5, 0.05, 0.01, function(v) Settings.TechDelay = v end)
 Tech:Slider("Cooldown (s)", 0.1, 3, 0.6, 0.05, function(v) Settings.TechCooldown = v end)
 Tech:Label("Dash key defaults to Q - change Settings.TechKey if you rebound it.")
-Tech:Label("AUTO BLOCK - holds F for you when a player in front of you starts an attack aimed at you. Hits from behind, charged hits and grabs cannot be blocked, so those are skipped.")
+Tech:Label("AUTO BLOCK - blocks every hit aimed at you from in front, then lets go a moment after their attack ends so you can punch. Your own M1 / move key drops the block instantly (PC; on a phone it relies on the quick release). Hits from behind, charged hits and grabs cannot be blocked, so those are skipped.")
 blockToggle = Tech:Toggle("Auto block", false, function(on)
 Block.on = on
+if not on and Block.reset then Block.reset() end
 if renderFab then renderFab() end
 if ready then toast(on and "Auto block ON" or "Auto block OFF") end
 end)
@@ -2407,10 +2473,10 @@ local function blockSet(key) return function(v) if Block[key] ~= v then Block[ke
 Tech:Slider("Range (studs)", 6, 30, Block.range, 1, blockSet("range"))
 Tech:Slider("Aim cone (+- degrees)", 20, 120, Block.aim, 5, blockSet("aim"))
 Tech:Slider("Delay after their swing starts (s)", 0, 0.4, Block.delay, 0.01, blockSet("delay"))
-Tech:Slider("Hold block (s)", 0.1, 1, Block.hold, 0.05, blockSet("hold"))
-Tech:Slider("Cooldown (s)", 0.1, 1, Block.cooldown, 0.05, blockSet("cooldown"))
+Tech:Slider("Let go after their attack ends (s)", 0.05, 0.5, Block.grace, 0.01, blockSet("grace"))
+Tech:Slider("Longest hold (s)", 0.3, 2, Block.maxHold, 0.05, blockSet("maxHold"))
 Tech:Toggle("Shorten the delay by my ping", Block.usePing, blockSet("usePing"))
-Tech:Label("Perfect block timing depends on each move's hit frame, which I cannot read. Delay is shortened by your ping (Auto timing strength / fine-tune apply). Start at 0.10 s and nudge it: lower = blocks sooner.")
+Tech:Label("Perfect block timing depends on each move's hit frame, which I cannot read. Delay is shortened by your ping (Auto timing strength / fine-tune apply). Start at 0.10 s and nudge it: lower = blocks sooner. Longest hold caps one block, so you are never stuck blocking.")
 do
 local playerSec = Tele:Section("Players")
 local function teleportTo(p)
