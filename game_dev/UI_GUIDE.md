@@ -46,6 +46,27 @@ switch knob, tab fade/slide, window pop. Never snap a value that the eye can see
 Make it *phone friendly*: size the window from `workspace.CurrentCamera.ViewportSize`, keep hit areas >= 36 px,
 use a floating button to open it (phones have no keyboard), and never rely on hover.
 
+## Colour: bright, not dull (what changed and why)
+The first version was close to black: the window averaged a relative luminance of **0.03**. Fluent's themes (a popular script-hub
+library) are the reference that showed the difference - they use saturated MID-tone gradients, `Text = (240,240,240)`,
+`SubText = (170,170,170)` and cards that are the accent colour at ~87 % transparency, e.g. Rose `AcrylicGradient`
+(190,60,135) -> (165,50,70), Amethyst (85,57,139) -> (40,25,65).
+This project now picks each theme's surfaces by luminance instead of by eye: Back 0.075, Panel 0.115, Item 0.165, Hover 0.235,
+window gradient 0.30 -> 0.105 (the window averages ~0.16, five times brighter), white text on Item/Panel and the soft sub-text on
+Panel all stay above WCAG 4.5 : 1. Text that sits ON the bright accent / white buttons uses a separate dark `Theme.Ink`.
+`tests/check_palette.py` parses the theme table and fails if a theme gets dark or unreadable again (the old palette fails it).
+A **Brightness** slider (0.8 - 1.2, Effects tab, press Apply theme) scales the surfaces; the accents are left alone.
+
+## References (design examples to open yourself)
+These are real, widely used script-hub UI libraries. I did not load any of them into this project (a third-party loadstring runs
+its code with your executor's full power); they are listed so you can see screenshots and copy ideas.
+- WindUI - https://github.com/Footagesus/WindUI  (themes swappable at runtime, docs at footagesus.github.io/treehub-web/docs/windui)
+- Fluent - https://github.com/dawid-scripts/Fluent  (acrylic look; `src/Themes/*.lua` hold every colour: Dark, Darker, Light, Aqua, Amethyst, Rose)
+- Rayfield - https://github.com/sirius-menu/rayfield  (docs: docs.sirius.menu/rayfield, theme list under configuration/themes)
+- Orion, Luna - older / alternative libraries with the same building blocks.
+Common traits worth copying: rounded cards (UICorner 8-14), a 1 px translucent stroke, a coloured rim gradient on the window,
+tinted translucent cards instead of opaque grey, one saturated accent, white title text, a left tab column with icons.
+
 ## Tools used to check this project
 - `luau-compile` / `luau-analyze` / `luau-ast` (https://github.com/luau-lang/luau/releases) compile and parse the script with
   Roblox's own language implementation.

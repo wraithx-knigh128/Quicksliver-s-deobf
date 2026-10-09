@@ -134,11 +134,15 @@ end
 local PNG = "\137PNG\r\n\26\n" .. string.rep("x", 32)
 
 -- a plain-Lua character (real numbers, not dummies) so geometry code can be tested: pos / look = {x=, y=, z=}
-local function fakeChar(pos, look, animFns, writes, healthFns)
+local function fakeChar(pos, look, animFns, writes, healthFns, vel)
     -- a proxy: every WRITE to the character's root part (even re-assigning an existing field) is recorded
     local data = {Position = {X = pos.x, Y = pos.y, Z = pos.z}, CFrame = {LookVector = {X = look.x, Y = look.y, Z = look.z}}}
+    if vel then data.AssemblyLinearVelocity = {X = vel.x, Y = vel.y, Z = vel.z} end
     local hrp = setmetatable({}, {__index = data, __newindex = function(_, k, v) writes[#writes + 1] = k; data[k] = v end})
-    local animator = {AnimationPlayed = {Connect = function(_, fn) animFns[#animFns + 1] = fn; return {Disconnect = function() end} end}}
+    local playing = {}
+    local animator = {AnimationPlayed = {Connect = function(_, fn) animFns[#animFns + 1] = fn; return {Disconnect = function() end} end},
+                      playing = playing,
+                      GetPlayingAnimationTracks = function() local copy = {} for i, t in ipairs(playing) do copy[i] = t end return copy end}
     local hum = {Health = 100, GetState = function() return "Running" end,
                  HealthChanged = {Connect = function(_, fn) healthFns[#healthFns + 1] = fn; return {Disconnect = function() end} end},
                  FindFirstChildOfClass = function() return animator end, WaitForChild = function() return animator end}
@@ -148,7 +152,7 @@ local function fakeChar(pos, look, animFns, writes, healthFns)
         WaitForChild = function(_, n) if n == "Humanoid" then return hum end return hrp end,
         GetAttribute = function() return nil end,
     }
-    return char, hrp, hum
+    return char, hrp, hum, animator
 end
 
 -- every scenario's error list, so a final sweep also catches errors that happen AFTER the scenario was built
@@ -165,16 +169,20 @@ local function run(scenario)
     local env = setmetatable({}, {__index = _G})
 
     env.game = dummy("game", ctx); env.workspace = dummy("workspace", ctx)
-    env.workspace.CurrentCamera = {ViewportSize = {X = 800, Y = 450}, CFrame = {RightVector = {X = 1, Y = 0, Z = 0}}}
+    env.workspace.CurrentCamera = {ViewportSize = {X = 800, Y = 450}, CFrame = {RightVector = {X = 1, Y = 0, Z = 0}, LookVector = {X = 0, Y = 0, Z = -1}}}
     local world = scenario.world            -- optional: {me = {pos, look}, enemies = {{name, pos, look}...}, right = {x,y,z}}
-    local myAnim, myWrites, enemyAnim, enemies, myHealth = {}, {}, {}, {}, {}
+    local myAnim, myWrites, enemyAnim, enemies, myHealth, enemyAnimators = {}, {}, {}, {}, {}, {}
     local myChar, myHrp, myHum
     if world then
-        myChar, myHrp, myHum = fakeChar(world.me.pos, world.me.look, myAnim, myWrites, myHealth)
-        if world.right then env.workspace.CurrentCamera.CFrame = {RightVector = {X = world.right.x, Y = world.right.y, Z = world.right.z}} end
+        myChar, myHrp, myHum = fakeChar(world.me.pos, world.me.look, myAnim, myWrites, myHealth, world.me.vel)
+        if world.right or world.camLook then
+            local r, l = world.right or {x = 1, y = 0, z = 0}, world.camLook or {x = 0, y = 0, z = -1}
+            env.workspace.CurrentCamera.CFrame = {RightVector = {X = r.x, Y = r.y, Z = r.z}, LookVector = {X = l.x, Y = l.y, Z = l.z}}
+        end
         for i, e in ipairs(world.enemies or {}) do
             enemyAnim[i] = {}
-            local c = fakeChar(e.pos, e.look, enemyAnim[i], {}, {})
+            local c, _, _, animator = fakeChar(e.pos, e.look, enemyAnim[i], {}, {}, e.vel)
+            enemyAnimators[i] = animator
             enemies[i] = {Name = e.name, DisplayName = e.name, Character = c, CharacterAdded = {Connect = function() return {Disconnect = function() end} end}}
         end
     end
@@ -237,6 +245,11 @@ local function run(scenario)
                         "TweenInfo", "CFrame", "Enum", "Vector3"}) do
         env[n] = dummy(n, ctx)
     end
+    env.Color3 = {fromRGB = function(r, g, b)                                -- keeps its numbers, so palette tests can read them
+        local c = dummy("Color3.fromRGB()", ctx)
+        rawset(c, "R", r); rawset(c, "G", g); rawset(c, "B", b)
+        return c
+    end}
     env.Vector2 = {new = function(x, y) return {X = x or 0, Y = y or 0} end}
     env.typeof = function(v) return isInstanceLike(v) and "Instance" or type(v) end
     env.Enum.AnimationPriority.Action = {Value = 2}                      -- real Roblox: Idle 0, Movement 1, Action 2, Action2 3 ...
@@ -350,11 +363,22 @@ local function run(scenario)
             if not ok then errors[#errors + 1] = "InputBegan handler: " .. tostring(e) end
         end
     end
-    local function swing(i, priority, looped, id, length)                  -- enemy i starts an attack animation
+    local function newTrack(priority, looped, id, length, name, timePos)
+        return {Animation = {AnimationId = id or "rbxassetid://777", Name = name}, Name = name, Looped = looped or false,
+                Priority = {Value = priority or 3}, Length = length, TimePosition = timePos or 0}
+    end
+    local function swing(i, priority, looped, id, length, name)            -- enemy i starts an attack animation (the event fires)
+        local track = newTrack(priority, looped, id, length, name)
+        local animator = enemyAnimators[i]
+        if animator then animator.playing[#animator.playing + 1] = track end
         for _, fn in ipairs(enemyAnim[i] or {}) do
-            local ok, e = pcall(fn, {Animation = {AnimationId = id or "rbxassetid://777"}, Looped = looped or false, Priority = {Value = priority or 3}, Length = length})
+            local ok, e = pcall(fn, track)
             if not ok then errors[#errors + 1] = "enemy AnimationPlayed handler: " .. tostring(e) end
         end
+    end
+    local function silentSwing(i, priority, looped, id, length, name, timePos)   -- the track is playing but the event never fires
+        local animator = enemyAnimators[i]
+        if animator then animator.playing[#animator.playing + 1] = newTrack(priority, looped, id, length, name, timePos) end
     end
     local function hurt(amount)                                            -- I lose health: Humanoid.HealthChanged fires
         if not myHum then return end
@@ -375,7 +399,7 @@ local function run(scenario)
         end
         for _, fn in ipairs(ctx.inputEnded) do pcall(fn, {UserInputType = M1, Position = {X = toX, Y = toY}}) end
     end
-    return {instances = instances, save = save, findLastButton = findLastButton, hurt = hurt, drag = drag, frames = frames, fireInput = fireInput, swing = swing, myWrites = myWrites, advance = advance, tap = tap, toggleRowHit = toggleRowHit, fireKey = fireKey, playAnimation = playAnimation,
+    return {silentSwing = silentSwing, instances = instances, save = save, findLastButton = findLastButton, hurt = hurt, drag = drag, frames = frames, fireInput = fireInput, swing = swing, myWrites = myWrites, advance = advance, tap = tap, toggleRowHit = toggleRowHit, fireKey = fireKey, playAnimation = playAnimation,
             findButton = findButton, textOf = textOf, errors = errors, ctx = ctx, writes = writes, assets = assets, bgSet = bgSet, genv = genvStore, env = env, fn = fn}
 end
 
@@ -602,41 +626,118 @@ check(#au.ctx.keys == 0, "auto side dash: a non-move key must not trigger it")
 au.fireKey(au.env.Enum.KeyCode.One)                                     -- you cast move 1
 check(pressed(au, au.env.Enum.KeyCode.Q) and pressed(au, au.env.Enum.KeyCode.A), "auto side dash: first dash goes Left (Alternate starts Left)")
 
--- 8. SIDE DASH toward the closest player: picks the A or D key, never moves you
+-- 8. SIDE DASHES: only ever Q + a direction key, never a move of my character
 local ME, LOOK = {x = 0, y = 0, z = 0}, {x = 0, y = 0, z = -1}
 local function keyNamed(r, name) return r.env.Enum.KeyCode[name] end
-local rightSide = run({executor = "full", body = PNG, settings = {pins = {SideDash_Closest = {x = 90, y = 90}}}, world = {
+do   -- (own scope: the main chunk may only hold 200 locals)
+local function pins(...) local t = {} for _, n in ipairs({...}) do t[n] = {x = 90, y = 90} end return {pins = t} end
+local function keysDown(r) local out = {} for _, k in ipairs(r.ctx.keys) do if k.down then out[#out + 1] = k.key end end return out end
+local function countKey(r, name) local n = 0 for _, k in ipairs(r.ctx.keys) do if k.down and k.key == keyNamed(r, name) then n = n + 1 end end return n end
+
+-- "Toward": at the closest player (the old behaviour, still available)
+local rightSide = run({executor = "full", body = PNG, settings = pins("SideDash_Toward"), world = {
     me = {pos = ME, look = LOOK}, right = {x = 1, y = 0, z = 0},
     enemies = {{name = "Far", pos = {x = -80, y = 0, z = 0}, look = LOOK}, {name = "Near", pos = {x = 12, y = 0, z = -4}, look = LOOK}}}})
-for _, e in ipairs(rightSide.errors) do failures[#failures + 1] = "closest side dash (right): " .. e end
-local closeBtn = rightSide.findButton("Side Dash")
-check(closeBtn ~= nil, "closest side dash: the round button is missing")
+for _, e in ipairs(rightSide.errors) do failures[#failures + 1] = "toward side dash (right): " .. e end
+local closeBtn = rightSide.findButton("Toward")
+check(closeBtn ~= nil, "toward side dash: the round button is missing")
 if closeBtn then rightSide.tap(closeBtn) end
-check(pressed(rightSide, keyNamed(rightSide, "D")) and pressed(rightSide, keyNamed(rightSide, "Q")), "closest side dash: nearest player is on my right -> Q + D")
-check(not pressed(rightSide, keyNamed(rightSide, "A")), "closest side dash: must not press A when the nearest player is on the right")
-check(#rightSide.myWrites == 0, "closest side dash: it must NOT move / teleport me - my character was written to: " .. table.concat(rightSide.myWrites, ","))
+check(pressed(rightSide, keyNamed(rightSide, "D")) and pressed(rightSide, keyNamed(rightSide, "Q")), "toward side dash: nearest player is on my right -> Q + D")
+check(not pressed(rightSide, keyNamed(rightSide, "A")), "toward side dash: must not press A when the nearest player is on the right")
+check(#rightSide.myWrites == 0, "toward side dash: it must NOT move / teleport me - my character was written to: " .. table.concat(rightSide.myWrites, ","))
 
-local leftSide = run({executor = "full", body = PNG, settings = {pins = {SideDash_Closest = {x = 90, y = 90}}}, world = {
+local leftSide = run({executor = "full", body = PNG, settings = pins("SideDash_Toward"), world = {
     me = {pos = ME, look = LOOK}, right = {x = 1, y = 0, z = 0},
     enemies = {{name = "Near", pos = {x = -9, y = 0, z = -2}, look = LOOK}, {name = "Far", pos = {x = 70, y = 0, z = 0}, look = LOOK}}}})
-local lb = leftSide.findButton("Side Dash")
+local lb = leftSide.findButton("Toward")
 if lb then leftSide.tap(lb) end
-check(pressed(leftSide, keyNamed(leftSide, "A")) and not pressed(leftSide, keyNamed(leftSide, "D")), "closest side dash: nearest player on my left -> Q + A")
+check(pressed(leftSide, keyNamed(leftSide, "A")) and not pressed(leftSide, keyNamed(leftSide, "D")), "toward side dash: nearest player on my left -> Q + A")
 
-local nobody = run({executor = "full", body = PNG, settings = {pins = {SideDash_Closest = {x = 90, y = 90}}}, world = {
+local nobody = run({executor = "full", body = PNG, settings = pins("SideDash_Toward"), world = {
     me = {pos = ME, look = LOOK}, enemies = {}}})
-local nb = nobody.findButton("Side Dash")
+local nb = nobody.findButton("Toward")
 if nb then nobody.tap(nb) end
-check(pressed(nobody, keyNamed(nobody, "A")), "closest side dash: with nobody around it falls back to Left (A) instead of failing")
+check(pressed(nobody, keyNamed(nobody, "A")), "toward side dash: with nobody around it falls back to Left (A) instead of failing")
 
--- every side dash inside a tech / combo follows the same rule (default side = Closest)
-local techDash = run({executor = "full", body = PNG, settings = {pins = {Garou_Catch = {x = 100, y = 100}}}, world = {
-    me = {pos = ME, look = LOOK}, right = {x = 1, y = 0, z = 0}, enemies = {{name = "Near", pos = {x = 10, y = 0, z = 0}, look = LOOK}}}})
-local tdBtn = techDash.findButton("Garou Catch")
-if tdBtn then techDash.tap(tdBtn) end
-techDash.fireKey(techDash.env.Enum.KeyCode.Three)
-check(pressed(techDash, keyNamed(techDash, "D")), "assist combos: their SIDEDASH steps must also go toward the closest player")
-check(#techDash.myWrites == 0, "assist combos: side dash must not move me")
+-- "Behind": round the closest player toward his BACK, so the next hit cannot be blocked
+local function behindWorld(enemyPos, enemyLook, extra)
+    local w = {me = {pos = ME, look = LOOK}, enemies = {{name = "Target", pos = enemyPos, look = enemyLook}}}
+    for k, v in pairs(extra or {}) do w[k] = v end
+    return w
+end
+local FRONT_POS = {x = 0, y = 0, z = -6}                                      -- he stands 6 studs ahead of me, camera looks at him
+local function behindRun(enemyPos, enemyLook, settings, world)
+    local st = settings or pins("SideDash_Behind")
+    local r = run({executor = "full", body = PNG, settings = st, world = world or behindWorld(enemyPos, enemyLook)})
+    for _, e in ipairs(r.errors) do failures[#failures + 1] = "behind side dash: " .. e end
+    local btn = r.findButton("Behind")
+    if btn then r.tap(btn) else failures[#failures + 1] = "behind side dash: the round 'Behind' button is missing" end
+    return r
+end
+local b1 = behindRun(FRONT_POS, {x = 0, y = 0, z = 1})                        -- facing me head on
+check(pressed(b1, keyNamed(b1, "Q")) and pressed(b1, keyNamed(b1, "D")) and not pressed(b1, keyNamed(b1, "A")), "behind: head on, the camera's right is +x -> Q + D (round him, not into him)")
+check(not pressed(b1, keyNamed(b1, "W")) and #b1.myWrites == 0, "behind: it must not dash at him and must not move / teleport me")
+local b2 = behindRun(FRONT_POS, {x = 0.447, y = 0, z = 0.894})                -- he is already turning to his left-of-me side
+check(pressed(b2, keyNamed(b2, "A")) and not pressed(b2, keyNamed(b2, "D")), "behind: he looks a little toward +x, so the quicker way round is the other side -> A")
+local b3 = behindRun(FRONT_POS, {x = -0.447, y = 0, z = 0.894})
+check(pressed(b3, keyNamed(b3, "D")) and not pressed(b3, keyNamed(b3, "A")), "behind: mirrored -> D")
+local b4 = behindRun(FRONT_POS, {x = 0, y = 0, z = -1})                       -- I am already standing behind him
+check(#keysDown(b4) == 0, "behind: already behind him -> no dash at all (it would take me away from his back)")
+local b5 = behindRun(nil, nil, pins("SideDash_Behind"), {me = {pos = ME, look = LOOK}, enemies = {}})
+check(#keysDown(b5) == 0, "behind: nobody around -> nothing happens")
+local b6 = behindRun(FRONT_POS, {x = 0, y = 0, z = 1}, {behind = {count = 3, gap = 0.2}, pins = {SideDash_Behind = {x = 90, y = 90}}})
+check(countKey(b6, "Q") == 3, "behind: 'most dashes' = 3 -> three dashes while I am not behind him yet, got " .. countKey(b6, "Q"))
+local b7 = behindRun(FRONT_POS, {x = 0, y = 0, z = 1}, {behind = {count = 1, gap = 0.2}, pins = {SideDash_Behind = {x = 90, y = 90}}})
+check(countKey(b7, "Q") == 1, "behind: 'most dashes' = 1 -> one dash")
+local b8 = behindRun(FRONT_POS, {x = 0, y = 0, z = 1}, {behind = {count = 2, gap = 0.2, m1 = true}, pins = {SideDash_Behind = {x = 90, y = 90}}})
+check(#b8.ctx.mouse == 0, "behind + M1: if the dashes did not get me behind him I must NOT hit him from the front")
+local b9 = behindRun(FRONT_POS, {x = 0, y = 0, z = -1}, {behind = {m1 = true}, pins = {SideDash_Behind = {x = 90, y = 90}}})
+check(#keysDown(b9) == 0 and #b9.ctx.mouse >= 2, "behind + M1: already behind him -> no dash, just the M1")
+local b10 = behindRun(FRONT_POS, {x = 0, y = 0, z = 1}, {behind = {count = 99, gap = 99, m1 = "yes"}, pins = {SideDash_Behind = {x = 90, y = 90}}})
+check(countKey(b10, "Q") == 3 and #b10.ctx.mouse == 0, "behind: garbage settings are clamped (max 3 dashes, m1 must be true)")
+local b12 = behindRun(FRONT_POS, {x = 0, y = 0, z = -1}, {behind = {m1 = "yes"}, pins = {SideDash_Behind = {x = 90, y = 90}}})
+check(#keysDown(b12) == 0 and #b12.ctx.mouse == 0, "behind: M1 is only on when the saved value is exactly true, not any truthy garbage")
+-- the camera decides which KEY goes round him: camera turned to look along +x -> the same circle needs W / S instead of A / D
+local b11 = behindRun(FRONT_POS, {x = 0, y = 0, z = 1}, nil, behindWorld(FRONT_POS, {x = 0, y = 0, z = 1}, {right = {x = 0, y = 0, z = 1}, camLook = {x = 1, y = 0, z = 0}}))
+check(pressed(b11, keyNamed(b11, "Q")) and (pressed(b11, keyNamed(b11, "W")) or pressed(b11, keyNamed(b11, "S"))) and not (pressed(b11, keyNamed(b11, "A")) or pressed(b11, keyNamed(b11, "D"))),
+    "behind: movement keys are camera relative: with the camera turned 90 degrees the dash uses W / S")
+
+-- every SIDEDASH inside a tech / combo goes behind the closest player by default, "Toward" / Left / Right still work
+local function techDashRun(enemyPos, enemyLook, comboSide)
+    local settings = {pins = {Garou_Catch = {x = 100, y = 100}}}
+    if comboSide then settings.combos = {Garou_Catch = {side = comboSide}} end
+    local r = run({executor = "full", body = PNG, settings = settings, world = behindWorld(enemyPos, enemyLook, {right = {x = 1, y = 0, z = 0}})})
+    for _, e in ipairs(r.errors) do failures[#failures + 1] = "assist side dash: " .. e end
+    local btn = r.findButton("Garou Catch"); if btn then r.tap(btn) end
+    r.fireKey(r.env.Enum.KeyCode.Three)
+    return r
+end
+local td1 = techDashRun(FRONT_POS, {x = 0.447, y = 0, z = 0.894})
+check(pressed(td1, keyNamed(td1, "A")) and not pressed(td1, keyNamed(td1, "D")), "assist combos: their SIDEDASH steps go round the closest player toward his back by default")
+check(#td1.myWrites == 0, "assist combos: side dash must not move me")
+local td5 = techDashRun({x = 10, y = 0, z = 0}, LOOK)                       -- he stands to my right and looks along -z (my own look direction)
+check(pressed(td5, keyNamed(td5, "S")) and not pressed(td5, keyNamed(td5, "D")),
+    "assist combos: default = round him toward his back: his back is behind me (+z), so with this camera it is the back key S, NOT a dash at him (D)")
+local td2 = techDashRun({x = 10, y = 0, z = 0}, LOOK, "Toward")
+check(pressed(td2, keyNamed(td2, "D")), "assist combos: side = Toward still dashes at the closest player")
+local td3 = techDashRun(FRONT_POS, {x = 0, y = 0, z = 1}, "Left")
+check(pressed(td3, keyNamed(td3, "A")), "assist combos: side = Left")
+local td4 = techDashRun(FRONT_POS, {x = 0, y = 0, z = 1}, "Closest")
+check(#td4.errors == 0, "assist combos: the old name 'Closest' in a saved config must not break anything")
+
+-- automatic side dash after my moves goes behind too (old saved name 'Closest' = Toward)
+local function autoDashRun(dir, enemyPos, enemyLook)
+    local r = run({executor = "full", body = PNG, settings = {sideAuto = {dir = dir}}, world = behindWorld(enemyPos, enemyLook, {right = {x = 1, y = 0, z = 0}})})
+    local hit = r.toggleRowHit("Auto side dash after my moves"); if hit then r.tap(hit) end
+    r.fireKey(r.env.Enum.KeyCode.One)
+    return r
+end
+local ad1 = autoDashRun(nil, FRONT_POS, {x = 0.447, y = 0, z = 0.894})
+check(pressed(ad1, keyNamed(ad1, "Q")) and pressed(ad1, keyNamed(ad1, "A")), "auto side dash: default goes round the closest player (here A)")
+local ad2 = autoDashRun("Closest", {x = 10, y = 0, z = 0}, LOOK)
+check(pressed(ad2, keyNamed(ad2, "D")), "auto side dash: a saved 'Closest' means Toward the closest player (here D)")
+
+end
 
 -- 9. AUTO BLOCK: blocks every hit, lets go quickly, drops the moment I punch
 local BLOCKER = {x = 0, y = 0, z = -6}
@@ -649,8 +750,16 @@ local function fEvents(r, F)                                               -- li
     for _, k in ipairs(r.ctx.keys) do if k.key == F then out[#out + 1] = k end end
     return out
 end
+local OLD = {style = "Balanced", delay = 0.10}                               -- the timings most checks below were written for
+local function withOld(block)                                                -- {pierceMode = ...} + the old timings
+    local b = {}
+    for k, v in pairs(OLD) do b[k] = v end
+    for k, v in pairs(block or {}) do b[k] = v end
+    return b
+end
 local function newBlocker(world, extra)
-    local r = run({executor = "full", body = PNG, ping = extra and extra.ping, world = world or blockWorld(BLOCKER, TOWARD_ME)})
+    local r = run({executor = "full", body = PNG, ping = extra and extra.ping, world = world or blockWorld(BLOCKER, TOWARD_ME),
+        settings = {block = withOld(extra and extra.block)}})
     for _, e in ipairs(r.errors) do failures[#failures + 1] = "auto block scenario: " .. e end
     if extra and extra.ping then r.frames(2) end                              -- let it measure the ping
     local hit = r.toggleRowHit("Auto block")
@@ -715,11 +824,22 @@ check(#fEvents(pu, F4) == 1, "auto block (punch): should be blocking now")
 pu.fireInput(pu.env.Enum.UserInputType.MouseButton1)
 local pe = fEvents(pu, F4)
 check(#pe == 2 and not pe[2].down, "auto block (punch): M1 must drop the block immediately")
+pu.swing(1, 3, false); pu.frames(0.1)
+check(#fEvents(pu, F4) == 2, "auto block (punch): right after my punch F cannot come up (the game's ~0.2 s lockout)")
+pu.frames(0.15)
+check(#fEvents(pu, F4) == 3 and fEvents(pu, F4)[3].down, "auto block (punch): the moment the lockout is over F goes down for the attack that is still coming")
+pu.frames(1.0)
+check(#fEvents(pu, F4) == 4 and not fEvents(pu, F4)[4].down, "auto block (punch): and it is let go after that attack")
 pu.swing(1, 3, false); pu.frames(0.2)
-check(#fEvents(pu, F4) == 2, "auto block (punch): right after my punch it must not clamp down again")
-pu.frames(0.5)
-pu.swing(1, 3, false); pu.frames(0.2)
-check(#fEvents(pu, F4) == 3, "auto block (punch): after the short pause it must block the next hit")
+check(#fEvents(pu, F4) == 5, "auto block (punch): later attacks are blocked as usual")
+local puLate = newBlocker()
+puLate.swing(1, 3, false); puLate.frames(0.2)
+puLate.fireInput(puLate.env.Enum.UserInputType.MouseButton1)
+puLate.frames(1.0)
+puLate.fireInput(puLate.env.Enum.UserInputType.MouseButton1)                -- punch again with nothing coming
+puLate.frames(0.5)
+local pl = fEvents(puLate, keyNamed(puLate, "F"))
+check(#pl == 2, "auto block (punch): a punch with no attack coming must not make F go down, events " .. #pl)
 local pg = newBlocker()
 pg.swing(1, 3, false); pg.frames(0.2)
 pg.fireInput(pg.env.Enum.UserInputType.MouseButton1, nil, true)           -- consumed by the game's UI: not a real punch
@@ -771,7 +891,7 @@ check(pressed(tg, keyNamed(tg, "Q")) and pressed(tg, tg.env.Enum.KeyCode.Three),
 check(not pressed(tg, tg.env.Enum.KeyCode.One), "tech toggles: it must not press Flowing Water itself")
 
 -- 11. MENU REBUILD with a new theme (rebuild enabled in this one scenario)
-local rb = run({executor = "full", body = PNG, allowRebuild = true, settings = {ui = {theme = "Ocean", scale = 1.1, glass = 0.6}}})
+local rb = run({executor = "full", body = PNG, allowRebuild = true, settings = {ui = {theme = "Ocean", scale = 1.1, glass = 0.6, bright = 1.15}}})
 for _, e in ipairs(rb.errors) do failures[#failures + 1] = "rebuild scenario: " .. e end
 check(rb.genv.__AnimationHubCleanup ~= nil, "rebuild scenario: menu did not start with a saved theme")
 local applyBtn = rb.findButton("Apply theme (rebuilds the menu)")
@@ -783,6 +903,31 @@ check(rb.genv.__AnimationHubSession == nil, "rebuild: the hand-over table must b
 local rbEnc = rb.save()
 check(rbEnc and rbEnc.ui and rbEnc.ui.theme == "Ocean", "rebuild: the chosen theme must survive the rebuild")
 check(rbEnc and rbEnc.ui and rbEnc.ui.scale == 1.1 and rbEnc.ui.glass == 0.6, "rebuild: menu size / glass must survive the rebuild")
+check(rbEnc and rbEnc.ui and rbEnc.ui.bright == 1.15, "rebuild: the Brightness setting must survive the rebuild")
+local brHigh = run({executor = "full", body = PNG, settings = {ui = {bright = 99}}})
+local brLow = run({executor = "full", body = PNG, settings = {ui = {bright = "x"}}})
+local brDefault = run({executor = "full", body = PNG})
+local bhE, blE, bdE = brHigh.save(), brLow.save(), brDefault.save()
+check(bhE and bhE.ui.bright == 1.2, "brightness: a silly saved value is clamped to the slider's maximum (1.2)")
+check(blE and blE.ui.bright == 1, "brightness: garbage falls back to 1")
+check(bdE and bdE.ui.bright == 1 and bdE.ui.glass == 0.82, "brightness / glass defaults: 1 and 0.82 (a clear, bright window)")
+local function windowColor(r)                                                  -- the window's own background colour
+    for _, inst in ipairs(r.instances) do
+        if rawget(inst, "__name") == "CanvasGroup" then
+            local c = rawget(inst, "BackgroundColor3")
+            return c and {rawget(c, "R"), rawget(c, "G"), rawget(c, "B")}
+        end
+    end
+end
+local function sameColor(c, r, g, b) return c ~= nil and c[1] == r and c[2] == g and c[3] == b end
+local wc = windowColor(brDefault)
+check(sameColor(wc, 121, 51, 107), "palette: the default Rose Gold window colour is (121, 51, 107), got " .. tostring(wc and table.concat(wc, ",")))
+local wOcean = run({executor = "full", body = PNG, settings = {ui = {theme = "Ocean", bright = 1.2}}})
+wc = windowColor(wOcean)
+check(sameColor(wc, 38, 96, 152), "palette: Ocean at brightness 1.2 -> (38, 96, 152), got " .. tostring(wc and table.concat(wc, ",")))
+local wDim = run({executor = "full", body = PNG, settings = {ui = {bright = 0.8}}})
+wc = windowColor(wDim)
+check(sameColor(wc, 97, 41, 86), "palette: Rose Gold at brightness 0.8 -> (97, 41, 86), got " .. tostring(wc and table.concat(wc, ",")))
 
 end
 
@@ -846,7 +991,7 @@ lb2.frames(1.1)
 check(lb2.textOf("Learned: 1 attack animation"), "learning: only the one valid saved entry should survive; got: " .. tostring(lb2.textOf("^Learned:")))
 
 -- PREDICTION: with a learned hit time F goes down shortly BEFORE that hit, not at the fixed default delay
-local LEARNED = {learned = {[ID_A] = {n = 5, offset = 0.30, spread = 0.01, length = 0.4}}}
+local LEARNED = {learned = {[ID_A] = {n = 5, offset = 0.30, spread = 0.01, length = 0.4}}, block = withOld()}
 local function blockerWith(extra)
     extra = extra or {}
     local r = run({executor = "full", body = PNG, ping = extra.ping, world = blockWorld(BLOCKER, TOWARD_ME), settings = extra.settings})
@@ -892,7 +1037,7 @@ local pne = fEvents(pn, PNF)
 check(#pne == 1 and pne[1].down and math.abs((pne[1].t - pn0) - 0.25) < 0.03, "prediction: without ping F should go down ~0.25 s after the swing, got " .. tostring(pne[1] and (pne[1].t - pn0)))
 
 -- CHAIN: after seeing A -> B a few times, A alone also covers the next punch (B) before it shows up
-local CHAIN = {learned = {[ID_A] = {n = 5, offset = 0.20, spread = 0.01, length = 0.4}, [ID_B] = {n = 5, offset = 0.20, spread = 0.01, length = 0.4}}}
+local CHAIN = {learned = {[ID_A] = {n = 5, offset = 0.20, spread = 0.01, length = 0.4}, [ID_B] = {n = 5, offset = 0.20, spread = 0.01, length = 0.4}}, block = withOld()}
 local function chainRun(chainOn, rounds, learnOff, blockStaysOn)
     local r = blockerWith({settings = CHAIN})
     local off2 = r.toggleRowHit("Auto block"); if off2 and not blockStaysOn then r.tap(off2) end   -- off while it watches the chain
@@ -978,7 +1123,7 @@ end
 local function countDown(r, F) local n = 0 for _, k in ipairs(fEvents(r, F)) do if k.down then n = n + 1 end end return n end
 local RIGHT_ENEMY = blockWorld({x = 3, y = 0, z = -5}, {x = -0.5, y = 0, z = 1})
 for _, mode in ipairs({"block", "skip", "dash"}) do
-    local pz, PZF = blockerWith({settings = {block = {pierceMode = mode}}, world = nil})
+    local pz, PZF = blockerWith({settings = {block = withOld({pierceMode = mode})}})
     pierceRound(pz, 0.4); pierceRound(pz, 0.4)
     check(countDown(pz, PZF) == 2, "ignore-block (" .. mode .. "): the first two swings are blocked normally, got " .. countDown(pz, PZF) .. " presses")
     pz.frames(1.1)
@@ -995,7 +1140,7 @@ for _, mode in ipairs({"block", "skip", "dash"}) do
     end
 end
 -- side dash mode: Q + the key AWAY from the closest player (he is on my right -> A), around the time the hit lands, no F
-local dw = run({executor = "full", body = PNG, world = RIGHT_ENEMY, settings = {block = {pierceMode = "dash"}}})
+local dw = run({executor = "full", body = PNG, world = RIGHT_ENEMY, settings = {block = withOld({pierceMode = "dash"})}})
 for _, e in ipairs(dw.errors) do failures[#failures + 1] = "ignore-block dash scenario: " .. e end
 local dwHit = dw.toggleRowHit("Auto block"); if dwHit then dw.tap(dwHit) end
 local DWF = keyNamed(dw, "F")
@@ -1021,19 +1166,19 @@ dw.swing(1, 3, false, ID_C, 0.5); dw.swing(1, 3, false, ID_C, 0.5); dw.frames(0.
 check(qPresses(dw) - qBefore == 1, "ignore-block (side dash): two attacks in a row must give ONE dash (cooldown), got " .. (qPresses(dw) - qBefore))
 
 -- a hit that lands before F has been down for ping + 60 ms proves nothing (a late block): never flagged
-local pq, PQF = blockerWith({settings = {block = {pierceMode = "skip"}}})
+local pq, PQF = blockerWith({settings = {block = withOld({pierceMode = "skip"})}})
 for _ = 1, 4 do pierceRound(pq, 0.10) end
 local pqBefore = countDown(pq, PQF)
 pq.swing(1, 3, false, ID_C, 0.5); pq.frames(0.5)
 check(countDown(pq, PQF) == pqBefore + 1, "ignore-block: hits that landed right after F went down must not flag the attack as unblockable")
 -- with a 100 ms ping, F must have been down for ping + 60 ms (not just 60 ms) before a hit counts as "ignores block"
-local pp, PPF = blockerWith({ping = 100, settings = {block = {pierceMode = "skip"}}})
+local pp, PPF = blockerWith({ping = 100, settings = {block = withOld({pierceMode = "skip"})}})
 for _ = 1, 4 do pierceRound(pp, 0.12) end
 local ppBefore = countDown(pp, PPF)
 pp.swing(1, 3, false, ID_C, 0.5); pp.frames(0.5)
 check(countDown(pp, PPF) == ppBefore + 1, "ignore-block: the ping must be added to the 'F was already down' requirement")
 -- and while Auto block is OFF F is not held at all, so nothing is flagged either
-local po2 = run({executor = "full", body = PNG, world = blockWorld(BLOCKER, TOWARD_ME), settings = {block = {pierceMode = "skip"}}})
+local po2 = run({executor = "full", body = PNG, world = blockWorld(BLOCKER, TOWARD_ME), settings = {block = withOld({pierceMode = "skip"})}})
 pierceRound(po2, 0.4); pierceRound(po2, 0.4); pierceRound(po2, 0.4)
 local po2Hit = po2.toggleRowHit("Auto block"); if po2Hit then po2.tap(po2Hit) end
 po2.swing(1, 3, false, ID_C, 0.5); po2.frames(0.5)
@@ -1162,6 +1307,143 @@ check(genosBlitz ~= nil and has(genosBlitz, "M1 gap") and not has(genosBlitz, "A
     "adjustments: when no gap waits for a visible cue there is no Auto timing / fine-tune")
 end
 
+-- 17. RELIABILITY: the things that used to make Auto block hit-and-miss (all with the NEW defaults: no OLD timings pinned)
+do
+    local function defaultBlocker(enemy, settings, ping)
+        local world = {me = {pos = ME, look = LOOK}, enemies = {enemy or {name = "Enemy", pos = BLOCKER, look = TOWARD_ME}}}
+        local r = run({executor = "full", body = PNG, ping = ping, world = world, settings = settings})
+        for _, e in ipairs(r.errors) do failures[#failures + 1] = "reliability scenario: " .. e end
+        if ping then r.frames(2) end
+        local hit = r.toggleRowHit("Auto block"); if hit then r.tap(hit) end
+        return r, keyNamed(r, "F")
+    end
+    local function firstDown(r, F, t0) local ev = fEvents(r, F)[1] return ev and ev.down and (ev.t - t0) or nil end
+    local XID = "rbxassetid://444"
+
+    do -- new defaults: early and generous
+    local d1, DF = defaultBlocker()
+    local d1t = d1.ctx.now
+    d1.swing(1, 3, false, XID, 0.5); d1.frames(0.03)
+    check(#fEvents(d1, DF) == 0, "defaults: F waits the (short) default delay of 0.05 s")
+    d1.frames(0.05)
+    local d1p = firstDown(d1, DF, d1t)
+    check(d1p and d1p >= 0.04 and d1p <= 0.1, "defaults: F must go down ~0.05 s after the swing starts, got " .. tostring(d1p))
+    d1.frames(0.7)
+    check(d1.textOf("%-> block"), "diagnostics: the readout must say the attack was answered; got: " .. tostring(d1.textOf("^Last:")))
+
+    end
+    do -- style presets (learned 0.30 s hit, no ping): Safe 0.12 -> 0.18 s, Balanced 0.05 -> 0.25 s, Perfect 0.02 -> 0.28 s
+    local function pressAfterStyle(style)
+        local settings = {learned = {[XID] = {n = 5, offset = 0.30, spread = 0.01, length = 0.4}}}
+        if style then settings.block = {style = style} end
+        local r, F = defaultBlocker(nil, settings)
+        local t0 = r.ctx.now
+        r.swing(1, 3, false, XID, 0.4); r.frames(0.6)
+        return firstDown(r, F, t0)
+    end
+    local safe, balanced, perfect, deflt = pressAfterStyle("Safe"), pressAfterStyle("Balanced"), pressAfterStyle("Perfect"), pressAfterStyle(nil)
+    check(safe and math.abs(safe - 0.18) < 0.03, "style Safe: F ~0.18 s after the swing, got " .. tostring(safe))
+    check(balanced and math.abs(balanced - 0.25) < 0.03, "style Balanced: F ~0.25 s after the swing, got " .. tostring(balanced))
+    check(perfect and math.abs(perfect - 0.28) < 0.03, "style Perfect: F ~0.28 s after the swing, got " .. tostring(perfect))
+    check(deflt and safe and math.abs(deflt - safe) < 0.02, "the default style is Safe")
+
+    end
+    do -- backup detection: a track that is playing but never fired AnimationPlayed is still answered
+    local pl, PLF = defaultBlocker()
+    local plt = pl.ctx.now
+    pl.silentSwing(1, 3, false, XID, 0.5, nil, 0.02)
+    pl.frames(0.25)
+    local plp = firstDown(pl, PLF, plt)
+    check(plp ~= nil and plp <= 0.2, "polling: an attack whose event never fired must be caught within ~0.1 s, F at " .. tostring(plp))
+    pl.frames(1.5)
+    check(#fEvents(pl, PLF) == 2, "polling: the same track must only be answered once (no repeated presses), events " .. #fEvents(pl, PLF))
+    local pe2, PEF = defaultBlocker()
+    pe2.swing(1, 3, false, XID, 0.5); pe2.frames(2.0)
+    check(#fEvents(pe2, PEF) == 2 and pe2.textOf("Seen 1 attacks"), "polling + event for one swing count once; got: " .. tostring(pe2.textOf("^Last:")))
+    local pm, PMF = defaultBlocker()
+    pm.silentSwing(1, 3, false, XID, 2.0, nil, 0.8); pm.frames(0.5)
+    check(#fEvents(pm, PMF) == 0, "polling: an animation that is already 0.8 s in when first seen is not a new attack")
+    local pg2, PGF = defaultBlocker()
+    local pg2t = pg2.ctx.now
+    pg2.silentSwing(1, 3, false, XID, 0.5, nil, 0.25); pg2.frames(0.2)
+    local pg2p = firstDown(pg2, PGF, pg2t)
+    check(pg2p ~= nil and pg2p <= 0.16, "polling: an attack seen 0.25 s late does not wait the default delay again, F at " .. tostring(pg2p))
+
+    end
+    do -- idle / movement layers are not attacks - unless the name (or what hurt me) says otherwise
+    local pr1, PR1 = defaultBlocker()
+    pr1.swing(1, 1, false, XID, 0.5); pr1.frames(0.5)
+    check(#fEvents(pr1, PR1) == 0, "priority: an unnamed movement-layer animation is not an attack")
+    local pr2, PR2 = defaultBlocker()
+    pr2.swing(1, 1, false, XID, 0.5, "Hunter's Grasp"); pr2.frames(1.2)
+    check(#fEvents(pr2, PR2) == 2, "priority: ...but a known attack name on a low layer is answered")
+    local pr3, PR3 = defaultBlocker(nil, {learned = {[XID] = {n = 5, offset = 0.20, spread = 0.01}}})
+    pr3.swing(1, 1, false, XID, 0.5); pr3.frames(0.5)
+    check(#fEvents(pr3, PR3) == 2, "priority: ...and so is one that hurt me before")
+
+    end
+    do -- geometry that looks ahead
+    local function pressedFor(enemy)
+        local r, F = defaultBlocker(enemy)
+        r.swing(1, 3, false, XID, 0.5); r.frames(0.8)
+        return #fEvents(r, F) > 0, r
+    end
+    check(pressedFor({name = "Dasher", pos = {x = 0, y = 0, z = -30}, look = TOWARD_ME, vel = {x = 0, y = 0, z = 80}}), "geometry: an attacker 30 studs away DASHING in (80 studs/s) must be blocked")
+    local slowFar, slowFarR = pressedFor({name = "Far", pos = {x = 0, y = 0, z = -30}, look = TOWARD_ME, vel = {x = 0, y = 0, z = 10}})
+    check(not slowFar, "geometry: a slow attacker 30 studs away is too far")
+    check(slowFarR.textOf("too far away"), "diagnostics: the readout must say WHY it ignored it; got: " .. tostring(slowFarR.textOf("^Last:")))
+    check(pressedFor({name = "Side", pos = {x = 0, y = 0, z = -6}, look = {x = 1, y = 0, z = 0.1}}), "geometry: an attacker whose look is 90 degrees off still counts (M1s snap on)")
+    check(pressedFor({name = "Adjacent", pos = {x = 0, y = 0, z = -3}, look = {x = 0, y = 0, z = -1}}), "geometry: right next to me the aim test is skipped")
+    local away, awayR = pressedFor({name = "Away", pos = {x = 0, y = 0, z = -9}, look = {x = 0, y = 0, z = -1}})
+    check(not away and awayR.textOf("not aimed at you"), "geometry: 9 studs away and looking away is not aimed at me (and the readout says so)")
+    local behind, behindR = pressedFor({name = "Behind", pos = {x = 0, y = 0, z = 6}, look = {x = 0, y = 0, z = -1}})
+    check(not behind and behindR.textOf("behind you"), "geometry: from behind F cannot help (and the readout says so)")
+    local running, runningR = defaultBlocker({name = "Runner", pos = {x = 0, y = 0, z = -8}, look = {x = 0, y = 0, z = -1}, vel = {x = 0, y = 0, z = 14}})
+    runningR = nil
+    running.swing(1, 3, false, XID, 0.5); running.frames(0.4)
+    check(#fEvents(running, keyNamed(running, "F")) > 0, "geometry: an attacker RUNNING AT me counts as aimed at me even if his body still points elsewhere")
+
+    end
+    do -- names tell what ignores block (only matters when the 'ignores block' action is not 'Block anyway')
+    for _, case in ipairs({{"Hunter's Grasp", "skip", false}, {"Flowing_Water", "skip", false}, {"Homerun", "skip", false}, {"Mini Uppercut", "skip", false},
+                           {"Hunter's Grasp", "block", true}, {"Lethal Whirlwind Stream", "skip", true}, {"M1_2", "skip", true}, {"Pinpoint Cut", "skip", true}}) do
+        local r, F = defaultBlocker(nil, {block = {pierceMode = case[2]}})
+        r.swing(1, 3, false, XID, 0.5, case[1]); r.frames(0.4)
+        local did = #fEvents(r, F) > 0
+        check(did == case[3], string.format("names: '%s' with '%s' -> F %s, expected %s", case[1], case[2], tostring(did), tostring(case[3])))
+    end
+    local nd, NDF = defaultBlocker(nil, {block = {pierceMode = "skip"}})
+    nd.swing(1, 3, false, XID, 0.5, "Hunter's Grasp"); nd.frames(0.8)
+    check(nd.textOf("skipped %(known to ignore block%)"), "diagnostics: the readout must say it skipped a known unblockable move; got: " .. tostring(nd.textOf("^Last:")))
+
+    end
+    do -- the same swing seen twice is one attack; two different animations at once are two (but teach the learner once)
+    local r1, F1 = defaultBlocker()
+    r1.swing(1, 3, false, XID, 0.5); r1.frames(0.05); r1.swing(1, 3, false, XID, 0.5); r1.frames(0.9)
+    check(r1.textOf("Seen 1 attacks: 1 answered"), "dedupe: the same animation twice within 0.12 s is ONE attack and one is answered; got: " .. tostring(r1.textOf("^Last:")))
+    local r2 = defaultBlocker()
+    r2.swing(1, 3, false, XID, 0.5); r2.frames(0.05); r2.swing(1, 3, false, "rbxassetid://555", 0.5); r2.frames(0.9)
+    check(r2.textOf("Seen 2 attacks: 2 answered"), "dedupe: two different animations are two attacks; got: " .. tostring(r2.textOf("^Last:")))
+    end
+    do -- what ignores block, per character (names from the guides)
+    local r = run({executor = "full", body = PNG})
+    check(r.textOf("Ignore or break block: .*Flowing Water %(guardbreak, medium%)"), "info: the Garou tab must list Flowing Water as a guard-break")
+    check(r.textOf("Ignore or break block: .*Hunter's Grasp %(unblockable"), "info: ... and Hunter's Grasp as unblockable")
+    check(r.textOf("Ignore or break block: .*Homerun %(guardbreak"), "info: the Metal Bat tab lists Homerun")
+    check(r.textOf("Ignore or break block: .*Downslam %(unblockable"), "info: the Universal tab lists Downslam")
+    check(r.textOf("Other notes: .*Lethal Whirlwind Stream %(disputed"), "info: disputed moves are shown as disputed, not as unblockable")
+    check(r.textOf("Everything not listed is treated as blockable"), "info: it must say what the rest means")
+    end
+    do -- the counters can be reset
+    local rs = defaultBlocker()
+    rs.swing(1, 3, false, XID, 0.5); rs.frames(1.0)
+    check(rs.textOf("Seen 1 attacks"), "diagnostics: Seen counter")
+    local rsb = rs.findButton("Reset the attack counters"); if rsb then rs.tap(rsb) end
+    check(rs.textOf("Seen 0 attacks"), "diagnostics: Reset must zero the counters; got: " .. tostring(rs.textOf("^Last:")))
+    end
+end
+
+
 do   -- anything that went wrong at any time in any scenario (taps, frames, drags, ...) fails the run
     local seen = {}
     for _, list in ipairs(ALL_ERRORS) do
@@ -1176,4 +1458,4 @@ if #failures > 0 then
     finish(1)
     return
 end
-print("smoke test passed (28 scenarios)")
+print("smoke test passed (29 scenarios)")

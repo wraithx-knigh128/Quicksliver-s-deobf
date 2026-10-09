@@ -22,6 +22,7 @@ local Assist = ex:require("assist.lua")
 local CM = ex:require("combat_math.lua")
 local BS = ex:require("block_state.lua")
 local BP = ex:require("block_predict.lua")
+local BI = ex:require("block_info.lua")
 Engine.loadData(Data)
 
 local function feedAll(p, tokens, t0, dt)
@@ -300,8 +301,9 @@ test("combo options: sanitize always returns a complete valid table", function()
     for k, v in pairs(CO.DEFAULTS) do eq(o[k], v, "default " .. k) end
     local bad = CO.sanitize({speed = 99, m1 = -3, dash = "x", move = 0/0, jump = 5, offsetMs = 1e9, auto = "weird", side = 7})
     eq(bad.speed, 2); eq(bad.m1, 0); eq(bad.dash, 0); eq(bad.move, 0); eq(bad.jump, 0.6); eq(bad.offsetMs, 100)
-    eq(bad.auto, "global"); eq(bad.side, "Closest")
-    eq(CO.sanitize({side = "Left"}).side, "Left"); eq(CO.sanitize({side = "Closest"}).side, "Closest")
+    eq(bad.auto, "global"); eq(bad.side, "Behind")
+    eq(CO.sanitize({side = "Left"}).side, "Left"); eq(CO.sanitize({side = "Behind"}).side, "Behind"); eq(CO.sanitize({side = "Toward"}).side, "Toward")
+    eq(CO.sanitize({side = "Closest"}).side, "Toward", "the old name 'Closest' means 'Toward'")
     local ok = CO.sanitize({speed = 1.25, auto = "off", side = "Right", dash = 0.35, offsetMs = -20})
     eq(ok.speed, 1.25); eq(ok.auto, "off"); eq(ok.side, "Right"); eq(ok.dash, 0.35); eq(ok.offsetMs, -20)
     local a, b = CO.sanitize(nil), CO.sanitize(nil)
@@ -461,14 +463,35 @@ test("block state: punching drops the block at once and pauses re-blocking", fun
     eq(b:tick(0), "press")
     eq(b:punch(0.2), "release", "you hit M1 while blocking -> unblock immediately")
     eq(b:tick(0.25), nil)
-    b:threat(0.3, 0, 0.3)
-    eq(b:tick(0.3), nil, "inside the punch pause an incoming attack is ignored")
+    b:threat(0.3, 0, 0.2)
+    eq(b:tick(0.3), nil, "inside the lockout the block cannot come up")
+    eq(b:tick(0.55), nil, "an attack that is over before the lockout ends cannot be blocked: nothing happens")
     b:threat(0.61, 0, 0.3)
     eq(b:tick(0.61), "press", "after the pause it blocks again")
     local c = BS.new({punchPause = 0.4})
     c:threat(0, 0.2, 0.3)
     eq(c:punch(0.1), nil, "nothing to release yet")
     eq(c:tick(0.2), nil, "a block that was only scheduled is cancelled by the punch")
+end)
+
+test("block state: a hit that lands AFTER your punch lockout is still blocked (press waits for the lockout)", function()
+    local b = BS.new({grace = 0.15, maxHold = 1.0, minHold = 0.12, punchPause = 0.22})
+    eq(b:punch(1.0), nil)                                            -- you throw an M1 at t = 1.0; lockout until 1.22
+    b:threat(1.05, 0.05, 0.4)                                        -- their attack starts now and lasts until 1.5
+    eq(b:tick(1.1), nil, "not before the lockout is over")
+    eq(b:tick(1.21), nil)
+    eq(b:tick(1.23), "press", "as soon as the lockout is over F goes down")
+    eq(b:tick(1.6), nil, "still down: their attack ends at 1.45 and the grace is 0.15 (release at 1.65)")
+    eq(b:tick(1.66), "release", "and it is let go after their attack, not later than that")
+    local c = BS.new({punchPause = 0.22, grace = 0.1, minHold = 0.1})
+    c:punch(0)
+    c:threat(0.05, 0, 0.1)                                           -- over at 0.15, before the lockout (0.22) ends
+    eq(c:tick(0.3), nil, "nothing to block any more")
+    local d = BS.new({punchPause = 0.22, grace = 0.1, minHold = 0.1})
+    d:punch(0)
+    d:threat(0.05, 0.3, 0)                                           -- lands at 0.35: after the lockout
+    eq(d:tick(0.34), nil, "it was due at 0.35: not earlier")
+    eq(d:tick(0.36), "press", "and not later than it was due (the lockout was over long before)")
 end)
 
 test("block state: several attacks before the press, bad input, reset", function()
@@ -589,6 +612,99 @@ test("combo options: only the adjustments a combo needs are offered", function()
     n = CO.needs({"Unmapped", "Other"}, kindOf)
     eq(n.played, 0); eq(n.m1, false); eq(n.dependent, false)
     eq(CO.needs(nil, kindOf).played, 0); eq(CO.needs({}, kindOf).m1, false)
+end)
+
+test("combat math: assess looks ahead (running attackers, snapping M1s) and says why it will not block", function()
+    local me, look = {x = 0, y = 0, z = 0}, {x = 0, y = 0, z = -1}
+    local function A(o)
+        local base = {mp = me, ml = look, tp = {x = 0, y = 0, z = -6}, tl = {x = 0, y = 0, z = 1}, range = 16, aim = 90}
+        for k, v in pairs(o or {}) do base[k] = v end
+        return CM.assess(base)
+    end
+    eq(A(), "block")
+    eq(A({tp = {x = 0, y = 0, z = -30}}), "far")
+    eq(A({tp = {x = 0, y = 0, z = -30}, tv = {x = 0, y = 0, z = 60}, hitIn = 0.3}), "block", "30 studs away but dashing in: he is 12 studs away when it lands")
+    eq(A({tp = {x = 0, y = 0, z = -30}, tv = {x = 0, y = 0, z = 20}, hitIn = 0.2}), "far", "too slow to arrive")
+    eq(A({tl = {x = 0, y = 0, z = -1}}), "unaimed", "looking away, 6 studs: the swing is for someone else")
+    eq(A({tp = {x = 0, y = 0, z = -3}, tl = {x = 0, y = 0, z = -1}}), "block", "right next to me the aim test is skipped (M1s snap on)")
+    eq(A({tl = {x = 1, y = 0, z = 0.1}}), "block", "90 degrees to the side is inside a 90 degree half-cone")
+    eq(A({tl = {x = 1, y = 0, z = 0.1}, aim = 60}), "unaimed", "but not inside a 60 degree one")
+    eq(A({tl = {x = 0, y = 0, z = -1}, tv = {x = 0, y = 0, z = 14}}), "block", "running at me counts as aimed at me")
+    eq(A({tl = {x = 0, y = 0, z = -1}, tv = {x = 0, y = 0, z = -14}}), "unaimed", "running away does not")
+    eq(A({tp = {x = 0, y = 0, z = 6}, tl = {x = 0, y = 0, z = -1}}), "behind", "from behind: a block would be wasted")
+    eq(A({tp = {x = 5, y = 0, z = -5}, tl = {x = -1, y = 0, z = 1}}), "block", "diagonal in front")
+    eq(A({mv = {x = 0, y = 0, z = -30}, tp = {x = 0, y = 0, z = -25}, tl = {x = 0, y = 0, z = 1}, hitIn = 0.3}), "block", "I run toward him")
+    eq(CM.assess({mp = me, ml = look, tp = {x = 0, y = 0, z = -6}, tl = {x = 0, y = 0, z = 1}, aim = 90}), "unknown", "no range")
+    eq(CM.assess(nil), "unknown"); eq(A({mp = {x = 1}}), "unknown")
+    eq(A({hitIn = 99, tp = {x = 0, y = 0, z = -20}, tv = {x = 0, y = 0, z = 20}}), "block", "hitIn is capped at 1 s (he arrives in 1 s; 99 s would put him miles away)")
+end)
+
+test("combat math: orbitStep goes round the player towards his back", function()
+    local him, look = {x = 0, y = 0, z = 0}, {x = 0, y = 0, z = 1}         -- he looks toward +z
+    local st = CM.orbitStep({x = 0, y = 0, z = 6}, him, look)               -- I am right in front of him
+    near(st.angle, 0, 1e-6); eq(st.behind, false); near(st.radius, 6, 1e-9)
+    assert(math.abs(st.dz) < 0.2 and math.abs(st.dx) > 0.9, "in front: dash sideways (round him), not at him")
+    local sr = CM.orbitStep({x = 0, y = 0, z = 6}, him, look, {x = 1, y = 0, z = 0})
+    assert(sr.dx > 0.9, "in front, camera right is +x: start to my right")
+    local sl = CM.orbitStep({x = 0, y = 0, z = 6}, him, look, {x = -1, y = 0, z = 0})
+    assert(sl.dx < -0.9, "...and to my left when the camera says so")
+    local side = CM.orbitStep({x = 6, y = 0, z = 0}, him, look)              -- at his side (90 degrees)
+    near(side.angle, 90, 1e-6); eq(side.behind, false)
+    assert(side.dz < -0.9, "at his right side the next step is toward his back (-z)")
+    local back = CM.orbitStep({x = 0, y = 0, z = -6}, him, look)
+    near(back.angle, 180, 1e-6); eq(back.behind, true)
+    eq(CM.orbitStep({x = 4, y = 0, z = -5}, him, look).behind, true, "angle ~141 degrees counts as behind")
+    local far = CM.orbitStep({x = 20, y = 0, z = 0}, him, look)             -- far away: also close in
+    assert(far.dx < -0.2 and far.dz < -0.2, "far away: go round AND come closer")
+    local near2 = CM.orbitStep({x = 2, y = 0, z = 0}, him, look)
+    assert(near2.dx > 0 or near2.dz < 0, "very close: do not run into him")
+    eq(CM.orbitStep({x = 0, y = 0, z = 0}, him, look), nil, "on top of him: no direction")
+    eq(CM.orbitStep(nil, him, look), nil); eq(CM.orbitStep({x = 1, y = 0, z = 1}, him, {x = 0, y = 5, z = 0}), nil, "vertical look")
+    -- walk the whole thing: repeated 12-stud dashes along the suggested direction reach his back within 3 dashes (any start, radius 5..9)
+    for _, start in ipairs({{0, 6}, {6, 0}, {-6, 0}, {4, 4}, {-5, 5}, {0, 9}, {7, 3}}) do
+        local pos, dashes = {x = start[1], y = 0, z = start[2]}, 0
+        while dashes < 4 do
+            local s2 = CM.orbitStep(pos, him, look)
+            if s2.behind then break end
+            local len = 12
+            pos = {x = pos.x + s2.dx * len, y = 0, z = pos.z + s2.dz * len}
+            local r = math.sqrt(pos.x * pos.x + pos.z * pos.z)
+            if r > 7 then pos.x, pos.z = pos.x * 6 / r, pos.z * 6 / r end   -- dashes stop at the player: keep a circle of radius ~6
+            dashes = dashes + 1
+        end
+        assert(dashes <= 3, "from " .. start[1] .. "," .. start[2] .. " it took " .. dashes .. " dashes to get behind")
+    end
+end)
+
+test("combat math: dominantKey picks the one key that moves me closest to a direction", function()
+    local look, right = {x = 0, y = 0, z = -1}, {x = 1, y = 0, z = 0}     -- camera looks to -z, its right is +x
+    eq((CM.dominantKey(0, -1, look, right)), "W"); eq((CM.dominantKey(0, 1, look, right)), "S")
+    eq((CM.dominantKey(1, 0, look, right)), "D"); eq((CM.dominantKey(-1, 0, look, right)), "A")
+    eq((CM.dominantKey(0.8, -0.6, look, right)), "D", "more sideways than forward")
+    eq((CM.dominantKey(0.5, -0.9, look, right)), "W")
+    local look2, right2 = {x = 1, y = 0, z = 0}, {x = 0, y = 0, z = 1}     -- camera turned: looks to +x
+    eq((CM.dominantKey(1, 0, look2, right2)), "W"); eq((CM.dominantKey(0, 1, look2, right2)), "D")
+    eq((CM.dominantKey(0, 1, {x = 0, y = -1, z = 0}, right)), "S", "camera looking straight down: forward comes from the right vector")
+    eq(CM.dominantKey(0, 1, nil, right), nil); eq(CM.dominantKey(0, 1, look, {x = 0, y = 1, z = 0}), nil); eq(CM.dominantKey("x", 1, look, right), nil)
+end)
+
+test("block info: which moves ignore block (names only, never from the game)", function()
+    eq((BI.classify("Flowing Water")), "guardbreak"); eq((BI.classify("flowing_water")), "guardbreak", "case / underscores ignored")
+    eq((BI.classify("Hunter's Grasp")), "unblockable"); eq((BI.classify("HUNTERS_GRASP")), "unblockable")
+    eq((BI.classify("Lethal Whirlwind Stream")), "disputed")
+    eq((BI.classify("Homerun")), "guardbreak"); eq((BI.classify("Grand Slam")), "guardbreak"); eq((BI.classify("FoulBall")), "guardbreak")
+    eq((BI.classify("Downslam")), "unblockable"); eq((BI.classify("Normal Punch")), "unblockable")
+    eq((BI.classify("Pinpoint Cut")), "blockable"); eq((BI.classify("Whirlwind Drop")), "chip")
+    eq((BI.classify("Ragdoll Cancel")), "unblockable", "longest match wins over a shorter one")
+    eq((BI.classify("M1_3")), nil, "ordinary attacks are not listed"); eq((BI.classify("")), nil); eq((BI.classify(42)), nil); eq((BI.classify(nil)), nil)
+    local kind, entry = BI.classify("Mini Uppercut")
+    eq(kind, "unblockable"); eq(entry.name, "Uppercut"); eq(entry.who, "Universal")
+    eq(BI.ignoresBlock("unblockable"), true); eq(BI.ignoresBlock("guardbreak"), true)
+    eq(BI.ignoresBlock("chip"), false); eq(BI.ignoresBlock("blockable"), false); eq(BI.ignoresBlock("disputed"), false); eq(BI.ignoresBlock(nil), false)
+    for _, e in ipairs(BI.entries) do
+        assert(type(e[1]) == "string" and #e == 4 and (e[4] == "medium" or e[4] == "low"), "entry shape: " .. tostring(e[1]))
+        assert(BI.classify(e[1]) ~= nil, "every listed name must classify: " .. e[1])
+    end
 end)
 
 test("sandboxed script runs, records key events and virtual time", function()

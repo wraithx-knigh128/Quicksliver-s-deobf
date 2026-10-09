@@ -153,3 +153,46 @@ hover / float MOVEMENT feature was meant, that is a different thing and was not 
   (Auto block off, or attacks that ignore block). That is why the Tech tab tells you to spar with Auto block OFF for a while to teach it.
 * Searches found no frame data, no perfect-block window length and no published hit offsets - none of these numbers are invented.
 * The Fandom wiki was not reachable from the build environment this round, so its pages were not read directly.
+
+---
+## Round 7 - why Auto block was hit-and-miss, which moves block can stop, going behind a player, a brighter menu
+(Search-result summaries and raw theme files only. The Fandom wiki could not be opened from the build environment, so its pages were
+not read directly - what is quoted below comes from the search summaries of those pages.)
+
+**Which moves ignore block (names only; encoded in `block_info.lua`, shown per character in the menu)**
+* Wiki "Basic Combat" (via search summary): block protects against basic attacks and some moves from a 180 degree angle; attacks that break
+  through it include Normal Punch (up close), Shove, Uppercut, Flowing Water and Hunter's Grasp.
+* The Strongest Hero (Saitama): Normal Punch is unblockable on a direct hit; Uppercut unblockable. No blockability note found for Consecutive Punches,
+  Serious Punch, Table Flip, Death Counter.
+* Hero Hunter (Garou): "7 block-bypassing moves" (more than any character). Flowing Water - unblockable / guardbreak (several guides);
+  Hunter's Grasp - armoured grab, unblockable; Crushed Rock (rampage) - advancing grab, unblockable. **Lethal Whirlwind Stream: guides contradict**
+  (one says guardable, others say its AoE cannot be blocked) -> kept as "disputed" and never skipped.
+* Brutal Demon (Metal Bat): Homerun, Grand Slam, Foul Ball are the block-breakers (punishable end lag).
+* Destructive Cyborg (Genos): most base moves blockable, chip damage still gets through. Blade Master: Pinpoint Cut blockable.
+* Martial Artist: Vanishing Kick, Head First (damage only reduced), Grand Fissure, Twin Fangs, Earth Splitting Strike, Last Breath unblockable;
+  Whirlwind Drop hits through guard without breaking it. Event characters: Grave Maker, Pincer Barrage unblockable.
+* Nothing usable was found for Sonic, Wild Psychic (Tatsumaki) or Tech Prodigy blockability -> they are treated as blockable.
+* Perfect-block window / hit frames: still nothing public ("the window is short, worth practicing" is all any guide says). No numbers invented.
+  The script learns hit times from the hits you take instead (Round 6) and now reads the animation's NAME so known moves are recognised.
+
+**Why Auto block worked "sometimes" - found by auditing the code, each one fixed**
+1. It only listened to `AnimationPlayed`. Now it ALSO polls every enemy Animator 10x a second and answers tracks the event missed (one track is never answered twice).
+2. It tested "is he looking at me" at the exact frame the swing started - TSB M1s snap onto the target, so real attacks were thrown away.
+   Now: 90 degree half-cone by default, no aim test when he is within 4 studs, and a fast attacker running at you counts as aimed.
+3. It tested distance at the first frame - a dashing attacker starts far away. Now it predicts both positions at the moment of the hit.
+4. Idle / movement-layer animations were dropped even when they were real attacks. Now a known attack NAME or an animation that hurt you before overrides the priority filter.
+5. A hit that lands after your own M1 (the game's ~0.2 s block lockout) was discarded. Now F goes down the moment the lockout ends if the hit is still coming.
+6. Defaults were tight (0.10 s delay, "just before the hit"). Now 0.05 s delay and the "Safe" style (F ~0.12 s before a learned hit).
+7. Nothing told you WHY a swing was ignored. The Tech tab now shows the last decision and counters ("2x too far away, 1x not aimed at you").
+Honest limit: none of this could be run against the real game here; the readout exists so a remaining miss can be explained from what it prints.
+
+**Dash behind a player (the "side dash from the back")**
+* Hits from behind always connect (block covers only the front 180 degrees), so the goal is to end up behind the closest player. Guides also describe
+  "dashing behind the opponent" as the answer to a ragdoll cancel. Nothing is teleported: the script only picks WHICH key goes with Q.
+* Maths (`combat_math.lua`): angle of me around him (0 = in front, 180 = behind, "behind" from 120), the next step along the circle (the tangent that
+  turns me away from his front, pulled inwards when far), then the movement key closest to that direction in CAMERA space (movement keys are
+  camera relative). One key per dash, because a dash goes the way of one key.
+* Caveats: dash distance and cooldowns are not public (guides: side dash ~1-2 s, front/back dash ~5 s shared), so a second dash of the same kind may
+  be on cooldown; "most dashes" (1-3) and the wait between them are adjustable and the loop stops as soon as you are behind him.
+
+**Menu**: measured luminance of the old window 0.03 -> new ~0.16 with text contrast >= 4.5 : 1 (details and references in `UI_GUIDE.md`).

@@ -14,6 +14,7 @@ Checks (from `game_dev/`):
 - `python3 tests/run_tests.py`           logic tests (needs `pip install lupa`)
 - `python3 tests/run_smoke.py [file]`    UI smoke test on Lua 5.x via lupa
 - `LUAU=/path/to/luau python3 tests/run_smoke_luau.py [file]`   same smoke test on real Luau (what Roblox runs)
+- `python3 tests/check_palette.py`        the menu themes must stay bright (window luminance) and readable (WCAG contrast)
 - `tools/validate_api.py`                every Roblox property/enum/service used vs Roblox's real API dump
 - `tools/gen_prop_types.py`              regenerates `tests/prop_types.lua` (real property VALUE types); the smoke test rejects wrong-typed assignments and tweens like Roblox does
 

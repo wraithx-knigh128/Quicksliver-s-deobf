@@ -6,7 +6,8 @@
 
       local b = BlockState.new(cfg)       cfg (read live, so sliders can change it): {grace, maxHold, minHold, punchPause}
       b:threat(now, delay, duration)      an attack will land ~`delay` s from now and its animation lasts `duration` s
-      b:punch(now)                        you want to attack: drop the block now, no new block for `punchPause` s
+      b:punch(now)                        you want to attack: drop the block now; no block can come up for `punchPause` s (the game's
+                                          lockout after your own M1), but an attack that lands after that is still blocked
       b:tick(now)  -> "press" | "release" | nil     call every frame; the caller presses / releases F
       b:reset()    -> "release" | nil     turn everything off (e.g. Auto block switched off)
 
@@ -26,9 +27,17 @@ function M.new(cfg)
     local function minHold() return cfg.minHold or 0.12 end
 
     function self:threat(now, delay, duration)
-        if type(now) ~= "number" or now < self.pausedUntil then return end          -- you just punched: let it through
+        if type(now) ~= "number" then return end
         delay = math.max(tonumber(delay) or 0, 0)
         duration = math.max(tonumber(duration) or 0, 0)
+        if now < self.pausedUntil then
+            -- you just punched, so the game will not let you block before the lockout ends. A hit that is over by then is
+            -- lost anyway; one that lands after it is still blocked - the press just waits for the lockout.
+            local attackEnds = now + delay + duration
+            if attackEnds <= self.pausedUntil then return end
+            delay = math.max(delay, self.pausedUntil - now)
+            duration = math.max(attackEnds - (now + delay), 0.1)           -- the attack still ends when it ends
+        end
         local hitEnd = now + delay + duration + grace()
         if self.holding then
             -- keep blocking through the next hit, but never longer than maxHold from the start of this block

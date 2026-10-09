@@ -7,8 +7,9 @@
       speed     0.5..2     multiplies every gap of this combo
       m1/dash/move/jump  0..max   gap override in seconds, 0 = use the global gap from the Timing tab
       offsetMs  -100..100  fine-tune added (in auto mode) to gaps that wait for a visible cue
-      side      "Closest" | "Left" | "Right"   which way a SIDEDASH step goes: toward the nearest player (no teleport -
-                                  it just picks the A or D key), or always left / right
+      side      "Behind" | "Toward" | "Left" | "Right"   which way a SIDEDASH step goes: round the nearest player toward his
+                                  back ("Behind"), toward him ("Toward"), or always left / right. It never moves you: it
+                                  only picks the key (the old name "Closest" now means "Toward")
       trigger   0..64      Assist mode: after WHICH step (1-based) the script takes over; 0 = after your first move
       pinMode   "assist" | "run"   what the on-screen button does: arm / disarm Assist, or run the whole combo
       trigAnim  string     animation id learned for the trigger move (lets Assist work with on-screen touch buttons)
@@ -16,7 +17,7 @@
 
 local M = {}
 
-M.DEFAULTS = {auto = "global", speed = 1, m1 = 0, dash = 0, move = 0, jump = 0, offsetMs = 0, side = "Closest",
+M.DEFAULTS = {auto = "global", speed = 1, m1 = 0, dash = 0, move = 0, jump = 0, offsetMs = 0, side = "Behind",
     trigger = 0, pinMode = "assist", trigAnim = ""}
 
 local RANGES = {
@@ -25,7 +26,7 @@ local RANGES = {
 M.RANGES = RANGES
 
 local AUTO = {global = true, on = true, off = true}
-local SIDE = {Closest = true, Left = true, Right = true}
+local SIDE = {Behind = true, Toward = true, Left = true, Right = true}
 local PINMODE = {assist = true, run = true}
 
 local function clamp(v, lo, hi, default)
@@ -41,7 +42,7 @@ function M.sanitize(src)
         o[key] = clamp(src[key], range[1], range[2], M.DEFAULTS[key])
     end
     o.auto = AUTO[src.auto] and src.auto or M.DEFAULTS.auto
-    o.side = SIDE[src.side] and src.side or M.DEFAULTS.side
+    o.side = SIDE[src.side] and src.side or (src.side == "Closest" and "Toward" or M.DEFAULTS.side)
     o.pinMode = PINMODE[src.pinMode] and src.pinMode or M.DEFAULTS.pinMode
     o.trigger = math.floor(clamp(src.trigger, 0, 64, M.DEFAULTS.trigger))
     -- an animation id is plain text like "rbxassetid://123"; anything odd or huge is thrown away
