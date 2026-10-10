@@ -4,7 +4,7 @@
 
 One-line loader (pinned to a build; the SHA is updated after every build):
 ```lua
-loadstring(game:HttpGet("https://raw.githubusercontent.com/wraithx-knigh128/Quicksliver-s-deobf/<SHA>/dist/mm2_hub.min.txt"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/wraithx-knigh128/Quicksliver-s-deobf/a7ae1b764846e1e7982c4b0cd8aa97c71f4fca00/dist/mm2_hub.min.txt"))()
 ```
 WindUI / RuzHub-style window (sidebar tabs + search, toggles, sliders, dropdowns, keybinds, toasts, 5 themes, round avatar, minimise / maximise / hide,
 floating **M** button for phones; RightShift hides the menu). Tabs: Main, ESP, Combat, Player, Misc, Settings, Debug.
@@ -34,7 +34,7 @@ take-over, clicks the game already consumed are ignored, and touch players teach
 
 Short loader (no pasting a 77 KB file):
 ```lua
-loadstring(game:HttpGet("https://raw.githubusercontent.com/wraithx-knigh128/Quicksliver-s-deobf/6667162e1b9f7c78923983db9bdfac9360276263/dist/tsb_hub_executor.min.txt"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/wraithx-knigh128/Quicksliver-s-deobf/715b666948a9aab6ab57f8b181b6dfd3cbb87b70/dist/tsb_hub_executor.min.txt"))()
 ```
 
 Nothing is saved automatically (that includes your own menu picture: Save config keeps it). The Config tab has Save config / Reload / Delete; the only file is `animation_hub_config.json`, loaded when
