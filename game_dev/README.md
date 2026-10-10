@@ -4,7 +4,7 @@
 
 One-line loader (pinned to a build; the SHA is updated after every build):
 ```lua
-loadstring(game:HttpGet("https://raw.githubusercontent.com/wraithx-knigh128/Quicksliver-s-deobf/56404a42f99209609e8c4ad224ffb3298d3622c1/dist/wraiths_hub.min.txt"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/wraithx-knigh128/Quicksliver-s-deobf/0e872f7081cbec66e6869642dfc65e43628b5966/dist/wraiths_hub.min.txt"))()
 ```
 The menu is the real **[WindUI](https://github.com/Footagesus/WindUI)** library (Footagesus, MIT licence - the full source is embedded in the script, see `mm2/vendor/`),
 set up like the official example (`main.client.lua`): Mac-style window buttons, a sidebar group with square coloured tab icons, search box, toggles / sliders / dropdowns /
