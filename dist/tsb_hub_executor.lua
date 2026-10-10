@@ -274,6 +274,47 @@ function M.nextSide(direction, last)
     return "Left"
 end
 
+-- ---- "Start with M1" ---------------------------------------------------------------------------------------------------------
+function M.leadingM1(steps)
+    if type(steps) ~= "table" then return 0 end
+    local k = 0
+    for _, tok in ipairs(steps) do
+        if tok ~= "M1" then break end
+        k = k + 1
+    end
+    return k
+end
+
+-- returns rest, k : rest = the steps after your k M1s (nil when nothing is left)
+function M.afterM1(steps)
+    if type(steps) ~= "table" or #steps == 0 then return nil, 0 end
+    local k = M.leadingM1(steps)
+    if k >= #steps then return nil, k end
+    local rest = {}
+    for i = k + 1, #steps do rest[#rest + 1] = steps[i] end
+    return rest, k
+end
+
+function M.m1Cap(steps, most)
+    local k = M.leadingM1(steps)
+    if k > 0 then return k end
+    local m = tonumber(most)
+    return (m and m >= 1) and math.floor(m) or 3
+end
+
+function M.m1Count(count, last, now, window)
+    if type(count) == "number" and count > 0 and type(last) == "number" and type(now) == "number" and now - last <= (window or 0.8) then
+        return count + 1
+    end
+    return 1
+end
+
+function M.m1Ready(count, last, now, cap, settle)
+    if type(count) ~= "number" or count < 1 or type(last) ~= "number" or type(now) ~= "number" then return false end
+    if count >= cap then return true end
+    return now - last >= settle - 1e-9                                  -- (floating point: 10.35 - 10 is a hair under 0.35)
+end
+
 return M
 
 end)()
@@ -2618,6 +2659,20 @@ local function __run()
     -- before checking / hitting, M1 once behind
     local Behind = {count = 1, gap = 2.1, settle = 0.3, m1 = false}
     -- Garou "Flowing Water -> Kyoto" assist options (see kyoto_plan.lua): M1s, wait after Flowing Water, whirlwind dash, twisted, side dash way
+    -- how techs START: with YOUR M1 (1-3 of them; the script then plays the rest of the tech, casting its first move itself)
+    -- or, with m1 = false, by casting the tech's first move yourself. anims = your M1 animations (touch players teach them once).
+    local Start = {m1 = true, settle = 0.35, most = 3, anims = {}}
+    if type(Saved.start) == "table" then
+        Start.m1 = Saved.start.m1 ~= false
+        Start.settle = num(Saved.start.settle, 0.15, 0.8, Start.settle)
+        Start.most = math.floor(num(Saved.start.most, 1, 4, Start.most))
+        if type(Saved.start.anims) == "table" then
+            local n = 0
+            for id, v in pairs(Saved.start.anims) do
+                if v == true and type(id) == "string" and #id <= 120 and not id:find("%c") and n < 12 then Start.anims[id] = true; n = n + 1 end
+            end
+        end
+    end
     local Kyoto = KyotoPlan and KyotoPlan.clean(type(Saved.kyoto) == "table" and Saved.kyoto or nil)
         or {m1 = 3, wait = 0.3, whirl = true, twisted = true, side = "Toward"}
     if type(Saved.behind) == "table" then
@@ -2709,6 +2764,7 @@ local function __run()
             behind = {count = Behind.count, gap = Behind.gap, settle = Behind.settle, m1 = Behind.m1},
             kyoto = {m1 = Kyoto.m1, wait = Kyoto.wait, whirl = Kyoto.whirl, twisted = Kyoto.twisted, side = Kyoto.side},
             picture = Picture.source,
+            start = {m1 = Start.m1, settle = Start.settle, most = Start.most, anims = Start.anims},
             sideAuto = {dir = SideAuto.dir, delay = SideAuto.delay, cooldown = SideAuto.cooldown, anims = SideAuto.anims}}
     end
     -- returns true when the file was written
@@ -3059,6 +3115,44 @@ local function __run()
         runMacro(rest, info.charName, name, {kind = kind, dependent = dependent, fixed = leadGap}, restGaps)
     end
 
+    -- START WITH M1: every M1 you throw is counted; when you stop (or reach the tech's own M1 count) the newest armed tech plays the rest
+    local m1Pending, lastM1Input = nil, -10
+    local function userM1(now)
+        if #armedOrder == 0 then m1Pending = nil return end
+        local prev = m1Pending
+        m1Pending = {count = Assist.m1Count(prev and prev.count, prev and prev.last, now, 0.8), last = now}
+    end
+    local function newestM1Tech()                     -- the newest armed tech that has something left to play after your M1s
+        return Assist.pick(armedOrder, function(n)
+            local info = ComboInfo[n]
+            return info ~= nil and Assist.afterM1(info.steps) ~= nil
+        end)
+    end
+    local function startAssistM1(name)
+        if macroRunning then return end
+        local info = ComboInfo[name]
+        local rest, k = Assist.afterM1(info and info.steps)
+        if not rest then return end
+        local restGaps, leadGap
+        if info.gaps then                              -- fixed waits are indexed by the FULL step list
+            restGaps = {}
+            for i = k + 1, #info.steps do restGaps[i - k] = info.gaps[i] end
+            leadGap = k > 0 and info.gaps[k] or nil
+        end
+        runMacro(rest, info.charName, name, {kind = "m1", dependent = false, fixed = leadGap}, restGaps)
+    end
+    connect(RunService.Heartbeat, function()
+        local p = m1Pending
+        if not p then return end
+        if macroRunning or #armedOrder == 0 or not Start.m1 then m1Pending = nil return end
+        local name = newestM1Tech()
+        if not name then m1Pending = nil return end
+        if Assist.m1Ready(p.count, p.last, os.clock(), Assist.m1Cap(ComboInfo[name].steps, Start.most), Start.settle) then
+            m1Pending = nil
+            startAssistM1(name)
+        end
+    end)
+
     function setArmed(name, on)
         on = on and true or false
         if (Armed[name] == true) == on then return end
@@ -3071,6 +3165,8 @@ local function __run()
             local idx, trigTok = triggerOf(name)
             local info = ComboInfo[name]
             if not on then toast(shortLabel(name) .. " disarmed")
+            elseif Start.m1 and info and Assist.afterM1(info.steps) then
+                toast(shortLabel(name) .. " armed - throw 1-" .. Assist.m1Cap(info.steps, Start.most) .. " M1s, I do the rest")
             elseif idx and info and Assist.remaining(info.steps, idx) then
                 toast(shortLabel(name) .. " armed - cast " .. shortLabel(trigTok) .. " yourself, I do the rest")
             else toast(shortLabel(name) .. " has nothing after its trigger step") end
@@ -3100,7 +3196,14 @@ local function __run()
     end
     connect(UserInputService.InputBegan, function(input, gp)
         if gp or macroRunning or os.clock() < assistBlockedUntil then return end
-        if #armedOrder > 0 then
+        if Start.m1 then
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                lastM1Input = os.clock()
+                userM1(lastM1Input)
+            elseif isSlotKey(input.KeyCode) or input.KeyCode == Enum.KeyCode.Q then
+                m1Pending = nil                         -- you are doing something else: do not take over
+            end
+        elseif #armedOrder > 0 then
             local name = Assist.pick(armedOrder, function(n)
                 local idx, tok = triggerOf(n)
                 return idx ~= nil and matchesToken(input, tok, ComboInfo[n].charName)
@@ -3116,6 +3219,13 @@ local function __run()
         local id = safe(function() return track.Animation.AnimationId end)
         if type(id) ~= "string" or id == "" or #id > 120 then return end
         if safe(function() return track.Looped end) == true then return end        -- walking / idle loops are not moves
+        if learning and learning.kind == "m1" then       -- teaching your M1 animations: collect everything you play for a few seconds
+            local n = 0
+            for _ in pairs(Start.anims) do n = n + 1 end
+            if n < 12 and not Start.anims[id] then Start.anims[id] = true; markDirty() end
+            learning.n = (learning.n or 0) + 1
+            return
+        end
         if learning then
             local what = learning
             learning = nil
@@ -3133,21 +3243,34 @@ local function __run()
             return
         end
         if macroRunning or os.clock() < assistBlockedUntil then return end
-        local name = Assist.pick(armedOrder, function(n)
-            local o = getOpts(n)
-            return o ~= nil and o.trigAnim ~= "" and o.trigAnim == id
-        end)
-        if name then startAssist(name) return end
+        if Start.m1 then
+            local now = os.clock()
+            if Start.anims[id] and now - lastM1Input > 0.25 then userM1(now) end    -- a touch player's M1 (a keyboard M1 was counted already)
+        else
+            local name = Assist.pick(armedOrder, function(n)
+                local o = getOpts(n)
+                return o ~= nil and o.trigAnim ~= "" and o.trigAnim == id
+            end)
+            if name then startAssist(name) return end
+        end
         if SideAuto.on and SideAuto.anims[id] then performSideAuto() end
     end
     function startLearning(kind, name, hint)
-        learning = {kind = kind, name = name}
+        learning = {kind = kind, name = name, n = 0}
         learnGen = learnGen + 1
         local mine = learnGen
         toast(hint)
         task.spawn(function()
-            task.wait(10)
-            if learning and mine == learnGen and alive then learning = nil; toast("Learning timed out - tap Learn again") end
+            task.wait(kind == "m1" and 4 or 10)
+            if learning and mine == learnGen and alive then
+                local l = learning
+                learning = nil
+                if kind == "m1" then
+                    toast(l.n > 0 and ("Learned your M1 animation(s): " .. l.n .. " played") or "I saw no animation - tap again and throw four M1s")
+                else
+                    toast("Learning timed out - tap Learn again")
+                end
+            end
         end)
     end
     local function hookCharacter(char)
@@ -3755,6 +3878,20 @@ local function __run()
 
     -- Main
     Main_:Banner("Animation Hub", "Auto block  |  Garou Kyoto assist  |  Dash behind the closest player  |  your own picture (Effects tab)", "TSB")
+    -- how techs start (applies to every tech, combo card and tech switch)
+    Main_:Toggle("Start techs with my M1 (off = start them by casting their first move)", Start.m1, function(v)
+        if Start.m1 ~= v then Start.m1 = v; markDirty() end
+    end, nil, "Arm a tech, then throw 1-3 M1s: when you stop (or reach the tech's own M1 count) I play the rest, casting its first move myself.")
+    Main_:Slider("Wait after my last M1 before I take over (s)", 0.15, 0.8, Start.settle, 0.05, function(v)
+        if Start.settle ~= v then Start.settle = v; markDirty() end
+    end)
+    Main_:Slider("Most M1s I wait for (techs that do not begin with M1s)", 1, 4, Start.most, 1, function(v)
+        if Start.most ~= v then Start.most = v; markDirty() end
+    end)
+    Main_:Button("Teach my M1 (touch players): tap this, then throw four M1s", function()
+        if startLearning then startLearning("m1", nil, "Throw four M1s now") end
+    end)
+    Main_:Label("Keyboard / mouse players need nothing - your click is the start. On a phone the M1 is an on-screen button, so teach its animations once with the button above (only your M1s - no moves or dashes while it listens).")
     Main_:Label("General utilities")
     do
     local wantSpeed
@@ -3907,7 +4044,7 @@ local function __run()
                     techSec:Toggle("Lethal Whirlwind Dash (forward dash right after the Stream)", Kyoto.whirl, set("whirl"))
                     techSec:Toggle("Instant Twisted in the air (step back, dash at him)", Kyoto.twisted, set("twisted"))
                     techSec:Dropdown("Kyoto side dash goes", {"Toward", "Behind", "Left", "Right"}, Kyoto.side, set("side"))
-                    techSec:Label("Switch the first toggle on, then cast Flowing Water YOURSELF - I do the rest: side dash (Kyoto), Lethal Whirlwind Stream, the whirlwind dash, your number of M1s, then the instant twisted. Waits follow Auto timing and the Speed setting; change 'wait after Flowing Water' if the side dash comes too early or late.")
+                    techSec:Label("Switch the first toggle on, then start it: throw 1-3 M1s (I cast Flowing Water for you after the last one) - or, if you turned 'Start techs with my M1' off, cast Flowing Water yourself. Then I do the side dash (Kyoto), Lethal Whirlwind Stream, the whirlwind dash, your number of M1s, and the instant twisted. Waits follow Auto timing and the Speed setting; change 'wait after Flowing Water' if the side dash comes too early or late.")
                 end
             end
         end

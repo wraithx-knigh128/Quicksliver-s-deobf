@@ -168,6 +168,7 @@ local function run(scenario)
     ctx.errors = errors
     ALL_ERRORS[#ALL_ERRORS + 1] = errors
     local genvStore = {AH_DISABLE_REBUILD = not scenario.allowRebuild}   -- clicking every button must not rebuild the menu mid-test
+    if scenario.moveStart and not scenario.settings then genvStore.__AnimationHubSession = {start = {m1 = false}} end   -- techs start by casting their first move
     local env = setmetatable({}, {__index = _G})
 
     env.game = dummy("game", ctx); env.workspace = dummy("workspace", ctx)
@@ -229,6 +230,12 @@ local function run(scenario)
             s.JSONDecode = function(_, raw)
                 if raw == "SETTINGS_RAW" then
                     if scenario.settingsThrows then error("malformed json") end
+                    if scenario.moveStart and type(scenario.settings) == "table" then
+                        local copy = {}
+                        for k, v in pairs(scenario.settings) do copy[k] = v end
+                        copy.start = copy.start or {m1 = false}
+                        return copy
+                    end
                     return scenario.settings
                 end
                 return {url = "https://i.waifu.pics/a.png"}
@@ -267,10 +274,33 @@ local function run(scenario)
     env.Vector2 = {new = function(x, y) return {X = x or 0, Y = y or 0} end}
     env.typeof = function(v) return isInstanceLike(v) and "Instance" or type(v) end
     env.Enum.AnimationPriority.Action = {Value = 2}                      -- real Roblox: Idle 0, Movement 1, Action 2, Action2 3 ...
+    local threads = {}                                                  -- scenario.asyncTasks: task.spawn threads really wait (resumed by frames / advance)
     env.task = {
-        spawn = function(f, ...) local ok, e = pcall(f, ...); if not ok then errors[#errors + 1] = "task: " .. tostring(e) end end,
-        wait = function(t) ctx.waits[#ctx.waits + 1] = t or 0; ctx.now = ctx.now + (t or 0); return 0 end,
+        spawn = function(f, ...)
+            if scenario.asyncTasks then
+                local co = coroutine.create(f)
+                local ok, res = coroutine.resume(co, ...)
+                if not ok then errors[#errors + 1] = "task: " .. tostring(res)
+                elseif coroutine.status(co) == "suspended" then threads[#threads + 1] = {co = co, wake = ctx.now + (type(res) == "number" and res or 0)} end
+                return
+            end
+            local ok, e = pcall(f, ...); if not ok then errors[#errors + 1] = "task: " .. tostring(e) end
+        end,
+        wait = function(t)
+            if scenario.asyncTasks and coroutine.isyieldable() then coroutine.yield(t or 0); return t or 0 end
+            ctx.waits[#ctx.waits + 1] = t or 0; ctx.now = ctx.now + (t or 0); return 0
+        end,
     }
+    local function pumpThreads()
+        local due, keep = {}, {}
+        for _, th in ipairs(threads) do if th.wake <= ctx.now then due[#due + 1] = th else keep[#keep + 1] = th end end
+        threads = keep
+        for _, th in ipairs(due) do
+            local ok, res = coroutine.resume(th.co)
+            if not ok then errors[#errors + 1] = "task: " .. tostring(res)
+            elseif coroutine.status(th.co) == "suspended" then threads[#threads + 1] = {co = th.co, wake = ctx.now + (type(res) == "number" and res or 0)} end
+        end
+    end
     env.warn = function(...) errors[#errors + 1] = "warn: " .. table.concat({...}, " ") end
     env.print = function() end
     ctx.now = 1000                                                      -- fake clock: only task.wait / advance() move it
@@ -377,7 +407,7 @@ local function run(scenario)
         end
         errors[#errors + 1] = "no TextBox with placeholder " .. placeholderStart
     end
-    local function advance(seconds) ctx.now = ctx.now + seconds end
+    local function advance(seconds) ctx.now = ctx.now + seconds; pumpThreads() end
     local function save()                                                  -- press "Save config"; returns the table that was written
         ctx.encoded = nil
         local b = findLastButton("Save config")
@@ -390,6 +420,7 @@ local function run(scenario)
         local n = math.max(1, math.floor(seconds / step + 0.5))
         for _ = 1, n do
             ctx.now = ctx.now + step
+            pumpThreads()
             for _, hb in ipairs(ctx.heartbeats) do pcall(hb, step) end
         end
     end
@@ -598,7 +629,7 @@ end
 
 -- 7. ASSIST: arm the Garou catch, then cast Hunter's Grasp "yourself" - the script must play only what comes after
 local function pressed(r, key) for _, k in ipairs(r.ctx.keys) do if k.down and k.key == key then return true end end return false end
-local as = run({executor = "full", body = PNG, settings = {pins = {Garou_Catch = {x = 100, y = 100}}}})
+local as = run({executor = "full", body = PNG, moveStart = true, settings = {pins = {Garou_Catch = {x = 100, y = 100}}}})
 for _, e in ipairs(as.errors) do failures[#failures + 1] = "assist scenario: " .. e end
 local K, UIT = as.env.Enum.KeyCode, as.env.Enum.UserInputType
 local catchBtn = as.findButton("Garou Catch")
@@ -637,7 +668,7 @@ check(pressed(sd, sd.env.Enum.KeyCode.Q) and pressed(sd, sd.env.Enum.KeyCode.A),
 check(not pressed(sd, sd.env.Enum.KeyCode.D), "side dash left must not press D")
 
 -- 7c. learned animation trigger (touch players)
-local an = run({executor = "full", body = PNG, settings = {
+local an = run({executor = "full", body = PNG, moveStart = true, settings = {
     pins = {Garou_Catch = {x = 100, y = 100}}, combos = {Garou_Catch = {trigAnim = "rbxassetid://99"}},
 }})
 for _, e in ipairs(an.errors) do failures[#failures + 1] = "animation scenario: " .. e end
@@ -773,7 +804,7 @@ check(#b16.ctx.mouse >= 2 and math.abs((b16.ctx.mouse[1].t - b16t0) - 0.3) < 0.0
 local function techDashRun(enemyPos, enemyLook, comboSide)
     local settings = {pins = {Garou_Catch = {x = 100, y = 100}}}
     if comboSide then settings.combos = {Garou_Catch = {side = comboSide}} end
-    local r = run({executor = "full", body = PNG, settings = settings, world = behindWorld(enemyPos, enemyLook, {right = {x = 1, y = 0, z = 0}})})
+    local r = run({executor = "full", body = PNG, moveStart = true, settings = settings, world = behindWorld(enemyPos, enemyLook, {right = {x = 1, y = 0, z = 0}})})
     for _, e in ipairs(r.errors) do failures[#failures + 1] = "assist side dash: " .. e end
     local btn = r.findButton("Garou Catch"); if btn then r.tap(btn) end
     r.fireKey(r.env.Enum.KeyCode.Three)
@@ -946,7 +977,7 @@ check(blockedWith(blockWorld({x = 3, y = 0, z = -5}, {x = -0.5, y = 0, z = 1})),
 
 do
 -- 10. TECH TOGGLES: every tech in the character tab is an on/off switch that arms Assist
-local tg = run({executor = "full", body = PNG, world = {me = {pos = ME, look = LOOK}, enemies = {}}})
+local tg = run({executor = "full", body = PNG, moveStart = true, world = {me = {pos = ME, look = LOOK}, enemies = {}}})
 for _, e in ipairs(tg.errors) do failures[#failures + 1] = "tech toggle scenario: " .. e end
 local flowHit = tg.toggleRowHit("Flowing + Grasp")
 check(flowHit ~= nil, "tech toggles: the Garou 'Flowing + Grasp' switch is missing")
@@ -1515,7 +1546,7 @@ end
 do
     local KC = {}
     local function kyotoRun(kyoto, enemyPos)
-        local r = run({executor = "full", body = PNG, settings = {kyoto = kyoto},
+        local r = run({executor = "full", body = PNG, moveStart = true, settings = {kyoto = kyoto},
             world = {me = {pos = ME, look = LOOK}, right = {x = 1, y = 0, z = 0}, enemies = {{name = "Target", pos = enemyPos or {x = 10, y = 0, z = 0}, look = LOOK}}}})
         for _, e in ipairs(r.errors) do failures[#failures + 1] = "kyoto scenario: " .. e end
         local hit = r.toggleRowHit("Flowing Water -> Kyoto")
@@ -1564,10 +1595,10 @@ do
     local _, seqBad = kyotoRun({m1 = 99, wait = "x", whirl = "no", twisted = 5, side = "Up"})
     check(table.concat(seqBad, " ") == "D Q Two M1 M1 M1", "kyoto: garbage options are cleaned (m1 3, default wait, whirl / twisted need exactly true); got: " .. table.concat(seqBad, " "))
     -- not armed -> nothing; only the trigger starts it
-    local ra = run({executor = "full", body = PNG, world = {me = {pos = ME, look = LOOK}, enemies = {}}})
+    local ra = run({executor = "full", body = PNG, moveStart = true, world = {me = {pos = ME, look = LOOK}, enemies = {}}})
     ra.fireKey(ra.env.Enum.KeyCode.One)
     check(#ra.ctx.keys == 0, "kyoto: not armed -> casting Flowing Water must do nothing")
-    local rb = run({executor = "full", body = PNG, world = {me = {pos = ME, look = LOOK}, enemies = {}}})
+    local rb = run({executor = "full", body = PNG, moveStart = true, world = {me = {pos = ME, look = LOOK}, enemies = {}}})
     local rbHit = rb.toggleRowHit("Flowing Water -> Kyoto"); if rbHit then rb.tap(rbHit) end
     rb.fireKey(rb.env.Enum.KeyCode.Two)
     check(#rb.ctx.keys == 0, "kyoto: only Flowing Water (key 1) starts it, not another move")
@@ -1792,6 +1823,143 @@ do
     check((r9.save() or {}).picture == "", "picture: control characters in the saved value are dropped")
 end
 
+-- 21. START WITH M1: arm a tech, throw 1-3 M1s, and the script plays the rest (casting the tech's first move itself when it does not begin with M1s)
+do
+    local function m1Run(pinned, settings, noWorld, async)   -- noWorld: the plain fake character (needed to feed AnimationPlayed events); async: threads really wait
+        local st = settings or {}
+        st.pins = {[pinned] = {x = 90, y = 90}}
+        local r = run({executor = "full", body = PNG, settings = st, asyncTasks = async, world = (not noWorld) and {me = {pos = ME, look = LOOK}, enemies = {}} or nil})
+        for _, e in ipairs(r.errors) do failures[#failures + 1] = "M1 scenario: " .. e end
+        return r
+    end
+    local function arm(r, label)
+        local b = r.findButton(label)
+        if b then r.tap(b) else failures[#failures + 1] = "M1 start: the pinned button '" .. label .. "' is missing" end
+        r.ctx.keys, r.ctx.mouse = {}, {}
+    end
+    local function M1(r) r.fireInput(r.env.Enum.UserInputType.MouseButton1) end
+    local function nKeys(r) local n = 0 for _, k in ipairs(r.ctx.keys) do if k.down then n = n + 1 end end return n end
+
+    -- (a) a tech that does NOT begin with M1s (Garou catch): one M1, then it waits for the pause and plays the whole tech
+    local ra = m1Run("Garou_Catch", {}); arm(ra, "Garou Catch")
+    M1(ra); ra.frames(0.2)
+    check(nKeys(ra) == 0 and #ra.ctx.mouse == 0, "M1 start: it must wait while I might still be throwing M1s")
+    ra.frames(0.4)
+    check(nKeys(ra) > 0, "M1 start: after I stop M1ing the armed tech plays")
+    check(pressed(ra, keyNamed(ra, "Q")), "M1 start: ...including its side dash")
+    check(#ra.myWrites == 0, "M1 start: nothing moves or teleports me")
+
+    -- (b) a tech that begins with 3 M1s (Kyoto core: M1 x3 > Flowing Water > side dash > Lethal Whirlwind Stream): my three M1s are the start,
+    --     the script plays only what comes after (and no M1 of its own)
+    local rb = m1Run("Kyoto_Core", {}); arm(rb, "Kyoto Core")
+    M1(rb); M1(rb); M1(rb); rb.frames(0.05)
+    check(nKeys(rb) >= 1, "M1 start: three M1s reach the tech's own count -> it takes over at once (keys: " .. nKeys(rb) .. ")")
+    rb.frames(2.0)
+    check(nKeys(rb) >= 4, "M1 start: Flowing Water, side dash (2 keys), Lethal Whirlwind Stream are played (keys: " .. nKeys(rb) .. ")")
+    check(#rb.ctx.mouse == 0, "M1 start: it does not click M1 for me - those three were mine (clicks: " .. #rb.ctx.mouse .. ")")
+    check(pressed(rb, keyNamed(rb, "One")) and pressed(rb, keyNamed(rb, "Two")), "M1 start: Flowing Water (1) and Lethal Whirlwind Stream (2) were cast")
+    rb.advance(3); rb.ctx.keys = {}
+    M1(rb); rb.frames(0.9)
+    check(nKeys(rb) > 0, "M1 start: it can be started again after it finished (one M1 + pause)")
+    -- a 4-M1 tech waits for the 4th M1 / the pause
+    local rb4 = m1Run("Garou_InstantTwisted", {}); arm(rb4, "Garou InstantTwisted")
+    M1(rb4); M1(rb4); M1(rb4); rb4.frames(0.1)
+    check(nKeys(rb4) == 0, "M1 start: 3 of 4 M1s -> still waiting")
+    M1(rb4); rb4.frames(1.5)
+    check(nKeys(rb4) >= 4 and #rb4.ctx.mouse == 0, "M1 start: the 4th M1 hands over: back dash + front dash (keys " .. nKeys(rb4) .. ")")
+
+    -- (c) fewer M1s than the tech has: it takes over after the pause
+    local rc = m1Run("Kyoto_Core", {}); arm(rc, "Kyoto Core")
+    M1(rc); rc.frames(0.2)
+    check(nKeys(rc) == 0, "M1 start: one M1 of three, still inside the wait -> nothing yet")
+    rc.frames(0.4)
+    check(nKeys(rc) > 0, "M1 start: one M1 then a pause -> it plays the rest")
+
+    -- (d) not armed -> an M1 does nothing
+    local rd = m1Run("Garou_Catch", {})
+    M1(rd); rd.frames(1.0)
+    check(nKeys(rd) == 0 and #rd.ctx.mouse == 0, "M1 start: a tech that is not armed never reacts to my M1")
+
+    -- (e) pressing a move between M1s cancels (I am doing something else)
+    local re = m1Run("Garou_Catch", {}); arm(re, "Garou Catch")
+    M1(re); re.fireKey(re.env.Enum.KeyCode.Two); re.frames(1.0)
+    check(nKeys(re) == 0, "M1 start: casting a move myself cancels the pending take-over")
+
+    -- (f) gameProcessed input (a click on a menu) is ignored
+    local rf = m1Run("Garou_Catch", {}); arm(rf, "Garou Catch")
+    rf.fireInput(rf.env.Enum.UserInputType.MouseButton1, nil, true); rf.frames(1.0)
+    check(nKeys(rf) == 0, "M1 start: a click the game already consumed does not count")
+
+    -- (g) the switch: off -> the old behaviour (cast the first move yourself)
+    local rg = m1Run("Garou_Catch", {start = {m1 = false}}); arm(rg, "Garou Catch")
+    M1(rg); rg.frames(1.0)
+    check(nKeys(rg) == 0, "M1 start: switched off -> M1s start nothing")
+    rg.fireKey(keyNamed(rg, "Three"))
+    check(nKeys(rg) > 0, "M1 start: switched off -> casting the trigger still works")
+
+    -- (h) the wait slider is respected and the options are cleaned / saved
+    local rh = m1Run("Garou_Catch", {start = {settle = 0.7, most = 2}}); arm(rh, "Garou Catch")
+    M1(rh); rh.frames(0.5)
+    check(nKeys(rh) == 0, "M1 start: wait 0.7 s -> still waiting after 0.5 s")
+    rh.frames(0.4)
+    check(nKeys(rh) > 0, "M1 start: ...and takes over after it")
+    local enc = rh.save()
+    check(enc and enc.start and enc.start.m1 == true and enc.start.settle == 0.7 and enc.start.most == 2, "M1 start: the options are part of the saved config")
+    local rBad = m1Run("Garou_Catch", {start = {m1 = "yes", settle = "slow", most = 99, anims = {["x"] = "no", ["rbxassetid://5"] = true}}})
+    local encBad = rBad.save()
+    check(encBad and encBad.start and encBad.start.m1 == true and encBad.start.settle == 0.35 and encBad.start.most == 4, "M1 start: garbage options are cleaned (got " .. tostring(encBad and encBad.start and encBad.start.settle) .. ")")
+    local rDef = run({executor = "full", body = PNG}); local encDef = rDef.save()
+    check(encDef and encDef.start and encDef.start.m1 == true and encDef.start.settle == 0.35 and encDef.start.most == 3, "M1 start: on by default (wait 0.35 s, up to 3 M1s)")
+
+    -- (i) touch players: the M1 is an on-screen button -> its animation counts as an M1
+    local ri = m1Run("Garou_Catch", {start = {anims = {["rbxassetid://5"] = true}}}, true); arm(ri, "Garou Catch")
+    ri.playAnimation("rbxassetid://5", true); ri.frames(1.0)
+    check(nKeys(ri) == 0, "M1 start (touch): a looped animation is not an M1")
+    ri.playAnimation("rbxassetid://6", false); ri.frames(1.0)
+    check(nKeys(ri) == 0, "M1 start (touch): an animation I did not teach is not an M1")
+    ri.playAnimation("rbxassetid://5", false); ri.frames(0.6)
+    check(nKeys(ri) > 0, "M1 start (touch): my taught M1 animation starts the tech")
+    -- ...but a keyboard M1 and its animation are ONE M1
+    local rj = m1Run("Garou_InstantTwisted", {start = {anims = {["rbxassetid://5"] = true}}}, true); arm(rj, "Garou InstantTwisted")
+    M1(rj); rj.playAnimation("rbxassetid://5", false); M1(rj); rj.playAnimation("rbxassetid://5", false)
+    M1(rj); rj.playAnimation("rbxassetid://5", false); rj.frames(0.1)
+    check(nKeys(rj) == 0, "M1 start (touch): the animation my keyboard M1 plays is not counted as a second M1 (3 M1s of 4 -> still waiting)")
+
+    -- (k) teaching the M1 animations
+    local rk = m1Run("Garou_Catch", {}, true, true)
+    local teach = rk.findButton("Teach my M1 (touch players): tap this, then throw four M1s")
+    check(teach ~= nil, "M1 start: the teach button exists")
+    if teach then rk.tap(teach) end
+    rk.playAnimation("rbxassetid://21", false); rk.playAnimation("rbxassetid://22", false)
+    rk.playAnimation("rbxassetid://21", false)
+    local encK = rk.save()
+    check(encK and encK.start and encK.start.anims["rbxassetid://21"] and encK.start.anims["rbxassetid://22"], "M1 start: the animations played while teaching are saved")
+    check(nKeys(rk) == 0, "M1 start: while teaching, nothing is started")
+    for i = 1, 20 do rk.playAnimation("rbxassetid://9" .. i, false) end
+    local n = 0; for _ in pairs((rk.save().start or {}).anims or {}) do n = n + 1 end
+    check(n <= 12, "M1 start: at most 12 taught animations are kept (got " .. n .. ")")
+    rk.frames(5.0)                                                       -- the 4 s window ends: the toast says what was learned
+    check(rk.textOf("Learned your M1 animation"), "M1 start: the end of the teaching window says what was learned")
+    rk.playAnimation("rbxassetid://77", false)
+    check(not (rk.save().start.anims or {})["rbxassetid://77"], "M1 start: after the window nothing more is learned")
+
+    -- (l) Garou "Flowing Water -> Kyoto" in M1 mode: my M1(s), then it casts Flowing Water itself and continues
+    local rl = run({executor = "full", body = PNG, world = {me = {pos = ME, look = LOOK}, right = {x = 1, y = 0, z = 0}, enemies = {{name = "Target", pos = {x = 10, y = 0, z = 0}, look = LOOK}}}})
+    for _, e in ipairs(rl.errors) do failures[#failures + 1] = "M1 kyoto scenario: " .. e end
+    local hit = rl.toggleRowHit("Flowing Water -> Kyoto"); if hit then rl.tap(hit) end
+    rl.ctx.keys, rl.ctx.mouse = {}, {}
+    M1(rl); rl.frames(0.2)
+    check(nKeys(rl) == 0, "M1 start: Kyoto waits for my M1s too")
+    rl.frames(2.5)
+    local names = {}
+    for name, code in pairs({A = "A", D = "D", W = "W", S = "S", Q = "Q", One = "One", Two = "Two", Three = "Three"}) do names[rl.env.Enum.KeyCode[name]] = code end
+    local seq = {}
+    for _, k in ipairs(rl.ctx.keys) do if k.down then seq[#seq + 1] = names[k.key] or "?" end end
+    check(seq[1] == "One", "M1 start: Kyoto begins by casting Flowing Water (key 1) itself; got " .. table.concat(seq, " "))
+    check(table.concat(seq, " "):find("D Q Two", 1, true) ~= nil, "M1 start: ...then the side dash and Lethal Whirlwind Stream; got " .. table.concat(seq, " "))
+    check(#rl.myWrites == 0, "M1 start: Kyoto never moves me")
+end
+
 do   -- anything that went wrong at any time in any scenario (taps, frames, drags, ...) fails the run
     local seen = {}
     for _, list in ipairs(ALL_ERRORS) do
@@ -1806,4 +1974,4 @@ if #failures > 0 then
     finish(1)
     return
 end
-print("smoke test passed (32 scenarios)")
+print("smoke test passed (33 scenarios)")
