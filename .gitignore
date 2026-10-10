@@ -1,2 +1,7 @@
 __pycache__/
 *.pyc
+preview/mm2/*
+!preview/mm2/phone_main.png
+!preview/mm2/phone_play.png
+!preview/mm2/phone_buttons.png
+!preview/mm2/desktop_main.png

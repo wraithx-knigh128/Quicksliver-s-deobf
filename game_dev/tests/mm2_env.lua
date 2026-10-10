@@ -613,6 +613,26 @@ function World.new(opts)
     env.UDim2 = UDim2_lib
     env.Enum = W.Enum
     env.TweenInfo = {new = function() return plainType("TweenInfo") end}
+    local function seqType(name, keyName)
+        local mt = {__type = name}
+        local lib = {}
+        lib.new = function(a, b)
+            local keys = {}
+            if type(a) == "table" and getmetatable(a) == nil then
+                for i, k in ipairs(a) do keys[i] = k end
+            elseif b ~= nil then keys = {{t = 0, v = a}, {t = 1, v = b}}
+            else keys = {{t = 0, v = a}, {t = 1, v = a}} end
+            if #keys < 2 then error(name .. " needs at least 2 keypoints", 2) end
+            table.sort(keys, function(x, y) return x.t < y.t end)
+            if keys[1].t ~= 0 or keys[#keys].t ~= 1 then error(name .. " must start at 0 and end at 1", 2) end
+            return setmetatable({keys = keys}, mt)
+        end
+        env[name] = lib
+        env[keyName] = {new = function(t, v) return {t = t, v = v} end}
+    end
+    seqType("ColorSequence", "ColorSequenceKeypoint")
+    seqType("NumberSequence", "NumberSequenceKeypoint")
+    env.NumberRange = {new = function(a, b) return setmetatable({Min = a, Max = b or a}, {__type = "NumberRange"}) end}
     env.RaycastParams = {new = function() return setmetatable({FilterDescendantsInstances = {}, IgnoreWater = false}, {__type = "RaycastParams"}) end}
     env.Instance = {new = function(class, parent)
         if not classes[class] then throw("Unable to create an Instance of type \"" .. tostring(class) .. "\"", 2) end
@@ -906,6 +926,26 @@ function World:mouseMove(x, y)
     local E = self.env.Enum
     self.fire(rawget(self.uis, "__d").signals.InputChanged, {UserInputType = E.UserInputType.MouseMovement, Position = self:V3(x, y or 50, 0)})
 end
+-- finger / mouse on a GuiObject: press, move, release
+function World:press(inst, x, y, kind)
+    local E = self.env.Enum
+    self.fire(rawget(inst, "__d").signals.InputBegan, {UserInputType = E.UserInputType[kind or "Touch"], Position = self:V3(x, y, 0)})
+end
+function World:release(x, y, kind)
+    local E = self.env.Enum
+    self.fire(rawget(self.uis, "__d").signals.InputEnded, {UserInputType = E.UserInputType[kind or "Touch"], Position = self:V3(x, y, 0)})
+end
+function World:touchMove(x, y, kind)
+    local E = self.env.Enum
+    self.fire(rawget(self.uis, "__d").signals.InputChanged, {UserInputType = E.UserInputType[kind or "Touch"], Position = self:V3(x, y, 0)})
+end
+function World:tap(inst, x, y) self:press(inst, x or 0, y or 0); self:release(x or 0, y or 0) end
+function World:drag(inst, x0, y0, x1, y1, steps)
+    self:press(inst, x0, y0)
+    steps = steps or 4
+    for i = 1, steps do self:touchMove(x0 + (x1 - x0) * i / steps, y0 + (y1 - y0) * i / steps) end
+    self:release(x1, y1)
+end
 function World:jumpRequest() self.fire(rawget(self.uis, "__d").signals.JumpRequest) end
 
 function World:find(pred, root)
@@ -923,29 +963,44 @@ function World:click(btn)
     if not btn then error("click(nil): button not found", 2) end
     self.fire(rawget(btn, "__d").signals.MouseButton1Click)
 end
--- the row Frame holding a title label
+-- the row Frame holding a title label (rows keep their texts in a "Text" column frame)
 function World:row(title)
     local lbl = self:label(title)
     if not lbl then error("no row titled " .. title, 2) end
-    return lbl.Parent
+    local p = lbl.Parent
+    if p.Name == "Text" then return p.Parent end
+    return p
 end
-function World:rowButton(title)                                   -- the full-row TextButton overlay (toggle / button / dropdown header)
+function World:rowButton(title)                                   -- the full-row overlay (toggle / button / dropdown / slider) or the key button of a keybind
     local row = self:row(title)
-    for _, c in ipairs(self.M.GetChildren(row)) do if c.ClassName == "TextButton" then return c end end
+    for _, c in ipairs(self.M.GetChildren(row)) do
+        if c.ClassName == "TextButton" and (c.Name == "Hit" or c.Name == "Key") then return c end
+    end
     error("row " .. title .. " has no button", 2)
+end
+function World:option(value, dropdownTitle)                       -- a dropdown option (the button that wraps the text label); several dropdowns share words like "Off"
+    local scope = dropdownTitle and self:row(dropdownTitle).Parent or nil
+    local lbl = self:find(function(i) return i.ClassName == "TextLabel" and i.Text == value and i.Parent and i.Parent.Name == "Option" end, scope)
+    if not lbl then error("no dropdown option " .. value, 2) end
+    return lbl.Parent
 end
 function World:toggle(title) self:click(self:rowButton(title)) end
 function World:tab(name)
-    local b = self:find(function(i) return i.ClassName == "TextButton" and i.Name == name and i.Text:find(name, 1, true) end)
+    local b = self:find(function(i) return i.ClassName == "TextButton" and i.Name == name and i.Parent and i.Parent.Name == "Tabs" end)
     if not b then error("no tab " .. name, 2) end
     self:click(b)
+end
+function World:button(name)                                       -- a TextButton by its Name (Close, Maximize, Minimize, OpenButton, Float_shoot ...)
+    local b = self:find(function(i) return i.ClassName == "TextButton" and i.Name == name end)
+    if not b then error("no button named " .. name, 2) end
+    return b
 end
 function World:slide(title, fraction)                             -- drag the slider of the row `title` to a 0..1 position
     local row = self:row(title)
     local track, hit
     for _, c in ipairs(self.M.GetChildren(row)) do
-        if c.ClassName == "Frame" and c.Size.Y.Offset == 6 then track = c end
-        if c.ClassName == "TextButton" then hit = c end
+        if c.Name == "Track" then track = c end
+        if c.Name == "Hit" then hit = c end
     end
     local d = rawget(track, "__d")
     d.props.AbsoluteSize = self.env.Vector2.new(200, 6)
@@ -966,7 +1021,7 @@ function World:load(source, chunkname)
         local fn, err = loadstring(src, name); if not fn then return nil, err end
         setfenv(fn, env); return fn
     end or function(src, name, env) return load(src, name, "t", env) end
-    local fn, err = compile(source, chunkname or "=mm2_hub", self.env)
+    local fn, err = compile(source, chunkname or "=wraiths_hub", self.env)
     if not fn then return false, "SYNTAX ERROR: " .. tostring(err) end
     self:startThread(fn)
     return true

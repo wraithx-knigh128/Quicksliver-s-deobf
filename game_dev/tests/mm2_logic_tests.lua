@@ -106,5 +106,69 @@ test("mergeFlags: only known keys with the right type", function()
 end)
 test("clamp", function() eq(Logic.clamp(5, 0, 3), 3); eq(Logic.clamp(-1, 0, 3), 0); eq(Logic.clamp(2, 0, 3), 2) end)
 
+
+test("ping: median + EMA ignores a lag spike, rejects junk", function()
+    local p = Logic.newPing()
+    eq(p:ms(), 80, "default before any sample")
+    for _ = 1, 5 do p:add(60) end
+    near(p:ms(), 60, 1e-9)
+    p:add(900)                                   -- one spike
+    near(p:ms(), 60, 1e-9, "a single spike is a median outlier")
+    p:add(nil); p:add(-5); p:add(0 / 0); p:add(99999); p:add("x")
+    near(p:ms(), 60, 1e-9, "junk samples are ignored")
+    for _ = 1, 10 do p:add(120) end
+    near(p:ms(), 120, 3, "a real change converges")
+    near(p:seconds(), p:ms() / 1000, 1e-12)
+end)
+test("pingLead: ping + interpolation, scaled, trimmed, clamped", function()
+    near(Logic.pingLead(100, 1, 60, 0), 0.16, 1e-9)
+    near(Logic.pingLead(100, 0, 60, 0), 0.06, 1e-9, "comp 0 keeps only the interpolation delay")
+    near(Logic.pingLead(100, 1.5, 0, 0), 0.15, 1e-9)
+    near(Logic.pingLead(100, 1, 60, 40), 0.20, 1e-9, "extra trim adds")
+    near(Logic.pingLead(100, 1, 60, -300), 0, 1e-9, "never negative")
+    near(Logic.pingLead(2000, 1, 60, 0), 0.8, 1e-9, "clamped")
+    near(Logic.pingLead(100), 0.1, 1e-9, "defaults")
+end)
+test("lead + pingLead: a faster ping leads further", function()
+    local function aimX(ping) local x = Logic.lead(0, 0, 0, 20, 0, 0, 0, 0, 0, {latency = Logic.pingLead(ping, 1, 60, 0), maxLead = 1}) return x end
+    local a, b = aimX(40), aimX(200)
+    if not (b > a) then error("200 ms should lead further than 40 ms: " .. a .. " vs " .. b) end
+    near(a, 20 * 0.1, 1e-9); near(b, 20 * 0.26, 1e-9)
+end)
+test("estimateVelocity: displacement over the window", function()
+    local s = {}
+    for i = 0, 10 do s[#s + 1] = {t = i * 0.05, x = i * 0.5, y = 0, z = -i * 1.0} end    -- 10 studs/s in x, -20 in z
+    local vx, vy, vz = Logic.estimateVelocity(s, 0.2)
+    near(vx, 10, 1e-9); near(vy, 0, 1e-9); near(vz, -20, 1e-9)
+    local a, b, c = Logic.estimateVelocity({{t = 0, x = 0, y = 0, z = 0}}, 0.2); eq(a + b + c, 0)
+    local d = Logic.estimateVelocity({{t = 0, x = 0, y = 0, z = 0}, {t = 0.01, x = 5, y = 0, z = 0}}, 0.2); eq(d, 0, "too short a time span is not trusted")
+end)
+test("velocity: a teleport is not running, and nothing is faster than 90 studs/s", function()
+    local jump = {{t = 0, x = 0, y = 0, z = 0}, {t = 1 / 60, x = 10, y = 0, z = 0}, {t = 2 / 60, x = 10, y = 0, z = 0}, {t = 3 / 60, x = 10, y = 0, z = 0}, {t = 4 / 60, x = 10, y = 0, z = 0}}
+    local a, b, c = Logic.estimateVelocity(jump, 0.2); eq(a + b + c, 0, "a 10-stud jump in one frame is a teleport")
+    -- the jump is old news after it: samples before it are ignored, so a target that teleported and stands still has no velocity
+    local still = {}
+    for i = 0, 12 do still[#still + 1] = {t = i / 60, x = i == 0 and 0 or 10, y = 0, z = 0} end
+    local sx = Logic.estimateVelocity(still, 0.18); eq(sx, 0, "after a teleport the older samples do not count")
+    local ran = {}
+    for i = 0, 12 do ran[#ran + 1] = {t = i / 60, x = i < 6 and 0 or (i - 5) * 0.2, y = 0, z = 0} end   -- standing, then running 12 studs/s
+    local rx = Logic.estimateVelocity(ran, 0.18); near(rx, 1.4 / (11 / 60), 1e-6, "running after standing still still counts (averaged over the window)")
+    local x = Logic.pickVelocity(500, 0, 0, 0, 0, 0); near(x, 90, 1e-9, "physics speed is capped")
+    local x2, y2 = Logic.pickVelocity(300, 400, 0, 0, 0, 0); near(math.sqrt(x2 * x2 + y2 * y2), 90, 1e-9); near(x2 / y2, 0.75, 1e-9, "...keeping its direction")
+    local h = Logic.pickVelocity(0, 0, 0, 120, 0, 0); near(h, 90, 1e-9, "history speed is capped too")
+end)
+test("pickVelocity: physics first, history when physics says standing still", function()
+    local x = Logic.pickVelocity(10, 0, 0, 3, 0, 0); eq(x, 10)
+    local y = Logic.pickVelocity(0, 0, 0, 8, 0, 0); eq(y, 8)
+    local z = Logic.pickVelocity(0, 0, 0, 0.3, 0, 0); eq(z, 0, "history noise below 1 stud/s is ignored")
+end)
+test("pickTarget: sheriff first", function()
+    local c = {{id = "a", dist = 10, role = "Innocent"}, {id = "b", dist = 60, role = "Sheriff"}, {id = "c", dist = 5, role = "Innocent"}}
+    eq(Logic.pickTarget(c, {mode = "Sheriff first"}), "b", "the sheriff wins even when farther")
+    eq(Logic.pickTarget({c[1], c[3]}, {mode = "Sheriff first"}), "c", "nearest when there is no sheriff")
+    eq(Logic.pickTarget(c, {mode = "Sheriff first", maxDist = 30}), "c", "a sheriff out of range does not count")
+    eq(Logic.pickTarget({{id = "h", dist = 40, role = "Hero"}, c[3]}, {mode = "Sheriff first"}), "h", "the hero counts too")
+end)
+
 print(string.format("\n%d passed, %d failed", passed, failed))
 if failed > 0 then error("logic tests failed") end

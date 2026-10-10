@@ -1,27 +1,40 @@
 # game_dev
 
-## Murder Mystery 2 hub (`dist/mm2_hub.min.txt`)
+## Wraith's Hub - Murder Mystery 2 (`dist/wraiths_hub.min.txt`)
 
 One-line loader (pinned to a build; the SHA is updated after every build):
 ```lua
-loadstring(game:HttpGet("https://raw.githubusercontent.com/wraithx-knigh128/Quicksliver-s-deobf/a7ae1b764846e1e7982c4b0cd8aa97c71f4fca00/dist/mm2_hub.min.txt"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/wraithx-knigh128/Quicksliver-s-deobf/<SHA>/dist/wraiths_hub.min.txt"))()
 ```
-WindUI / RuzHub-style window (sidebar tabs + search, toggles, sliders, dropdowns, keybinds, toasts, 5 themes, round avatar, minimise / maximise / hide,
-floating **M** button for phones; RightShift hides the menu). Tabs: Main, ESP, Combat, Player, Misc, Settings, Debug.
+![Wraith's Hub on a phone](../preview/mm2/phone_main.png)
 
-- role ESP (red murderer / blue sheriff / gold hero / green innocent), names, distance, health, tracers; **gun ESP + gun finder HUD + toast saying where the gun is**
-- aim assist with velocity + ping prediction (camera / cursor), "Shoot the murderer", auto shoot, throw knife, slash aura, **silent aim** (rewrites your own shots)
-- hitbox expander (experimental), walk speed / jump / noclip / FOV, anti-AFK, rejoin / server hop
-- nothing is saved unless you press **Save config** (`mm2_hub_config.json`)
+(Layout preview rendered from the test world - not a Roblox screenshot. More in `preview/mm2/`.)
+
+A RuzHub / WindUI-style window: logo header, red minimise / maximise / close glyphs, search box, collapsible tab group with icons
+(Main, ESP, Combat, Buttons, Player, Settings, Debug), wrapping rows (toggle, slider, dropdown, keybind, button), round avatar, toasts, 5 themes.
+Hiding it leaves a floating **Wraith's Hub** pill (tap = open, drag the handle = move; RightShift also toggles).
+
+- **Floating buttons** (Buttons tab): **SHOOT** (perfect shoot), **THROW** (perfect throw) and **GRAB GUN**. Tap = fire, hold and drag = move, size slider, lock,
+  dimmed when you do not hold that weapon, flash green / red for fired / could not, positions saved with *Save config*.
+- **Perfect aim by ping**: the aim point is where the target will be when the shot arrives = measured ping (median + EMA, lag spikes ignored) x compensation
+  + the render delay of other players + trim, using engine velocity or - when the engine reports none - the position history (teleports are not velocity).
+  The aim is re-computed after the weapon is equipped, because the target keeps moving. Live "Ping 60 ms -> aim 110 ms ahead" readout.
+- **Moving aim reticle**: a ring with spinning ticks that glides onto the predicted point, labelled with name, distance and lead.
+- **Water-wave skin on every button**: layered grey-white wave gradients that drift (menu buttons, tabs, controls, pill, rows, keybinds, options, floating buttons)
+  plus a ripple where you press; *Button waves* High / Low / Off for weak phones. Windowed skins only animate while the window is open.
+- role ESP, gun ESP + gun finder (toast, HUD compass), aim assist, auto shoot / throw, silent aim, slash aura, hitbox expander (experimental), player mods.
+- nothing is saved unless you press **Save config** (`wraiths_hub_config.json`).
 
 How the game works, what is known vs. assumed, and how the hub discovers the private parts at run time: [`mm2/MM2_NOTES.md`](mm2/MM2_NOTES.md).
-Source: `mm2/` (`ui_lib.lua` window library, `logic.lua` pure logic, `mm2_hub.lua` the script); build with `python3 game_dev/mm2/build_mm2.py`.
+Source: `mm2/` (`ui_lib.lua` window library, `logic.lua` pure logic, `wraiths_hub.lua` the script); build with `python3 game_dev/mm2/build_mm2.py`.
 
-MM2 checks (from `game_dev/`, needs `pip install lupa`; add `LUAU=/path/to/luau` to run on real Luau):
-- `python3 tests/run_mm2.py logic`                       unit tests of `mm2/logic.lua`
-- `python3 tests/run_mm2.py smoke [../dist/mm2_hub.lua]`  ~350 checks against a fake Roblox world (`tests/mm2_env.lua`): real instance tree / events / Vector3 / CFrame math,
+Checks (from `game_dev/`, needs `pip install lupa`; add `LUAU=/path/to/luau` to run on real Luau):
+- `python3 tests/run_mm2.py logic`                          unit tests of `mm2/logic.lua` (ping model, lead solver, velocity, targeting, shot planner ...)
+- `python3 tests/run_mm2.py smoke [../dist/wraiths_hub.lua]`  ~780 checks against a fake Roblox world (`tests/mm2_env.lua`): real instance tree / events / Vector3 / CFrame math,
   coroutine scheduler, executor-style `__namecall` hook, and **strict member checking from Roblox's API dump** (`tools/gen_mm2_types.sh` regenerates `tests/prop_types_mm2.lua`):
   a misspelled property, a wrong value type or a method the class does not have throws and fails the test even if the script swallowed it with `pcall`.
+- `python3 tests/run_mm2.py preview [script]`               lays the UI out like Roblox does (`tests/mm2_layout.lua`: UDim sizing, UIListLayout, UIPadding, AutomaticSize, wrapped text),
+  reports layout problems (text that does not fit, default "Label" text, visible borders ...) and writes JSON; `python3 tools/render_preview.py scene.json out.png` paints it.
 
 # Animation Hub (The Strongest Battlegrounds)
 

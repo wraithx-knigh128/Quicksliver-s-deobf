@@ -1,781 +1,7 @@
---[[ Murder Mystery 2 hub - roles, ESP, gun finder, aim / shot helpers, hitbox, player mods.
+--[[ Wraith's Hub (Murder Mystery 2) - roles, ESP, gun finder, perfect shoot / throw, aim reticle, hitbox, player mods.
   Source file: build it into one script with `python3 game_dev/mm2/build_mm2.py` (it fills in the UILib / Logic modules below).
   Everything that depends on the game's private internals (remote names, hit detection) is DISCOVERED at run time - see MM2_NOTES.md. ]]
-local Logic = (function()
-
-local Logic = {}
-
-local sqrt, atan2, floor, max, min = math.sqrt, math.atan2 or math.atan, math.floor, math.max, math.min
-
------------------------------------------------------------------------------------------------- roles
-local ROLE_WORDS = {
-    murderer = "Murderer", murder = "Murderer", killer = "Murderer", infected = "Infected", zombie = "Infected",
-    sheriff = "Sheriff", detective = "Sheriff", gunner = "Sheriff",
-    hero = "Hero",
-    innocent = "Innocent", civilian = "Innocent", survivor = "Innocent", innocents = "Innocent",
-}
-
--- "murderer " -> "Murderer"; anything unknown -> nil
-function Logic.normalizeRole(s)
-    if type(s) ~= "string" then return nil end
-    return ROLE_WORDS[(s:lower():gsub("[^%a]", ""))]
-end
-
--- what a Tool's name says about its owner: knife -> Murderer, gun -> Sheriff (or Hero), anything else nil
-function Logic.toolRole(name)
-    if type(name) ~= "string" then return nil end
-    local n = name:lower()
-    if n:find("knife", 1, true) then return "Murderer" end
-    if n == "gun" or n == "revolver" or n:find("^gun[^%a]") then return "Sheriff" end
-    return nil
-end
-
--- "Gun" / "Knife" / nil : which weapon slot a tool name belongs to
-function Logic.weaponOf(name)
-    local r = Logic.toolRole(name)
-    if r == "Murderer" then return "Knife" end
-    if r == "Sheriff" then return "Gun" end
-    return nil
-end
-
-local function deadFlag(v)
-    if v.Dead == true or v.dead == true or v.Killed == true or v.killed == true then return true end
-    if v.Alive == false or v.alive == false then return true end
-    return false
-end
-
--- Walks whatever table a "player data" remote returned and lists {key=, role=, dead=}. It accepts the shapes seen in
--- Roblox games: {[name] = {Role = "Murderer"}}, {[name] = "Murderer"}, {Murderer = "name", Sheriff = "name"}, and one level of nesting.
-function Logic.parseRoles(data, depth)
-    local out = {}
-    depth = depth or 0
-    if type(data) ~= "table" or depth > 2 then return out end
-    for k, v in pairs(data) do
-        local keyRole = type(k) == "string" and Logic.normalizeRole(k) or nil
-        if type(v) == "table" then
-            local r = Logic.normalizeRole(v.Role or v.role or v.Team or v.team)
-            if r then
-                out[#out + 1] = {key = k, role = r, dead = deadFlag(v)}
-            elseif keyRole and (v.Name or v.name or v.Player or v.player) then
-                out[#out + 1] = {key = v.Name or v.name or v.Player or v.player, role = keyRole, dead = deadFlag(v)}
-            else
-                for _, e in ipairs(Logic.parseRoles(v, depth + 1)) do out[#out + 1] = e end
-            end
-        elseif type(v) == "string" then
-            local r = Logic.normalizeRole(v)
-            if r and keyRole == nil then out[#out + 1] = {key = k, role = r, dead = false}
-            elseif keyRole then out[#out + 1] = {key = v, role = keyRole, dead = false} end
-        end
-    end
-    return out
-end
-
------------------------------------------------------------------------------------------------- aim
--- Where to aim at a moving target. target / velocity / shooter are {x,y,z}; opts:
---   speed    projectile speed in studs/s (0 or nil = instant hit, only latency is led)
---   latency  seconds (one way) added on top
---   strength 0..2 multiplier on the lead (1 = full prediction)
---   maxLead  seconds, never lead further than this
---   vertical 0..1 how much of the vertical velocity to lead (jumping targets are hard to predict)
-function Logic.lead(tx, ty, tz, vx, vy, vz, sx, sy, sz, opts)
-    opts = opts or {}
-    local speed = opts.speed or 0
-    local latency = max(0, opts.latency or 0)
-    local strength = opts.strength == nil and 1 or opts.strength
-    local maxLead = opts.maxLead or 0.6
-    local vertical = opts.vertical == nil and 0.5 or opts.vertical
-    local t = latency
-    local px, py, pz = tx, ty, tz
-    for _ = 1, 4 do                                      -- solve "where is it when the shot arrives" (converges in a few steps)
-        local dx, dy, dz = px - sx, py - sy, pz - sz
-        local flight = speed > 0 and sqrt(dx * dx + dy * dy + dz * dz) / speed or 0
-        t = min(maxLead, (latency + flight) * strength)
-        px, py, pz = tx + vx * t, ty + vy * t * vertical, tz + vz * t
-    end
-    return px, py, pz, t
-end
-
--- Direction of (dx,dz) relative to where I look (lx,lz), as one of 8 words; ahead is 0 degrees, right 90.
-function Logic.direction(dx, dz, lx, lz)
-    local ll = sqrt(lx * lx + lz * lz)
-    if ll < 1e-6 then lx, lz, ll = 0, -1, 1 end
-    lx, lz = lx / ll, lz / ll
-    local fwd = dx * lx + dz * lz
-    local rgt = dx * (-lz) + dz * lx                     -- right vector of look (lx, lz): (-lz, lx)
-    local ang = atan2(rgt, fwd) * 180 / math.pi          -- 0 ahead, 90 right, -90 left, +-180 behind
-    local names = {"ahead", "ahead-right", "right", "behind-right", "behind", "behind-left", "left", "ahead-left"}
-    local idx = floor(((ang + 22.5) % 360) / 45) + 1
-    return names[idx], ang
-end
-
--- "37 studs ahead-left, 6 higher"
-function Logic.describe(dx, dy, dz, lx, lz)
-    local flat = sqrt(dx * dx + dz * dz)
-    local dist = sqrt(dx * dx + dy * dy + dz * dz)
-    local where = flat < 3 and "right here" or Logic.direction(dx, dz, lx, lz)
-    local s = string.format("%d studs %s", floor(dist + 0.5), where)
-    if dy > 6 then s = s .. ", " .. floor(dy + 0.5) .. " higher" elseif dy < -6 then s = s .. ", " .. floor(-dy + 0.5) .. " lower" end
-    return s
-end
-
--- Picks one candidate id. cands: {{id=, dist=, screen=(pixels from the crosshair or nil when off screen), visible=bool, role=, alive=bool}}
--- opts: mode ("Murderer" | "Sheriff" | "Closest to crosshair" | "Nearest" | "Anyone but me"), fov (pixels), maxDist, needVisible
-function Logic.pickTarget(cands, opts)
-    local best, bestScore
-    local mode = opts.mode or "Nearest"
-    for _, c in ipairs(cands) do
-        local ok = c.alive ~= false and c.dist <= (opts.maxDist or math.huge)
-        if ok and opts.needVisible and not c.visible then ok = false end
-        if ok and mode == "Murderer" and c.role ~= "Murderer" and c.role ~= "Infected" then ok = false end
-        if ok and mode == "Sheriff" and c.role ~= "Sheriff" and c.role ~= "Hero" then ok = false end
-        local score = c.dist
-        if ok and mode == "Closest to crosshair" then
-            if c.screen == nil or c.screen > (opts.fov or math.huge) then ok = false else score = c.screen end
-        end
-        if ok and opts.fov and opts.fovAlways and (c.screen == nil or c.screen > opts.fov) then ok = false end
-        if ok and (bestScore == nil or score < bestScore) then best, bestScore = c.id, score end
-    end
-    return best
-end
-
------------------------------------------------------------------------------------------------- shot templates
--- A recorded shot is a list of arguments. descs[i] = {kind = "vec" | "cf" | "inst" | "other", x,y,z}.
--- Returns plan[i] = "origin" | "target" for the position arguments:
---   one position  -> it is the aim point
---   several       -> the one closest to my head (within maxOrigin studs) is the origin, the others are aim points
-function Logic.planShot(descs, hx, hy, hz, maxOrigin)
-    local plan, positions = {}, {}
-    for i, d in ipairs(descs) do
-        if d.kind == "vec" or d.kind == "cf" then positions[#positions + 1] = i end
-    end
-    if #positions == 0 then return plan end
-    if #positions == 1 then plan[positions[1]] = "target"; return plan end
-    local nearest, nd
-    for _, i in ipairs(positions) do
-        local d = descs[i]
-        local dist = sqrt((d.x - hx) ^ 2 + (d.y - hy) ^ 2 + (d.z - hz) ^ 2)
-        if nd == nil or dist < nd then nearest, nd = i, dist end
-    end
-    for _, i in ipairs(positions) do plan[i] = "target" end
-    if nd <= (maxOrigin or 25) then plan[nearest] = "origin" end
-    return plan
-end
-
--- remote names worth recording when they are NOT inside the weapon tool
-function Logic.looksLikeShotRemote(name)
-    if type(name) ~= "string" then return false end
-    local n = name:lower()
-    for _, w in ipairs({"shoot", "fire", "throw", "knife", "gun", "stab", "slash", "hit", "bullet", "attack"}) do
-        if n:find(w, 1, true) then return true end
-    end
-    return false
-end
-
------------------------------------------------------------------------------------------------- config
--- copy only the keys the script knows, and only with the right type (a hand-edited or old file cannot break anything)
-function Logic.mergeFlags(defaults, saved)
-    local out = {}
-    for k, v in pairs(defaults) do out[k] = v end
-    if type(saved) ~= "table" then return out end
-    for k, v in pairs(saved) do
-        local d = defaults[k]
-        if d ~= nil and type(v) == type(d) then out[k] = v end
-    end
-    return out
-end
-
-function Logic.clamp(v, lo, hi) return max(lo, min(hi, v)) end
-
-return Logic
-
-end)()
-local UILib = (function()
-
-local UILib = {}
-
-local THEMES = {
-    Crimson = {bg = {11, 11, 15}, side = {15, 15, 21}, row = {21, 21, 29}, rowHover = {30, 30, 41}, stroke = {42, 42, 55}, text = {236, 236, 243},
-               sub = {140, 140, 158}, accent = {228, 54, 68}, accent2 = {255, 110, 120}, good = {78, 205, 124}, warn = {250, 190, 60}, bad = {240, 80, 80}, off = {64, 64, 82}},
-    Ocean = {bg = {9, 13, 20}, side = {12, 18, 28}, row = {18, 27, 41}, rowHover = {26, 38, 57}, stroke = {36, 52, 76}, text = {232, 240, 250},
-             sub = {131, 150, 176}, accent = {52, 152, 255}, accent2 = {120, 195, 255}, good = {78, 205, 124}, warn = {250, 190, 60}, bad = {240, 80, 80}, off = {58, 72, 96}},
-    Emerald = {bg = {9, 15, 13}, side = {12, 21, 18}, row = {18, 31, 27}, rowHover = {26, 44, 38}, stroke = {36, 62, 54}, text = {232, 247, 240},
-               sub = {128, 160, 146}, accent = {46, 204, 113}, accent2 = {120, 235, 170}, good = {78, 205, 124}, warn = {250, 190, 60}, bad = {240, 80, 80}, off = {56, 84, 74}},
-    Violet = {bg = {13, 10, 20}, side = {18, 13, 29}, row = {26, 19, 41}, rowHover = {37, 27, 58}, stroke = {55, 40, 84}, text = {242, 236, 252},
-              sub = {154, 138, 184}, accent = {155, 89, 255}, accent2 = {196, 150, 255}, good = {78, 205, 124}, warn = {250, 190, 60}, bad = {240, 80, 80}, off = {76, 62, 104}},
-    Gold = {bg = {14, 12, 8}, side = {20, 17, 11}, row = {30, 25, 16}, rowHover = {42, 35, 22}, stroke = {66, 55, 34}, text = {250, 244, 230},
-            sub = {171, 158, 128}, accent = {240, 178, 40}, accent2 = {255, 214, 100}, good = {78, 205, 124}, warn = {250, 190, 60}, bad = {240, 80, 80}, off = {88, 76, 52}},
-}
-UILib.ThemeNames = {"Crimson", "Ocean", "Emerald", "Violet", "Gold"}
-
-local function rgb(t) return Color3.fromRGB(t[1], t[2], t[3]) end
-local function clamp(v, lo, hi) if v < lo then return lo elseif v > hi then return hi end return v end
-
-function UILib.new(cfg)
-    local Players = game:GetService("Players")
-    local UIS = game:GetService("UserInputService")
-    local TweenService = game:GetService("TweenService")
-
-    local win = {Flags = {}, Tabs = {}, Elements = {}, Connections = {}, Alive = true}
-    local themeName = THEMES[cfg.Theme] and cfg.Theme or "Crimson"
-    local T = THEMES[themeName]
-    local themed = {}                                                    -- {inst, prop, key}: re-coloured by SetTheme
-    local onError = cfg.OnError or function() end
-
-    local function connect(signal, fn)
-        local c = signal:Connect(fn)
-        win.Connections[#win.Connections + 1] = c
-        return c
-    end
-    win.Connect = connect
-    local function safe(where, fn, ...)
-        local ok, err = pcall(fn, ...)
-        if not ok then onError(where, err) end
-        return ok
-    end
-    win.Safe = safe
-
-    local function mk(class, props, parent)
-        local o = Instance.new(class)
-        for k, v in pairs(props) do o[k] = v end
-        if parent then o.Parent = parent end
-        return o
-    end
-    local function bind(inst, prop, key)                                 -- colour from the theme, now and after SetTheme
-        inst[prop] = rgb(T[key])
-        themed[#themed + 1] = {inst, prop, key}
-    end
-    local function corner(inst, px) return mk("UICorner", {CornerRadius = px == "full" and UDim.new(1, 0) or UDim.new(0, px or 8)}, inst) end
-    local function stroke(inst, key)
-        local s = mk("UIStroke", {Thickness = 1, ApplyStrokeMode = Enum.ApplyStrokeMode.Border}, inst)
-        bind(s, "Color", key or "stroke")
-        return s
-    end
-    local function tween(inst, props, secs)
-        local ok = pcall(function()
-            TweenService:Create(inst, TweenInfo.new(secs or 0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), props):Play()
-        end)
-        if not ok then for k, v in pairs(props) do pcall(function() inst[k] = v end) end end
-    end
-
-    ---------------------------------------------------------------------------------------------- window frame
-    local vp = workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize or Vector2.new(1280, 720)
-    local W = clamp(vp.X - 24, 340, 640)
-    local H = clamp(vp.Y - 24, 250, 410)
-    local SIDE = W < 520 and 132 or 172
-    local TOP = 46
-    local bigW, bigH = clamp(vp.X - 40, 340, 900), clamp(vp.Y - 40, 250, 600)
-
-    local gui = mk("ScreenGui", {Name = cfg.GuiName or "UILibWindow", ResetOnSpawn = false, ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
-        IgnoreGuiInset = true, DisplayOrder = 50}, nil)
-    win.Gui = gui
-
-    local main = mk("Frame", {Name = "Window", Size = UDim2.fromOffset(W, H), Position = UDim2.new(0.5, -W / 2, 0.5, -H / 2),
-        BorderSizePixel = 0, ClipsDescendants = true}, gui)
-    bind(main, "BackgroundColor3", "bg")
-    corner(main, 12); stroke(main)
-    win.Main = main
-
-    local side = mk("Frame", {Name = "Sidebar", Size = UDim2.new(0, SIDE, 1, 0), BorderSizePixel = 0}, main)
-    bind(side, "BackgroundColor3", "side"); corner(side, 12)
-    local sideFill = mk("Frame", {Position = UDim2.new(1, -14, 0, 0), Size = UDim2.new(0, 14, 1, 0), BorderSizePixel = 0}, side)   -- squares the inner edge
-    bind(sideFill, "BackgroundColor3", "side")
-    local sideEdge = mk("Frame", {Size = UDim2.new(0, 1, 1, 0), Position = UDim2.new(1, -1, 0, 0), BorderSizePixel = 0}, side)
-    bind(sideEdge, "BackgroundColor3", "stroke")
-
-    local logo = mk("TextLabel", {BackgroundTransparency = 1, Position = UDim2.new(0, 14, 0, 10), Size = UDim2.new(1, -20, 0, 20), Text = cfg.Title or "Hub",
-        Font = Enum.Font.GothamBold, TextSize = 17, TextXAlignment = Enum.TextXAlignment.Left}, side)
-    bind(logo, "TextColor3", "text")
-    local subtitle = mk("TextLabel", {BackgroundTransparency = 1, Position = UDim2.new(0, 14, 0, 29), Size = UDim2.new(1, -20, 0, 14), Text = cfg.Subtitle or "",
-        Font = Enum.Font.Gotham, TextSize = 11, TextXAlignment = Enum.TextXAlignment.Left, TextTruncate = Enum.TextTruncate.AtEnd}, side)
-    bind(subtitle, "TextColor3", "sub")
-    local accentLine = mk("Frame", {Position = UDim2.new(0, 14, 0, 48), Size = UDim2.new(0, 34, 0, 3), BorderSizePixel = 0}, side)
-    bind(accentLine, "BackgroundColor3", "accent"); corner(accentLine, "full")
-
-    local searchBox = mk("Frame", {Position = UDim2.new(0, 10, 0, 60), Size = UDim2.new(1, -20, 0, 30), BorderSizePixel = 0}, side)
-    bind(searchBox, "BackgroundColor3", "row"); corner(searchBox, 8); stroke(searchBox)
-    local search = mk("TextBox", {BackgroundTransparency = 1, Position = UDim2.new(0, 10, 0, 0), Size = UDim2.new(1, -16, 1, 0), Text = "", PlaceholderText = "Search...",
-        ClearTextOnFocus = false, Font = Enum.Font.Gotham, TextSize = 13, TextXAlignment = Enum.TextXAlignment.Left}, searchBox)
-    bind(search, "TextColor3", "text"); bind(search, "PlaceholderColor3", "sub")
-
-    local tabList = mk("ScrollingFrame", {Position = UDim2.new(0, 0, 0, 98), Size = UDim2.new(1, 0, 1, -104), BackgroundTransparency = 1, BorderSizePixel = 0,
-        CanvasSize = UDim2.new(0, 0, 0, 0), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 0}, side)
-    mk("UIListLayout", {Padding = UDim.new(0, 3), SortOrder = Enum.SortOrder.LayoutOrder}, tabList)
-    mk("UIPadding", {PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 8)}, tabList)
-
-    local top = mk("Frame", {Name = "Topbar", Position = UDim2.new(0, SIDE, 0, 0), Size = UDim2.new(1, -SIDE, 0, TOP), BackgroundTransparency = 1}, main)
-    local pageTitle = mk("TextLabel", {BackgroundTransparency = 1, Position = UDim2.new(0, 16, 0, 0), Size = UDim2.new(1, -190, 1, 0), Text = "",
-        Font = Enum.Font.GothamBold, TextSize = 16, TextXAlignment = Enum.TextXAlignment.Left}, top)
-    bind(pageTitle, "TextColor3", "text")
-
-    local function ctlButton(text, offsetFromRight)
-        local b = mk("TextButton", {AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -offsetFromRight, 0.5, 0), Size = UDim2.fromOffset(26, 26),
-            Text = text, Font = Enum.Font.GothamBold, TextSize = 14, AutoButtonColor = false, BorderSizePixel = 0}, top)
-        bind(b, "BackgroundColor3", "row"); bind(b, "TextColor3", "sub"); corner(b, 7); stroke(b)
-        return b
-    end
-    local btnClose = ctlButton("X", 10)
-    local btnMax = ctlButton("+", 42)
-    local btnMin = ctlButton("-", 74)
-    local avatar = mk("ImageLabel", {AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -108, 0.5, 0), Size = UDim2.fromOffset(30, 30), BackgroundTransparency = 0,
-        BorderSizePixel = 0, Image = ""}, top)
-    bind(avatar, "BackgroundColor3", "row"); corner(avatar, "full")
-    local avatarRing = stroke(avatar, "accent"); avatarRing.Thickness = 2
-
-    local content = mk("Frame", {Name = "Content", Position = UDim2.new(0, SIDE, 0, TOP), Size = UDim2.new(1, -SIDE, 1, -TOP), BackgroundTransparency = 1, ClipsDescendants = true}, main)
-    local scroll = mk("ScrollingFrame", {Position = UDim2.new(0, 10, 0, 0), Size = UDim2.new(1, -20, 1, -10), BackgroundTransparency = 1, BorderSizePixel = 0,
-        CanvasSize = UDim2.new(0, 0, 0, 0), AutomaticCanvasSize = Enum.AutomaticSize.Y, ScrollBarThickness = 3, ScrollingDirection = Enum.ScrollingDirection.Y}, content)
-    bind(scroll, "ScrollBarImageColor3", "accent")
-    mk("UIListLayout", {Padding = UDim.new(0, 10), SortOrder = Enum.SortOrder.LayoutOrder}, scroll)
-    mk("UIPadding", {PaddingRight = UDim.new(0, 6), PaddingBottom = UDim.new(0, 6)}, scroll)
-    win.Scroll = scroll
-
-    -- floating re-open button (phones have no keyboard shortcut)
-    local fab = mk("TextButton", {Name = "Open", AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 10, 0.5, 0), Size = UDim2.fromOffset(42, 42), Text = "M",
-        Font = Enum.Font.GothamBold, TextSize = 18, AutoButtonColor = false, BorderSizePixel = 0, Visible = false}, gui)
-    bind(fab, "BackgroundColor3", "accent"); bind(fab, "TextColor3", "text"); corner(fab, "full")
-
-    ---------------------------------------------------------------------------------------------- dragging
-    local function makeDraggable(handle, target)
-        local dragging, startX, startY, basePos = false, 0, 0, nil
-        connect(handle.InputBegan, function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                dragging, startX, startY, basePos = true, input.Position.X, input.Position.Y, target.Position
-            end
-        end)
-        connect(UIS.InputChanged, function(input)
-            if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-                target.Position = UDim2.new(basePos.X.Scale, basePos.X.Offset + (input.Position.X - startX), basePos.Y.Scale, basePos.Y.Offset + (input.Position.Y - startY))
-            end
-        end)
-        connect(UIS.InputEnded, function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragging = false end
-        end)
-    end
-    makeDraggable(top, main)
-    makeDraggable(side, main)
-
-    ---------------------------------------------------------------------------------------------- tabs, search
-    local currentTab
-    local function selectTab(tab)
-        currentTab = tab
-        for _, t in ipairs(win.Tabs) do
-            local on = t == tab
-            t.page.Visible = on
-            t.bar.Visible = on
-            tween(t.button, {BackgroundTransparency = on and 0 or 1}, 0.12)
-            t.button.TextColor3 = rgb(on and T.text or T.sub)
-        end
-        pageTitle.Text = tab and tab.name or ""
-        scroll.CanvasPosition = Vector2.new(0, 0)
-    end
-
-    local function applySearch()
-        local q = (search.Text or ""):lower():gsub("^%s+", ""):gsub("%s+$", "")
-        if q == "" then
-            for _, t in ipairs(win.Tabs) do
-                for _, e in ipairs(t.entries) do e.frame.Visible = true end
-                t.heading.Visible = false
-            end
-            selectTab(currentTab or win.Tabs[1])
-            return
-        end
-        pageTitle.Text = "Search results"
-        for _, t in ipairs(win.Tabs) do
-            local section, any = nil, false
-            for _, e in ipairs(t.entries) do
-                if e.isSection then
-                    section = e; e.hits = 0; e.frame.Visible = false
-                else
-                    local hit = e.key:find(q, 1, true) ~= nil
-                    e.frame.Visible = hit
-                    if hit then any = true; if section then section.hits = section.hits + 1; section.frame.Visible = true end end
-                end
-            end
-            t.page.Visible = any
-            t.heading.Visible = any
-            t.bar.Visible = false
-        end
-    end
-    connect(search:GetPropertyChangedSignal("Text"), function() safe("search", applySearch) end)
-
-    function win:Tab(name)
-        local tab = {name = name, entries = {}, order = 0}
-        local button = mk("TextButton", {Name = name, Size = UDim2.new(1, 0, 0, 34), BackgroundTransparency = 1, Text = "   " .. name, Font = Enum.Font.GothamMedium,
-            TextSize = 14, TextXAlignment = Enum.TextXAlignment.Left, AutoButtonColor = false, BorderSizePixel = 0, LayoutOrder = #win.Tabs + 1}, tabList)
-        bind(button, "BackgroundColor3", "row"); bind(button, "TextColor3", "sub"); corner(button, 8)
-        local bar = mk("Frame", {Position = UDim2.new(0, 0, 0.5, -9), Size = UDim2.new(0, 3, 0, 18), BorderSizePixel = 0, Visible = false}, button)
-        bind(bar, "BackgroundColor3", "accent"); corner(bar, "full")
-        local page = mk("Frame", {Name = name, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1,
-            Visible = false, LayoutOrder = #win.Tabs + 1}, scroll)
-        mk("UIListLayout", {Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder}, page)
-        local heading = mk("TextLabel", {Size = UDim2.new(1, 0, 0, 20), BackgroundTransparency = 1, Text = string.upper(name), Font = Enum.Font.GothamBold, TextSize = 12,
-            TextXAlignment = Enum.TextXAlignment.Left, Visible = false, LayoutOrder = 0}, page)
-        bind(heading, "TextColor3", "accent")
-        tab.button, tab.bar, tab.page, tab.heading = button, bar, page, heading
-        win.Tabs[#win.Tabs + 1] = tab
-        connect(button.MouseButton1Click, function()
-            if (search.Text or "") ~= "" then search.Text = "" end
-            selectTab(tab)
-        end)
-        if #win.Tabs == 1 then selectTab(tab) end
-
-        local function nextOrder() tab.order = tab.order + 1; return tab.order end
-        local function register(frame, key, isSection)
-            local entry = {frame = frame, key = (key or ""):lower(), isSection = isSection, hits = 0}
-            tab.entries[#tab.entries + 1] = entry
-            return entry
-        end
-        local function fire(cb, ...) if cb then safe("callback", cb, ...) end end
-
-        local function newRow(height, title, desc, rightPad)
-            local row = mk("Frame", {Size = UDim2.new(1, 0, 0, height), BorderSizePixel = 0, LayoutOrder = nextOrder()}, page)
-            bind(row, "BackgroundColor3", "row"); corner(row, 8); stroke(row)
-            local t = mk("TextLabel", {BackgroundTransparency = 1, Position = UDim2.new(0, 14, 0, desc and 6 or 0), Size = UDim2.new(1, -(rightPad or 20) - 14, 0, desc and 18 or height),
-                Text = title or "", Font = Enum.Font.GothamMedium, TextSize = 14, TextXAlignment = Enum.TextXAlignment.Left, TextTruncate = Enum.TextTruncate.AtEnd}, row)
-            bind(t, "TextColor3", "text")
-            if desc then
-                local d = mk("TextLabel", {BackgroundTransparency = 1, Position = UDim2.new(0, 14, 0, 25), Size = UDim2.new(1, -(rightPad or 20) - 14, 0, 16), Text = desc,
-                    Font = Enum.Font.Gotham, TextSize = 11, TextXAlignment = Enum.TextXAlignment.Left, TextTruncate = Enum.TextTruncate.AtEnd}, row)
-                bind(d, "TextColor3", "sub")
-            end
-            register(row, (title or "") .. " " .. (desc or ""))
-            return row, t
-        end
-        local function addElement(el, flag)
-            win.Elements[#win.Elements + 1] = el
-            if flag then win.Flags[flag] = el; el.Flag = flag end
-            return el
-        end
-
-        function tab:Section(title)
-            local lbl = mk("TextLabel", {Size = UDim2.new(1, 0, 0, 22), BackgroundTransparency = 1, Text = string.upper(title), Font = Enum.Font.GothamBold, TextSize = 11,
-                TextXAlignment = Enum.TextXAlignment.Left, LayoutOrder = nextOrder()}, page)
-            bind(lbl, "TextColor3", "sub")
-            mk("UIPadding", {PaddingLeft = UDim.new(0, 4), PaddingTop = UDim.new(0, 6)}, lbl)
-            register(lbl, title, true)
-            return lbl
-        end
-
-        function tab:Label(text)
-            local row = mk("Frame", {Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BorderSizePixel = 0, LayoutOrder = nextOrder()}, page)
-            bind(row, "BackgroundColor3", "row"); corner(row, 8); stroke(row)
-            mk("UIPadding", {PaddingTop = UDim.new(0, 9), PaddingBottom = UDim.new(0, 9), PaddingLeft = UDim.new(0, 14), PaddingRight = UDim.new(0, 14)}, row)
-            local lbl = mk("TextLabel", {BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, Text = text or "",
-                Font = Enum.Font.Gotham, TextSize = 12, TextWrapped = true, TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top}, row)
-            bind(lbl, "TextColor3", "sub")
-            local entry = register(row, text)
-            local el = {Value = text}
-            function el:Set(v) el.Value = tostring(v); lbl.Text = el.Value; entry.key = el.Value:lower() end
-            return el
-        end
-
-        function tab:Button(o)
-            local row = newRow(o.Desc and 48 or 40, o.Title, o.Desc, 60)
-            local pill = mk("TextLabel", {AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -12, 0.5, 0), Size = UDim2.fromOffset(44, 22), Text = o.Label or "Run",
-                Font = Enum.Font.GothamBold, TextSize = 11, BorderSizePixel = 0}, row)
-            bind(pill, "BackgroundColor3", "accent"); bind(pill, "TextColor3", "text"); corner(pill, 6)
-            local hit = mk("TextButton", {BackgroundTransparency = 1, Size = UDim2.new(1, 0, 1, 0), Text = "", AutoButtonColor = false}, row)
-            connect(hit.MouseButton1Click, function()
-                tween(row, {BackgroundColor3 = rgb(T.rowHover)}, 0.08)
-                task.delay(0.12, function() if row.Parent then tween(row, {BackgroundColor3 = rgb(T.row)}, 0.15) end end)
-                fire(o.Callback)
-            end)
-            local el = {Value = nil, Click = function() fire(o.Callback) end}
-            function el:Set() end
-            return addElement(el)
-        end
-
-        function tab:Toggle(o)
-            local row = newRow(o.Desc and 48 or 40, o.Title, o.Desc, 64)
-            local sw = mk("Frame", {AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -12, 0.5, 0), Size = UDim2.fromOffset(38, 20), BorderSizePixel = 0}, row)
-            corner(sw, "full")
-            local knob = mk("Frame", {AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 3, 0.5, 0), Size = UDim2.fromOffset(14, 14), BorderSizePixel = 0}, sw)
-            knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255); corner(knob, "full")
-            local hit = mk("TextButton", {BackgroundTransparency = 1, Size = UDim2.new(1, 0, 1, 0), Text = "", AutoButtonColor = false}, row)
-            local el = {Value = o.Default == true}
-            local function render()
-                tween(sw, {BackgroundColor3 = rgb(el.Value and T.accent or T.off)}, 0.12)
-                tween(knob, {Position = UDim2.new(0, el.Value and 21 or 3, 0.5, 0)}, 0.12)
-            end
-            el.render = render
-            function el:Set(v, silent)
-                v = v == true
-                local changed = v ~= el.Value
-                el.Value = v; render()
-                if not silent and (changed or o.FireSame) then fire(o.Callback, v) end
-            end
-            sw.BackgroundColor3 = rgb(el.Value and T.accent or T.off)
-            knob.Position = UDim2.new(0, el.Value and 21 or 3, 0.5, 0)
-            connect(hit.MouseButton1Click, function() el:Set(not el.Value) end)
-            addElement(el, o.Flag)
-            if el.Value and o.Callback and not o.NoInitialCallback then fire(o.Callback, true) end
-            return el
-        end
-
-        function tab:Slider(o)
-            local min, max, step = o.Min or 0, o.Max or 100, o.Step or 1
-            local row = newRow(56, o.Title, nil, 90)
-            local valueLabel = mk("TextLabel", {BackgroundTransparency = 1, AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -14, 0, 8), Size = UDim2.fromOffset(86, 18),
-                Font = Enum.Font.GothamBold, TextSize = 13, TextXAlignment = Enum.TextXAlignment.Right, Text = ""}, row)
-            bind(valueLabel, "TextColor3", "accent2")
-            local track = mk("Frame", {Position = UDim2.new(0, 14, 0, 38), Size = UDim2.new(1, -28, 0, 6), BorderSizePixel = 0}, row)
-            bind(track, "BackgroundColor3", "off"); corner(track, "full")
-            local fill = mk("Frame", {Size = UDim2.new(0, 0, 1, 0), BorderSizePixel = 0}, track)
-            bind(fill, "BackgroundColor3", "accent"); corner(fill, "full")
-            local knob = mk("Frame", {AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0, 0, 0.5, 0), Size = UDim2.fromOffset(14, 14), BorderSizePixel = 0}, track)
-            knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255); corner(knob, "full")
-            local hit = mk("TextButton", {BackgroundTransparency = 1, Position = UDim2.new(0, 0, 0, 26), Size = UDim2.new(1, 0, 0, 30), Text = "", AutoButtonColor = false}, row)
-            local el = {Value = o.Default or min}
-            local decimals = step < 1 and (step < 0.1 and 2 or 1) or 0
-            local function snap(v)
-                v = clamp(v, min, max)
-                v = min + math.floor((v - min) / step + 0.5) * step
-                return clamp(tonumber(string.format("%." .. decimals .. "f", v)), min, max)
-            end
-            local function render()
-                local f = max > min and (el.Value - min) / (max - min) or 0
-                fill.Size = UDim2.new(f, 0, 1, 0)
-                knob.Position = UDim2.new(f, 0, 0.5, 0)
-                valueLabel.Text = string.format("%." .. decimals .. "f", el.Value) .. (o.Suffix or "")
-            end
-            el.Value = snap(el.Value); render()
-            function el:Set(v, silent)
-                if type(v) ~= "number" then return end
-                v = snap(v)
-                local changed = v ~= el.Value
-                el.Value = v; render()
-                if not silent and changed then fire(o.Callback, v) end
-            end
-            local dragging = false
-            local function fromX(x)
-                local w = track.AbsoluteSize.X
-                el:Set(min + clamp((x - track.AbsolutePosition.X) / (w > 0 and w or 1), 0, 1) * (max - min))
-            end
-            connect(hit.InputBegan, function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                    dragging = true; scroll.ScrollingEnabled = false; fromX(input.Position.X)
-                end
-            end)
-            connect(UIS.InputChanged, function(input)
-                if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then fromX(input.Position.X) end
-            end)
-            connect(UIS.InputEnded, function(input)
-                if dragging and (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
-                    dragging = false; scroll.ScrollingEnabled = true
-                end
-            end)
-            addElement(el, o.Flag)
-            return el
-        end
-
-        function tab:Dropdown(o)
-            local holder = mk("Frame", {Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1, LayoutOrder = nextOrder()}, page)
-            mk("UIListLayout", {Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder}, holder)
-            local head = mk("Frame", {Size = UDim2.new(1, 0, 0, 40), BorderSizePixel = 0, LayoutOrder = 1}, holder)
-            bind(head, "BackgroundColor3", "row"); corner(head, 8); stroke(head)
-            local title = mk("TextLabel", {BackgroundTransparency = 1, Position = UDim2.new(0, 14, 0, 0), Size = UDim2.new(0.5, -14, 1, 0), Text = o.Title or "", Font = Enum.Font.GothamMedium,
-                TextSize = 14, TextXAlignment = Enum.TextXAlignment.Left, TextTruncate = Enum.TextTruncate.AtEnd}, head)
-            bind(title, "TextColor3", "text")
-            local current = mk("TextLabel", {BackgroundTransparency = 1, AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -14, 0, 0), Size = UDim2.new(0.5, -20, 1, 0), Text = "",
-                Font = Enum.Font.GothamBold, TextSize = 13, TextXAlignment = Enum.TextXAlignment.Right, TextTruncate = Enum.TextTruncate.AtEnd}, head)
-            bind(current, "TextColor3", "accent2")
-            local hit = mk("TextButton", {BackgroundTransparency = 1, Size = UDim2.new(1, 0, 1, 0), Text = "", AutoButtonColor = false}, head)
-            local list = mk("Frame", {Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1, Visible = false, LayoutOrder = 2}, holder)
-            mk("UIListLayout", {Padding = UDim.new(0, 3), SortOrder = Enum.SortOrder.LayoutOrder}, list)
-            mk("UIPadding", {PaddingLeft = UDim.new(0, 10)}, list)
-            register(holder, (o.Title or "") .. " " .. table.concat(o.Values or {}, " "))
-            local el = {Value = o.Default, Values = o.Values or {}}
-            local buttons = {}
-            local function paint()
-                current.Text = tostring(el.Value or "-")
-                for _, b in ipairs(buttons) do
-                    b.inst.TextColor3 = rgb(b.value == el.Value and T.accent2 or T.text)
-                end
-            end
-            local function rebuild()
-                for _, b in ipairs(buttons) do b.inst:Destroy() end
-                buttons = {}
-                for i, v in ipairs(el.Values) do
-                    local b = mk("TextButton", {Size = UDim2.new(1, 0, 0, 30), Text = "  " .. tostring(v), Font = Enum.Font.GothamMedium, TextSize = 13,
-                        TextXAlignment = Enum.TextXAlignment.Left, AutoButtonColor = false, BorderSizePixel = 0, LayoutOrder = i}, list)
-                    bind(b, "BackgroundColor3", "rowHover"); corner(b, 6)
-                    buttons[#buttons + 1] = {inst = b, value = v}
-                    connect(b.MouseButton1Click, function() el:Set(v); list.Visible = false end)
-                end
-                paint()
-            end
-            function el:Set(v, silent)
-                local changed = v ~= el.Value
-                el.Value = v; paint()
-                if not silent and changed then fire(o.Callback, v) end
-            end
-            function el:SetValues(values) el.Values = values; rebuild() end
-            if el.Value == nil then el.Value = el.Values[1] end
-            rebuild()
-            connect(hit.MouseButton1Click, function() list.Visible = not list.Visible end)
-            addElement(el, o.Flag)
-            return el
-        end
-
-        function tab:Keybind(o)
-            local row = newRow(40, o.Title, o.Desc, 110)
-            local btn = mk("TextButton", {AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -12, 0.5, 0), Size = UDim2.fromOffset(86, 24), Text = "",
-                Font = Enum.Font.GothamBold, TextSize = 12, AutoButtonColor = false, BorderSizePixel = 0}, row)
-            bind(btn, "BackgroundColor3", "rowHover"); bind(btn, "TextColor3", "accent2"); corner(btn, 6); stroke(btn)
-            local el = {Value = o.Default or "None", Down = false}
-            local capturing = false
-            local function nameOf(input)
-                if input.UserInputType == Enum.UserInputType.Keyboard then return input.KeyCode.Name end
-                if input.UserInputType == Enum.UserInputType.MouseButton2 then return "MouseButton2" end
-                if input.UserInputType == Enum.UserInputType.MouseButton3 then return "MouseButton3" end
-                return nil
-            end
-            function el:Set(v, silent)
-                el.Value = type(v) == "string" and v or "None"
-                btn.Text = el.Value
-                if not silent and o.Changed then fire(o.Changed, el.Value) end
-            end
-            btn.Text = el.Value
-            connect(btn.MouseButton1Click, function() capturing = true; btn.Text = "press a key" end)
-            connect(UIS.InputBegan, function(input, processed)
-                local n = nameOf(input)
-                if not n then return end
-                if capturing then
-                    capturing = false
-                    el:Set(n == "Escape" and "None" or n)
-                    return
-                end
-                if n == el.Value and (not processed or o.IgnoreProcessed) then
-                    el.Down = true
-                    if o.Callback then fire(o.Callback) end
-                end
-            end)
-            connect(UIS.InputEnded, function(input)
-                if nameOf(input) == el.Value then el.Down = false end
-            end)
-            addElement(el, o.Flag)
-            return el
-        end
-
-        return tab
-    end
-
-    ---------------------------------------------------------------------------------------------- notifications
-    local toasts = mk("Frame", {Name = "Toasts", AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -14, 1, -14), Size = UDim2.new(0, 290, 1, -28),
-        BackgroundTransparency = 1}, gui)
-    mk("UIListLayout", {Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder, VerticalAlignment = Enum.VerticalAlignment.Bottom,
-        HorizontalAlignment = Enum.HorizontalAlignment.Right}, toasts)
-    local toastCount = 0
-    function win:Notify(o)
-        if not win.Alive then return end
-        toastCount = toastCount + 1
-        local kind = o.Type == "good" and "good" or o.Type == "warn" and "warn" or o.Type == "bad" and "bad" or "accent"
-        local card = mk("Frame", {Size = UDim2.fromOffset(280, o.Content and 58 or 40), BorderSizePixel = 0, BackgroundTransparency = 1, LayoutOrder = toastCount}, toasts)
-        bind(card, "BackgroundColor3", "side"); corner(card, 10)
-        local edge = stroke(card, kind)
-        local bar = mk("Frame", {Size = UDim2.new(0, 4, 1, -16), Position = UDim2.new(0, 8, 0, 8), BorderSizePixel = 0}, card)
-        bind(bar, "BackgroundColor3", kind); corner(bar, "full")
-        local t = mk("TextLabel", {BackgroundTransparency = 1, Position = UDim2.new(0, 22, 0, o.Content and 6 or 0), Size = UDim2.new(1, -30, 0, o.Content and 20 or 40),
-            Text = o.Title or "", Font = Enum.Font.GothamBold, TextSize = 14, TextXAlignment = Enum.TextXAlignment.Left, TextTruncate = Enum.TextTruncate.AtEnd}, card)
-        bind(t, "TextColor3", "text")
-        local c
-        if o.Content then
-            c = mk("TextLabel", {BackgroundTransparency = 1, Position = UDim2.new(0, 22, 0, 26), Size = UDim2.new(1, -30, 0, 28), Text = o.Content, Font = Enum.Font.Gotham,
-                TextSize = 12, TextWrapped = true, TextXAlignment = Enum.TextXAlignment.Left, TextYAlignment = Enum.TextYAlignment.Top}, card)
-            bind(c, "TextColor3", "sub")
-        end
-        tween(card, {BackgroundTransparency = 0}, 0.2)
-        task.delay(o.Duration or 4, function()
-            if not card.Parent then return end
-            tween(card, {BackgroundTransparency = 1}, 0.25)
-            tween(t, {TextTransparency = 1}, 0.25)
-            if c then tween(c, {TextTransparency = 1}, 0.25) end
-            tween(bar, {BackgroundTransparency = 1}, 0.25)
-            tween(edge, {Transparency = 1}, 0.25)
-            task.delay(0.3, function() if card.Parent then card:Destroy() end end)
-        end)
-    end
-
-    ---------------------------------------------------------------------------------------------- window state
-    local expanded = false
-    local minimized = false
-    local function layoutSize()
-        local w, h = expanded and bigW or W, expanded and bigH or H
-        if minimized then h = TOP end
-        main.Size = UDim2.fromOffset(w, h)
-        side.Visible = not minimized
-        content.Visible = not minimized
-    end
-    function win:SetVisible(v)
-        main.Visible = v
-        fab.Visible = not v
-    end
-    function win:Toggle() win:SetVisible(not main.Visible) end
-    function win:Minimize() minimized = not minimized; layoutSize() end
-    function win:Maximize() expanded = not expanded; if expanded then minimized = false end; layoutSize() end
-    connect(btnClose.MouseButton1Click, function()
-        win:SetVisible(false)
-        win:Notify{Title = "Menu hidden", Content = "Tap the M button" .. (win.ToggleKey and (" or press " .. win.ToggleKey.Name) or "") .. " to open it again.", Duration = 3}
-    end)
-    connect(btnMin.MouseButton1Click, function() win:Minimize() end)
-    connect(btnMax.MouseButton1Click, function() win:Maximize() end)
-    connect(fab.MouseButton1Click, function() win:SetVisible(true) end)
-    win.ToggleKey = cfg.ToggleKey
-    connect(UIS.InputBegan, function(input, processed)
-        if not processed and win.ToggleKey and input.KeyCode == win.ToggleKey then win:Toggle() end
-    end)
-
-    function win:SetTheme(name)
-        if not THEMES[name] then return end
-        themeName, T = name, THEMES[name]
-        for _, b in ipairs(themed) do
-            if b[1].Parent ~= nil or b[1] == gui then pcall(function() b[1][b[2]] = rgb(T[b[3]]) end) end
-        end
-        for _, el in ipairs(win.Elements) do if el.render then el.render() end end
-        if currentTab then selectTab(currentTab) end
-    end
-    function win:GetTheme() return themeName end
-    function win:SelectTab(name) for _, t in ipairs(win.Tabs) do if t.name == name then selectTab(t) end end end
-
-    function win:SetAvatar(userId)
-        task.spawn(function()
-            local ok, img = pcall(function()
-                return Players:GetUserThumbnailAsync(userId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100)
-            end)
-            if ok and type(img) == "string" and img ~= "" then avatar.Image = img end
-        end)
-    end
-
-    function win:GetState()
-        local out = {}
-        for flag, el in pairs(win.Flags) do out[flag] = el.Value end
-        return out
-    end
-    function win:SetState(state, silent)
-        if type(state) ~= "table" then return end
-        for flag, v in pairs(state) do
-            local el = win.Flags[flag]
-            if el and el.Set and type(v) == type(el.Value) then el:Set(v, silent) end
-        end
-    end
-
-    function win:Destroy()
-        if not win.Alive then return end
-        win.Alive = false
-        for _, c in ipairs(win.Connections) do pcall(function() c:Disconnect() end) end
-        win.Connections = {}
-        pcall(function() gui:Destroy() end)
-    end
-
-    layoutSize()
-    gui.Parent = cfg.Parent
-    return win
-end
-
-return UILib
-
-end)()
-
+-- @@MODULES@@
 
 local function __run()
     local Players = game:GetService("Players")
@@ -792,16 +18,16 @@ local function __run()
 
     ------------------------------------------------------------------------------------------ session / logging
     local genv = (getgenv and getgenv()) or _G
-    if type(genv.__MM2Hub) == "table" and genv.__MM2Hub.Destroy then pcall(genv.__MM2Hub.Destroy) end
+    if type(genv.__WraithsHub) == "table" and genv.__WraithsHub.Destroy then pcall(genv.__WraithsHub.Destroy) end
     local Hub = {Alive = true, Conns = {}, Cleanups = {}}
-    genv.__MM2Hub = Hub
+    genv.__WraithsHub = Hub
     Hub.Destroy = function()
         if not Hub.Alive then return end
         Hub.Alive = false
         for _, c in ipairs(Hub.Conns) do pcall(function() c:Disconnect() end) end
         for _, fn in ipairs(Hub.Cleanups) do pcall(fn) end
         if Hub.Win then pcall(function() Hub.Win:Destroy() end) end
-        if genv.__MM2Hub == Hub then genv.__MM2Hub = nil end
+        if genv.__WraithsHub == Hub then genv.__WraithsHub = nil end
     end
 
     local LOG, LOG_MAX = {}, 40
@@ -846,10 +72,13 @@ local function __run()
         autoShoot = false, shootGap = 2.5, shootKey = "X", silentAim = false, fireMethod = "Auto",
         throwKey = "E", throwAtKey = "C", autoThrow = false, throwGap = 2, slashAura = false, slashRange = 9,
         hitbox = false, hitboxSize = 8, hitboxAlpha = 0.6, hitboxWho = "Murderer",
+        reticle = "Weapon in hand", pingComp = 1, interpMs = 50, extraLead = 0,
+        btnShoot = true, btnThrow = true, btnGrab = false, btnSpeed = false, btnJump = false, btnSize = 80, btnLock = false, waves = "High",
+        shootX = -1, shootY = -1, throwX = -1, throwY = -1, grabX = -1, grabY = -1, speedX = -1, speedY = -1, jumpX = -1, jumpY = -1,   -- -1 = placed automatically (down the right edge)
         walkOn = false, walkSpeed = 24, jumpOn = false, jumpPower = 60, infJump = false, noclip = false, fovOn = false, fovValue = 80,
         antiAfk = true, theme = "Crimson", uiKey = "RightShift",
     }
-    local CONFIG_FILE = "mm2_hub_config.json"
+    local CONFIG_FILE = "wraiths_hub_config.json"
     local saved
     if Cap.files then
         local okf, exists = pcall(isfile, CONFIG_FILE)
@@ -873,13 +102,15 @@ local function __run()
     local function lookXZ() local cam = camera(); local l = cam and cam.CFrame.LookVector; return l and l.X or 0, l and l.Z or -1 end
     local function nameOf(plr) return plr.DisplayName ~= "" and plr.DisplayName or plr.Name end
 
-    local pingCache, pingAt = 0.08, 0
-    local function pingSeconds()
-        if now() - pingAt < 1 then return pingCache end
-        pingAt = now()
+    -- measured ping (round trip), smoothed so one lag spike cannot throw the aim off
+    local Ping = Logic.newPing{default = 80}
+    local function samplePing()
         local ok, ms = pcall(function() return Stats.Network.ServerStatsItem["Data Ping"]:GetValue() end)
-        if ok and type(ms) == "number" then pingCache = ms / 1000 end
-        return pingCache
+        if ok and type(ms) == "number" then Ping:add(ms) end
+    end
+    -- how far ahead of what I see the aim point goes (seconds): ping + the render delay of remote players
+    local function leadSeconds()
+        return Logic.pingLead(Ping:ms(), S.addPing and S.pingComp or 0, S.interpMs, S.extraLead, 0.8)
     end
 
     local function uiParent()
@@ -1111,7 +342,7 @@ local function __run()
     ------------------------------------------------------------------------------------------ ESP
     local ESP = {objs = {}, tracers = {}, gunObjs = {}}
     local espFolder = Instance.new("Folder")
-    espFolder.Name = "MM2HubESP"
+    espFolder.Name = "WraithsHubESP"
     espFolder.Parent = PARENT:IsA("PlayerGui") and workspace or PARENT    -- Highlights do not render under a PlayerGui
     onCleanup(function() espFolder:Destroy() end)
 
@@ -1282,7 +513,7 @@ local function __run()
 
     ------------------------------------------------------------------------------------------ HUD: gun finder + FOV circle
     local hud = Instance.new("ScreenGui")
-    hud.Name = "MM2HubHud"
+    hud.Name = "WraithsHubHud"
     hud.ResetOnSpawn = false
     hud.IgnoreGuiInset = true
     hud.DisplayOrder = 40
@@ -1291,7 +522,7 @@ local function __run()
 
     local gunBox = Instance.new("Frame")
     gunBox.AnchorPoint = Vector2.new(0.5, 0)
-    gunBox.Position = UDim2.new(0.5, 0, 0, 14)
+    gunBox.Position = UDim2.new(0.5, 0, 0, 52)
     gunBox.Size = UDim2.new(0, 300, 0, 40)
     gunBox.BackgroundColor3 = Color3.fromRGB(14, 14, 20)
     gunBox.BackgroundTransparency = 0.15
@@ -1342,6 +573,68 @@ local function __run()
         local st = Instance.new("UIStroke"); st.Color = Color3.fromRGB(255, 255, 255); st.Thickness = 1; st.Transparency = 0.4; st.Parent = fovRing
     end
 
+    -- the aim reticle: a ring with spinning ticks that glides onto the predicted point of the current target
+    local reticle = Instance.new("Frame")
+    reticle.Name = "AimReticle"
+    reticle.AnchorPoint = Vector2.new(0.5, 0.5)
+    reticle.Size = UDim2.new(0, 56, 0, 56)
+    reticle.BackgroundTransparency = 1
+    reticle.BorderSizePixel = 0
+    reticle.Visible = false
+    reticle.Parent = hud
+    local reticleSpin = Instance.new("Frame")
+    reticleSpin.Name = "Spin"
+    reticleSpin.Size = UDim2.new(1, 0, 1, 0)
+    reticleSpin.BackgroundTransparency = 1
+    reticleSpin.BorderSizePixel = 0
+    reticleSpin.Parent = reticle
+    local reticleRing = Instance.new("Frame")
+    reticleRing.Name = "Ring"
+    reticleRing.AnchorPoint = Vector2.new(0.5, 0.5)
+    reticleRing.Position = UDim2.new(0.5, 0, 0.5, 0)
+    reticleRing.Size = UDim2.new(0, 38, 0, 38)
+    reticleRing.BackgroundTransparency = 1
+    reticleRing.BorderSizePixel = 0
+    reticleRing.Parent = reticle
+    local reticleStroke = Instance.new("UIStroke")
+    reticleStroke.Thickness = 2
+    reticleStroke.Color = Color3.fromRGB(255, 255, 255)
+    reticleStroke.Parent = reticleRing
+    do
+        local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(1, 0); c.Parent = reticleRing
+        for _, spec in ipairs({{0.5, 0, 2, 9}, {0.5, 1, 2, 9}, {0, 0.5, 9, 2}, {1, 0.5, 9, 2}}) do
+            local tick = Instance.new("Frame")
+            tick.Name = "Tick"
+            tick.AnchorPoint = Vector2.new(0.5, 0.5)
+            tick.Position = UDim2.new(spec[1], 0, spec[2], 0)
+            tick.Size = UDim2.new(0, spec[3], 0, spec[4])
+            tick.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            tick.BorderSizePixel = 0
+            tick.Parent = reticleSpin
+        end
+        local dot = Instance.new("Frame")
+        dot.Name = "Dot"
+        dot.AnchorPoint = Vector2.new(0.5, 0.5)
+        dot.Position = UDim2.new(0.5, 0, 0.5, 0)
+        dot.Size = UDim2.new(0, 6, 0, 6)
+        dot.BackgroundColor3 = Color3.fromRGB(255, 80, 90)
+        dot.BorderSizePixel = 0
+        dot.Parent = reticle
+        local dc = Instance.new("UICorner"); dc.CornerRadius = UDim.new(1, 0); dc.Parent = dot
+    end
+    local reticleTag = Instance.new("TextLabel")
+    reticleTag.Name = "Tag"
+    reticleTag.AnchorPoint = Vector2.new(0.5, 0)
+    reticleTag.Position = UDim2.new(0.5, 0, 1, 2)
+    reticleTag.Size = UDim2.new(0, 170, 0, 14)
+    reticleTag.BackgroundTransparency = 1
+    reticleTag.Font = Enum.Font.GothamBold
+    reticleTag.TextSize = 11
+    reticleTag.TextColor3 = Color3.fromRGB(255, 255, 255)
+    reticleTag.TextStrokeTransparency = 0.35
+    reticleTag.Text = ""
+    reticleTag.Parent = reticle
+
     function Guns.updateHud()
         local inst, pos = nearestGun()
         if not (S.gunHud and pos) then gunBox.Visible = false; return end
@@ -1379,16 +672,42 @@ local function __run()
         return hit == nil
     end
 
-    local function predictedPos(part, char, shooterPos)
+    -- recent positions of every other player: a velocity that does not depend on the engine reporting one
+    local Tracks = {}
+    local function sampleTracks()
+        local t = now()
+        for plr, info in pairs(Roles.map) do
+            local r = plr ~= LocalPlayer and not info.dead and plr.Character and rootOf(plr.Character)
+            if r then
+                local tr = Tracks[plr]
+                if not tr then tr = {}; Tracks[plr] = tr end
+                local sample = (#tr >= 12) and table.remove(tr, 1) or {}
+                local p = r.Position
+                sample.t, sample.x, sample.y, sample.z = t, p.X, p.Y, p.Z
+                tr[#tr + 1] = sample
+            else
+                Tracks[plr] = nil
+            end
+        end
+        for plr in pairs(Tracks) do if Roles.map[plr] == nil then Tracks[plr] = nil end end
+    end
+
+    local function velocityOf(plr, part, char)
+        local root = rootOf(char) or part
+        local pv = root.AssemblyLinearVelocity
+        local hx, hy, hz = 0, 0, 0
+        if Tracks[plr] then hx, hy, hz = Logic.estimateVelocity(Tracks[plr], 0.18) end
+        return Logic.pickVelocity(pv.X, pv.Y, pv.Z, hx, hy, hz)
+    end
+
+    -- where to aim: the target's position when my shot arrives (ping + render delay + bullet flight), and the lead time used
+    local function predictedPos(part, char, shooterPos, plr)
         local pos = part.Position
-        if not S.predict then return pos end
-        local vel = part.AssemblyLinearVelocity
-        local root = rootOf(char)
-        if root and root ~= part then vel = root.AssemblyLinearVelocity end
-        local latency = S.addPing and pingSeconds() or 0
-        local x, y, z = Logic.lead(pos.X, pos.Y, pos.Z, vel.X, vel.Y, vel.Z, shooterPos.X, shooterPos.Y, shooterPos.Z,
-            {speed = S.bulletSpeed, latency = latency, strength = S.predictStrength, maxLead = 0.6, vertical = 0.5})
-        return Vector3.new(x, y, z)
+        if not S.predict then return pos, 0 end
+        local vx, vy, vz = velocityOf(plr, part, char)
+        local x, y, z, t = Logic.lead(pos.X, pos.Y, pos.Z, vx, vy, vz, shooterPos.X, shooterPos.Y, shooterPos.Z,
+            {speed = S.bulletSpeed, latency = leadSeconds(), strength = S.predictStrength, maxLead = 0.8, vertical = 0.5})
+        return Vector3.new(x, y, z), t
     end
 
     -- which mode is in effect for this weapon
@@ -1399,7 +718,7 @@ local function __run()
         return "Closest to crosshair"
     end
 
-    -- picks the best target for the weapon: returns plr, char, part, aimPosition
+    -- picks the best target for the weapon: returns plr, char, part, aimPosition, lead seconds
     function Aim.pick(weapon, modeOverride)
         local cam = camera()
         local me = myRoot()
@@ -1427,7 +746,8 @@ local function __run()
         local id = Logic.pickTarget(cands, {mode = modeOverride or modeFor(weapon), fov = S.fov, maxDist = S.maxDistance, needVisible = S.wallCheck})
         if not id then return end
         local e = byId[id]
-        return id, e.char, e.part, predictedPos(e.part, e.char, origin)
+        local pp, lt = predictedPos(e.part, e.char, origin, id)
+        return id, e.char, e.part, pp, lt
     end
 
     -- the data the namecall hook may read (it must not call methods): refreshed every frame
@@ -1485,7 +805,7 @@ local function __run()
     end
 
     ------------------------------------------------------------------------------------------ weapons: record / replay / silent aim
-    local Shots = {templates = {}, pending = {}, counts = {Gun = 0, Knife = 0}, window = 0, windowWeapon = nil, skip = nil, last = {}}
+    local Shots = {templates = {}, pending = {}, counts = {Gun = 0, Knife = 0}, window = 0, windowWeapon = nil, skip = nil, last = {}, firing = {}}
 
     local function findTool(weapon)
         local char = myChar()
@@ -1659,29 +979,51 @@ local function __run()
         return true
     end
 
+    local function pickFor(weapon)
+        local plr, char, part, pos, lt = Aim.pick(weapon)
+        if not plr and S.aimMode == "Auto (by my role)" and weapon == "Knife" then plr, char, part, pos, lt = Aim.pick(weapon, "Nearest") end
+        return plr, char, part, pos, lt
+    end
+
     function Shots.fire(weapon)           -- aim at the best target and use the weapon; returns ok, text
-        local plr, char, part, pos = Aim.pick(weapon)
-        if not plr and S.aimMode == "Auto (by my role)" and weapon == "Knife" then plr, char, part, pos = Aim.pick(weapon, "Nearest") end
+        local plr, char, part, pos, lead = pickFor(weapon)
         if not plr then return false, "no target in range / line of sight" end
-        local tool = equip(weapon)
+        local tool, held = equip(weapon)
         if not tool then return false, "you do not have the " .. weapon:lower() end
-        local method = S.fireMethod
-        if method == "Auto" then method = Shots.templates[weapon] and "Remote replay" or "Tool:Activate" end
-        local aimMethod = S.aimMethod == "Mouse cursor" and "Mouse cursor" or "Both"
-        if method ~= "Remote replay" then applyAim(pos, aimMethod, 0) end
+        if not held then task.wait(0.06) end                     -- let the equip land
         task.wait()                                              -- one frame so the equip and the aim have taken effect
         if not Hub.Alive then return false, "unloaded" end
+        local p2, c2, pt2, pos2, lead2 = pickFor(weapon)         -- the target kept moving: aim with fresh numbers
+        if p2 == plr then char, part, pos, lead = c2, pt2, pos2, lead2 end
+        local method = S.fireMethod
+        local auto = method == "Auto"
+        if auto then method = Shots.templates[weapon] and "Remote replay" or (weapon == "Knife" and "Throw key" or "Tool:Activate") end
+        local aimMethod = S.aimMethod == "Mouse cursor" and "Mouse cursor" or "Both"
         local ok, why = true, nil
+        local function viaTool()
+            applyAim(pos, aimMethod, 0)
+            task.wait()
+            if weapon == "Knife" and (auto or method == "Throw key") and pressKey(S.throwKey) then return true end
+            local t2 = findTool(weapon)
+            if t2 then pcall(function() t2:Activate() end); return true end
+            return false, "weapon not ready"
+        end
         if method == "Remote replay" then
             ok, why = Shots.replay(weapon, plr, char, part, pos)
+            if not ok and auto then ok, why = viaTool() end
+        elseif method == "Throw key" then
+            applyAim(pos, aimMethod, 0); task.wait()
+            ok = pressKey(S.throwKey); why = not ok and "set the game's throw key in Combat" or nil
         elseif method == "Mouse click" and Cap.mouseClick then
+            applyAim(pos, aimMethod, 0); task.wait()
             pcall(mouse1click)
         else
-            local t2 = findTool(weapon)
-            if t2 then pcall(function() t2:Activate() end) else ok, why = false, "weapon not ready" end
+            ok, why = viaTool()
         end
         Shots.last[weapon] = now()
-        return ok, ok and nameOf(plr) or why
+        if not ok then return false, why end
+        local me = myPos()
+        return true, string.format("%s  %dm  lead %d ms", nameOf(plr), me and math.floor((part.Position - me).Magnitude + 0.5) or 0, math.floor((lead or 0) * 1000 + 0.5))
     end
 
     -- the hook (installed once; harmless when the executor cannot do it)
@@ -1821,40 +1163,42 @@ local function __run()
     end
 
     ------------------------------------------------------------------------------------------ actions
-    local function shootMurderer()
-        local role = Roles.mine
-        if role ~= "Sheriff" and role ~= "Hero" and not findTool("Gun") then notify("No gun", "You are not holding the gun.", "warn"); return end
+    local Floats = {}
+    local autoPos                                                         -- (defined with the floating buttons below)
+    -- Perfect shoot / throw: pick the best target, aim ahead of it by my ping, equip the weapon and use it. Runs in its own thread; the floating
+    -- button (if any) flashes green when it fired and red when it could not.
+    local function perfectAction(weapon)
+        local float = weapon == "Gun" and Floats.shoot or Floats.throw
+        local function fail(title, text)
+            notify(title, text, "warn", 2)
+            if float then float:Flash(false) end
+        end
+        if Shots.firing[weapon] then return "async" end
+        if not findTool(weapon) then
+            if weapon == "Gun" then fail("No gun", "You are not holding the gun.") else fail("No knife", "You are not the murderer.") end
+            return "async"
+        end
+        Shots.firing[weapon] = true
         task.spawn(function()
-            local ok, why = Shots.fire("Gun")
-            if ok then notify("Shot fired", "at " .. tostring(why), "good", 2) else notify("Could not shoot", tostring(why), "warn", 3) end
-        end)
-    end
-    local function throwKnife()
-        if not findTool("Knife") then notify("No knife", "You are not the murderer.", "warn"); return end
-        task.spawn(function()
-            local plr, char, part, pos = Aim.pick("Knife")
-            if not plr and S.aimMode == "Auto (by my role)" then plr, char, part, pos = Aim.pick("Knife", "Nearest") end
-            if not plr then notify("Could not throw", "no target in range / line of sight", "warn", 3); return end
-            local tool = equip("Knife")
-            if not tool then return end
-            task.wait()
-            local ok = false
-            if Shots.templates.Knife and S.fireMethod ~= "Tool:Activate" then
-                ok = Shots.replay("Knife", plr, char, part, pos)
+            local okc, ok, why = pcall(Shots.fire, weapon)
+            Shots.firing[weapon] = false
+            if not okc then report("perfect " .. weapon, ok); ok, why = false, "error - see the Debug tab" end
+            if ok then
+                notify(weapon == "Gun" and "Shot fired" or "Knife thrown", tostring(why), "good", 2)
+                if float then float:Flash(true); float:Cooldown(weapon == "Gun" and S.shootGap or S.throwGap) end
+            else
+                notify(weapon == "Gun" and "Could not shoot" or "Could not throw", tostring(why), "warn", 3)
+                if float then float:Flash(false) end
             end
-            if not ok then
-                applyAim(pos, S.aimMethod == "Mouse cursor" and "Mouse cursor" or "Both", 0)
-                task.wait()
-                ok = pressKey(S.throwKey)
-            end
-            Shots.last.Knife = now()
-            notify(ok and "Knife thrown" or "Could not throw", ok and ("at " .. nameOf(plr)) or "set your throw key in Combat", ok and "good" or "warn", 2)
         end)
+        return "async"
     end
+    local function perfectShoot() return perfectAction("Gun") end
+    local function perfectThrow() return perfectAction("Knife") end
     local function grabGun()
         local inst, pos = nearestGun()
         local root = myRoot()
-        if not (pos and root) then notify("No gun on the map", nil, "warn", 3); return end
+        if not (pos and root) then notify("No gun on the map", nil, "warn", 3); return false end
         local back = root.CFrame
         root.CFrame = CFrame.new(pos + Vector3.new(0, 3, 0))
         task.delay(0.45, function()
@@ -1862,10 +1206,11 @@ local function __run()
             if r then r.CFrame = back end
             notify("Back where you were", "Check your hotbar for the gun.", "info", 3)
         end)
+        return true
     end
 
     ------------------------------------------------------------------------------------------ main loops
-    local acc = {slow = 0, mid = 0, poll = 0, auto = 0}
+    local acc = {slow = 0, mid = 0, poll = 0, auto = 0, ping = 0, dim = 0}
     local announced = {}
     local alertAt = 0
 
@@ -1928,7 +1273,7 @@ local function __run()
         if role == "Murderer" then
             if S.autoThrow and not Shots.busy and now() - (Shots.last.Knife or 0) >= S.throwGap then
                 local plr = Aim.pick("Knife")
-                if plr then Shots.busy = true; throwKnife(); task.delay(0.5, function() Shots.busy = false end) end
+                if plr then Shots.busy = true; perfectThrow(); task.delay(0.5, function() Shots.busy = false end) end
             end
             if S.slashAura and now() - (Shots.last.Slash or 0) >= 0.45 then
                 local me = myPos()
@@ -1956,10 +1301,64 @@ local function __run()
         return S.aimLock and Win and Win.Flags.aimKey and Win.Flags.aimKey.Down
     end
 
+    -- the target the aim assist / reticle follow right now
+    local function currentPick()
+        local weapon = Roles.mine == "Murderer" and "Knife" or "Gun"
+        local override
+        if S.aimMode == "Auto (by my role)" then override = Roles.mine == "Murderer" and "Closest to crosshair" or "Murderer" end
+        return Aim.pick(weapon, override)
+    end
+
+    -- the moving aim: the reticle glides (exponential smoothing) onto where the shot will land, with the ping lead in its label
+    local Ret = {x = nil, y = nil, nextPick = 0, plr = nil, pos = nil, lead = 0, spin = 0}
+    local function updateReticle(dt)
+        local mode = S.reticle
+        local cam = camera()
+        local function hide() reticle.Visible = false; Ret.x = nil end
+        if mode == "Off" or not cam or not Roles.active then return hide() end
+        if mode ~= "Always" then
+            local holding = false
+            local char = myChar()
+            if char then
+                for _, tool in ipairs(char:GetChildren()) do
+                    if tool:IsA("Tool") and Logic.weaponOf(tool.Name) then holding = true end
+                end
+            end
+            if not holding and not aimHeld() then return hide() end
+        end
+        local t = now()
+        if t >= Ret.nextPick then
+            Ret.nextPick = t + 0.05
+            local plr, _, _, pos, lead = currentPick()
+            Ret.plr, Ret.pos, Ret.lead = plr, pos, lead
+        end
+        if not Ret.plr then return hide() end
+        local v, on = cam:WorldToViewportPoint(Ret.pos)
+        if not on then return hide() end
+        local k = 1 - math.exp(-dt * 16)
+        if Ret.x == nil then Ret.x, Ret.y = v.X, v.Y else Ret.x, Ret.y = Ret.x + (v.X - Ret.x) * k, Ret.y + (v.Y - Ret.y) * k end
+        reticle.Position = UDim2.new(0, Ret.x, 0, Ret.y)
+        Ret.spin = (Ret.spin + dt * 110) % 360
+        reticleSpin.Rotation = Ret.spin
+        reticleStroke.Color = aimHeld() and Color3.fromRGB(90, 235, 130) or Color3.fromRGB(255, 255, 255)
+        local me = myPos()
+        reticleTag.Text = string.format("%s  %dm  lead %dms", nameOf(Ret.plr), me and math.floor((Ret.pos - me).Magnitude + 0.5) or 0, math.floor((Ret.lead or 0) * 1000 + 0.5))
+        reticle.Visible = true
+    end
+
     track(RunService.Heartbeat:Connect(guard("heartbeat", function(dt)
         if not Hub.Alive then return end
         acc.slow, acc.mid, acc.poll, acc.auto = acc.slow + dt, acc.mid + dt, acc.poll + dt, acc.auto + dt
+        acc.ping, acc.dim = acc.ping + dt, acc.dim + dt
         Shots.process()
+        sampleTracks()
+        if acc.ping >= 0.25 then acc.ping = 0; samplePing() end
+        if acc.dim >= 0.5 then
+            acc.dim = 0
+            if Floats.shoot then Floats.shoot:SetDim(findTool("Gun") == nil) end
+            if Floats.throw then Floats.throw:SetDim(findTool("Knife") == nil) end
+            if Floats.grab then Floats.grab:SetDim(next(Guns.drops) == nil and Guns.fallback == nil) end
+        end
         if acc.mid >= 0.4 then
             acc.mid = 0
             Roles.scan()
@@ -1982,15 +1381,16 @@ local function __run()
     end)))
 
     pcall(function()
-        RunService:BindToRenderStep("MM2HubAim", Enum.RenderPriority.Camera.Value + 1, guard("aim lock", function()
+        RunService:BindToRenderStep("WraithsHubAim", Enum.RenderPriority.Camera.Value + 1, guard("aim lock", function(dt)
             ESP.drawTracers()
             if aimHeld() then
-                local plr, _, _, pos = Aim.pick("Gun", S.aimMode == "Auto (by my role)" and (Roles.mine == "Murderer" and "Closest to crosshair" or "Murderer") or nil)
+                local plr, _, _, pos = currentPick()
                 if plr then applyAim(pos, S.aimMethod, S.aimSmooth) end
             end
+            updateReticle(dt or 1 / 60)
         end))
     end)
-    onCleanup(function() pcall(function() RunService:UnbindFromRenderStep("MM2HubAim") end) end)
+    onCleanup(function() pcall(function() RunService:UnbindFromRenderStep("WraithsHubAim") end) end)
 
     ------------------------------------------------------------------------------------------ events
     track(workspace.DescendantAdded:Connect(guard("gun drop added", function(inst)
@@ -2006,10 +1406,18 @@ local function __run()
         local ok, code = pcall(function() return Enum.KeyCode[name] end)
         return ok and code or Enum.KeyCode.RightShift
     end
-    Win = UILib.new{Title = "MM2 Hub", Subtitle = "Murder Mystery 2", Parent = PARENT, GuiName = "MM2HubWindow", Theme = S.theme,
-        ToggleKey = keyCodeFor(S.uiKey), OnError = report}
+    Win = UILib.new{Title = "Wraith's Hub", Subtitle = "Murder Mystery 2", Group = "Wraith's Hub", Parent = PARENT, GuiName = "WraithsHubWindow", Theme = S.theme,
+        WaveMode = S.waves, ToggleKey = keyCodeFor(S.uiKey), OnError = report}
     Hub.Win = Win
     Win:SetAvatar(LocalPlayer.UserId)
+    do
+        local summary = {}
+        if not Cap.hook then summary[#summary + 1] = "no hook (silent aim / shot recording off)" end
+        if not Cap.drawing then summary[#summary + 1] = "no Drawing (no tracers)" end
+        if not Cap.mouseRel then summary[#summary + 1] = "no mousemoverel (cursor aim off)" end
+        if game.PlaceId ~= 142823291 then summary[#summary + 1] = "this does not look like Murder Mystery 2" end
+        notify("Wraith's Hub loaded", #summary > 0 and table.concat(summary, "; ") or "All features available.", #summary > 0 and "warn" or "good", 5)
+    end
     for _, q in ipairs(queued) do notify(q[1], q[2], q[3], q[4]) end
     queued = {}
 
@@ -2038,13 +1446,13 @@ local function __run()
         end}
     end
 
-    local main = Win:Tab("Main")
-    local esp = Win:Tab("ESP")
-    local combat = Win:Tab("Combat")
-    local player = Win:Tab("Player")
-    local misc = Win:Tab("Misc")
-    local settings = Win:Tab("Settings")
-    local dbg = Win:Tab("Debug")
+    local main = Win:Tab("Main", "grid")
+    local esp = Win:Tab("ESP", "eye")
+    local combat = Win:Tab("Combat", "crosshair")
+    local btns = Win:Tab("Buttons", "bolt")
+    local player = Win:Tab("Player", "user")
+    local settings = Win:Tab("Settings", "gear")
+    local dbg = Win:Tab("Debug", "terminal")
 
     -- Main
     main:Section("Live round info")
@@ -2057,10 +1465,10 @@ local function __run()
     tog(main, "notifyGun", "Gun drop notification", "Says where the gun is the moment the sheriff goes down.")
     tog(main, "gunHud", "Gun finder HUD", "Top-centre bar with distance, direction and a little compass.")
     main:Section("Quick actions")
-    main:Label("First time: take your gun / knife out and fire or throw it ONCE by hand. I watch what the game sends (see the Debug tab), then the buttons below, auto shoot and silent aim use the same call with a better aim point.")
-    main:Button{Title = "Shoot the murderer", Desc = "Sheriff / hero: aims with prediction and fires the gun.", Label = "Fire", Callback = shootMurderer}
-    main:Button{Title = "Throw knife at best target", Desc = "Murderer: aims and throws using your throw key or the recorded throw.", Label = "Throw", Callback = throwKnife}
-    main:Button{Title = "Grab the gun", Desc = "Teleports to the dropped gun for a moment and brings you straight back.", Label = "Go", Callback = grabGun}
+    main:Label("First time: take your gun / knife out and fire or throw it ONCE by hand. I watch what the game sends (see the Debug tab), then Perfect shoot / throw, auto shoot and silent aim use the same call with a better aim point.")
+    main:Button{Title = "Perfect shoot", Desc = "Sheriff / hero: aims ahead of the murderer by your ping and fires the gun.", Label = "Fire", Callback = perfectShoot}
+    main:Button{Title = "Perfect throw", Desc = "Murderer: aims ahead of the best target by your ping and throws the knife.", Label = "Throw", Callback = perfectThrow}
+    main:Button{Title = "Grab the gun", Desc = "Teleports to the dropped gun for a moment and brings you straight back.", Label = "Go", Callback = function() grabGun() end}
     main:Section("Data")
     tog(main, "useRemoteData", "Read roles from the game's data remote", "Lets me see roles even when nobody holds a weapon. Off = only visible weapons.")
 
@@ -2079,7 +1487,7 @@ local function __run()
 
     -- Combat
     combat:Section("Targeting")
-    drop(combat, "aimMode", "Aim target", {"Auto (by my role)", "Murderer", "Sheriff", "Closest to crosshair", "Nearest"})
+    drop(combat, "aimMode", "Aim target", {"Auto (by my role)", "Murderer", "Sheriff", "Sheriff first", "Closest to crosshair", "Nearest"})
     drop(combat, "aimPart", "Aim at", {"Head", "Torso"})
     tog(combat, "wallCheck", "Wall check", "Only targets with a clear line of sight.")
     sld(combat, "maxDistance", "Max distance", 30, 600, 10, " studs")
@@ -2087,22 +1495,28 @@ local function __run()
     tog(combat, "showFov", "Show FOV circle")
     combat:Section("Prediction")
     tog(combat, "predict", "Lead moving targets", "Aims where they will be, using their velocity.")
-    tog(combat, "addPing", "Add my ping", "Leads a little more on a laggy connection.")
     sld(combat, "bulletSpeed", "Bullet speed (0 = instant)", 0, 600, 10, " sps")
     sld(combat, "predictStrength", "Lead strength", 0, 2, 0.1, "x")
+    combat:Section("Ping and lead")
+    local pingLabel = combat:Label("Measuring your ping...")
+    tog(combat, "addPing", "Lead by my ping", "Aims ahead of moving players by your measured ping (smoothed, lag spikes ignored).")
+    sld(combat, "pingComp", "Ping compensation", 0, 1.5, 0.05, "x")
+    sld(combat, "interpMs", "Render delay (others)", 0, 200, 5, " ms")
+    sld(combat, "extraLead", "Extra lead (trim)", -100, 200, 5, " ms")
+    drop(combat, "reticle", "Aim reticle", {"Weapon in hand", "Always", "Off"})
     combat:Section("Aim assist (hold the key)")
     tog(combat, "aimLock", "Aim assist", "While the key is held, your camera / cursor follows the target.")
     key(combat, "aimKey", "Aim key (hold)", "Right-click is the camera drag, so use a key.")
     drop(combat, "aimMethod", "Aim method", {"Camera", "Mouse cursor", "Both"})
     sld(combat, "aimSmooth", "Smoothness", 0, 0.9, 0.05, "")
     combat:Section("Gun - sheriff / hero")
-    key(combat, "shootKey", "Shoot-the-murderer key", "One press: aim, predict and fire.", shootMurderer)
+    key(combat, "shootKey", "Perfect shoot key", "One press: aim, predict and fire.", perfectShoot)
     tog(combat, "autoShoot", "Auto shoot", "Fires as soon as the murderer is in range and visible.")
     sld(combat, "shootGap", "Time between shots", 0.5, 6, 0.1, " s")
     tog(combat, "silentAim", "Silent aim (your own shots)", Cap.hook and "Your normal shots fly at the predicted target. Needs one recorded shot." or "Needs hookmetamethod - not available here.")
     drop(combat, "fireMethod", "How to fire", {"Auto", "Remote replay", "Tool:Activate", "Mouse click"})
     combat:Section("Knife - murderer")
-    key(combat, "throwAtKey", "Throw-at-target key", "One press: aim, predict and throw.", throwKnife)
+    key(combat, "throwAtKey", "Perfect throw key", "One press: aim, predict and throw.", perfectThrow)
     key(combat, "throwKey", "The game's throw key", "Used when no throw has been recorded yet.")
     tog(combat, "autoThrow", "Auto throw", "Throws at anyone in range and in sight.")
     sld(combat, "throwGap", "Time between throws", 0.5, 8, 0.1, " s")
@@ -2114,11 +1528,32 @@ local function __run()
     sld(combat, "hitboxAlpha", "Transparency", 0.2, 1, 0.1, "")
     drop(combat, "hitboxWho", "Who", {"Murderer", "Sheriff", "Everyone else"})
 
+    -- Buttons: the floating on-screen buttons and their look
+    btns:Section("On-screen buttons")
+    btns:Label("Tap = fire. Hold and drag = move (unless locked). Dimmed = you do not have that weapon.")
+    tog(btns, "btnShoot", "Show Perfect Shoot", "A SHOOT button: aims ahead of the murderer by your ping and fires.", function(v) if Floats.shoot then Floats.shoot:SetVisible(v) end end)
+    tog(btns, "btnThrow", "Show Perfect Throw", "A THROW button: aims ahead of the best target by your ping and throws.", function(v) if Floats.throw then Floats.throw:SetVisible(v) end end)
+    tog(btns, "btnGrab", "Show Grab Gun", "A GRAB GUN button: hops onto the dropped gun and back.", function(v) if Floats.grab then Floats.grab:SetVisible(v) end end)
+    tog(btns, "btnSpeed", "Show Speed toggle", "A SPEED ON / OFF button for walk speed.", function(v) if Floats.speed then Floats.speed:SetVisible(v) end end)
+    tog(btns, "btnJump", "Show Jump toggle", "A JUMP ON / OFF button for jump power.", function(v) if Floats.jump then Floats.jump:SetVisible(v) end end)
+    sld(btns, "btnSize", "Button size", 56, 120, 2, " px", function(v) for _, f in pairs(Floats) do f:SetSize(v) end end)
+    tog(btns, "btnLock", "Lock button positions", "Stops a tap that wobbles from dragging the button.", function(v) for _, f in pairs(Floats) do f:SetLocked(v) end end)
+    btns:Button{Title = "Reset button positions", Label = "Reset", Callback = function()
+        for id, f in pairs(Floats) do
+            local fx, fy = autoPos(id)
+            S[id .. "X"], S[id .. "Y"] = -1, -1
+            f:SetPos(fx, fy)
+        end
+    end}
+    btns:Section("Water waves")
+    drop(btns, "waves", "Button waves", {"High", "Low", "Off"}, function(v) Win:SetWaveMode(v) end)
+    btns:Label("Every button wears an animated grey-white wave texture. Low uses one layer at half speed; Off is the lightest on weak phones.")
+
     -- Player
     player:Section("Movement")
-    tog(player, "walkOn", "Walk speed")
+    tog(player, "walkOn", "Walk speed", nil, function(v) if Floats.speed then Floats.speed:SetState(v) end end)
     sld(player, "walkSpeed", "Speed", 16, 80, 1, "")
-    tog(player, "jumpOn", "Jump power")
+    tog(player, "jumpOn", "Jump power", nil, function(v) if Floats.jump then Floats.jump:SetState(v) end end)
     sld(player, "jumpPower", "Power", 50, 200, 5, "")
     tog(player, "infJump", "Infinite jump")
     tog(player, "noclip", "Noclip")
@@ -2126,8 +1561,9 @@ local function __run()
     tog(player, "fovOn", "Field of view")
     sld(player, "fovValue", "FOV", 40, 120, 1, "")
 
-    -- Misc
-    misc:Section("Session")
+    -- session tools live on the Player tab
+    player:Section("Session")
+    local misc = player
     tog(misc, "antiAfk", "Anti AFK")
     misc:Button{Title = "Rejoin this server", Label = "Go", Callback = function()
         if TeleportService then pcall(function() TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer) end) end
@@ -2154,13 +1590,14 @@ local function __run()
     -- Settings
     settings:Section("Look")
     drop(settings, "theme", "Theme", UILib.ThemeNames, function(v) Win:SetTheme(v) end)
-    key(settings, "uiKey", "Show / hide menu", "Also tap the M button on screen.", nil, function(v) Win.ToggleKey = keyCodeFor(v) end)
+    key(settings, "uiKey", "Show / hide menu", "Also tap the pill at the top of the screen.", nil, function(v) Win.ToggleKey = keyCodeFor(v) end)
     settings:Section("Config")
     settings:Label("Nothing is saved unless you press Save config.")
     settings:Button{Title = "Save config", Label = "Save", Callback = function()
         if not Cap.files then notify("Cannot save", "This executor has no writefile.", "bad"); return end
         local state = Win:GetState()
         state.theme = Win:GetTheme()
+        for _, k in ipairs({"shootX", "shootY", "throwX", "throwY", "grabX", "grabY", "speedX", "speedY", "jumpX", "jumpY"}) do state[k] = S[k] end
         local ok, err = pcall(function() writefile(CONFIG_FILE, HttpService:JSONEncode(state)) end)
         notify(ok and "Config saved" or "Save failed", ok and CONFIG_FILE or tostring(err), ok and "good" or "bad")
     end}
@@ -2171,6 +1608,14 @@ local function __run()
         local merged = Logic.mergeFlags(DEFAULTS, data)
         Win:SetState(merged, false)
         if merged.theme ~= Win:GetTheme() then Win:SetTheme(merged.theme) end
+        for _, id in ipairs({"shoot", "throw", "grab", "speed", "jump"}) do
+            S[id .. "X"], S[id .. "Y"] = merged[id .. "X"], merged[id .. "Y"]
+            if Floats[id] then
+                local fx, fy = S[id .. "X"], S[id .. "Y"]
+                if fx < 0 or fy < 0 then fx, fy = autoPos(id) end
+                Floats[id]:SetPos(fx, fy)
+            end
+        end
         notify("Config loaded", nil, "good", 2)
     end}
     settings:Button{Title = "Delete saved config", Label = "Delete", Callback = function()
@@ -2191,7 +1636,7 @@ local function __run()
     dbg:Section("Log")
     local logLabel = dbg:Label("(empty)")
     local function diagnostics()
-        local lines = {"MM2 Hub diagnostics", "place " .. tostring(game.PlaceId), string.format("role %s | murderer %s | sheriff %s", tostring(Roles.mine),
+        local lines = {"Wraith's Hub diagnostics", "place " .. tostring(game.PlaceId), string.format("role %s | murderer %s | sheriff %s", tostring(Roles.mine),
             Roles.murderer() and Roles.murderer().Name or "?", Roles.sheriff() and Roles.sheriff().Name or "?")}
         for _, w in ipairs({"Gun", "Knife"}) do
             local t = Shots.templates[w]
@@ -2208,6 +1653,39 @@ local function __run()
         if Cap.clipboard then pcall(setclipboard, diagnostics()); notify("Copied", nil, "good", 2) else notify("No clipboard", "See the Log below instead.", "warn") end
     end}
 
+    -- the floating buttons (Perfect shoot / Perfect throw / Grab gun / Speed / Jump)
+    local AUTO_SLOT = {shoot = {1, 1}, throw = {1, 2}, grab = {1, 3}, speed = {2, 1}, jump = {2, 2}}      -- {column from the right edge, row from the top}
+    autoPos = function(id)
+        local vp = camera() and camera().ViewportSize or Vector2.new(1280, 720)
+        local size = S.btnSize
+        local col, row = AUTO_SLOT[id][1], AUTO_SLOT[id][2]
+        local x = vp.X - 12 - col * size - (col - 1) * 8
+        local y = vp.Y * 0.18 + (row - 1) * (size + 10)
+        return Logic.clamp(x, 0, math.max(0, vp.X - size)) / vp.X, Logic.clamp(y, 0, math.max(0, vp.Y - size)) / vp.Y
+    end
+    for _, d in ipairs({
+        {id = "shoot", title = "SHOOT", icon = "crosshair", accent = {255, 255, 255}, flag = "btnShoot", weapon = "Gun"},
+        {id = "throw", title = "THROW", icon = "knife", accent = {236, 52, 64}, flag = "btnThrow", weapon = "Knife"},
+        {id = "grab", title = "GRAB GUN", icon = "pistol", accent = {250, 190, 60}, flag = "btnGrab"},
+        {id = "speed", title = "SPEED", labelOn = "SPEED ON", labelOff = "SPEED OFF", icon = "bolt", accent = {64, 214, 190}, flag = "btnSpeed", state = "walkOn"},
+        {id = "jump", title = "JUMP", labelOn = "JUMP ON", labelOff = "JUMP OFF", icon = "chevron_up", accent = {96, 170, 255}, flag = "btnJump", state = "jumpOn"},
+    }) do
+        local fx, fy = S[d.id .. "X"], S[d.id .. "Y"]
+        if fx < 0 or fy < 0 then fx, fy = autoPos(d.id) end
+        Floats[d.id] = Win:Floating{Id = d.id, Title = d.title, Icon = d.icon, Accent = d.accent, Size = S.btnSize, Pos = {fx, fy},
+            Visible = S[d.flag], Locked = S.btnLock, Toggle = d.state ~= nil, LabelOn = d.labelOn, LabelOff = d.labelOff, State = d.state and S[d.state] or false,
+            OnPress = function()
+                if d.state then                                           -- a toggle: flip the matching switch in the Player tab
+                    local el = Win.Flags[d.state]
+                    if el then el:Set(not el.Value) end
+                    return true
+                end
+                if d.weapon then return perfectAction(d.weapon) end
+                return grabGun()
+            end,
+            OnMoved = function(fx, fy) S[d.id .. "X"], S[d.id .. "Y"] = fx, fy end}
+    end
+
     -- live labels
     local lastLabels = 0
     track(RunService.Heartbeat:Connect(guard("labels", function()
@@ -2217,6 +1695,7 @@ local function __run()
         roundLabel:Set(string.format("You: %s\nMurderer: %s\nSheriff / hero: %s", Roles.mine or (Roles.active and "spectating" or "lobby"), m and nameOf(m) or "unknown", s and nameOf(s) or "unknown"))
         local _, pos = nearestGun()
         gunLabel:Set(pos and ("Gun: " .. describeFromMe(pos)) or "Gun: not dropped")
+        pingLabel:Set(string.format("Ping %d ms (smoothed)  ->  aim %d ms ahead of what you see", math.floor(Ping:ms() + 0.5), math.floor(leadSeconds() * 1000 + 0.5)))
         local parts = {}
         for _, w in ipairs({"Gun", "Knife"}) do
             local t = Shots.templates[w]
@@ -2228,18 +1707,12 @@ local function __run()
 
     -- start-up
     Roles.scan()
-    local summary = {}
-    if not Cap.hook then summary[#summary + 1] = "no hook (silent aim / shot recording off)" end
-    if not Cap.drawing then summary[#summary + 1] = "no Drawing (no tracers)" end
-    if not Cap.mouseRel then summary[#summary + 1] = "no mousemoverel (cursor aim off)" end
-    if game.PlaceId ~= 142823291 then summary[#summary + 1] = "this does not look like Murder Mystery 2" end
-    notify("MM2 Hub loaded", #summary > 0 and table.concat(summary, "; ") or "All features available.", #summary > 0 and "warn" or "good", 5)
 end
 
 local ok, err = xpcall(__run, function(e) return debug.traceback(tostring(e), 2) end)
 if not ok then
-    warn("[MM2 Hub] failed to start: " .. tostring(err))
+    warn("[Wraith's Hub] failed to start: " .. tostring(err))
     pcall(function()
-        game:GetService("StarterGui"):SetCore("SendNotification", {Title = "MM2 Hub failed to start", Text = tostring(err):sub(1, 180), Duration = 20})
+        game:GetService("StarterGui"):SetCore("SendNotification", {Title = "Wraith's Hub failed to start", Text = tostring(err):sub(1, 180), Duration = 20})
     end)
 end

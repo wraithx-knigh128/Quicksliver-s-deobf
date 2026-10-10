@@ -1,7 +1,7 @@
 """Writes tests/prop_types_mm2.lua: for every Roblox class the MM2 hub touches, its real properties (with value types), methods, events and
 superclass chain, taken from Roblox's API dump. The fake Roblox world in tests/mm2_env.lua uses it to throw like Roblox does when the script
 reads a member that does not exist, assigns a wrong-typed value, or calls a method the class does not have.
-  python3 tools/gen_member_types.py API-Dump.json mm2/ui_lib.lua mm2/mm2_hub.lua -- Part Humanoid ... > tests/prop_types_mm2.lua
+  python3 tools/gen_member_types.py API-Dump.json mm2/ui_lib.lua mm2/wraiths_hub.lua -- Part Humanoid ... > tests/prop_types_mm2.lua
 Classes = every Instance.new("X") / mk("X", ...) in the given sources + the extra classes after `--`.
 Only members whose name occurs as a word in the sources are listed (everything else is irrelevant to this script)."""
 import json, re, sys

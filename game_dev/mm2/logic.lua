@@ -117,7 +117,7 @@ function Logic.describe(dx, dy, dz, lx, lz)
 end
 
 -- Picks one candidate id. cands: {{id=, dist=, screen=(pixels from the crosshair or nil when off screen), visible=bool, role=, alive=bool}}
--- opts: mode ("Murderer" | "Sheriff" | "Closest to crosshair" | "Nearest" | "Anyone but me"), fov (pixels), maxDist, needVisible
+-- opts: mode ("Murderer" | "Sheriff" | "Sheriff first" | "Closest to crosshair" | "Nearest"), fov (pixels), maxDist, needVisible
 function Logic.pickTarget(cands, opts)
     local best, bestScore
     local mode = opts.mode or "Nearest"
@@ -127,6 +127,7 @@ function Logic.pickTarget(cands, opts)
         if ok and mode == "Murderer" and c.role ~= "Murderer" and c.role ~= "Infected" then ok = false end
         if ok and mode == "Sheriff" and c.role ~= "Sheriff" and c.role ~= "Hero" then ok = false end
         local score = c.dist
+        if ok and mode == "Sheriff first" and c.role ~= "Sheriff" and c.role ~= "Hero" then score = c.dist + 1e6 end   -- anyone, but the sheriff / hero wins
         if ok and mode == "Closest to crosshair" then
             if c.screen == nil or c.screen > (opts.fov or math.huge) then ok = false else score = c.screen end
         end
@@ -134,6 +135,72 @@ function Logic.pickTarget(cands, opts)
         if ok and (bestScore == nil or score < bestScore) then best, bestScore = c.id, score end
     end
     return best
+end
+
+
+------------------------------------------------------------------------------------------------ ping + velocity
+-- Smoothed round-trip time. Samples are milliseconds; one spike (a lag blip) must not move the aim, so the value is the EMA of the median of
+-- the last few samples.
+function Logic.newPing(opts)
+    opts = opts or {}
+    local keep, alpha = opts.keep or 5, opts.alpha or 0.35
+    local self = {samples = {}, ema = nil}
+    function self:add(ms)
+        if type(ms) ~= "number" or ms ~= ms or ms < 0 or ms > 5000 then return end
+        local s = self.samples
+        s[#s + 1] = ms
+        if #s > keep then table.remove(s, 1) end
+        local sorted = {}
+        for i, v in ipairs(s) do sorted[i] = v end
+        table.sort(sorted)
+        local median = sorted[floor((#sorted + 1) / 2)]
+        self.ema = self.ema and (self.ema + (median - self.ema) * alpha) or median
+    end
+    function self:ms() return self.ema or (opts.default or 80) end
+    function self:seconds() return self:ms() / 1000 end
+    return self
+end
+
+-- How far ahead of what I SEE the target really is when my shot arrives: my screen shows other players about one interpolation delay plus half
+-- the round trip in the past, and the shot needs another half round trip to reach the server => about ping + interpolation.
+--   pingMs      smoothed round trip (ms)       comp  0..1.5 multiplier on the ping part      interpMs  render delay of remote players
+--   extraMs     manual trim (can be negative)  max   upper bound in seconds
+function Logic.pingLead(pingMs, comp, interpMs, extraMs, maxLead)
+    local lead = (pingMs or 0) * (comp == nil and 1 or comp) + (interpMs or 0) + (extraMs or 0)
+    return max(0, min(maxLead or 0.8, lead / 1000))
+end
+
+-- Velocity from recent position samples {{t=, x=, y=, z=}, ...} (oldest first): the displacement over the last `window` seconds.
+-- A jump faster than `maxSpeed` studs/s is a teleport / respawn, not running: it reports 0.
+function Logic.estimateVelocity(samples, window, maxSpeed)
+    local n = #samples
+    if n < 2 then return 0, 0, 0 end
+    local cap = maxSpeed or 90
+    local last = samples[n]
+    local first = last
+    for i = n - 1, 1, -1 do
+        local a, b = samples[i], samples[i + 1]
+        local sdt = b.t - a.t
+        if sdt > 0 and sqrt((b.x - a.x) ^ 2 + (b.y - a.y) ^ 2 + (b.z - a.z) ^ 2) / sdt > cap then break end   -- a teleport: nothing older counts
+        first = a
+        if last.t - a.t >= (window or 0.18) then break end
+    end
+    local dt = last.t - first.t
+    if dt < 0.04 then return 0, 0, 0 end
+    local vx, vy, vz = (last.x - first.x) / dt, (last.y - first.y) / dt, (last.z - first.z) / dt
+    if sqrt(vx * vx + vy * vy + vz * vz) > cap then return 0, 0, 0 end
+    return vx, vy, vz
+end
+
+-- physics velocity when the engine reports one, otherwise what the position history says; never faster than `maxSpeed`
+function Logic.pickVelocity(px, py, pz, hx, hy, hz, maxSpeed)
+    local ps = sqrt(px * px + py * py + pz * pz)
+    local hs = sqrt(hx * hx + hy * hy + hz * hz)
+    local vx, vy, vz, speed = px, py, pz, ps
+    if not (ps >= 0.5 or hs < 1) then vx, vy, vz, speed = hx, hy, hz, hs end
+    local cap = maxSpeed or 90
+    if speed > cap then local k = cap / speed; return vx * k, vy * k, vz * k end
+    return vx, vy, vz
 end
 
 ------------------------------------------------------------------------------------------------ shot templates

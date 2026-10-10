@@ -1,7 +1,7 @@
-# Murder Mystery 2 - what is known, what is assumed, how the hub copes
+# Murder Mystery 2 - what is known, what is assumed, how Wraith's Hub copes
 
 This file separates **facts I could find**, **common knowledge I could not verify**, and **things nobody publishes**
-(bullet speed, knife speed, hitbox sizes, remote names). The hub is built so that nothing in the third group is hard-coded:
+(bullet speed, knife speed, hitbox sizes, remote names). Wraith's Hub is built so that nothing in the third group is hard-coded:
 it discovers it while you play (see "How the hub copes").
 
 ## 1. The game
@@ -62,21 +62,48 @@ Consequences for this hub:
 | Who is the murderer / sheriff? | (a) reads `Knife` / `Gun` tools in everybody's character (and your backpack), (b) listens to `PlayerDataChanged` and polls `GetPlayerData` under `ReplicatedStorage` **if they exist** (names taken from long-standing community scripts - unverified, so every step is guarded), (c) expires stale data when the map disappears. |
 | Where did the gun fall? | `workspace.DescendantAdded` for a part/model called `GunDrop` (exact match; `Gun*` names only for 6 s after a sheriff dies), plus a start-up scan, plus a fallback "Sheriff down near ..." when no drop object shows up. Direction is worded relative to where your camera looks ("37 studs ahead-left, 6 higher"). |
 | Which remote fires the gun / knife? | A `__namecall` hook records the **real** `FireServer` / `InvokeServer` call when *you* shoot or throw: remotes inside the equipped tool, or (within 0.6 s of your click) any remote whose name looks like shoot/fire/throw/knife/gun/stab/slash. It stores the argument list, classifies which `Vector3` / `CFrame` is the *origin* (closest to your head) and which is the *aim point*, and remembers the remote's **path inside the tool**, so it still works after the tool is re-created next round. |
-| Perfect aim | **Replay** the recorded call with the aim point replaced by the predicted position (and hit-part / humanoid / character arguments swapped to the new target), or **Silent aim**: do the same swap on your own shots as they leave. If no shot has been recorded the hub falls back to *aim + `Tool:Activate()`* (or your configured throw key). |
+| Perfect aim | **Replay** the recorded call with the aim point replaced by the predicted position (see "Aiming by ping" below) (and hit-part / humanoid / character arguments swapped to the new target), or **Silent aim**: do the same swap on your own shots as they leave. If no shot has been recorded the hub falls back to *aim + `Tool:Activate()`* (or your configured throw key). |
 | Hook safety | The hook only reads properties (no method calls - those can corrupt the pending method name in some executors), never yields, restores `setnamecallmethod`, and is inert after you unload. |
 
 If something does not work, open **Debug**: it lists what your executor supports, which shots were recorded (remote, method, argument
 shape such as `cf=origin,cf=target`) and the script's own log, and **Copy diagnostics** puts all of it on your clipboard.
 
+
+## 3b. Aiming by ping
+
+The server judges a shot against where the target IS when the shot arrives, not where your screen shows it. Your screen is behind by the render delay
+of other players plus half the round trip, and the shot needs another half round trip to get there, so the aim point is
+
+    target position  +  velocity x ( ping x compensation + render delay + trim [+ bullet flight] )
+
+- **ping**: `Stats.Network.ServerStatsItem["Data Ping"]` sampled every 0.25 s; the value used is the EMA of the median of the last five samples, so a single lag
+  spike cannot throw the aim off, while a real change in connection is followed within a second or two.
+- **render delay** (default 50 ms, slider 0-200) and **trim** (-100..+200 ms) exist because that part is an estimate - tune them if your shots land consistently
+  ahead of or behind a runner. **Ping compensation** (0-1.5x) scales the ping part.
+- **velocity**: the engine's `AssemblyLinearVelocity` when it reports one; otherwise the displacement over the last 0.18 s of recorded positions. A jump faster
+  than 90 studs/s is a teleport / respawn and is never treated as running, and no speed above 90 studs/s is ever used.
+- the aim is **recomputed after the weapon is equipped** and one frame before it fires, because the target keeps moving during those frames.
+- limits: the lead is capped at 0.8 s; if the game rewinds players for lag compensation, "Ping compensation" 0 is the right setting.
+
+## 3c. On-screen buttons, waves, reticle
+
+- The **SHOOT / THROW / GRAB GUN** buttons live in their own ScreenGui, so they stay when the menu is hidden. A tap fires, moving more than 8 px drags (never fires),
+  *Lock* turns dragging off (and a long swipe is then not a tap either), the icon dims when you do not hold the weapon, and the ring flashes green / red.
+- Every button wears a **wave skin**: three transparent frames over the button, each with a `UIGradient` whose colour / transparency sequence is a sharpened sine
+  (20 keypoints: thin grey-white crests on transparent) at a different angle, whose `Offset` slides with a different speed and phase. One Heartbeat connection
+  moves them all (30 fps on High, 15 fps and one layer on Low); skins on hidden pages or a hidden window are skipped.
+- The **reticle** follows the same target and predicted point the shot uses and glides onto it with exponential smoothing.
+
 ## 4. Feature map
 
 - **Main** - live round info (you / murderer / sheriff), gun finder status, announcements (murderer, sheriff, gun drops, murderer nearby),
-  quick actions (Shoot the murderer, Throw knife, Grab gun).
+  quick actions (Perfect shoot, Perfect throw, Grab the gun).
 - **ESP** - role-coloured chams, names, distance, health, tracers (needs the executor's `Drawing`), gun ESP + tracer.
 - **Combat** - target rules (role-aware), prediction, aim assist (camera / cursor / both, smoothing), gun and knife tools, auto shoot / auto
   throw / slash aura, silent aim, hitbox expander.
-- **Player** - walk speed, jump power, infinite jump, noclip, field of view.
-- **Misc / Settings / Debug** - anti-AFK, rejoin, server hop, themes, config (saved **only** when you press *Save config*), unload.
+- **Buttons** - the floating SHOOT / THROW / GRAB GUN buttons and the wave skin.
+- **Player** - walk speed, jump power, infinite jump, noclip, field of view, anti-AFK, rejoin, server hop.
+- **Settings / Debug** - themes, config (saved **only** when you press *Save config*), unload; executor support, recorded shots, log, diagnostics.
 
 ## 5. Honest limits
 
