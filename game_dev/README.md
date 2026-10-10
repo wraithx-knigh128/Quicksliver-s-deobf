@@ -1,5 +1,30 @@
 # game_dev
 
+## Murder Mystery 2 hub (`dist/mm2_hub.min.txt`)
+
+One-line loader (pinned to a build; the SHA is updated after every build):
+```lua
+loadstring(game:HttpGet("https://raw.githubusercontent.com/wraithx-knigh128/Quicksliver-s-deobf/<SHA>/dist/mm2_hub.min.txt"))()
+```
+WindUI / RuzHub-style window (sidebar tabs + search, toggles, sliders, dropdowns, keybinds, toasts, 5 themes, round avatar, minimise / maximise / hide,
+floating **M** button for phones; RightShift hides the menu). Tabs: Main, ESP, Combat, Player, Misc, Settings, Debug.
+
+- role ESP (red murderer / blue sheriff / gold hero / green innocent), names, distance, health, tracers; **gun ESP + gun finder HUD + toast saying where the gun is**
+- aim assist with velocity + ping prediction (camera / cursor), "Shoot the murderer", auto shoot, throw knife, slash aura, **silent aim** (rewrites your own shots)
+- hitbox expander (experimental), walk speed / jump / noclip / FOV, anti-AFK, rejoin / server hop
+- nothing is saved unless you press **Save config** (`mm2_hub_config.json`)
+
+How the game works, what is known vs. assumed, and how the hub discovers the private parts at run time: [`mm2/MM2_NOTES.md`](mm2/MM2_NOTES.md).
+Source: `mm2/` (`ui_lib.lua` window library, `logic.lua` pure logic, `mm2_hub.lua` the script); build with `python3 game_dev/mm2/build_mm2.py`.
+
+MM2 checks (from `game_dev/`, needs `pip install lupa`; add `LUAU=/path/to/luau` to run on real Luau):
+- `python3 tests/run_mm2.py logic`                       unit tests of `mm2/logic.lua`
+- `python3 tests/run_mm2.py smoke [../dist/mm2_hub.lua]`  ~350 checks against a fake Roblox world (`tests/mm2_env.lua`): real instance tree / events / Vector3 / CFrame math,
+  coroutine scheduler, executor-style `__namecall` hook, and **strict member checking from Roblox's API dump** (`tools/gen_mm2_types.sh` regenerates `tests/prop_types_mm2.lua`):
+  a misspelled property, a wrong value type or a method the class does not have throws and fails the test even if the script swallowed it with `pcall`.
+
+# Animation Hub (The Strongest Battlegrounds)
+
 Single-file executor script: `dist/tsb_hub_executor.min.txt` (built by `python3 game_dev/build_executor.py`).
 
 Short loader (no pasting a 77 KB file):
