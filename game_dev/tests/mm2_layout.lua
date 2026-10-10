@@ -236,7 +236,7 @@ function World:drawList(gui, opts)
         if not b then return a end
         local x1, y1 = max(a[1], b[1]), max(a[2], b[2])
         local x2, y2 = min(a[1] + a[3], b[1] + b[3]), min(a[2] + a[4], b[2] + b[4])
-        return {x1, y1, max(0, x2 - x1), max(0, y2 - y1)}
+        return {x1, y1, max(0, x2 - x1), max(0, y2 - y1), a[5] or b[5]}
     end
     local function walk(inst, clip, depth)
         local d = D(inst)
@@ -309,7 +309,10 @@ function World:drawList(gui, opts)
             end
         end
         local childClip = clip
-        if P(d, "ClipsDescendants", false) or d.class == "ScrollingFrame" then childClip = inter(clip, {L.x, L.y, L.w, L.h}) end
+        if P(d, "ClipsDescendants", false) or d.class == "ScrollingFrame" or d.class == "CanvasGroup" then
+            childClip = inter(clip, {L.x, L.y, L.w, L.h})
+            if d.class == "CanvasGroup" and corner then childClip = {childClip[1], childClip[2], childClip[3], childClip[4], op.radius} end   -- rounded clip
+        end
         local kids = {}
         for i, c in ipairs(d.children) do kids[#kids + 1] = {c = c, i = i, z = P(D(c), "ZIndex", 1)} end
         table.sort(kids, function(a, b) if a.z ~= b.z then return a.z < b.z end return a.i < b.i end)

@@ -61,6 +61,9 @@ local function waveSequences(look, layer, strength)
     return ColorSequence.new(colors), NumberSequence.new(alphas)
 end
 
+UILib.WaveLayers = WAVE_LAYERS
+UILib.WaveSequences = waveSequences
+
 function UILib.new(cfg)
     local Players = game:GetService("Players")
     local UIS = game:GetService("UserInputService")
@@ -192,7 +195,7 @@ function UILib.new(cfg)
         o = o or {}
         local look = WAVE_LOOKS[o.Look or "ui"]
         local holder = mk("Frame", {Name = "Waves", BackgroundTransparency = 1, BorderSizePixel = 0, Size = UDim2.new(1, 0, 1, 0), ClipsDescendants = true,
-            Active = false}, host)
+            Active = false, ZIndex = o.ZIndex or 1}, host)
         local skin = {host = host, holder = holder, layers = {}, page = o.Page, global = o.Global, active = o.Active, look = look, radius = o.Radius or 8}
         corner(holder, o.Radius or 8)
         for i, layer in ipairs(WAVE_LAYERS) do
@@ -259,6 +262,152 @@ function UILib.new(cfg)
             end
         end
     end)
+
+    ---------------------------------------------------------------------------------------------- floating action buttons
+    -- A square button with an icon and a label that lives outside the window (it stays when the menu is hidden). Tap = OnPress, drag = move it.
+    local floatGui
+    local function ensureFloatGui()
+        if floatGui then return floatGui end
+        floatGui = mk("ScreenGui", {Name = (cfg.GuiName or "WraithUI") .. "_Buttons", ResetOnSpawn = false, ZIndexBehavior = Enum.ZIndexBehavior.Sibling, IgnoreGuiInset = true,
+            DisplayOrder = 45}, nil)
+        floatGui.Parent = cfg.Parent
+        win.FloatGui = floatGui
+        return floatGui
+    end
+
+    function win:Floating(o)
+        local g = ensureFloatGui()
+        local f = {Id = o.Id, Locked = o.Locked == true, Size = o.Size or 72, State = o.State == true}
+        local accent = o.Accent or T.accent
+        local vp = viewport()
+        local fx, fy = (o.Pos and o.Pos[1]) or 0.8, (o.Pos and o.Pos[2]) or 0.25
+        local btn = mk("TextButton", {Name = "Float_" .. tostring(o.Id), Text = "", AutoButtonColor = false, BorderSizePixel = 0, Size = UDim2.fromOffset(f.Size, f.Size),
+            Position = UDim2.fromOffset(fx * vp.X, fy * vp.Y), BackgroundColor3 = Color3.fromRGB(58, 60, 66), BackgroundTransparency = 0.12, Visible = o.Visible ~= false}, g)
+        corner(btn, 14)
+        local ring = mk("UIStroke", {Thickness = 2, Color = rgb(accent), ApplyStrokeMode = Enum.ApplyStrokeMode.Border, Transparency = 0.15}, btn)
+        local skin = win:Skin(btn, {Radius = 14, Look = "float", Global = true})
+        local iconBox = mk("CanvasGroup", {Name = "IconBox", BackgroundTransparency = 1, BorderSizePixel = 0, AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 0),
+            Size = UDim2.fromOffset(f.Size, f.Size * 0.62), ZIndex = 3}, btn)
+        local ic = icon(o.Icon or "crosshair", iconBox, math.floor(f.Size * 0.42), Color3.fromRGB(246, 247, 250), UDim2.new(0.5, -math.floor(f.Size * 0.21), 0.5, -math.floor(f.Size * 0.21)))
+        local label = mk("TextLabel", {Name = "Label", BackgroundTransparency = 1, AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -5), Size = UDim2.new(1, -6, 0, 14),
+            Text = o.Title or "", Font = Enum.Font.GothamBold, TextSize = 11, TextColor3 = Color3.fromRGB(250, 250, 252), TextStrokeTransparency = 0.45, TextStrokeColor3 = Color3.fromRGB(20, 20, 24),
+            ZIndex = 3}, btn)
+        local shade = mk("Frame", {Name = "Cooldown", BackgroundColor3 = Color3.fromRGB(10, 10, 14), BackgroundTransparency = 1, BorderSizePixel = 0, Size = UDim2.new(1, 0, 1, 0), ZIndex = 6}, btn)
+        corner(shade, 14)
+        f.Button, f.Gui = btn, g
+
+        local function place(px, py)
+            local v = viewport()
+            px = clamp(px, 0, math.max(0, v.X - f.Size)); py = clamp(py, 0, math.max(0, v.Y - f.Size))
+            btn.Position = UDim2.fromOffset(px, py)
+            return px, py
+        end
+        function f:GetPos()
+            local v = viewport()
+            return btn.Position.X.Offset / v.X, btn.Position.Y.Offset / v.Y
+        end
+        function f:SetPos(x, y) local v = viewport(); place(x * v.X, y * v.Y) end
+        function f:SetVisible(b) btn.Visible = b == true end
+        function f:SetLocked(b) f.Locked = b == true end
+        function f:SetSize(px)
+            f.Size = clamp(px, 56, 140)
+            label.TextSize = clamp(math.floor(f.Size * 0.135), 8, 13)
+            btn.Size = UDim2.fromOffset(f.Size, f.Size)
+            iconBox.Size = UDim2.fromOffset(f.Size, f.Size * 0.62)
+            ic.Size = UDim2.fromOffset(math.floor(f.Size * 0.42), math.floor(f.Size * 0.42))
+            ic.Position = UDim2.new(0.5, -math.floor(f.Size * 0.21), 0.5, -math.floor(f.Size * 0.21))
+            local fx2, fy2 = f:GetPos()
+            f:SetPos(fx2, fy2)
+        end
+        function f:SetState(on)                                           -- toggle buttons (SPEED ON / SPEED OFF): label and ring show the state
+            f.State = on == true
+            if o.Toggle then
+                label.Text = f.State and (o.LabelOn or o.Title or "") or (o.LabelOff or o.Title or "")
+                local c = f.State and (o.Accent or T.accent) or {150, 150, 160}
+                ring.Color = rgb(c)
+            end
+        end
+        function f:SetDim(b)                                              -- e.g. you do not hold the weapon right now
+            iconBox.GroupTransparency = b and 0.55 or 0
+            label.TextTransparency = b and 0.45 or 0
+        end
+        function f:Flash(ok)                                              -- green = fired, red = nothing happened
+            local c = ok and T.good or T.bad
+            ring.Color = rgb(c)
+            tween(ring, {Thickness = 4}, 0.08)
+            task.delay(0.35, function()
+                if not btn.Parent then return end
+                local base = accent
+                if o.Toggle and not f.State then base = {150, 150, 160} end
+                ring.Color = rgb(base); tween(ring, {Thickness = 2}, 0.2)
+            end)
+        end
+        function f:Cooldown(seconds)
+            if not seconds or seconds <= 0.05 then return end
+            shade.BackgroundTransparency = 0.45
+            tween(shade, {BackgroundTransparency = 1}, seconds)
+        end
+        function f:Destroy() pcall(function() btn:Destroy() end) end
+        f:SetSize(f.Size)
+        if o.Toggle then f:SetState(f.State) end
+
+        -- press / drag: a tap fires OnPress, moving more than 8 px drags the button (unless it is locked)
+        local pressed, dragging, cancelled, sx, sy, bx, by = false, false, false, 0, 0, 0, 0
+        connect(btn.InputBegan, function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                pressed, dragging, cancelled = true, false, false
+                sx, sy = input.Position.X, input.Position.Y
+                bx, by = btn.Position.X.Offset, btn.Position.Y.Offset
+                skin:Ripple(sx, sy)
+            end
+        end)
+        connect(UIS.InputChanged, function(input)
+            if not pressed then return end
+            if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+                local dx, dy = input.Position.X - sx, input.Position.Y - sy
+                if not dragging and not f.Locked and (dx * dx + dy * dy) > 64 then dragging = true end
+                if f.Locked and (dx * dx + dy * dy) > 576 then cancelled = true end        -- locked: a long swipe is not a tap either
+                if dragging then place(bx + dx, by + dy) end
+            end
+        end)
+        connect(UIS.InputEnded, function(input)
+            if not pressed then return end
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                pressed = false
+                if dragging then
+                    dragging = false
+                    if o.OnMoved then safe("float moved", o.OnMoved, f:GetPos()) end
+                elseif o.OnPress and not cancelled then
+                    local ok, ret = pcall(o.OnPress)
+                    if not ok then onError("float press", ret); f:Flash(false)
+                    elseif ret == "async" or o.Toggle then                    -- the caller flashes / cools down when it knows the result (toggles show their state instead)
+                    else
+                        if ret == nil then ret = true end
+                        f:Flash(ret ~= false)
+                        if type(o.Cooldown) == "number" and ret ~= false then f:Cooldown(o.Cooldown) end
+                    end
+                end
+            end
+        end)
+        win.Floats[#win.Floats + 1] = f
+        return f
+    end
+
+
+    if cfg.Headless then
+        -- the pieces other window libraries borrow (wave skins, floating buttons, theme names): no window of its own
+        function win:SetTheme(name) if THEMES[name] then themeName, T = name, THEMES[name] end end
+        function win:GetTheme() return themeName end
+        function win:Destroy()
+            if not win.Alive then return end
+            win.Alive = false
+            for _, c in ipairs(win.Connections) do pcall(function() c:Disconnect() end) end
+            win.Connections = {}
+            skins = {}
+            if floatGui then pcall(function() floatGui:Destroy() end) end
+        end
+        return win
+    end
 
     ---------------------------------------------------------------------------------------------- window frame
     local TOP = 44
@@ -876,136 +1025,6 @@ function UILib.new(cfg)
             local el = win.Flags[flag]
             if el and el.Set and type(v) == type(el.Value) then el:Set(v, silent) end
         end
-    end
-
-    ---------------------------------------------------------------------------------------------- floating action buttons
-    -- A square button with an icon and a label that lives outside the window (it stays when the menu is hidden). Tap = OnPress, drag = move it.
-    local floatGui
-    local function ensureFloatGui()
-        if floatGui then return floatGui end
-        floatGui = mk("ScreenGui", {Name = (cfg.GuiName or "WraithUI") .. "_Buttons", ResetOnSpawn = false, ZIndexBehavior = Enum.ZIndexBehavior.Sibling, IgnoreGuiInset = true,
-            DisplayOrder = 45}, nil)
-        floatGui.Parent = cfg.Parent
-        win.FloatGui = floatGui
-        return floatGui
-    end
-
-    function win:Floating(o)
-        local g = ensureFloatGui()
-        local f = {Id = o.Id, Locked = o.Locked == true, Size = o.Size or 72, State = o.State == true}
-        local accent = o.Accent or T.accent
-        local vp = viewport()
-        local fx, fy = (o.Pos and o.Pos[1]) or 0.8, (o.Pos and o.Pos[2]) or 0.25
-        local btn = mk("TextButton", {Name = "Float_" .. tostring(o.Id), Text = "", AutoButtonColor = false, BorderSizePixel = 0, Size = UDim2.fromOffset(f.Size, f.Size),
-            Position = UDim2.fromOffset(fx * vp.X, fy * vp.Y), BackgroundColor3 = Color3.fromRGB(58, 60, 66), BackgroundTransparency = 0.12, Visible = o.Visible ~= false}, g)
-        corner(btn, 14)
-        local ring = mk("UIStroke", {Thickness = 2, Color = rgb(accent), ApplyStrokeMode = Enum.ApplyStrokeMode.Border, Transparency = 0.15}, btn)
-        local skin = win:Skin(btn, {Radius = 14, Look = "float", Global = true})
-        local iconBox = mk("CanvasGroup", {Name = "IconBox", BackgroundTransparency = 1, BorderSizePixel = 0, AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 0),
-            Size = UDim2.fromOffset(f.Size, f.Size * 0.62), ZIndex = 3}, btn)
-        local ic = icon(o.Icon or "crosshair", iconBox, math.floor(f.Size * 0.42), Color3.fromRGB(246, 247, 250), UDim2.new(0.5, -math.floor(f.Size * 0.21), 0.5, -math.floor(f.Size * 0.21)))
-        local label = mk("TextLabel", {Name = "Label", BackgroundTransparency = 1, AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -5), Size = UDim2.new(1, -6, 0, 14),
-            Text = o.Title or "", Font = Enum.Font.GothamBold, TextSize = 11, TextColor3 = Color3.fromRGB(250, 250, 252), TextStrokeTransparency = 0.45, TextStrokeColor3 = Color3.fromRGB(20, 20, 24),
-            ZIndex = 3}, btn)
-        local shade = mk("Frame", {Name = "Cooldown", BackgroundColor3 = Color3.fromRGB(10, 10, 14), BackgroundTransparency = 1, BorderSizePixel = 0, Size = UDim2.new(1, 0, 1, 0), ZIndex = 6}, btn)
-        corner(shade, 14)
-        f.Button, f.Gui = btn, g
-
-        local function place(px, py)
-            local v = viewport()
-            px = clamp(px, 0, math.max(0, v.X - f.Size)); py = clamp(py, 0, math.max(0, v.Y - f.Size))
-            btn.Position = UDim2.fromOffset(px, py)
-            return px, py
-        end
-        function f:GetPos()
-            local v = viewport()
-            return btn.Position.X.Offset / v.X, btn.Position.Y.Offset / v.Y
-        end
-        function f:SetPos(x, y) local v = viewport(); place(x * v.X, y * v.Y) end
-        function f:SetVisible(b) btn.Visible = b == true end
-        function f:SetLocked(b) f.Locked = b == true end
-        function f:SetSize(px)
-            f.Size = clamp(px, 56, 140)
-            label.TextSize = clamp(math.floor(f.Size * 0.135), 8, 13)
-            btn.Size = UDim2.fromOffset(f.Size, f.Size)
-            iconBox.Size = UDim2.fromOffset(f.Size, f.Size * 0.62)
-            ic.Size = UDim2.fromOffset(math.floor(f.Size * 0.42), math.floor(f.Size * 0.42))
-            ic.Position = UDim2.new(0.5, -math.floor(f.Size * 0.21), 0.5, -math.floor(f.Size * 0.21))
-            local fx2, fy2 = f:GetPos()
-            f:SetPos(fx2, fy2)
-        end
-        function f:SetState(on)                                           -- toggle buttons (SPEED ON / SPEED OFF): label and ring show the state
-            f.State = on == true
-            if o.Toggle then
-                label.Text = f.State and (o.LabelOn or o.Title or "") or (o.LabelOff or o.Title or "")
-                local c = f.State and (o.Accent or T.accent) or {150, 150, 160}
-                ring.Color = rgb(c)
-            end
-        end
-        function f:SetDim(b)                                              -- e.g. you do not hold the weapon right now
-            iconBox.GroupTransparency = b and 0.55 or 0
-            label.TextTransparency = b and 0.45 or 0
-        end
-        function f:Flash(ok)                                              -- green = fired, red = nothing happened
-            local c = ok and T.good or T.bad
-            ring.Color = rgb(c)
-            tween(ring, {Thickness = 4}, 0.08)
-            task.delay(0.35, function()
-                if not btn.Parent then return end
-                local base = accent
-                if o.Toggle and not f.State then base = {150, 150, 160} end
-                ring.Color = rgb(base); tween(ring, {Thickness = 2}, 0.2)
-            end)
-        end
-        function f:Cooldown(seconds)
-            if not seconds or seconds <= 0.05 then return end
-            shade.BackgroundTransparency = 0.45
-            tween(shade, {BackgroundTransparency = 1}, seconds)
-        end
-        function f:Destroy() pcall(function() btn:Destroy() end) end
-        f:SetSize(f.Size)
-        if o.Toggle then f:SetState(f.State) end
-
-        -- press / drag: a tap fires OnPress, moving more than 8 px drags the button (unless it is locked)
-        local pressed, dragging, cancelled, sx, sy, bx, by = false, false, false, 0, 0, 0, 0
-        connect(btn.InputBegan, function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                pressed, dragging, cancelled = true, false, false
-                sx, sy = input.Position.X, input.Position.Y
-                bx, by = btn.Position.X.Offset, btn.Position.Y.Offset
-                skin:Ripple(sx, sy)
-            end
-        end)
-        connect(UIS.InputChanged, function(input)
-            if not pressed then return end
-            if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-                local dx, dy = input.Position.X - sx, input.Position.Y - sy
-                if not dragging and not f.Locked and (dx * dx + dy * dy) > 64 then dragging = true end
-                if f.Locked and (dx * dx + dy * dy) > 576 then cancelled = true end        -- locked: a long swipe is not a tap either
-                if dragging then place(bx + dx, by + dy) end
-            end
-        end)
-        connect(UIS.InputEnded, function(input)
-            if not pressed then return end
-            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                pressed = false
-                if dragging then
-                    dragging = false
-                    if o.OnMoved then safe("float moved", o.OnMoved, f:GetPos()) end
-                elseif o.OnPress and not cancelled then
-                    local ok, ret = pcall(o.OnPress)
-                    if not ok then onError("float press", ret); f:Flash(false)
-                    elseif ret == "async" or o.Toggle then                    -- the caller flashes / cools down when it knows the result (toggles show their state instead)
-                    else
-                        if ret == nil then ret = true end
-                        f:Flash(ret ~= false)
-                        if type(o.Cooldown) == "number" and ret ~= false then f:Cooldown(o.Cooldown) end
-                    end
-                end
-            end
-        end)
-        win.Floats[#win.Floats + 1] = f
-        return f
     end
 
     function win:Destroy()

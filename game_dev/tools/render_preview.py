@@ -81,6 +81,7 @@ def render(data, out, scale=2):
             piece = Image.new("RGBA", (wpx, hpx), tuple(col) + (int(255 * alpha),))
             if op.get("grad"):
                 rgb, a = gradient_layer(op, wpx, hpx)
+                rgb = rgb * (np.array(col) / 255.0)                    # Roblox multiplies the gradient's colour with the frame's own colour
                 arr = np.zeros((hpx, wpx, 4), dtype=np.uint8)
                 arr[..., :3] = rgb.astype(np.uint8)
                 arr[..., 3] = np.clip(a * alpha * 255, 0, 255).astype(np.uint8)
@@ -121,7 +122,10 @@ def render(data, out, scale=2):
             cx1, cy1 = cx0 + int(clip[2] * S), cy0 + int(clip[3] * S)
             if clip[2] <= 0 or clip[3] <= 0 or min(lw, cx1) <= max(0, cx0) or min(lh, cy1) <= max(0, cy0): continue
             m = Image.new("L", (lw, lh), 0)
-            ImageDraw.Draw(m).rectangle((max(0, cx0), max(0, cy0), min(lw, cx1) - 1, min(lh, cy1) - 1), fill=255)
+            if len(clip) > 4 and clip[4]:
+                ImageDraw.Draw(m).rounded_rectangle((cx0, cy0, cx1 - 1, cy1 - 1), radius=min(clip[4] * S, min(clip[2], clip[3]) * S / 2), fill=255)
+            else:
+                ImageDraw.Draw(m).rectangle((max(0, cx0), max(0, cy0), min(lw, cx1) - 1, min(lh, cy1) - 1), fill=255)
             a = np.minimum(np.array(layer.split()[3]), np.array(m))
             layer.putalpha(Image.fromarray(a.astype(np.uint8), "L"))
         canvas.alpha_composite(layer, (max(0, bx0), max(0, by0)) if bx0 >= 0 and by0 >= 0 else (0, 0)) if (bx0 >= 0 and by0 >= 0 and bx1 <= canvas.width and by1 <= canvas.height) else paste_clipped(canvas, layer, bx0, by0)

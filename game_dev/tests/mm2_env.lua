@@ -42,6 +42,9 @@ local V2 = typeMT("Vector2")
 local function Vector2_new(x, y) return setmetatable({X = x or 0, Y = y or 0}, V2) end
 V2.__index = function(v, k)
     if k == "Magnitude" then return sqrt(v.X * v.X + v.Y * v.Y) end
+    if k == "Unit" then local m = sqrt(v.X * v.X + v.Y * v.Y); if m == 0 then return v end return Vector2_new(v.X / m, v.Y / m) end
+    if k == "Dot" then return function(a, b) return a.X * b.X + a.Y * b.Y end end
+    if k == "Lerp" then return function(a, b, t) return Vector2_new(a.X + (b.X - a.X) * t, a.Y + (b.Y - a.Y) * t) end end
     error(tostring(k) .. " is not a valid member of Vector2", 2)
 end
 V2.__add = function(a, b) return Vector2_new(a.X + b.X, a.Y + b.Y) end
@@ -114,8 +117,37 @@ local CFrame_lib = {
 local C3 = typeMT("Color3")
 local function color3(r, g, b) return setmetatable({R = r, G = g, B = b}, C3) end
 C3.__eq = function(a, b) return a.R == b.R and a.G == b.G and a.B == b.B end
-C3.__index = function(_, k) error(tostring(k) .. " is not a valid member of Color3", 2) end
-local Color3_lib = {new = color3, fromRGB = function(r, g, b) return color3(r / 255, g / 255, b / 255) end}
+C3.__index = function(c, k)
+    if k == "Lerp" then return function(a, b, t) return color3(a.R + (b.R - a.R) * t, a.G + (b.G - a.G) * t, a.B + (b.B - a.B) * t) end end
+    if k == "ToHSV" then
+        return function(a)
+            local mx, mn = math.max(a.R, a.G, a.B), math.min(a.R, a.G, a.B)
+            local d, h = mx - mn, 0
+            if d > 0 then
+                if mx == a.R then h = ((a.G - a.B) / d) % 6 elseif mx == a.G then h = (a.B - a.R) / d + 2 else h = (a.R - a.G) / d + 4 end
+                h = h / 6
+            end
+            return h, mx == 0 and 0 or d / mx, mx
+        end
+    end
+    if k == "ToHex" then return function(a) return string.format("%02X%02X%02X", floor(a.R * 255 + 0.5), floor(a.G * 255 + 0.5), floor(a.B * 255 + 0.5)) end end
+    error(tostring(k) .. " is not a valid member of Color3", 2)
+end
+local function hsv(h, s, v)
+    local i = floor(h * 6) % 6
+    local f = h * 6 - floor(h * 6)
+    local p, q, t = v * (1 - s), v * (1 - f * s), v * (1 - (1 - f) * s)
+    local r, g, b = v, t, p
+    if i == 1 then r, g, b = q, v, p elseif i == 2 then r, g, b = p, v, t elseif i == 3 then r, g, b = p, q, v elseif i == 4 then r, g, b = t, p, v elseif i == 5 then r, g, b = v, p, q end
+    return color3(r, g, b)
+end
+local Color3_lib = {new = color3, fromRGB = function(r, g, b) return color3(r / 255, g / 255, b / 255) end, fromHSV = hsv,
+    fromHex = function(hex)
+        local h = tostring(hex):gsub("^#", "")
+        if #h == 3 then h = h:gsub(".", function(c) return c .. c end) end
+        if not h:match("^%x%x%x%x%x%x$") then error("Color3.fromHex: invalid hex '" .. tostring(hex) .. "'", 2) end
+        return color3(tonumber(h:sub(1, 2), 16) / 255, tonumber(h:sub(3, 4), 16) / 255, tonumber(h:sub(5, 6), 16) / 255)
+    end}
 
 local UD = typeMT("UDim")
 local function udim(s, o) return setmetatable({Scale = s or 0, Offset = o or 0}, UD) end
@@ -133,6 +165,23 @@ UD2.__index = function(_, k) error(tostring(k) .. " is not a valid member of UDi
 local UDim2_lib = {new = udim2, fromOffset = function(x, y) return udim2(0, x, 0, y) end, fromScale = function(x, y) return udim2(x, 0, y, 0) end}
 
 local function plainType(name) return setmetatable({}, {__type = name}) end
+
+local RectMT = typeMT("Rect")
+RectMT.__index = function(_, k) error(tostring(k) .. " is not a valid member of Rect", 2) end
+local Rect_lib = {new = function(a, b, c, d)
+    local mn, mx
+    if type(a) == "number" then mn, mx = Vector2_new(a, b), Vector2_new(c, d) else mn, mx = a, b end
+    return setmetatable({Min = mn, Max = mx, Width = mx.X - mn.X, Height = mx.Y - mn.Y}, RectMT)
+end}
+local FontMT = typeMT("Font")
+local FONT_FIELDS = {Family = true, Weight = true, Style = true, Bold = true}
+FontMT.__index = function(_, k)
+    if FONT_FIELDS[k] then return nil end
+    error(tostring(k) .. " is not a valid member of Font", 2)
+end
+local function fontOf(family, weight, style)
+    return setmetatable({Family = family, Weight = weight, Style = style, Bold = weight ~= nil and tostring(weight):find("Bold") ~= nil}, FontMT)
+end
 
 local function kindOf(v)
     local t = type(v)
@@ -551,6 +600,8 @@ function World.new(opts)
         if READONLY[k] then throw(tostring(k) .. " is read-only on " .. d.class, 2) end
         local pt = propType(d.class, k)
         if not pt then throw(tostring(k) .. " is not a valid property of " .. d.class .. " (assign)", 2) end
+        if type(v) == "string" and pt:sub(1, 5) == "Enum:" then v = W.Enum[pt:sub(6)][v] end
+        if type(v) == "number" and pt == "string" then v = tostring(v) end          -- Roblox turns a number assigned to a string property into text
         W.checkValue(d.class, k, pt, v)
         if isA(d.class, "BasePart") and k == "Position" then
             local cf = d.props.CFrame or cframe(0, 0, 0)
@@ -611,30 +662,43 @@ function World.new(opts)
     env.Color3 = Color3_lib
     env.UDim = {new = udim}
     env.UDim2 = UDim2_lib
+    env.Rect = Rect_lib
+    env.Font = {
+        new = function(family, weight, style) return fontOf(family, weight, style) end,
+        fromEnum = function(e) return fontOf("rbxasset://fonts/" .. tostring(e.Name), nil, nil) end,
+        fromName = function(name, weight, style) return fontOf("rbxasset://fonts/families/" .. name .. ".json", weight, style) end,
+        fromId = function(id, weight, style) return fontOf("rbxassetid://" .. tostring(id), weight, style) end,
+    }
     env.Enum = W.Enum
     env.TweenInfo = {new = function() return plainType("TweenInfo") end}
     local function seqType(name, keyName)
         local mt = {__type = name}
+        mt.__index = function(self, k)
+            if k == "Keypoints" then return rawget(self, "keys") end
+            error(tostring(k) .. " is not a valid member of " .. name, 2)
+        end
         local lib = {}
+        local function kp(t, v) return {t = t, v = v, Time = t, Value = v} end
         lib.new = function(a, b)
             local keys = {}
             if type(a) == "table" and getmetatable(a) == nil then
                 for i, k in ipairs(a) do keys[i] = k end
-            elseif b ~= nil then keys = {{t = 0, v = a}, {t = 1, v = b}}
-            else keys = {{t = 0, v = a}, {t = 1, v = a}} end
+            elseif b ~= nil then keys = {kp(0, a), kp(1, b)}
+            else keys = {kp(0, a), kp(1, a)} end
             if #keys < 2 then error(name .. " needs at least 2 keypoints", 2) end
             table.sort(keys, function(x, y) return x.t < y.t end)
             if keys[1].t ~= 0 or keys[#keys].t ~= 1 then error(name .. " must start at 0 and end at 1", 2) end
             return setmetatable({keys = keys}, mt)
         end
         env[name] = lib
-        env[keyName] = {new = function(t, v) return {t = t, v = v} end}
+        env[keyName] = {new = kp}
     end
     seqType("ColorSequence", "ColorSequenceKeypoint")
     seqType("NumberSequence", "NumberSequenceKeypoint")
     env.NumberRange = {new = function(a, b) return setmetatable({Min = a, Max = b or a}, {__type = "NumberRange"}) end}
     env.RaycastParams = {new = function() return setmetatable({FilterDescendantsInstances = {}, IgnoreWater = false}, {__type = "RaycastParams"}) end}
     env.Instance = {new = function(class, parent)
+        if W.denyClass and W.denyClass[class] then throw("Unable to create an Instance of type \"" .. tostring(class) .. "\" (denied by the test)", 2) end
         if not classes[class] then throw("Unable to create an Instance of type \"" .. tostring(class) .. "\"", 2) end
         local inst = makeRaw(class, class)
         if parent then setParent(inst, parent) end
@@ -680,7 +744,19 @@ function World.new(opts)
         env.readfile = function(p) if W.files[p] == nil then error("no such file " .. p) end return W.files[p] end
         env.isfile = function(p) return W.files[p] ~= nil end
         env.delfile = function(p) W.files[p] = nil end
+        env.isfolder = function(p) return W.files["dir:" .. p] ~= nil end
+        env.makefolder = function(p) W.files["dir:" .. p] = true end
+        env.getcustomasset = function(p) if W.files[p] == nil then error("getcustomasset: no such file " .. tostring(p)) end return "rbxasset://" .. p end
     end
+    if opts.request then                                                       -- an executor with request(): answers from W.http, remembers the headers it was given
+        env.request = function(o)
+            W.requests = W.requests or {}; W.requests[#W.requests + 1] = o
+            local body = W.http and W.http[o.Url]
+            if body then return {Success = true, StatusCode = 200, Body = body} end
+            return {Success = false, StatusCode = opts.requestStatus or 403, Body = ""}
+        end
+    end
+    env.identifyexecutor = function() return "TestExecutor", "1.0" end
     if not no.clipboard then env.setclipboard = function(s) W.clipboard = s end end
     if not no.mouseRel then env.mousemoverel = function(dx, dy) W.moves = W.moves or {}; W.moves[#W.moves + 1] = {dx, dy} end end
     if not no.mouseClick then env.mouse1click = function() W.clicks = (W.clicks or 0) + 1 end end

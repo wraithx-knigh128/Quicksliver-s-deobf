@@ -3,7 +3,7 @@
 local World = MM2_WORLD
 local problemsTotal = {}
 local function scene(name, vp, setup)
-    local w = World.new(); w:installJson()
+    local w = World.new(); w:installJson(); w.genv.WraithsHubUI = MM2_UI
     rawget(w.camera, "__d").props.ViewportSize = w.env.Vector2.new(vp[1], vp[2])
     local me = w:addPlayer("Me", {pos = {0, 3, 0}}); w:setLocal(me); w.me = me
     local alice = w:addPlayer("Alice", {pos = {0, 3, -40}, vel = {10, 0, 0}})
@@ -18,9 +18,11 @@ local function scene(name, vp, setup)
     w:run(0.6)
     local data = w:previewAll(w.env.Vector2.new(vp[1], vp[2]))
     local json = w.jsonEncode(data)
-    if PREVIEW_DIR then
+    if io then                                                       -- plain Lua: write the file; Luau has no io, so the runner picks the file out of stdout
         local f = assert(io.open(PREVIEW_DIR .. "/" .. name .. ".json", "w"))
         f:write(json); f:close()
+    else
+        print("@@FILE " .. name .. ".json\n" .. json .. "\n@@END")
     end
     for _, p in ipairs(data.problems) do problemsTotal[#problemsTotal + 1] = name .. ": " .. p end
     print(string.format("%-22s %dx%d  %d draw ops, %d layout problems", name, vp[1], vp[2], #data.ops, #data.problems))

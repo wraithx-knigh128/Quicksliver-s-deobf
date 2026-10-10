@@ -9,6 +9,7 @@ local function section(name) print(string.format("--- %s [%d MB]", name, math.fl
 local function newGame(opts)
     local w = World.new(opts)
     w:installJson()
+    w.genv.WraithsHubUI = MM2_UI
     local me = w:addPlayer("Me", {pos = {0, 3, 0}})
     w:setLocal(me)
     w.me = me
@@ -658,7 +659,7 @@ do
     check(labelContaining(w, "does not look like Murder Mystery 2") ~= nil, "...but says this is not MM2")
     clean(w, "other place")
 
-    local w2 = World.new(); w2:installJson()
+    local w2 = World.new(); w2:installJson(); w2.genv.WraithsHubUI = MM2_UI
     local me = w2:addPlayer("Me", {pos = {0, 3, 0}})
     w2:load(SCRIPT_SOURCE); w2:run(0.5)
     check(w2:find(function(i) return i.ClassName == "ScreenGui" and i.Name == "WraithsHubWindow" end) == nil, "waits while LocalPlayer is nil")
@@ -1379,7 +1380,7 @@ section("layout at phone and desktop sizes")
 do
     local sizes = {{"phone 844x390", 844, 390}, {"small phone 740x360", 740, 360}, {"tiny 640x360", 640, 360}, {"tablet 1024x768", 1024, 768}, {"desktop 1920x1080", 1920, 1080}}
     for _, sz in ipairs(sizes) do
-        local w = World.new(); w:installJson()
+        local w = World.new(); w:installJson(); w.genv.WraithsHubUI = MM2_UI
         rawget(w.camera, "__d").props.ViewportSize = w.env.Vector2.new(sz[2], sz[3])
         local me = w:addPlayer("Me", {pos = {0, 3, 0}}); w:setLocal(me); w.me = me
         local alice = w:addPlayer("Alice", {pos = {0, 3, -40}, vel = {10, 0, 0}}); local bob = w:addPlayer("Bob", {pos = {20, 3, -20}})

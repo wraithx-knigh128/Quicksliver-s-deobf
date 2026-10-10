@@ -2,18 +2,21 @@
 superclass chain, taken from Roblox's API dump. The fake Roblox world in tests/mm2_env.lua uses it to throw like Roblox does when the script
 reads a member that does not exist, assigns a wrong-typed value, or calls a method the class does not have.
   python3 tools/gen_member_types.py API-Dump.json mm2/ui_lib.lua mm2/wraiths_hub.lua -- Part Humanoid ... > tests/prop_types_mm2.lua
-Classes = every Instance.new("X") / mk("X", ...) in the given sources + the extra classes after `--`.
+Classes = every Instance.new("X") / mk("X", ...) in the given sources (with --quoted: every string literal that is a class name) + the extra classes after `--`.
 Only members whose name occurs as a word in the sources are listed (everything else is irrelevant to this script)."""
 import json, re, sys
 args = sys.argv[1:]
 dump = json.load(open(args[0]))
 rest = args[1:]
+quoted = "--quoted" in rest            # also every "ClassName" string literal (needed for libraries that call New("Frame", ...))
+rest = [r for r in rest if r != "--quoted"]
 extra = []
 if "--" in rest:
     i = rest.index("--"); extra = rest[i + 1:]; rest = rest[:i]
 src = "\n".join(open(p, encoding="utf-8").read() for p in rest)
 classes = {c["Name"]: c for c in dump["Classes"]}
 used = set(re.findall(r'Instance\.new\("([A-Za-z0-9]+)"', src)) | set(re.findall(r'\bmk\("([A-Za-z0-9]+)"', src)) | set(extra)
+if quoted: used |= set(re.findall(r'["\']([A-Za-z0-9]+)["\']', src))
 used = sorted(u for u in used if u in classes)
 words = set(re.findall(r"[A-Za-z_][A-Za-z0-9_]*", src))
 supers, out = {}, []

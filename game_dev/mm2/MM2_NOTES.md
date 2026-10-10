@@ -94,6 +94,20 @@ of other players plus half the round trip, and the shot needs another half round
   moves them all (30 fps on High, 15 fps and one layer on Low); skins on hidden pages or a hidden window are skipped.
 - The **reticle** follows the same target and predicted point the shot uses and glides onto it with exponential smoothing.
 
+## 3d. The menu (WindUI), the background, the fallback
+
+- The window is **WindUI** (Footagesus/WindUI release, MIT). `mm2/vendor/windui.lua` is the release file, unchanged; `vendor/patch_windui.py` applies three exact-string patches when
+  the script is built (they make a failed icon download fall back to blank icons instead of waiting forever for a Studio-only server remote). `mm2/windui_ui.lua` adapts it to the
+  hub's small window API (`Tab` / `Toggle` / `Slider` / `Dropdown` / `Keybind` / `Input` / `Button` / `Label`, `Notify`, `GetState` / `SetState`), so the hub's code does not
+  care which menu is in use. The floating buttons and the water skin always come from `ui_lib.lua` (a "headless" instance of it), so they live in their own ScreenGui.
+- WindUI is embedded as a function that is only called inside a protected call. If it fails to load or to build its window, whatever it made is removed and the **Classic** menu starts
+  (toast + Debug > Log). A WindUI toggle / slider / dropdown reports the value the hub itself just set; the adapter compares with its own copy and ignores that echo, so `Set(v, true)`
+  is silent and `Set(v)` behaves like a tap.
+- **Background**: `win:SetBackground(link)`. A link is a direct `.mp4` / `.webm` / `.png` / `.jpg`, or a pixabay.com video page (the page is read and its `cdn.pixabay.com/...mp4` link used,
+  medium size preferred). The file is fetched with `request` (browser-like headers) and `HttpGet` as the fallback, saved to `WraithsHub/assets/bg_<hash>.<ext>` and shown with
+  `getcustomasset` in a `VideoFrame` / `ImageLabel` placed in WindUI's window-background layer, plus a dimming frame. Not verified against the real Pixabay site (not reachable from the
+  build environment), and `VideoFrame` with a custom file depends on the executor - WindUI's own docs say it "may not work".
+
 ## 4. Feature map
 
 - **Main** - live round info (you / murderer / sheriff), gun finder status, announcements (murderer, sheriff, gun drops, murderer nearby),
@@ -103,7 +117,7 @@ of other players plus half the round trip, and the shot needs another half round
   throw / slash aura, silent aim, hitbox expander.
 - **Buttons** - the floating SHOOT / THROW / GRAB GUN buttons and the wave skin.
 - **Player** - walk speed, jump power, infinite jump, noclip, field of view, anti-AFK, rejoin, server hop.
-- **Settings / Debug** - themes, config (saved **only** when you press *Save config*), unload; executor support, recorded shots, log, diagnostics.
+- **Settings / Debug** - themes, menu style (WindUI / Classic), window background (video link, dimming), config (saved **only** when you press *Save config*), unload; executor support, recorded shots, log, diagnostics.
 
 ## 5. Honest limits
 

@@ -1,5 +1,5 @@
 --[[ Wraith's Hub (Murder Mystery 2) - roles, ESP, gun finder, perfect shoot / throw, aim reticle, hitbox, player mods.
-  Source file: build it into one script with `python3 game_dev/mm2/build_mm2.py` (it fills in the UILib / Logic modules below).
+  Source file: build it into one script with `python3 game_dev/mm2/build_mm2.py` (it fills in the Logic / UILib / WindUI modules below).
   Everything that depends on the game's private internals (remote names, hit detection) is DISCOVERED at run time - see MM2_NOTES.md. ]]
 -- @@MODULES@@
 
@@ -76,7 +76,8 @@ local function __run()
         btnShoot = true, btnThrow = true, btnGrab = false, btnSpeed = false, btnJump = false, btnSize = 80, btnLock = false, waves = "High",
         shootX = -1, shootY = -1, throwX = -1, throwY = -1, grabX = -1, grabY = -1, speedX = -1, speedY = -1, jumpX = -1, jumpY = -1,   -- -1 = placed automatically (down the right edge)
         walkOn = false, walkSpeed = 24, jumpOn = false, jumpPower = 60, infJump = false, noclip = false, fovOn = false, fovValue = 80,
-        antiAfk = true, theme = "Crimson", uiKey = "RightShift",
+        antiAfk = true, theme = "Dark", uiKey = "RightShift",
+        ui = "WindUI", bgOn = true, bgDim = 0.45, bgUrl = "https://pixabay.com/videos/lake-sunset-trees-leaves-japan-91562/",
     }
     local CONFIG_FILE = "wraiths_hub_config.json"
     local saved
@@ -88,6 +89,7 @@ local function __run()
         end
     end
     local S = Logic.mergeFlags(DEFAULTS, saved)
+    if genv.WraithsHubUI == "Classic" or genv.WraithsHubUI == "WindUI" then S.ui = genv.WraithsHubUI end      -- (tests, or a one-off override: getgenv().WraithsHubUI = "Classic")
 
     ------------------------------------------------------------------------------------------ small helpers
     local function camera() return workspace.CurrentCamera end
@@ -1406,8 +1408,31 @@ local function __run()
         local ok, code = pcall(function() return Enum.KeyCode[name] end)
         return ok and code or Enum.KeyCode.RightShift
     end
-    Win = UILib.new{Title = "Wraith's Hub", Subtitle = "Murder Mystery 2", Group = "Wraith's Hub", Parent = PARENT, GuiName = "WraithsHubWindow", Theme = S.theme,
-        WaveMode = S.waves, ToggleKey = keyCodeFor(S.uiKey), OnError = report}
+    local function traceback(e) return debug.traceback(tostring(e), 2) end
+    local usingWind = false
+    local function contains(list, v) for _, x in ipairs(list) do if x == v then return true end end return false end
+    local function makeWindow(cfg)
+        if S.ui ~= "Classic" then
+            local okLib, WindUI = xpcall(WindUILoader, traceback)
+            if okLib and type(WindUI) == "table" and WindUI.CreateWindow then
+                cfg.Theme = WindAdapter.themeFor(S.theme)
+                local ok, res = xpcall(WindAdapter.new, traceback, WindUI, UILib, cfg)
+                if ok then usingWind = true; return res end
+                report("WindUI window", res)
+            else
+                report("WindUI load", WindUI)
+            end
+            queued[#queued + 1] = {"WindUI could not start", "Using the classic menu instead (details: Debug tab -> Log). Your executor may block the library's file / web calls.", "warn", 8}
+        end
+        cfg.Theme = contains(UILib.ThemeNames, S.theme) and S.theme or "Crimson"
+        return UILib.new(cfg)
+    end
+    Win = makeWindow{Title = "Wraith's Hub", Subtitle = "Murder Mystery 2", Group = "Wraith's Hub", Parent = PARENT, GuiName = "WraithsHubWindow", Folder = "WraithsHub",
+        WaveMode = S.waves, ToggleKey = keyCodeFor(S.uiKey), OnError = report, Background = S.bgOn and S.bgUrl or "", BackgroundDim = S.bgDim,
+        OnBackground = function(ok, msg)
+            if ok then logLine("background: " .. tostring(msg)) else notify("Background not loaded", tostring(msg) .. " - open Settings > Background and paste a direct .mp4 / .webm link.", "warn", 9) end
+        end}
+    S.theme = Win:GetTheme()
     Hub.Win = Win
     Win:SetAvatar(LocalPlayer.UserId)
     do
@@ -1589,7 +1614,24 @@ local function __run()
 
     -- Settings
     settings:Section("Look")
-    drop(settings, "theme", "Theme", UILib.ThemeNames, function(v) Win:SetTheme(v) end)
+    drop(settings, "theme", "Theme", usingWind and WindAdapter.ThemeNames or UILib.ThemeNames, function(v) Win:SetTheme(v) end)
+    drop(settings, "ui", "Menu style", {"WindUI", "Classic"})
+    settings:Label("WindUI is the full menu. Classic is the small built-in one - use it if WindUI does not start on your executor. The style applies the next time you run the script (press Save config to keep it).")
+    if usingWind then
+        settings:Section("Background")
+        tog(settings, "bgOn", "Background video", "A looping video behind the menu. The first run downloads it once (needs HttpGet, writefile and getcustomasset); after that it comes from your executor's workspace folder.",
+            function(v) Win:SetBackground(v and S.bgUrl or "", function(ok, msg) if not ok then notify("Background not loaded", tostring(msg), "warn", 8) end end) end)
+        settings:Input{Title = "Video or picture link", Desc = "A pixabay.com video page, or a direct link that ends in .mp4 / .webm / .png / .jpg.", Default = S.bgUrl, Flag = "bgUrl",
+            Placeholder = "https://...", Callback = function(v) S.bgUrl = v end}
+        sld(settings, "bgDim", "Dimming", 0, 0.9, 0.05, "", function(v) Win:SetBackgroundDim(v) end)
+        settings:Button{Title = "Load this link now", Desc = "Downloads (first time) and shows it behind the menu.", Callback = function()
+            S.bgOn = true
+            if Win.Flags.bgOn then Win.Flags.bgOn:Set(true, true) end
+            Win:SetBackground(S.bgUrl, function(ok, msg)
+                if ok then notify("Background ready", nil, "good", 3) else notify("Background not loaded", tostring(msg), "warn", 9) end
+            end)
+        end}
+    end
     key(settings, "uiKey", "Show / hide menu", "Also tap the pill at the top of the screen.", nil, function(v) Win.ToggleKey = keyCodeFor(v) end)
     settings:Section("Config")
     settings:Label("Nothing is saved unless you press Save config.")
@@ -1628,6 +1670,7 @@ local function __run()
     -- Debug
     dbg:Section("Executor support")
     local function yes(b) return b and "yes" or "NO" end
+    dbg:Label("menu: " .. (usingWind and "WindUI" or "Classic") .. " | web: " .. (Cap.http and "yes" or "NO") .. " | getcustomasset: " .. (type(getcustomasset) == "function" and "yes" or "NO"))
     dbg:Label(string.format("hook %s | setnamecall %s | drawing %s | mousemoverel %s | mouse1click %s | files %s | clipboard %s | gethui %s",
         yes(Cap.hook), yes(Cap.setnamecall), yes(Cap.drawing), yes(Cap.mouseRel), yes(Cap.mouseClick), yes(Cap.files), yes(Cap.clipboard), yes(Cap.gethui)))
     dbg:Section("Recorded shots")
