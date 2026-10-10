@@ -1023,7 +1023,9 @@ do
     local hum = w.me.Character.Humanoid
     check(labelOf(speed) == "SPEED OFF" and labelOf(jump) == "JUMP OFF", "they start as SPEED OFF / JUMP OFF")
     local x0 = speed.Position.X.Offset
-    w:tap(speed, x0 + 10, 150); w:run(0.4)
+    w:tap(speed, x0 + 10, 150)
+    check(ring(w, speed).Thickness == 2, "a toggle does not flash like a shot does (the ring keeps its thickness)")
+    w:run(0.4)
     check(hum.WalkSpeed == 24 and labelOf(speed) == "SPEED ON", "a tap turns walk speed on (24) and says SPEED ON")
     check(ring(w, speed).Color.G > 0.7 and ring(w, speed).Color.R < 0.4, "the ring turns teal while it is on")
     w:tap(speed, x0 + 10, 150); w:run(0.4)
@@ -1404,10 +1406,12 @@ do
         check(c.w >= 28 and c.h >= 28, sz[1] .. ": controls are big enough to tap (" .. c.w .. "x" .. c.h .. ")")
         -- floating buttons: inside the screen, apart from each other, not on top of the open window
         w:toggle("Show Grab Gun"); w:toggle("Show Speed toggle"); w:toggle("Show Jump toggle"); w:run(0.1)
+        w:previewAll(vp)                                              -- (lay the newly shown buttons out)
         local ids, boxes = {"shoot", "throw", "grab", "speed", "jump"}, {}
         for i, id in ipairs(ids) do
             local b = w:button("Float_" .. id)
             boxes[i] = {x = b.AbsolutePosition.X, y = b.AbsolutePosition.Y, w = b.AbsoluteSize.X, h = b.AbsoluteSize.Y}
+            check(boxes[i].w == 80 and boxes[i].h == 80, sz[1] .. ": Float_" .. id .. " has been laid out (80x80)")
             check(boxes[i].x >= 0 and boxes[i].y >= 0 and boxes[i].x + boxes[i].w <= sz[2] and boxes[i].y + boxes[i].h <= sz[3], sz[1] .. ": Float_" .. id .. " is on screen")
         end
         for i = 1, #ids do for j = i + 1, #ids do

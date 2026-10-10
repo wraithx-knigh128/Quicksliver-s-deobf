@@ -4,7 +4,7 @@
 
 One-line loader (pinned to a build; the SHA is updated after every build):
 ```lua
-loadstring(game:HttpGet("https://raw.githubusercontent.com/wraithx-knigh128/Quicksliver-s-deobf/<SHA>/dist/wraiths_hub.min.txt"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/wraithx-knigh128/Quicksliver-s-deobf/56404a42f99209609e8c4ad224ffb3298d3622c1/dist/wraiths_hub.min.txt"))()
 ```
 ![Wraith's Hub on a phone](../preview/mm2/phone_main.png)
 
