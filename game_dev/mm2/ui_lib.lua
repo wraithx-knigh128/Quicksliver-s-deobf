@@ -118,10 +118,28 @@ function UILib.new(cfg)
         return vp
     end
 
-    ---------------------------------------------------------------------------------------------- vector icons
-    -- every icon is a handful of Frames drawn on a 20x20 grid; `color` is a theme key or a Color3
+    ---------------------------------------------------------------------------------------------- icons
+    -- Licensed raster icons (Lucide, via Footagesus/Icons, MIT - same pack WindUI itself uses: mm2/vendor/lucide_subset.json) for the shapes that have a
+    -- real equivalent in that set. Everything else (no licensed match exists - there is no gun/pistol icon in Lucide) stays the small hand-drawn vector
+    -- shape below. `icon()` returns a holder the same way either way, so callers (and the floating-button animations) do not care which one they got.
+    local ICON_ASSETS = {
+        crosshair = "rbxassetid://134242818164054", knife = "rbxassetid://124448418211665",  -- "sword" (Lucide has no knife icon)
+        bolt = "rbxassetid://130551565616516",                                                -- "zap"
+    }
+    local function paintImage(img, color)
+        if type(color) == "string" then bind(img, "ImageColor3", color) else img.ImageColor3 = color end
+    end
+
+    -- every vector icon is a handful of Frames drawn on a 20x20 grid; `color` is a theme key or a Color3
     local function icon(kind, parent, size, color, pos)
         size = size or 18
+        if ICON_ASSETS[kind] then
+            local img = mk("ImageLabel", {BackgroundTransparency = 1, BorderSizePixel = 0, Size = UDim2.fromOffset(size, size), Name = "Icon_" .. kind,
+                Image = ICON_ASSETS[kind]}, parent)
+            if pos then img.Position = pos end
+            paintImage(img, color)
+            return img
+        end
         local k = size / 20
         local holder = mk("Frame", {BackgroundTransparency = 1, BorderSizePixel = 0, Size = UDim2.fromOffset(size, size), Name = "Icon_" .. kind}, parent)
         if pos then holder.Position = pos end

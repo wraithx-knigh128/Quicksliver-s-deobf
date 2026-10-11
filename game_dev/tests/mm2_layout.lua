@@ -274,7 +274,7 @@ function World:drawList(gui, opts)
             problem(inst, "BorderSizePixel is not 0 (Roblox draws a black border)")
         end
         if d.class == "ImageLabel" and (d.props.Image or "") ~= "" then
-            ops[#ops + 1] = {t = "image", x = L.x, y = L.y, w = L.w, h = L.h, clip = clip, radius = op.radius, name = d.props.Image}
+            ops[#ops + 1] = {t = "image", x = L.x, y = L.y, w = L.w, h = L.h, clip = clip, radius = op.radius, name = d.props.Image, icon = d.name:find("^Icon_") ~= nil}
         end
         if TEXTY[d.class] then
             local text = d.props.Text

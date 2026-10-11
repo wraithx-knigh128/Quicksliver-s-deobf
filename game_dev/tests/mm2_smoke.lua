@@ -1170,9 +1170,11 @@ do
     check(changes(0.5) > 8, "High: it flows again")
 
     -- the icons move; no colour anywhere
-    local function iconOf(id) return w:find(function(i) return i.ClassName == "Frame" and i.Name:match("^Icon_") ~= nil and i.Parent and i.Parent.Name == "IconBox" and i.Parent.Parent == w:button("Float_" .. id) end) end
+    local function iconOf(id) return w:find(function(i) return (i.ClassName == "Frame" or i.ClassName == "ImageLabel") and i.Name:match("^Icon_") ~= nil and i.Parent and i.Parent.Name == "IconBox" and i.Parent.Parent == w:button("Float_" .. id) end) end
     local cross, knife = iconOf("shoot"), iconOf("throw")
     check(cross and cross.Name == "Icon_crosshair" and knife and knife.Name == "Icon_knife", "SHOOT draws a crosshair, THROW a knife")
+    check(cross.ClassName == "ImageLabel" and knife.ClassName == "ImageLabel", "both are real licensed icon images (Lucide), not hand-drawn shapes")
+    check(cross.Image ~= "" and knife.Image ~= "" and cross.Image ~= knife.Image, "each has its own icon asset")
     local rots, sizes = {}, {}
     for _ = 1, 20 do w:run(0.1); rots[#rots + 1] = cross.Rotation end
     local spread = math.max(table.unpack(rots)) - math.min(table.unpack(rots))

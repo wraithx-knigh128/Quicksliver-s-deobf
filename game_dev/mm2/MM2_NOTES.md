@@ -89,6 +89,8 @@ of other players plus half the round trip, and the shot needs another half round
 
 - The **SHOOT / THROW / GRAB GUN** buttons live in their own ScreenGui, so they stay when the menu is hidden. A tap fires, moving more than 8 px drags (never fires),
   *Lock* turns dragging off (and a long swipe is then not a tap either), the icon dims when you do not hold the weapon, and the ring flashes green / red.
+  SHOOT / THROW / SPEED draw licensed [Lucide](https://lucide.dev) icons (MIT, `ICON_ASSETS` in `ui_lib.lua`, same `vendor/lucide_subset.json` ids WindUI uses) - crosshair, sword
+  (no plain "knife" exists in Lucide) and bolt; GRAB GUN / JUMP stay the small hand-drawn vector shapes, since Lucide has no gun icon to use instead.
 - Every button wears a **wave skin**: three transparent frames over the button, each with a `UIGradient` whose colour / transparency sequence is a sharpened sine
   (20 keypoints: thin grey-white crests on transparent) at a different angle, whose `Offset` slides with a different speed and phase. One Heartbeat connection
   moves them all (30 fps on High, 15 fps and one layer on Low); skins on hidden pages or a hidden window are skipped.

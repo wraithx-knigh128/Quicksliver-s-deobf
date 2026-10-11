@@ -287,8 +287,22 @@ local vp = cam and cam.ViewportSize
 if not vp or vp.X < 100 then return Vector2.new(1280, 720) end
 return vp
 end
+local ICON_ASSETS = {
+crosshair = "rbxassetid://134242818164054", knife = "rbxassetid://124448418211665",
+bolt = "rbxassetid://130551565616516",
+}
+local function paintImage(img, color)
+if type(color) == "string" then bind(img, "ImageColor3", color) else img.ImageColor3 = color end
+end
 local function icon(kind, parent, size, color, pos)
 size = size or 18
+if ICON_ASSETS[kind] then
+local img = mk("ImageLabel", {BackgroundTransparency = 1, BorderSizePixel = 0, Size = UDim2.fromOffset(size, size), Name = "Icon_" .. kind,
+Image = ICON_ASSETS[kind]}, parent)
+if pos then img.Position = pos end
+paintImage(img, color)
+return img
+end
 local k = size / 20
 local holder = mk("Frame", {BackgroundTransparency = 1, BorderSizePixel = 0, Size = UDim2.fromOffset(size, size), Name = "Icon_" .. kind}, parent)
 if pos then holder.Position = pos end

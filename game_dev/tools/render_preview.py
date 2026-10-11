@@ -97,10 +97,16 @@ def render(data, out, scale=2):
             d.rounded_rectangle((ox, oy, ox + wpx - 1, oy + hpx - 1), radius=r, outline=tuple(op["color"]) + (int(255 * op.get("alpha", 1)),), width=th)
         elif op["t"] == "image":
             d = ImageDraw.Draw(layer)
-            d.rounded_rectangle((ox, oy, ox + wpx - 1, oy + hpx - 1), radius=min(wpx, hpx) / 2 if rad else 0, fill=(70, 70, 86, 255))
             cx, cy = ox + wpx / 2, oy + hpx / 2
-            d.ellipse((cx - wpx * 0.17, cy - hpx * 0.30, cx + wpx * 0.17, cy + hpx * 0.04), fill=(215, 215, 225, 255))
-            d.ellipse((cx - wpx * 0.30, cy + hpx * 0.08, cx + wpx * 0.30, cy + hpx * 0.62), fill=(215, 215, 225, 255))
+            if op.get("icon"):
+                # a small licensed glyph (crosshair / knife / zap ...), not an avatar: a plain ring+dot stand-in, no silhouette
+                r = min(wpx, hpx) * 0.42
+                d.ellipse((cx - r, cy - r, cx + r, cy + r), outline=(235, 237, 244, 230), width=max(1, int(r * 0.16)))
+                d.ellipse((cx - r * 0.14, cy - r * 0.14, cx + r * 0.14, cy + r * 0.14), fill=(235, 237, 244, 230))
+            else:
+                d.rounded_rectangle((ox, oy, ox + wpx - 1, oy + hpx - 1), radius=min(wpx, hpx) / 2 if rad else 0, fill=(70, 70, 86, 255))
+                d.ellipse((cx - wpx * 0.17, cy - hpx * 0.30, cx + wpx * 0.17, cy + hpx * 0.04), fill=(215, 215, 225, 255))
+                d.ellipse((cx - wpx * 0.30, cy + hpx * 0.08, cx + wpx * 0.30, cy + hpx * 0.62), fill=(215, 215, 225, 255))
         elif op["t"] == "text":
             kind = "bold" if op.get("bold") else "medium" if op.get("medium") else "regular"
             size = max(6, int(round(op["size"] * S * 0.92)))

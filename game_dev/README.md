@@ -11,7 +11,8 @@ made small and clean: a Mac-style close button only (no minimise / fullscreen), 
 font, frosted cards that fade out to the right, WindUI's draggable open button, 10 themes (default **Dark**). The **inside stays transparent** (Settings > *Window see-through*);
 the grey **water-flow texture lives only on outlines**: the window's border, WindUI's buttons and the floating buttons - a thin grey / white gradient that runs round the border
 (*Button waves* High = 30 updates a second, Low = 15, Off = still). If WindUI cannot start on an executor (a blocked class, ...) the script falls back to the small built-in
-**Classic** menu and says why in the Log; Settings > *Menu style* picks one for the next run. No icon pack is downloaded (a built-in set of 76 Lucide icons is used), and the menu
+**Classic** menu and says why in the Log; Settings > *Menu style* picks one for the next run. No icon pack is downloaded (a built-in set of 76 licensed [Lucide](https://lucide.dev)
+icons is used, MIT, via Footagesus/Icons), and the menu
 is built a few controls per frame, so loading does not freeze the game; the SHOOT / THROW buttons appear first.
 
 ![Classic menu on a phone](../preview/mm2/phone_main.png)
@@ -25,8 +26,9 @@ link now*). The file is downloaded **once** into `WraithsHub/assets/` of your ex
 ship the exact picture from your reference photo (it is somebody's artwork and I have no way to search for it), and pixabay.com is blocked in the build environment, so the
 Pixabay path is tested with a stand-in page and file, not with the real site; paste the direct link of the image / video you want.
 
-- **Floating buttons**: rounded squares with a **transparent inside** and a glowing grey outline that carries the flowing water. **SHOOT** (a turning, pulsing crosshair), **THROW**
-  (a white knife that travels round a circle), **GRAB GUN** (a pistol that bobs and kicks), SPEED / JUMP toggles (brighter outline = on). Tap = fire, drag = move, size slider, lock,
+- **Floating buttons**: rounded squares with a **transparent inside** and a glowing grey outline that carries the flowing water. **SHOOT** (a turning, pulsing crosshair),
+  **THROW** (a knife that travels round a circle) - both licensed [Lucide](https://lucide.dev) icons (MIT) - **GRAB GUN** (there is no licensed gun icon in Lucide, so this one stays
+  a small hand-drawn pistol shape), SPEED / JUMP toggles (a licensed bolt / the hand-drawn chevron, brighter outline = on). Tap = fire, drag = move, size slider, lock,
   fainter without that weapon, a solid green / red flash for fired / could not, positions saved with *Save config*.
 - **Auto targets by role**: Sheriff / hero -> the **murderer**, aimed ahead by your ping (innocents are never shot; if the murderer is not known yet it says so). Murderer -> the
   **closest player**. Either button does what your weapon can do (SHOOT as murderer throws, THROW as sheriff shoots). Shots use the shot you recorded once by hand; with nothing recorded
