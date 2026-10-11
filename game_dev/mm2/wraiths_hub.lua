@@ -73,11 +73,11 @@ local function __run()
         throwKey = "E", throwAtKey = "C", autoThrow = false, throwGap = 2, slashAura = false, slashRange = 9,
         hitbox = false, hitboxSize = 8, hitboxAlpha = 0.6, hitboxWho = "Murderer",
         reticle = "Weapon in hand", pingComp = 1, interpMs = 50, extraLead = 0,
-        btnShoot = true, btnThrow = true, btnGrab = false, btnSpeed = false, btnJump = false, btnSize = 80, btnLock = false, waves = "High",
+        useKnown = true, btnShoot = true, btnThrow = true, btnGrab = false, btnSpeed = false, btnJump = false, btnSize = 80, btnLock = false, waves = "High",
         shootX = -1, shootY = -1, throwX = -1, throwY = -1, grabX = -1, grabY = -1, speedX = -1, speedY = -1, jumpX = -1, jumpY = -1,   -- -1 = placed automatically (down the right edge)
         walkOn = false, walkSpeed = 24, jumpOn = false, jumpPower = 60, infJump = false, noclip = false, fovOn = false, fovValue = 80,
         antiAfk = true, theme = "Dark", uiKey = "RightShift",
-        ui = "WindUI", bgOn = true, bgDim = 0.45, bgUrl = "https://pixabay.com/videos/lake-sunset-trees-leaves-japan-91562/",
+        ui = "WindUI", uiScale = 0.9, uiAlpha = 0.5, bgOn = false, bgDim = 0.35, bgUrl = "https://pixabay.com/videos/lake-sunset-trees-leaves-japan-91562/",
     }
     local CONFIG_FILE = "wraiths_hub_config.json"
     local saved
@@ -136,6 +136,8 @@ local function __run()
     ------------------------------------------------------------------------------------------ roles
     local Roles = {map = {}, data = {}, announced = {}, mapSeen = false, lastActive = 0, dataFails = 0, getter = nil}
     Roles.mine = nil
+    local dirty = true                               -- set by events (a weapon appears, someone spawns / dies, data arrives): the next frame re-reads the roles and refreshes the ESP
+    local function markDirty() dirty = true end
 
     local function findPlayerByKey(key)
         if typeof(key) == "Instance" and key:IsA("Player") then return key end
@@ -175,7 +177,7 @@ local function __run()
             if ev and ev:IsA("RemoteEvent") then
                 track(ev.OnClientEvent:Connect(guard("PlayerDataChanged", function(...)
                     local args = table.pack(...)
-                    for i = 1, args.n do if type(args[i]) == "table" then Roles.ingest(args[i], true); break end end
+                    for i = 1, args.n do if type(args[i]) == "table" then Roles.ingest(args[i], true); markDirty(); break end end
                 end)))
                 logLine("listening to " .. ev:GetFullName())
             end
@@ -193,7 +195,7 @@ local function __run()
             local ok, res = pcall(function() return Roles.getter:InvokeServer() end)
             Roles.polling = false
             if ok and type(res) == "table" then
-                if Roles.ingest(res, true) > 0 then Roles.dataFails = 0 else Roles.dataFails = Roles.dataFails + 1 end
+                if Roles.ingest(res, true) > 0 then Roles.dataFails = 0; markDirty() else Roles.dataFails = Roles.dataFails + 1 end
             else
                 Roles.dataFails = Roles.dataFails + 1
                 if not ok then report("GetPlayerData", res) end
@@ -264,11 +266,22 @@ local function __run()
     function Roles.murderer() return Roles.find("Murderer") or Roles.find("Infected") end
     function Roles.sheriff() return Roles.find("Sheriff") or Roles.find("Hero") end
 
+    -- murderer red, sheriff (and the hero who picked the gun up) blue, innocents green, the dropped gun orange
     local ROLE_COLOR = {
-        Murderer = Color3.fromRGB(255, 70, 70), Infected = Color3.fromRGB(255, 120, 60), Sheriff = Color3.fromRGB(70, 150, 255),
-        Hero = Color3.fromRGB(255, 205, 60), Innocent = Color3.fromRGB(90, 225, 125),
+        Murderer = Color3.fromRGB(255, 45, 45), Infected = Color3.fromRGB(255, 45, 45), Sheriff = Color3.fromRGB(45, 140, 255),
+        Hero = Color3.fromRGB(45, 140, 255), Innocent = Color3.fromRGB(70, 225, 120),
     }
     local NO_ROLE = Color3.fromRGB(220, 220, 230)
+    local GUN_COLOR = Color3.fromRGB(255, 140, 20)
+    local GUN_TEXT = Color3.fromRGB(255, 186, 110)
+
+    local TweenService = service("TweenService")
+    local function glide(inst, props, secs)                                   -- a short ease so colours and fades never pop
+        local ok = TweenService and pcall(function()
+            TweenService:Create(inst, TweenInfo.new(secs or 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), props):Play()
+        end)
+        if not ok then for k, v in pairs(props) do pcall(function() inst[k] = v end) end end
+    end
 
     ------------------------------------------------------------------------------------------ gun drops
     local Guns = {drops = {}, announced = {}}
@@ -302,6 +315,7 @@ local function __run()
         if Guns.drops[inst] or not acceptDrop(inst, loose) then return end
         Guns.drops[inst] = {t = now()}
         Guns.fallback = nil
+        markDirty()
         logLine("gun drop: " .. inst:GetFullName())
         if S.notifyGun then
             local pos = posOfThing(inst)
@@ -312,6 +326,7 @@ local function __run()
         if not Guns.drops[inst] then return end
         Guns.drops[inst] = nil
         Guns.pickedAt = now()
+        markDirty()
         if S.notifyGun and next(Guns.drops) == nil then notify("Gun picked up", "someone grabbed it", "info", 3) end
     end
 
@@ -357,14 +372,14 @@ local function __run()
         end
     end
 
-    local function buildESP(plr, char)
-        local o = {char = char}
+    local function buildESP(plr, char, color)
+        local o = {char = char, color = color}
         local hl = Instance.new("Highlight")
         hl.Name = "H"
         hl.Adornee = char
         hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-        hl.FillTransparency = 0.7
-        hl.OutlineTransparency = 0
+        hl.FillColor, hl.OutlineColor = color, color
+        hl.FillTransparency, hl.OutlineTransparency = 1, 1                    -- fades in (below) instead of popping
         hl.Parent = espFolder
         o.hl = hl
         local bb = Instance.new("BillboardGui")
@@ -381,9 +396,13 @@ local function __run()
         lbl.Size = UDim2.new(1, 0, 1, 0)
         lbl.Font = Enum.Font.GothamBold
         lbl.TextSize = 13
-        lbl.TextStrokeTransparency = 0.4
+        lbl.TextColor3 = color
+        lbl.TextTransparency = 1
+        lbl.TextStrokeTransparency = 1
         lbl.Text = ""
         lbl.Parent = bb
+        glide(hl, {FillTransparency = 0.62, OutlineTransparency = 0}, 0.22)
+        glide(lbl, {TextTransparency = 0, TextStrokeTransparency = 0.4}, 0.22)
         o.bb, o.label = bb, lbl
         ESP.objs[plr] = o
         return o
@@ -399,20 +418,26 @@ local function __run()
                 if want and role == "Innocent" and not S.espInnocents then want = false end
                 local o = ESP.objs[plr]
                 if want then
-                    if o and o.char ~= char then removeESP(plr); o = nil end
-                    if not o then o = buildESP(plr, char) end
                     local color = ROLE_COLOR[role] or NO_ROLE
-                    o.hl.Enabled = S.espChams
-                    o.hl.FillColor = color
-                    o.hl.OutlineColor = color
-                    o.bb.Enabled = S.espNames or S.espDistance or S.espHealth
-                    o.label.TextColor3 = color
-                    local parts = {}
-                    if S.espNames then parts[#parts + 1] = nameOf(plr) end
-                    if role and role ~= "Innocent" then parts[#parts + 1] = "[" .. role .. "]" end
-                    if S.espHealth then local h = humOf(char); if h then parts[#parts + 1] = math.floor(h.Health + 0.5) .. "hp" end end
-                    if S.espDistance and me then local r = rootOf(char); if r then parts[#parts + 1] = math.floor((r.Position - me).Magnitude + 0.5) .. "m" end end
-                    o.label.Text = table.concat(parts, " ")
+                    if o and o.char ~= char then removeESP(plr); o = nil end
+                    if not o then o = buildESP(plr, char, color) end
+                    if o.color ~= color then                                    -- a role change (the sheriff dies, a hero appears) blends to the new colour
+                        o.color = color
+                        glide(o.hl, {FillColor = color, OutlineColor = color}, 0.15)
+                        glide(o.label, {TextColor3 = color}, 0.15)
+                    end
+                    if o.chams ~= S.espChams then o.chams = S.espChams; o.hl.Enabled = S.espChams end
+                    local labelOn = S.espNames or S.espDistance or S.espHealth
+                    if o.labelOn ~= labelOn then o.labelOn = labelOn; o.bb.Enabled = labelOn end
+                    if labelOn then
+                        local parts = {}
+                        if S.espNames then parts[#parts + 1] = nameOf(plr) end
+                        if role and role ~= "Innocent" then parts[#parts + 1] = "[" .. role .. "]" end
+                        if S.espHealth then local h = humOf(char); if h then parts[#parts + 1] = math.floor(h.Health + 0.5) .. "hp" end end
+                        if S.espDistance and me then local r = rootOf(char); if r then parts[#parts + 1] = math.floor((r.Position - me).Magnitude + 0.5) .. "m" end end
+                        local text = table.concat(parts, " ")
+                        if o.text ~= text then o.text = text; o.label.Text = text end
+                    end
                 elseif o then
                     removeESP(plr)
                 end
@@ -421,7 +446,7 @@ local function __run()
         for plr in pairs(ESP.objs) do
             if Roles.map[plr] == nil or plr.Parent == nil then removeESP(plr) end
         end
-        -- guns
+        -- the dropped gun: orange
         for inst, o in pairs(ESP.gunObjs) do
             if not Guns.drops[inst] or not S.espGun or not inst.Parent then
                 pcall(function() o.hl:Destroy() end); pcall(function() o.bb:Destroy() end)
@@ -437,9 +462,9 @@ local function __run()
                         o.hl = Instance.new("Highlight")
                         o.hl.Adornee = inst
                         o.hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-                        o.hl.FillColor = Color3.fromRGB(255, 205, 60)
-                        o.hl.OutlineColor = Color3.fromRGB(255, 255, 255)
-                        o.hl.FillTransparency = 0.35
+                        o.hl.FillColor = GUN_COLOR
+                        o.hl.OutlineColor = GUN_COLOR
+                        o.hl.FillTransparency, o.hl.OutlineTransparency = 1, 1
                         o.hl.Parent = espFolder
                         o.bb = Instance.new("BillboardGui")
                         o.bb.Adornee = inst
@@ -453,13 +478,16 @@ local function __run()
                         o.label.Size = UDim2.new(1, 0, 1, 0)
                         o.label.Font = Enum.Font.GothamBold
                         o.label.TextSize = 14
-                        o.label.TextColor3 = Color3.fromRGB(255, 215, 80)
-                        o.label.TextStrokeTransparency = 0.3
+                        o.label.TextColor3 = GUN_TEXT
+                        o.label.TextTransparency, o.label.TextStrokeTransparency = 1, 1
                         o.label.Parent = o.bb
+                        glide(o.hl, {FillTransparency = 0.3, OutlineTransparency = 0}, 0.22)
+                        glide(o.label, {TextTransparency = 0, TextStrokeTransparency = 0.3}, 0.22)
                         ESP.gunObjs[inst] = o
                     end
                     local p = posOfThing(inst)
-                    o.label.Text = "GUN" .. ((p and me) and (" " .. math.floor((p - me).Magnitude + 0.5) .. "m") or "")
+                    local text = "GUN" .. ((p and me) and (" " .. math.floor((p - me).Magnitude + 0.5) .. "m") or "")
+                    if o.text ~= text then o.text = text; o.label.Text = text end
                 end
             end
         end
@@ -494,13 +522,13 @@ local function __run()
             if S.espTracers and S.espPlayers then
                 for plr, o in pairs(ESP.objs) do
                     local r = rootOf(o.char)
-                    if r then line(plr, r.Position, o.label.TextColor3) end
+                    if r then line(plr, r.Position, o.color) end
                 end
             end
             if S.gunTracer then
                 for inst in pairs(Guns.drops) do
                     local p = inst.Parent and posOfThing(inst)
-                    if p then line(inst, p, Color3.fromRGB(255, 215, 80)) end
+                    if p then line(inst, p, GUN_COLOR) end
                 end
             end
         end
@@ -533,7 +561,7 @@ local function __run()
     gunBox.Parent = hud
     do
         local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 10); c.Parent = gunBox
-        local st = Instance.new("UIStroke"); st.Color = Color3.fromRGB(255, 205, 60); st.Thickness = 1.5; st.Parent = gunBox
+        local st = Instance.new("UIStroke"); st.Color = GUN_COLOR; st.Thickness = 1.5; st.Parent = gunBox
     end
     local gunText = Instance.new("TextLabel")
     gunText.BackgroundTransparency = 1
@@ -541,7 +569,7 @@ local function __run()
     gunText.Size = UDim2.new(1, -52, 1, 0)
     gunText.Font = Enum.Font.GothamBold
     gunText.TextSize = 14
-    gunText.TextColor3 = Color3.fromRGB(255, 225, 120)
+    gunText.TextColor3 = GUN_TEXT
     gunText.TextXAlignment = Enum.TextXAlignment.Left
     gunText.Text = ""
     gunText.Parent = gunBox
@@ -552,12 +580,12 @@ local function __run()
     compass.Parent = gunBox
     do
         local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(1, 0); c.Parent = compass
-        local st = Instance.new("UIStroke"); st.Color = Color3.fromRGB(255, 205, 60); st.Thickness = 1.5; st.Parent = compass
+        local st = Instance.new("UIStroke"); st.Color = GUN_COLOR; st.Thickness = 1.5; st.Parent = compass
     end
     local compassDot = Instance.new("Frame")
     compassDot.AnchorPoint = Vector2.new(0.5, 0.5)
     compassDot.Size = UDim2.new(0, 8, 0, 8)
-    compassDot.BackgroundColor3 = Color3.fromRGB(255, 225, 120)
+    compassDot.BackgroundColor3 = GUN_COLOR
     compassDot.BorderSizePixel = 0
     compassDot.Position = UDim2.new(0.5, 0, 0.5, 0)
     compassDot.Parent = compass
@@ -716,8 +744,8 @@ local function __run()
     local function modeFor(weapon)
         local m = S.aimMode
         if m ~= "Auto (by my role)" then return m end
-        if weapon == "Gun" then return "Murderer" end
-        return "Closest to crosshair"
+        if weapon == "Gun" then return "Murderer" end              -- the sheriff / hero shoots the murderer
+        return "Nearest"                                           -- the murderer throws at whoever is closest
     end
 
     -- picks the best target for the weapon: returns plr, char, part, aimPosition, lead seconds
@@ -981,6 +1009,45 @@ local function __run()
         return true
     end
 
+    -- Remote layouts reported by other MM2 scripts (UNVERIFIED guesses, only tried when nothing was recorded and the remote really exists under the weapon).
+    local KNOWN = {
+        Gun = {{path = {"KnifeLocal", "CreateBeam", "RemoteFunction"}, method = "InvokeServer", name = "Gun.KnifeLocal.CreateBeam",
+                build = function(origin, aim) return {n = 3, 1, aim, "AH2"} end}},
+        Knife = {{path = {"Events", "KnifeThrown"}, method = "FireServer", name = "Knife.Events.KnifeThrown",
+                  build = function(origin, aim) return {n = 2, CFrame.new(origin), CFrame.new(aim)} end},
+                 {path = {"Throw"}, method = "FireServer", name = "Knife.Throw",
+                  build = function(origin, aim) return {n = 2, CFrame.new(origin), CFrame.new(aim)} end}},
+    }
+    function Shots.known(weapon, aimPos)
+        if not S.useKnown then return false, "known remotes are switched off" end
+        local tool = findTool(weapon)
+        local head = headOf(myChar())
+        if not (tool and head) then return false, weapon:lower() .. " is not ready" end
+        for _, k in ipairs(KNOWN[weapon] or {}) do
+            local cur = tool
+            for _, name in ipairs(k.path) do cur = cur and cur:FindFirstChild(name) end
+            if cur and (cur:IsA("RemoteEvent") or cur:IsA("RemoteFunction")) then
+                local args = k.build(head.Position, aimPos)
+                Shots.skip = cur
+                local ok, err
+                if k.method == "InvokeServer" then
+                    task.spawn(function()
+                        local okc, e = pcall(function() return cur:InvokeServer(table.unpack(args, 1, args.n)) end)
+                        if Shots.skip == cur then Shots.skip = nil end
+                        if not okc then report("known " .. k.name, e) end
+                    end)
+                    ok = true
+                else
+                    ok, err = pcall(function() cur:FireServer(table.unpack(args, 1, args.n)) end)
+                    if Shots.skip == cur then Shots.skip = nil end
+                    if not ok then report("known " .. k.name, err) end
+                end
+                if ok then Shots.knownUsed = k.name; return true end
+            end
+        end
+        return false, "no known remote under the " .. weapon:lower()
+    end
+
     local function pickFor(weapon)
         local plr, char, part, pos, lt = Aim.pick(weapon)
         if not plr and S.aimMode == "Auto (by my role)" and weapon == "Knife" then plr, char, part, pos, lt = Aim.pick(weapon, "Nearest") end
@@ -989,7 +1056,10 @@ local function __run()
 
     function Shots.fire(weapon)           -- aim at the best target and use the weapon; returns ok, text
         local plr, char, part, pos, lead = pickFor(weapon)
-        if not plr then return false, "no target in range / line of sight" end
+        if not plr then
+            if weapon == "Gun" and S.aimMode == "Auto (by my role)" and not Roles.murderer() then return false, "the murderer is not known yet" end
+            return false, "no target in range / line of sight"
+        end
         local tool, held = equip(weapon)
         if not tool then return false, "you do not have the " .. weapon:lower() end
         if not held then task.wait(0.06) end                     -- let the equip land
@@ -999,7 +1069,7 @@ local function __run()
         if p2 == plr then char, part, pos, lead = c2, pt2, pos2, lead2 end
         local method = S.fireMethod
         local auto = method == "Auto"
-        if auto then method = Shots.templates[weapon] and "Remote replay" or (weapon == "Knife" and "Throw key" or "Tool:Activate") end
+        if auto then method = Shots.templates[weapon] and "Remote replay" or "Known remote" end
         local aimMethod = S.aimMethod == "Mouse cursor" and "Mouse cursor" or "Both"
         local ok, why = true, nil
         local function viaTool()
@@ -1010,7 +1080,10 @@ local function __run()
             if t2 then pcall(function() t2:Activate() end); return true end
             return false, "weapon not ready"
         end
-        if method == "Remote replay" then
+        if method == "Known remote" then
+            ok, why = Shots.known(weapon, pos)
+            if not ok and auto then ok, why = viaTool() end
+        elseif method == "Remote replay" then
             ok, why = Shots.replay(weapon, plr, char, part, pos)
             if not ok and auto then ok, why = viaTool() end
         elseif method == "Throw key" then
@@ -1175,9 +1248,13 @@ local function __run()
             notify(title, text, "warn", 2)
             if float then float:Flash(false) end
         end
+        if not findTool(weapon) then                                          -- the other button's weapon is the one I have: use that (shoot as sheriff, throw as murderer)
+            local other = weapon == "Gun" and "Knife" or "Gun"
+            if findTool(other) then weapon = other end
+        end
         if Shots.firing[weapon] then return "async" end
         if not findTool(weapon) then
-            if weapon == "Gun" then fail("No gun", "You are not holding the gun.") else fail("No knife", "You are not the murderer.") end
+            fail("No weapon", "You are neither the sheriff nor the murderer right now.")
             return "async"
         end
         Shots.firing[weapon] = true
@@ -1307,7 +1384,7 @@ local function __run()
     local function currentPick()
         local weapon = Roles.mine == "Murderer" and "Knife" or "Gun"
         local override
-        if S.aimMode == "Auto (by my role)" then override = Roles.mine == "Murderer" and "Closest to crosshair" or "Murderer" end
+        if S.aimMode == "Auto (by my role)" then override = Roles.mine == "Murderer" and "Nearest" or "Murderer" end
         return Aim.pick(weapon, override)
     end
 
@@ -1354,6 +1431,7 @@ local function __run()
         acc.ping, acc.dim = acc.ping + dt, acc.dim + dt
         Shots.process()
         sampleTracks()
+        if dirty then dirty = false; Roles.scan(); announceRoles(); ESP.update(); Guns.updateHud() end      -- event-driven: the ESP follows a role the same frame
         if acc.ping >= 0.25 then acc.ping = 0; samplePing() end
         if acc.dim >= 0.5 then
             acc.dim = 0
@@ -1361,7 +1439,7 @@ local function __run()
             if Floats.throw then Floats.throw:SetDim(findTool("Knife") == nil) end
             if Floats.grab then Floats.grab:SetDim(next(Guns.drops) == nil and Guns.fallback == nil) end
         end
-        if acc.mid >= 0.4 then
+        if acc.mid >= 0.3 then
             acc.mid = 0
             Roles.scan()
             announceRoles()
@@ -1379,7 +1457,7 @@ local function __run()
         end
         if acc.poll >= 3 then acc.poll = 0; pollData() end
         if acc.auto >= 0.1 then acc.auto = 0; autoActions() end
-        refreshCache()
+        if S.silentAim then refreshCache() end
     end)))
 
     pcall(function()
@@ -1399,7 +1477,39 @@ local function __run()
         Guns.add(inst, now() < (Guns.looseUntil or 0))
     end)))
     track(workspace.DescendantRemoving:Connect(guard("gun drop removed", function(inst) Guns.remove(inst) end)))
-    track(Players.PlayerRemoving:Connect(guard("player left", function(plr) removeESP(plr); Roles.data[plr] = nil end)))
+    -- react the moment something changes: a weapon in a character or the backpack, a spawn, a death (instead of waiting for the next poll)
+    local watch = {}
+    local function unwatch(plr)
+        local list = watch[plr]
+        if list then for _, c in ipairs(list) do pcall(function() c:Disconnect() end) end; watch[plr] = nil end
+    end
+    local function watchPlayer(plr)
+        unwatch(plr)
+        local list = {}
+        watch[plr] = list
+        local function add(c) list[#list + 1] = c end
+        local function watchTools(container)
+            if not container then return end
+            add(container.ChildAdded:Connect(function(c) if c:IsA("Tool") then markDirty() end end))
+            add(container.ChildRemoved:Connect(function(c) if c:IsA("Tool") then markDirty() end end))
+        end
+        local function watchChar(char)
+            if not char then return end
+            watchTools(char)
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            if hum then add(hum.Died:Connect(markDirty)) end
+        end
+        add(plr.CharacterAdded:Connect(function(char) markDirty(); watchChar(char) end))
+        watchChar(plr.Character)
+        if plr == LocalPlayer then
+            watchTools(plr:FindFirstChildOfClass("Backpack"))
+            add(plr.ChildAdded:Connect(function(c) if c:IsA("Backpack") then markDirty(); watchTools(c) end end))
+        end
+    end
+    onCleanup(function() for plr in pairs(watch) do unwatch(plr) end end)
+    for _, plr in ipairs(Players:GetPlayers()) do pcall(watchPlayer, plr) end
+    track(Players.PlayerAdded:Connect(guard("player joined", function(plr) watchPlayer(plr); markDirty() end)))
+    track(Players.PlayerRemoving:Connect(guard("player left", function(plr) unwatch(plr); removeESP(plr); Roles.data[plr] = nil; markDirty() end)))
     connectDataRemotes()
     scanWorkspaceForGuns()
 
@@ -1409,6 +1519,7 @@ local function __run()
         return ok and code or Enum.KeyCode.RightShift
     end
     local function traceback(e) return debug.traceback(tostring(e), 2) end
+    pcall(function() Roles.scan(); ESP.update(); Guns.updateHud() end)                  -- the ESP is already on while the menu is still being built
     local usingWind = false
     local function contains(list, v) for _, x in ipairs(list) do if x == v then return true end end return false end
     local function makeWindow(cfg)
@@ -1429,6 +1540,7 @@ local function __run()
     end
     Win = makeWindow{Title = "Wraith's Hub", Subtitle = "Murder Mystery 2", Group = "Wraith's Hub", Parent = PARENT, GuiName = "WraithsHubWindow", Folder = "WraithsHub",
         WaveMode = S.waves, ToggleKey = keyCodeFor(S.uiKey), OnError = report, Background = S.bgOn and S.bgUrl or "", BackgroundDim = S.bgDim,
+        WindowAlpha = S.uiAlpha, Scale = S.uiScale,
         OnBackground = function(ok, msg)
             if ok then logLine("background: " .. tostring(msg)) else notify("Background not loaded", tostring(msg) .. " - open Settings > Background and paste a direct .mp4 / .webm link.", "warn", 9) end
         end}
@@ -1445,6 +1557,39 @@ local function __run()
     end
     for _, q in ipairs(queued) do notify(q[1], q[2], q[3], q[4]) end
     queued = {}
+
+    -- the floating buttons (Perfect shoot / Perfect throw / Grab gun / Speed / Jump)
+    local AUTO_SLOT = {shoot = {1, 1}, throw = {1, 2}, grab = {1, 3}, speed = {2, 1}, jump = {2, 2}}      -- {column from the right edge, row from the top}
+    autoPos = function(id)
+        local vp = camera() and camera().ViewportSize or Vector2.new(1280, 720)
+        local size = S.btnSize
+        local col, row = AUTO_SLOT[id][1], AUTO_SLOT[id][2]
+        local x = vp.X - 12 - col * size - (col - 1) * 8
+        local y = vp.Y * 0.18 + (row - 1) * (size + 10)
+        return Logic.clamp(x, 0, math.max(0, vp.X - size)) / vp.X, Logic.clamp(y, 0, math.max(0, vp.Y - size)) / vp.Y
+    end
+    for _, d in ipairs({
+        {id = "shoot", title = "SHOOT", icon = "crosshair", accent = {255, 255, 255}, flag = "btnShoot", weapon = "Gun"},
+        {id = "throw", title = "THROW", icon = "knife", accent = {236, 52, 64}, flag = "btnThrow", weapon = "Knife"},
+        {id = "grab", title = "GRAB GUN", icon = "pistol", accent = {255, 140, 20}, flag = "btnGrab"},
+        {id = "speed", title = "SPEED", labelOn = "SPEED ON", labelOff = "SPEED OFF", icon = "bolt", accent = {64, 214, 190}, flag = "btnSpeed", state = "walkOn"},
+        {id = "jump", title = "JUMP", labelOn = "JUMP ON", labelOff = "JUMP OFF", icon = "chevron_up", accent = {96, 170, 255}, flag = "btnJump", state = "jumpOn"},
+    }) do
+        local fx, fy = S[d.id .. "X"], S[d.id .. "Y"]
+        if fx < 0 or fy < 0 then fx, fy = autoPos(d.id) end
+        Floats[d.id] = Win:Floating{Id = d.id, Title = d.title, Icon = d.icon, Accent = d.accent, Size = S.btnSize, Pos = {fx, fy},
+            Visible = S[d.flag], Locked = S.btnLock, Toggle = d.state ~= nil, LabelOn = d.labelOn, LabelOff = d.labelOff, State = d.state and S[d.state] or false,
+            OnPress = function()
+                if d.state then                                           -- a toggle: flip the matching switch in the Player tab
+                    local el = Win.Flags[d.state]
+                    if el then el:Set(not el.Value) end
+                    return true
+                end
+                if d.weapon then return perfectAction(d.weapon) end
+                return grabGun()
+            end,
+            OnMoved = function(fx, fy) S[d.id .. "X"], S[d.id .. "Y"] = fx, fy end}
+    end
 
     local function tog(tab, flag, title, desc, after)
         return tab:Toggle{Title = title, Desc = desc, Default = S[flag], Flag = flag, NoInitialCallback = true, Callback = function(v)
@@ -1471,13 +1616,34 @@ local function __run()
         end}
     end
 
-    local main = Win:Tab("Main", "grid")
-    local esp = Win:Tab("ESP", "eye")
-    local combat = Win:Tab("Combat", "crosshair")
-    local btns = Win:Tab("Buttons", "bolt")
-    local player = Win:Tab("Player", "user")
-    local settings = Win:Tab("Settings", "gear")
-    local dbg = Win:Tab("Debug", "terminal")
+    -- The menu is built a few controls per frame, so loading the script never freezes the game for a moment (a phone builds a WindUI menu slowly).
+    local paceCount, paceStart = 0, os.clock()
+    local function pace()
+        paceCount = paceCount + 1
+        if paceCount >= 6 or os.clock() - paceStart > 0.012 then
+            paceCount = 0
+            task.wait()
+            paceStart = os.clock()
+            if not Hub.Alive then error("__unloaded__", 0) end
+        end
+    end
+    local function paced(tab)
+        for _, name in ipairs({"Section", "Label", "Toggle", "Slider", "Dropdown", "Keybind", "Button", "Input"}) do
+            local f = tab[name]
+            if f then tab[name] = function(self, ...) local r = f(self, ...); pace(); return r end end
+        end
+        return tab
+    end
+    local main = paced(Win:Tab("Main", "grid"))
+    local esp = paced(Win:Tab("ESP", "eye"))
+    local combat = paced(Win:Tab("Combat", "crosshair"))
+    -- WindUI: a short sidebar (Main, ESP, Combat, Player, Misc); Classic keeps its separate Buttons / Settings / Debug tabs
+    local btns = not usingWind and paced(Win:Tab("Buttons", "bolt")) or nil
+    local player = paced(Win:Tab("Player", "user"))
+    local misc = usingWind and paced(Win:Tab("Misc", "gear")) or nil
+    local settings = misc or paced(Win:Tab("Settings", "gear"))
+    local dbg = misc or paced(Win:Tab("Debug", "terminal"))
+    btns = btns or misc
 
     -- Main
     main:Section("Live round info")
@@ -1494,6 +1660,8 @@ local function __run()
     main:Button{Title = "Perfect shoot", Desc = "Sheriff / hero: aims ahead of the murderer by your ping and fires the gun.", Label = "Fire", Callback = perfectShoot}
     main:Button{Title = "Perfect throw", Desc = "Murderer: aims ahead of the best target by your ping and throws the knife.", Label = "Throw", Callback = perfectThrow}
     main:Button{Title = "Grab the gun", Desc = "Teleports to the dropped gun for a moment and brings you straight back.", Label = "Go", Callback = function() grabGun() end}
+    tog(main, "autoShoot", "Auto shoot", "Sheriff / hero: fires at the murderer by itself as soon as they are in range and in sight (ahead of them by your ping).")
+    tog(main, "autoThrow", "Auto throw", "Murderer: throws at the closest player by itself when they are in range and in sight.")
     main:Section("Data")
     tog(main, "useRemoteData", "Read roles from the game's data remote", "Lets me see roles even when nobody holds a weapon. Off = only visible weapons.")
 
@@ -1536,14 +1704,13 @@ local function __run()
     sld(combat, "aimSmooth", "Smoothness", 0, 0.9, 0.05, "")
     combat:Section("Gun - sheriff / hero")
     key(combat, "shootKey", "Perfect shoot key", "One press: aim, predict and fire.", perfectShoot)
-    tog(combat, "autoShoot", "Auto shoot", "Fires as soon as the murderer is in range and visible.")
     sld(combat, "shootGap", "Time between shots", 0.5, 6, 0.1, " s")
     tog(combat, "silentAim", "Silent aim (your own shots)", Cap.hook and "Your normal shots fly at the predicted target. Needs one recorded shot." or "Needs hookmetamethod - not available here.")
     drop(combat, "fireMethod", "How to fire", {"Auto", "Remote replay", "Tool:Activate", "Mouse click"})
+    tog(combat, "useKnown", "Try known game remotes", "When no shot was recorded yet, also try the remote layouts other MM2 scripts report (unverified guesses; only used if that remote exists under your weapon).")
     combat:Section("Knife - murderer")
     key(combat, "throwAtKey", "Perfect throw key", "One press: aim, predict and throw.", perfectThrow)
     key(combat, "throwKey", "The game's throw key", "Used when no throw has been recorded yet.")
-    tog(combat, "autoThrow", "Auto throw", "Throws at anyone in range and in sight.")
     sld(combat, "throwGap", "Time between throws", 0.5, 8, 0.1, " s")
     tog(combat, "slashAura", "Slash aura", "Swings when someone is close.")
     sld(combat, "slashRange", "Slash range", 4, 20, 1, " studs")
@@ -1618,13 +1785,15 @@ local function __run()
     drop(settings, "ui", "Menu style", {"WindUI", "Classic"})
     settings:Label("WindUI is the full menu. Classic is the small built-in one - use it if WindUI does not start on your executor. The style applies the next time you run the script (press Save config to keep it).")
     if usingWind then
-        settings:Section("Background")
-        tog(settings, "bgOn", "Background video", "A looping video behind the menu. The first run downloads it once (needs HttpGet, writefile and getcustomasset); after that it comes from your executor's workspace folder.",
+        settings:Section("Window")
+        sld(settings, "uiScale", "Menu size", 0.6, 1.1, 0.05, "x", function(v) Win:SetScale(v) end)
+        sld(settings, "uiAlpha", "Window see-through", 0, 0.9, 0.1, "", function(v) Win:SetBackgroundTransparency(v) end)
+        sld(settings, "bgDim", "Dimming", 0, 0.9, 0.05, "", function(v) Win:SetBackgroundDim(v) end)
+        tog(settings, "bgOn", "Video / picture behind it", "Shows the link below behind the menu (the first time it is downloaded once into your executor's workspace folder: needs HttpGet / request, writefile and getcustomasset).",
             function(v) Win:SetBackground(v and S.bgUrl or "", function(ok, msg) if not ok then notify("Background not loaded", tostring(msg), "warn", 8) end end) end)
         settings:Input{Title = "Video or picture link", Desc = "A pixabay.com video page, or a direct link that ends in .mp4 / .webm / .png / .jpg.", Default = S.bgUrl, Flag = "bgUrl",
             Placeholder = "https://...", Callback = function(v) S.bgUrl = v end}
-        sld(settings, "bgDim", "Dimming", 0, 0.9, 0.05, "", function(v) Win:SetBackgroundDim(v) end)
-        settings:Button{Title = "Load this link now", Desc = "Downloads (first time) and shows it behind the menu.", Callback = function()
+        settings:Button{Title = "Load this link now", Callback = function()
             S.bgOn = true
             if Win.Flags.bgOn then Win.Flags.bgOn:Set(true, true) end
             Win:SetBackground(S.bgUrl, function(ok, msg)
@@ -1632,7 +1801,7 @@ local function __run()
             end)
         end}
     end
-    key(settings, "uiKey", "Show / hide menu", "Also tap the pill at the top of the screen.", nil, function(v) Win.ToggleKey = keyCodeFor(v) end)
+    key(settings, "uiKey", "Show / hide menu", "Also tap the open button on the screen.", nil, function(v) Win.ToggleKey = keyCodeFor(v) end)
     settings:Section("Config")
     settings:Label("Nothing is saved unless you press Save config.")
     settings:Button{Title = "Save config", Label = "Save", Callback = function()
@@ -1696,38 +1865,7 @@ local function __run()
         if Cap.clipboard then pcall(setclipboard, diagnostics()); notify("Copied", nil, "good", 2) else notify("No clipboard", "See the Log below instead.", "warn") end
     end}
 
-    -- the floating buttons (Perfect shoot / Perfect throw / Grab gun / Speed / Jump)
-    local AUTO_SLOT = {shoot = {1, 1}, throw = {1, 2}, grab = {1, 3}, speed = {2, 1}, jump = {2, 2}}      -- {column from the right edge, row from the top}
-    autoPos = function(id)
-        local vp = camera() and camera().ViewportSize or Vector2.new(1280, 720)
-        local size = S.btnSize
-        local col, row = AUTO_SLOT[id][1], AUTO_SLOT[id][2]
-        local x = vp.X - 12 - col * size - (col - 1) * 8
-        local y = vp.Y * 0.18 + (row - 1) * (size + 10)
-        return Logic.clamp(x, 0, math.max(0, vp.X - size)) / vp.X, Logic.clamp(y, 0, math.max(0, vp.Y - size)) / vp.Y
-    end
-    for _, d in ipairs({
-        {id = "shoot", title = "SHOOT", icon = "crosshair", accent = {255, 255, 255}, flag = "btnShoot", weapon = "Gun"},
-        {id = "throw", title = "THROW", icon = "knife", accent = {236, 52, 64}, flag = "btnThrow", weapon = "Knife"},
-        {id = "grab", title = "GRAB GUN", icon = "pistol", accent = {250, 190, 60}, flag = "btnGrab"},
-        {id = "speed", title = "SPEED", labelOn = "SPEED ON", labelOff = "SPEED OFF", icon = "bolt", accent = {64, 214, 190}, flag = "btnSpeed", state = "walkOn"},
-        {id = "jump", title = "JUMP", labelOn = "JUMP ON", labelOff = "JUMP OFF", icon = "chevron_up", accent = {96, 170, 255}, flag = "btnJump", state = "jumpOn"},
-    }) do
-        local fx, fy = S[d.id .. "X"], S[d.id .. "Y"]
-        if fx < 0 or fy < 0 then fx, fy = autoPos(d.id) end
-        Floats[d.id] = Win:Floating{Id = d.id, Title = d.title, Icon = d.icon, Accent = d.accent, Size = S.btnSize, Pos = {fx, fy},
-            Visible = S[d.flag], Locked = S.btnLock, Toggle = d.state ~= nil, LabelOn = d.labelOn, LabelOff = d.labelOff, State = d.state and S[d.state] or false,
-            OnPress = function()
-                if d.state then                                           -- a toggle: flip the matching switch in the Player tab
-                    local el = Win.Flags[d.state]
-                    if el then el:Set(not el.Value) end
-                    return true
-                end
-                if d.weapon then return perfectAction(d.weapon) end
-                return grabGun()
-            end,
-            OnMoved = function(fx, fy) S[d.id .. "X"], S[d.id .. "Y"] = fx, fy end}
-    end
+    Win:SelectTab("Main")                                                  -- (WindUI opens with no tab selected otherwise)
 
     -- live labels
     local lastLabels = 0
@@ -1753,7 +1891,7 @@ local function __run()
 end
 
 local ok, err = xpcall(__run, function(e) return debug.traceback(tostring(e), 2) end)
-if not ok then
+if not ok and not tostring(err):find("__unloaded__", 1, true) then
     warn("[Wraith's Hub] failed to start: " .. tostring(err))
     pcall(function()
         game:GetService("StarterGui"):SetCore("SendNotification", {Title = "Wraith's Hub failed to start", Text = tostring(err):sub(1, 180), Duration = 20})

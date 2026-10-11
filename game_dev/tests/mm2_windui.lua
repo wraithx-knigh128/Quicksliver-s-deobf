@@ -77,17 +77,64 @@ do
     end
     check(hasText(w, "WindUI", "Wraith's Hub"), "the window title says Wraith's Hub")
     check(hasText(w, "WindUI", "Murder Mystery 2"), "the window subtitle names the game")
-    for _, tab in ipairs({"Main", "ESP", "Combat", "Buttons", "Player", "Settings", "Debug"}) do check(hasText(w, "WindUI", tab), "tab " .. tab) end
+    for _, tab in ipairs({"Main", "ESP", "Combat", "Player", "Misc"}) do check(hasText(w, "WindUI", tab), "tab " .. tab) end
     check(hasText(w, "WindUI", "Perfect shoot"), "Quick actions are there")
     check(hasText(w, "WindUI/Notifications", "Wraith's Hub loaded"), "welcome toast (a WindUI notification)")
     check(w.genv.__WraithsHub ~= nil, "session registered")
-    check(#Win.Tabs == 7, "seven tabs, got " .. #Win.Tabs)
+    local function hasImage(id) return w:find(function(i) return i.ClassName == "ImageLabel" and i.Image == id end) ~= nil end
+    check(hasImage(LUCIDE_IDS["layout-grid"]) and hasImage(LUCIDE_IDS["crosshair"]) and hasImage(LUCIDE_IDS["settings"]), "the tab icons come from the built-in Lucide set (no icon download)")
+    local fetched = {}
+    for _, u in ipairs(w.httpLog or {}) do fetched[#fetched + 1] = u end
+    check(#fetched == 0, "starting the menu fetches nothing from the web (" .. table.concat(fetched, ", ") .. ")")
+    check(#Win.Tabs == 5, "a short sidebar: five tabs, got " .. #Win.Tabs)
+    -- clean and small, like the reference menu
+    local topbar = {}
+    for _, b in pairs(Win.Window.TopBarButtons) do topbar[b.Name] = b.Object.Visible end
+    check(topbar.Close == true and topbar.Minimize == false and topbar.Fullscreen == false, "only the close button is left in the top bar (no minimise / fullscreen)")
+    check(Win.Window.User.Enabled == false and Win.Window.HideSearchBar == true, "no user card, no search bar")
+    check(not hasText(w, "WindUI", "v" .. tostring(Win.WindUI.Version)), "no version tag")
+    check(Win.Window.UIElements.Main.Size.X.Offset <= 560 and Win.Window.UIElements.Main.Size.Y.Offset <= 380, "the window is compact (" .. tostring(Win.Window.UIElements.Main.Size.X.Offset) .. " x " .. tostring(Win.Window.UIElements.Main.Size.Y.Offset) .. ")")
+    check(Win.WindUI.Creator.Font == w.env.Font.fromEnum(w.env.Enum.Font.Code).Family, "the menu uses a monospace face")
+    check(Win.WindUI.Themes.Dark.ElementBackgroundTransparency >= 0.4, "cards are frosted (translucent)")
+    local toggleCard = el(w, "Show Grab Gun").Ui.ElementFrame
+    check(w.M.FindFirstChild(toggleCard, "WraithFade") ~= nil, "every card fades out to the right")
     check(Win.Main.Visible == true, "the window is open")
     check(w:find(function(i) return i.Name == "Float_shoot" end) ~= nil and w:find(function(i) return i.Name == "Float_throw" end) ~= nil, "Perfect Shoot / Throw floating buttons exist")
     local shoot = w:find(function(i) return i.Name == "Float_shoot" end)
-    check(shoot.Visible == true and w.M.FindFirstChild(shoot, "Waves") ~= nil, "the SHOOT button is visible and wears the water skin")
+    check(shoot.Visible == true and w.M.FindFirstChild(shoot, "Outline") ~= nil and w.M.FindFirstChild(shoot, "Waves") == nil, "the SHOOT button is visible: transparent inside, a flowing outline")
+    check(Win.Tabs[1].ui.ContainerFrame.Visible == true and Win.Tabs[1].ui.Selected == true and Win.Tabs[5].ui.ContainerFrame.Visible == false, "the Main tab is open at start (WindUI would show none)")
     check(win(w).Flags.espPlayers ~= nil and win(w).Flags.aimKey ~= nil and win(w).Flags.waves ~= nil, "flags are registered")
     clean(w, "boot")
+end
+
+-- the menu is built a few controls per frame, so loading never freezes the game for a moment
+section("smooth load")
+do
+    local w = newGame()
+    w.writes = 0
+    w:load(SCRIPT_SOURCE)
+    local Win0 = win(w)
+    check(w:find(function(i) return i.Name == "Float_shoot" end) ~= nil, "the SHOOT / THROW buttons are there before the menu is finished")
+    local first = w.writes
+    w:step(1 / 60); w:step(1 / 60); w:step(1 / 60)
+    local early = #win(w).Elements
+    w:run(1.5)
+    local total = #win(w).Elements
+    check(early > 0 and early < total / 2 and total > 60, "the menu fills up over several frames (" .. early .. " controls after 3 frames, " .. total .. " in the end)")
+    local worst, frames = 0, 0
+    local w2 = newGame(); w2.writes = 0; w2:load(SCRIPT_SOURCE)
+    for _ = 1, 60 do
+        local before = w2.writes
+        w2:step(1 / 60)
+        worst = math.max(worst, w2.writes - before)
+    end
+    check(worst < 25000, "no frame of the build does more than ~25k property writes (worst: " .. worst .. ")")
+    local roles = 0
+    w2:run(0.5)
+    local before = w2.writes
+    w2:run(1.0)
+    check((w2.writes - before) / 60 < 25, "at rest the hub writes about " .. string.format("%.1f", (w2.writes - before) / 60) .. " properties a frame (< 25)")
+    clean(w, "smooth load")
 end
 
 ------------------------------------------------------------------------------------------------ 2. the controls follow WindUI's own widgets
@@ -119,14 +166,14 @@ do
     check(size.Value == 120, "values are clamped to the slider's range (" .. tostring(size.Value) .. ")")
 
     local save = el(w, "Save config")
-    local skin = w.M.FindFirstChild(save.Ui.ElementFrame, "Waves")
-    check(skin ~= nil and w.M.FindFirstChild(skin, "Wave3") ~= nil and skin.Visible, "WindUI's own buttons wear the water skin too (three layers on High)")
-    check(skin and skin.ZIndex == 0, "...under the label")
+    check(w.M.FindFirstChild(save.Ui.ElementFrame, "Outline") ~= nil, "WindUI's own buttons carry the flowing outline too")
     local waves = el(w, "Button waves")
     check(Win.WaveMode == "High", "waves start High")
     pickOption(w, waves, "Off")
     check(waves.Value == "Off" and Win.WaveMode == "Off", "choosing 'Off' in WindUI's dropdown switches the waves off")
-    check(skin and skin.Visible == false, "...and hides the skin on WindUI's buttons")
+    local og = w.M.FindFirstChildOfClass(w.M.FindFirstChild(save.Ui.ElementFrame, "Outline"), "UIGradient")
+    local still = og.Rotation; w:run(0.5)
+    check(og.Rotation == still, "...and stops the water on WindUI's buttons")
     waves:Set("Low")
     check(Win.WaveMode == "Low", "dropdown Set()")
     waves:Set("High", true)
@@ -195,8 +242,53 @@ section("window background")
 do
     local MEDIUM = "https://cdn.pixabay.com/video/2021/05/04/91562-548000000_medium.mp4"
     local TINY = "https://cdn.pixabay.com/video/2021/05/04/91562-548000000_tiny.mp4"
-    -- a. the default link is the Pixabay page; its page names the files, the medium one is downloaded once and kept in the workspace folder
-    local w = newGame(); w.http = {[PAGE] = '<video src="' .. TINY .. '"></video><script>{"medium":"' .. MEDIUM .. '"}</script>', [MEDIUM] = "FAKE-MP4-BYTES"}
+    -- the inside is transparent; the grey water flows only round OUTLINES: the window's border and the borders of the buttons
+    local wt = newGame(); boot(wt, 1.0)
+    check(wt:find(function(i) return i.Name == "WraithTexture" or i.Name == "Water" or i.Name == "Sky" or i.Name == "Collage" end) == nil, "no texture is drawn inside the window")
+    local Wt = win(wt)
+    check(Wt.Window.Transparent == true and Wt.WindUI.TransparencyValue == 0.5, "the window is see-through (0.5)")
+    local frame = wt:find(function(i) return i.Name == "WraithOutline" end)
+    check(frame ~= nil and frame.Parent == Wt.Window.UIElements.Main and frame.BackgroundTransparency == 1, "the window outline is a transparent frame with only a border")
+    local strokes = wt:findAll(function(i) return i.ClassName == "UIStroke" and i.Parent == frame end)
+    check(#strokes == 2 and strokes[1].Name == "Outline" and strokes[2].Name == "Glow", "...a crisp line and a soft glow")
+    local grad = wt.M.FindFirstChildOfClass(strokes[1], "UIGradient")
+    check(grad ~= nil and #grad.Color.keys == 20, "...carrying the grey water gradient")
+    for _, k in ipairs(grad.Color.keys) do check(math.abs(k.v.R - k.v.B) < 0.1, "window outline colours are grey / white") end
+    local r0, travel = grad.Rotation, 0
+    for _ = 1, 12 do wt:run(0.25); travel = math.max(travel, math.abs(grad.Rotation - r0)) end
+    check(travel > 20, "the water runs round the window border (" .. string.format("%.0f", travel) .. " deg)")
+    Wt.Window:Close(); wt:run(0.8)
+    local before = grad.Rotation
+    wt:run(0.6)
+    check(grad.Rotation == before, "nothing moves while the window is closed")
+    Wt.Window:Open(); wt:run(0.8)
+    Wt:SetWaveMode("Off"); wt:run(0.2)
+    local still = grad.Rotation; wt:run(0.5)
+    check(grad.Rotation == still, "Off: the border stands still")
+    Wt:SetWaveMode("High")
+    -- the buttons: only their borders flow, and only while their tab is open
+    Wt.Window:SelectTab(5); wt:run(0.5)
+    local save = el(wt, "Save config")
+    local card = save.Ui.ElementFrame
+    local ost = wt.M.FindFirstChild(card, "Outline")
+    local og = ost and wt.M.FindFirstChildOfClass(ost, "UIGradient")
+    check(ost ~= nil and ost.Thickness == 1.5 and og ~= nil and wt.M.FindFirstChild(card, "Glow") == nil, "WindUI buttons get a thin flowing outline")
+    check(wt.M.FindFirstChild(card, "Waves") == nil, "...and nothing inside")
+    local o0, otravel = og.Rotation, 0
+    for _ = 1, 12 do wt:run(0.25); otravel = math.max(otravel, math.abs(og.Rotation - o0)) end
+    check(otravel > 20, "the button outline flows while its tab is open")
+    Wt.Window:SelectTab(1); wt:run(0.5)
+    local o1 = og.Rotation; wt:run(0.5)
+    check(og.Rotation == o1, "...and stands still on a tab that is not open")
+    Wt:SetBackgroundTransparency(0.8)
+    check(Wt.WindUI.TransparencyValue == 0.8, "the 'Window see-through' slider reaches WindUI")
+    local dim = wt:find(function(i) return i.Name == "WraithDim" end)
+    check(dim ~= nil and dim.Visible == false, "the dim layer is only there while a picture / video is")
+    check(wt:find(function(i) return i.Name == "WraithVideo" or i.Name == "WraithPicture" end) == nil, "no picture by default (nothing is downloaded at start)")
+    clean(wt, "outlines")
+
+    -- a) the Pixabay page: its page names the files, the medium one is downloaded once and kept in the workspace folder
+    local w = newGame(nil, {bgOn = true}); w.http = {[PAGE] = '<video src="' .. TINY .. '"></video><script>{"medium":"' .. MEDIUM .. '"}</script>', [MEDIUM] = "FAKE-MP4-BYTES"}
     boot(w, 1.0)
     local Win = win(w)
     local file
@@ -209,15 +301,16 @@ do
     local played = false
     for _, c in ipairs(w.calls) do if c[1] == "Play" then played = true end end
     check(played, "Play() was called")
-    local dim = w:find(function(i) return i.Name == "WraithDim" end)
-    check(dim ~= nil and math.abs(dim.BackgroundTransparency - 0.55) < 1e-9, "a dim layer keeps the text readable (0.45 -> transparency 0.55)")
-    check(video and video.Parent == dim.Parent and video.Parent.Name == "Background", "both live in WindUI's window background layer")
+    local dim2 = w:find(function(i) return i.Name == "WraithDim" end)
+    check(video and video.Parent == dim2.Parent and video.Parent.Name == "Background", "the video and the dim layer live in WindUI's window background layer")
+    check(dim2.Visible == true and math.abs(dim2.BackgroundTransparency - 0.65) < 1e-9, "the dim layer appears with the picture (0.35 -> transparency 0.65)")
     Win:SetBackgroundDim(0.9)
-    check(math.abs(dim.BackgroundTransparency - 0.1) < 1e-9, "the dim slider's value reaches the layer")
+    check(math.abs(dim2.BackgroundTransparency - 0.1) < 1e-9, "the dim slider's value reaches the layer")
     local downloads = #w.httpLog
-    el(w, "Background video"):Set(false)
-    check(w:find(function(i) return i.Name == "WraithVideo" end) == nil and w:find(function(i) return i.Name == "WraithDim" end) == nil, "turning the background off removes it")
-    el(w, "Background video"):Set(true); w:run(0.3)
+    el(w, "Video / picture behind it"):Set(false)
+    check(w:find(function(i) return i.Name == "WraithVideo" end) == nil, "turning it off removes the video")
+    check(w:find(function(i) return i.Name == "WraithDim" end).Visible == false, "...and the dim layer goes with it")
+    el(w, "Video / picture behind it"):Set(true); w:run(0.3)
     check(w:find(function(i) return i.Name == "WraithVideo" end) ~= nil, "...and on again")
     local fetches = 0
     for i = downloads + 1, #w.httpLog do if w.httpLog[i] == MEDIUM then fetches = fetches + 1 end end
@@ -234,21 +327,22 @@ do
     check(hasText(w, "WindUI/Notifications", "Background not loaded"), "an unsupported link raises a 'Background not loaded' notification")
     clean(w, "background")
 
-    -- b. the page names no file / the web is not reachable: the menu works anyway and says so
-    local w2 = newGame(); w2.http = {[PAGE] = "<html>captcha</html>"}
+    -- b) the page names no file / the web is not reachable: the menu works anyway and says so
+    local w2 = newGame(nil, {bgOn = true}); w2.http = {[PAGE] = "<html>captcha</html>"}
     boot(w2, 1.0)
     check(w2:find(function(i) return i.Name == "WraithVideo" end) == nil, "no video without a file link")
     check(hasText(w2, "WindUI/Notifications", "Background not loaded"), "the failure is reported")
     check(win(w2).Backend == "WindUI" and w2:find(function(i) return i.Name == "Float_shoot" end) ~= nil, "the rest of the hub is unaffected")
+    check(w2:find(function(i) return i.Name == "WraithOutline" end) ~= nil, "...and the outline is still there")
     clean(w2, "background fails")
 
     -- b2. an executor with request(): it is used first, with browser-like headers; when the site refuses (403) HttpGet gets a turn
-    local w4 = newGame({gethui = true, request = true}); w4.http = {[PAGE] = '<source src="' .. MEDIUM .. '">', [MEDIUM] = "BYTES"}
+    local w4 = newGame({gethui = true, request = true}, {bgOn = true}); w4.http = {[PAGE] = '<source src="' .. MEDIUM .. '">', [MEDIUM] = "BYTES"}
     boot(w4, 1.0)
     check(w4.requests and #w4.requests >= 2 and w4.requests[1].Url == PAGE, "request() fetched the page first")
     check(w4.requests and w4.requests[1].Headers and tostring(w4.requests[1].Headers["User-Agent"]):find("Mozilla", 1, true) ~= nil and w4.requests[1].Headers["Referer"] == "https://pixabay.com/", "...with browser-like headers")
     check(w4:find(function(i) return i.Name == "WraithVideo" end) ~= nil, "and the video was loaded through it")
-    local w5 = newGame({gethui = true, request = true}); w5.http = {[PAGE] = '<source src="' .. MEDIUM .. '">', [MEDIUM] = "BYTES"}
+    local w5 = newGame({gethui = true, request = true}, {bgOn = true}); w5.http = {[PAGE] = '<source src="' .. MEDIUM .. '">', [MEDIUM] = "BYTES"}
     local realRequest = w5.env.request
     w5.env.request = function(o) realRequest(o); return {Success = false, StatusCode = 403, Body = ""} end         -- the site turns request() away
     boot(w5, 1.0)
@@ -256,7 +350,7 @@ do
     clean(w4, "request path"); clean(w5, "request refused")
 
     -- c. an executor without file functions
-    local w3 = newGame({gethui = true, no = {files = true}}); w3.http = {[PAGE] = '<source src="' .. MEDIUM .. '">', [MEDIUM] = "x"}
+    local w3 = newGame({gethui = true, no = {files = true}}, {bgOn = true}); w3.http = {[PAGE] = '<source src="' .. MEDIUM .. '">', [MEDIUM] = "x"}
     boot(w3, 1.0)
     check(w3:find(function(i) return i.Name == "WraithVideo" end) == nil, "no files, no video")
     check(win(w3) and win(w3).Backend == "WindUI", "the menu still runs on WindUI")
@@ -266,8 +360,9 @@ end
 section("fallback, menu style, unload")
 do
     -- a. WindUI fails to start, or fails half way through building its window: the hub switches to the classic menu and cleans up after the attempt
-    for _, case in ipairs({{"loading the library", "UIScale"}, {"building the window", "ImageButton"}}) do
-        local w = newGame(); w.denyClass = {[case[2]] = true}
+    for _, case in ipairs({{"loading the library", "json"}, {"building the window", "ImageButton"}}) do
+        local w = newGame()
+        if case[2] == "json" then w.denyJsonDecode = true else w.denyClass = {[case[2]] = true} end
         boot(w, 1.2)
         local name = "fallback while " .. case[1]
         check(win(w) ~= nil and win(w).Backend ~= "WindUI", name .. ": the classic menu took over")

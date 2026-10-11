@@ -18,7 +18,7 @@ end
 local function boot(w, seconds)
     local ok, err = w:load(SCRIPT_SOURCE)
     if not ok then failures[#failures + 1] = "load: " .. tostring(err); return false end
-    w:run(seconds or 0.6)
+    w:run((seconds or 0.6) + 0.5)                       -- (the menu is built a few controls per frame: half a second of build time on top)
     return true
 end
 local function clean(w, name)           -- nothing may have been thrown at the script, swallowed, or reported by a handler
@@ -58,9 +58,9 @@ local function espColors(w)
     end
     return out
 end
-local function red(c) return c and c.R > 0.9 and c.G < 0.4 end
-local function blue(c) return c and c.B > 0.9 and c.R < 0.4 end
-local function green(c) return c and c.G > 0.8 and c.R < 0.5 end
+local function red(c) return c and c.R > 0.9 and c.G < 0.4 and c.B < 0.4 end
+local function blue(c) return c and c.B > 0.9 and c.R < 0.4 and c.G < 0.7 end
+local function green(c) return c and c.G > 0.8 and c.R < 0.5 and c.B < 0.6 end
 
 ------------------------------------------------------------------------------------------------ 1. loads, builds the window
 section("load")
@@ -419,9 +419,9 @@ do
     round(w)
     boot(w, 1.0)
     w:click(w:rowButton("Perfect shoot")); w:run(0.3)
-    check(hasToast(w, "No gun"), "no gun -> 'No gun'")
+    check(hasToast(w, "No weapon"), "no weapon at all -> 'No weapon'")
     w:click(w:rowButton("Perfect throw")); w:run(0.3)
-    check(hasToast(w, "No knife"), "no knife -> 'No knife'")
+    check(hasToast(w, "No weapon"), "...from the throw button too")
     w:click(w:rowButton("Grab the gun")); w:run(0.3)
     check(hasToast(w, "No gun on the map"), "no dropped gun -> message")
     clean(w, "no weapon")
@@ -912,10 +912,12 @@ do
     w:tap(shoot, 1050, 160); w:tap(shoot, 1050, 160); w:run(0.6)
     check(#w.sent == before2 + 1, "two taps in the same instant fire once: the second is ignored while the first is still in flight (" .. (#w.sent - before2) .. ")")
 
-    -- THROW: the murderer's button (I only have the gun, so it says so and flashes red)
+    -- THROW while I only hold the gun: either button does what my weapon can do, so this shoots the murderer again (after the cooldown of the first shot)
+    w:run(2.6)
+    local before3 = #w.sent
     w:tap(throw, 1050, 340); w:run(0.1)
-    check(hasToast(w, "No knife"), "THROW without a knife says 'No knife'")
-    check(badColor(ring(w, throw).Color), "...and flashes red")
+    check(#w.sent == before3 + 1 and w.sent[#w.sent].remote == remote, "THROW with only the gun in hand shoots the murderer (the buttons follow your role)")
+    check(goodColor(ring(w, throw).Color), "...and the pressed button flashes green")
     clean(w, "floating buttons")
 end
 
@@ -934,8 +936,9 @@ do
     check(hasToast(w, "Knife thrown"), "toast: Knife thrown")
     local aimed = w.sent[#w.sent].args[2]
     check(near(aimed.X, 0, 1e-6) and near(aimed.Y, 4.5, 1e-6) and near(aimed.Z, -40, 1e-6), "the throw is aimed at Bob's head (a standing target is not led)")
-    w:tap(w:button("Float_shoot"), 1050, 160); w:run(0.1)
-    check(hasToast(w, "No gun") and badColor(ring(w, w:button("Float_shoot")).Color), "SHOOT without a gun says 'No gun' and flashes red")
+    local n2 = #w.sent
+    w:tap(w:button("Float_shoot"), 1050, 160); w:run(0.15)
+    check(#w.sent == n2 + 1 and goodColor(ring(w, w:button("Float_shoot")).Color), "SHOOT while I am the murderer throws the knife at the closest player instead")
     clean(w, "float throw")
 end
 
@@ -1025,13 +1028,13 @@ do
     check(labelOf(speed) == "SPEED OFF" and labelOf(jump) == "JUMP OFF", "they start as SPEED OFF / JUMP OFF")
     local x0 = speed.Position.X.Offset
     w:tap(speed, x0 + 10, 150)
-    check(ring(w, speed).Thickness == 2, "a toggle does not flash like a shot does (the ring keeps its thickness)")
+    check(ring(w, speed).Thickness == 2.5, "a toggle does not flash like a shot does (the outline keeps its thickness)")
     w:run(0.4)
     check(hum.WalkSpeed == 24 and labelOf(speed) == "SPEED ON", "a tap turns walk speed on (24) and says SPEED ON")
-    check(ring(w, speed).Color.G > 0.7 and ring(w, speed).Color.R < 0.4, "the ring turns teal while it is on")
+    check(ring(w, speed).Transparency < 0.1, "the outline is bright while it is on (no colour, just brighter)")
     w:tap(speed, x0 + 10, 150); w:run(0.4)
     check(hum.WalkSpeed == 16 and labelOf(speed) == "SPEED OFF", "a second tap turns it off again")
-    check(ring(w, speed).Color.R > 0.5 and ring(w, speed).Color.G < 0.7, "the ring is grey while it is off")
+    check(ring(w, speed).Transparency > 0.3, "the outline is fainter while it is off")
     -- the Player tab switch and the button stay in step
     w:toggle("Walk speed"); w:run(0.4)
     check(labelOf(speed) == "SPEED ON" and hum.WalkSpeed == 24, "switching it in the Player tab updates the button")
@@ -1053,14 +1056,13 @@ do
 end
 
 ------------------------------------------------------------------------------------------------ water waves
-section("water waves on every button")
+section("water waves on every menu button (Classic menu)")
 do
     local w, alice, gun = setupShooter()
     local function waves(btn) return w:find(function(i) return i.ClassName == "Frame" and i.Name == "Waves" and i.Parent == btn end) end
     local function layers(wv) local out = {} for _, c in ipairs(w.M.GetChildren(wv)) do if c.Name:match("^Wave%d$") then out[#out + 1] = c end end return out end
     local function offsetOf(layer) return w.M.FindFirstChildOfClass(layer, "UIGradient").Offset end
-    -- every kind of button has the skin
-    local named = {"Close", "Maximize", "Minimize", "Group", "Float_shoot", "Float_throw", "Float_grab"}
+    local named = {"Close", "Maximize", "Minimize", "Group"}
     for _, tab in ipairs({"Main", "ESP", "Combat", "Buttons", "Player", "Settings", "Debug"}) do named[#named + 1] = tab end
     for _, name in ipairs(named) do
         local b = w:find(function(i) return i.ClassName == "TextButton" and i.Name == name end)
@@ -1073,79 +1075,138 @@ do
     check(waves(w:rowButton("Aim key (hold)")) ~= nil, "keybind buttons wear it")
     w:click(w:rowButton("Aim at"))
     check(waves(w:option("Torso")) ~= nil, "dropdown options wear it")
-    local runPill = w:find(function(i) return i.Name == "RunPill" end)
-    check(waves(runPill) ~= nil, "the Run / Fire pills wear it")
+    check(waves(w:find(function(i) return i.Name == "RunPill" end)) ~= nil, "the Run / Fire pills wear it")
+    check(waves(w:button("Float_shoot")) == nil, "...but the floating buttons do NOT have waves inside: only their outline flows")
 
-    -- the gradients are real grey-white wave patterns
-    local fl = waves(w:button("Float_shoot"))
-    local g1 = w.M.FindFirstChildOfClass(layers(fl)[1], "UIGradient")
-    check(#g1.Color.keys == 20 and #g1.Transparency.keys == 20, "each layer is a 20-keypoint wave")
-    local brightest, darkest = 0, 1
-    for _, k in ipairs(g1.Color.keys) do
-        local lum = (k.v.R + k.v.G + k.v.B) / 3
-        brightest, darkest = math.max(brightest, lum), math.min(darkest, lum)
-        check(math.abs(k.v.R - k.v.B) < 0.1, "wave colours are grey / white (no tint)")
-    end
-    check(brightest > 0.85 and darkest > 0.5, "from mid-grey to near white (" .. string.format("%.2f..%.2f", darkest, brightest) .. ")")
-    local rots = {}
-    for _, l in ipairs(layers(fl)) do rots[#rots + 1] = w.M.FindFirstChildOfClass(l, "UIGradient").Rotation end
-    check(rots[1] ~= rots[2] and rots[2] ~= rots[3] and rots[1] ~= rots[3], "the three layers run at different angles (interference reads as water)")
-
-    -- they move
-    local travel, lastX = {0, 0, 0}, {}
-    for i, l in ipairs(layers(fl)) do lastX[i] = offsetOf(l).X end
-    for _ = 1, 30 do
-        w:run(0.1)
-        for i, l in ipairs(layers(fl)) do
-            local x = offsetOf(l).X
-            travel[i] = travel[i] + math.abs(x - lastX[i]); lastX[i] = x
-            check(math.abs(x) <= 0.4, "layer " .. i .. " stays inside its range")
-        end
-    end
-    local moved = 0
-    for i = 1, 3 do if travel[i] > 0.15 then moved = moved + 1 end end
-    check(moved == 3, "all three layers of the floating button move (travel " .. string.format("%.2f %.2f %.2f", travel[1], travel[2], travel[3]) .. ")")
-    local first = offsetOf(layers(fl)[1]).X
-    w:run(1.7)
-    check(math.abs(offsetOf(layers(fl)[1]).X - first) > 0.01, "...and keep moving")
-
-    -- tabs only move while the window is shown
     local tabWaves = layers(waves(w:find(function(i) return i.ClassName == "TextButton" and i.Name == "ESP" end)))
+    local g1 = w.M.FindFirstChildOfClass(tabWaves[1], "UIGradient")
+    check(#g1.Color.keys == 20 and #g1.Transparency.keys == 20, "each layer is a 20-keypoint wave")
+    for _, k in ipairs(g1.Color.keys) do check(math.abs(k.v.R - k.v.B) < 0.1, "wave colours are grey / white (no tint)") end
+    local rots = {}
+    for _, l in ipairs(tabWaves) do rots[#rots + 1] = w.M.FindFirstChildOfClass(l, "UIGradient").Rotation end
+    check(rots[1] ~= rots[2] and rots[2] ~= rots[3] and rots[1] ~= rots[3], "the three layers run at different angles (interference reads as water)")
     local t0 = offsetOf(tabWaves[1]).X
-    w:run(0.5)
-    check(math.abs(offsetOf(tabWaves[1]).X - t0) > 0.01, "menu buttons move while the window is open")
+    local tabTravel = 0
+    for _ = 1, 8 do w:run(0.25); tabTravel = math.max(tabTravel, math.abs(offsetOf(tabWaves[1]).X - t0)) end      -- (sampled over a while: one sample can land on a crest where the slope is zero)
+    check(tabTravel > 0.01, "menu buttons move while the window is open")
     w:click(w:button("Close")); w:run(0.1)
     local t1 = offsetOf(tabWaves[1]).X
     w:run(0.6)
     check(offsetOf(tabWaves[1]).X == t1, "...and stand still (no work) while it is hidden")
-    local f1 = offsetOf(layers(fl)[1]).X
-    w:run(0.6)
-    check(offsetOf(layers(fl)[1]).X ~= f1, "the floating buttons keep moving with the window hidden")
     w:click(w:button("OpenButton")); w:run(0.1)
-
-    -- modes
     w:tab("Buttons")
     w:click(w:rowButton("Button waves")); w:click(w:option("Low", "Button waves")); w:run(0.3)
     local vis = 0
-    for _, l in ipairs(layers(fl)) do if l.Visible then vis = vis + 1 end end
-    check(vis == 1, "Low: one layer per button (" .. vis .. ")")
+    for _, l in ipairs(tabWaves) do if l.Visible then vis = vis + 1 end end
+    check(vis == 1, "Low: one layer per menu button (" .. vis .. ")")
     w:click(w:rowButton("Button waves")); w:click(w:option("Off", "Button waves")); w:run(0.3)
-    check(fl.Visible == false, "Off: the wave holder is hidden")
-    local f2 = offsetOf(layers(fl)[1]).X
+    local f2 = offsetOf(tabWaves[1]).X
     w:run(0.5)
-    check(offsetOf(layers(fl)[1]).X == f2, "Off: nothing is animated")
+    check(offsetOf(tabWaves[1]).X == f2, "Off: nothing is animated")
     w:click(w:rowButton("Button waves")); w:click(w:option("High", "Button waves")); w:run(0.3)
     local vis2 = 0
-    for _, l in ipairs(layers(fl)) do if l.Visible then vis2 = vis2 + 1 end end
-    check(fl.Visible and vis2 == 3, "High: all three layers again")
-
+    for _, l in ipairs(tabWaves) do if l.Visible then vis2 = vis2 + 1 end end
+    check(vis2 == 3, "High: all three layers again")
     -- a press spreads a ripple that goes away
-    local shoot = w:button("Float_shoot")
-    w:press(shoot, 1060, 170); w:release(1060, 170)
-    check(w:find(function(i) return i.Name == "Ripple" end, shoot) ~= nil, "a press starts a ripple on the button")
+    local esp = w:find(function(i) return i.ClassName == "TextButton" and i.Name == "ESP" end)
+    w:press(esp, 60, 150); w:release(60, 150)
+    check(w:find(function(i) return i.Name == "Ripple" end, esp) ~= nil, "a press starts a ripple on the button")
     w:run(0.9)
-    check(w:find(function(i) return i.Name == "Ripple" end, shoot) == nil, "...which disappears again")
+    check(w:find(function(i) return i.Name == "Ripple" end, esp) == nil, "...which disappears again")
     clean(w, "waves")
+end
+
+section("floating buttons: transparent inside, grey water flowing round the outline, moving icons")
+do
+    local w, alice, gun = setupShooter()
+    for _, id in ipairs({"shoot", "throw"}) do
+        local b = w:button("Float_" .. id)
+        check(b.BackgroundTransparency >= 0.75, id .. ": the inside is transparent (" .. tostring(b.BackgroundTransparency) .. ")")
+        local corner = w.M.FindFirstChildOfClass(b, "UICorner")
+        check(corner and corner.CornerRadius.Scale > 0.15 and corner.CornerRadius.Scale < 0.35, id .. ": a rounded square, not a circle or a sharp box")
+        local strokes = w:findAll(function(i) return i.ClassName == "UIStroke" and i.Parent == b end)
+        check(#strokes == 2 and strokes[1].Name == "Outline" and strokes[2].Name == "Glow" and strokes[2].Thickness > strokes[1].Thickness and strokes[2].Transparency > 0.6, id .. ": a crisp outline plus a soft glow")
+        local grad = w.M.FindFirstChildOfClass(strokes[1], "UIGradient")
+        check(grad ~= nil and #grad.Color.keys == 20 and #grad.Transparency.keys == 20, id .. ": the outline carries a 20-keypoint water gradient")
+        local lo, hi = 1, 0
+        for _, k in ipairs(grad.Color.keys) do
+            local lum = (k.v.R + k.v.G + k.v.B) / 3
+            lo, hi = math.min(lo, lum), math.max(hi, lum)
+            check(math.abs(k.v.R - k.v.B) < 0.1, id .. ": outline colours are grey / white")
+        end
+        check(hi > 0.9 and lo > 0.3, id .. ": from grey to near white (" .. string.format("%.2f..%.2f", lo, hi) .. ")")
+        check(w:find(function(i) return i.Name == "Waves" end, b) == nil, id .. ": no waves inside")
+        check(w.M.FindFirstChild(b, "Cooldown").BackgroundTransparency == 1, id .. ": nothing is drawn over the inside at rest")
+    end
+    -- the water runs round the border
+    local shoot = w:button("Float_shoot")
+    local grad = w.M.FindFirstChildOfClass(w.M.FindFirstChild(shoot, "Outline"), "UIGradient")
+    local glowGrad = w.M.FindFirstChildOfClass(w.M.FindFirstChild(shoot, "Glow"), "UIGradient")
+    local r0, seen = grad.Rotation, {}
+    local travel = 0
+    for _ = 1, 20 do w:run(0.1); seen[grad.Rotation] = true; travel = math.max(travel, math.abs(grad.Rotation - r0)) end
+    local n = 0; for _ in pairs(seen) do n = n + 1 end
+    check(n >= 15 and travel > 20, "the outline gradient keeps turning (" .. n .. " different angles, up to " .. string.format("%.0f", travel) .. " deg)")
+    check(math.abs(grad.Rotation - glowGrad.Rotation) < 1e-6, "outline and glow flow together")
+    local other = w.M.FindFirstChildOfClass(w.M.FindFirstChild(w:button("Float_throw"), "Outline"), "UIGradient")
+    check(math.abs(other.Rotation - grad.Rotation) > 1, "each button has its own phase (they do not move in lockstep)")
+    -- it flows while the menu is hidden, and per the wave mode
+    w:click(w:button("Close")); w:run(0.1)
+    local c0 = grad.Rotation; w:run(0.4)
+    check(grad.Rotation ~= c0, "the buttons keep flowing with the menu hidden")
+    w:click(w:button("OpenButton")); w:run(0.1)
+    local function changes(secs)
+        local last, n2 = grad.Rotation, 0
+        for _ = 1, math.floor(secs * 60 + 0.5) do w:run(1 / 60); if grad.Rotation ~= last then n2 = n2 + 1; last = grad.Rotation end end
+        return n2
+    end
+    local high = changes(1)
+    w:tab("Buttons"); w:click(w:rowButton("Button waves")); w:click(w:option("Low", "Button waves")); w:run(0.2)
+    local low = changes(1)
+    check(high >= 24 and low >= 10 and low <= high * 0.7, "High updates ~30 times a second, Low ~15 (" .. high .. " / " .. low .. ")")
+    w:click(w:rowButton("Button waves")); w:click(w:option("Off", "Button waves")); w:run(0.3)
+    check(changes(0.5) == 0, "Off: the outline stands still")
+    w:click(w:rowButton("Button waves")); w:click(w:option("High", "Button waves")); w:run(0.3)
+    check(changes(0.5) > 8, "High: it flows again")
+
+    -- the icons move; no colour anywhere
+    local function iconOf(id) return w:find(function(i) return i.ClassName == "Frame" and i.Name:match("^Icon_") ~= nil and i.Parent and i.Parent.Name == "IconBox" and i.Parent.Parent == w:button("Float_" .. id) end) end
+    local cross, knife = iconOf("shoot"), iconOf("throw")
+    check(cross and cross.Name == "Icon_crosshair" and knife and knife.Name == "Icon_knife", "SHOOT draws a crosshair, THROW a knife")
+    local rots, sizes = {}, {}
+    for _ = 1, 20 do w:run(0.1); rots[#rots + 1] = cross.Rotation end
+    local spread = math.max(table.unpack(rots)) - math.min(table.unpack(rots))
+    check(spread > 30, "the crosshair turns (" .. string.format("%.0f", spread) .. " deg in 2 s)")
+    -- the knife travels round a circle: constant distance from the centre, the angle keeps advancing, it points the way it moves
+    local pts, minD, maxD = {}, 1e9, 0
+    for i = 1, 40 do
+        w:run(0.05)
+        local px, py = knife.Position.X.Offset, knife.Position.Y.Offset
+        pts[#pts + 1] = {px, py, knife.Rotation}
+        local d = math.sqrt(px * px + py * py); minD, maxD = math.min(minD, d), math.max(maxD, d)
+    end
+    check(maxD - minD < 0.5 and maxD > 5, "the knife stays on a circle round the middle (radius " .. string.format("%.1f..%.1f", minD, maxD) .. " px)")
+    local advanced = 0
+    for i = 2, #pts do
+        local a1, a2 = math.atan2 and math.atan2(pts[i - 1][2], pts[i - 1][1]) or math.atan(pts[i - 1][2], pts[i - 1][1]), math.atan2 and math.atan2(pts[i][2], pts[i][1]) or math.atan(pts[i][2], pts[i][1])
+        local d = (a2 - a1) % (2 * math.pi)
+        if d > 0 and d < 1 then advanced = advanced + 1 end
+    end
+    check(advanced >= 38, "...always in the same direction, a loop (" .. advanced .. "/39 steps forward)")
+    check(math.abs(pts[10][3] - pts[1][3]) > 20, "and the blade turns with it")
+    local colourful = false
+    for _, i in ipairs(w:findAll(function(i) return i.ClassName == "Frame" and i.BackgroundTransparency < 1 end, knife)) do
+        local c = i.BackgroundColor3
+        if math.abs(c.R - c.G) > 0.05 or math.abs(c.G - c.B) > 0.05 then colourful = true end
+    end
+    check(not colourful, "the knife is plain white / grey: no colour added")
+    -- a flash is a short solid colour; afterwards the flowing water comes back
+    w:tap(w:button("Float_shoot"), 1050, 160); w:run(0.1)
+    check(grad.Enabled == false and goodColor(ring(w, shoot).Color) or badColor(ring(w, shoot).Color), "the outline flashes a solid colour while a shot is reported")
+    w:run(0.8)
+    check(grad.Enabled == true and ring(w, shoot).Color.R > 0.95 and ring(w, shoot).Color.G > 0.95, "...and goes back to the flowing grey water")
+    -- a button without its weapon is fainter
+    clean(w, "floating outline")
 end
 
 section("waves: saved and restored")
@@ -1159,10 +1220,10 @@ do
     round(w2)
     w2.files["wraiths_hub_config.json"] = w.files["wraiths_hub_config.json"]
     boot(w2, 0.6)
-    local fl = w2:find(function(i) return i.ClassName == "Frame" and i.Name == "Waves" and i.Parent == w2:button("Float_shoot") end)
-    local vis = 0
-    for _, c in ipairs(w2.M.GetChildren(fl)) do if c.Name:match("^Wave%d$") and c.Visible then vis = vis + 1 end end
-    check(vis == 1, "a saved 'Low' wave mode is applied at start (" .. vis .. " layer)")
+    local g = w2.M.FindFirstChildOfClass(w2.M.FindFirstChild(w2:button("Float_shoot"), "Outline"), "UIGradient")
+    local last, n = g.Rotation, 0
+    for _ = 1, 60 do w2:run(1 / 60); if g.Rotation ~= last then n = n + 1; last = g.Rotation end end
+    check(n >= 10 and n <= 20, "a saved 'Low' wave mode is applied at start (" .. n .. " updates a second)")
     clean(w2, "waves restored")
 end
 
@@ -1238,7 +1299,7 @@ do
     w:run(1.5)
     w:tab("Combat"); w:run(0.8)
     check(labelContaining(w, "^Ping 60 ms") ~= nil, "a lag spike does not move the smoothed ping (label: " .. tostring((labelContaining(w, "^Ping") or {}).Text) .. ")")
-    w.pingMs = 140; w:run(4.0)
+    w.pingMs = 140; w:run(5.0)
     check(labelContaining(w, "^Ping 140 ms") ~= nil, "a real change in ping is followed (" .. tostring((labelContaining(w, "^Ping") or {}).Text) .. ")")
     check(labelContaining(w, "aim 190 ms ahead") ~= nil, "...and the lead follows it (140 + 50 ms)")
     clean(w, "ping spike")
@@ -1447,6 +1508,139 @@ do
     w:click(w:rowButton("Save config")); w:run(0.1)
     check(w.files["wraiths_hub_config.json"] ~= nil and w.files["mm2_hub_config.json"] == nil, "the config file is wraiths_hub_config.json")
     clean(w, "naming")
+end
+
+------------------------------------------------------------------------------------------------ round 2: ESP colours + speed, role-aware targets, known remotes
+local function orange(c) return c and c.R > 0.95 and c.G > 0.45 and c.G < 0.65 and c.B < 0.2 end
+local function hlOf(w, name) return w:find(function(i) return i.ClassName == "Highlight" and i.Adornee and i.Adornee.Name == name end) end
+
+section("ESP: gun orange, murderer red, sheriff blue - and it reacts the same frame")
+do
+    local w = newGame()
+    local alice, bob, cy = round(w, {noTools = true})
+    boot(w, 0.8)
+    check(not red(espColors(w).Alice) and not blue(espColors(w).Bob), "before any weapon is seen nobody is coloured as a role")
+    w:giveTool(alice, "Knife", {held = true}); w:giveTool(bob, "Gun", {held = true})
+    w:step(1 / 60)
+    local c = espColors(w)
+    check(red(c.Alice), "one frame after Alice takes out a knife she is RED (no waiting for a poll)")
+    check(blue(c.Bob), "one frame after Bob takes out a gun he is BLUE")
+    check(green(c.Cy), "innocents are green")
+    local hl = hlOf(w, "Alice")
+    check(hl and hl.OutlineColor.R > 0.9 and hl.FillTransparency > 0.5 and hl.OutlineTransparency == 0, "the outline is solid, the fill is see-through")
+    -- the gun drops: orange, next frame
+    w:dropGun({30, 3, -20}); w:step(1 / 60)
+    check(orange(hlOf(w, "GunDrop") and hlOf(w, "GunDrop").FillColor), "the dropped gun is ORANGE the frame it appears")
+    -- ...whatever the phase of the periodic ESP refresh: a gun dropped at any moment is outlined within ONE frame
+    local early = 0
+    for phase = 0, 8 do
+        for _ = 1, phase do w:step(1 / 60) end
+        w:dropGun({30 + phase, 3, -20 - phase}); w:step(1 / 60)
+        local count = #w:findAll(function(i) return i.ClassName == "Highlight" and i.Adornee and i.Adornee.Name == "GunDrop" end)
+        if count == phase + 2 then early = early + 1 end
+    end
+    check(early == 9, "a gun dropped at any moment gets its orange outline within one frame (" .. early .. "/9)")
+    check(labelContaining(w, "^GUN %d+m") ~= nil, "...with a GUN label and the distance")
+    local gl = labelContaining(w, "^GUN")
+    check(gl and orange(w.env.Color3.fromRGB(255, 140, 20)) and gl.TextColor3.R > 0.95 and gl.TextColor3.B < 0.5, "the label is orange too")
+    -- a respawn: the new character is followed at once
+    local oldChar = alice.Character
+    w:newCharacter(alice); w:step(1 / 60)
+    check(hlOf(w, "Alice") ~= nil and hlOf(w, "Alice").Adornee == alice.Character and hlOf(w, "Alice").Adornee ~= oldChar, "after a respawn the ESP is on the new character")
+    -- a role change blends to the new colour
+    w:giveTool(alice, "Knife", {held = true}); w:step(1 / 60)
+    check(red(espColors(w).Alice), "...and the murderer is red again once the knife is out")
+    clean(w, "esp colours")
+end
+
+section("targets follow my role: sheriff -> the murderer, murderer -> the closest player")
+do
+    -- murderer (me) with two others: Bob is closest but off to the side, Cy is dead ahead further away
+    local w = newGame()
+    local bob = w:addPlayer("Bob", {pos = {14, 3, -8}})
+    local cy = w:addPlayer("Cy", {pos = {0, 3, -34}})
+    local knife = w:giveTool(w.me, "Knife", {held = true, remotes = {{folder = "Events", name = "KnifeThrown"}}})
+    boot(w, 1.0)
+    w:mouseDown("MouseButton1")
+    knife:FindFirstChild("Events"):FindFirstChild("KnifeThrown"):FireServer(w.env.CFrame.new(0, 4.5, 0), w:V3(0, 4, -30)); w:run(0.3)
+    local n = #w.sent
+    w:tap(w:button("Float_throw"), 1050, 340); w:run(0.2)
+    check(#w.sent == n + 1, "THROW throws once")
+    local aimed = w.sent[#w.sent].args[2]
+    local bobHead = bob.Character.Head.Position
+    check(near(aimed.X, bobHead.X, 1e-6) and near(aimed.Z, bobHead.Z, 1e-6), "the murderer throws at the CLOSEST player (Bob, 16 studs), not the one nearest the crosshair")
+    w:run(2.5)
+    w:movePlayer(bob, {14, 3, 80})                        -- Bob walks far away: now Cy is the closest
+    w:run(0.3)
+    local n2 = #w.sent
+    w:tap(w:button("Float_throw"), 1050, 340); w:run(0.2)
+    local aimed2 = w.sent[#w.sent].args[2]
+    check(#w.sent == n2 + 1 and near(aimed2.Z, cy.Character.Head.Position.Z, 1e-6), "...and when someone else is closer, the throw goes to them")
+    clean(w, "murderer target")
+
+    -- sheriff (me): the murderer is the only valid target, innocents are never shot
+    local w2, alice = setupShooter()
+    local carol = w2:addPlayer("Carol", {pos = {1, 3, -6}})              -- an innocent standing right next to me
+    w2:run(0.6)
+    local before = #w2.sent
+    w2:tap(w2:button("Float_shoot"), 1050, 160); w2:run(0.2)
+    local shot = w2.sent[#w2.sent].args[2]
+    shot = shot.Position or shot
+    check(#w2.sent == before + 1 and shot.Z < -30, "the sheriff shoots the murderer (40 studs away), not the innocent standing next to them")
+    clean(w2, "sheriff target")
+
+    -- sheriff who does not know the murderer yet: says so and does not shoot at anyone
+    local w3 = newGame()
+    w3:addPlayer("Dan", {pos = {0, 3, -20}})
+    local g3 = w3:giveTool(w3.me, "Gun", {held = true, remotes = {{name = "Shoot"}}})
+    boot(w3, 1.0)
+    w3:mouseDown("MouseButton1")
+    g3:FindFirstChild("Shoot"):FireServer(w3.env.CFrame.new(0, 4.5, 0), w3.env.CFrame.new(5, 3, -30)); w3:run(0.3)
+    local before3 = #w3.sent
+    w3:tap(w3:button("Float_shoot"), 1050, 160); w3:run(0.2)
+    check(#w3.sent == before3 and hasToast(w3, "murderer is not known yet"), "unknown murderer: no shot, and the toast says why")
+end
+
+section("known remote layouts (used only when nothing was recorded)")
+do
+    -- sheriff: Gun.KnifeLocal.CreateBeam.RemoteFunction:InvokeServer(1, aimPoint, "AH2")
+    local w = newGame()
+    local alice = round(w, {noTools = true})
+    w:giveTool(alice, "Knife", {held = true})
+    w:giveTool(w.me, "Gun", {held = true, remotes = {{path = {"KnifeLocal", "CreateBeam"}, name = "RemoteFunction", class = "RemoteFunction"}}})
+    boot(w, 1.0)
+    w:tap(w:button("Float_shoot"), 1050, 160); w:run(0.2)
+    local sent = w.sent[#w.sent]
+    check(sent and sent.method == "InvokeServer" and sent.remote.Name == "RemoteFunction" and sent.args[1] == 1 and sent.args[3] == "AH2", "the sheriff's shot goes through the known gun remote (1, aim point, 'AH2')")
+    local head = alice.Character.Head.Position
+    check(sent and World.kindOf(sent.args[2]) == "Vector3" and near(sent.args[2].X, head.X + 1.1, 1e-6), "...aimed at the murderer, led by ping + render delay")
+    check(hasToast(w, "Shot fired"), "and it reports the shot")
+    clean(w, "known gun remote")
+
+    -- murderer: Knife.Throw:FireServer(CFrame, CFrame)
+    local w2 = newGame()
+    local bob = w2:addPlayer("Bob", {pos = {5, 3, -15}})
+    w2:giveTool(w2.me, "Knife", {held = true, remotes = {{name = "Throw"}}})
+    boot(w2, 1.0)
+    w2:tap(w2:button("Float_throw"), 1050, 340); w2:run(0.2)
+    local s2 = w2.sent[#w2.sent]
+    check(s2 and s2.method == "FireServer" and s2.remote.Name == "Throw" and World.kindOf(s2.args[1]) == "CFrame" and World.kindOf(s2.args[2]) == "CFrame", "the murderer's throw goes through the known knife remote (origin CFrame, target CFrame)")
+    check(s2 and near(s2.args[2].Position.X, bob.Character.Head.Position.X, 1e-6), "...aimed at the closest player")
+    clean(w2, "known knife remote")
+
+    -- switched off: nothing is sent to a guessed remote; the weapon is used the normal way
+    local w3 = newGame()
+    w3:addPlayer("Bob", {pos = {5, 3, -15}})
+    w3:giveTool(w3.me, "Knife", {held = true, remotes = {{name = "Throw"}}})
+    boot(w3, 1.0)
+    w3:tap(w3:button("Combat") or w3:button("Float_throw"), 0, 0)
+    w3:tab("Combat"); w3:toggle("Try known game remotes"); w3:run(0.2)
+    w3:tap(w3:button("Float_throw"), 1050, 340); w3:run(0.3)
+    check(#w3.sent == 0, "with 'Try known game remotes' off the guessed remote is never called")
+    local pressedKey = false
+    for _, e in ipairs(w3.vim) do if e[1] == "key" and e[2] == true then pressedKey = true end end
+    check(pressedKey, "...the throw key is pressed instead")
+    clean(w3, "known remotes off")
 end
 
 print(string.format("\n%d checks passed, %d failed", passes, #failures))

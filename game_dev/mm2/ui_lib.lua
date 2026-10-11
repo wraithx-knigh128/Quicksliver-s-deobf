@@ -44,7 +44,7 @@ local WAVE_LAYERS = {
 }
 local WAVE_LOOKS = {
     ui = {lo = {150, 154, 162}, hi = {236, 240, 248}, alpha = {1.0, 0.86}},        -- rows and small controls: faint light ripples on the dark fill
-    float = {lo = {140, 144, 154}, hi = {240, 244, 252}, alpha = {0.97, 0.45}},    -- floating buttons: clearly visible grey-white waves
+    float = {lo = {140, 144, 154}, hi = {240, 244, 252}, alpha = {0.97, 0.52}},    -- floating buttons: clearly visible grey-white waves
     pill = {lo = {150, 154, 162}, hi = {236, 240, 248}, alpha = {1.0, 0.78}},
 }
 -- one layer = 20 keypoints of a sharpened sine: thin bright crests on a transparent background, which reads as ripples on water
@@ -70,7 +70,7 @@ function UILib.new(cfg)
     local TweenService = game:GetService("TweenService")
     local RunService = game:GetService("RunService")
 
-    local win = {Flags = {}, Tabs = {}, Elements = {}, Connections = {}, Alive = true, Floats = {}}
+    local win = {Flags = {}, Tabs = {}, Elements = {}, Connections = {}, Alive = true, Floats = {}, Tickers = {}}
     local themeName = THEMES[cfg.Theme] and cfg.Theme or "Crimson"
     local T = THEMES[themeName]
     local themed = {}                                                    -- {inst, prop, key}: re-coloured by SetTheme
@@ -196,11 +196,11 @@ function UILib.new(cfg)
         local look = WAVE_LOOKS[o.Look or "ui"]
         local holder = mk("Frame", {Name = "Waves", BackgroundTransparency = 1, BorderSizePixel = 0, Size = UDim2.new(1, 0, 1, 0), ClipsDescendants = true,
             Active = false, ZIndex = o.ZIndex or 1}, host)
-        local skin = {host = host, holder = holder, layers = {}, page = o.Page, global = o.Global, active = o.Active, look = look, radius = o.Radius or 8}
-        corner(holder, o.Radius or 8)
+        local skin = {host = host, holder = holder, layers = {}, page = o.Page, global = o.Global, active = o.Active, look = look, radius = o.Radius or 8, corners = {}}
+        skin.corners[1] = corner(holder, o.Radius or 8)
         for i, layer in ipairs(WAVE_LAYERS) do
             local f = mk("Frame", {Name = "Wave" .. i, BackgroundColor3 = Color3.fromRGB(255, 255, 255), BorderSizePixel = 0, Size = UDim2.new(1, 0, 1, 0)}, holder)
-            corner(f, o.Radius or 8)
+            skin.corners[#skin.corners + 1] = corner(f, o.Radius or 8)
             local colorSeq, alphaSeq = waveSequences(look, layer, o.Strength)
             local g = mk("UIGradient", {Color = colorSeq, Transparency = alphaSeq, Rotation = layer.rot, Offset = Vector2.new(0, 0)}, f)
             skin.layers[i] = {frame = f, grad = g, def = layer}
@@ -209,6 +209,10 @@ function UILib.new(cfg)
         holder.Visible = n > 0
         for i, l in ipairs(skin.layers) do l.frame.Visible = i <= n end
         skins[#skins + 1] = skin
+        function skin:SetRadius(px)                                       -- a resized round button keeps round waves
+            skin.radius = px
+            for _, c in ipairs(skin.corners) do c.CornerRadius = UDim.new(0, px) end
+        end
         function skin:Ripple(x, y)                                        -- a ring of water spreading from the press point
             if win.WaveMode == "Off" or not skin.host.Parent then return end
             local size = math.max(skin.host.AbsoluteSize.X, skin.host.AbsoluteSize.Y, 20)
@@ -221,6 +225,43 @@ function UILib.new(cfg)
             task.delay(0.6, function() if r.Parent then r:Destroy() end end)
         end
         return skin
+    end
+
+    -- Outlines: the water-flow texture lives ONLY on borders. A UIStroke (plus a wider, fainter glow stroke) whose UIGradient is a sharpened sine of grey and white; the gradient's
+    -- Rotation turns, so the bands run round the border like moving water. The inside of the host stays as it was (transparent).
+    local outlines = {}
+    local OUTLINE_LOOK = {lo = {96, 100, 112}, hi = {250, 252, 255}, alpha = {0.62, 0.0}}
+    local OUTLINE_LAYER = {periods = 1.5, phase = 0.4}
+    function win:Outline(host, o)
+        o = o or {}
+        local colors, alphas = waveSequences(OUTLINE_LOOK, OUTLINE_LAYER, 1)
+        local ol = {host = host, grads = {}, page = o.Page, global = o.Global, active = o.Active, speed = o.Speed or 34, phase = (#outlines * 53) % 360, base = {}}
+        local function addStroke(name, thickness, transparency)
+            local st = mk("UIStroke", {Name = name, Thickness = thickness, Color = Color3.fromRGB(255, 255, 255), Transparency = transparency,
+                ApplyStrokeMode = Enum.ApplyStrokeMode.Border}, host)
+            ol.grads[#ol.grads + 1] = mk("UIGradient", {Name = "Flow", Color = colors, Transparency = alphas, Rotation = ol.phase}, st)
+            return st
+        end
+        ol.stroke = addStroke("Outline", o.Thickness or 2.5, o.Transparency or 0)
+        if o.Glow ~= false then ol.glow = addStroke("Glow", (o.Thickness or 2.5) * 2.8, 0.8) end
+        function ol:Flash(color)                                          -- a short solid colour (fired / could not): the flow stands aside
+            ol.flashing = true
+            for _, g in ipairs(ol.grads) do g.Enabled = false end
+            ol.stroke.Color = color
+            if ol.glow then ol.glow.Color = color end
+        end
+        function ol:Reset()
+            ol.flashing = false
+            for _, g in ipairs(ol.grads) do g.Enabled = true end
+            ol.stroke.Color = Color3.fromRGB(255, 255, 255)
+            if ol.glow then ol.glow.Color = Color3.fromRGB(255, 255, 255) end
+        end
+        function ol:SetStrength(a)                                        -- 1 = full, 0 = faint (a dimmed / switched-off button)
+            ol.stroke.Transparency = 1 - a * (1 - (o.Transparency or 0))
+            if ol.glow then ol.glow.Transparency = 1 - a * 0.2 end
+        end
+        outlines[#outlines + 1] = ol
+        return ol
     end
 
     function win:SetWaveMode(mode)
@@ -240,7 +281,7 @@ function UILib.new(cfg)
         if win.WaveMode == "Off" then return end
         waveClock = waveClock + dt
         local step = win.WaveMode == "High" and 1 / 30 or 1 / 15
-        if waveClock - lastWave < step then return end
+        if waveClock - lastWave < step * 0.9 then return end                -- (a little slack: 60 fps then updates every 2nd frame, not sometimes every 3rd)
         lastWave = waveClock
         local n = layersFor(win.WaveMode)
         local shown = win.Main and win.Main.Visible
@@ -261,10 +302,32 @@ function UILib.new(cfg)
                 i = i + 1
             end
         end
+        for i = #outlines, 1, -1 do                                        -- the water runs round every outline that is on screen
+            local ol = outlines[i]
+            if not ol.host.Parent then
+                table.remove(outlines, i)
+            elseif not ol.flashing then
+                local active = ol.global and ol.host.Visible or (shown and ol.host.Visible and (not ol.page or ol.page.Visible))
+                if active and ol.active then active = ol.active() end
+                if active then
+                    local r = (waveClock * ol.speed + ol.phase) % 360
+                    for _, g in ipairs(ol.grads) do g.Rotation = r end
+                end
+            end
+        end
+        for _, f in ipairs(win.Floats) do                                  -- the crosshair turns, the knife circles ...
+            if f.anim and f.Button.Visible and f.Button.Parent then f.anim(waveClock) end
+        end
+        for i = #win.Tickers, 1, -1 do                                     -- other things that move with the waves (a window background): dropped if they ever error
+            local ok, err = pcall(win.Tickers[i], waveClock)
+            if not ok then table.remove(win.Tickers, i); onError("ticker", err) end
+        end
     end)
 
     ---------------------------------------------------------------------------------------------- floating action buttons
-    -- A square button with an icon and a label that lives outside the window (it stays when the menu is hidden). Tap = OnPress, drag = move it.
+    -- A rounded-square glass button: the inside is transparent (only the icon and the label are drawn), the OUTLINE glows and carries the flowing grey water.
+    -- The icon moves: the crosshair turns and pulses, the knife circles, the pistol bobs and kicks. It lives outside the window (it stays when the menu is hidden).
+    -- Tap = OnPress, drag = move it.
     local floatGui
     local function ensureFloatGui()
         if floatGui then return floatGui end
@@ -275,26 +338,58 @@ function UILib.new(cfg)
         return floatGui
     end
 
+    -- t = seconds, size = the button's side in px; holder = the icon (anchored at its centre), scale = its UIScale
+    local ICON_ANIM = {
+        crosshair = function(holder, scale, t, size)
+            holder.Rotation = (t * 42) % 360
+            scale.Scale = 1 + 0.07 * math.sin(t * 3.1)
+            holder.Position = UDim2.new(0.5, 0.025 * size * math.cos(t * 1.7), 0.5, 0.025 * size * math.sin(t * 2.3))     -- the aim drifts a little, as if it was searching
+        end,
+        knife = function(holder, scale, t, size)                                   -- the knife travels round a circle, pointing the way it moves (plain white, no colour)
+            local a = t * 2.4
+            local r = 0.1 * size
+            holder.Position = UDim2.new(0.5, r * math.cos(a), 0.5, r * math.sin(a))
+            holder.Rotation = (math.deg(a) + 140) % 360
+        end,
+        pistol = function(holder, scale, t)
+            local k = t % 3.4
+            holder.Rotation = k < 0.28 and -12 * math.sin(k / 0.28 * math.pi) or 0                    -- a small kick every few seconds
+            holder.Position = UDim2.new(0.5, 0, 0.5, 1.4 * math.sin(t * 2.2))
+        end,
+        bolt = function(holder, scale, t) holder.Rotation = 7 * math.sin(t * 8); scale.Scale = 1 + 0.06 * math.sin(t * 4) end,
+        chevron_up = function(holder, scale, t) holder.Position = UDim2.new(0.5, 0, 0.5, -3 * math.abs(math.sin(t * 3))) end,
+    }
+
     function win:Floating(o)
         local g = ensureFloatGui()
         local f = {Id = o.Id, Locked = o.Locked == true, Size = o.Size or 72, State = o.State == true}
-        local accent = o.Accent or T.accent
         local vp = viewport()
         local fx, fy = (o.Pos and o.Pos[1]) or 0.8, (o.Pos and o.Pos[2]) or 0.25
         local btn = mk("TextButton", {Name = "Float_" .. tostring(o.Id), Text = "", AutoButtonColor = false, BorderSizePixel = 0, Size = UDim2.fromOffset(f.Size, f.Size),
-            Position = UDim2.fromOffset(fx * vp.X, fy * vp.Y), BackgroundColor3 = Color3.fromRGB(58, 60, 66), BackgroundTransparency = 0.12, Visible = o.Visible ~= false}, g)
-        corner(btn, 14)
-        local ring = mk("UIStroke", {Thickness = 2, Color = rgb(accent), ApplyStrokeMode = Enum.ApplyStrokeMode.Border, Transparency = 0.15}, btn)
-        local skin = win:Skin(btn, {Radius = 14, Look = "float", Global = true})
+            Position = UDim2.fromOffset(fx * vp.X, fy * vp.Y), BackgroundColor3 = Color3.fromRGB(8, 8, 12), BackgroundTransparency = 0.82, Visible = o.Visible ~= false}, g)
+        mk("UICorner", {CornerRadius = UDim.new(0.24, 0)}, btn)
+        local outline = win:Outline(btn, {Thickness = 2.5, Global = true})
         local iconBox = mk("CanvasGroup", {Name = "IconBox", BackgroundTransparency = 1, BorderSizePixel = 0, AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 0),
-            Size = UDim2.fromOffset(f.Size, f.Size * 0.62), ZIndex = 3}, btn)
-        local ic = icon(o.Icon or "crosshair", iconBox, math.floor(f.Size * 0.42), Color3.fromRGB(246, 247, 250), UDim2.new(0.5, -math.floor(f.Size * 0.21), 0.5, -math.floor(f.Size * 0.21)))
-        local label = mk("TextLabel", {Name = "Label", BackgroundTransparency = 1, AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -5), Size = UDim2.new(1, -6, 0, 14),
-            Text = o.Title or "", Font = Enum.Font.GothamBold, TextSize = 11, TextColor3 = Color3.fromRGB(250, 250, 252), TextStrokeTransparency = 0.45, TextStrokeColor3 = Color3.fromRGB(20, 20, 24),
+            Size = UDim2.fromOffset(f.Size, f.Size * 0.7), ZIndex = 3}, btn)
+        local label = mk("TextLabel", {Name = "Label", BackgroundTransparency = 1, AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -math.floor(f.Size * 0.09)), Size = UDim2.new(0.9, 0, 0, 12),
+            Text = o.Title or "", Font = Enum.Font.GothamBold, TextSize = 10, TextColor3 = Color3.fromRGB(250, 250, 252), TextStrokeTransparency = 0.5, TextStrokeColor3 = Color3.fromRGB(10, 10, 14),
             ZIndex = 3}, btn)
         local shade = mk("Frame", {Name = "Cooldown", BackgroundColor3 = Color3.fromRGB(10, 10, 14), BackgroundTransparency = 1, BorderSizePixel = 0, Size = UDim2.new(1, 0, 1, 0), ZIndex = 6}, btn)
-        corner(shade, 14)
-        f.Button, f.Gui = btn, g
+        mk("UICorner", {CornerRadius = UDim.new(0.24, 0)}, shade)
+        local pressScale = mk("UIScale", {Scale = 1}, btn)
+        f.Button, f.Gui, f.Outline = btn, g, outline
+
+        local ic, iconScale
+        local function buildIcon()
+            if ic then ic:Destroy() end
+            local isz = math.floor(f.Size * (o.Icon == "knife" and 0.36 or 0.4))
+            ic = icon(o.Icon or "crosshair", iconBox, isz, Color3.fromRGB(246, 247, 250), UDim2.new(0.5, 0, 0.5, 0))
+            ic.AnchorPoint = Vector2.new(0.5, 0.5)
+            iconScale = mk("UIScale", {Scale = 1}, ic)
+        end
+        buildIcon()
+        local step = ICON_ANIM[o.Icon or "crosshair"]
+        f.anim = step and function(t) step(ic, iconScale, t, f.Size) end or nil
 
         local function place(px, py)
             local v = viewport()
@@ -311,35 +406,36 @@ function UILib.new(cfg)
         function f:SetLocked(b) f.Locked = b == true end
         function f:SetSize(px)
             f.Size = clamp(px, 56, 140)
-            label.TextSize = clamp(math.floor(f.Size * 0.135), 8, 13)
+            label.TextSize = clamp(math.floor(f.Size * 0.125), 8, 12)
+            label.Position = UDim2.new(0.5, 0, 1, -math.floor(f.Size * 0.09))
             btn.Size = UDim2.fromOffset(f.Size, f.Size)
-            iconBox.Size = UDim2.fromOffset(f.Size, f.Size * 0.62)
-            ic.Size = UDim2.fromOffset(math.floor(f.Size * 0.42), math.floor(f.Size * 0.42))
-            ic.Position = UDim2.new(0.5, -math.floor(f.Size * 0.21), 0.5, -math.floor(f.Size * 0.21))
+            iconBox.Size = UDim2.fromOffset(f.Size, f.Size * 0.7)
+            buildIcon()
             local fx2, fy2 = f:GetPos()
             f:SetPos(fx2, fy2)
         end
-        function f:SetState(on)                                           -- toggle buttons (SPEED ON / SPEED OFF): label and ring show the state
+        local function strength()                                         -- how bright the outline is: dimmed (no weapon) and switched-off toggles are fainter
+            outline:SetStrength((f.Dim and 0.45 or 1) * ((o.Toggle and not f.State) and 0.6 or 1))
+        end
+        function f:SetState(on)                                           -- toggle buttons (SPEED ON / SPEED OFF): the label says it and the outline brightens
             f.State = on == true
             if o.Toggle then
                 label.Text = f.State and (o.LabelOn or o.Title or "") or (o.LabelOff or o.Title or "")
-                local c = f.State and (o.Accent or T.accent) or {150, 150, 160}
-                ring.Color = rgb(c)
+                strength()
             end
         end
         function f:SetDim(b)                                              -- e.g. you do not hold the weapon right now
+            f.Dim = b == true
             iconBox.GroupTransparency = b and 0.55 or 0
             label.TextTransparency = b and 0.45 or 0
+            strength()
         end
-        function f:Flash(ok)                                              -- green = fired, red = nothing happened
-            local c = ok and T.good or T.bad
-            ring.Color = rgb(c)
-            tween(ring, {Thickness = 4}, 0.08)
+        function f:Flash(ok)                                              -- green = fired, red = nothing happened (the water stands aside for a moment)
+            outline:Flash(rgb(ok and T.good or T.bad))
+            tween(outline.stroke, {Thickness = 4.5}, 0.08)
             task.delay(0.35, function()
                 if not btn.Parent then return end
-                local base = accent
-                if o.Toggle and not f.State then base = {150, 150, 160} end
-                ring.Color = rgb(base); tween(ring, {Thickness = 2}, 0.2)
+                outline:Reset(); tween(outline.stroke, {Thickness = 2.5}, 0.2)
             end)
         end
         function f:Cooldown(seconds)
@@ -347,7 +443,7 @@ function UILib.new(cfg)
             shade.BackgroundTransparency = 0.45
             tween(shade, {BackgroundTransparency = 1}, seconds)
         end
-        function f:Destroy() pcall(function() btn:Destroy() end) end
+        function f:Destroy() f.anim = nil; pcall(function() btn:Destroy() end) end
         f:SetSize(f.Size)
         if o.Toggle then f:SetState(f.State) end
 
@@ -358,7 +454,7 @@ function UILib.new(cfg)
                 pressed, dragging, cancelled = true, false, false
                 sx, sy = input.Position.X, input.Position.Y
                 bx, by = btn.Position.X.Offset, btn.Position.Y.Offset
-                skin:Ripple(sx, sy)
+                tween(pressScale, {Scale = 0.92}, 0.08)
             end
         end)
         connect(UIS.InputChanged, function(input)
@@ -374,6 +470,7 @@ function UILib.new(cfg)
             if not pressed then return end
             if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                 pressed = false
+                tween(pressScale, {Scale = 1}, 0.12)
                 if dragging then
                     dragging = false
                     if o.OnMoved then safe("float moved", o.OnMoved, f:GetPos()) end

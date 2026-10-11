@@ -286,7 +286,7 @@ local WAVE_LAYERS = {
 }
 local WAVE_LOOKS = {
     ui = {lo = {150, 154, 162}, hi = {236, 240, 248}, alpha = {1.0, 0.86}},        -- rows and small controls: faint light ripples on the dark fill
-    float = {lo = {140, 144, 154}, hi = {240, 244, 252}, alpha = {0.97, 0.45}},    -- floating buttons: clearly visible grey-white waves
+    float = {lo = {140, 144, 154}, hi = {240, 244, 252}, alpha = {0.97, 0.52}},    -- floating buttons: clearly visible grey-white waves
     pill = {lo = {150, 154, 162}, hi = {236, 240, 248}, alpha = {1.0, 0.78}},
 }
 -- one layer = 20 keypoints of a sharpened sine: thin bright crests on a transparent background, which reads as ripples on water
@@ -312,7 +312,7 @@ function UILib.new(cfg)
     local TweenService = game:GetService("TweenService")
     local RunService = game:GetService("RunService")
 
-    local win = {Flags = {}, Tabs = {}, Elements = {}, Connections = {}, Alive = true, Floats = {}}
+    local win = {Flags = {}, Tabs = {}, Elements = {}, Connections = {}, Alive = true, Floats = {}, Tickers = {}}
     local themeName = THEMES[cfg.Theme] and cfg.Theme or "Crimson"
     local T = THEMES[themeName]
     local themed = {}                                                    -- {inst, prop, key}: re-coloured by SetTheme
@@ -438,11 +438,11 @@ function UILib.new(cfg)
         local look = WAVE_LOOKS[o.Look or "ui"]
         local holder = mk("Frame", {Name = "Waves", BackgroundTransparency = 1, BorderSizePixel = 0, Size = UDim2.new(1, 0, 1, 0), ClipsDescendants = true,
             Active = false, ZIndex = o.ZIndex or 1}, host)
-        local skin = {host = host, holder = holder, layers = {}, page = o.Page, global = o.Global, active = o.Active, look = look, radius = o.Radius or 8}
-        corner(holder, o.Radius or 8)
+        local skin = {host = host, holder = holder, layers = {}, page = o.Page, global = o.Global, active = o.Active, look = look, radius = o.Radius or 8, corners = {}}
+        skin.corners[1] = corner(holder, o.Radius or 8)
         for i, layer in ipairs(WAVE_LAYERS) do
             local f = mk("Frame", {Name = "Wave" .. i, BackgroundColor3 = Color3.fromRGB(255, 255, 255), BorderSizePixel = 0, Size = UDim2.new(1, 0, 1, 0)}, holder)
-            corner(f, o.Radius or 8)
+            skin.corners[#skin.corners + 1] = corner(f, o.Radius or 8)
             local colorSeq, alphaSeq = waveSequences(look, layer, o.Strength)
             local g = mk("UIGradient", {Color = colorSeq, Transparency = alphaSeq, Rotation = layer.rot, Offset = Vector2.new(0, 0)}, f)
             skin.layers[i] = {frame = f, grad = g, def = layer}
@@ -451,6 +451,10 @@ function UILib.new(cfg)
         holder.Visible = n > 0
         for i, l in ipairs(skin.layers) do l.frame.Visible = i <= n end
         skins[#skins + 1] = skin
+        function skin:SetRadius(px)                                       -- a resized round button keeps round waves
+            skin.radius = px
+            for _, c in ipairs(skin.corners) do c.CornerRadius = UDim.new(0, px) end
+        end
         function skin:Ripple(x, y)                                        -- a ring of water spreading from the press point
             if win.WaveMode == "Off" or not skin.host.Parent then return end
             local size = math.max(skin.host.AbsoluteSize.X, skin.host.AbsoluteSize.Y, 20)
@@ -463,6 +467,43 @@ function UILib.new(cfg)
             task.delay(0.6, function() if r.Parent then r:Destroy() end end)
         end
         return skin
+    end
+
+    -- Outlines: the water-flow texture lives ONLY on borders. A UIStroke (plus a wider, fainter glow stroke) whose UIGradient is a sharpened sine of grey and white; the gradient's
+    -- Rotation turns, so the bands run round the border like moving water. The inside of the host stays as it was (transparent).
+    local outlines = {}
+    local OUTLINE_LOOK = {lo = {96, 100, 112}, hi = {250, 252, 255}, alpha = {0.62, 0.0}}
+    local OUTLINE_LAYER = {periods = 1.5, phase = 0.4}
+    function win:Outline(host, o)
+        o = o or {}
+        local colors, alphas = waveSequences(OUTLINE_LOOK, OUTLINE_LAYER, 1)
+        local ol = {host = host, grads = {}, page = o.Page, global = o.Global, active = o.Active, speed = o.Speed or 34, phase = (#outlines * 53) % 360, base = {}}
+        local function addStroke(name, thickness, transparency)
+            local st = mk("UIStroke", {Name = name, Thickness = thickness, Color = Color3.fromRGB(255, 255, 255), Transparency = transparency,
+                ApplyStrokeMode = Enum.ApplyStrokeMode.Border}, host)
+            ol.grads[#ol.grads + 1] = mk("UIGradient", {Name = "Flow", Color = colors, Transparency = alphas, Rotation = ol.phase}, st)
+            return st
+        end
+        ol.stroke = addStroke("Outline", o.Thickness or 2.5, o.Transparency or 0)
+        if o.Glow ~= false then ol.glow = addStroke("Glow", (o.Thickness or 2.5) * 2.8, 0.8) end
+        function ol:Flash(color)                                          -- a short solid colour (fired / could not): the flow stands aside
+            ol.flashing = true
+            for _, g in ipairs(ol.grads) do g.Enabled = false end
+            ol.stroke.Color = color
+            if ol.glow then ol.glow.Color = color end
+        end
+        function ol:Reset()
+            ol.flashing = false
+            for _, g in ipairs(ol.grads) do g.Enabled = true end
+            ol.stroke.Color = Color3.fromRGB(255, 255, 255)
+            if ol.glow then ol.glow.Color = Color3.fromRGB(255, 255, 255) end
+        end
+        function ol:SetStrength(a)                                        -- 1 = full, 0 = faint (a dimmed / switched-off button)
+            ol.stroke.Transparency = 1 - a * (1 - (o.Transparency or 0))
+            if ol.glow then ol.glow.Transparency = 1 - a * 0.2 end
+        end
+        outlines[#outlines + 1] = ol
+        return ol
     end
 
     function win:SetWaveMode(mode)
@@ -482,7 +523,7 @@ function UILib.new(cfg)
         if win.WaveMode == "Off" then return end
         waveClock = waveClock + dt
         local step = win.WaveMode == "High" and 1 / 30 or 1 / 15
-        if waveClock - lastWave < step then return end
+        if waveClock - lastWave < step * 0.9 then return end                -- (a little slack: 60 fps then updates every 2nd frame, not sometimes every 3rd)
         lastWave = waveClock
         local n = layersFor(win.WaveMode)
         local shown = win.Main and win.Main.Visible
@@ -503,10 +544,32 @@ function UILib.new(cfg)
                 i = i + 1
             end
         end
+        for i = #outlines, 1, -1 do                                        -- the water runs round every outline that is on screen
+            local ol = outlines[i]
+            if not ol.host.Parent then
+                table.remove(outlines, i)
+            elseif not ol.flashing then
+                local active = ol.global and ol.host.Visible or (shown and ol.host.Visible and (not ol.page or ol.page.Visible))
+                if active and ol.active then active = ol.active() end
+                if active then
+                    local r = (waveClock * ol.speed + ol.phase) % 360
+                    for _, g in ipairs(ol.grads) do g.Rotation = r end
+                end
+            end
+        end
+        for _, f in ipairs(win.Floats) do                                  -- the crosshair turns, the knife circles ...
+            if f.anim and f.Button.Visible and f.Button.Parent then f.anim(waveClock) end
+        end
+        for i = #win.Tickers, 1, -1 do                                     -- other things that move with the waves (a window background): dropped if they ever error
+            local ok, err = pcall(win.Tickers[i], waveClock)
+            if not ok then table.remove(win.Tickers, i); onError("ticker", err) end
+        end
     end)
 
     ---------------------------------------------------------------------------------------------- floating action buttons
-    -- A square button with an icon and a label that lives outside the window (it stays when the menu is hidden). Tap = OnPress, drag = move it.
+    -- A rounded-square glass button: the inside is transparent (only the icon and the label are drawn), the OUTLINE glows and carries the flowing grey water.
+    -- The icon moves: the crosshair turns and pulses, the knife circles, the pistol bobs and kicks. It lives outside the window (it stays when the menu is hidden).
+    -- Tap = OnPress, drag = move it.
     local floatGui
     local function ensureFloatGui()
         if floatGui then return floatGui end
@@ -517,26 +580,58 @@ function UILib.new(cfg)
         return floatGui
     end
 
+    -- t = seconds, size = the button's side in px; holder = the icon (anchored at its centre), scale = its UIScale
+    local ICON_ANIM = {
+        crosshair = function(holder, scale, t, size)
+            holder.Rotation = (t * 42) % 360
+            scale.Scale = 1 + 0.07 * math.sin(t * 3.1)
+            holder.Position = UDim2.new(0.5, 0.025 * size * math.cos(t * 1.7), 0.5, 0.025 * size * math.sin(t * 2.3))     -- the aim drifts a little, as if it was searching
+        end,
+        knife = function(holder, scale, t, size)                                   -- the knife travels round a circle, pointing the way it moves (plain white, no colour)
+            local a = t * 2.4
+            local r = 0.1 * size
+            holder.Position = UDim2.new(0.5, r * math.cos(a), 0.5, r * math.sin(a))
+            holder.Rotation = (math.deg(a) + 140) % 360
+        end,
+        pistol = function(holder, scale, t)
+            local k = t % 3.4
+            holder.Rotation = k < 0.28 and -12 * math.sin(k / 0.28 * math.pi) or 0                    -- a small kick every few seconds
+            holder.Position = UDim2.new(0.5, 0, 0.5, 1.4 * math.sin(t * 2.2))
+        end,
+        bolt = function(holder, scale, t) holder.Rotation = 7 * math.sin(t * 8); scale.Scale = 1 + 0.06 * math.sin(t * 4) end,
+        chevron_up = function(holder, scale, t) holder.Position = UDim2.new(0.5, 0, 0.5, -3 * math.abs(math.sin(t * 3))) end,
+    }
+
     function win:Floating(o)
         local g = ensureFloatGui()
         local f = {Id = o.Id, Locked = o.Locked == true, Size = o.Size or 72, State = o.State == true}
-        local accent = o.Accent or T.accent
         local vp = viewport()
         local fx, fy = (o.Pos and o.Pos[1]) or 0.8, (o.Pos and o.Pos[2]) or 0.25
         local btn = mk("TextButton", {Name = "Float_" .. tostring(o.Id), Text = "", AutoButtonColor = false, BorderSizePixel = 0, Size = UDim2.fromOffset(f.Size, f.Size),
-            Position = UDim2.fromOffset(fx * vp.X, fy * vp.Y), BackgroundColor3 = Color3.fromRGB(58, 60, 66), BackgroundTransparency = 0.12, Visible = o.Visible ~= false}, g)
-        corner(btn, 14)
-        local ring = mk("UIStroke", {Thickness = 2, Color = rgb(accent), ApplyStrokeMode = Enum.ApplyStrokeMode.Border, Transparency = 0.15}, btn)
-        local skin = win:Skin(btn, {Radius = 14, Look = "float", Global = true})
+            Position = UDim2.fromOffset(fx * vp.X, fy * vp.Y), BackgroundColor3 = Color3.fromRGB(8, 8, 12), BackgroundTransparency = 0.82, Visible = o.Visible ~= false}, g)
+        mk("UICorner", {CornerRadius = UDim.new(0.24, 0)}, btn)
+        local outline = win:Outline(btn, {Thickness = 2.5, Global = true})
         local iconBox = mk("CanvasGroup", {Name = "IconBox", BackgroundTransparency = 1, BorderSizePixel = 0, AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 0, 0),
-            Size = UDim2.fromOffset(f.Size, f.Size * 0.62), ZIndex = 3}, btn)
-        local ic = icon(o.Icon or "crosshair", iconBox, math.floor(f.Size * 0.42), Color3.fromRGB(246, 247, 250), UDim2.new(0.5, -math.floor(f.Size * 0.21), 0.5, -math.floor(f.Size * 0.21)))
-        local label = mk("TextLabel", {Name = "Label", BackgroundTransparency = 1, AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -5), Size = UDim2.new(1, -6, 0, 14),
-            Text = o.Title or "", Font = Enum.Font.GothamBold, TextSize = 11, TextColor3 = Color3.fromRGB(250, 250, 252), TextStrokeTransparency = 0.45, TextStrokeColor3 = Color3.fromRGB(20, 20, 24),
+            Size = UDim2.fromOffset(f.Size, f.Size * 0.7), ZIndex = 3}, btn)
+        local label = mk("TextLabel", {Name = "Label", BackgroundTransparency = 1, AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -math.floor(f.Size * 0.09)), Size = UDim2.new(0.9, 0, 0, 12),
+            Text = o.Title or "", Font = Enum.Font.GothamBold, TextSize = 10, TextColor3 = Color3.fromRGB(250, 250, 252), TextStrokeTransparency = 0.5, TextStrokeColor3 = Color3.fromRGB(10, 10, 14),
             ZIndex = 3}, btn)
         local shade = mk("Frame", {Name = "Cooldown", BackgroundColor3 = Color3.fromRGB(10, 10, 14), BackgroundTransparency = 1, BorderSizePixel = 0, Size = UDim2.new(1, 0, 1, 0), ZIndex = 6}, btn)
-        corner(shade, 14)
-        f.Button, f.Gui = btn, g
+        mk("UICorner", {CornerRadius = UDim.new(0.24, 0)}, shade)
+        local pressScale = mk("UIScale", {Scale = 1}, btn)
+        f.Button, f.Gui, f.Outline = btn, g, outline
+
+        local ic, iconScale
+        local function buildIcon()
+            if ic then ic:Destroy() end
+            local isz = math.floor(f.Size * (o.Icon == "knife" and 0.36 or 0.4))
+            ic = icon(o.Icon or "crosshair", iconBox, isz, Color3.fromRGB(246, 247, 250), UDim2.new(0.5, 0, 0.5, 0))
+            ic.AnchorPoint = Vector2.new(0.5, 0.5)
+            iconScale = mk("UIScale", {Scale = 1}, ic)
+        end
+        buildIcon()
+        local step = ICON_ANIM[o.Icon or "crosshair"]
+        f.anim = step and function(t) step(ic, iconScale, t, f.Size) end or nil
 
         local function place(px, py)
             local v = viewport()
@@ -553,35 +648,36 @@ function UILib.new(cfg)
         function f:SetLocked(b) f.Locked = b == true end
         function f:SetSize(px)
             f.Size = clamp(px, 56, 140)
-            label.TextSize = clamp(math.floor(f.Size * 0.135), 8, 13)
+            label.TextSize = clamp(math.floor(f.Size * 0.125), 8, 12)
+            label.Position = UDim2.new(0.5, 0, 1, -math.floor(f.Size * 0.09))
             btn.Size = UDim2.fromOffset(f.Size, f.Size)
-            iconBox.Size = UDim2.fromOffset(f.Size, f.Size * 0.62)
-            ic.Size = UDim2.fromOffset(math.floor(f.Size * 0.42), math.floor(f.Size * 0.42))
-            ic.Position = UDim2.new(0.5, -math.floor(f.Size * 0.21), 0.5, -math.floor(f.Size * 0.21))
+            iconBox.Size = UDim2.fromOffset(f.Size, f.Size * 0.7)
+            buildIcon()
             local fx2, fy2 = f:GetPos()
             f:SetPos(fx2, fy2)
         end
-        function f:SetState(on)                                           -- toggle buttons (SPEED ON / SPEED OFF): label and ring show the state
+        local function strength()                                         -- how bright the outline is: dimmed (no weapon) and switched-off toggles are fainter
+            outline:SetStrength((f.Dim and 0.45 or 1) * ((o.Toggle and not f.State) and 0.6 or 1))
+        end
+        function f:SetState(on)                                           -- toggle buttons (SPEED ON / SPEED OFF): the label says it and the outline brightens
             f.State = on == true
             if o.Toggle then
                 label.Text = f.State and (o.LabelOn or o.Title or "") or (o.LabelOff or o.Title or "")
-                local c = f.State and (o.Accent or T.accent) or {150, 150, 160}
-                ring.Color = rgb(c)
+                strength()
             end
         end
         function f:SetDim(b)                                              -- e.g. you do not hold the weapon right now
+            f.Dim = b == true
             iconBox.GroupTransparency = b and 0.55 or 0
             label.TextTransparency = b and 0.45 or 0
+            strength()
         end
-        function f:Flash(ok)                                              -- green = fired, red = nothing happened
-            local c = ok and T.good or T.bad
-            ring.Color = rgb(c)
-            tween(ring, {Thickness = 4}, 0.08)
+        function f:Flash(ok)                                              -- green = fired, red = nothing happened (the water stands aside for a moment)
+            outline:Flash(rgb(ok and T.good or T.bad))
+            tween(outline.stroke, {Thickness = 4.5}, 0.08)
             task.delay(0.35, function()
                 if not btn.Parent then return end
-                local base = accent
-                if o.Toggle and not f.State then base = {150, 150, 160} end
-                ring.Color = rgb(base); tween(ring, {Thickness = 2}, 0.2)
+                outline:Reset(); tween(outline.stroke, {Thickness = 2.5}, 0.2)
             end)
         end
         function f:Cooldown(seconds)
@@ -589,7 +685,7 @@ function UILib.new(cfg)
             shade.BackgroundTransparency = 0.45
             tween(shade, {BackgroundTransparency = 1}, seconds)
         end
-        function f:Destroy() pcall(function() btn:Destroy() end) end
+        function f:Destroy() f.anim = nil; pcall(function() btn:Destroy() end) end
         f:SetSize(f.Size)
         if o.Toggle then f:SetState(f.State) end
 
@@ -600,7 +696,7 @@ function UILib.new(cfg)
                 pressed, dragging, cancelled = true, false, false
                 sx, sy = input.Position.X, input.Position.Y
                 bx, by = btn.Position.X.Offset, btn.Position.Y.Offset
-                skin:Ripple(sx, sy)
+                tween(pressScale, {Scale = 0.92}, 0.08)
             end
         end)
         connect(UIS.InputChanged, function(input)
@@ -616,6 +712,7 @@ function UILib.new(cfg)
             if not pressed then return end
             if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                 pressed = false
+                tween(pressScale, {Scale = 1}, 0.12)
                 if dragging then
                     dragging = false
                     if o.OnMoved then safe("float moved", o.OnMoved, f:GetPos()) end
@@ -1348,23 +1445,43 @@ local function build(win, WindUI, UILib, cfg)
     end
 
     ---------------------------------------------------------------------------------------------- the window
+    -- Small and clean, like the reference: Mac-style close button, no search bar / version tag / user card / minimise / fullscreen, tabs straight in the sidebar.
     local themeName = Adapter.themeFor(cfg.Theme)
     local vp = viewport()
-    local size = UDim2.fromOffset(clamp(math.floor(vp.X * 0.62), 480, 640), clamp(vp.Y - 80, 270, 460))      -- WindUI scales the window down by itself if it does not fit
+    local size = UDim2.fromOffset(clamp(math.floor(vp.X * 0.6), 440, 560), clamp(vp.Y - 70, 250, 380))      -- WindUI scales the window down by itself if it does not fit
+    win.Tickers = win.Tickers or {}
+    local glassTouched = {}
+
+    -- frosted cards: every theme's element background becomes translucent grey (the backdrop shows through), and each card fades out towards the right
+    local function glass(name)
+        local t = WindUI.Themes and WindUI.Themes[name]
+        if t and not glassTouched[name] then
+            glassTouched[name] = true
+            t.ElementBackgroundTransparency = math.max(t.ElementBackgroundTransparency or 0, 0.42)
+        end
+    end
+    glass(themeName)
+
     local Window = WindUI:CreateWindow{
         Title = cfg.Title or "Hub", Author = cfg.Subtitle, Folder = cfg.Folder or "WraithsHub", Icon = "swords", NewElements = true, Theme = themeName,
-        Size = size, MinSize = Vector2.new(440, 260), SideBarWidth = vp.X < 900 and 150 or 190, HideSearchBar = false,
-        Transparent = true, HidePanelBackground = false, ToggleKey = cfg.ToggleKey,
-        Topbar = {Height = 44, ButtonsType = "Mac"},
-        User = {Enabled = true, Anonymous = false},
+        Size = size, MinSize = Vector2.new(380, 230), SideBarWidth = vp.X < 900 and 124 or 150, HideSearchBar = true,
+        Transparent = true, HidePanelBackground = true, ElementsRadius = 14, Radius = 16, ToggleKey = cfg.ToggleKey,
+        Topbar = {Height = 38, ButtonsType = "Mac"},
+        User = {Enabled = false},
         OpenButton = {Title = cfg.Title or "Hub", CornerRadius = UDim.new(1, 0), StrokeThickness = 2, Enabled = true, Draggable = true, OnlyMobile = false, Scale = 0.7,
-            Color = ColorSequence.new(Color3.fromHex("#7775F2"), Color3.fromHex("#EF4F1D"))},
+            Color = ColorSequence.new(Color3.fromHex("#9aa0b4"), Color3.fromHex("#e84a8a"))},
     }
     win.Window, win.WindUI = Window, WindUI
     if cfg.Parent and WindUI.SetParent then pcall(function() WindUI:SetParent(cfg.Parent) end) end
-    pcall(function() Window:Tag{Title = "v" .. tostring(WindUI.Version), Icon = "github", Color = Color3.fromHex("#1c1c1c"), Border = true} end)
-
-    local group = Window:Section{Title = cfg.Group or "Menu", Opened = true}
+    pcall(function() Window:DisableTopbarButtons{"Minimize", "Fullscreen"} end)
+    pcall(function() Window:SetUIScale(clamp(cfg.Scale or 0.9, 0.55, 1.2)) end)
+    if cfg.Mono ~= false then                                                -- the reference menu uses a monospace face
+        pcall(function()
+            local family = Font.fromEnum(Enum.Font.Code).Family
+            if type(family) == "string" and family ~= "" then WindUI:SetFont(family) end
+        end)
+    end
+    pcall(function() WindUI:SetTheme(themeName) end)                           -- (re-applies the theme with the frosted element background)
 
     -- the hub reads win.Main.Visible and sets win.ToggleKey, like with the classic menu
     local toggleKey = cfg.ToggleKey
@@ -1389,8 +1506,20 @@ local function build(win, WindUI, UILib, cfg)
     end
     local function fire(cb, ...) if cb then safe("callback", cb, ...) end end
 
+    local FADE = NumberSequence.new({NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(0.45, 0.12), NumberSequenceKeypoint.new(1, 0.78)})
+    local function decorate(p, ui)                                           -- a card fades out to the right
+        pcall(function()
+            local host = p.ElementFrame
+            if not (host and host:IsA("GuiObject")) then return end
+            local g = Instance.new("UIGradient")
+            g.Name = "WraithFade"
+            g.Transparency = FADE
+            g.Parent = host
+        end)
+    end
+
     function win:Tab(name, iconKind)
-        local ui = group:Tab{Title = name, Icon = ICONS[iconKind or "dots"] or "circle", IconColor = Color3.fromHex(TAB_COLORS[iconKind] or "#83889E"), IconShape = "Square", Border = true}
+        local ui = Window:Tab{Title = name, Icon = ICONS[iconKind or "dots"] or "circle"}
         local tab = {name = name, ui = ui}
         win.Tabs[#win.Tabs + 1] = tab
 
@@ -1413,17 +1542,15 @@ local function build(win, WindUI, UILib, cfg)
         function tab:Button(o)
             local el = {Value = nil, Title = o.Title, Click = function() fire(o.Callback) end}
             el.Ui = ui:Button{Title = o.Title or "Button", Desc = o.Desc, Icon = "mouse-pointer-click", Callback = function() fire(o.Callback) end}
+            decorate(el.Ui, ui)
             function el:Set() end
-            -- the water-wave skin every button wears: grey-white ripples under the label, moving while this tab is open
+            -- the grey water flows round the button's OUTLINE (nothing is drawn inside it); it runs while this tab is open
             local okSkin, skinErr = pcall(function()
                 local host = el.Ui.ElementFrame
-                local skin = win:Skin(host, {Radius = 14, Look = "ui", Strength = 0.55, Page = ui.UIElements and ui.UIElements.ContainerFrame, ZIndex = 0})
-                connect(host.InputBegan, function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then skin:Ripple(input.Position.X, input.Position.Y) end
-                end)
-                el.Skin = skin
+                local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 14); c.Parent = host
+                el.Outline = win:Outline(host, {Thickness = 1.5, Glow = false, Page = ui.ContainerFrame})
             end)
-            if not okSkin then onError("button skin", skinErr) end
+            if not okSkin then onError("button outline", skinErr) end
             return addElement(el)
         end
 
@@ -1442,6 +1569,7 @@ local function build(win, WindUI, UILib, cfg)
                 if not silent and (changed or o.FireSame) then fire(o.Callback, v) end
             end
             el.Title, el.Ui = o.Title, p
+            decorate(p, ui)
             addElement(el, o.Flag)
             if el.Value and o.Callback and not o.NoInitialCallback then fire(o.Callback, true) end
             return el
@@ -1474,6 +1602,7 @@ local function build(win, WindUI, UILib, cfg)
                 if not silent and changed then fire(o.Callback, v) end
             end
             el.Title, el.Ui = o.Title, p
+            decorate(p, ui)
             addElement(el, o.Flag)
             return el
         end
@@ -1499,6 +1628,7 @@ local function build(win, WindUI, UILib, cfg)
                 pcall(function() p:Refresh(values) end)
             end
             el.Title, el.Ui = o.Title, p
+            decorate(p, ui)
             return addElement(el, o.Flag)
         end
 
@@ -1518,6 +1648,7 @@ local function build(win, WindUI, UILib, cfg)
                 if not silent and changed then fire(o.Callback, v) end
             end
             el.Title, el.Ui = o.Title, p
+            decorate(p, ui)
             return addElement(el, o.Flag)
         end
 
@@ -1552,6 +1683,7 @@ local function build(win, WindUI, UILib, cfg)
                 if input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode.Name == el.Value then el.Down = false end
             end)
             el.Title, el.Ui = o.Title, p
+            decorate(p, ui)
             return addElement(el, o.Flag)
         end
 
@@ -1568,11 +1700,16 @@ local function build(win, WindUI, UILib, cfg)
     function win:SetTheme(name)
         name = Adapter.themeFor(name)
         themeName = name
+        glass(name)
         pcall(function() WindUI:SetTheme(name) end)
     end
     function win:GetTheme() return themeName end
     function win:SetAvatar() end                                           -- WindUI shows the player's own avatar and name (User option)
-    function win:SelectTab(name) pcall(function() Window:SelectTab(name) end) end
+    function win:SelectTab(name)                                              -- WindUI shows no tab until one is selected, so the hub selects the first one
+        for i, t in ipairs(win.Tabs) do
+            if t.name == name or i == name then pcall(function() Window:SelectTab(i) end); return end
+        end
+    end
     function win:SetVisible(v) if v then Window:Open() else Window:Close() end end
     function win:Toggle() Window:Toggle() end
     function win:GetState()
@@ -1590,7 +1727,6 @@ local function build(win, WindUI, UILib, cfg)
     win.SetTheme(win, themeName)
 
     ---------------------------------------------------------------------------------------------- window background (video / picture)
-    local backdrop = {media = nil, dim = nil, Dim = clamp(cfg.BackgroundDim or 0.45, 0, 0.9), Url = nil, Token = 0}
     local function folder() return (cfg.Folder or "WraithsHub") .. "/assets" end
 
     -- executors' request() looks like a browser (some sites turn Roblox's own HttpGet away); HttpGet is the fallback
@@ -1631,22 +1767,62 @@ local function build(win, WindUI, UILib, cfg)
         return kind, getcustomasset(path)
     end
 
-    local function clearBackdrop()
-        if backdrop.media then pcall(function() backdrop.media:Destroy() end); backdrop.media = nil end
-        if backdrop.dim then pcall(function() backdrop.dim:Destroy() end); backdrop.dim = nil end
+    ---------------------------------------------------------------------------------------------- outline water, transparent inside
+    -- The inside of the window stays transparent. The grey water-flow texture lives only on OUTLINES: the window's border (here) and the borders of the buttons (above).
+    local bgLayer = Window.UIElements and Window.UIElements.Main and Window.UIElements.Main:FindFirstChild("Background")
+    local radius = Window.UICorner or 16
+    local function rounded(f, r) local c = Instance.new("UICorner"); c.CornerRadius = r or UDim.new(0, radius); c.Parent = f; return c end
+    do
+        local frame = Instance.new("Frame")
+        frame.Name = "WraithOutline"
+        frame.Size = UDim2.new(1, 0, 1, 0)
+        frame.BackgroundTransparency = 1
+        frame.BorderSizePixel = 0
+        frame.Active = false
+        frame.ZIndex = 100
+        rounded(frame)
+        frame.Parent = Window.UIElements.Main
+        win.WindowOutline = win:Outline(frame, {Thickness = 2, Global = true, Speed = 24, Active = function() return not Window.Closed end})
     end
-    local function applyDim() if backdrop.dim then backdrop.dim.BackgroundTransparency = 1 - clamp(backdrop.Dim, 0, 0.9) end end
+    pcall(function() Window:SetBackgroundTransparency(clamp(cfg.WindowAlpha or 0.5, 0, 0.9)) end)      -- a see-through window
+    function win:SetBackgroundTransparency(v) pcall(function() Window:SetBackgroundTransparency(clamp(tonumber(v) or 0.5, 0, 0.9)) end) end
 
-    function win:SetBackgroundDim(v) backdrop.Dim = clamp(tonumber(v) or backdrop.Dim, 0, 0.9); applyDim() end
+    local dimFrame
+    if bgLayer then
+        dimFrame = Instance.new("Frame")
+        dimFrame.Name = "WraithDim"
+        dimFrame.Size = UDim2.new(1, 0, 1, 0)
+        dimFrame.BackgroundColor3 = Color3.fromRGB(6, 6, 12)
+        dimFrame.BackgroundTransparency = 1
+        dimFrame.BorderSizePixel = 0
+        dimFrame.Active = false
+        dimFrame.ZIndex = 9
+        dimFrame.Visible = false
+        rounded(dimFrame)
+        dimFrame.Parent = bgLayer
+    end
+    local backdrop = {media = nil, Dim = clamp(cfg.BackgroundDim or 0.35, 0, 0.9), Url = nil, Token = 0}
+    local function refreshBackdrop()                                          -- the dim layer only exists while a picture / video is showing
+        if dimFrame then
+            dimFrame.Visible = backdrop.media ~= nil
+            dimFrame.BackgroundTransparency = 1 - clamp(backdrop.Dim, 0, 0.9)
+        end
+    end
+    refreshBackdrop()
 
-    -- url == nil or "" removes the background. Async: the download happens in a task; `done(ok, message)` is called when it is over.
+    local function clearMedia()
+        if backdrop.media then pcall(function() backdrop.media:Destroy() end); backdrop.media = nil end
+    end
+    function win:SetBackgroundDim(v) backdrop.Dim = clamp(tonumber(v) or backdrop.Dim, 0, 0.9); refreshBackdrop() end
+    function win:SetScale(v) pcall(function() Window:SetUIScale(clamp(tonumber(v) or 0.9, 0.55, 1.2)) end) end
+
+    -- url == nil or "" removes the picture / video. Async: the download happens in a task; `done(ok, message)` is called when it is over.
     function win:SetBackground(url, done)
         backdrop.Token = backdrop.Token + 1
         local token = backdrop.Token
         url = type(url) == "string" and url:gsub("^%s+", ""):gsub("%s+$", "") or ""
         if url == "" then
-            clearBackdrop(); backdrop.Url = nil
-            pcall(function() Window:SetBackgroundTransparency(0); Window:SetPanelBackground(true) end)       -- (true = show the content panel)
+            clearMedia(); backdrop.Url = nil; refreshBackdrop()
             if done then done(true, "removed") end
             return
         end
@@ -1658,10 +1834,8 @@ local function build(win, WindUI, UILib, cfg)
                 if done then done(false, tostring(kindOrErr)) end
                 return
             end
-            local bg = Window.UIElements and Window.UIElements.Main and Window.UIElements.Main:FindFirstChild("Background")
-            if not bg then if done then done(false, "the window has no background layer") end return end
-            clearBackdrop()
-            local radius = Window.UICorner or 16
+            if not bgLayer then if done then done(false, "the window has no background layer") end return end
+            clearMedia()
             if kindOrErr == "video" then
                 backdrop.media = Instance.new("VideoFrame")
                 backdrop.media.Name = "WraithVideo"
@@ -1678,20 +1852,11 @@ local function build(win, WindUI, UILib, cfg)
             backdrop.media.BorderSizePixel = 0
             backdrop.media.Size = UDim2.new(1, 0, 1, 0)
             backdrop.media.ZIndex = 2
-            local c1 = Instance.new("UICorner"); c1.CornerRadius = UDim.new(0, radius); c1.Parent = backdrop.media
-            backdrop.media.Parent = bg
-            backdrop.dim = Instance.new("Frame")
-            backdrop.dim.Name = "WraithDim"
-            backdrop.dim.Size = UDim2.new(1, 0, 1, 0)
-            backdrop.dim.BackgroundColor3 = Color3.fromRGB(6, 6, 12)
-            backdrop.dim.BorderSizePixel = 0
-            backdrop.dim.ZIndex = 3
-            local c2 = Instance.new("UICorner"); c2.CornerRadius = UDim.new(0, radius); c2.Parent = backdrop.dim
-            backdrop.dim.Parent = bg
-            applyDim()
-            if kindOrErr == "video" then pcall(function() backdrop.media:Play() end) end
+            rounded(backdrop.media)
+            backdrop.media.Parent = bgLayer
             backdrop.Url = url
-            pcall(function() Window:SetBackgroundTransparency(0.6); Window:SetPanelBackground(false) end)       -- the picture shows through the window
+            if kindOrErr == "video" then pcall(function() backdrop.media:Play() end) end
+            refreshBackdrop()
             if done then done(true, kindOrErr) end
         end)
     end
@@ -1702,7 +1867,7 @@ local function build(win, WindUI, UILib, cfg)
         if not win.Alive then return end
         backdrop.Token = backdrop.Token + 1
         coreDestroy()                                                       -- (also marks the window dead and removes the floating buttons)
-        clearBackdrop()
+        clearMedia()
         pcall(function() Window:Destroy() end)
         for _, key in ipairs({"ScreenGui", "NotificationGui", "DropdownGui", "TooltipGui"}) do
             local g = WindUI[key]
@@ -1988,7 +2153,7 @@ return d end function a.b()
 
 local b=(cloneref or clonereference or function(b)return b end)
 
-local d={Icons={}}
+local d={Icons={lucide={["bell"]="rbxassetid://97392696311902",["bug"]="rbxassetid://83626408925438",["check"]="rbxassetid://93898873302694",["chevron-down"]="rbxassetid://134243273101015",["chevron-left"]="rbxassetid://73780377692148",["chevron-right"]="rbxassetid://92473583511724",["chevron-up"]="rbxassetid://122444883127455",["chevrons-up-down"]="rbxassetid://131833120209646",["circle"]="rbxassetid://130359823580534",["circle-alert"]="rbxassetid://83898160590116",["circle-check"]="rbxassetid://85262178816537",["circle-x"]="rbxassetid://76821953846248",["clock"]="rbxassetid://121808839832144",["copy"]="rbxassetid://78979572434545",["crosshair"]="rbxassetid://134242818164054",["download"]="rbxassetid://134814648082393",["ellipsis"]="rbxassetid://140019550645825",["expand"]="rbxassetid://137492887754537",["eye"]="rbxassetid://100033680381365",["eye-off"]="rbxassetid://135928786788378",["flag"]="rbxassetid://78183383236196",["folder"]="rbxassetid://80846616596607",["frown"]="rbxassetid://124407301067982",["gamepad-2"]="rbxassetid://92483947987410",["gauge"]="rbxassetid://110273524101447",["gift"]="rbxassetid://109855212076373",["github"]="rbxassetid://120349554354380",["heart"]="rbxassetid://116559368303288",["house"]="rbxassetid://98755624629571",["info"]="rbxassetid://124560466474914",["key"]="rbxassetid://96510194465420",["layout-dashboard"]="rbxassetid://139929981863901",["layout-grid"]="rbxassetid://81344910161871",["link"]="rbxassetid://131607023382430",["list"]="rbxassetid://113179976918783",["lock"]="rbxassetid://134724289526879",["lock-open"]="rbxassetid://93597915325122",["map-pin"]="rbxassetid://84279202219901",["maximize"]="rbxassetid://76045941763188",["menu"]="rbxassetid://77021539815611",["minimize"]="rbxassetid://121304296213645",["minus"]="rbxassetid://118026365011536",["mouse-pointer-click"]="rbxassetid://107150227368485",["move"]="rbxassetid://116138709011735",["music"]="rbxassetid://113343203848535",["octagon-alert"]="rbxassetid://140438367956051",["package"]="rbxassetid://97261141732706",["palette"]="rbxassetid://86350350950064",["pause"]="rbxassetid://74873705394436",["play"]="rbxassetid://135609604299893",["plus"]="rbxassetid://111774323017047",["power"]="rbxassetid://96479131758775",["refresh-cw"]="rbxassetid://138133190015277",["save"]="rbxassetid://126116963775616",["search"]="rbxassetid://121018724060431",["settings"]="rbxassetid://80758916183665",["shield"]="rbxassetid://110987169760162",["skull"]="rbxassetid://137726256442333",["sliders-horizontal"]="rbxassetid://85538382643347",["sparkles"]="rbxassetid://138635884129147",["square"]="rbxassetid://86304921356806",["star"]="rbxassetid://136141469398409",["sword"]="rbxassetid://124448418211665",["swords"]="rbxassetid://81872698913435",["target"]="rbxassetid://87563802520297",["terminal"]="rbxassetid://106783148545356",["timer"]="rbxassetid://85473888890506",["trash"]="rbxassetid://106723740584310",["triangle"]="rbxassetid://126330486745540",["triangle-alert"]="rbxassetid://125920361880643",["upload"]="rbxassetid://138212042425501",["user"]="rbxassetid://81589895647169",["users"]="rbxassetid://115398113982385",["wrench"]="rbxassetid://112148279212860",["x"]="rbxassetid://110786993356448",["zap"]="rbxassetid://130551565616516"}}}
 
 local function parseIconString(e)
 if type(e)=="string"then
@@ -2364,12 +2529,7 @@ local m
 if d:IsStudio()or not writefile then
 m=a.load'b'
 else
-do
-local okI,iconSet=pcall(function()
-return loadstring(game.HttpGet and game:HttpGet(l)or h:GetAsync(l))()
-end)
-m=okI and type(iconSet)=="table"and iconSet or a.load'b'
-end
+m=a.load'b'
 end
 
 m.SetIconsType"lucide"
@@ -17460,11 +17620,11 @@ local function __run()
         throwKey = "E", throwAtKey = "C", autoThrow = false, throwGap = 2, slashAura = false, slashRange = 9,
         hitbox = false, hitboxSize = 8, hitboxAlpha = 0.6, hitboxWho = "Murderer",
         reticle = "Weapon in hand", pingComp = 1, interpMs = 50, extraLead = 0,
-        btnShoot = true, btnThrow = true, btnGrab = false, btnSpeed = false, btnJump = false, btnSize = 80, btnLock = false, waves = "High",
+        useKnown = true, btnShoot = true, btnThrow = true, btnGrab = false, btnSpeed = false, btnJump = false, btnSize = 80, btnLock = false, waves = "High",
         shootX = -1, shootY = -1, throwX = -1, throwY = -1, grabX = -1, grabY = -1, speedX = -1, speedY = -1, jumpX = -1, jumpY = -1,   -- -1 = placed automatically (down the right edge)
         walkOn = false, walkSpeed = 24, jumpOn = false, jumpPower = 60, infJump = false, noclip = false, fovOn = false, fovValue = 80,
         antiAfk = true, theme = "Dark", uiKey = "RightShift",
-        ui = "WindUI", bgOn = true, bgDim = 0.45, bgUrl = "https://pixabay.com/videos/lake-sunset-trees-leaves-japan-91562/",
+        ui = "WindUI", uiScale = 0.9, uiAlpha = 0.5, bgOn = false, bgDim = 0.35, bgUrl = "https://pixabay.com/videos/lake-sunset-trees-leaves-japan-91562/",
     }
     local CONFIG_FILE = "wraiths_hub_config.json"
     local saved
@@ -17523,6 +17683,8 @@ local function __run()
     ------------------------------------------------------------------------------------------ roles
     local Roles = {map = {}, data = {}, announced = {}, mapSeen = false, lastActive = 0, dataFails = 0, getter = nil}
     Roles.mine = nil
+    local dirty = true                               -- set by events (a weapon appears, someone spawns / dies, data arrives): the next frame re-reads the roles and refreshes the ESP
+    local function markDirty() dirty = true end
 
     local function findPlayerByKey(key)
         if typeof(key) == "Instance" and key:IsA("Player") then return key end
@@ -17562,7 +17724,7 @@ local function __run()
             if ev and ev:IsA("RemoteEvent") then
                 track(ev.OnClientEvent:Connect(guard("PlayerDataChanged", function(...)
                     local args = table.pack(...)
-                    for i = 1, args.n do if type(args[i]) == "table" then Roles.ingest(args[i], true); break end end
+                    for i = 1, args.n do if type(args[i]) == "table" then Roles.ingest(args[i], true); markDirty(); break end end
                 end)))
                 logLine("listening to " .. ev:GetFullName())
             end
@@ -17580,7 +17742,7 @@ local function __run()
             local ok, res = pcall(function() return Roles.getter:InvokeServer() end)
             Roles.polling = false
             if ok and type(res) == "table" then
-                if Roles.ingest(res, true) > 0 then Roles.dataFails = 0 else Roles.dataFails = Roles.dataFails + 1 end
+                if Roles.ingest(res, true) > 0 then Roles.dataFails = 0; markDirty() else Roles.dataFails = Roles.dataFails + 1 end
             else
                 Roles.dataFails = Roles.dataFails + 1
                 if not ok then report("GetPlayerData", res) end
@@ -17651,11 +17813,22 @@ local function __run()
     function Roles.murderer() return Roles.find("Murderer") or Roles.find("Infected") end
     function Roles.sheriff() return Roles.find("Sheriff") or Roles.find("Hero") end
 
+    -- murderer red, sheriff (and the hero who picked the gun up) blue, innocents green, the dropped gun orange
     local ROLE_COLOR = {
-        Murderer = Color3.fromRGB(255, 70, 70), Infected = Color3.fromRGB(255, 120, 60), Sheriff = Color3.fromRGB(70, 150, 255),
-        Hero = Color3.fromRGB(255, 205, 60), Innocent = Color3.fromRGB(90, 225, 125),
+        Murderer = Color3.fromRGB(255, 45, 45), Infected = Color3.fromRGB(255, 45, 45), Sheriff = Color3.fromRGB(45, 140, 255),
+        Hero = Color3.fromRGB(45, 140, 255), Innocent = Color3.fromRGB(70, 225, 120),
     }
     local NO_ROLE = Color3.fromRGB(220, 220, 230)
+    local GUN_COLOR = Color3.fromRGB(255, 140, 20)
+    local GUN_TEXT = Color3.fromRGB(255, 186, 110)
+
+    local TweenService = service("TweenService")
+    local function glide(inst, props, secs)                                   -- a short ease so colours and fades never pop
+        local ok = TweenService and pcall(function()
+            TweenService:Create(inst, TweenInfo.new(secs or 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), props):Play()
+        end)
+        if not ok then for k, v in pairs(props) do pcall(function() inst[k] = v end) end end
+    end
 
     ------------------------------------------------------------------------------------------ gun drops
     local Guns = {drops = {}, announced = {}}
@@ -17689,6 +17862,7 @@ local function __run()
         if Guns.drops[inst] or not acceptDrop(inst, loose) then return end
         Guns.drops[inst] = {t = now()}
         Guns.fallback = nil
+        markDirty()
         logLine("gun drop: " .. inst:GetFullName())
         if S.notifyGun then
             local pos = posOfThing(inst)
@@ -17699,6 +17873,7 @@ local function __run()
         if not Guns.drops[inst] then return end
         Guns.drops[inst] = nil
         Guns.pickedAt = now()
+        markDirty()
         if S.notifyGun and next(Guns.drops) == nil then notify("Gun picked up", "someone grabbed it", "info", 3) end
     end
 
@@ -17744,14 +17919,14 @@ local function __run()
         end
     end
 
-    local function buildESP(plr, char)
-        local o = {char = char}
+    local function buildESP(plr, char, color)
+        local o = {char = char, color = color}
         local hl = Instance.new("Highlight")
         hl.Name = "H"
         hl.Adornee = char
         hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-        hl.FillTransparency = 0.7
-        hl.OutlineTransparency = 0
+        hl.FillColor, hl.OutlineColor = color, color
+        hl.FillTransparency, hl.OutlineTransparency = 1, 1                    -- fades in (below) instead of popping
         hl.Parent = espFolder
         o.hl = hl
         local bb = Instance.new("BillboardGui")
@@ -17768,9 +17943,13 @@ local function __run()
         lbl.Size = UDim2.new(1, 0, 1, 0)
         lbl.Font = Enum.Font.GothamBold
         lbl.TextSize = 13
-        lbl.TextStrokeTransparency = 0.4
+        lbl.TextColor3 = color
+        lbl.TextTransparency = 1
+        lbl.TextStrokeTransparency = 1
         lbl.Text = ""
         lbl.Parent = bb
+        glide(hl, {FillTransparency = 0.62, OutlineTransparency = 0}, 0.22)
+        glide(lbl, {TextTransparency = 0, TextStrokeTransparency = 0.4}, 0.22)
         o.bb, o.label = bb, lbl
         ESP.objs[plr] = o
         return o
@@ -17786,20 +17965,26 @@ local function __run()
                 if want and role == "Innocent" and not S.espInnocents then want = false end
                 local o = ESP.objs[plr]
                 if want then
-                    if o and o.char ~= char then removeESP(plr); o = nil end
-                    if not o then o = buildESP(plr, char) end
                     local color = ROLE_COLOR[role] or NO_ROLE
-                    o.hl.Enabled = S.espChams
-                    o.hl.FillColor = color
-                    o.hl.OutlineColor = color
-                    o.bb.Enabled = S.espNames or S.espDistance or S.espHealth
-                    o.label.TextColor3 = color
-                    local parts = {}
-                    if S.espNames then parts[#parts + 1] = nameOf(plr) end
-                    if role and role ~= "Innocent" then parts[#parts + 1] = "[" .. role .. "]" end
-                    if S.espHealth then local h = humOf(char); if h then parts[#parts + 1] = math.floor(h.Health + 0.5) .. "hp" end end
-                    if S.espDistance and me then local r = rootOf(char); if r then parts[#parts + 1] = math.floor((r.Position - me).Magnitude + 0.5) .. "m" end end
-                    o.label.Text = table.concat(parts, " ")
+                    if o and o.char ~= char then removeESP(plr); o = nil end
+                    if not o then o = buildESP(plr, char, color) end
+                    if o.color ~= color then                                    -- a role change (the sheriff dies, a hero appears) blends to the new colour
+                        o.color = color
+                        glide(o.hl, {FillColor = color, OutlineColor = color}, 0.15)
+                        glide(o.label, {TextColor3 = color}, 0.15)
+                    end
+                    if o.chams ~= S.espChams then o.chams = S.espChams; o.hl.Enabled = S.espChams end
+                    local labelOn = S.espNames or S.espDistance or S.espHealth
+                    if o.labelOn ~= labelOn then o.labelOn = labelOn; o.bb.Enabled = labelOn end
+                    if labelOn then
+                        local parts = {}
+                        if S.espNames then parts[#parts + 1] = nameOf(plr) end
+                        if role and role ~= "Innocent" then parts[#parts + 1] = "[" .. role .. "]" end
+                        if S.espHealth then local h = humOf(char); if h then parts[#parts + 1] = math.floor(h.Health + 0.5) .. "hp" end end
+                        if S.espDistance and me then local r = rootOf(char); if r then parts[#parts + 1] = math.floor((r.Position - me).Magnitude + 0.5) .. "m" end end
+                        local text = table.concat(parts, " ")
+                        if o.text ~= text then o.text = text; o.label.Text = text end
+                    end
                 elseif o then
                     removeESP(plr)
                 end
@@ -17808,7 +17993,7 @@ local function __run()
         for plr in pairs(ESP.objs) do
             if Roles.map[plr] == nil or plr.Parent == nil then removeESP(plr) end
         end
-        -- guns
+        -- the dropped gun: orange
         for inst, o in pairs(ESP.gunObjs) do
             if not Guns.drops[inst] or not S.espGun or not inst.Parent then
                 pcall(function() o.hl:Destroy() end); pcall(function() o.bb:Destroy() end)
@@ -17824,9 +18009,9 @@ local function __run()
                         o.hl = Instance.new("Highlight")
                         o.hl.Adornee = inst
                         o.hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-                        o.hl.FillColor = Color3.fromRGB(255, 205, 60)
-                        o.hl.OutlineColor = Color3.fromRGB(255, 255, 255)
-                        o.hl.FillTransparency = 0.35
+                        o.hl.FillColor = GUN_COLOR
+                        o.hl.OutlineColor = GUN_COLOR
+                        o.hl.FillTransparency, o.hl.OutlineTransparency = 1, 1
                         o.hl.Parent = espFolder
                         o.bb = Instance.new("BillboardGui")
                         o.bb.Adornee = inst
@@ -17840,13 +18025,16 @@ local function __run()
                         o.label.Size = UDim2.new(1, 0, 1, 0)
                         o.label.Font = Enum.Font.GothamBold
                         o.label.TextSize = 14
-                        o.label.TextColor3 = Color3.fromRGB(255, 215, 80)
-                        o.label.TextStrokeTransparency = 0.3
+                        o.label.TextColor3 = GUN_TEXT
+                        o.label.TextTransparency, o.label.TextStrokeTransparency = 1, 1
                         o.label.Parent = o.bb
+                        glide(o.hl, {FillTransparency = 0.3, OutlineTransparency = 0}, 0.22)
+                        glide(o.label, {TextTransparency = 0, TextStrokeTransparency = 0.3}, 0.22)
                         ESP.gunObjs[inst] = o
                     end
                     local p = posOfThing(inst)
-                    o.label.Text = "GUN" .. ((p and me) and (" " .. math.floor((p - me).Magnitude + 0.5) .. "m") or "")
+                    local text = "GUN" .. ((p and me) and (" " .. math.floor((p - me).Magnitude + 0.5) .. "m") or "")
+                    if o.text ~= text then o.text = text; o.label.Text = text end
                 end
             end
         end
@@ -17881,13 +18069,13 @@ local function __run()
             if S.espTracers and S.espPlayers then
                 for plr, o in pairs(ESP.objs) do
                     local r = rootOf(o.char)
-                    if r then line(plr, r.Position, o.label.TextColor3) end
+                    if r then line(plr, r.Position, o.color) end
                 end
             end
             if S.gunTracer then
                 for inst in pairs(Guns.drops) do
                     local p = inst.Parent and posOfThing(inst)
-                    if p then line(inst, p, Color3.fromRGB(255, 215, 80)) end
+                    if p then line(inst, p, GUN_COLOR) end
                 end
             end
         end
@@ -17920,7 +18108,7 @@ local function __run()
     gunBox.Parent = hud
     do
         local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 10); c.Parent = gunBox
-        local st = Instance.new("UIStroke"); st.Color = Color3.fromRGB(255, 205, 60); st.Thickness = 1.5; st.Parent = gunBox
+        local st = Instance.new("UIStroke"); st.Color = GUN_COLOR; st.Thickness = 1.5; st.Parent = gunBox
     end
     local gunText = Instance.new("TextLabel")
     gunText.BackgroundTransparency = 1
@@ -17928,7 +18116,7 @@ local function __run()
     gunText.Size = UDim2.new(1, -52, 1, 0)
     gunText.Font = Enum.Font.GothamBold
     gunText.TextSize = 14
-    gunText.TextColor3 = Color3.fromRGB(255, 225, 120)
+    gunText.TextColor3 = GUN_TEXT
     gunText.TextXAlignment = Enum.TextXAlignment.Left
     gunText.Text = ""
     gunText.Parent = gunBox
@@ -17939,12 +18127,12 @@ local function __run()
     compass.Parent = gunBox
     do
         local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(1, 0); c.Parent = compass
-        local st = Instance.new("UIStroke"); st.Color = Color3.fromRGB(255, 205, 60); st.Thickness = 1.5; st.Parent = compass
+        local st = Instance.new("UIStroke"); st.Color = GUN_COLOR; st.Thickness = 1.5; st.Parent = compass
     end
     local compassDot = Instance.new("Frame")
     compassDot.AnchorPoint = Vector2.new(0.5, 0.5)
     compassDot.Size = UDim2.new(0, 8, 0, 8)
-    compassDot.BackgroundColor3 = Color3.fromRGB(255, 225, 120)
+    compassDot.BackgroundColor3 = GUN_COLOR
     compassDot.BorderSizePixel = 0
     compassDot.Position = UDim2.new(0.5, 0, 0.5, 0)
     compassDot.Parent = compass
@@ -18103,8 +18291,8 @@ local function __run()
     local function modeFor(weapon)
         local m = S.aimMode
         if m ~= "Auto (by my role)" then return m end
-        if weapon == "Gun" then return "Murderer" end
-        return "Closest to crosshair"
+        if weapon == "Gun" then return "Murderer" end              -- the sheriff / hero shoots the murderer
+        return "Nearest"                                           -- the murderer throws at whoever is closest
     end
 
     -- picks the best target for the weapon: returns plr, char, part, aimPosition, lead seconds
@@ -18368,6 +18556,45 @@ local function __run()
         return true
     end
 
+    -- Remote layouts reported by other MM2 scripts (UNVERIFIED guesses, only tried when nothing was recorded and the remote really exists under the weapon).
+    local KNOWN = {
+        Gun = {{path = {"KnifeLocal", "CreateBeam", "RemoteFunction"}, method = "InvokeServer", name = "Gun.KnifeLocal.CreateBeam",
+                build = function(origin, aim) return {n = 3, 1, aim, "AH2"} end}},
+        Knife = {{path = {"Events", "KnifeThrown"}, method = "FireServer", name = "Knife.Events.KnifeThrown",
+                  build = function(origin, aim) return {n = 2, CFrame.new(origin), CFrame.new(aim)} end},
+                 {path = {"Throw"}, method = "FireServer", name = "Knife.Throw",
+                  build = function(origin, aim) return {n = 2, CFrame.new(origin), CFrame.new(aim)} end}},
+    }
+    function Shots.known(weapon, aimPos)
+        if not S.useKnown then return false, "known remotes are switched off" end
+        local tool = findTool(weapon)
+        local head = headOf(myChar())
+        if not (tool and head) then return false, weapon:lower() .. " is not ready" end
+        for _, k in ipairs(KNOWN[weapon] or {}) do
+            local cur = tool
+            for _, name in ipairs(k.path) do cur = cur and cur:FindFirstChild(name) end
+            if cur and (cur:IsA("RemoteEvent") or cur:IsA("RemoteFunction")) then
+                local args = k.build(head.Position, aimPos)
+                Shots.skip = cur
+                local ok, err
+                if k.method == "InvokeServer" then
+                    task.spawn(function()
+                        local okc, e = pcall(function() return cur:InvokeServer(table.unpack(args, 1, args.n)) end)
+                        if Shots.skip == cur then Shots.skip = nil end
+                        if not okc then report("known " .. k.name, e) end
+                    end)
+                    ok = true
+                else
+                    ok, err = pcall(function() cur:FireServer(table.unpack(args, 1, args.n)) end)
+                    if Shots.skip == cur then Shots.skip = nil end
+                    if not ok then report("known " .. k.name, err) end
+                end
+                if ok then Shots.knownUsed = k.name; return true end
+            end
+        end
+        return false, "no known remote under the " .. weapon:lower()
+    end
+
     local function pickFor(weapon)
         local plr, char, part, pos, lt = Aim.pick(weapon)
         if not plr and S.aimMode == "Auto (by my role)" and weapon == "Knife" then plr, char, part, pos, lt = Aim.pick(weapon, "Nearest") end
@@ -18376,7 +18603,10 @@ local function __run()
 
     function Shots.fire(weapon)           -- aim at the best target and use the weapon; returns ok, text
         local plr, char, part, pos, lead = pickFor(weapon)
-        if not plr then return false, "no target in range / line of sight" end
+        if not plr then
+            if weapon == "Gun" and S.aimMode == "Auto (by my role)" and not Roles.murderer() then return false, "the murderer is not known yet" end
+            return false, "no target in range / line of sight"
+        end
         local tool, held = equip(weapon)
         if not tool then return false, "you do not have the " .. weapon:lower() end
         if not held then task.wait(0.06) end                     -- let the equip land
@@ -18386,7 +18616,7 @@ local function __run()
         if p2 == plr then char, part, pos, lead = c2, pt2, pos2, lead2 end
         local method = S.fireMethod
         local auto = method == "Auto"
-        if auto then method = Shots.templates[weapon] and "Remote replay" or (weapon == "Knife" and "Throw key" or "Tool:Activate") end
+        if auto then method = Shots.templates[weapon] and "Remote replay" or "Known remote" end
         local aimMethod = S.aimMethod == "Mouse cursor" and "Mouse cursor" or "Both"
         local ok, why = true, nil
         local function viaTool()
@@ -18397,7 +18627,10 @@ local function __run()
             if t2 then pcall(function() t2:Activate() end); return true end
             return false, "weapon not ready"
         end
-        if method == "Remote replay" then
+        if method == "Known remote" then
+            ok, why = Shots.known(weapon, pos)
+            if not ok and auto then ok, why = viaTool() end
+        elseif method == "Remote replay" then
             ok, why = Shots.replay(weapon, plr, char, part, pos)
             if not ok and auto then ok, why = viaTool() end
         elseif method == "Throw key" then
@@ -18562,9 +18795,13 @@ local function __run()
             notify(title, text, "warn", 2)
             if float then float:Flash(false) end
         end
+        if not findTool(weapon) then                                          -- the other button's weapon is the one I have: use that (shoot as sheriff, throw as murderer)
+            local other = weapon == "Gun" and "Knife" or "Gun"
+            if findTool(other) then weapon = other end
+        end
         if Shots.firing[weapon] then return "async" end
         if not findTool(weapon) then
-            if weapon == "Gun" then fail("No gun", "You are not holding the gun.") else fail("No knife", "You are not the murderer.") end
+            fail("No weapon", "You are neither the sheriff nor the murderer right now.")
             return "async"
         end
         Shots.firing[weapon] = true
@@ -18694,7 +18931,7 @@ local function __run()
     local function currentPick()
         local weapon = Roles.mine == "Murderer" and "Knife" or "Gun"
         local override
-        if S.aimMode == "Auto (by my role)" then override = Roles.mine == "Murderer" and "Closest to crosshair" or "Murderer" end
+        if S.aimMode == "Auto (by my role)" then override = Roles.mine == "Murderer" and "Nearest" or "Murderer" end
         return Aim.pick(weapon, override)
     end
 
@@ -18741,6 +18978,7 @@ local function __run()
         acc.ping, acc.dim = acc.ping + dt, acc.dim + dt
         Shots.process()
         sampleTracks()
+        if dirty then dirty = false; Roles.scan(); announceRoles(); ESP.update(); Guns.updateHud() end      -- event-driven: the ESP follows a role the same frame
         if acc.ping >= 0.25 then acc.ping = 0; samplePing() end
         if acc.dim >= 0.5 then
             acc.dim = 0
@@ -18748,7 +18986,7 @@ local function __run()
             if Floats.throw then Floats.throw:SetDim(findTool("Knife") == nil) end
             if Floats.grab then Floats.grab:SetDim(next(Guns.drops) == nil and Guns.fallback == nil) end
         end
-        if acc.mid >= 0.4 then
+        if acc.mid >= 0.3 then
             acc.mid = 0
             Roles.scan()
             announceRoles()
@@ -18766,7 +19004,7 @@ local function __run()
         end
         if acc.poll >= 3 then acc.poll = 0; pollData() end
         if acc.auto >= 0.1 then acc.auto = 0; autoActions() end
-        refreshCache()
+        if S.silentAim then refreshCache() end
     end)))
 
     pcall(function()
@@ -18786,7 +19024,39 @@ local function __run()
         Guns.add(inst, now() < (Guns.looseUntil or 0))
     end)))
     track(workspace.DescendantRemoving:Connect(guard("gun drop removed", function(inst) Guns.remove(inst) end)))
-    track(Players.PlayerRemoving:Connect(guard("player left", function(plr) removeESP(plr); Roles.data[plr] = nil end)))
+    -- react the moment something changes: a weapon in a character or the backpack, a spawn, a death (instead of waiting for the next poll)
+    local watch = {}
+    local function unwatch(plr)
+        local list = watch[plr]
+        if list then for _, c in ipairs(list) do pcall(function() c:Disconnect() end) end; watch[plr] = nil end
+    end
+    local function watchPlayer(plr)
+        unwatch(plr)
+        local list = {}
+        watch[plr] = list
+        local function add(c) list[#list + 1] = c end
+        local function watchTools(container)
+            if not container then return end
+            add(container.ChildAdded:Connect(function(c) if c:IsA("Tool") then markDirty() end end))
+            add(container.ChildRemoved:Connect(function(c) if c:IsA("Tool") then markDirty() end end))
+        end
+        local function watchChar(char)
+            if not char then return end
+            watchTools(char)
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            if hum then add(hum.Died:Connect(markDirty)) end
+        end
+        add(plr.CharacterAdded:Connect(function(char) markDirty(); watchChar(char) end))
+        watchChar(plr.Character)
+        if plr == LocalPlayer then
+            watchTools(plr:FindFirstChildOfClass("Backpack"))
+            add(plr.ChildAdded:Connect(function(c) if c:IsA("Backpack") then markDirty(); watchTools(c) end end))
+        end
+    end
+    onCleanup(function() for plr in pairs(watch) do unwatch(plr) end end)
+    for _, plr in ipairs(Players:GetPlayers()) do pcall(watchPlayer, plr) end
+    track(Players.PlayerAdded:Connect(guard("player joined", function(plr) watchPlayer(plr); markDirty() end)))
+    track(Players.PlayerRemoving:Connect(guard("player left", function(plr) unwatch(plr); removeESP(plr); Roles.data[plr] = nil; markDirty() end)))
     connectDataRemotes()
     scanWorkspaceForGuns()
 
@@ -18796,6 +19066,7 @@ local function __run()
         return ok and code or Enum.KeyCode.RightShift
     end
     local function traceback(e) return debug.traceback(tostring(e), 2) end
+    pcall(function() Roles.scan(); ESP.update(); Guns.updateHud() end)                  -- the ESP is already on while the menu is still being built
     local usingWind = false
     local function contains(list, v) for _, x in ipairs(list) do if x == v then return true end end return false end
     local function makeWindow(cfg)
@@ -18816,6 +19087,7 @@ local function __run()
     end
     Win = makeWindow{Title = "Wraith's Hub", Subtitle = "Murder Mystery 2", Group = "Wraith's Hub", Parent = PARENT, GuiName = "WraithsHubWindow", Folder = "WraithsHub",
         WaveMode = S.waves, ToggleKey = keyCodeFor(S.uiKey), OnError = report, Background = S.bgOn and S.bgUrl or "", BackgroundDim = S.bgDim,
+        WindowAlpha = S.uiAlpha, Scale = S.uiScale,
         OnBackground = function(ok, msg)
             if ok then logLine("background: " .. tostring(msg)) else notify("Background not loaded", tostring(msg) .. " - open Settings > Background and paste a direct .mp4 / .webm link.", "warn", 9) end
         end}
@@ -18832,6 +19104,39 @@ local function __run()
     end
     for _, q in ipairs(queued) do notify(q[1], q[2], q[3], q[4]) end
     queued = {}
+
+    -- the floating buttons (Perfect shoot / Perfect throw / Grab gun / Speed / Jump)
+    local AUTO_SLOT = {shoot = {1, 1}, throw = {1, 2}, grab = {1, 3}, speed = {2, 1}, jump = {2, 2}}      -- {column from the right edge, row from the top}
+    autoPos = function(id)
+        local vp = camera() and camera().ViewportSize or Vector2.new(1280, 720)
+        local size = S.btnSize
+        local col, row = AUTO_SLOT[id][1], AUTO_SLOT[id][2]
+        local x = vp.X - 12 - col * size - (col - 1) * 8
+        local y = vp.Y * 0.18 + (row - 1) * (size + 10)
+        return Logic.clamp(x, 0, math.max(0, vp.X - size)) / vp.X, Logic.clamp(y, 0, math.max(0, vp.Y - size)) / vp.Y
+    end
+    for _, d in ipairs({
+        {id = "shoot", title = "SHOOT", icon = "crosshair", accent = {255, 255, 255}, flag = "btnShoot", weapon = "Gun"},
+        {id = "throw", title = "THROW", icon = "knife", accent = {236, 52, 64}, flag = "btnThrow", weapon = "Knife"},
+        {id = "grab", title = "GRAB GUN", icon = "pistol", accent = {255, 140, 20}, flag = "btnGrab"},
+        {id = "speed", title = "SPEED", labelOn = "SPEED ON", labelOff = "SPEED OFF", icon = "bolt", accent = {64, 214, 190}, flag = "btnSpeed", state = "walkOn"},
+        {id = "jump", title = "JUMP", labelOn = "JUMP ON", labelOff = "JUMP OFF", icon = "chevron_up", accent = {96, 170, 255}, flag = "btnJump", state = "jumpOn"},
+    }) do
+        local fx, fy = S[d.id .. "X"], S[d.id .. "Y"]
+        if fx < 0 or fy < 0 then fx, fy = autoPos(d.id) end
+        Floats[d.id] = Win:Floating{Id = d.id, Title = d.title, Icon = d.icon, Accent = d.accent, Size = S.btnSize, Pos = {fx, fy},
+            Visible = S[d.flag], Locked = S.btnLock, Toggle = d.state ~= nil, LabelOn = d.labelOn, LabelOff = d.labelOff, State = d.state and S[d.state] or false,
+            OnPress = function()
+                if d.state then                                           -- a toggle: flip the matching switch in the Player tab
+                    local el = Win.Flags[d.state]
+                    if el then el:Set(not el.Value) end
+                    return true
+                end
+                if d.weapon then return perfectAction(d.weapon) end
+                return grabGun()
+            end,
+            OnMoved = function(fx, fy) S[d.id .. "X"], S[d.id .. "Y"] = fx, fy end}
+    end
 
     local function tog(tab, flag, title, desc, after)
         return tab:Toggle{Title = title, Desc = desc, Default = S[flag], Flag = flag, NoInitialCallback = true, Callback = function(v)
@@ -18858,13 +19163,34 @@ local function __run()
         end}
     end
 
-    local main = Win:Tab("Main", "grid")
-    local esp = Win:Tab("ESP", "eye")
-    local combat = Win:Tab("Combat", "crosshair")
-    local btns = Win:Tab("Buttons", "bolt")
-    local player = Win:Tab("Player", "user")
-    local settings = Win:Tab("Settings", "gear")
-    local dbg = Win:Tab("Debug", "terminal")
+    -- The menu is built a few controls per frame, so loading the script never freezes the game for a moment (a phone builds a WindUI menu slowly).
+    local paceCount, paceStart = 0, os.clock()
+    local function pace()
+        paceCount = paceCount + 1
+        if paceCount >= 6 or os.clock() - paceStart > 0.012 then
+            paceCount = 0
+            task.wait()
+            paceStart = os.clock()
+            if not Hub.Alive then error("__unloaded__", 0) end
+        end
+    end
+    local function paced(tab)
+        for _, name in ipairs({"Section", "Label", "Toggle", "Slider", "Dropdown", "Keybind", "Button", "Input"}) do
+            local f = tab[name]
+            if f then tab[name] = function(self, ...) local r = f(self, ...); pace(); return r end end
+        end
+        return tab
+    end
+    local main = paced(Win:Tab("Main", "grid"))
+    local esp = paced(Win:Tab("ESP", "eye"))
+    local combat = paced(Win:Tab("Combat", "crosshair"))
+    -- WindUI: a short sidebar (Main, ESP, Combat, Player, Misc); Classic keeps its separate Buttons / Settings / Debug tabs
+    local btns = not usingWind and paced(Win:Tab("Buttons", "bolt")) or nil
+    local player = paced(Win:Tab("Player", "user"))
+    local misc = usingWind and paced(Win:Tab("Misc", "gear")) or nil
+    local settings = misc or paced(Win:Tab("Settings", "gear"))
+    local dbg = misc or paced(Win:Tab("Debug", "terminal"))
+    btns = btns or misc
 
     -- Main
     main:Section("Live round info")
@@ -18881,6 +19207,8 @@ local function __run()
     main:Button{Title = "Perfect shoot", Desc = "Sheriff / hero: aims ahead of the murderer by your ping and fires the gun.", Label = "Fire", Callback = perfectShoot}
     main:Button{Title = "Perfect throw", Desc = "Murderer: aims ahead of the best target by your ping and throws the knife.", Label = "Throw", Callback = perfectThrow}
     main:Button{Title = "Grab the gun", Desc = "Teleports to the dropped gun for a moment and brings you straight back.", Label = "Go", Callback = function() grabGun() end}
+    tog(main, "autoShoot", "Auto shoot", "Sheriff / hero: fires at the murderer by itself as soon as they are in range and in sight (ahead of them by your ping).")
+    tog(main, "autoThrow", "Auto throw", "Murderer: throws at the closest player by itself when they are in range and in sight.")
     main:Section("Data")
     tog(main, "useRemoteData", "Read roles from the game's data remote", "Lets me see roles even when nobody holds a weapon. Off = only visible weapons.")
 
@@ -18923,14 +19251,13 @@ local function __run()
     sld(combat, "aimSmooth", "Smoothness", 0, 0.9, 0.05, "")
     combat:Section("Gun - sheriff / hero")
     key(combat, "shootKey", "Perfect shoot key", "One press: aim, predict and fire.", perfectShoot)
-    tog(combat, "autoShoot", "Auto shoot", "Fires as soon as the murderer is in range and visible.")
     sld(combat, "shootGap", "Time between shots", 0.5, 6, 0.1, " s")
     tog(combat, "silentAim", "Silent aim (your own shots)", Cap.hook and "Your normal shots fly at the predicted target. Needs one recorded shot." or "Needs hookmetamethod - not available here.")
     drop(combat, "fireMethod", "How to fire", {"Auto", "Remote replay", "Tool:Activate", "Mouse click"})
+    tog(combat, "useKnown", "Try known game remotes", "When no shot was recorded yet, also try the remote layouts other MM2 scripts report (unverified guesses; only used if that remote exists under your weapon).")
     combat:Section("Knife - murderer")
     key(combat, "throwAtKey", "Perfect throw key", "One press: aim, predict and throw.", perfectThrow)
     key(combat, "throwKey", "The game's throw key", "Used when no throw has been recorded yet.")
-    tog(combat, "autoThrow", "Auto throw", "Throws at anyone in range and in sight.")
     sld(combat, "throwGap", "Time between throws", 0.5, 8, 0.1, " s")
     tog(combat, "slashAura", "Slash aura", "Swings when someone is close.")
     sld(combat, "slashRange", "Slash range", 4, 20, 1, " studs")
@@ -19005,13 +19332,15 @@ local function __run()
     drop(settings, "ui", "Menu style", {"WindUI", "Classic"})
     settings:Label("WindUI is the full menu. Classic is the small built-in one - use it if WindUI does not start on your executor. The style applies the next time you run the script (press Save config to keep it).")
     if usingWind then
-        settings:Section("Background")
-        tog(settings, "bgOn", "Background video", "A looping video behind the menu. The first run downloads it once (needs HttpGet, writefile and getcustomasset); after that it comes from your executor's workspace folder.",
+        settings:Section("Window")
+        sld(settings, "uiScale", "Menu size", 0.6, 1.1, 0.05, "x", function(v) Win:SetScale(v) end)
+        sld(settings, "uiAlpha", "Window see-through", 0, 0.9, 0.1, "", function(v) Win:SetBackgroundTransparency(v) end)
+        sld(settings, "bgDim", "Dimming", 0, 0.9, 0.05, "", function(v) Win:SetBackgroundDim(v) end)
+        tog(settings, "bgOn", "Video / picture behind it", "Shows the link below behind the menu (the first time it is downloaded once into your executor's workspace folder: needs HttpGet / request, writefile and getcustomasset).",
             function(v) Win:SetBackground(v and S.bgUrl or "", function(ok, msg) if not ok then notify("Background not loaded", tostring(msg), "warn", 8) end end) end)
         settings:Input{Title = "Video or picture link", Desc = "A pixabay.com video page, or a direct link that ends in .mp4 / .webm / .png / .jpg.", Default = S.bgUrl, Flag = "bgUrl",
             Placeholder = "https://...", Callback = function(v) S.bgUrl = v end}
-        sld(settings, "bgDim", "Dimming", 0, 0.9, 0.05, "", function(v) Win:SetBackgroundDim(v) end)
-        settings:Button{Title = "Load this link now", Desc = "Downloads (first time) and shows it behind the menu.", Callback = function()
+        settings:Button{Title = "Load this link now", Callback = function()
             S.bgOn = true
             if Win.Flags.bgOn then Win.Flags.bgOn:Set(true, true) end
             Win:SetBackground(S.bgUrl, function(ok, msg)
@@ -19019,7 +19348,7 @@ local function __run()
             end)
         end}
     end
-    key(settings, "uiKey", "Show / hide menu", "Also tap the pill at the top of the screen.", nil, function(v) Win.ToggleKey = keyCodeFor(v) end)
+    key(settings, "uiKey", "Show / hide menu", "Also tap the open button on the screen.", nil, function(v) Win.ToggleKey = keyCodeFor(v) end)
     settings:Section("Config")
     settings:Label("Nothing is saved unless you press Save config.")
     settings:Button{Title = "Save config", Label = "Save", Callback = function()
@@ -19083,38 +19412,7 @@ local function __run()
         if Cap.clipboard then pcall(setclipboard, diagnostics()); notify("Copied", nil, "good", 2) else notify("No clipboard", "See the Log below instead.", "warn") end
     end}
 
-    -- the floating buttons (Perfect shoot / Perfect throw / Grab gun / Speed / Jump)
-    local AUTO_SLOT = {shoot = {1, 1}, throw = {1, 2}, grab = {1, 3}, speed = {2, 1}, jump = {2, 2}}      -- {column from the right edge, row from the top}
-    autoPos = function(id)
-        local vp = camera() and camera().ViewportSize or Vector2.new(1280, 720)
-        local size = S.btnSize
-        local col, row = AUTO_SLOT[id][1], AUTO_SLOT[id][2]
-        local x = vp.X - 12 - col * size - (col - 1) * 8
-        local y = vp.Y * 0.18 + (row - 1) * (size + 10)
-        return Logic.clamp(x, 0, math.max(0, vp.X - size)) / vp.X, Logic.clamp(y, 0, math.max(0, vp.Y - size)) / vp.Y
-    end
-    for _, d in ipairs({
-        {id = "shoot", title = "SHOOT", icon = "crosshair", accent = {255, 255, 255}, flag = "btnShoot", weapon = "Gun"},
-        {id = "throw", title = "THROW", icon = "knife", accent = {236, 52, 64}, flag = "btnThrow", weapon = "Knife"},
-        {id = "grab", title = "GRAB GUN", icon = "pistol", accent = {250, 190, 60}, flag = "btnGrab"},
-        {id = "speed", title = "SPEED", labelOn = "SPEED ON", labelOff = "SPEED OFF", icon = "bolt", accent = {64, 214, 190}, flag = "btnSpeed", state = "walkOn"},
-        {id = "jump", title = "JUMP", labelOn = "JUMP ON", labelOff = "JUMP OFF", icon = "chevron_up", accent = {96, 170, 255}, flag = "btnJump", state = "jumpOn"},
-    }) do
-        local fx, fy = S[d.id .. "X"], S[d.id .. "Y"]
-        if fx < 0 or fy < 0 then fx, fy = autoPos(d.id) end
-        Floats[d.id] = Win:Floating{Id = d.id, Title = d.title, Icon = d.icon, Accent = d.accent, Size = S.btnSize, Pos = {fx, fy},
-            Visible = S[d.flag], Locked = S.btnLock, Toggle = d.state ~= nil, LabelOn = d.labelOn, LabelOff = d.labelOff, State = d.state and S[d.state] or false,
-            OnPress = function()
-                if d.state then                                           -- a toggle: flip the matching switch in the Player tab
-                    local el = Win.Flags[d.state]
-                    if el then el:Set(not el.Value) end
-                    return true
-                end
-                if d.weapon then return perfectAction(d.weapon) end
-                return grabGun()
-            end,
-            OnMoved = function(fx, fy) S[d.id .. "X"], S[d.id .. "Y"] = fx, fy end}
-    end
+    Win:SelectTab("Main")                                                  -- (WindUI opens with no tab selected otherwise)
 
     -- live labels
     local lastLabels = 0
@@ -19140,7 +19438,7 @@ local function __run()
 end
 
 local ok, err = xpcall(__run, function(e) return debug.traceback(tostring(e), 2) end)
-if not ok then
+if not ok and not tostring(err):find("__unloaded__", 1, true) then
     warn("[Wraith's Hub] failed to start: " .. tostring(err))
     pcall(function()
         game:GetService("StarterGui"):SetCore("SendNotification", {Title = "Wraith's Hub failed to start", Text = tostring(err):sub(1, 180), Duration = 20})

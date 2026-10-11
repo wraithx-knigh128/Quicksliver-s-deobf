@@ -31,7 +31,9 @@ elif mode in ("smoke", "windui", "preview"):
     prelude = ("SCRIPT_SOURCE = [====[%s]====]\nPROP_TYPES_SOURCE = [====[%s]====]\nMM2_UI = %r\nLOGIC_MODULE = (function()\n%s\nend)()\n"
                % (read(script), read("tests/prop_types_mm2.lua"), ui, read("mm2/logic.lua")))
     if mode == "windui":
+        import json
         prelude = "MM2_UI = 'WindUI'\n" + prelude.replace("MM2_UI = %r\n" % ui, "", 1)
+        prelude += "LUCIDE_IDS = {%s}\n" % ",".join('["%s"]="%s"' % kv for kv in json.load(open("mm2/vendor/lucide_subset.json")).items())
     test = {"smoke": os.environ.get("MM2_SMOKE", "tests/mm2_smoke.lua"), "windui": "tests/mm2_windui.lua", "preview": "tests/mm2_preview.lua"}[mode]
     body = read("tests/mm2_env.lua") + "\n" + read("tests/mm2_layout.lua") + "\n" + read(test)
     if mode == "preview":

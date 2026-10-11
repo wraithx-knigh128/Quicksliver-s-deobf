@@ -65,23 +65,43 @@ local function build(win, WindUI, UILib, cfg)
     end
 
     ---------------------------------------------------------------------------------------------- the window
+    -- Small and clean, like the reference: Mac-style close button, no search bar / version tag / user card / minimise / fullscreen, tabs straight in the sidebar.
     local themeName = Adapter.themeFor(cfg.Theme)
     local vp = viewport()
-    local size = UDim2.fromOffset(clamp(math.floor(vp.X * 0.62), 480, 640), clamp(vp.Y - 80, 270, 460))      -- WindUI scales the window down by itself if it does not fit
+    local size = UDim2.fromOffset(clamp(math.floor(vp.X * 0.6), 440, 560), clamp(vp.Y - 70, 250, 380))      -- WindUI scales the window down by itself if it does not fit
+    win.Tickers = win.Tickers or {}
+    local glassTouched = {}
+
+    -- frosted cards: every theme's element background becomes translucent grey (the backdrop shows through), and each card fades out towards the right
+    local function glass(name)
+        local t = WindUI.Themes and WindUI.Themes[name]
+        if t and not glassTouched[name] then
+            glassTouched[name] = true
+            t.ElementBackgroundTransparency = math.max(t.ElementBackgroundTransparency or 0, 0.42)
+        end
+    end
+    glass(themeName)
+
     local Window = WindUI:CreateWindow{
         Title = cfg.Title or "Hub", Author = cfg.Subtitle, Folder = cfg.Folder or "WraithsHub", Icon = "swords", NewElements = true, Theme = themeName,
-        Size = size, MinSize = Vector2.new(440, 260), SideBarWidth = vp.X < 900 and 150 or 190, HideSearchBar = false,
-        Transparent = true, HidePanelBackground = false, ToggleKey = cfg.ToggleKey,
-        Topbar = {Height = 44, ButtonsType = "Mac"},
-        User = {Enabled = true, Anonymous = false},
+        Size = size, MinSize = Vector2.new(380, 230), SideBarWidth = vp.X < 900 and 124 or 150, HideSearchBar = true,
+        Transparent = true, HidePanelBackground = true, ElementsRadius = 14, Radius = 16, ToggleKey = cfg.ToggleKey,
+        Topbar = {Height = 38, ButtonsType = "Mac"},
+        User = {Enabled = false},
         OpenButton = {Title = cfg.Title or "Hub", CornerRadius = UDim.new(1, 0), StrokeThickness = 2, Enabled = true, Draggable = true, OnlyMobile = false, Scale = 0.7,
-            Color = ColorSequence.new(Color3.fromHex("#7775F2"), Color3.fromHex("#EF4F1D"))},
+            Color = ColorSequence.new(Color3.fromHex("#9aa0b4"), Color3.fromHex("#e84a8a"))},
     }
     win.Window, win.WindUI = Window, WindUI
     if cfg.Parent and WindUI.SetParent then pcall(function() WindUI:SetParent(cfg.Parent) end) end
-    pcall(function() Window:Tag{Title = "v" .. tostring(WindUI.Version), Icon = "github", Color = Color3.fromHex("#1c1c1c"), Border = true} end)
-
-    local group = Window:Section{Title = cfg.Group or "Menu", Opened = true}
+    pcall(function() Window:DisableTopbarButtons{"Minimize", "Fullscreen"} end)
+    pcall(function() Window:SetUIScale(clamp(cfg.Scale or 0.9, 0.55, 1.2)) end)
+    if cfg.Mono ~= false then                                                -- the reference menu uses a monospace face
+        pcall(function()
+            local family = Font.fromEnum(Enum.Font.Code).Family
+            if type(family) == "string" and family ~= "" then WindUI:SetFont(family) end
+        end)
+    end
+    pcall(function() WindUI:SetTheme(themeName) end)                           -- (re-applies the theme with the frosted element background)
 
     -- the hub reads win.Main.Visible and sets win.ToggleKey, like with the classic menu
     local toggleKey = cfg.ToggleKey
@@ -106,8 +126,20 @@ local function build(win, WindUI, UILib, cfg)
     end
     local function fire(cb, ...) if cb then safe("callback", cb, ...) end end
 
+    local FADE = NumberSequence.new({NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(0.45, 0.12), NumberSequenceKeypoint.new(1, 0.78)})
+    local function decorate(p, ui)                                           -- a card fades out to the right
+        pcall(function()
+            local host = p.ElementFrame
+            if not (host and host:IsA("GuiObject")) then return end
+            local g = Instance.new("UIGradient")
+            g.Name = "WraithFade"
+            g.Transparency = FADE
+            g.Parent = host
+        end)
+    end
+
     function win:Tab(name, iconKind)
-        local ui = group:Tab{Title = name, Icon = ICONS[iconKind or "dots"] or "circle", IconColor = Color3.fromHex(TAB_COLORS[iconKind] or "#83889E"), IconShape = "Square", Border = true}
+        local ui = Window:Tab{Title = name, Icon = ICONS[iconKind or "dots"] or "circle"}
         local tab = {name = name, ui = ui}
         win.Tabs[#win.Tabs + 1] = tab
 
@@ -130,17 +162,15 @@ local function build(win, WindUI, UILib, cfg)
         function tab:Button(o)
             local el = {Value = nil, Title = o.Title, Click = function() fire(o.Callback) end}
             el.Ui = ui:Button{Title = o.Title or "Button", Desc = o.Desc, Icon = "mouse-pointer-click", Callback = function() fire(o.Callback) end}
+            decorate(el.Ui, ui)
             function el:Set() end
-            -- the water-wave skin every button wears: grey-white ripples under the label, moving while this tab is open
+            -- the grey water flows round the button's OUTLINE (nothing is drawn inside it); it runs while this tab is open
             local okSkin, skinErr = pcall(function()
                 local host = el.Ui.ElementFrame
-                local skin = win:Skin(host, {Radius = 14, Look = "ui", Strength = 0.55, Page = ui.UIElements and ui.UIElements.ContainerFrame, ZIndex = 0})
-                connect(host.InputBegan, function(input)
-                    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then skin:Ripple(input.Position.X, input.Position.Y) end
-                end)
-                el.Skin = skin
+                local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 14); c.Parent = host
+                el.Outline = win:Outline(host, {Thickness = 1.5, Glow = false, Page = ui.ContainerFrame})
             end)
-            if not okSkin then onError("button skin", skinErr) end
+            if not okSkin then onError("button outline", skinErr) end
             return addElement(el)
         end
 
@@ -159,6 +189,7 @@ local function build(win, WindUI, UILib, cfg)
                 if not silent and (changed or o.FireSame) then fire(o.Callback, v) end
             end
             el.Title, el.Ui = o.Title, p
+            decorate(p, ui)
             addElement(el, o.Flag)
             if el.Value and o.Callback and not o.NoInitialCallback then fire(o.Callback, true) end
             return el
@@ -191,6 +222,7 @@ local function build(win, WindUI, UILib, cfg)
                 if not silent and changed then fire(o.Callback, v) end
             end
             el.Title, el.Ui = o.Title, p
+            decorate(p, ui)
             addElement(el, o.Flag)
             return el
         end
@@ -216,6 +248,7 @@ local function build(win, WindUI, UILib, cfg)
                 pcall(function() p:Refresh(values) end)
             end
             el.Title, el.Ui = o.Title, p
+            decorate(p, ui)
             return addElement(el, o.Flag)
         end
 
@@ -235,6 +268,7 @@ local function build(win, WindUI, UILib, cfg)
                 if not silent and changed then fire(o.Callback, v) end
             end
             el.Title, el.Ui = o.Title, p
+            decorate(p, ui)
             return addElement(el, o.Flag)
         end
 
@@ -269,6 +303,7 @@ local function build(win, WindUI, UILib, cfg)
                 if input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode.Name == el.Value then el.Down = false end
             end)
             el.Title, el.Ui = o.Title, p
+            decorate(p, ui)
             return addElement(el, o.Flag)
         end
 
@@ -285,11 +320,16 @@ local function build(win, WindUI, UILib, cfg)
     function win:SetTheme(name)
         name = Adapter.themeFor(name)
         themeName = name
+        glass(name)
         pcall(function() WindUI:SetTheme(name) end)
     end
     function win:GetTheme() return themeName end
     function win:SetAvatar() end                                           -- WindUI shows the player's own avatar and name (User option)
-    function win:SelectTab(name) pcall(function() Window:SelectTab(name) end) end
+    function win:SelectTab(name)                                              -- WindUI shows no tab until one is selected, so the hub selects the first one
+        for i, t in ipairs(win.Tabs) do
+            if t.name == name or i == name then pcall(function() Window:SelectTab(i) end); return end
+        end
+    end
     function win:SetVisible(v) if v then Window:Open() else Window:Close() end end
     function win:Toggle() Window:Toggle() end
     function win:GetState()
@@ -307,7 +347,6 @@ local function build(win, WindUI, UILib, cfg)
     win.SetTheme(win, themeName)
 
     ---------------------------------------------------------------------------------------------- window background (video / picture)
-    local backdrop = {media = nil, dim = nil, Dim = clamp(cfg.BackgroundDim or 0.45, 0, 0.9), Url = nil, Token = 0}
     local function folder() return (cfg.Folder or "WraithsHub") .. "/assets" end
 
     -- executors' request() looks like a browser (some sites turn Roblox's own HttpGet away); HttpGet is the fallback
@@ -348,22 +387,62 @@ local function build(win, WindUI, UILib, cfg)
         return kind, getcustomasset(path)
     end
 
-    local function clearBackdrop()
-        if backdrop.media then pcall(function() backdrop.media:Destroy() end); backdrop.media = nil end
-        if backdrop.dim then pcall(function() backdrop.dim:Destroy() end); backdrop.dim = nil end
+    ---------------------------------------------------------------------------------------------- outline water, transparent inside
+    -- The inside of the window stays transparent. The grey water-flow texture lives only on OUTLINES: the window's border (here) and the borders of the buttons (above).
+    local bgLayer = Window.UIElements and Window.UIElements.Main and Window.UIElements.Main:FindFirstChild("Background")
+    local radius = Window.UICorner or 16
+    local function rounded(f, r) local c = Instance.new("UICorner"); c.CornerRadius = r or UDim.new(0, radius); c.Parent = f; return c end
+    do
+        local frame = Instance.new("Frame")
+        frame.Name = "WraithOutline"
+        frame.Size = UDim2.new(1, 0, 1, 0)
+        frame.BackgroundTransparency = 1
+        frame.BorderSizePixel = 0
+        frame.Active = false
+        frame.ZIndex = 100
+        rounded(frame)
+        frame.Parent = Window.UIElements.Main
+        win.WindowOutline = win:Outline(frame, {Thickness = 2, Global = true, Speed = 24, Active = function() return not Window.Closed end})
     end
-    local function applyDim() if backdrop.dim then backdrop.dim.BackgroundTransparency = 1 - clamp(backdrop.Dim, 0, 0.9) end end
+    pcall(function() Window:SetBackgroundTransparency(clamp(cfg.WindowAlpha or 0.5, 0, 0.9)) end)      -- a see-through window
+    function win:SetBackgroundTransparency(v) pcall(function() Window:SetBackgroundTransparency(clamp(tonumber(v) or 0.5, 0, 0.9)) end) end
 
-    function win:SetBackgroundDim(v) backdrop.Dim = clamp(tonumber(v) or backdrop.Dim, 0, 0.9); applyDim() end
+    local dimFrame
+    if bgLayer then
+        dimFrame = Instance.new("Frame")
+        dimFrame.Name = "WraithDim"
+        dimFrame.Size = UDim2.new(1, 0, 1, 0)
+        dimFrame.BackgroundColor3 = Color3.fromRGB(6, 6, 12)
+        dimFrame.BackgroundTransparency = 1
+        dimFrame.BorderSizePixel = 0
+        dimFrame.Active = false
+        dimFrame.ZIndex = 9
+        dimFrame.Visible = false
+        rounded(dimFrame)
+        dimFrame.Parent = bgLayer
+    end
+    local backdrop = {media = nil, Dim = clamp(cfg.BackgroundDim or 0.35, 0, 0.9), Url = nil, Token = 0}
+    local function refreshBackdrop()                                          -- the dim layer only exists while a picture / video is showing
+        if dimFrame then
+            dimFrame.Visible = backdrop.media ~= nil
+            dimFrame.BackgroundTransparency = 1 - clamp(backdrop.Dim, 0, 0.9)
+        end
+    end
+    refreshBackdrop()
 
-    -- url == nil or "" removes the background. Async: the download happens in a task; `done(ok, message)` is called when it is over.
+    local function clearMedia()
+        if backdrop.media then pcall(function() backdrop.media:Destroy() end); backdrop.media = nil end
+    end
+    function win:SetBackgroundDim(v) backdrop.Dim = clamp(tonumber(v) or backdrop.Dim, 0, 0.9); refreshBackdrop() end
+    function win:SetScale(v) pcall(function() Window:SetUIScale(clamp(tonumber(v) or 0.9, 0.55, 1.2)) end) end
+
+    -- url == nil or "" removes the picture / video. Async: the download happens in a task; `done(ok, message)` is called when it is over.
     function win:SetBackground(url, done)
         backdrop.Token = backdrop.Token + 1
         local token = backdrop.Token
         url = type(url) == "string" and url:gsub("^%s+", ""):gsub("%s+$", "") or ""
         if url == "" then
-            clearBackdrop(); backdrop.Url = nil
-            pcall(function() Window:SetBackgroundTransparency(0); Window:SetPanelBackground(true) end)       -- (true = show the content panel)
+            clearMedia(); backdrop.Url = nil; refreshBackdrop()
             if done then done(true, "removed") end
             return
         end
@@ -375,10 +454,8 @@ local function build(win, WindUI, UILib, cfg)
                 if done then done(false, tostring(kindOrErr)) end
                 return
             end
-            local bg = Window.UIElements and Window.UIElements.Main and Window.UIElements.Main:FindFirstChild("Background")
-            if not bg then if done then done(false, "the window has no background layer") end return end
-            clearBackdrop()
-            local radius = Window.UICorner or 16
+            if not bgLayer then if done then done(false, "the window has no background layer") end return end
+            clearMedia()
             if kindOrErr == "video" then
                 backdrop.media = Instance.new("VideoFrame")
                 backdrop.media.Name = "WraithVideo"
@@ -395,20 +472,11 @@ local function build(win, WindUI, UILib, cfg)
             backdrop.media.BorderSizePixel = 0
             backdrop.media.Size = UDim2.new(1, 0, 1, 0)
             backdrop.media.ZIndex = 2
-            local c1 = Instance.new("UICorner"); c1.CornerRadius = UDim.new(0, radius); c1.Parent = backdrop.media
-            backdrop.media.Parent = bg
-            backdrop.dim = Instance.new("Frame")
-            backdrop.dim.Name = "WraithDim"
-            backdrop.dim.Size = UDim2.new(1, 0, 1, 0)
-            backdrop.dim.BackgroundColor3 = Color3.fromRGB(6, 6, 12)
-            backdrop.dim.BorderSizePixel = 0
-            backdrop.dim.ZIndex = 3
-            local c2 = Instance.new("UICorner"); c2.CornerRadius = UDim.new(0, radius); c2.Parent = backdrop.dim
-            backdrop.dim.Parent = bg
-            applyDim()
-            if kindOrErr == "video" then pcall(function() backdrop.media:Play() end) end
+            rounded(backdrop.media)
+            backdrop.media.Parent = bgLayer
             backdrop.Url = url
-            pcall(function() Window:SetBackgroundTransparency(0.6); Window:SetPanelBackground(false) end)       -- the picture shows through the window
+            if kindOrErr == "video" then pcall(function() backdrop.media:Play() end) end
+            refreshBackdrop()
             if done then done(true, kindOrErr) end
         end)
     end
@@ -419,7 +487,7 @@ local function build(win, WindUI, UILib, cfg)
         if not win.Alive then return end
         backdrop.Token = backdrop.Token + 1
         coreDestroy()                                                       -- (also marks the window dead and removes the floating buttons)
-        clearBackdrop()
+        clearMedia()
         pcall(function() Window:Destroy() end)
         for _, key in ipairs({"ScreenGui", "NotificationGui", "DropdownGui", "TooltipGui"}) do
             local g = WindUI[key]

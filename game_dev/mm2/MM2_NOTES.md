@@ -94,19 +94,39 @@ of other players plus half the round trip, and the shot needs another half round
   moves them all (30 fps on High, 15 fps and one layer on Low); skins on hidden pages or a hidden window are skipped.
 - The **reticle** follows the same target and predicted point the shot uses and glides onto it with exponential smoothing.
 
-## 3d. The menu (WindUI), the background, the fallback
+## 3d. The menu (WindUI), outlines, the picture, the fallback
 
 - The window is **WindUI** (Footagesus/WindUI release, MIT). `mm2/vendor/windui.lua` is the release file, unchanged; `vendor/patch_windui.py` applies three exact-string patches when
-  the script is built (they make a failed icon download fall back to blank icons instead of waiting forever for a Studio-only server remote). `mm2/windui_ui.lua` adapts it to the
-  hub's small window API (`Tab` / `Toggle` / `Slider` / `Dropdown` / `Keybind` / `Input` / `Button` / `Label`, `Notify`, `GetState` / `SetState`), so the hub's code does not
-  care which menu is in use. The floating buttons and the water skin always come from `ui_lib.lua` (a "headless" instance of it), so they live in their own ScreenGui.
+  the script is built: the library always uses its icon module with a built-in set of 76 Lucide icons (`vendor/lucide_subset.json`: name -> Roblox asset id from Footagesus/Icons)
+  instead of downloading six icon packs and, when that fails, waiting forever for a Studio-only server remote. `mm2/windui_ui.lua` adapts it to the hub's small window API (`Tab` /
+  `Toggle` / `Slider` / `Dropdown` / `Keybind` / `Input` / `Button` / `Label`, `Notify`, `GetState` / `SetState`), so the hub's code does not care which menu is in use.
+  The floating buttons and the outline water always come from `ui_lib.lua` (a "headless" instance of it), so they live in their own ScreenGui.
+- WindUI never selects a tab by itself (the official example does not either), so the hub selects "Main" once the tabs exist.
+- **Outlines**: `win:Outline(host)` = a `UIStroke` (plus a wider, fainter glow stroke) whose `UIGradient` is a 20-keypoint sharpened sine of greys and whites; the gradient's `Rotation`
+  turns, so the bands run round the border. It is used on the window (a transparent frame with only a border), on WindUI's buttons (only while their tab is open) and on the floating
+  buttons. The wave mode sets the update rate (High 30 / Low 15 / Off still); nothing runs while the window is closed. Nothing is drawn INSIDE any of them.
+- **Cards** are made translucent (every theme's `ElementBackgroundTransparency` is raised to at least 0.42) and each carries a static fade-out gradient to the right.
 - WindUI is embedded as a function that is only called inside a protected call. If it fails to load or to build its window, whatever it made is removed and the **Classic** menu starts
   (toast + Debug > Log). A WindUI toggle / slider / dropdown reports the value the hub itself just set; the adapter compares with its own copy and ignores that echo, so `Set(v, true)`
   is silent and `Set(v)` behaves like a tap.
-- **Background**: `win:SetBackground(link)`. A link is a direct `.mp4` / `.webm` / `.png` / `.jpg`, or a pixabay.com video page (the page is read and its `cdn.pixabay.com/...mp4` link used,
-  medium size preferred). The file is fetched with `request` (browser-like headers) and `HttpGet` as the fallback, saved to `WraithsHub/assets/bg_<hash>.<ext>` and shown with
-  `getcustomasset` in a `VideoFrame` / `ImageLabel` placed in WindUI's window-background layer, plus a dimming frame. Not verified against the real Pixabay site (not reachable from the
+- **Smooth start**: the floating buttons are created before the menu; the menu is built a few controls per frame (6, or as many as fit in ~12 ms), and the ESP is already running
+  (`Roles.scan()` + `ESP.update()` are called before the menu is built).
+- **Picture / video**: `win:SetBackground(link)`. A link is a direct `.mp4` / `.webm` / `.png` / `.jpg`, or a pixabay.com video page (the page is read and its `cdn.pixabay.com/...mp4`
+  link used, medium size preferred). The file is fetched with `request` (browser-like headers) and `HttpGet` as the fallback, saved to `WraithsHub/assets/bg_<hash>.<ext>` and shown with
+  `getcustomasset` in a `VideoFrame` / `ImageLabel` in WindUI's window-background layer, plus a dimming frame. Not verified against the real Pixabay site (not reachable from the
   build environment), and `VideoFrame` with a custom file depends on the executor - WindUI's own docs say it "may not work".
+
+## 3e. ESP, role detection speed, auto targets
+
+- Colours: murderer / infected red, sheriff / hero blue, innocent green, dropped gun orange. Highlights fade in (0.2 s) and colour changes are tweened (0.15 s); a removed player is
+  removed at once.
+- Roles are re-read the frame something changes: `ChildAdded` / `ChildRemoved` of a character or the backpack (a knife or gun appears), `CharacterAdded` (spawn), `Humanoid.Died`,
+  `PlayerAdded` / `PlayerRemoving`, `PlayerDataChanged`, a gun drop appearing or disappearing; a periodic scan (0.3 s) stays as the safety net. Only changed properties are written.
+- Targets in "Auto (by my role)": the gun's target is the murderer (nobody else, ever); the knife's target is the nearest player in range and in line of sight. Either floating button
+  uses whichever weapon you actually have.
+- Firing order: the shot you recorded by hand -> the known remote layouts below (if enabled and the remote exists under the weapon) -> the tool's `Activate` / the game's throw key.
+  Known layouts (UNVERIFIED, from other MM2 scripts): `Gun.KnifeLocal.CreateBeam.RemoteFunction:InvokeServer(1, aimPoint, "AH2")`, `Knife.Events.KnifeThrown:FireServer(CFrame(origin),
+  CFrame(aim))`, `Knife.Throw:FireServer(CFrame(origin), CFrame(aim))`.
 
 ## 4. Feature map
 

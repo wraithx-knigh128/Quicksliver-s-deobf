@@ -2,14 +2,20 @@
 They are applied when the hub is built (build_mm2.py) and when the tests load the library; every patch must match exactly once, so a new
 WindUI release that changes these lines fails loudly instead of being half-patched.
 
-Why: outside Roblox Studio the library fetches its icon packs over HTTP when it loads. If that fails (no HttpGet, github blocked, a changed URL) it
-throws, and its built-in fallback (module b) waits forever for a server remote called "GetIcons" - which an executor game never has. With these
-patches a failed download leaves the menu working with blank icons instead of hanging or crashing."""
+Why: outside Roblox Studio the library fetches six icon packs over HTTP when it loads (several seconds and a big compile on a phone, and a hard
+failure if a download fails); its built-in fallback (module b) waits forever for a server remote called "GetIcons", which an executor game never
+has. With these patches the library always uses module b with a small built-in set of Lucide icons (lucide_subset.json: icon name -> Roblox asset
+id, as published by Footagesus/Icons), so nothing is downloaded; any other icon name simply draws blank instead of failing."""
+import json, os
+
+_SUBSET = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "lucide_subset.json")))
+_LUA_SUBSET = "{" + ",".join('["%s"]="%s"' % (k, v) for k, v in sorted(_SUBSET.items())) + "}"
+
 PATCHES = [
-    # 1. module b (the Studio icon module) must not wait for a server remote that does not exist
+    # 1. module b (the Studio icon module): start with the built-in icons instead of asking a server remote that does not exist
     ('local d=b(game:GetService"ReplicatedStorage":WaitForChild("GetIcons",99999):InvokeServer())',
-     'local d={Icons={}}'),
-    # 2. ...and it returns a blank icon for anything that looks like an icon name (the window asks for "x", "expand", "search" ... by name)
+     'local d={Icons={lucide=' + _LUA_SUBSET + '}}'),
+    # 2. ...and it returns a blank icon for any other name that looks like an icon name
     ('''return nil
 end
 
@@ -21,17 +27,13 @@ return nil
 end
 
 function d.GetIcon(f,g)'''),
-    # 3. a failed icon download falls back to module b instead of throwing
+    # 3. no icon download: module b (with the built-in set) is always the icon module
     ('''m=loadstring(
 game.HttpGet and game:HttpGet(l)or h:GetAsync(l)
 )()''',
-     '''do
-local okI,iconSet=pcall(function()
-return loadstring(game.HttpGet and game:HttpGet(l)or h:GetAsync(l))()
-end)
-m=okI and type(iconSet)=="table"and iconSet or a.load'b'
-end'''),
+     "m=a.load'b'"),
 ]
+
 
 def apply(src):
     for old, new in PATCHES:

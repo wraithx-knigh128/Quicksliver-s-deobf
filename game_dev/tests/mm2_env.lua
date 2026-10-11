@@ -514,7 +514,10 @@ function World.new(opts)
         if W.serverHandler then return W.serverHandler(self, "InvokeServer", table.pack(...)) end
     end
     METHODS.JSONEncode = function(_, v) return W.jsonEncode(v) end
-    METHODS.JSONDecode = function(_, s) return W.jsonDecode(s) end
+    METHODS.JSONDecode = function(_, s)
+        if W.denyJsonDecode then error("JSONDecode is denied by the test", 2) end
+        return W.jsonDecode(s)
+    end
     METHODS.GenerateGUID = function() return "GUID" end
     METHODS.Create = function(_, inst, info, props)
         if not isInstance(inst) then throw("TweenService:Create expects an Instance", 2) end
@@ -603,6 +606,7 @@ function World.new(opts)
         if type(v) == "string" and pt:sub(1, 5) == "Enum:" then v = W.Enum[pt:sub(6)][v] end
         if type(v) == "number" and pt == "string" then v = tostring(v) end          -- Roblox turns a number assigned to a string property into text
         W.checkValue(d.class, k, pt, v)
+        W.writes = (W.writes or 0) + 1                                         -- every property write (a rough cost meter for the tests)
         if isA(d.class, "BasePart") and k == "Position" then
             local cf = d.props.CFrame or cframe(0, 0, 0)
             d.props.CFrame = cframe(v.X, v.Y, v.Z, cf.r)
@@ -711,7 +715,7 @@ function World.new(opts)
         wait = function(t)
             if not coroutine.isyieldable() then throw("task.wait called outside a thread in the test world", 2) end
             local start = W.now
-            coroutine.yield(t or 0.03)
+            coroutine.yield(t or (1 / 60))
             return W.now - start
         end,
         delay = function(t, f, ...)
@@ -921,6 +925,7 @@ function World:newCharacter(plr, o)
     self:make("Humanoid", "Humanoid", {Health = o.health or 100, MaxHealth = 100}, char)
     rawget(plr, "__d").props.Character = char
     self.setParent(char, self.workspace)
+    self.fire(rawget(plr, "__d").signals.CharacterAdded, char)                 -- like the engine: a spawn tells everyone listening
     return char
 end
 
@@ -941,6 +946,7 @@ function World:giveTool(plr, toolName, o)
     for _, r in ipairs(o.remotes or {}) do
         local parent = tool
         if r.folder then parent = self:make("Folder", r.folder, {}, tool) end
+        for _, dir in ipairs(r.path or {}) do parent = self:make("Folder", dir, {}, parent) end
         self:make(r.class or "RemoteEvent", r.name, {}, parent)
     end
     local where = o.held and rawget(plr, "__d").props.Character or self.M.FindFirstChildOfClass(plr, "Backpack")
