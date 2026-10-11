@@ -73,7 +73,7 @@ local function __run()
         throwKey = "E", throwAtKey = "C", autoThrow = false, throwGap = 2, slashAura = false, slashRange = 9,
         hitbox = false, hitboxSize = 8, hitboxAlpha = 0.6, hitboxWho = "Murderer",
         reticle = "Weapon in hand", pingComp = 1, interpMs = 50, extraLead = 0,
-        useKnown = true, btnShoot = true, btnThrow = true, btnGrab = false, btnSpeed = false, btnJump = false, btnSize = 80, btnLock = false, waves = "High",
+        useKnown = false, btnShoot = true, btnThrow = true, btnGrab = false, btnSpeed = false, btnJump = false, btnSize = 80, btnLock = false, waves = "High",
         shootX = -1, shootY = -1, throwX = -1, throwY = -1, grabX = -1, grabY = -1, speedX = -1, speedY = -1, jumpX = -1, jumpY = -1,   -- -1 = placed automatically (down the right edge)
         walkOn = false, walkSpeed = 24, jumpOn = false, jumpPower = 60, infJump = false, noclip = false, fovOn = false, fovValue = 80,
         antiAfk = true, theme = "Dark", uiKey = "RightShift",
@@ -1707,7 +1707,7 @@ local function __run()
     sld(combat, "shootGap", "Time between shots", 0.5, 6, 0.1, " s")
     tog(combat, "silentAim", "Silent aim (your own shots)", Cap.hook and "Your normal shots fly at the predicted target. Needs one recorded shot." or "Needs hookmetamethod - not available here.")
     drop(combat, "fireMethod", "How to fire", {"Auto", "Remote replay", "Tool:Activate", "Mouse click"})
-    tog(combat, "useKnown", "Try known game remotes", "When no shot was recorded yet, also try the remote layouts other MM2 scripts report (unverified guesses; only used if that remote exists under your weapon).")
+    tog(combat, "useKnown", "Try known game remotes (risky)", "Off by default: these are unverified guesses at other MM2 scripts' remote names. A guessed remote can report 'fired' / 'thrown' even when the server ignored it, because FireServer never tells you whether the server did anything with it. With this off, nothing is recorded yet goes straight to really using the tool (aim + Activate / the throw key) - the same thing a real click does.")
     combat:Section("Knife - murderer")
     key(combat, "throwAtKey", "Perfect throw key", "One press: aim, predict and throw.", perfectThrow)
     key(combat, "throwKey", "The game's throw key", "Used when no throw has been recorded yet.")

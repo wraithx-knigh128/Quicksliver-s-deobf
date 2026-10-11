@@ -90,7 +90,7 @@ do
     -- clean and small, like the reference menu
     local topbar = {}
     for _, b in pairs(Win.Window.TopBarButtons) do topbar[b.Name] = b.Object.Visible end
-    check(topbar.Close == true and topbar.Minimize == false and topbar.Fullscreen == false, "only the close button is left in the top bar (no minimise / fullscreen)")
+    check(topbar.Close ~= true and topbar.Minimize ~= true and topbar.Fullscreen ~= true, "none of WindUI's own top bar buttons are shown (ours replaces Close - see 'close button' below)")
     check(Win.Window.User.Enabled == false and Win.Window.HideSearchBar == true, "no user card, no search bar")
     check(not hasText(w, "WindUI", "v" .. tostring(Win.WindUI.Version)), "no version tag")
     check(Win.Window.UIElements.Main.Size.X.Offset <= 560 and Win.Window.UIElements.Main.Size.Y.Offset <= 380, "the window is compact (" .. tostring(Win.Window.UIElements.Main.Size.X.Offset) .. " x " .. tostring(Win.Window.UIElements.Main.Size.Y.Offset) .. ")")
@@ -216,6 +216,29 @@ do
     w:keyDown("F5"); w:run(1.0)
     check(Win.Main.Visible == true, "F5 opens it again")
     clean(w, "keys")
+end
+
+-- WindUI's own topbar "x" opens a "you will not be able to open it again" dialog and, if confirmed, permanently destroys the window: not what tapping a
+-- close button should do. We replace it with our own dot that hides the window the same reversible way the toggle key does.
+section("close button: hides, never destroys")
+do
+    local w = newGame(); boot(w)
+    local Win = win(w)
+    for _, name in ipairs({"Close", "Minimize", "Fullscreen"}) do
+        local native = w:find(function(i) return i.ClassName == "TextButton" and i.Name == name end)
+        check(native == nil or native.Visible == false, "WindUI's own " .. name .. " button is not shown")
+    end
+    local dot = w:find(function(i) return i.ClassName == "TextButton" and i.Name == "WraithClose" end)
+    check(dot ~= nil and dot.Visible ~= false, "our own close dot is there instead")
+    check(Win.Main.Visible == true, "the window starts open")
+    w:click(dot); w:run(0.3)
+    check(Win.Main.Visible == false, "tapping it hides the window")
+    check(Win.Window.UIElements ~= nil and Win.Window.UIElements.Main ~= nil, "...WITHOUT destroying it (no 'you will not be able to open it again')")
+    check(w.genv.__WraithsHub ~= nil and w.genv.__WraithsHub.Alive == true, "the hub itself is still running")
+    check(w:find(function(i) return i.Name == "Float_shoot" end).Visible == true, "...and the floating buttons stay up")
+    w:click(Win.Window.OpenButtonMain.Button.TextButton); w:run(0.3)
+    check(Win.Main.Visible == true, "WindUI's own open button brings it straight back")
+    clean(w, "close button")
 end
 
 ------------------------------------------------------------------------------------------------ 4. config, labels

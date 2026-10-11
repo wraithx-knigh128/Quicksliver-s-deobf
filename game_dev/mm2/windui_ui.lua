@@ -93,7 +93,27 @@ local function build(win, WindUI, UILib, cfg)
     }
     win.Window, win.WindUI = Window, WindUI
     if cfg.Parent and WindUI.SetParent then pcall(function() WindUI:SetParent(cfg.Parent) end) end
-    pcall(function() Window:DisableTopbarButtons{"Minimize", "Fullscreen"} end)
+    -- WindUI's own topbar "x" does not hide the window: it opens a confirmation dialog ("you will not be able to open it again") and, if confirmed
+    -- (or if IgnoreAlerts is set), permanently DESTROYS the window - there is no built-in way to make it a reversible hide. So all three native buttons
+    -- are hidden and replaced with one small dot of our own that calls Window:Close() (the *method*, not the topbar button): that hides the window and
+    -- leaves WindUI's own open button on screen to bring it back, exactly like tapping the pill in the Classic menu or pressing the toggle key.
+    pcall(function() Window:DisableTopbarButtons{"Close", "Minimize", "Fullscreen"} end)
+    pcall(function()
+        local right = Window.UIElements.Main.Main.Topbar.Right
+        local dot = Instance.new("TextButton")
+        dot.Name = "WraithClose"
+        dot.Text = ""
+        dot.AutoButtonColor = false
+        dot.BackgroundColor3 = Color3.fromHex("#F4695F")
+        dot.BorderSizePixel = 0
+        dot.Size = UDim2.fromOffset(14, 14)
+        dot.LayoutOrder = 999
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(1, 0)
+        corner.Parent = dot
+        dot.Parent = right
+        connect(dot.MouseButton1Click, function() Window:Close() end)
+    end)
     pcall(function() Window:SetUIScale(clamp(cfg.Scale or 0.9, 0.55, 1.2)) end)
     if cfg.Mono ~= false then                                                -- the reference menu uses a monospace face
         pcall(function()

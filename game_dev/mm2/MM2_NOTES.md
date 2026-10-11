@@ -111,6 +111,12 @@ of other players plus half the round trip, and the shot needs another half round
 - WindUI is embedded as a function that is only called inside a protected call. If it fails to load or to build its window, whatever it made is removed and the **Classic** menu starts
   (toast + Debug > Log). A WindUI toggle / slider / dropdown reports the value the hub itself just set; the adapter compares with its own copy and ignores that echo, so `Set(v, true)`
   is silent and `Set(v)` behaves like a tap.
+- **The topbar "x" is NOT WindUI's own Close button.** WindUI's native one opens a confirmation dialog ("you will not be able to open it again") and, if confirmed (or if
+  `IgnoreAlerts` is set, immediately with no confirmation), calls `Window:Destroy()` - a one-way teardown, never a hide. We hide all three native topbar buttons
+  (`Window:DisableTopbarButtons{"Close", "Minimize", "Fullscreen"}`) and add our own small dot in their place, wired to `Window:Close()` (the *method* on the window object, a
+  different thing from the topbar button despite the name) - that is the reversible hide WindUI's own `ToggleKey` / `win:SetVisible(false)` already use, leaving the open button on
+  screen to bring it back. (This was the "I can't close the hub or minimise it" bug: tapping WindUI's real close button either showed a dialog the player didn't expect, or - with
+  no dialog - destroyed the whole window outright, with no way back short of re-running the script.)
 - **Smooth start**: the floating buttons are created before the menu; the menu is built a few controls per frame (6, or as many as fit in ~12 ms), and the ESP is already running
   (`Roles.scan()` + `ESP.update()` are called before the menu is built).
 - **Picture / video**: `win:SetBackground(link)`. A link is a direct `.mp4` / `.webm` / `.png` / `.jpg`, or a pixabay.com video page (the page is read and its `cdn.pixabay.com/...mp4`
@@ -126,9 +132,13 @@ of other players plus half the round trip, and the shot needs another half round
   `PlayerAdded` / `PlayerRemoving`, `PlayerDataChanged`, a gun drop appearing or disappearing; a periodic scan (0.3 s) stays as the safety net. Only changed properties are written.
 - Targets in "Auto (by my role)": the gun's target is the murderer (nobody else, ever); the knife's target is the nearest player in range and in line of sight. Either floating button
   uses whichever weapon you actually have.
-- Firing order: the shot you recorded by hand -> the known remote layouts below (if enabled and the remote exists under the weapon) -> the tool's `Activate` / the game's throw key.
-  Known layouts (UNVERIFIED, from other MM2 scripts): `Gun.KnifeLocal.CreateBeam.RemoteFunction:InvokeServer(1, aimPoint, "AH2")`, `Knife.Events.KnifeThrown:FireServer(CFrame(origin),
-  CFrame(aim))`, `Knife.Throw:FireServer(CFrame(origin), CFrame(aim))`.
+- Firing order: the shot you recorded by hand -> the known remote layouts below (**off by default**, only if switched on in Combat and the remote exists under the weapon) -> the
+  tool's `Activate` / the game's throw key. Known layouts (UNVERIFIED, from other MM2 scripts): `Gun.KnifeLocal.CreateBeam.RemoteFunction:InvokeServer(1, aimPoint, "AH2")`,
+  `Knife.Events.KnifeThrown:FireServer(CFrame(origin), CFrame(aim))`, `Knife.Throw:FireServer(CFrame(origin), CFrame(aim))`.
+  **Why off by default:** `FireServer` never reports whether the server did anything with the call - a wrong guess among the layouts above can "work" from the client's point of
+  view (no error, so the hub says "Shot fired" / "Knife thrown") while the server silently ignores it, because the remote exists under the weapon but isn't actually what it does, or
+  takes different arguments. That is indistinguishable from a real success without seeing the round actually react, so defaulting this off means a weapon with nothing recorded yet
+  goes straight to `Activate()` / the throw key instead - the same call a manual click makes, which is the only one of the three paths that is not a guess.
 
 ## 4. Feature map
 

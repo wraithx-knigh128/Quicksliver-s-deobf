@@ -1611,6 +1611,7 @@ do
     w:giveTool(alice, "Knife", {held = true})
     w:giveTool(w.me, "Gun", {held = true, remotes = {{path = {"KnifeLocal", "CreateBeam"}, name = "RemoteFunction", class = "RemoteFunction"}}})
     boot(w, 1.0)
+    w:toggle("Try known game remotes (risky)"); w:run(0.1)        -- off by default: these are unverified guesses
     w:tap(w:button("Float_shoot"), 1050, 160); w:run(0.2)
     local sent = w.sent[#w.sent]
     check(sent and sent.method == "InvokeServer" and sent.remote.Name == "RemoteFunction" and sent.args[1] == 1 and sent.args[3] == "AH2", "the sheriff's shot goes through the known gun remote (1, aim point, 'AH2')")
@@ -1624,6 +1625,7 @@ do
     local bob = w2:addPlayer("Bob", {pos = {5, 3, -15}})
     w2:giveTool(w2.me, "Knife", {held = true, remotes = {{name = "Throw"}}})
     boot(w2, 1.0)
+    w2:toggle("Try known game remotes (risky)"); w2:run(0.1)
     w2:tap(w2:button("Float_throw"), 1050, 340); w2:run(0.2)
     local s2 = w2.sent[#w2.sent]
     check(s2 and s2.method == "FireServer" and s2.remote.Name == "Throw" and World.kindOf(s2.args[1]) == "CFrame" and World.kindOf(s2.args[2]) == "CFrame", "the murderer's throw goes through the known knife remote (origin CFrame, target CFrame)")
@@ -1635,10 +1637,8 @@ do
     w3:addPlayer("Bob", {pos = {5, 3, -15}})
     w3:giveTool(w3.me, "Knife", {held = true, remotes = {{name = "Throw"}}})
     boot(w3, 1.0)
-    w3:tap(w3:button("Combat") or w3:button("Float_throw"), 0, 0)
-    w3:tab("Combat"); w3:toggle("Try known game remotes"); w3:run(0.2)
     w3:tap(w3:button("Float_throw"), 1050, 340); w3:run(0.3)
-    check(#w3.sent == 0, "with 'Try known game remotes' off the guessed remote is never called")
+    check(#w3.sent == 0, "off by default: the guessed remote is never called")
     local pressedKey = false
     for _, e in ipairs(w3.vim) do if e[1] == "key" and e[2] == true then pressedKey = true end end
     check(pressedKey, "...the throw key is pressed instead")

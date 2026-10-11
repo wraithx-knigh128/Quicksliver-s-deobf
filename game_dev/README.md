@@ -7,7 +7,9 @@ One-line loader (pinned to a build; the SHA is updated after every build):
 loadstring(game:HttpGet("https://raw.githubusercontent.com/wraithx-knigh128/Quicksliver-s-deobf/5a2c2214448d23e3f0af901c24fda0de159340ba/dist/wraiths_hub.min.txt"))()
 ```
 The menu is the real **[WindUI](https://github.com/Footagesus/WindUI)** library (Footagesus, MIT licence - the full source is embedded in the script, see `mm2/vendor/`),
-made small and clean: a Mac-style close button only (no minimise / fullscreen), no search bar, version tag or user card, five tabs (Main, ESP, Combat, Player, Misc), a monospace
+made small and clean: a Mac-style close dot only (no minimise / fullscreen) - our own, not WindUI's built-in one, which opens a "you will not be able to open it again" dialog
+and then permanently destroys the window; ours just hides it, the same reversible way the toggle key does - no search bar, version tag or user card, five tabs (Main, ESP,
+Combat, Player, Misc), a monospace
 font, frosted cards that fade out to the right, WindUI's draggable open button, 10 themes (default **Dark**). The **inside stays transparent** (Settings > *Window see-through*);
 the grey **water-flow texture lives only on outlines**: the window's border, WindUI's buttons and the floating buttons - a thin grey / white gradient that runs round the border
 (*Button waves* High = 30 updates a second, Low = 15, Off = still). If WindUI cannot start on an executor (a blocked class, ...) the script falls back to the small built-in
@@ -31,9 +33,11 @@ Pixabay path is tested with a stand-in page and file, not with the real site; pa
   a small hand-drawn pistol shape), SPEED / JUMP toggles (a licensed bolt / the hand-drawn chevron, brighter outline = on). Tap = fire, drag = move, size slider, lock,
   fainter without that weapon, a solid green / red flash for fired / could not, positions saved with *Save config*.
 - **Auto targets by role**: Sheriff / hero -> the **murderer**, aimed ahead by your ping (innocents are never shot; if the murderer is not known yet it says so). Murderer -> the
-  **closest player**. Either button does what your weapon can do (SHOOT as murderer throws, THROW as sheriff shoots). Shots use the shot you recorded once by hand; with nothing recorded
-  the hub also tries the remote layouts other MM2 scripts report (`Gun.KnifeLocal.CreateBeam.RemoteFunction`, `Knife.Events.KnifeThrown`, `Knife.Throw`; unverified guesses, switchable)
-  and finally the tool / throw key.
+  **closest player**. Either button does what your weapon can do (SHOOT as murderer throws, THROW as sheriff shoots). Shots use the shot you recorded once by hand; with nothing
+  recorded it goes straight to really using the tool (aim + `Activate()` / the throw key - the same thing a manual click does). Combat also has a *Try known game remotes*
+  toggle (**off by default**) for the remote layouts other MM2 scripts report (`Gun.KnifeLocal.CreateBeam.RemoteFunction`, `Knife.Events.KnifeThrown`, `Knife.Throw`) - these are
+  unverified guesses, and `FireServer` never tells you whether the server actually did anything with a call, so a wrong guess can report "fired" / "thrown" while doing nothing;
+  that's why it isn't on by default.
 - **ESP**: murderer **red**, sheriff / hero **blue**, innocents green, the dropped gun **orange** (highlight, label, tracer, HUD). Event driven: a knife or gun appearing, a spawn, a
   death, new role data, a gun drop all refresh the ESP the same frame; new highlights fade in and colour changes blend.
 - **Perfect aim by ping**: the aim point is where the target will be when the shot arrives = measured ping (median + EMA, lag spikes ignored) x compensation
