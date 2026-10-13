@@ -99,6 +99,8 @@ CF.__mul = function(a, b)
     end
     return cframe(pos.X, pos.Y, pos.Z, out)
 end
+CF.__add = function(a, v) return cframe(a.p[1] + v.X, a.p[2] + v.Y, a.p[3] + v.Z, a.r) end
+CF.__sub = function(a, v) return cframe(a.p[1] - v.X, a.p[2] - v.Y, a.p[3] - v.Z, a.r) end
 CF.__eq = function(a, b)
     for i = 1, 3 do if a.p[i] ~= b.p[i] then return false end end
     for i = 1, 9 do if a.r[i] ~= b.r[i] then return false end end
@@ -192,11 +194,13 @@ end
 
 ------------------------------------------------------------------------------------------------ enums
 local enumCounter = 0
+local ENUM_VALUES = {RenderPriority = {First = 0, Input = 100, Camera = 200, Character = 300, Last = 2000}}      -- (the values scripts add numbers to)
 local function makeEnums()
     return setmetatable({}, {__index = function(all, enumName)
         local e = setmetatable({}, {__type = "Enum", __index = function(items, itemName)
             enumCounter = enumCounter + 1
-            local item = setmetatable({Name = itemName, EnumType = enumName, Value = enumCounter}, {__type = "EnumItem", __tostring = function() return "Enum." .. enumName .. "." .. itemName end})
+            local known = ENUM_VALUES[enumName]
+            local item = setmetatable({Name = itemName, EnumType = enumName, Value = known and known[itemName] or enumCounter}, {__type = "EnumItem", __tostring = function() return "Enum." .. enumName .. "." .. itemName end})
             rawset(items, itemName, item)
             return item
         end})
@@ -793,6 +797,7 @@ function World:resume(th)
 end
 function World:step(dt)
     self.now = self.now + dt
+    if self.preStep then self.preStep(dt) end                  -- (the game simulation of tests/mm2_sim.lua: server, bots, network)
     local due = {}
     local keep = {}
     for _, th in ipairs(self.threads) do

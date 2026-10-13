@@ -397,6 +397,21 @@ function UILib.new(cfg)
         local pressScale = mk("UIScale", {Scale = 1}, btn)
         f.Button, f.Gui, f.Outline = btn, g, outline
 
+        -- the "advanced" extras, none of them filled: a status line under the button (what a tap would do right now), a small pip in the corner (green = ready, grey = waiting,
+        -- red = cannot), a thin progress bar for the reload / cooldown, a ring that spreads from a tap, and HIT / MISS after a shot
+        local WHITE = Color3.fromRGB(255, 255, 255)
+        local caption = mk("TextLabel", {Name = "Status", BackgroundTransparency = 1, AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 1, 5), Size = UDim2.new(1.9, 0, 0, 13),
+            Text = "", Font = Enum.Font.GothamMedium, TextSize = 10, TextColor3 = Color3.fromRGB(236, 237, 241), TextTransparency = 0.12, TextStrokeTransparency = 0.45,
+            TextStrokeColor3 = Color3.fromRGB(10, 10, 14), ZIndex = 4, Visible = false}, btn)
+        local pip = mk("Frame", {Name = "Pip", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -9, 0, 9), Size = UDim2.fromOffset(7, 7), BackgroundColor3 = Color3.fromRGB(170, 172, 180),
+            BorderSizePixel = 0, ZIndex = 5, Visible = false}, btn)
+        corner(pip, "full")
+        local track = mk("Frame", {Name = "ProgressTrack", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -3), Size = UDim2.new(0.56, 0, 0, 3), BackgroundColor3 = WHITE,
+            BackgroundTransparency = 0.82, BorderSizePixel = 0, ZIndex = 4, Visible = false}, btn)
+        corner(track, "full")
+        local fill = mk("Frame", {Name = "Progress", Size = UDim2.new(0, 0, 1, 0), BackgroundColor3 = WHITE, BackgroundTransparency = 0.08, BorderSizePixel = 0, ZIndex = 5}, track)
+        corner(fill, "full")
+
         local ic, iconScale
         local function buildIcon()
             if ic then ic:Destroy() end
@@ -451,15 +466,63 @@ function UILib.new(cfg)
         function f:Flash(ok)                                              -- green = fired, red = nothing happened (the water stands aside for a moment)
             outline:Flash(rgb(ok and T.good or T.bad))
             tween(outline.stroke, {Thickness = 4.5}, 0.08)
+            if ok then                                                    -- a small kick, like a recoil
+                tween(pressScale, {Scale = 1.08}, 0.06)
+                task.delay(0.07, function() if btn.Parent then tween(pressScale, {Scale = 1}, 0.16) end end)
+            end
             task.delay(0.35, function()
                 if not btn.Parent then return end
                 outline:Reset(); tween(outline.stroke, {Thickness = 2.5}, 0.2)
             end)
         end
-        function f:Cooldown(seconds)
+        function f:Pulse()                                                -- ready again: the outline swells once
+            if not btn.Parent then return end
+            tween(outline.stroke, {Thickness = 4}, 0.12)
+            task.delay(0.14, function() if btn.Parent then tween(outline.stroke, {Thickness = 2.5}, 0.3) end end)
+        end
+        function f:Cooldown(seconds)                                      -- the bar fills over the reload; the inside is only veiled very lightly
             if not seconds or seconds <= 0.05 then return end
-            shade.BackgroundTransparency = 0.45
+            f.cdToken = (f.cdToken or 0) + 1
+            local token = f.cdToken
+            shade.BackgroundTransparency = 0.8
             tween(shade, {BackgroundTransparency = 1}, seconds)
+            track.Visible = true
+            fill.Size = UDim2.new(0, 0, 1, 0)
+            tween(fill, {Size = UDim2.new(1, 0, 1, 0)}, seconds)
+            task.delay(seconds, function()
+                if f.cdToken ~= token or not btn.Parent then return end
+                track.Visible = false
+                f:Pulse()
+            end)
+        end
+        function f:SetStatus(text, kind)                                  -- kind: "ready" | "wait" | "off"
+            f.status = {text, kind}
+            if f.resultUntil and os.clock() < f.resultUntil then return end            -- HIT / MISS is on show: the status comes back after it
+            caption.Text = text or ""
+            caption.Visible = text ~= nil and text ~= ""
+            pip.Visible = kind ~= nil
+            pip.BackgroundColor3 = kind == "ready" and rgb(T.good) or kind == "off" and rgb(T.bad) or Color3.fromRGB(170, 172, 180)
+        end
+        function f:Result(hit)                                            -- after a shot: HIT (green) / MISS (red) for a moment
+            f.resultUntil = os.clock() + 1.4
+            caption.Text = hit and "HIT" or "MISS"
+            caption.Visible = true
+            caption.TextColor3 = rgb(hit and T.good or T.bad)
+            task.delay(1.45, function()
+                if not btn.Parent then return end
+                f.resultUntil = nil
+                caption.TextColor3 = Color3.fromRGB(236, 237, 241)
+                if f.status then f:SetStatus(f.status[1], f.status[2]) else caption.Visible = false end
+            end)
+        end
+        local function ripple()                                           -- a ring that spreads from the middle on every tap
+            local r = mk("Frame", {Name = "Ripple", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0), Size = UDim2.fromOffset(f.Size * 0.45, f.Size * 0.45),
+                BackgroundTransparency = 1, BorderSizePixel = 0, ZIndex = 7}, btn)
+            corner(r, "full")
+            local st = mk("UIStroke", {Thickness = 2, Color = WHITE, Transparency = 0.25, ApplyStrokeMode = Enum.ApplyStrokeMode.Border}, r)
+            tween(r, {Size = UDim2.fromOffset(f.Size * 1.05, f.Size * 1.05)}, 0.35)
+            tween(st, {Transparency = 1}, 0.35)
+            task.delay(0.4, function() pcall(function() r:Destroy() end) end)
         end
         function f:Destroy() f.anim = nil; pcall(function() btn:Destroy() end) end
         f:SetSize(f.Size)
@@ -473,6 +536,7 @@ function UILib.new(cfg)
                 sx, sy = input.Position.X, input.Position.Y
                 bx, by = btn.Position.X.Offset, btn.Position.Y.Offset
                 tween(pressScale, {Scale = 0.92}, 0.08)
+                ripple()
             end
         end)
         connect(UIS.InputChanged, function(input)

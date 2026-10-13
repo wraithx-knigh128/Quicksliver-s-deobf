@@ -78,10 +78,19 @@ of other players plus half the round trip, and the shot needs another half round
 
 - **ping**: `Stats.Network.ServerStatsItem["Data Ping"]` sampled every 0.25 s; the value used is the EMA of the median of the last five samples, so a single lag
   spike cannot throw the aim off, while a real change in connection is followed within a second or two.
-- **render delay** (default 50 ms, slider 0-200) and **trim** (-100..+200 ms) exist because that part is an estimate - tune them if your shots land consistently
-  ahead of or behind a runner. **Ping compensation** (0-1.5x) scales the ping part.
+- **render delay** (default 100 ms, slider 0-200) and **trim** (-100..+200 ms) exist because that part is an estimate (Roblox draws other players a little in the past; I assume about 100 ms and could
+  not measure the real figure, which also moves with the connection) - tune them if your shots land consistently ahead of or behind a runner. In the simulated round a runner at normal speed is still hit
+  when the real delay is anywhere from 40 to 160 ms. **Ping compensation** (0-1.5x) scales the ping part.
 - **velocity**: the engine's `AssemblyLinearVelocity` when it reports one; otherwise the displacement over the last 0.18 s of recorded positions. A jump faster
   than 90 studs/s is a teleport / respawn and is never treated as running, and no speed above 90 studs/s is ever used.
+- a target **in the air** is led along its jump arc (y + vy*t - g*t^2/2 with the workspace's gravity, never below the height it was last standing at) instead of a straight line; one
+  that stands is not led vertically (nobody can know when it will jump).
+- **projectile speed**: Bullet speed / Knife speed 0 = "measure". Only the knife is measured: after a throw the hub watches for a part that appears within a second and flies away from
+  you in a straight line (25-700 studs/s) and uses its speed for the next throw. A gun is treated as instant unless you set Bullet speed (a trail is not how fast the server resolves
+  the hit).
+- **the aim is held**: Roblox's camera script rewrites `Camera.CFrame` every render frame, so the hub holds the camera / cursor on the target with a render step right after it
+  (`Enum.RenderPriority.Camera.Value + 2`) for the length of the shot, and re-leads the target every frame of it.
+- **hit / miss**: after a shot the hub watches the target's health for ping + flight time + 0.6 s: it dropped = HIT, otherwise MISS. That is all the client can see.
 - the aim is **recomputed after the weapon is equipped** and one frame before it fires, because the target keeps moving during those frames.
 - limits: the lead is capped at 0.8 s; if the game rewinds players for lag compensation, "Ping compensation" 0 is the right setting.
 
@@ -140,6 +149,19 @@ of other players plus half the round trip, and the shot needs another half round
   takes different arguments. That is indistinguishable from a real success without seeing the round actually react, so defaulting this off means a weapon with nothing recorded yet
   goes straight to `Activate()` / the throw key instead - the same call a manual click makes, which is the only one of the three paths that is not a guess.
 
+## 3f. The simulated game (`tests/mm2_sim.lua`) - what it models and what it only assumes
+
+Modelled the way Roblox works (so the hub's behaviour against it is meaningful): R6 / R15 rigs with every part, characters that move as one body, client-owned local movement
+(`WalkSpeed` / `JumpPower` / a root `CFrame` write all take effect), other players drawn one-way latency + interpolation delay in the past with their velocity, a ping the client can
+read from `Stats`, `Tool:Activate()` only firing for an enabled tool in the character, `HumanoidRootPart`-style raycasts for line of sight, the executor input functions
+(`mousemoverel`, `VirtualInputManager`, `mouse1click`), the camera script, `Humanoid:EquipTool`, remotes that reach the server one way later.
+
+**Assumed** (my guesses; the real numbers are not published): the gun is a hitscan unless a bullet speed is set; a thrown knife flies at 80 studs/s for up to 200 studs and kills on
+contact; reload 2.5 s (the tool disables itself), knife cooldown 3 s; stab reach 5 studs in front; any gun hit on the murderer kills him, any hit on an innocent kills the
+innocent **and** the sheriff; the remote layouts (`Gun.KnifeLocal.CreateBeam.RemoteFunction(1, aim, "AH2")` or `Gun.Remotes.Shoot(originCF, aim, hitPart)`, `Knife.Events.KnifeThrown`,
+`Knife.Throw` or `Knife.Remotes.ThrowRE`); that the data remote `ReplicatedStorage.Remotes.Gameplay.PlayerDataChanged` / `GetPlayerData` exists (switchable); the knife is thrown with the
+`E` key; the gun drops where the sheriff died and is picked up by touching it. None of it is verified against the real game.
+
 ## 4. Feature map
 
 - **Main** - live round info (you / murderer / sheriff), gun finder status, announcements (murderer, sheriff, gun drops, murderer nearby),
@@ -147,7 +169,7 @@ of other players plus half the round trip, and the shot needs another half round
 - **ESP** - role-coloured chams, names, distance, health, tracers (needs the executor's `Drawing`), gun ESP + tracer.
 - **Combat** - target rules (role-aware), prediction, aim assist (camera / cursor / both, smoothing), gun and knife tools, auto shoot / auto
   throw / slash aura, silent aim, hitbox expander.
-- **Buttons** - the floating SHOOT / THROW / GRAB GUN buttons and the wave skin.
+- **Buttons** - the floating SHOOT / THROW / GRAB GUN buttons (status line, pip, reload bar, tap ring, HIT / MISS) and the wave skin.
 - **Player** - walk speed, jump power, infinite jump, noclip, field of view, anti-AFK, rejoin, server hop.
 - **Settings / Debug** - themes, menu style (WindUI / Classic), window background (video link, dimming), config (saved **only** when you press *Save config*), unload; executor support, recorded shots, log, diagnostics.
 

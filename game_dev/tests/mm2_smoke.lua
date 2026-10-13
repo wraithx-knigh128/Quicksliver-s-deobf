@@ -15,10 +15,12 @@ local function newGame(opts)
     w.me = me
     return w
 end
-local function boot(w, seconds)
+local function boot(w, seconds, defaults)
     local ok, err = w:load(SCRIPT_SOURCE)
     if not ok then failures[#failures + 1] = "load: " .. tostring(err); return false end
     w:run((seconds or 0.6) + 0.5)                       -- (the menu is built a few controls per frame: half a second of build time on top)
+    local S = w.genv.__WraithsHub and w.genv.__WraithsHub.S
+    if S and not defaults then S.aimPart, S.interpMs = "Head", 50; w:run(0.4) end      -- the lead / aim numbers below are worked out for the head and a 50 ms render delay (the real defaults are checked once, in 'defaults')
     return true
 end
 local function clean(w, name)           -- nothing may have been thrown at the script, swallowed, or reported by a handler
@@ -61,6 +63,18 @@ end
 local function red(c) return c and c.R > 0.9 and c.G < 0.4 and c.B < 0.4 end
 local function blue(c) return c and c.B > 0.9 and c.R < 0.4 and c.G < 0.7 end
 local function green(c) return c and c.G > 0.8 and c.R < 0.5 and c.B < 0.6 end
+
+------------------------------------------------------------------------------------------------ 0. defaults that matter for aiming
+section("defaults")
+do
+    local w = newGame()
+    check(boot(w, 0.6, true), "boots")
+    local S = w.genv.__WraithsHub.S
+    check(S.aimPart == "Torso", "aims at the torso by default (any hit kills, and it is the biggest part of a moving target)")
+    check(S.interpMs == 100, "assumes a 100 ms render delay for other players")
+    check(S.bulletSpeed == 0 and S.knifeSpeed == 0, "projectile speeds start at 0 = measure them from the real projectile")
+    check(S.predict and S.addPing and S.pingComp == 1, "leads by ping")
+end
 
 ------------------------------------------------------------------------------------------------ 1. loads, builds the window
 section("load")
@@ -753,8 +767,8 @@ do
     w:mouseMove(100 + 200 * 0.25); w:run(0.05)
     check(labelContaining(w, "^37 studs$") ~= nil or labelContaining(w, "^40 studs$") ~= nil, "dragging moves the value (25% of 10..120)")
     w.fire(rawget(w.uis, "__d").signals.InputEnded, {UserInputType = E.UserInputType.MouseButton1, Position = w:V3(150, 50, 0)})
-    w:click(w:rowButton("Aim at")); w:click(w:option("Torso")); w:run(0.1)
-    check(labelContaining(w, "^Torso$") ~= nil, "dropdown shows the chosen value")
+    w:click(w:rowButton("Aim at")); w:click(w:option("Head")); w:run(0.1)
+    check(labelContaining(w, "^Head$") ~= nil, "dropdown shows the chosen value")
     -- keybind capture
     w:click(w:rowButton("Aim key (hold)")); w:keyDown("G"); w:run(0.1)
     check(w:find(function(i) return i.ClassName == "TextLabel" and i.Text == "G" and i.Parent and i.Parent.Name == "Key" end) ~= nil, "keybind button shows the captured key")
@@ -948,7 +962,7 @@ do
     local shoot = w:button("Float_shoot")
     local n = #w.sent
     local x0, y0 = shoot.Position.X.Offset, shoot.Position.Y.Offset
-    check(near(x0, 1280 - 12 - 80, 1e-6) and near(y0, 0.18 * 720, 1e-6), "default place: down the right edge (12 px from it), 18% from the top")
+    check(near(x0, 1280 - 12 - 80, 1e-6) and near(y0, 0.16 * 720, 1e-6), "default place: down the right edge (12 px from it), 16% from the top")
     w:drag(shoot, 1050, 160, 850, 260)
     check(near(shoot.Position.X.Offset, x0 - 200, 1e-6) and near(shoot.Position.Y.Offset, y0 + 100, 1e-6), "dragging moves the button by the finger's movement")
     w:run(0.3)

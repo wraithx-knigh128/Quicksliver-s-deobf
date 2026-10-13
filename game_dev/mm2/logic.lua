@@ -74,7 +74,9 @@ end
 --   latency  seconds (one way) added on top
 --   strength 0..2 multiplier on the lead (1 = full prediction)
 --   maxLead  seconds, never lead further than this
---   vertical 0..1 how much of the vertical velocity to lead (jumping targets are hard to predict)
+--   vertical 0..1 how much of the vertical velocity to lead when gravity / groundY are not given (jumping targets are hard to predict)
+--   gravity, groundY  with both given, a target in the air follows a real jump arc: y + vy*t - g*t^2/2, never below groundY (where it stands);
+--            a target that stands (on groundY, not rising / falling) is not led vertically at all - it cannot be known when it will jump.
 function Logic.lead(tx, ty, tz, vx, vy, vz, sx, sy, sz, opts)
     opts = opts or {}
     local speed = opts.speed or 0
@@ -82,13 +84,21 @@ function Logic.lead(tx, ty, tz, vx, vy, vz, sx, sy, sz, opts)
     local strength = opts.strength == nil and 1 or opts.strength
     local maxLead = opts.maxLead or 0.6
     local vertical = opts.vertical == nil and 0.5 or opts.vertical
+    local g, ground = opts.gravity, opts.groundY
+    local ballistic = type(g) == "number" and g > 0 and type(ground) == "number"
+    local airborne = ballistic and (ty > ground + 0.4 or math.abs(vy) > 1)
     local t = latency
     local px, py, pz = tx, ty, tz
     for _ = 1, 4 do                                      -- solve "where is it when the shot arrives" (converges in a few steps)
         local dx, dy, dz = px - sx, py - sy, pz - sz
         local flight = speed > 0 and sqrt(dx * dx + dy * dy + dz * dz) / speed or 0
         t = min(maxLead, (latency + flight) * strength)
-        px, py, pz = tx + vx * t, ty + vy * t * vertical, tz + vz * t
+        px, pz = tx + vx * t, tz + vz * t
+        if ballistic then
+            if airborne then py = max(ground, ty + vy * t - 0.5 * g * t * t) else py = ty end
+        else
+            py = ty + vy * t * vertical
+        end
     end
     return px, py, pz, t
 end

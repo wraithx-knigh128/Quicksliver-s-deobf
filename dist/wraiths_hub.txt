@@ -76,7 +76,9 @@ end
 --   latency  seconds (one way) added on top
 --   strength 0..2 multiplier on the lead (1 = full prediction)
 --   maxLead  seconds, never lead further than this
---   vertical 0..1 how much of the vertical velocity to lead (jumping targets are hard to predict)
+--   vertical 0..1 how much of the vertical velocity to lead when gravity / groundY are not given (jumping targets are hard to predict)
+--   gravity, groundY  with both given, a target in the air follows a real jump arc: y + vy*t - g*t^2/2, never below groundY (where it stands);
+--            a target that stands (on groundY, not rising / falling) is not led vertically at all - it cannot be known when it will jump.
 function Logic.lead(tx, ty, tz, vx, vy, vz, sx, sy, sz, opts)
     opts = opts or {}
     local speed = opts.speed or 0
@@ -84,13 +86,21 @@ function Logic.lead(tx, ty, tz, vx, vy, vz, sx, sy, sz, opts)
     local strength = opts.strength == nil and 1 or opts.strength
     local maxLead = opts.maxLead or 0.6
     local vertical = opts.vertical == nil and 0.5 or opts.vertical
+    local g, ground = opts.gravity, opts.groundY
+    local ballistic = type(g) == "number" and g > 0 and type(ground) == "number"
+    local airborne = ballistic and (ty > ground + 0.4 or math.abs(vy) > 1)
     local t = latency
     local px, py, pz = tx, ty, tz
     for _ = 1, 4 do                                      -- solve "where is it when the shot arrives" (converges in a few steps)
         local dx, dy, dz = px - sx, py - sy, pz - sz
         local flight = speed > 0 and sqrt(dx * dx + dy * dy + dz * dz) / speed or 0
         t = min(maxLead, (latency + flight) * strength)
-        px, py, pz = tx + vx * t, ty + vy * t * vertical, tz + vz * t
+        px, pz = tx + vx * t, tz + vz * t
+        if ballistic then
+            if airborne then py = max(ground, ty + vy * t - 0.5 * g * t * t) else py = ty end
+        else
+            py = ty + vy * t * vertical
+        end
     end
     return px, py, pz, t
 end
@@ -639,6 +649,21 @@ function UILib.new(cfg)
         local pressScale = mk("UIScale", {Scale = 1}, btn)
         f.Button, f.Gui, f.Outline = btn, g, outline
 
+        -- the "advanced" extras, none of them filled: a status line under the button (what a tap would do right now), a small pip in the corner (green = ready, grey = waiting,
+        -- red = cannot), a thin progress bar for the reload / cooldown, a ring that spreads from a tap, and HIT / MISS after a shot
+        local WHITE = Color3.fromRGB(255, 255, 255)
+        local caption = mk("TextLabel", {Name = "Status", BackgroundTransparency = 1, AnchorPoint = Vector2.new(0.5, 0), Position = UDim2.new(0.5, 0, 1, 5), Size = UDim2.new(1.9, 0, 0, 13),
+            Text = "", Font = Enum.Font.GothamMedium, TextSize = 10, TextColor3 = Color3.fromRGB(236, 237, 241), TextTransparency = 0.12, TextStrokeTransparency = 0.45,
+            TextStrokeColor3 = Color3.fromRGB(10, 10, 14), ZIndex = 4, Visible = false}, btn)
+        local pip = mk("Frame", {Name = "Pip", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -9, 0, 9), Size = UDim2.fromOffset(7, 7), BackgroundColor3 = Color3.fromRGB(170, 172, 180),
+            BorderSizePixel = 0, ZIndex = 5, Visible = false}, btn)
+        corner(pip, "full")
+        local track = mk("Frame", {Name = "ProgressTrack", AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -3), Size = UDim2.new(0.56, 0, 0, 3), BackgroundColor3 = WHITE,
+            BackgroundTransparency = 0.82, BorderSizePixel = 0, ZIndex = 4, Visible = false}, btn)
+        corner(track, "full")
+        local fill = mk("Frame", {Name = "Progress", Size = UDim2.new(0, 0, 1, 0), BackgroundColor3 = WHITE, BackgroundTransparency = 0.08, BorderSizePixel = 0, ZIndex = 5}, track)
+        corner(fill, "full")
+
         local ic, iconScale
         local function buildIcon()
             if ic then ic:Destroy() end
@@ -693,15 +718,63 @@ function UILib.new(cfg)
         function f:Flash(ok)                                              -- green = fired, red = nothing happened (the water stands aside for a moment)
             outline:Flash(rgb(ok and T.good or T.bad))
             tween(outline.stroke, {Thickness = 4.5}, 0.08)
+            if ok then                                                    -- a small kick, like a recoil
+                tween(pressScale, {Scale = 1.08}, 0.06)
+                task.delay(0.07, function() if btn.Parent then tween(pressScale, {Scale = 1}, 0.16) end end)
+            end
             task.delay(0.35, function()
                 if not btn.Parent then return end
                 outline:Reset(); tween(outline.stroke, {Thickness = 2.5}, 0.2)
             end)
         end
-        function f:Cooldown(seconds)
+        function f:Pulse()                                                -- ready again: the outline swells once
+            if not btn.Parent then return end
+            tween(outline.stroke, {Thickness = 4}, 0.12)
+            task.delay(0.14, function() if btn.Parent then tween(outline.stroke, {Thickness = 2.5}, 0.3) end end)
+        end
+        function f:Cooldown(seconds)                                      -- the bar fills over the reload; the inside is only veiled very lightly
             if not seconds or seconds <= 0.05 then return end
-            shade.BackgroundTransparency = 0.45
+            f.cdToken = (f.cdToken or 0) + 1
+            local token = f.cdToken
+            shade.BackgroundTransparency = 0.8
             tween(shade, {BackgroundTransparency = 1}, seconds)
+            track.Visible = true
+            fill.Size = UDim2.new(0, 0, 1, 0)
+            tween(fill, {Size = UDim2.new(1, 0, 1, 0)}, seconds)
+            task.delay(seconds, function()
+                if f.cdToken ~= token or not btn.Parent then return end
+                track.Visible = false
+                f:Pulse()
+            end)
+        end
+        function f:SetStatus(text, kind)                                  -- kind: "ready" | "wait" | "off"
+            f.status = {text, kind}
+            if f.resultUntil and os.clock() < f.resultUntil then return end            -- HIT / MISS is on show: the status comes back after it
+            caption.Text = text or ""
+            caption.Visible = text ~= nil and text ~= ""
+            pip.Visible = kind ~= nil
+            pip.BackgroundColor3 = kind == "ready" and rgb(T.good) or kind == "off" and rgb(T.bad) or Color3.fromRGB(170, 172, 180)
+        end
+        function f:Result(hit)                                            -- after a shot: HIT (green) / MISS (red) for a moment
+            f.resultUntil = os.clock() + 1.4
+            caption.Text = hit and "HIT" or "MISS"
+            caption.Visible = true
+            caption.TextColor3 = rgb(hit and T.good or T.bad)
+            task.delay(1.45, function()
+                if not btn.Parent then return end
+                f.resultUntil = nil
+                caption.TextColor3 = Color3.fromRGB(236, 237, 241)
+                if f.status then f:SetStatus(f.status[1], f.status[2]) else caption.Visible = false end
+            end)
+        end
+        local function ripple()                                           -- a ring that spreads from the middle on every tap
+            local r = mk("Frame", {Name = "Ripple", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0), Size = UDim2.fromOffset(f.Size * 0.45, f.Size * 0.45),
+                BackgroundTransparency = 1, BorderSizePixel = 0, ZIndex = 7}, btn)
+            corner(r, "full")
+            local st = mk("UIStroke", {Thickness = 2, Color = WHITE, Transparency = 0.25, ApplyStrokeMode = Enum.ApplyStrokeMode.Border}, r)
+            tween(r, {Size = UDim2.fromOffset(f.Size * 1.05, f.Size * 1.05)}, 0.35)
+            tween(st, {Transparency = 1}, 0.35)
+            task.delay(0.4, function() pcall(function() r:Destroy() end) end)
         end
         function f:Destroy() f.anim = nil; pcall(function() btn:Destroy() end) end
         f:SetSize(f.Size)
@@ -715,6 +788,7 @@ function UILib.new(cfg)
                 sx, sy = input.Position.X, input.Position.Y
                 bx, by = btn.Position.X.Offset, btn.Position.Y.Offset
                 tween(pressScale, {Scale = 0.92}, 0.08)
+                ripple()
             end
         end)
         connect(UIS.InputChanged, function(input)
@@ -17651,13 +17725,13 @@ local function __run()
         notifyRoles = true, murdererAlert = true, alertDistance = 40, notifyGun = true, gunHud = true, useRemoteData = true,
         espPlayers = true, espChams = true, espNames = true, espDistance = true, espHealth = false, espInnocents = true, espTracers = false,
         espGun = true, gunTracer = true,
-        aimMode = "Auto (by my role)", aimPart = "Head", wallCheck = true, maxDistance = 300, fov = 220, showFov = false,
-        predict = true, bulletSpeed = 0, predictStrength = 1, addPing = true,
+        aimMode = "Auto (by my role)", aimPart = "Torso", wallCheck = true, maxDistance = 300, fov = 220, showFov = false,
+        predict = true, bulletSpeed = 0, knifeSpeed = 0, predictStrength = 1, addPing = true,
         aimLock = false, aimMethod = "Camera", aimSmooth = 0, aimKey = "Z",
         autoShoot = false, shootGap = 2.5, shootKey = "X", silentAim = false, fireMethod = "Auto",
         throwKey = "E", throwAtKey = "C", autoThrow = false, throwGap = 2, slashAura = false, slashRange = 9,
         hitbox = false, hitboxSize = 8, hitboxAlpha = 0.6, hitboxWho = "Murderer",
-        reticle = "Weapon in hand", pingComp = 1, interpMs = 50, extraLead = 0,
+        reticle = "Weapon in hand", pingComp = 1, interpMs = 100, extraLead = 0,
         useKnown = false, btnShoot = true, btnThrow = true, btnGrab = false, btnSpeed = false, btnJump = false, btnSize = 80, btnLock = false, waves = "High",
         shootX = -1, shootY = -1, throwX = -1, throwY = -1, grabX = -1, grabY = -1, speedX = -1, speedY = -1, jumpX = -1, jumpY = -1,   -- -1 = placed automatically (down the right edge)
         walkOn = false, walkSpeed = 24, jumpOn = false, jumpPower = 60, infJump = false, noclip = false, fovOn = false, fovValue = 80,
@@ -17674,6 +17748,7 @@ local function __run()
         end
     end
     local S = Logic.mergeFlags(DEFAULTS, saved)
+    Hub.S = S                                                  -- (the live settings: the tests, and anyone poking at getgenv().__WraithsHub, change them here)
     if genv.WraithsHubUI == "Classic" or genv.WraithsHubUI == "WindUI" then S.ui = genv.WraithsHubUI end      -- (tests, or a one-off override: getgenv().WraithsHubUI = "Classic")
 
     ------------------------------------------------------------------------------------------ small helpers
@@ -18287,8 +18362,9 @@ local function __run()
         return hit == nil
     end
 
-    -- recent positions of every other player: a velocity that does not depend on the engine reporting one
-    local Tracks = {}
+    -- recent positions of every other player: a velocity that does not depend on the engine reporting one, and where each one stands (the height of its root
+    -- while it was last standing still), which a jumping target is predicted against
+    local Tracks, Ground = {}, {}
     local function sampleTracks()
         local t = now()
         for plr, info in pairs(Roles.map) do
@@ -18300,11 +18376,17 @@ local function __run()
                 local p = r.Position
                 sample.t, sample.x, sample.y, sample.z = t, p.X, p.Y, p.Z
                 tr[#tr + 1] = sample
+                local n = #tr
+                if n >= 4 then                                           -- four frames at the same height = standing (a jump is never level for that long)
+                    local y = tr[n].y
+                    if math.abs(tr[n - 1].y - y) < 0.05 and math.abs(tr[n - 2].y - y) < 0.05 and math.abs(tr[n - 3].y - y) < 0.05 then Ground[plr] = y end
+                end
             else
                 Tracks[plr] = nil
+                Ground[plr] = nil
             end
         end
-        for plr in pairs(Tracks) do if Roles.map[plr] == nil then Tracks[plr] = nil end end
+        for plr in pairs(Tracks) do if Roles.map[plr] == nil then Tracks[plr] = nil; Ground[plr] = nil end end
     end
 
     local function velocityOf(plr, part, char)
@@ -18315,13 +18397,28 @@ local function __run()
         return Logic.pickVelocity(pv.X, pv.Y, pv.Z, hx, hy, hz)
     end
 
+    -- projectile speeds (studs/s): the slider when it is set, else what the real projectile measured last time (0 = none seen: the shot is treated as instant)
+    local Learned = {}
+    local function speedFor(weapon)
+        if weapon == "Gun" then return S.bulletSpeed > 0 and S.bulletSpeed or Learned.Gun or 0 end
+        return S.knifeSpeed > 0 and S.knifeSpeed or Learned.Knife or 0
+    end
+
     -- where to aim: the target's position when my shot arrives (ping + render delay + bullet flight), and the lead time used
-    local function predictedPos(part, char, shooterPos, plr)
+    local function gravityNow()
+        local ok, g = pcall(function() return workspace.Gravity end)
+        return ok and type(g) == "number" and g > 0 and g or 196.2
+    end
+    local function predictedPos(part, char, shooterPos, plr, weapon)
         local pos = part.Position
         if not S.predict then return pos, 0 end
         local vx, vy, vz = velocityOf(plr, part, char)
+        local root = rootOf(char) or part
+        local ground = Ground[plr]                                            -- (where the root stands) -> where THIS part is when it stands
+        local partGround = ground and (ground + (pos.Y - root.Position.Y)) or nil
         local x, y, z, t = Logic.lead(pos.X, pos.Y, pos.Z, vx, vy, vz, shooterPos.X, shooterPos.Y, shooterPos.Z,
-            {speed = S.bulletSpeed, latency = leadSeconds(), strength = S.predictStrength, maxLead = 0.8, vertical = 0.5})
+            {speed = speedFor(weapon), latency = leadSeconds(), strength = S.predictStrength, maxLead = 0.8,
+             vertical = 0.5, gravity = partGround and gravityNow() or nil, groundY = partGround})
         return Vector3.new(x, y, z), t
     end
 
@@ -18361,7 +18458,7 @@ local function __run()
         local id = Logic.pickTarget(cands, {mode = modeOverride or modeFor(weapon), fov = S.fov, maxDist = S.maxDistance, needVisible = S.wallCheck})
         if not id then return end
         local e = byId[id]
-        local pp, lt = predictedPos(e.part, e.char, origin, id)
+        local pp, lt = predictedPos(e.part, e.char, origin, id, weapon)
         return id, e.char, e.part, pp, lt
     end
 
@@ -18419,8 +18516,35 @@ local function __run()
         return true
     end
 
+    -- Roblox's own camera script rewrites Camera.CFrame every render frame, so a camera aim set once is gone before the weapon's script reads it a frame later.
+    -- A shot therefore HOLDS its aim: a render step right after the camera script puts the camera (and the cursor) back on the target every frame for as long as the
+    -- shot needs. getPos is called each frame, so the aim keeps leading a target that keeps moving.
+    local Hold = {}
+    local function stopHold()
+        if Hold.bound then pcall(function() RunService:UnbindFromRenderStep("WraithsHubShotAim") end); Hold.bound = false end
+        Hold.fn = nil
+    end
+    local function holdAim(getPos, method, secs)
+        Hold.fn, Hold.method, Hold.untilT = getPos, method, now() + secs
+        local pos = getPos()
+        if pos then applyAim(pos, method, 0) end
+        if not Hold.bound then
+            Hold.bound = true
+            RunService:BindToRenderStep("WraithsHubShotAim", Enum.RenderPriority.Camera.Value + 2, guard("shot aim", function()
+                if Hold.fn and Hub.Alive and now() < Hold.untilT then
+                    local p = Hold.fn()
+                    if p then applyAim(p, Hold.method, 0) end
+                else
+                    stopHold()
+                end
+            end))
+        end
+    end
+    onCleanup(stopHold)
+
     ------------------------------------------------------------------------------------------ weapons: record / replay / silent aim
     local Shots = {templates = {}, pending = {}, counts = {Gun = 0, Knife = 0}, window = 0, windowWeapon = nil, skip = nil, last = {}, firing = {}}
+    Hub.Shots = Shots
 
     local function findTool(weapon)
         local char = myChar()
@@ -18657,12 +18781,21 @@ local function __run()
         if auto then method = Shots.templates[weapon] and "Remote replay" or "Known remote" end
         local aimMethod = S.aimMethod == "Mouse cursor" and "Mouse cursor" or "Both"
         local ok, why = true, nil
+        local function livePos()                                 -- the target keeps moving while the aim is held: lead it again every frame
+            local c = plr.Character
+            local pt = c and isAlive(c) and pickPartFor(c)
+            local head = headOf(myChar())
+            if not (pt and head) then return pos end
+            return (predictedPos(pt, c, head.Position, plr, weapon))
+        end
+        local function release() Hold.untilT = math.min(Hold.untilT or 0, now() + 0.25) end      -- (a script that reads the cursor a frame later still finds it aimed)
         local function viaTool()
-            applyAim(pos, aimMethod, 0)
+            holdAim(livePos, aimMethod, 1.0)
             task.wait()
-            if weapon == "Knife" and (auto or method == "Throw key") and pressKey(S.throwKey) then return true end
+            if weapon == "Knife" and (auto or method == "Throw key") and pressKey(S.throwKey) then release(); return true end
             local t2 = findTool(weapon)
-            if t2 then pcall(function() t2:Activate() end); return true end
+            if t2 then pcall(function() t2:Activate() end); release(); return true end
+            release()
             return false, "weapon not ready"
         end
         if method == "Known remote" then
@@ -18672,18 +18805,106 @@ local function __run()
             ok, why = Shots.replay(weapon, plr, char, part, pos)
             if not ok and auto then ok, why = viaTool() end
         elseif method == "Throw key" then
-            applyAim(pos, aimMethod, 0); task.wait()
+            holdAim(livePos, aimMethod, 1.0); task.wait()
             ok = pressKey(S.throwKey); why = not ok and "set the game's throw key in Combat" or nil
+            release()
         elseif method == "Mouse click" and Cap.mouseClick then
-            applyAim(pos, aimMethod, 0); task.wait()
+            holdAim(livePos, aimMethod, 1.0); task.wait()
             pcall(mouse1click)
+            release()
         else
             ok, why = viaTool()
         end
         Shots.last[weapon] = now()
         if not ok then return false, why end
+        pcall(Shots.watch, weapon, plr, char, pos, (part.Position - (headOf(myChar()) or part).Position).Magnitude)
         local me = myPos()
         return true, string.format("%s  %dm  lead %d ms", nameOf(plr), me and math.floor((part.Position - me).Magnitude + 0.5) or 0, math.floor((lead or 0) * 1000 + 0.5))
+    end
+
+    ------------------------------------------------------------------------------------------ what a shot did: the projectile's speed, then hit or miss
+    -- FireServer / Activate never say whether the server did anything, so the only honest answer is what the world shows afterwards: a part that appears and flies away
+    -- from me (its speed is measured and used for the next lead) and whether the target's health drops.
+    local Watch
+    function Shots.watch(weapon, plr, char, aimPos, distance)
+        local head = headOf(myChar())
+        local origin = head and head.Position
+        local dir = origin and aimPos - origin
+        if not (origin and dir.Magnitude > 1) then Watch = nil; return end
+        local hum = humOf(char)
+        local t = now()
+        Watch = {weapon = weapon, plr = plr, char = char, hum = hum, health0 = hum and hum.Health or 0, origin = origin, dir = dir.Unit, name = nameOf(plr), dist = distance,
+                 t0 = t, projUntil = t + 0.8 + Ping:seconds(), cands = {},
+                 hitUntil = t + math.min(3.5, Ping:seconds() + distance / math.max(speedFor(weapon), 60) + 0.6)}
+        Shots.lastWatch = Watch
+    end
+    function Shots.consider(inst)                       -- a part appeared in the world just after my shot: maybe the bullet / the thrown knife
+        local W = Watch
+        -- (only the knife is measured: a gun is treated as instant unless Bullet speed is set by hand - the flash or trail a gun draws is not how fast the hit happens)
+        if not W or W.weapon ~= "Knife" or W.speed or #W.cands >= 6 or now() > W.projUntil or not inst:IsA("BasePart") then return end
+        local model = inst:FindFirstAncestorOfClass("Model")
+        if model and model:FindFirstChildOfClass("Humanoid") then return end
+        if inst:FindFirstAncestorOfClass("Tool") then return end
+        W.cands[#W.cands + 1] = {inst = inst, s = {}}
+    end
+    local function measure(W, c)
+        local s = c.s
+        local base
+        for i = 1, #s do if (s[i].p - s[1].p).Magnitude > 0.3 then base = s[i - 1] or s[1]; break end end
+        if not base then return nil end
+        local last = s[#s]
+        local dt = last.t - base.t
+        local disp = last.p - base.p
+        if dt < 0.1 or disp.Magnitude < 1.5 then return nil end
+        local u = disp.Unit
+        for i = 1, #s do                                   -- a straight path, or it is not a projectile
+            if s[i].t >= base.t then
+                local v = s[i].p - base.p
+                if (v - u * v:Dot(u)).Magnitude > math.max(1.2, disp.Magnitude * 0.05) then return false end
+            end
+        end
+        local speed = disp.Magnitude / dt
+        if speed < 25 or speed > 700 or u:Dot(W.dir) < 0.8 or (base.p - W.origin).Magnitude > 90 then return false end
+        return speed
+    end
+    function Shots.watchStep()
+        local W = Watch
+        if not W then return end
+        local t = now()
+        if not W.speed and t <= W.projUntil + 0.6 then
+            for i = #W.cands, 1, -1 do
+                local c = W.cands[i]
+                if not c.inst.Parent then
+                    table.remove(W.cands, i)
+                else
+                    if #c.s < 14 then c.s[#c.s + 1] = {t = t, p = c.inst.Position} end
+                    local v
+                    if #c.s >= 4 then v = measure(W, c) end          -- (nil = not enough yet, false = not a projectile)
+                    if v then
+                        W.speed = v
+                        Learned[W.weapon] = Learned[W.weapon] and (Learned[W.weapon] + (v - Learned[W.weapon]) * 0.5) or v
+                        logLine(string.format("measured the %s's speed: %d studs/s (now using %d)", W.weapon:lower(), math.floor(v + 0.5), math.floor(Learned[W.weapon] + 0.5)))
+                        W.cands = {}
+                        break
+                    elseif v == false or #c.s >= 14 then
+                        table.remove(W.cands, i)
+                    end
+                end
+            end
+        end
+        if not W.outcome then
+            local hum = W.hum
+            local down = (hum and (hum.Health < W.health0 - 0.01 or hum.Health <= 0)) or not W.char.Parent
+            if down or t > W.hitUntil then
+                W.outcome = down and "hit" or "miss"
+                Shots.lastResult = {weapon = W.weapon, hit = down, name = W.name, t = t}
+                if down then Shots.hits = (Shots.hits or 0) + 1 else Shots.misses = (Shots.misses or 0) + 1 end
+                local what = W.weapon == "Gun" and "Shot" or "Knife"
+                notify(down and (what .. " hit") or (what .. " missed"), W.name .. (down and " went down" or " - no hit seen (missed, or the game ignored it)"), down and "good" or "warn", 2.5)
+                if W.float and W.float.Result then W.float:Result(down) end
+            end
+        end
+        if W.outcome and (W.speed or t > W.projUntil + 0.6) then Watch = nil end
     end
 
     -- the hook (installed once; harmless when the executor cannot do it)
@@ -18771,14 +18992,32 @@ local function __run()
     onCleanup(Hitbox.restoreAll)
 
     ------------------------------------------------------------------------------------------ player mods
-    local Mods = {origWalk = nil, origJump = nil, origFov = nil}
+    local Mods = {origWalk = nil, origJump = nil, origFov = nil, reverts = 0, stepMode = false}
     function Mods.apply()
         local hum = humOf(myChar())
         if hum then
             if S.walkOn then
                 if Mods.origWalk == nil then Mods.origWalk = hum.WalkSpeed end
-                if hum.WalkSpeed ~= S.walkSpeed then hum.WalkSpeed = S.walkSpeed end
-            elseif Mods.origWalk ~= nil then hum.WalkSpeed = Mods.origWalk; Mods.origWalk = nil end
+                if Mods.stepMode then
+                    -- the game keeps putting WalkSpeed back, so the character is moved by hand (see the "walk step" loop) and the value is left alone
+                elseif hum.WalkSpeed ~= S.walkSpeed then
+                    if Mods.walkSetAt and now() - Mods.walkSetAt < 0.5 then      -- I set it a moment ago and it is not what I set: something put it back
+                        Mods.reverts = Mods.reverts + 1
+                        if Mods.reverts >= 3 then
+                            Mods.stepMode = true
+                            logLine("the game puts WalkSpeed back: moving the character myself instead")
+                            notify("Walk speed", "The game resets WalkSpeed - moving you directly instead.", "info", 4)
+                        end
+                    end
+                    hum.WalkSpeed = S.walkSpeed
+                    Mods.walkSetAt = now()
+                else
+                    Mods.reverts = 0
+                end
+            else
+                Mods.stepMode, Mods.reverts, Mods.walkSetAt = false, 0, nil
+                if Mods.origWalk ~= nil then hum.WalkSpeed = Mods.origWalk; Mods.origWalk = nil end
+            end
             if S.jumpOn then
                 if Mods.origJump == nil then Mods.origJump = hum.JumpPower end
                 hum.UseJumpPower = true
@@ -18816,6 +19055,16 @@ local function __run()
             if p:IsA("BasePart") and p.CanCollide then p.CanCollide = false end
         end
     end)))
+    track(RunService.Heartbeat:Connect(guard("walk step", function(dt)           -- only when the game keeps resetting WalkSpeed: add the missing speed by moving the root
+        if not (Mods.stepMode and S.walkOn) then return end
+        local char = myChar()
+        local hum, root = humOf(char), rootOf(char)
+        if not (hum and root and hum.Health > 0) then return end
+        local dir = hum.MoveDirection
+        local extra = S.walkSpeed - hum.WalkSpeed
+        if dir.Magnitude < 0.1 or extra <= 0 then return end
+        root.CFrame = root.CFrame + dir.Unit * (extra * dt)
+    end)))
     if VirtualUser then
         track(LocalPlayer.Idled:Connect(guard("anti afk", function()
             if S.antiAfk then VirtualUser:CaptureController(); VirtualUser:ClickButton2(Vector2.new(0, 0)) end
@@ -18824,6 +19073,7 @@ local function __run()
 
     ------------------------------------------------------------------------------------------ actions
     local Floats = {}
+    local refreshButtons                                                  -- (defined with the main loop below)
     local autoPos                                                         -- (defined with the floating buttons below)
     -- Perfect shoot / throw: pick the best target, aim ahead of it by my ping, equip the weapon and use it. Runs in its own thread; the floating
     -- button (if any) flashes green when it fired and red when it could not.
@@ -18848,6 +19098,7 @@ local function __run()
             Shots.firing[weapon] = false
             if not okc then report("perfect " .. weapon, ok); ok, why = false, "error - see the Debug tab" end
             if ok then
+                if Shots.lastWatch and not Shots.lastWatch.float then Shots.lastWatch.float = float end
                 notify(weapon == "Gun" and "Shot fired" or "Knife thrown", tostring(why), "good", 2)
                 if float then float:Flash(true); float:Cooldown(weapon == "Gun" and S.shootGap or S.throwGap) end
             else
@@ -18874,7 +19125,7 @@ local function __run()
     end
 
     ------------------------------------------------------------------------------------------ main loops
-    local acc = {slow = 0, mid = 0, poll = 0, auto = 0, ping = 0, dim = 0}
+    local acc = {slow = 0, mid = 0, poll = 0, auto = 0, ping = 0, dim = 0, btn = 0}
     local announced = {}
     local alertAt = 0
 
@@ -18950,7 +19201,8 @@ local function __run()
                             task.spawn(function()
                                 local t2 = equip("Knife")
                                 task.wait()
-                                applyAim(r.Position, "Camera", 0)
+                                holdAim(function() return r.Parent and r.Position end, "Camera", 0.4)
+                                task.wait()
                                 if t2 then pcall(function() t2:Activate() end) end
                             end)
                             break
@@ -19010,14 +19262,46 @@ local function __run()
         reticle.Visible = true
     end
 
+    -- what a tap on each floating button would do right now, shown under it: the target and its distance, RELOADING, NO GUN ...
+    local function shortName(plr) local n = nameOf(plr); return #n > 10 and (n:sub(1, 9) .. "~") or n end
+    local function buttonStatus(weapon)
+        local use = weapon
+        local tool = findTool(use)
+        if not tool then                                                     -- the other button's weapon is the one I have (shoot as sheriff, throw as murderer)
+            local other = use == "Gun" and "Knife" or "Gun"
+            tool = findTool(other)
+            if tool then use = other end
+        end
+        if not tool then return use == "Gun" and "NO GUN" or "NO KNIFE", "off" end
+        local gap = use == "Gun" and S.shootGap or S.throwGap
+        if tool.Enabled == false or now() - (Shots.last[use] or -1e9) < gap then return "RELOADING", "wait" end
+        local plr, _, part = pickFor(use)
+        if plr and part then
+            local me = myPos()
+            return string.format("%s  %dm", shortName(plr), me and math.floor((part.Position - me).Magnitude + 0.5) or 0), "ready"
+        end
+        if use == "Gun" and S.aimMode == "Auto (by my role)" and not Roles.murderer() then return "MURDERER?", "wait" end
+        return "NO TARGET", "wait"
+    end
+    function refreshButtons()
+        if Floats.shoot and Floats.shoot.Button.Visible then Floats.shoot:SetStatus(buttonStatus("Gun")) end
+        if Floats.throw and Floats.throw.Button.Visible then Floats.throw:SetStatus(buttonStatus("Knife")) end
+        if Floats.grab and Floats.grab.Button.Visible then
+            local _, pos, dist = nearestGun()
+            if pos then Floats.grab:SetStatus(string.format("GUN  %dm", math.floor((dist or 0) + 0.5)), "ready") else Floats.grab:SetStatus("NO GUN DROP", "off") end
+        end
+    end
+
     track(RunService.Heartbeat:Connect(guard("heartbeat", function(dt)
         if not Hub.Alive then return end
         acc.slow, acc.mid, acc.poll, acc.auto = acc.slow + dt, acc.mid + dt, acc.poll + dt, acc.auto + dt
-        acc.ping, acc.dim = acc.ping + dt, acc.dim + dt
+        acc.ping, acc.dim, acc.btn = acc.ping + dt, acc.dim + dt, acc.btn + dt
         Shots.process()
         sampleTracks()
+        Shots.watchStep()
         if dirty then dirty = false; Roles.scan(); announceRoles(); ESP.update(); Guns.updateHud() end      -- event-driven: the ESP follows a role the same frame
         if acc.ping >= 0.25 then acc.ping = 0; samplePing() end
+        if acc.btn >= 0.25 then acc.btn = 0; refreshButtons() end
         if acc.dim >= 0.5 then
             acc.dim = 0
             if Floats.shoot then Floats.shoot:SetDim(findTool("Gun") == nil) end
@@ -19060,6 +19344,7 @@ local function __run()
     ------------------------------------------------------------------------------------------ events
     track(workspace.DescendantAdded:Connect(guard("gun drop added", function(inst)
         Guns.add(inst, now() < (Guns.looseUntil or 0))
+        Shots.consider(inst)
     end)))
     track(workspace.DescendantRemoving:Connect(guard("gun drop removed", function(inst) Guns.remove(inst) end)))
     -- react the moment something changes: a weapon in a character or the backpack, a spawn, a death (instead of waiting for the next poll)
@@ -19150,7 +19435,7 @@ local function __run()
         local size = S.btnSize
         local col, row = AUTO_SLOT[id][1], AUTO_SLOT[id][2]
         local x = vp.X - 12 - col * size - (col - 1) * 8
-        local y = vp.Y * 0.18 + (row - 1) * (size + 10)
+        local y = vp.Y * 0.16 + (row - 1) * (size + 26)           -- (room under each button for its status line)
         return Logic.clamp(x, 0, math.max(0, vp.X - size)) / vp.X, Logic.clamp(y, 0, math.max(0, vp.Y - size)) / vp.Y
     end
     for _, d in ipairs({
@@ -19273,7 +19558,8 @@ local function __run()
     tog(combat, "showFov", "Show FOV circle")
     combat:Section("Prediction")
     tog(combat, "predict", "Lead moving targets", "Aims where they will be, using their velocity.")
-    sld(combat, "bulletSpeed", "Bullet speed (0 = instant)", 0, 600, 10, " sps")
+    sld(combat, "bulletSpeed", "Bullet speed (0 = measure it)", 0, 600, 10, " sps")
+    sld(combat, "knifeSpeed", "Knife speed (0 = measure it)", 0, 400, 5, " sps")
     sld(combat, "predictStrength", "Lead strength", 0, 2, 0.1, "x")
     combat:Section("Ping and lead")
     local pingLabel = combat:Label("Measuring your ping...")

@@ -129,6 +129,32 @@ test("pingLead: ping + interpolation, scaled, trimmed, clamped", function()
     near(Logic.pingLead(2000, 1, 60, 0), 0.8, 1e-9, "clamped")
     near(Logic.pingLead(100), 0.1, 1e-9, "defaults")
 end)
+test("lead: a jumping target follows a real jump arc (gravity + the height it stands at)", function()
+    local g = 196.2
+    -- rising at 50 studs/s, 0.2 s ahead: y + vy t - g t^2 / 2
+    local _, y = Logic.lead(0, 3, 0, 0, 50, 0, 0, 0, 0, {latency = 0.2, gravity = g, groundY = 3})
+    near(y, 3 + 50 * 0.2 - 0.5 * g * 0.04, 1e-6, "rising:")
+    -- falling: it lands, it does not go through the floor
+    local _, y2 = Logic.lead(0, 4, 0, 0, -30, 0, 0, 0, 0, {latency = 0.5, gravity = g, groundY = 3})
+    near(y2, 3, 1e-9, "landed:")
+    -- in the air at the top of the arc (vy 0, 2 studs up): it comes down
+    local _, y3 = Logic.lead(0, 5, 0, 0, 0, 0, 0, 0, 0, {latency = 0.1, gravity = g, groundY = 3})
+    near(y3, 5 - 0.5 * g * 0.01, 1e-6, "at the top:")
+    -- standing on the ground, nothing reported: not led vertically at all
+    local _, y4 = Logic.lead(0, 3, 0, 0, 0, 0, 0, 0, 0, {latency = 0.3, gravity = g, groundY = 3})
+    near(y4, 3, 1e-9, "standing:")
+    -- horizontal lead is untouched by the arc
+    local x5 = Logic.lead(0, 3, 0, 12, 50, 0, 0, 0, 0, {latency = 0.25, gravity = g, groundY = 3})
+    near(x5, 3, 1e-6, "horizontal:")
+    -- without gravity / groundY the old behaviour: a share of the vertical velocity
+    local _, y6 = Logic.lead(0, 3, 0, 0, 20, 0, 0, 0, 0, {latency = 0.5, vertical = 0.5})
+    near(y6, 3 + 20 * 0.5 * 0.5, 1e-6, "linear fallback:")
+end)
+test("lead: a projectile with speed leads a jumping target by the arc too", function()
+    local _, y, _, t = Logic.lead(100, 3, 0, 0, 30, 0, 0, 0, 0, {speed = 200, latency = 0.1, gravity = 196.2, groundY = 3, maxLead = 2})
+    if not (t > 0.55 and t < 0.65) then error("flight 0.5 s + 0.1 s latency, got " .. t) end
+    near(y, math.max(3, 3 + 30 * t - 0.5 * 196.2 * t * t), 0.05)
+end)
 test("lead + pingLead: a faster ping leads further", function()
     local function aimX(ping) local x = Logic.lead(0, 0, 0, 20, 0, 0, 0, 0, 0, {latency = Logic.pingLead(ping, 1, 60, 0), maxLead = 1}) return x end
     local a, b = aimX(40), aimX(200)

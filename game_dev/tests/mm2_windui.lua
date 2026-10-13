@@ -419,6 +419,35 @@ do
     clean(w3, "unload")
 end
 
+-- the whole thing on the WindUI menu, in the simulated round (tests/mm2_sim.lua): the hub finds the murderer and the SHOOT button kills a runner
+section("played end to end on WindUI (simulated round)")
+do
+    local Sim = MM2_SIM
+    local sim = Sim.new{ping = 100, gethui = true, world = {gethui = true}}
+    sim:spawn("Me", {pos = {0, 3, 0}})
+    sim:spawn("Alice", {pos = {30, 3, -40}, move = {kind = "line", speed = 15, dx = 0, dz = -1}})
+    sim:spawn("Cy", {pos = {-30, 3, -20}})
+    sim:startRound{murderer = "Alice", sheriff = "Me"}
+    boot(sim.w, 1.5)
+    sim.w:run(0.5)
+    check(win(sim.w) and win(sim.w).Backend == "WindUI", "the menu is WindUI")
+    sim:look(sim.v3(30, 3, -40)); sim:run(0.2)
+    sim.w:tap(sim.w:button("Float_shoot"), 1050, 160); sim:run(2.0)
+    check(sim:dead("Alice"), "SHOOT on the WindUI build kills the running murderer")
+    check(sim.stats.friendly == 0 and not sim:dead("Me"), "...and nobody else")
+    clean(sim.w, "wind game")
+
+    local sim2 = Sim.new{ping = 100, knifeSpeed = 80, world = {gethui = true}}
+    sim2:spawn("Me", {pos = {0, 3, 0}}); sim2:spawn("Bob", {pos = {0, 3, -35}}); sim2:spawn("Cy", {pos = {50, 3, 50}})
+    sim2:preset({knifeSpeed = 80})
+    sim2:startRound{murderer = "Me", sheriff = "Cy"}
+    boot(sim2.w, 1.5)
+    sim2:look(sim2.v3(0, 3, -35)); sim2:run(0.2)
+    sim2.w:tap(sim2.w:button("Float_throw"), 1050, 260); sim2:run(2.0)
+    check(sim2:dead("Bob"), "THROW on the WindUI build kills a standing target")
+    clean(sim2.w, "wind game knife")
+end
+
 print(string.format("\n%d checks passed, %d failed", passes, #failures))
 for _, f in ipairs(failures) do print("FAIL  " .. f) end
 if #failures > 0 then os.exit(1) end

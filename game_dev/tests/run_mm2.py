@@ -2,6 +2,7 @@
   python3 tests/run_mm2.py logic              unit tests of mm2/logic.lua
   python3 tests/run_mm2.py smoke [script]     hub run against the fake Roblox world in tests/mm2_env.lua   (default: ../dist/wraiths_hub.lua)
   python3 tests/run_mm2.py windui [script]    the same hub with the REAL WindUI library inside the fake world (tests/mm2_windui.lua)
+  python3 tests/run_mm2.py game [script]      the hub played end to end in a fake MM2 round (tests/mm2_sim.lua: rigs, roles, gun, knife, ping) -> tests/mm2_game.lua
   python3 tests/run_mm2.py preview [script]   layout of the classic menu -> ../preview/mm2/*.json (render with tools/render_preview.py)
 Everything but `logic` needs real Luau (the bundled WindUI uses Luau syntax): set LUAU=/path/to/luau, or put `luau` on PATH.
 MM2_UI=Classic|WindUI picks the menu the `smoke` / `preview` runs use (default Classic: the checks there address the classic menu's rows)."""
@@ -22,7 +23,7 @@ if mode == "logic":
     prelude = long_string("LOGIC_MODULE", read("mm2/logic.lua"), True)
     body = read("tests/mm2_logic_tests.lua")
     luau = None                                                     # plain Lua is enough
-elif mode in ("smoke", "windui", "preview"):
+elif mode in ("smoke", "windui", "preview", "game"):
     script = sys.argv[2] if len(sys.argv) > 2 else "../dist/wraiths_hub.lua"
     if len(sys.argv) <= 2:                                          # the default script is the built bundle: rebuild it when a source is newer
         srcs = ["mm2/wraiths_hub.lua", "mm2/logic.lua", "mm2/ui_lib.lua", "mm2/windui_ui.lua", "mm2/build_mm2.py", "mm2/vendor/windui.lua", "mm2/vendor/patch_windui.py"]
@@ -34,8 +35,9 @@ elif mode in ("smoke", "windui", "preview"):
         import json
         prelude = "MM2_UI = 'WindUI'\n" + prelude.replace("MM2_UI = %r\n" % ui, "", 1)
         prelude += "LUCIDE_IDS = {%s}\n" % ",".join('["%s"]="%s"' % kv for kv in json.load(open("mm2/vendor/lucide_subset.json")).items())
-    test = {"smoke": os.environ.get("MM2_SMOKE", "tests/mm2_smoke.lua"), "windui": "tests/mm2_windui.lua", "preview": "tests/mm2_preview.lua"}[mode]
-    body = read("tests/mm2_env.lua") + "\n" + read("tests/mm2_layout.lua") + "\n" + read(test)
+    test = {"smoke": os.environ.get("MM2_SMOKE", "tests/mm2_smoke.lua"), "windui": "tests/mm2_windui.lua", "preview": "tests/mm2_preview.lua",
+            "game": os.environ.get("MM2_GAME", "tests/mm2_game.lua")}[mode]
+    body = read("tests/mm2_env.lua") + "\n" + read("tests/mm2_layout.lua") + "\n" + (read("tests/mm2_sim.lua") + "\n" if mode in ("game", "windui") else "") + read(test)
     if mode == "preview":
         os.makedirs(outdir, exist_ok=True)
         prelude += "PREVIEW_DIR = %r\n" % outdir
