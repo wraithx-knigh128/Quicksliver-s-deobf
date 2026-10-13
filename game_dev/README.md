@@ -4,7 +4,7 @@
 
 One-line loader (pinned to a build; the SHA is updated after every build):
 ```lua
-loadstring(game:HttpGet("https://raw.githubusercontent.com/wraithx-knigh128/Quicksliver-s-deobf/cdc9fa8d2b74cd61a8dd86822b337741b14d9b95/dist/wraiths_hub.min.txt"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/wraithx-knigh128/Quicksliver-s-deobf/d2e59adad420f118b93afef63a2f438097da9878/dist/wraiths_hub.min.txt"))()
 ```
 The menu is the real **[WindUI](https://github.com/Footagesus/WindUI)** library (Footagesus, MIT licence - the full source is embedded in the script, see `mm2/vendor/`),
 made small and clean: a Mac-style close dot only (no minimise / fullscreen) - our own, not WindUI's built-in one, which opens a "you will not be able to open it again" dialog
