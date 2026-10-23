@@ -1,0 +1,2329 @@
+{
+  "tool": "Hercules",
+  "version": "2.0.1",
+  "source": "https://github.com/zeusssz/hercules-obfuscator",
+  "sourceRevision": "main",
+  "runtime": "PUC Lua 5.4 via lupa",
+  "seed": 1337,
+  "entries": [
+    {
+      "file": "s01_minify_basic__light.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "light",
+      "modules": [
+        "variable_renaming",
+        "compressor"
+      ],
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 1201,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__balanced.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "balanced",
+      "modules": [
+        "variable_renaming",
+        "control_flow",
+        "string_encoding",
+        "opaque_predicates",
+        "compressor"
+      ],
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 2363,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__heavy.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "heavy",
+      "modules": [
+        "variable_renaming",
+        "control_flow",
+        "string_encoding",
+        "string_to_expressions",
+        "opaque_predicates",
+        "garbage_code",
+        "function_inlining",
+        "wrap_in_function",
+        "antitamper",
+        "dynamic_code",
+        "compressor"
+      ],
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 12090,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__maximum.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "maximum",
+      "modules": [
+        "virtual_machine",
+        "antitamper",
+        "control_flow",
+        "string_to_expressions",
+        "string_encoding",
+        "wrap_in_function",
+        "variable_renaming",
+        "garbage_code",
+        "opaque_predicates",
+        "function_inlining",
+        "dynamic_code",
+        "bytecode_encoding",
+        "compressor"
+      ],
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 630202,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__mod-virtual_machine.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "mod-virtual_machine",
+      "modules": [
+        "virtual_machine"
+      ],
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 39352,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__mod-antitamper.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "mod-antitamper",
+      "modules": [
+        "antitamper"
+      ],
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 4304,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__mod-control_flow.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "mod-control_flow",
+      "modules": [
+        "control_flow"
+      ],
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 1416,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__mod-string_to_expressions.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "mod-string_to_expressions",
+      "modules": [
+        "string_to_expressions"
+      ],
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 2302,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__mod-string_encoding.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "mod-string_encoding",
+      "modules": [
+        "string_encoding"
+      ],
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 2283,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__mod-wrap_in_function.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "mod-wrap_in_function",
+      "modules": [
+        "wrap_in_function"
+      ],
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 1141,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__mod-variable_renaming.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "mod-variable_renaming",
+      "modules": [
+        "variable_renaming"
+      ],
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 1434,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__mod-garbage_code.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "mod-garbage_code",
+      "modules": [
+        "garbage_code"
+      ],
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 1889,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__mod-opaque_predicates.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "mod-opaque_predicates",
+      "modules": [
+        "opaque_predicates"
+      ],
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 1186,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__mod-function_inlining.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "mod-function_inlining",
+      "modules": [
+        "function_inlining"
+      ],
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 1426,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:67: unfinished string near '\"(function(a, b)'"
+    },
+    {
+      "file": "s01_minify_basic__mod-dynamic_code.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "mod-dynamic_code",
+      "modules": [
+        "dynamic_code"
+      ],
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 1301,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__mod-bytecode_encoding.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "mod-bytecode_encoding",
+      "modules": [
+        "bytecode_encoding"
+      ],
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 4744,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__mod-compressor.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "mod-compressor",
+      "modules": [
+        "compressor"
+      ],
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 885,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__light.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "light",
+      "modules": [
+        "variable_renaming",
+        "compressor"
+      ],
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 1560,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__balanced.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "balanced",
+      "modules": [
+        "variable_renaming",
+        "control_flow",
+        "string_encoding",
+        "opaque_predicates",
+        "compressor"
+      ],
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 2896,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__heavy.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "heavy",
+      "modules": [
+        "variable_renaming",
+        "control_flow",
+        "string_encoding",
+        "string_to_expressions",
+        "opaque_predicates",
+        "garbage_code",
+        "function_inlining",
+        "wrap_in_function",
+        "antitamper",
+        "dynamic_code",
+        "compressor"
+      ],
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 19923,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__maximum.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "maximum",
+      "modules": [
+        "virtual_machine",
+        "antitamper",
+        "control_flow",
+        "string_to_expressions",
+        "string_encoding",
+        "wrap_in_function",
+        "variable_renaming",
+        "garbage_code",
+        "opaque_predicates",
+        "function_inlining",
+        "dynamic_code",
+        "bytecode_encoding",
+        "compressor"
+      ],
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "omitted-large",
+      "bytes": 1111838,
+      "behavior": "skipped"
+    },
+    {
+      "file": "s02_renamed_vars__mod-virtual_machine.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "mod-virtual_machine",
+      "modules": [
+        "virtual_machine"
+      ],
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 42907,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:76: attempt to call field 'tointeger' (a nil value)"
+    },
+    {
+      "file": "s02_renamed_vars__mod-antitamper.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "mod-antitamper",
+      "modules": [
+        "antitamper"
+      ],
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 4731,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__mod-control_flow.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "mod-control_flow",
+      "modules": [
+        "control_flow"
+      ],
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 1879,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__mod-string_to_expressions.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "mod-string_to_expressions",
+      "modules": [
+        "string_to_expressions"
+      ],
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 3015,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__mod-string_encoding.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "mod-string_encoding",
+      "modules": [
+        "string_encoding"
+      ],
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 2759,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__mod-wrap_in_function.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "mod-wrap_in_function",
+      "modules": [
+        "wrap_in_function"
+      ],
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 1568,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__mod-variable_renaming.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "mod-variable_renaming",
+      "modules": [
+        "variable_renaming"
+      ],
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 1880,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__mod-garbage_code.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "mod-garbage_code",
+      "modules": [
+        "garbage_code"
+      ],
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 2502,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__mod-opaque_predicates.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "mod-opaque_predicates",
+      "modules": [
+        "opaque_predicates"
+      ],
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 1702,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__mod-function_inlining.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "mod-function_inlining",
+      "modules": [
+        "function_inlining"
+      ],
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 2632,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:123: attempt to call a nil value"
+    },
+    {
+      "file": "s02_renamed_vars__mod-dynamic_code.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "mod-dynamic_code",
+      "modules": [
+        "dynamic_code"
+      ],
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 1988,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__mod-bytecode_encoding.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "mod-bytecode_encoding",
+      "modules": [
+        "bytecode_encoding"
+      ],
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 6190,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__mod-compressor.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "mod-compressor",
+      "modules": [
+        "compressor"
+      ],
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 1272,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__light.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "light",
+      "modules": [
+        "variable_renaming",
+        "compressor"
+      ],
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 1280,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__balanced.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "balanced",
+      "modules": [
+        "variable_renaming",
+        "control_flow",
+        "string_encoding",
+        "opaque_predicates",
+        "compressor"
+      ],
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 2781,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__heavy.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "heavy",
+      "modules": [
+        "variable_renaming",
+        "control_flow",
+        "string_encoding",
+        "string_to_expressions",
+        "opaque_predicates",
+        "garbage_code",
+        "function_inlining",
+        "wrap_in_function",
+        "antitamper",
+        "dynamic_code",
+        "compressor"
+      ],
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 21803,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__maximum.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "maximum",
+      "modules": [
+        "virtual_machine",
+        "antitamper",
+        "control_flow",
+        "string_to_expressions",
+        "string_encoding",
+        "wrap_in_function",
+        "variable_renaming",
+        "garbage_code",
+        "opaque_predicates",
+        "function_inlining",
+        "dynamic_code",
+        "bytecode_encoding",
+        "compressor"
+      ],
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "omitted-large",
+      "bytes": 1144948,
+      "behavior": "skipped"
+    },
+    {
+      "file": "s03_encoded_strings__mod-virtual_machine.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "mod-virtual_machine",
+      "modules": [
+        "virtual_machine"
+      ],
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 37082,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__mod-antitamper.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "mod-antitamper",
+      "modules": [
+        "antitamper"
+      ],
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 4291,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__mod-control_flow.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "mod-control_flow",
+      "modules": [
+        "control_flow"
+      ],
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 1425,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__mod-string_to_expressions.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "mod-string_to_expressions",
+      "modules": [
+        "string_to_expressions"
+      ],
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 4183,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__mod-string_encoding.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "mod-string_encoding",
+      "modules": [
+        "string_encoding"
+      ],
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 2428,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__mod-wrap_in_function.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "mod-wrap_in_function",
+      "modules": [
+        "wrap_in_function"
+      ],
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 1128,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__mod-variable_renaming.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "mod-variable_renaming",
+      "modules": [
+        "variable_renaming"
+      ],
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 1431,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__mod-garbage_code.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "mod-garbage_code",
+      "modules": [
+        "garbage_code"
+      ],
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 1953,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__mod-opaque_predicates.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "mod-opaque_predicates",
+      "modules": [
+        "opaque_predicates"
+      ],
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 1380,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__mod-function_inlining.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "mod-function_inlining",
+      "modules": [
+        "function_inlining"
+      ],
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 1106,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__mod-dynamic_code.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "mod-dynamic_code",
+      "modules": [
+        "dynamic_code"
+      ],
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 1444,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__mod-bytecode_encoding.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "mod-bytecode_encoding",
+      "modules": [
+        "bytecode_encoding"
+      ],
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 5038,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__mod-compressor.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "mod-compressor",
+      "modules": [
+        "compressor"
+      ],
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 952,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__light.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "light",
+      "modules": [
+        "variable_renaming",
+        "compressor"
+      ],
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 1637,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__balanced.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "balanced",
+      "modules": [
+        "variable_renaming",
+        "control_flow",
+        "string_encoding",
+        "opaque_predicates",
+        "compressor"
+      ],
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 3065,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__heavy.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "heavy",
+      "modules": [
+        "variable_renaming",
+        "control_flow",
+        "string_encoding",
+        "string_to_expressions",
+        "opaque_predicates",
+        "garbage_code",
+        "function_inlining",
+        "wrap_in_function",
+        "antitamper",
+        "dynamic_code",
+        "compressor"
+      ],
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 36167,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__maximum.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "maximum",
+      "modules": [
+        "virtual_machine",
+        "antitamper",
+        "control_flow",
+        "string_to_expressions",
+        "string_encoding",
+        "wrap_in_function",
+        "variable_renaming",
+        "garbage_code",
+        "opaque_predicates",
+        "function_inlining",
+        "dynamic_code",
+        "bytecode_encoding",
+        "compressor"
+      ],
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "omitted-large",
+      "bytes": 2260800,
+      "behavior": "skipped"
+    },
+    {
+      "file": "s04_control_flow__mod-virtual_machine.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "mod-virtual_machine",
+      "modules": [
+        "virtual_machine"
+      ],
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 50236,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__mod-antitamper.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "mod-antitamper",
+      "modules": [
+        "antitamper"
+      ],
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 4879,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__mod-control_flow.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "mod-control_flow",
+      "modules": [
+        "control_flow"
+      ],
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 2021,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__mod-string_to_expressions.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "mod-string_to_expressions",
+      "modules": [
+        "string_to_expressions"
+      ],
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 3895,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__mod-string_encoding.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "mod-string_encoding",
+      "modules": [
+        "string_encoding"
+      ],
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 3113,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__mod-wrap_in_function.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "mod-wrap_in_function",
+      "modules": [
+        "wrap_in_function"
+      ],
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 1716,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__mod-variable_renaming.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "mod-variable_renaming",
+      "modules": [
+        "variable_renaming"
+      ],
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 2050,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__mod-garbage_code.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "mod-garbage_code",
+      "modules": [
+        "garbage_code"
+      ],
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 2497,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__mod-opaque_predicates.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "mod-opaque_predicates",
+      "modules": [
+        "opaque_predicates"
+      ],
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 1757,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__mod-function_inlining.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "mod-function_inlining",
+      "modules": [
+        "function_inlining"
+      ],
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 2242,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__mod-dynamic_code.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "mod-dynamic_code",
+      "modules": [
+        "dynamic_code"
+      ],
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 2084,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__mod-bytecode_encoding.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "mod-bytecode_encoding",
+      "modules": [
+        "bytecode_encoding"
+      ],
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 6850,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__mod-compressor.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "mod-compressor",
+      "modules": [
+        "compressor"
+      ],
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 1307,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__light.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "light",
+      "modules": [
+        "variable_renaming",
+        "compressor"
+      ],
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 1722,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__balanced.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "balanced",
+      "modules": [
+        "variable_renaming",
+        "control_flow",
+        "string_encoding",
+        "opaque_predicates",
+        "compressor"
+      ],
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 2987,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__heavy.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "heavy",
+      "modules": [
+        "variable_renaming",
+        "control_flow",
+        "string_encoding",
+        "string_to_expressions",
+        "opaque_predicates",
+        "garbage_code",
+        "function_inlining",
+        "wrap_in_function",
+        "antitamper",
+        "dynamic_code",
+        "compressor"
+      ],
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 8245,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:2: syntax error near 'end'"
+    },
+    {
+      "file": "s05_nested_functions__maximum.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "maximum",
+      "modules": [
+        "virtual_machine",
+        "antitamper",
+        "control_flow",
+        "string_to_expressions",
+        "string_encoding",
+        "wrap_in_function",
+        "variable_renaming",
+        "garbage_code",
+        "opaque_predicates",
+        "function_inlining",
+        "dynamic_code",
+        "bytecode_encoding",
+        "compressor"
+      ],
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 8137,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:2: syntax error near 'end'"
+    },
+    {
+      "file": "s05_nested_functions__mod-virtual_machine.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "mod-virtual_machine",
+      "modules": [
+        "virtual_machine"
+      ],
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 53386,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__mod-antitamper.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "mod-antitamper",
+      "modules": [
+        "antitamper"
+      ],
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 4744,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__mod-control_flow.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "mod-control_flow",
+      "modules": [
+        "control_flow"
+      ],
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 1886,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__mod-string_to_expressions.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "mod-string_to_expressions",
+      "modules": [
+        "string_to_expressions"
+      ],
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 1625,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__mod-string_encoding.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "mod-string_encoding",
+      "modules": [
+        "string_encoding"
+      ],
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 2628,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__mod-wrap_in_function.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "mod-wrap_in_function",
+      "modules": [
+        "wrap_in_function"
+      ],
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 1581,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__mod-variable_renaming.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "mod-variable_renaming",
+      "modules": [
+        "variable_renaming"
+      ],
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 2062,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__mod-garbage_code.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "mod-garbage_code",
+      "modules": [
+        "garbage_code"
+      ],
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 2585,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__mod-opaque_predicates.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "mod-opaque_predicates",
+      "modules": [
+        "opaque_predicates"
+      ],
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 1772,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__mod-function_inlining.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "mod-function_inlining",
+      "modules": [
+        "function_inlining"
+      ],
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 1776,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:69: syntax error near 'local'"
+    },
+    {
+      "file": "s05_nested_functions__mod-dynamic_code.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "mod-dynamic_code",
+      "modules": [
+        "dynamic_code"
+      ],
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 1845,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:52: cannot use '...' outside a vararg function near '...'"
+    },
+    {
+      "file": "s05_nested_functions__mod-bytecode_encoding.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "mod-bytecode_encoding",
+      "modules": [
+        "bytecode_encoding"
+      ],
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 6978,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__mod-compressor.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "mod-compressor",
+      "modules": [
+        "compressor"
+      ],
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 1219,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__light.lua",
+      "sample": "s06_combined.lua",
+      "config": "light",
+      "modules": [
+        "variable_renaming",
+        "compressor"
+      ],
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 2684,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:2: attempt to index global 'ycbhbXasaqVk' (a nil value)"
+    },
+    {
+      "file": "s06_combined__balanced.lua",
+      "sample": "s06_combined.lua",
+      "config": "balanced",
+      "modules": [
+        "variable_renaming",
+        "control_flow",
+        "string_encoding",
+        "opaque_predicates",
+        "compressor"
+      ],
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 4015,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:2: attempt to index global 'TxzkRBbZa' (a nil value)"
+    },
+    {
+      "file": "s06_combined__heavy.lua",
+      "sample": "s06_combined.lua",
+      "config": "heavy",
+      "modules": [
+        "variable_renaming",
+        "control_flow",
+        "string_encoding",
+        "string_to_expressions",
+        "opaque_predicates",
+        "garbage_code",
+        "function_inlining",
+        "wrap_in_function",
+        "antitamper",
+        "dynamic_code",
+        "compressor"
+      ],
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 15562,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:2: attempt to index global 'FLeORjwr' (a nil value)"
+    },
+    {
+      "file": "s06_combined__maximum.lua",
+      "sample": "s06_combined.lua",
+      "config": "maximum",
+      "modules": [
+        "virtual_machine",
+        "antitamper",
+        "control_flow",
+        "string_to_expressions",
+        "string_encoding",
+        "wrap_in_function",
+        "variable_renaming",
+        "garbage_code",
+        "opaque_predicates",
+        "function_inlining",
+        "dynamic_code",
+        "bytecode_encoding",
+        "compressor"
+      ],
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "omitted-large",
+      "bytes": 869580,
+      "behavior": "skipped"
+    },
+    {
+      "file": "s06_combined__mod-virtual_machine.lua",
+      "sample": "s06_combined.lua",
+      "config": "mod-virtual_machine",
+      "modules": [
+        "virtual_machine"
+      ],
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 70612,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:76: attempt to call field 'tointeger' (a nil value)"
+    },
+    {
+      "file": "s06_combined__mod-antitamper.lua",
+      "sample": "s06_combined.lua",
+      "config": "mod-antitamper",
+      "modules": [
+        "antitamper"
+      ],
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 5487,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__mod-control_flow.lua",
+      "sample": "s06_combined.lua",
+      "config": "mod-control_flow",
+      "modules": [
+        "control_flow"
+      ],
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 2635,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__mod-string_to_expressions.lua",
+      "sample": "s06_combined.lua",
+      "config": "mod-string_to_expressions",
+      "modules": [
+        "string_to_expressions"
+      ],
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 4307,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__mod-string_encoding.lua",
+      "sample": "s06_combined.lua",
+      "config": "mod-string_encoding",
+      "modules": [
+        "string_encoding"
+      ],
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 3483,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__mod-wrap_in_function.lua",
+      "sample": "s06_combined.lua",
+      "config": "mod-wrap_in_function",
+      "modules": [
+        "wrap_in_function"
+      ],
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 2324,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__mod-variable_renaming.lua",
+      "sample": "s06_combined.lua",
+      "config": "mod-variable_renaming",
+      "modules": [
+        "variable_renaming"
+      ],
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 3030,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:56: attempt to index global 'gIOyIDrVQe' (a nil value)"
+    },
+    {
+      "file": "s06_combined__mod-garbage_code.lua",
+      "sample": "s06_combined.lua",
+      "config": "mod-garbage_code",
+      "modules": [
+        "garbage_code"
+      ],
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 3096,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__mod-opaque_predicates.lua",
+      "sample": "s06_combined.lua",
+      "config": "mod-opaque_predicates",
+      "modules": [
+        "opaque_predicates"
+      ],
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 2603,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__mod-function_inlining.lua",
+      "sample": "s06_combined.lua",
+      "config": "mod-function_inlining",
+      "modules": [
+        "function_inlining"
+      ],
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 2293,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__mod-dynamic_code.lua",
+      "sample": "s06_combined.lua",
+      "config": "mod-dynamic_code",
+      "modules": [
+        "dynamic_code"
+      ],
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 2796,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__mod-bytecode_encoding.lua",
+      "sample": "s06_combined.lua",
+      "config": "mod-bytecode_encoding",
+      "modules": [
+        "bytecode_encoding"
+      ],
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 9982,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__mod-compressor.lua",
+      "sample": "s06_combined.lua",
+      "config": "mod-compressor",
+      "modules": [
+        "compressor"
+      ],
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 1919,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__light.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "light",
+      "modules": [
+        "variable_renaming",
+        "compressor"
+      ],
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 1120,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__balanced.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "balanced",
+      "modules": [
+        "variable_renaming",
+        "control_flow",
+        "string_encoding",
+        "opaque_predicates",
+        "compressor"
+      ],
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 2511,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__heavy.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "heavy",
+      "modules": [
+        "variable_renaming",
+        "control_flow",
+        "string_encoding",
+        "string_to_expressions",
+        "opaque_predicates",
+        "garbage_code",
+        "function_inlining",
+        "wrap_in_function",
+        "antitamper",
+        "dynamic_code",
+        "compressor"
+      ],
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 16143,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__maximum.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "maximum",
+      "modules": [
+        "virtual_machine",
+        "antitamper",
+        "control_flow",
+        "string_to_expressions",
+        "string_encoding",
+        "wrap_in_function",
+        "variable_renaming",
+        "garbage_code",
+        "opaque_predicates",
+        "function_inlining",
+        "dynamic_code",
+        "bytecode_encoding",
+        "compressor"
+      ],
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 771860,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__mod-virtual_machine.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "mod-virtual_machine",
+      "modules": [
+        "virtual_machine"
+      ],
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 33420,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__mod-antitamper.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "mod-antitamper",
+      "modules": [
+        "antitamper"
+      ],
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 4456,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__mod-control_flow.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "mod-control_flow",
+      "modules": [
+        "control_flow"
+      ],
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 1636,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__mod-string_to_expressions.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "mod-string_to_expressions",
+      "modules": [
+        "string_to_expressions"
+      ],
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 3331,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__mod-string_encoding.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "mod-string_encoding",
+      "modules": [
+        "string_encoding"
+      ],
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 2486,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__mod-wrap_in_function.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "mod-wrap_in_function",
+      "modules": [
+        "wrap_in_function"
+      ],
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 1293,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__mod-variable_renaming.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "mod-variable_renaming",
+      "modules": [
+        "variable_renaming"
+      ],
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 1394,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__mod-garbage_code.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "mod-garbage_code",
+      "modules": [
+        "garbage_code"
+      ],
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 1993,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__mod-opaque_predicates.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "mod-opaque_predicates",
+      "modules": [
+        "opaque_predicates"
+      ],
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 1480,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__mod-function_inlining.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "mod-function_inlining",
+      "modules": [
+        "function_inlining"
+      ],
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 1254,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__mod-dynamic_code.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "mod-dynamic_code",
+      "modules": [
+        "dynamic_code"
+      ],
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 1453,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__mod-bytecode_encoding.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "mod-bytecode_encoding",
+      "modules": [
+        "bytecode_encoding"
+      ],
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 4840,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__mod-compressor.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "mod-compressor",
+      "modules": [
+        "compressor"
+      ],
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 990,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    }
+  ]
+}
