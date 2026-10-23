@@ -19,6 +19,7 @@ const args = process.argv.slice(2);
 const filter = args.includes('--filter') ? args[args.indexOf('--filter') + 1] : '';
 const sandbox = !args.includes('--no-sandbox');
 const write = args.includes('--write');
+const outName = args.includes('--out') ? args[args.indexOf('--out') + 1] : 'scorecard.json';
 
 const tools = [['prometheus', 'obfuscated/prometheus'], ['hercules', 'obfuscated/hercules']];
 const results = [];
@@ -88,6 +89,6 @@ const bad = results.filter((r) => r.crash || r.error);
 if (bad.length) { console.log('\ncrashes / errors:'); bad.slice(0, 10).forEach((r) => console.log(' ', r.file, r.crash || JSON.stringify(r.error))); }
 if (write) {
   fs.mkdirSync(path.join(here, 'results'), { recursive: true });
-  fs.writeFileSync(path.join(here, 'results', 'scorecard.json'), JSON.stringify({ generatedAt: new Date().toISOString(), sandbox, results }, null, 1));
-  console.log('\nwrote tests/results/scorecard.json');
+  fs.writeFileSync(path.join(here, 'results', outName), JSON.stringify({ generatedAt: new Date().toISOString(), sandbox, results }, null, 1));
+  console.log(`\nwrote tests/results/${outName}`);
 }

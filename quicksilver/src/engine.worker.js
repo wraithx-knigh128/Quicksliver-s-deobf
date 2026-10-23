@@ -10,6 +10,7 @@ const OPS = {
   analyze: api.analyzeSource,
   recover: api.recoverSource,
   luast: api.luast,
+  diff: (source, options) => api.diffSources(source, options.other),
 };
 
 self.onmessage = (event) => {

@@ -21,8 +21,9 @@ const clamp = (x, lo = 0, hi = 1) => Math.min(hi, Math.max(lo, x));
  */
 export function assessConfidence(before, output, ctx) {
   const reasons = [];
+  const hints = []; // machine-readable follow-ups for the interface
   const { steps, validation } = ctx;
-  if (!validation.syntax) return { score: 0, level: 'none', reasons: [{ effect: -1, text: 'The recovered code does not parse.' }] };
+  if (!validation.syntax) return { score: 0, level: 'none', reasons: [{ effect: -1, text: 'The recovered code does not parse.' }], hints };
   if (!validation.roundTrip) reasons.push({ effect: -0.2, text: 'Re-parsing the printed code gave a different tree.' });
 
   const after = detect(output, ctx.ast);
@@ -60,11 +61,12 @@ export function assessConfidence(before, output, ctx) {
     || before.traits.some((t) => t.id === 'string-table');
   if (evalStep && evalStep.status === 'skipped' && /not enabled/.test(String(evalStep.detail)) && needsDecoder) {
     note(-0.2, 'Sandboxed evaluation is off, so strings that need their decoder to run were not resolved.');
+    hints.push('sandbox');
   }
   if (!hadObfuscation) reasons.push({ effect: 0, text: 'No obfuscation was detected; the result is a cleaned and reformatted copy.' });
 
   // Static analysis alone never reaches certainty, hence the ceiling.
   let score = clamp((hadObfuscation ? 0.9 : 0.95) - penalty, 0, 1);
   const level = score >= 0.85 ? 'high' : score >= 0.6 ? 'medium' : score > 0.25 ? 'low' : 'minimal';
-  return { score: Math.round(score * 100) / 100, level, reasons };
+  return { score: Math.round(score * 100) / 100, level, reasons, hints };
 }

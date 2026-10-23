@@ -1,0 +1,859 @@
+{
+ "generatedAt": "2026-10-23T20:29:01.807Z",
+ "engineVersion": "1.0.0",
+ "scorecard": {
+  "generatedAt": "2026-10-23T20:17:16.387Z",
+  "fixtures": 206,
+  "sandbox": true,
+  "behaviourOracle": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa"
+ },
+ "families": [
+  {
+   "id": "prometheus",
+   "name": "Prometheus",
+   "kind": "open-source",
+   "status": "partial",
+   "basis": "real-output",
+   "summary": "Open-source Lua 5.1 / basic Luau obfuscator written in Lua (levno-710).",
+   "detect": "Signatures verified against output of the real tool for every step and preset.",
+   "detectEvidence": "source",
+   "documentedTechniques": [
+    "Vmify (flattened register VM)",
+    "ConstantArray",
+    "EncryptStrings",
+    "SplitStrings",
+    "NumbersToExpressions",
+    "ProxifyLocals",
+    "AntiTamper",
+    "WrapInFunction",
+    "AddVararg"
+   ],
+   "untestedTechniques": [],
+   "techniques": [
+    {
+     "config": "Minify",
+     "samples": 7,
+     "fidelityBefore": 0.961,
+     "fidelityAfter": 0.962,
+     "fidelityStatic": 0.962,
+     "confidence": 0.9,
+     "behaviourChecked": 7,
+     "behaviourSame": 7,
+     "toolBroken": 0,
+     "ms": 9,
+     "status": "supported",
+     "needsSandbox": false,
+     "kind": "preset",
+     "label": "Minify"
+    },
+    {
+     "config": "Weak",
+     "samples": 7,
+     "fidelityBefore": 0.064,
+     "fidelityAfter": 0.096,
+     "fidelityStatic": 0.066,
+     "confidence": 0.429,
+     "behaviourChecked": 7,
+     "behaviourSame": 7,
+     "toolBroken": 1,
+     "ms": 84,
+     "status": "unsupported",
+     "needsSandbox": false,
+     "note": "Contains Vmify.",
+     "kind": "preset",
+     "label": "Weak"
+    },
+    {
+     "config": "Medium",
+     "samples": 7,
+     "fidelityBefore": 0.026,
+     "fidelityAfter": 0.032,
+     "fidelityStatic": 0.03,
+     "confidence": 0.2,
+     "behaviourChecked": 7,
+     "behaviourSame": 0,
+     "toolBroken": 1,
+     "ms": 358,
+     "status": "unsupported",
+     "needsSandbox": false,
+     "note": "Contains Vmify and a VM-embedded anti-tamper block.",
+     "kind": "preset",
+     "label": "Medium"
+    },
+    {
+     "config": "Strong",
+     "samples": 7,
+     "fidelityBefore": 0.026,
+     "fidelityAfter": 0.028,
+     "fidelityStatic": 0.029,
+     "confidence": 0.2,
+     "behaviourChecked": 7,
+     "behaviourSame": 0,
+     "toolBroken": 1,
+     "ms": 1303,
+     "status": "unsupported",
+     "needsSandbox": false,
+     "note": "Contains Vmify and a VM-embedded anti-tamper block.",
+     "kind": "preset",
+     "label": "Strong"
+    },
+    {
+     "config": "step-EncryptStrings",
+     "samples": 7,
+     "fidelityBefore": 0.318,
+     "fidelityAfter": 0.877,
+     "fidelityStatic": 0.323,
+     "confidence": 0.879,
+     "behaviourChecked": 7,
+     "behaviourSame": 7,
+     "toolBroken": 0,
+     "ms": 20,
+     "status": "supported",
+     "needsSandbox": true,
+     "kind": "step",
+     "label": "EncryptStrings"
+    },
+    {
+     "config": "step-ConstantArray",
+     "samples": 7,
+     "fidelityBefore": 0.208,
+     "fidelityAfter": 0.423,
+     "fidelityStatic": 0.204,
+     "confidence": 0.736,
+     "behaviourChecked": 7,
+     "behaviourSame": 7,
+     "toolBroken": 0,
+     "ms": 29,
+     "status": "partial",
+     "needsSandbox": true,
+     "kind": "step",
+     "label": "ConstantArray"
+    },
+    {
+     "config": "step-SplitStrings",
+     "samples": 7,
+     "fidelityBefore": 0.658,
+     "fidelityAfter": 0.915,
+     "fidelityStatic": 0.915,
+     "confidence": 0.879,
+     "behaviourChecked": 7,
+     "behaviourSame": 7,
+     "toolBroken": 0,
+     "ms": 5,
+     "status": "supported",
+     "needsSandbox": false,
+     "kind": "step",
+     "label": "SplitStrings"
+    },
+    {
+     "config": "step-NumbersToExpressions",
+     "samples": 7,
+     "fidelityBefore": 0.804,
+     "fidelityAfter": 0.962,
+     "fidelityStatic": 0.962,
+     "confidence": 0.907,
+     "behaviourChecked": 7,
+     "behaviourSame": 7,
+     "toolBroken": 0,
+     "ms": 4,
+     "status": "supported",
+     "needsSandbox": false,
+     "kind": "step",
+     "label": "NumbersToExpressions"
+    },
+    {
+     "config": "step-ProxifyLocals",
+     "samples": 7,
+     "fidelityBefore": 0.392,
+     "fidelityAfter": 0.948,
+     "fidelityStatic": 0.948,
+     "confidence": 0.9,
+     "behaviourChecked": 7,
+     "behaviourSame": 7,
+     "toolBroken": 0,
+     "ms": 7,
+     "status": "supported",
+     "needsSandbox": false,
+     "kind": "step",
+     "label": "ProxifyLocals"
+    },
+    {
+     "config": "step-WrapInFunction",
+     "samples": 7,
+     "fidelityBefore": 0.952,
+     "fidelityAfter": 0.962,
+     "fidelityStatic": 0.962,
+     "confidence": 0.9,
+     "behaviourChecked": 7,
+     "behaviourSame": 7,
+     "toolBroken": 0,
+     "ms": 4,
+     "status": "supported",
+     "needsSandbox": false,
+     "kind": "step",
+     "label": "WrapInFunction"
+    },
+    {
+     "config": "step-AddVararg",
+     "samples": 7,
+     "fidelityBefore": 0.961,
+     "fidelityAfter": 0.962,
+     "fidelityStatic": 0.962,
+     "confidence": 0.9,
+     "behaviourChecked": 7,
+     "behaviourSame": 7,
+     "toolBroken": 0,
+     "ms": 4,
+     "status": "supported",
+     "needsSandbox": false,
+     "kind": "step",
+     "label": "AddVararg"
+    },
+    {
+     "config": "step-AntiTamper",
+     "samples": 7,
+     "fidelityBefore": 0.389,
+     "fidelityAfter": 0.962,
+     "fidelityStatic": 0.962,
+     "confidence": 0.9,
+     "behaviourChecked": 7,
+     "behaviourSame": 7,
+     "toolBroken": 0,
+     "ms": 5,
+     "status": "supported",
+     "needsSandbox": false,
+     "kind": "step",
+     "label": "AntiTamper"
+    },
+    {
+     "config": "step-Vmify",
+     "samples": 7,
+     "fidelityBefore": 0.096,
+     "fidelityAfter": 0.096,
+     "fidelityStatic": 0.096,
+     "confidence": 0.429,
+     "behaviourChecked": 7,
+     "behaviourSame": 7,
+     "toolBroken": 1,
+     "ms": 34,
+     "status": "unsupported",
+     "needsSandbox": false,
+     "note": "The flattened VM is detected; its control flow is not reconstructed.",
+     "kind": "step",
+     "label": "Vmify"
+    }
+   ],
+   "measured": {
+    "fixtures": 91,
+    "fidelityBefore": 0.45,
+    "fidelityAfter": 0.632
+   },
+   "limits": [
+    "Vmify (the flattened register VM) is detected but its control flow is not reconstructed. Every preset that contains it (Weak, Medium, Strong) therefore stays at low fidelity.",
+    "String decoders (EncryptStrings, ConstantArray) are evaluated only when sandboxed evaluation is switched on."
+   ],
+   "sources": [
+    "https://github.com/prometheus-lua/Prometheus"
+   ]
+  },
+  {
+   "id": "hercules",
+   "name": "Hercules",
+   "kind": "open-source",
+   "status": "partial",
+   "basis": "real-output",
+   "summary": "Open-source Lua obfuscator with a module pipeline (zeusssz).",
+   "detect": "Signatures verified against output of the real tool for every module and preset.",
+   "detectEvidence": "source",
+   "documentedTechniques": [
+    "variable renaming",
+    "control-flow wrapper",
+    "Caesar string encoding",
+    "string-to-expressions",
+    "opaque predicates",
+    "garbage code",
+    "function inlining",
+    "wrap in function",
+    "anti-tamper",
+    "dynamic code",
+    "bytecode encoding",
+    "virtual machine",
+    "compressor"
+   ],
+   "untestedTechniques": [
+    "Caesar string encoding"
+   ],
+   "techniques": [
+    {
+     "config": "light",
+     "samples": 7,
+     "fidelityBefore": 0.64,
+     "fidelityAfter": 0.962,
+     "fidelityStatic": 0.962,
+     "confidence": 0.9,
+     "behaviourChecked": 6,
+     "behaviourSame": 6,
+     "toolBroken": 1,
+     "ms": 6,
+     "status": "supported",
+     "needsSandbox": false,
+     "kind": "preset",
+     "label": "light"
+    },
+    {
+     "config": "balanced",
+     "samples": 7,
+     "fidelityBefore": 0.374,
+     "fidelityAfter": 0.879,
+     "fidelityStatic": 0.464,
+     "confidence": 0.879,
+     "behaviourChecked": 6,
+     "behaviourSame": 6,
+     "toolBroken": 1,
+     "ms": 13,
+     "status": "supported",
+     "needsSandbox": true,
+     "kind": "preset",
+     "label": "balanced"
+    },
+    {
+     "config": "heavy",
+     "samples": 7,
+     "fidelityBefore": 0.073,
+     "fidelityAfter": 0.125,
+     "fidelityStatic": 0.125,
+     "confidence": 0.643,
+     "behaviourChecked": 5,
+     "behaviourSame": 5,
+     "toolBroken": 2,
+     "ms": 86,
+     "status": "unsupported",
+     "needsSandbox": false,
+     "note": "Includes the virtual-machine module.",
+     "kind": "preset",
+     "label": "heavy"
+    },
+    {
+     "config": "maximum",
+     "samples": 3,
+     "fidelityBefore": 0.198,
+     "fidelityAfter": 0.198,
+     "fidelityStatic": 0.198,
+     "confidence": 0.133,
+     "behaviourChecked": 2,
+     "behaviourSame": 2,
+     "toolBroken": 1,
+     "ms": 166,
+     "status": "unsupported",
+     "needsSandbox": false,
+     "note": "Includes the virtual-machine and bytecode modules.",
+     "kind": "preset",
+     "label": "maximum"
+    },
+    {
+     "config": "mod-virtual_machine",
+     "samples": 7,
+     "fidelityBefore": 0.076,
+     "fidelityAfter": 0.077,
+     "fidelityStatic": 0.077,
+     "confidence": 0.35,
+     "behaviourChecked": 5,
+     "behaviourSame": 5,
+     "toolBroken": 2,
+     "ms": 75,
+     "status": "unsupported",
+     "needsSandbox": false,
+     "note": "The script runs inside an interpreter written in Lua; the original program is only present as data.",
+     "kind": "module",
+     "label": "virtual machine"
+    },
+    {
+     "config": "mod-antitamper",
+     "samples": 7,
+     "fidelityBefore": 0.372,
+     "fidelityAfter": 0.998,
+     "fidelityStatic": 0.998,
+     "confidence": 0.9,
+     "behaviourChecked": 7,
+     "behaviourSame": 7,
+     "toolBroken": 0,
+     "ms": 7,
+     "status": "supported",
+     "needsSandbox": false,
+     "kind": "module",
+     "label": "antitamper"
+    },
+    {
+     "config": "mod-control_flow",
+     "samples": 7,
+     "fidelityBefore": 0.632,
+     "fidelityAfter": 0.983,
+     "fidelityStatic": 0.983,
+     "confidence": 0.9,
+     "behaviourChecked": 7,
+     "behaviourSame": 7,
+     "toolBroken": 0,
+     "ms": 7,
+     "status": "supported",
+     "needsSandbox": false,
+     "kind": "module",
+     "label": "control flow"
+    },
+    {
+     "config": "mod-string_to_expressions",
+     "samples": 7,
+     "fidelityBefore": 0.336,
+     "fidelityAfter": 0.998,
+     "fidelityStatic": 0.998,
+     "confidence": 0.9,
+     "behaviourChecked": 7,
+     "behaviourSame": 7,
+     "toolBroken": 0,
+     "ms": 8,
+     "status": "supported",
+     "needsSandbox": false,
+     "kind": "module",
+     "label": "string to expressions"
+    },
+    {
+     "config": "mod-string_encoding",
+     "samples": 7,
+     "fidelityBefore": 0.468,
+     "fidelityAfter": 0.927,
+     "fidelityStatic": 0.468,
+     "confidence": 0.879,
+     "behaviourChecked": 7,
+     "behaviourSame": 7,
+     "toolBroken": 0,
+     "ms": 7,
+     "status": "supported",
+     "needsSandbox": true,
+     "kind": "module",
+     "label": "string encoding"
+    },
+    {
+     "config": "mod-wrap_in_function",
+     "samples": 7,
+     "fidelityBefore": 0.993,
+     "fidelityAfter": 0.998,
+     "fidelityStatic": 0.998,
+     "confidence": 0.9,
+     "behaviourChecked": 7,
+     "behaviourSame": 7,
+     "toolBroken": 0,
+     "ms": 4,
+     "status": "supported",
+     "needsSandbox": false,
+     "kind": "module",
+     "label": "wrap in function"
+    },
+    {
+     "config": "mod-variable_renaming",
+     "samples": 7,
+     "fidelityBefore": 0.64,
+     "fidelityAfter": 0.962,
+     "fidelityStatic": 0.962,
+     "confidence": 0.9,
+     "behaviourChecked": 6,
+     "behaviourSame": 6,
+     "toolBroken": 1,
+     "ms": 6,
+     "status": "supported",
+     "needsSandbox": false,
+     "kind": "module",
+     "label": "variable renaming"
+    },
+    {
+     "config": "mod-garbage_code",
+     "samples": 7,
+     "fidelityBefore": 0.534,
+     "fidelityAfter": 0.998,
+     "fidelityStatic": 0.998,
+     "confidence": 0.9,
+     "behaviourChecked": 7,
+     "behaviourSame": 7,
+     "toolBroken": 0,
+     "ms": 6,
+     "status": "supported",
+     "needsSandbox": false,
+     "kind": "module",
+     "label": "garbage code"
+    },
+    {
+     "config": "mod-opaque_predicates",
+     "samples": 7,
+     "fidelityBefore": 0.926,
+     "fidelityAfter": 0.998,
+     "fidelityStatic": 0.998,
+     "confidence": 0.9,
+     "behaviourChecked": 7,
+     "behaviourSame": 7,
+     "toolBroken": 0,
+     "ms": 5,
+     "status": "supported",
+     "needsSandbox": false,
+     "kind": "module",
+     "label": "opaque predicates"
+    },
+    {
+     "config": "mod-function_inlining",
+     "samples": 7,
+     "fidelityBefore": 0.707,
+     "fidelityAfter": 0.704,
+     "fidelityStatic": 0.704,
+     "confidence": 0.643,
+     "behaviourChecked": 4,
+     "behaviourSame": 4,
+     "toolBroken": 3,
+     "ms": 5,
+     "status": "unsupported",
+     "needsSandbox": false,
+     "note": "No dedicated pass; the output is left as the tool wrote it.",
+     "kind": "module",
+     "label": "function inlining"
+    },
+    {
+     "config": "mod-dynamic_code",
+     "samples": 7,
+     "fidelityBefore": 0.902,
+     "fidelityAfter": 0.922,
+     "fidelityStatic": 0.922,
+     "confidence": 0.9,
+     "behaviourChecked": 6,
+     "behaviourSame": 6,
+     "toolBroken": 1,
+     "ms": 8,
+     "status": "supported",
+     "needsSandbox": false,
+     "kind": "module",
+     "label": "dynamic code"
+    },
+    {
+     "config": "mod-bytecode_encoding",
+     "samples": 7,
+     "fidelityBefore": 0.18,
+     "fidelityAfter": 0.18,
+     "fidelityStatic": 0.18,
+     "confidence": 0.2,
+     "behaviourChecked": 7,
+     "behaviourSame": 7,
+     "toolBroken": 0,
+     "ms": 3,
+     "status": "unsupported",
+     "needsSandbox": false,
+     "note": "The script is stored as a compiled chunk; QuickSilver reports it but cannot decompile it.",
+     "kind": "module",
+     "label": "bytecode encoding"
+    },
+    {
+     "config": "mod-compressor",
+     "samples": 7,
+     "fidelityBefore": 1,
+     "fidelityAfter": 0.998,
+     "fidelityStatic": 0.998,
+     "confidence": 0.9,
+     "behaviourChecked": 7,
+     "behaviourSame": 7,
+     "toolBroken": 0,
+     "ms": 4,
+     "status": "supported",
+     "needsSandbox": false,
+     "kind": "module",
+     "label": "compressor"
+    }
+   ],
+   "measured": {
+    "fixtures": 115,
+    "fidelityBefore": 0.549,
+    "fidelityAfter": 0.791
+   },
+   "limits": [
+    "The virtual-machine and bytecode-encoding modules embed a compiled Lua chunk. It is detected and flagged; its source is not recovered.",
+    "The tool itself produced non-equivalent output for some module/sample pairs (see the \"tool broken\" column); those cases are excluded from behaviour claims."
+   ],
+   "sources": [
+    "https://github.com/zeusssz/hercules-obfuscator"
+   ]
+  },
+  {
+   "id": "luraph",
+   "name": "Luraph",
+   "kind": "commercial",
+   "status": "unsupported",
+   "basis": "signature",
+   "summary": "Commercial virtualising obfuscator for Lua and Luau (lura.ph). Per-script VM; v14 and v15 are current.",
+   "detect": "Banner comments only. No real Luraph output could be obtained here, so structural detection is heuristic.",
+   "detectEvidence": "banner",
+   "documentedTechniques": [
+    "custom VM per script",
+    "encrypted constants",
+    "anti-tamper",
+    "VM compression (v14+)"
+   ],
+   "untestedTechniques": [
+    "custom VM per script",
+    "encrypted constants",
+    "anti-tamper",
+    "VM compression (v14+)"
+   ],
+   "techniques": [],
+   "measured": null,
+   "limits": [
+    "Luraph generates a different virtual machine for every script. Static recovery of the original source from a v14/v15 VM is not something this tool can do, and no output of the real obfuscator was available to test against."
+   ],
+   "sources": [
+    "https://lura.ph/"
+   ]
+  },
+  {
+   "id": "moonsec_v3",
+   "name": "MoonSec V3",
+   "kind": "commercial",
+   "status": "unsupported",
+   "basis": "signature",
+   "summary": "Commercial Roblox-oriented Lua obfuscator with a VM loader.",
+   "detect": "Banner comments only; no real output obtained.",
+   "detectEvidence": "banner",
+   "documentedTechniques": [
+    "VM loader",
+    "constant encoding"
+   ],
+   "untestedTechniques": [
+    "VM loader",
+    "constant encoding"
+   ],
+   "techniques": [],
+   "measured": null,
+   "limits": [
+    "VM-based loader; not recoverable statically."
+   ],
+   "sources": []
+  },
+  {
+   "id": "moonveil",
+   "name": "MoonVeil",
+   "kind": "commercial",
+   "status": "unsupported",
+   "basis": "signature",
+   "summary": "Obfuscator with selectable virtualisation, function encryption and control-flow flattening (macros MV_VM, MV_ENC_FUNC, MV_CFF).",
+   "detect": "Documented macro names only; no real output obtained.",
+   "detectEvidence": "banner",
+   "documentedTechniques": [
+    "optional VM",
+    "function encryption",
+    "control-flow flattening"
+   ],
+   "untestedTechniques": [
+    "optional VM",
+    "function encryption",
+    "control-flow flattening"
+   ],
+   "techniques": [],
+   "measured": null,
+   "limits": [
+    "Configurable VM and function encryption; not recoverable statically."
+   ],
+   "sources": [
+    "https://git.openpunk.com/CPunch/MoonVeil-Docs"
+   ]
+  },
+  {
+   "id": "ironbrew2",
+   "name": "IronBrew 2",
+   "kind": "open-source",
+   "status": "unsupported",
+   "basis": "signature",
+   "summary": "Lua obfuscator that compiles scripts to a custom bytecode VM. Output is minified with random names.",
+   "detect": "No public signature; only generic VM heuristics apply.",
+   "detectEvidence": "none",
+   "documentedTechniques": [
+    "custom bytecode VM",
+    "opcode shuffling",
+    "constant encoding"
+   ],
+   "untestedTechniques": [
+    "custom bytecode VM",
+    "opcode shuffling",
+    "constant encoding"
+   ],
+   "techniques": [],
+   "measured": null,
+   "limits": [
+    "Custom bytecode VM; not recoverable statically."
+   ],
+   "sources": []
+  },
+  {
+   "id": "luaobfuscator",
+   "name": "LuaObfuscator.com",
+   "kind": "service",
+   "status": "experimental",
+   "basis": "signature",
+   "summary": "Web obfuscation service with several protection levels.",
+   "detect": "Generic string-escape and constant-table heuristics only.",
+   "detectEvidence": "none",
+   "documentedTechniques": [
+    "string escaping",
+    "constant tables",
+    "optional VM"
+   ],
+   "untestedTechniques": [
+    "string escaping",
+    "constant tables",
+    "optional VM"
+   ],
+   "techniques": [],
+   "measured": null,
+   "limits": [
+    "No real output obtained to test against."
+   ],
+   "sources": [
+    "https://luaobfuscator.com"
+   ]
+  },
+  {
+   "id": "fuscator77",
+   "name": "77fuscator",
+   "kind": "unknown",
+   "status": "experimental",
+   "basis": "signature",
+   "summary": "Obfuscator seen only through its \"77fuscator <version>\" banner; no documentation was found.",
+   "detect": "Banner string only.",
+   "detectEvidence": "banner",
+   "documentedTechniques": [],
+   "untestedTechniques": [],
+   "techniques": [],
+   "measured": null,
+   "limits": [
+    "Structure unknown."
+   ],
+   "sources": []
+  },
+  {
+   "id": "psu",
+   "name": "PSU",
+   "kind": "commercial",
+   "status": "unsupported",
+   "basis": "signature",
+   "summary": "Commercial obfuscator mentioned in community threads; no public signature or documentation was found.",
+   "detect": "No signature known.",
+   "detectEvidence": "none",
+   "documentedTechniques": [],
+   "untestedTechniques": [],
+   "techniques": [],
+   "measured": null,
+   "limits": [
+    "Nothing public to verify against."
+   ],
+   "sources": []
+  },
+  {
+   "id": "ironveil",
+   "name": "IronVeil",
+   "kind": "unknown",
+   "status": "unsupported",
+   "basis": "signature",
+   "summary": "No public documentation or sample output was found.",
+   "detect": "No signature known.",
+   "detectEvidence": "none",
+   "documentedTechniques": [],
+   "untestedTechniques": [],
+   "techniques": [],
+   "measured": null,
+   "limits": [
+    "Nothing public to verify against."
+   ],
+   "sources": []
+  },
+  {
+   "id": "goofyscator",
+   "name": "Goofyscator",
+   "kind": "unknown",
+   "status": "unsupported",
+   "basis": "signature",
+   "summary": "No public documentation or sample output was found.",
+   "detect": "No signature known.",
+   "detectEvidence": "none",
+   "documentedTechniques": [],
+   "untestedTechniques": [],
+   "techniques": [],
+   "measured": null,
+   "limits": [
+    "Nothing public to verify against."
+   ],
+   "sources": []
+  },
+  {
+   "id": "clyde",
+   "name": "Clyde Protection",
+   "kind": "unknown",
+   "status": "unsupported",
+   "basis": "signature",
+   "summary": "No public documentation or sample output was found.",
+   "detect": "No signature known.",
+   "detectEvidence": "none",
+   "documentedTechniques": [],
+   "untestedTechniques": [],
+   "techniques": [],
+   "measured": null,
+   "limits": [
+    "Nothing public to verify against."
+   ],
+   "sources": []
+  },
+  {
+   "id": "xhider",
+   "name": "XHider",
+   "kind": "unknown",
+   "status": "unsupported",
+   "basis": "signature",
+   "summary": "No public documentation or sample output was found.",
+   "detect": "No signature known.",
+   "detectEvidence": "none",
+   "documentedTechniques": [],
+   "untestedTechniques": [],
+   "techniques": [],
+   "measured": null,
+   "limits": [
+    "Nothing public to verify against."
+   ],
+   "sources": []
+  },
+  {
+   "id": "synapse_xen",
+   "name": "Synapse Xen",
+   "kind": "commercial",
+   "status": "unsupported",
+   "basis": "signature",
+   "summary": "Historic commercial obfuscator bundled with an exploit executor; mentioned in community guides.",
+   "detect": "No signature known.",
+   "detectEvidence": "none",
+   "documentedTechniques": [],
+   "untestedTechniques": [],
+   "techniques": [],
+   "measured": null,
+   "limits": [
+    "Nothing public to verify against."
+   ],
+   "sources": []
+  },
+  {
+   "id": "wearedevs",
+   "name": "WeAreDevs Obfuscator",
+   "kind": "service",
+   "status": "experimental",
+   "basis": "signature",
+   "summary": "Web obfuscator referenced by community deobfuscation prompts; output format not verified.",
+   "detect": "Generic heuristics only.",
+   "detectEvidence": "none",
+   "documentedTechniques": [],
+   "untestedTechniques": [],
+   "techniques": [],
+   "measured": null,
+   "limits": [
+    "Output format not verified."
+   ],
+   "sources": []
+  }
+ ]
+}

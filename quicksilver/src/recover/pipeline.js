@@ -25,6 +25,7 @@ export const DEFAULT_OPTIONS = Object.freeze({
   foldCalls: 'obfuscation',   // 'obfuscation' | 'all'
   maxRounds: 8,
   stringStyle: 'normalize',
+  format: { indent: '  ', width: 100 },
 });
 
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
@@ -83,7 +84,7 @@ export function tryParse(source) {
  * @param {object} [userOptions] see DEFAULT_OPTIONS
  */
 export function recover(source, userOptions = {}) {
-  const options = { ...DEFAULT_OPTIONS, ...userOptions, sandbox: { ...DEFAULT_OPTIONS.sandbox, ...(userOptions.sandbox || {}) } };
+  const options = { ...DEFAULT_OPTIONS, ...userOptions, sandbox: { ...DEFAULT_OPTIONS.sandbox, ...(userOptions.sandbox || {}) }, format: { ...DEFAULT_OPTIONS.format, ...(userOptions.format || {}) } };
   const t0 = now();
   const parsed = tryParse(source);
   if (!parsed.ok) {
@@ -118,7 +119,7 @@ export function recover(source, userOptions = {}) {
   // ---- output and validation --------------------------------------------------------------------------------
   let output;
   try {
-    output = print(run.ast, { strings: options.stringStyle, numbers: options.stringStyle });
+    output = print(run.ast, printOptions(options));
   } catch (e) {
     return { ok: false, stage: 'print', error: { message: String(e.message || e) }, output: null, steps: [...run.steps.values()], detection, warnings: run.warnings };
   }
@@ -145,11 +146,13 @@ export function recover(source, userOptions = {}) {
  * `-5` reads back as a unary minus), while a text fixpoint catches every case where the printed program is
  * not the one we meant to print.
  */
+const printOptions = (o) => ({ ...(o.format || {}), strings: o.stringStyle || 'normalize', numbers: o.stringStyle || 'normalize' });
+
 export function validateOutput(output, ast, options = {}) {
   const re = tryParse(output);
   if (!re.ok) return { ok: false, syntax: false, roundTrip: false, message: `The recovered code does not parse: ${re.error.message}` };
   let again;
-  try { again = print(re.ast, { strings: options.stringStyle || 'normalize', numbers: options.stringStyle || 'normalize' }); } catch { again = null; }
+  try { again = print(re.ast, printOptions(options)); } catch { again = null; }
   const same = again === output;
   return { ok: same, syntax: true, roundTrip: same, message: same ? 'Recovered code parses and prints back identically.' : 'Recovered code parses, but printing it again gives different text.' };
 }

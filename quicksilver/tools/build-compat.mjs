@@ -1,0 +1,101 @@
+// Builds data/compat.json, the file behind the compatibility dashboard.
+//
+//   node tools/build-compat.mjs
+//
+// Inputs: the family registry (src/detect/families.js), the measured results (tests/results/scorecard.json,
+// written by tests/tools-scorecard.mjs) and the hand-written notes (tools/compat-notes.mjs).
+// Nothing on the dashboard is typed in by hand except what compat-notes.mjs says is a judgement.
+
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { familyRegistry, ENGINE_VERSION } from '../src/api.js';
+import { NOTES, OVERRIDES } from './compat-notes.mjs';
+
+const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
+const scorecard = JSON.parse(fs.readFileSync(path.join(root, 'tests/results/scorecard.json'), 'utf8'));
+// the same fixtures with sandboxed evaluation off: what recovery achieves without running any decoder
+const staticCard = JSON.parse(fs.readFileSync(path.join(root, 'tests/results/scorecard.static.json'), 'utf8'));
+
+const mean = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
+const round = (x, d = 3) => (x === null ? null : Math.round(x * 10 ** d) / 10 ** d);
+
+/** A technique is "supported" when the recovered code is close to the original and behaves like it. */
+function derive(agg) {
+  if (agg.fidelityAfter >= 0.85 && agg.behaviourSame === agg.behaviourChecked) return 'supported';
+  if (agg.fidelityAfter >= 0.85) return 'partial';
+  if (agg.fidelityAfter - agg.fidelityBefore >= 0.1 && agg.fidelityAfter >= 0.3) return 'partial';
+  return 'unsupported';
+}
+
+const norm = (s) => s.toLowerCase().replace(/^(step-|mod-)/, '').replace(/[^a-z0-9]/g, '');
+
+const families = familyRegistry().map((f) => {
+  const note = NOTES[f.id] || { status: 'unsupported', basis: 'signature', detect: '', limits: [] };
+  const rows = scorecard.results.filter((r) => r.tool === f.id);
+  let measured = null;
+  const techniques = [];
+  if (rows.length) {
+    const configs = [...new Set(rows.map((r) => r.config))];
+    for (const config of configs) {
+      const rs = rows.filter((r) => r.config === config);
+      const usable = rs.filter((r) => r.fidelityAfter != null);
+      const st = staticCard.results.filter((r) => r.tool === f.id && r.config === config && r.fidelityAfter != null);
+      const checked = rs.filter((r) => r.behavior != null);
+      const agg = {
+        config,
+        samples: rs.length,
+        fidelityBefore: round(mean(usable.map((r) => r.fidelityBefore ?? 0))),
+        fidelityAfter: round(mean(usable.map((r) => r.fidelityAfter))),
+        fidelityStatic: round(mean(st.map((r) => r.fidelityAfter))),
+        confidence: round(mean(rs.map((r) => r.confidence ?? 0))),
+        behaviourChecked: checked.length,
+        behaviourSame: checked.filter((r) => r.behavior === 'same').length,
+        toolBroken: rs.filter((r) => r.toolBehavior !== 'equivalent').length,
+        ms: Math.round(mean(rs.map((r) => r.ms || 0))),
+      };
+      const ov = (OVERRIDES[f.id] || {})[config];
+      agg.status = ov ? ov.status : derive(agg);
+      agg.needsSandbox = agg.fidelityStatic != null && agg.fidelityAfter - agg.fidelityStatic >= 0.1;
+      if (ov) agg.note = ov.note;
+      agg.kind = /^step-/.test(config) ? 'step' : /^mod-/.test(config) ? 'module' : 'preset';
+      agg.label = config.replace(/^(step|mod)-/, '').replace(/_/g, ' ');
+      techniques.push(agg);
+    }
+    const all = rows.filter((r) => r.fidelityAfter != null);
+    measured = {
+      fixtures: rows.length,
+      fidelityBefore: round(mean(all.map((r) => r.fidelityBefore ?? 0))),
+      fidelityAfter: round(mean(all.map((r) => r.fidelityAfter))),
+    };
+  }
+  const covered = new Set(techniques.map((t) => norm(t.config)));
+  const untested = f.techniques.filter((t) => ![...covered].some((c) => norm(t).startsWith(c) || c.startsWith(norm(t))));
+  return {
+    id: f.id,
+    name: f.name,
+    kind: f.kind,
+    status: note.status,
+    basis: note.basis,
+    summary: f.summary,
+    detect: note.detect,
+    detectEvidence: f.evidence,
+    documentedTechniques: f.techniques,
+    untestedTechniques: measured ? untested : f.techniques,
+    techniques,
+    measured,
+    limits: note.limits,
+    sources: f.sources,
+  };
+});
+
+const out = {
+  generatedAt: new Date().toISOString(),
+  engineVersion: ENGINE_VERSION,
+  scorecard: { generatedAt: scorecard.generatedAt, fixtures: scorecard.results.length, sandbox: scorecard.sandbox, behaviourOracle: 'PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa' },
+  families,
+};
+fs.mkdirSync(path.join(root, 'data'), { recursive: true });
+fs.writeFileSync(path.join(root, 'data/compat.json'), `${JSON.stringify(out, null, 1)}\n`);
+const count = (s) => families.filter((f) => f.status === s).length;
+console.log(`data/compat.json: ${families.length} families (supported ${count('supported')}, partial ${count('partial')}, experimental ${count('experimental')}, unsupported ${count('unsupported')}), ${scorecard.results.length} measured fixtures`);

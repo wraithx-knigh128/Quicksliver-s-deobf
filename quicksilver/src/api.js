@@ -10,6 +10,7 @@ import { FAMILIES } from './detect/families.js';
 import { analyzeScript } from './analyze/report.js';
 import { toLuast } from './analyze/luast.js';
 import { recover } from './recover/pipeline.js';
+import { diffLines, toRows } from './core/diff.js';
 
 export const ENGINE_VERSION = '1.0.0';
 
@@ -81,6 +82,15 @@ export function luast(source, options = {}) {
       if (!(e instanceof LuaSyntaxError)) throw e;
       return { ok: false, error: { message: e.message, line: e.line, col: e.col } };
     }
+  });
+}
+
+/** Line diff of two texts, as side-by-side rows (see core/diff.js). */
+export function diffSources(a, b) {
+  return timed(() => {
+    const A = a.split(/\r?\n/);
+    const B = b.split(/\r?\n/);
+    return { ok: true, ...toRows(diffLines(A, B)), aLines: A.length, bLines: B.length };
   });
 }
 
