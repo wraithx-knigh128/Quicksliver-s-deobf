@@ -34,6 +34,8 @@ export function assessConfidence(before, output, ctx) {
   let penalty = 0;
   const note = (effect, text) => { penalty += -effect; reasons.push({ effect, text }); };
 
+  const hardLeft = after.traits.some((t) => t.id === 'state-machine' || t.id === 'bytecode-blob');
+  if (hardLeft || after.families.some((f) => f.evidence.some((e) => e.unrecoverable))) hints.push('trace');
   if (after.traits.some((t) => t.id === 'state-machine')) note(-0.55, 'A flattened dispatcher loop (control-flow flattening or a VM) is still present, so the control flow is not recovered.');
   if (after.traits.some((t) => t.id === 'bytecode-blob')) note(-0.4, 'A compiled Lua chunk is still embedded as data.');
   const vm = after.families.find((f) => f.evidence.some((e) => e.rule === 'vmify-wrapper'));

@@ -16,6 +16,8 @@ const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const scorecard = JSON.parse(fs.readFileSync(path.join(root, 'tests/results/scorecard.json'), 'utf8'));
 // the same fixtures with sandboxed evaluation off: what recovery achieves without running any decoder
 const staticCard = JSON.parse(fs.readFileSync(path.join(root, 'tests/results/scorecard.static.json'), 'utf8'));
+// the behavioural trace compared with the trace of the original program (tests/trace-scorecard.mjs)
+const traceCard = JSON.parse(fs.readFileSync(path.join(root, 'tests/results/trace.json'), 'utf8'));
 
 const mean = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
 const round = (x, d = 3) => (x === null ? null : Math.round(x * 10 ** d) / 10 ** d);
@@ -40,6 +42,7 @@ const families = familyRegistry().map((f) => {
     for (const config of configs) {
       const rs = rows.filter((r) => r.config === config);
       const usable = rs.filter((r) => r.fidelityAfter != null);
+      const tr = traceCard.results.filter((r) => r.tool === f.id && r.config === config && r.toolBehavior === 'equivalent');
       const st = staticCard.results.filter((r) => r.tool === f.id && r.config === config && r.fidelityAfter != null);
       const checked = rs.filter((r) => r.behavior != null);
       const agg = {
@@ -51,6 +54,8 @@ const families = familyRegistry().map((f) => {
         confidence: round(mean(rs.map((r) => r.confidence ?? 0))),
         behaviourChecked: checked.length,
         behaviourSame: checked.filter((r) => r.behavior === 'same').length,
+        traceIdentical: tr.filter((r) => r.outcome === 'identical').length,
+        traceChecked: tr.length,
         toolBroken: rs.filter((r) => r.toolBehavior !== 'equivalent').length,
         ms: Math.round(mean(rs.map((r) => r.ms || 0))),
       };
@@ -63,7 +68,10 @@ const families = familyRegistry().map((f) => {
       techniques.push(agg);
     }
     const all = rows.filter((r) => r.fidelityAfter != null);
+    const trAll = traceCard.results.filter((r) => r.tool === f.id && r.toolBehavior === 'equivalent');
     measured = {
+      traceIdentical: trAll.filter((r) => r.outcome === 'identical').length,
+      traceChecked: trAll.length,
       fixtures: rows.length,
       fidelityBefore: round(mean(all.map((r) => r.fidelityBefore ?? 0))),
       fidelityAfter: round(mean(all.map((r) => r.fidelityAfter))),
@@ -92,6 +100,7 @@ const families = familyRegistry().map((f) => {
 const out = {
   generatedAt: new Date().toISOString(),
   engineVersion: ENGINE_VERSION,
+  trace: { generatedAt: traceCard.generatedAt },
   scorecard: { generatedAt: scorecard.generatedAt, fixtures: scorecard.results.length, sandbox: scorecard.sandbox, behaviourOracle: 'PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa' },
   families,
 };

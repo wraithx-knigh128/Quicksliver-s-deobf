@@ -9,6 +9,7 @@
   "scripts": {
     "test": "node --test --test-concurrency=1 \"tests/**/*.test.mjs\"",
     "scorecard": "node tests/tools-scorecard.mjs --write",
+    "test:e2e": "node --test --test-concurrency=1 tests/e2e/ui.e2e.mjs",
     "license:keygen": "node tools/license/keygen.mjs",
     "license:issue": "node tools/license/issue.mjs"
   }

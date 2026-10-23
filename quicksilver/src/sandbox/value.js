@@ -42,6 +42,7 @@ export class LuaTable {
     this.hash = null;       // Map for every other key
     this.meta = null;
     this.keyCache = null;   // snapshot of hash keys for next()
+    this.keyPos = null;     // key -> position in keyCache
     this.addr = nextAddress();
     this.readonly = false;
   }
@@ -82,7 +83,9 @@ export class LuaTable {
       throw new LuaError('table index is nil');
     }
     if (value === undefined) {
-      if (this.hash !== null && this.hash.delete(key)) this.keyCache = null;
+      // keep the key snapshot: a traversal may clear fields it has already visited (allowed in Lua), and
+      // next() must still find the key it is asked to continue from
+      if (this.hash !== null) this.hash.delete(key);
       return;
     }
     if (this.hash === null) this.hash = new Map();
@@ -135,8 +138,11 @@ export class LuaTable {
       if (typeof key === 'number' && Number.isInteger(key) && key >= 1 && key <= arr.length) i = key;
       else {
         const keys = this.hashKeys();
-        const at = keys.indexOf(key);
-        if (at < 0) throw new LuaError("invalid key to 'next'");
+        const at = this.keyPos.get(key);
+        // an array slot cleared during the traversal can leave the array shorter than the key it is asked to
+        // continue from; everything after it in the array part is empty, so carry on with the hash part
+        if (at === undefined && Number.isInteger(key) && key >= 1) return this.nextInHash(keys, 0);
+        if (at === undefined) throw new LuaError("invalid key to 'next'");
         return this.nextInHash(keys, at + 1);
       }
     }
@@ -145,7 +151,11 @@ export class LuaTable {
   }
 
   hashKeys() {
-    if (this.keyCache === null) this.keyCache = this.hash ? [...this.hash.keys()] : [];
+    if (this.keyCache === null) {
+      this.keyCache = this.hash ? [...this.hash.keys()] : [];
+      this.keyPos = new Map();
+      this.keyCache.forEach((k, i) => this.keyPos.set(k, i));
+    }
     return this.keyCache;
   }
 

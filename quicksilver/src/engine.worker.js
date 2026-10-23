@@ -10,6 +10,7 @@ const OPS = {
   analyze: api.analyzeSource,
   recover: api.recoverSource,
   luast: api.luast,
+  trace: api.traceSource,
   diff: (source, options) => api.diffSources(source, options.other),
 };
 

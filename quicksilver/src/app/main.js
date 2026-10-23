@@ -42,6 +42,8 @@ const S = {
   detection: null,
   analysis: null,
   luast: null,
+  trace: null,
+  traceConsent: false,
   beautified: null,
   recovered: null,
   output: null,       // { text, label, kind }
@@ -68,7 +70,7 @@ const el = {
   shell: $('#shell'), workspace: $('#workspace'), tabs: $('#tabs'), views: $('#views'), inspector: $('#inspector'),
   docname: $('#docname'), ver: $('#ver'), stState: $('#st-state'), stPos: $('#st-pos'), stSize: $('#st-size'), stSandbox: $('#st-sandbox'), stLicense: $('#st-license'),
   file: $('#file-input'), toollist: $('#toollist'), sideFilters: $('#side-filters'), sideCount: $('#side-count'), licenseLabel: $('#license-label'),
-  btn: Object.fromEntries(['open', 'samples', 'detect', 'beautify', 'analyze', 'recover', 'compare', 'export', 'cancel', 'clear'].map((k) => [k, $(`#act-${k}`)])),
+  btn: Object.fromEntries(['open', 'samples', 'detect', 'beautify', 'analyze', 'recover', 'trace', 'compare', 'export', 'cancel', 'clear'].map((k) => [k, $(`#act-${k}`)])),
 };
 el.ver.textContent = `v${ENGINE_VERSION}`;
 
@@ -309,7 +311,7 @@ function getInputBytes() {
 function invalidate() {
   S.version++;
   S.inspected = null;
-  S.detection = null; S.analysis = null; S.luast = null; S.beautified = null; S.recovered = null; S.output = null; S.diff = null;
+  S.detection = null; S.analysis = null; S.luast = null; S.trace = null; S.traceConsent = false; S.beautified = null; S.recovered = null; S.output = null; S.diff = null;
   S.notes = [];
   renderAll();
 }
@@ -324,7 +326,7 @@ function loadBytes(name, bytes) {
   sourceLines = lineCountOf(editor.value);
   S.version++;
   S.inspected = null;
-  S.detection = null; S.analysis = null; S.luast = null; S.beautified = null; S.recovered = null; S.output = null; S.diff = null;
+  S.detection = null; S.analysis = null; S.luast = null; S.trace = null; S.traceConsent = false; S.beautified = null; S.recovered = null; S.output = null; S.diff = null;
   S.notes = [];
   let lossy = false;
   try { new TextDecoder('utf-8', { fatal: true }).decode(bytes); } catch { lossy = true; }
@@ -492,6 +494,41 @@ async function runRecover({ quiet = false } = {}) {
   return r;
 }
 
+async function confirmTrace() {
+  if (!lic.allow('sandbox')) { toast('The sandbox is not part of this licence.'); return false; }
+  if (S.traceConsent) return true;
+  const r = await modal({
+    title: 'Run this script in the sandbox?',
+    body: [
+      h('p', { style: { margin: 0 } }, 'Trace runs the whole script, the way the Roblox client would, and writes down what it does: the services it asks for, the objects it creates, the properties it sets, the URLs it tries to fetch, the code it loads.'),
+      h('ul', [
+        h('li', 'It runs in QuickSilver’s own Lua interpreter inside a web worker, not in the browser’s JavaScript engine. The only things it can reach are stand-in Roblox objects made for the trace.'),
+        h('li', 'Nothing is fetched, saved or sent. Network calls are recorded and answered with an empty chunk.'),
+        h('li', 'Instruction, time, output and event limits apply, and Cancel stops it at any moment.'),
+      ]),
+      h('p.note.warn', 'The result is a description of one run, not the original source. Only run scripts you own or are authorised to analyse.'),
+    ],
+    buttons: [{ id: 'cancel', label: 'Cancel' }, { id: 'ok', label: 'Run in sandbox', primary: true }],
+  });
+  if (r === 'ok') S.traceConsent = true;
+  return r === 'ok';
+}
+
+async function runTrace() {
+  if (!inputPresent()) { toast('Nothing to trace. Paste code or open a file first.'); switchTab('source'); editor.focus(); return null; }
+  if (!(await confirmTrace())) return null;
+  const version = S.version;
+  const r = await run('trace', { dialect: 'luau' }, 'Tracing', { limits: { timeoutMs: 60_000 } });
+  if (!r || version !== S.version) return null;
+  S.trace = r;
+  S.notes = [];
+  if (r.status === 'syntax-error') S.notes.push({ kind: 'bad', text: `The script does not parse, so it cannot run: ${r.error}` });
+  S.output = { text: r.script, label: 'Behavioural trace', kind: 'trace' };
+  renderAll();
+  switchTab('output');
+  return r;
+}
+
 async function runCompare() {
   if (!lic.allow('compare')) { toast('Compare is not part of this licence.'); return; }
   if (!inputPresent()) { toast('Nothing to compare. Paste code or open a file first.'); return; }
@@ -581,6 +618,7 @@ function exportItems() {
     { label: 'Recovered code (.lua)', sub: `${base}.recovered.lua`, disabled: rec == null, run: () => save(`${base}.recovered.lua`, rec) },
     { label: 'Recovered code (.txt)', sub: `${base}.recovered.txt`, disabled: rec == null, run: () => save(`${base}.recovered.txt`, rec) },
     { label: 'Current output (.txt)', sub: S.output ? S.output.label : 'nothing shown', disabled: cur == null, run: () => save(`${base}.${S.output.kind}.txt`, cur) },
+    { label: 'Trace listing (.lua)', sub: `${base}.trace.lua`, disabled: !S.trace, run: () => save(`${base}.trace.lua`, S.trace.script) },
     '-',
     { label: 'Report (.json)', sub: 'detection, confidence, passes', disabled: !S.detection && !S.recovered, run: async () => { if (ensureExport()) download(`${base}.report.json`, JSON.stringify(await buildReport(), null, 2), 'application/json'); } },
     { label: 'Bundle (.zip)', sub: 'original + recovered + report', disabled: !inputPresent(), run: exportBundle },
@@ -595,6 +633,7 @@ async function exportBundle() {
   const enc = new TextEncoder();
   const entries = [{ name: `original/${S.name.replace(/[\\/]/g, '_')}`, data: orig }];
   if (S.recovered && S.recovered.output != null) entries.push({ name: `recovered/${base}.recovered.lua`, data: binaryToBytes(S.recovered.output) });
+  if (S.trace) entries.push({ name: `recovered/${base}.trace.lua`, data: binaryToBytes(S.trace.script) });
   if (S.output && S.output.kind === 'beautify') entries.push({ name: `recovered/${base}.beautified.lua`, data: binaryToBytes(S.output.text) });
   entries.push({ name: 'report.json', data: enc.encode(JSON.stringify(report, null, 2)) });
   entries.push({ name: 'manifest.json', data: enc.encode(JSON.stringify({ tool: 'QuickSilver Deobfuscator', engine: ENGINE_VERSION, created: report.generatedAt, original: { path: entries[0].name, bytes: orig.length, sha256: report.input.sha256 }, files: entries.map((e) => ({ path: e.name, bytes: e.data.length })) }, null, 2)) });
@@ -671,6 +710,12 @@ function renderInspector() {
   if (S.recovered) {
     parts.push(...recoverySummary(S.recovered));
     const hints = (S.recovered.confidence && S.recovered.confidence.hints) || [];
+    if (hints.includes('trace') && lic.allow('sandbox')) {
+      parts.push(h('section.section', h('h3', h('span', 'Code is still protected')), h('div.body', [
+        h('p.note.warn', 'A virtual machine or embedded bytecode is still in the output, so the original control flow was not recovered. Trace can still list what the script does when it runs (services, objects, properties, requests).'),
+        h('p', h('button.btn.primary', { type: 'button', onclick: () => runTrace() }, 'Trace in sandbox…')),
+      ])));
+    }
     if (hints.includes('sandbox') && lic.allow('sandbox')) {
       parts.push(h('section.section', h('h3', h('span', 'Encoded strings remain')), h('div.body', [
         h('p.note.warn', 'This script keeps its strings behind decoder functions. Evaluating them means running those functions, which QuickSilver only does inside its own interpreter sandbox and only if you allow it.'),
@@ -678,7 +723,40 @@ function renderInspector() {
       ])));
     }
   }
+  if (S.trace) parts.push(traceSection());
   replace(el.inspector, parts);
+}
+
+function traceSection() {
+  const t = S.trace;
+  const kv = (rows) => h('dl.kv', rows.flatMap(([k, v]) => [h('dt', k), h('dd', v)]));
+  const body = [
+    kv([
+      ['Ended', t.ended],
+      ['Events', `${t.stats.events}${t.stats.truncated ? ' (truncated)' : ''}`],
+      ['Calls / sets', `${t.stats.calls} / ${t.stats.sets}`],
+      ['Handlers run', String(t.stats.handlers)],
+      ['Chunks loaded', String(t.stats.loads)],
+      ['Instructions', t.stats.fuelUsed.toLocaleString()],
+    ]),
+    h('p.note.warn', 'A trace describes this one run. It is not the original source, and code paths that did not run are absent.'),
+  ];
+  if (t.requests.length) body.push(h('div', [h('div.dim', `Requests recorded, not performed (${t.requests.length})`), h('ul.list.mono', t.requests.map((u) => h('li', { style: { overflowWrap: 'anywhere' } }, u)))]));
+  if (t.layers.length) {
+    body.push(h('div', [h('div.dim', 'Chunks the script loaded'), h('ul.list', t.layers.map((l) => h('li', [
+      h('span.mono', `#${l.index}`), ` ${fmtBytes(l.source.length)} `,
+      h('button.btn.small', { type: 'button', onclick: () => useLayer(l) }, 'Use as input'),
+    ])))]));
+  }
+  if (t.undefinedGlobals.length) body.push(h('div', [h('div.dim', 'Globals it looked for and did not find'), h('p.mono', { style: { overflowWrap: 'anywhere', margin: '2px 0' } }, t.undefinedGlobals.join(', '))]));
+  return h('section.section', h('h3', h('span', 'Trace')), h('div.body', body));
+}
+
+function useLayer(layer) {
+  const bytes = binaryToBytes(layer.source);
+  loadBytes(`${baseName(S.name)}.chunk${layer.index}.lua`, bytes);
+  S.notes.push({ kind: 'info', text: `Chunk ${layer.index}, captured while tracing the previous script. It is now the input, so Detect, Recover and the rest apply to it.` });
+  renderInspector();
 }
 
 async function recoverWithSandbox() {
@@ -865,6 +943,7 @@ el.btn.detect.addEventListener('click', () => runDetect());
 el.btn.beautify.addEventListener('click', () => runBeautify());
 el.btn.analyze.addEventListener('click', () => runAnalyze());
 el.btn.recover.addEventListener('click', () => runRecover());
+el.btn.trace.addEventListener('click', () => runTrace());
 el.btn.compare.addEventListener('click', () => runCompare());
 
 document.addEventListener('keydown', (e) => {
@@ -873,7 +952,7 @@ document.addEventListener('keydown', (e) => {
   if ((e.ctrlKey || e.metaKey) && key === 'o') { e.preventDefault(); el.file.click(); }
   else if ((e.ctrlKey || e.metaKey) && key === 'enter') { e.preventDefault(); if (!S.busy) runRecover(); }
   else if (e.altKey && !e.ctrlKey && !e.metaKey) {
-    const map = { KeyD: runDetect, KeyB: runBeautify, KeyA: runAnalyze, KeyR: runRecover, KeyC: runCompare, KeyE: () => showMenu(el.btn.export, exportItems()) };
+    const map = { KeyD: runDetect, KeyB: runBeautify, KeyA: runAnalyze, KeyR: runRecover, KeyT: runTrace, KeyC: runCompare, KeyE: () => showMenu(el.btn.export, exportItems()) };
     if (map[e.code]) { e.preventDefault(); if (!S.busy) map[e.code](); }
   } else if (key === 'f' && (e.ctrlKey || e.metaKey) && (S.tab === 'output' || S.tab === 'source')) {
     e.preventDefault();

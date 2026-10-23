@@ -11,6 +11,7 @@ import { analyzeScript } from './analyze/report.js';
 import { toLuast } from './analyze/luast.js';
 import { recover } from './recover/pipeline.js';
 import { diffLines, toRows } from './core/diff.js';
+import { traceScript } from './trace/trace.js';
 
 export const ENGINE_VERSION = '1.0.0';
 
@@ -83,6 +84,14 @@ export function luast(source, options = {}) {
       return { ok: false, error: { message: e.message, line: e.line, col: e.col } };
     }
   });
+}
+
+/**
+ * Run the script in the instrumented sandbox and report what it did (see trace/trace.js). This is the only
+ * operation that executes anything; the interface asks the user first.
+ */
+export function traceSource(source, options = {}) {
+  return timed(() => traceScript(source, options));
 }
 
 /** Line diff of two texts, as side-by-side rows (see core/diff.js). */
