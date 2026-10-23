@@ -12,6 +12,7 @@ import { callValue, tostr, index, lessThan, compileSource, concat as vmConcat } 
 import { LuaSyntaxError } from '../core/parser.js';
 import { numberToLuaString, stringToNumber } from '../passes/consteval.js';
 import { strFind, gmatchIter, strGsub, strFormat } from './lstring.js';
+import { isBytecode, loadBytecode, BytecodeError } from './bytecode.js';
 
 const nf = (name, fn) => new NativeFunction(name, fn);
 
@@ -217,6 +218,12 @@ export function installStdlib(m, options = {}) {
     if (typeof src !== 'string') return [undefined, 'bad argument #1 to \'load\' (string expected)'];
     m.loads.push({ source: src, chunkName: typeof chunkName === 'string' ? chunkName : null });
     if (m.hooks.onLoad) m.hooks.onLoad(src, chunkName);   // may throw SandboxLimit('halt') to stop after capture
+    if (isBytecode(src)) {
+      try { return [loadBytecode(m, src, env || G)]; } catch (e) {
+        if (e instanceof BytecodeError) return [undefined, `bad binary chunk: ${e.message}`];
+        throw e;
+      }
+    }
     try {
       const display = typeof chunkName === 'string' ? chunkName.replace(/^[=@]/, '') : `[string "${src.split('\n')[0].slice(0, 40)}"]`;
       return [compileSource(m, src, display, env || G)];

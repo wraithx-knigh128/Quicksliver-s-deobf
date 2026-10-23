@@ -818,7 +818,7 @@ export class Compiler {
       let n = 1;
       for (let i = 0; i < items.length; i++) {
         const it = items[i];
-        if (it.kind === 'item') t.set(n++, it.value(f));
+        if (it.kind === 'item') t.listSet(n++, it.value(f));
         else {
           const k = it.key(f);
           if (k === undefined) throw m.error('table index is nil');
@@ -827,7 +827,7 @@ export class Compiler {
       }
       if (lastMulti) {
         const rest = lastMulti(f);
-        for (let i = 0; i < rest.length; i++) t.set(n++, rest[i]);
+        for (let i = 0; i < rest.length; i++) t.listSet(n++, rest[i]);
       }
       return t;
     };

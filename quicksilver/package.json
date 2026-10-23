@@ -7,7 +7,7 @@
   "license": "UNLICENSED",
   "engines": { "node": ">=20" },
   "scripts": {
-    "test": "node --test --test-concurrency=1 tests/",
+    "test": "node --test --test-concurrency=1 \"tests/**/*.test.mjs\"",
     "scorecard": "node tests/tools-scorecard.mjs --write",
     "license:keygen": "node tools/license/keygen.mjs",
     "license:issue": "node tools/license/issue.mjs"

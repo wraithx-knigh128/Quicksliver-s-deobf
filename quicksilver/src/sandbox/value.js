@@ -101,8 +101,31 @@ export class LuaTable {
     }
   }
 
-  /** The border used by #t. */
-  length() { return this.arr.length; }
+  /**
+   * Positional store used by table constructors and SETLIST. Unlike set(), a nil keeps its slot, so
+   * `{1, nil, 3}` has three array slots the way it does in the reference implementation.
+   */
+  listSet(i, value) {
+    const idx = i - 1;
+    if (idx === this.arr.length) this.arr.push(value);
+    else if (idx < this.arr.length) this.arr[idx] = value;
+    else this.set(i, value);
+  }
+
+  /** The border used by #t: the reference implementation's array-part search (luaH_getn). */
+  length() {
+    const a = this.arr;
+    let j = a.length;
+    if (j > 0 && a[j - 1] === undefined) {
+      let i = 0;
+      while (j - i > 1) {
+        const m = (i + j) >>> 1;
+        if (a[m - 1] === undefined) j = m; else i = m;
+      }
+      return i;
+    }
+    return j;
+  }
 
   /** next(table, key) -> [key, value] | undefined when finished. */
   next(key) {

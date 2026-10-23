@@ -1,0 +1,6 @@
+/tests
+/tools
+/docs
+/license
+/node_modules
+*.log
