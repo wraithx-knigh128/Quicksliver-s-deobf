@@ -154,7 +154,8 @@ function collectFacts(ast, src) {
 
 // ---- rules -------------------------------------------------------------------------------------------------------
 
-const rule = (id, kind, weight, test) => ({ id, kind, weight, test });
+/** `unrecoverable`: if this still matches after recovery, the program has not been recovered (VM, bytecode). */
+const rule = (id, kind, weight, test, unrecoverable = false) => ({ id, kind, weight, test, unrecoverable });
 
 const RULES = {
   prometheus: [
@@ -171,7 +172,8 @@ const RULES = {
     rule('watermark', 'banner', 0.97, (c) => { const m = /Obfuscated by Hercules v?([0-9][0-9.]*)/.exec(c.src); return m ? { text: `Hercules watermark (v${m[1]})`, version: m[1] } : false; }),
     rule('control-flow', 'structure', 0.9, (c) => c.facts && c.src.search(/\bthing2\b/) >= 0 && c.src.includes('counter') && /while\s+\w+\s*==\s*\w+\s+and\s+counter\s*<\s*1\s+do/.test(c.src) && 'control-flow wrapper (a loop that provably runs once, with a spoof branch)'),
     rule('function-table', 'structure', 0.85, (c) => /\["table\.concat"\]\s*=\s*table\.concat/.test(c.src) && 'anti-tamper function table ({["table.concat"]=table.concat, ...})'),
-    rule('bytecode-wrapper', 'structure', 0.85, (c) => /local\s+\w+\s*,\s*\w+\s*,\s*\w+\s*=\s*"[0-9A-F]{40,}"\s*,\s*\d+\s*,\s*\{\}/.test(c.src) && 'hex + offset bytecode wrapper around load()'),
+    rule('bytecode-wrapper', 'structure', 0.85, (c) => /local\s+\w+\s*,\s*\w+\s*,\s*\w+\s*=\s*"[0-9A-F]{40,}"\s*,\s*\d+\s*,\s*\{\}/.test(c.src) && 'hex + offset bytecode wrapper around load()', true),
+    rule('vm-protected', 'structure', 0.95, (c) => c.facts && c.facts.strings.some((x) => x.startsWith('Protected By Hercules')) && 'Hercules virtual machine: a Lua bytecode interpreter with the program embedded as bytecode', true),
     rule('caesar-decoder', 'structure', 0.75, (c) => c.facts && c.facts.numbers.has(26) && c.facts.numbers.has(65) && c.facts.numbers.has(97) && c.facts.numbers.has(122) && c.facts.numbers.has(48) && c.facts.numbers.has(57) && /%\s*26\)?\s*\+\s*(65|97)/.test(c.src.replace(/\s+/g, ' ')) && 'Caesar-cipher string decoder (letters mod 26, digits mod 10)'),
     rule('chars-table', 'structure', 0.7, (c) => /local\s+chars\s*=\s*\{\s*\[\d+\]\s*=\s*"/.test(c.src) && 'string-to-expression table (local chars = {[104]="h", ...})'),
     rule('junk', 'structure', 0.55, (c) => c.facts && c.facts.junkLocals >= 3 && `${c.facts.junkLocals} no-effect statements of the form local _ = N`),
@@ -286,7 +288,7 @@ export function detect(source, knownAst = null) {
       if (!hit) continue;
       const text = typeof hit === 'string' ? hit : hit.text;
       if (typeof hit === 'object' && hit.version) version = hit.version;
-      evidence.push({ rule: r.id, kind: r.kind, text, weight: r.weight });
+      evidence.push({ rule: r.id, kind: r.kind, text, weight: r.weight, unrecoverable: r.unrecoverable });
       miss *= 1 - r.weight;
     }
     if (!evidence.length) continue;

@@ -37,6 +37,7 @@ for (const [tool, dir] of tools) {
     try { r = recover(input, { sandbox: { enabled: sandbox } }); } catch (err) { entry.crash = String(err.stack || err).split('\n').slice(0, 3).join(' | '); results.push(entry); continue; }
     entry.ms = Date.now() - t0;
     entry.ok = r.ok;
+    entry.confidence = r.confidence ? r.confidence.score : null;
     entry.detected = r.detection.families.filter((f) => f.confidence >= 0.5).map((f) => `${f.id}:${f.confidence.toFixed(2)}`);
     entry.steps = r.steps.filter((s) => s.status === 'applied' || s.status === 'failed').map((s) => `${s.id}${s.status === 'failed' ? '(FAILED: ' + s.error + ')' : '×' + s.changed}`);
     if (r.output) {
@@ -63,7 +64,7 @@ for (const r of results) {
 }
 const avg = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : NaN);
 const pct = (x) => (Number.isNaN(x) ? '   - ' : (x * 100).toFixed(0).padStart(3) + '%');
-console.log('config'.padEnd(36), 'n  detect  fid-before  fid-after  behaviour(same/diff/err)');
+console.log('config'.padEnd(36), 'n  detect  fid-before  fid-after  conf  behaviour(same/diff/err)');
 for (const [k, rs] of groups) {
   const det = rs.filter((r) => r.detected && r.detected.length).length;
   const fb = avg(rs.map((r) => r.fidelityBefore).filter((x) => x != null));
@@ -72,7 +73,16 @@ for (const [k, rs] of groups) {
   const diff = rs.filter((r) => r.behavior === 'differs').length;
   const err = rs.filter((r) => r.behavior && r.behavior.startsWith('error')).length;
   const crash = rs.filter((r) => r.crash || r.error).length;
-  console.log(k.padEnd(36), String(rs.length).padStart(1), `${det}/${rs.length}`.padStart(6), pct(fb).padStart(10), pct(fa).padStart(10), `   ${same}/${diff}/${err}${crash ? '  crashes:' + crash : ''}`);
+  const cf = avg(rs.map((r) => r.confidence).filter((x) => x != null));
+  console.log(k.padEnd(36), String(rs.length).padStart(1), `${det}/${rs.length}`.padStart(6), pct(fb).padStart(10), pct(fa).padStart(10), pct(cf).padStart(6), `   ${same}/${diff}/${err}${crash ? '  crashes:' + crash : ''}`);
+}
+const pairs = results.filter((r) => r.confidence != null && r.fidelityAfter != null);
+if (pairs.length > 3) {
+  const xs = pairs.map((r) => r.confidence); const ys = pairs.map((r) => r.fidelityAfter);
+  const mx = avg(xs); const my = avg(ys);
+  const cov = avg(xs.map((x, i) => (x - mx) * (ys[i] - my)));
+  const sx = Math.sqrt(avg(xs.map((x) => (x - mx) ** 2))); const sy = Math.sqrt(avg(ys.map((y) => (y - my) ** 2)));
+  console.log(`\nconfidence vs measured fidelity: Pearson r = ${(cov / (sx * sy)).toFixed(2)} over ${pairs.length} recoveries`);
 }
 const bad = results.filter((r) => r.crash || r.error);
 if (bad.length) { console.log('\ncrashes / errors:'); bad.slice(0, 10).forEach((r) => console.log(' ', r.file, r.crash || JSON.stringify(r.error))); }

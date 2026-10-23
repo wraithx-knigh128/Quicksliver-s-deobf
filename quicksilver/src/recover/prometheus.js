@@ -117,6 +117,8 @@ export function undoProxifyLocals(chunk) {
       }
       if (e.type === 'Index') {
         const p = proxyOf(e.obj);
+        // `function Shape.new() end` is emitted as `function proxy.<K>.new() end`: a direct read of the stored value
+        if (p && e.key.type === 'String' && e.key.value === p.key) { reads++; return readOf(e.obj); }
         if (p && p.get === 'index') { reads++; return readOf(e.obj); }
         if (p && p.set === 'index') return { type: '__Set', target: e.obj, value: e.key };
       }

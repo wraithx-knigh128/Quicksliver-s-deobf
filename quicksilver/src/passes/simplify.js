@@ -16,18 +16,42 @@ import { isMachineName } from './rename.js';
 
 // ---- purity ------------------------------------------------------------------
 
-/** No observable effect and cannot fail in a way a script would rely on. */
-export function isPure(e) {
+/** Standard functions that only compute a value (setmetatable merely tags a table that is not shared yet). */
+const PURE_CALLEES = new Set([
+  'setmetatable', 'rawget', 'rawequal', 'type', 'tostring', 'tonumber', 'select', 'unpack',
+  'string.char', 'string.byte', 'string.sub', 'string.rep', 'string.reverse', 'string.lower', 'string.upper',
+  'string.len', 'string.format', 'math.floor', 'math.ceil', 'math.abs', 'math.sqrt', 'math.max', 'math.min',
+  'table.concat', 'table.unpack',
+]);
+
+/** Name of the standard function a callee refers to (`string.char`), or null. Needs scope info. */
+function pureCalleeName(fn, info) {
+  if (!info) return null;
+  const root = (e) => (e.type === 'Name' ? e : e.type === 'Index' && e.obj.type === 'Name' ? e.obj : null);
+  const r = root(fn);
+  if (!r) return null;
+  const v = info.varOf.get(r);
+  if (!v || !v.isGlobal || v.writes.length) return null;
+  if (fn.type === 'Name') return fn.name;
+  return fn.key.type === 'String' ? `${fn.obj.name}.${fn.key.value}` : null;
+}
+
+/** No observable effect and cannot fail in a way a script would rely on. `info` lets standard calls count as pure. */
+export function isPure(e, info = null) {
   switch (e.type) {
     case 'Nil': case 'True': case 'False': case 'Number': case 'String': case 'Vararg': case 'Name': case 'Func':
       return true;
-    case 'Paren': return isPure(e.expr);
-    case 'Table': return e.fields.every((f) => (f.kind !== 'keyed' || isPure(f.key)) && isPure(f.value));
-    case 'Index': return isPure(e.obj) && isPure(e.key);
-    case 'Unary': return e.op === 'not' ? isPure(e.arg) : constOf(e.arg) !== NOT_CONST;
+    case 'Paren': return isPure(e.expr, info);
+    case 'Table': return e.fields.every((f) => (f.kind !== 'keyed' || isPure(f.key, info)) && isPure(f.value, info));
+    case 'Index': return isPure(e.obj, info) && isPure(e.key, info);
+    case 'Unary': return e.op === 'not' ? isPure(e.arg, info) : constOf(e.arg) !== NOT_CONST;
     case 'Binary':
-      if (e.op === 'and' || e.op === 'or' || e.op === '==' || e.op === '~=') return isPure(e.left) && isPure(e.right);
+      if (e.op === 'and' || e.op === 'or' || e.op === '==' || e.op === '~=') return isPure(e.left, info) && isPure(e.right, info);
       return constOf(e.left) !== NOT_CONST && constOf(e.right) !== NOT_CONST;
+    case 'Call': {
+      const name = pureCalleeName(e.fn, info);
+      return !!name && PURE_CALLEES.has(name) && e.args.every((a) => isPure(a, info));
+    }
     default: return false;
   }
 }
@@ -53,8 +77,11 @@ function propagate(chunk) {
 
   for (const v of info.vars) {
     if (v.kind !== 'local' || v.writes.length || !v.hasInit || !v.init || !v.reads.length) continue;
-    if (!isMachineName(v.name)) continue;   // a name the author chose is part of the source; keep it
     const init = v.init;
+    // A name the author chose is part of the source and stays. An alias of a standard function under a one-
+    // or two-letter name (`local z = setmetatable`) is machine output even when the letter looks conventional.
+    const shortAlias = v.name.length <= 2 && stdAlias(init, info);
+    if (!isMachineName(v.name) && !shortAlias) continue;
     const c = constOf(init);
     let make = null;
     if (c !== NOT_CONST && init.type !== 'Paren') {
@@ -177,7 +204,7 @@ function removeDead(chunk, state) {
       if (s.type === 'Local') {
         const vars = s.ids.map((id) => info.varOf.get(id));
         if (vars.every((v, i) => removable(v, s.values[i]))) {
-          if (s.values.every(isPure)) { changed++; return null; }
+          if (s.values.every((x) => isPure(x, info))) { changed++; return null; }
           if (s.ids.length === 1 && s.values.length === 1 && (s.values[0].type === 'Call' || s.values[0].type === 'MethodCall')) {
             changed++;
             return { type: 'CallStmt', call: s.values[0], comments: s.comments, line: s.line };
@@ -190,13 +217,13 @@ function removeDead(chunk, state) {
         const trivial = s.func.body.every((x) => x.type === 'Local' && x.ids.length === 1 && x.ids[0].name === '_' && x.values.length === 1 && junkInit(x.values[0]));
         if ((isMachineName(v.name) || trivial || !state.unusedAtStart.has(v.decl)) && v.reads.every((r) => inside.has(r)) && v.writes.length === 0) { changed++; return null; }
       } else if (s.type === 'Assign') {
-        if (s.targets.every((t) => t.type === 'Name' && dead(t)) && s.values.every(isPure)) { changed++; return null; }
+        if (s.targets.every((t) => t.type === 'Name' && dead(t)) && s.values.every((x) => isPure(x, info))) { changed++; return null; }
       } else if (s.type === 'NumFor') {
         const empty = s.body.length === 0 && !(s.body.endComments && s.body.endComments.length);
-        if (empty && isPure(s.start) && isPure(s.stop) && (!s.step || isPure(s.step))) { changed++; return null; }
+        if (empty && isPure(s.start, info) && isPure(s.stop, info) && (!s.step || isPure(s.step, info))) { changed++; return null; }
       } else if (s.type === 'If') {
         const empty = (b) => b.length === 0 && !(b.endComments && b.endComments.length);
-        if (s.clauses.length === 1 && empty(s.clauses[0].body) && (!s.orelse || empty(s.orelse)) && isPure(s.clauses[0].cond)) {
+        if (s.clauses.length === 1 && empty(s.clauses[0].body) && (!s.orelse || empty(s.orelse)) && isPure(s.clauses[0].cond, info)) {
           changed++;
           return null;
         }

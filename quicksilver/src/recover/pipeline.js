@@ -16,6 +16,8 @@ import { evaluatePass } from '../passes/evaluate.js';
 import { renamePass } from '../passes/rename.js';
 import { unwrapWrapper, removeUnusedVararg } from '../passes/structure.js';
 import { removeAntiTamper, undoProxifyLocals } from './prometheus.js';
+import { removeHerculesAntiTamper } from './hercules.js';
+import { assessConfidence } from './confidence.js';
 
 export const DEFAULT_OPTIONS = Object.freeze({
   sandbox: { enabled: false, fuel: 60_000_000, timeMs: 10_000, dialect: 'luau' },
@@ -95,6 +97,7 @@ export function recover(source, userOptions = {}) {
     let total = 0;
     total += run.step('unwrap', 'Unwrap outer wrapper function', (a) => unwrapWrapper(a), { quiet: true });
     total += run.step('prometheus.antitamper', 'Remove Prometheus anti-tamper block', (a) => removeAntiTamper(a), { quiet: true });
+    total += run.step('hercules.antitamper', 'Remove Hercules anti-tamper block', (a) => removeHerculesAntiTamper(a), { quiet: true });
     total += run.step('fold', 'Fold constant expressions', (a) => foldPass(a, { foldCalls: options.foldCalls }));
     total += run.step('simplify', 'Simplify control flow and remove dead code', (a) => simplifyPass(a, { unusedAtStart }));
     total += run.step('prometheus.proxify', 'Undo Prometheus ProxifyLocals', (a) => undoProxifyLocals(a), { quiet: true });
@@ -119,24 +122,34 @@ export function recover(source, userOptions = {}) {
   } catch (e) {
     return { ok: false, stage: 'print', error: { message: String(e.message || e) }, output: null, steps: [...run.steps.values()], detection, warnings: run.warnings };
   }
-  const validation = validateOutput(output, run.ast);
+  const validation = validateOutput(output, run.ast, options);
   if (!validation.ok) run.warnings.push(validation.message);
+  const steps = [...run.steps.values()];
+  const confidence = assessConfidence(detection, output, { steps, validation, ast: run.ast });
 
   return {
     ok: validation.ok,
     output,
-    steps: [...run.steps.values()],
+    steps,
     detection,
     validation,
+    confidence,
     warnings: run.warnings,
     ms: now() - t0,
   };
 }
 
-/** Re-parse the printed output and check it is the program we meant to print. */
-export function validateOutput(output, ast) {
+/**
+ * Re-parse the printed output and check that printing is stable: print(parse(print(ast))) must equal
+ * print(ast). Comparing trees directly would flag harmless canonicalisation (a negative literal printed as
+ * `-5` reads back as a unary minus), while a text fixpoint catches every case where the printed program is
+ * not the one we meant to print.
+ */
+export function validateOutput(output, ast, options = {}) {
   const re = tryParse(output);
   if (!re.ok) return { ok: false, syntax: false, roundTrip: false, message: `The recovered code does not parse: ${re.error.message}` };
-  const same = structuralKey(re.ast) === structuralKey(ast);
-  return { ok: same, syntax: true, roundTrip: same, message: same ? 'Recovered code parses and round-trips.' : 'Recovered code parses, but re-parsing produced a different tree.' };
+  let again;
+  try { again = print(re.ast, { strings: options.stringStyle || 'normalize', numbers: options.stringStyle || 'normalize' }); } catch { again = null; }
+  const same = again === output;
+  return { ok: same, syntax: true, roundTrip: same, message: same ? 'Recovered code parses and prints back identically.' : 'Recovered code parses, but printing it again gives different text.' };
 }

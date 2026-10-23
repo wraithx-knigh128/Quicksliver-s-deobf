@@ -25,7 +25,10 @@ const ACRONYMS = new Set([
 ]);
 const ABBREVIATIONS = new Set(['http', 'https', 'json', 'url', 'xml', 'html', 'css', 'sql', 'rpc', 'tcp', 'udp', 'nth', 'btn', 'cfg', 'tbl', 'str', 'num', 'idx', 'obj', 'arr', 'vec', 'pos', 'dir', 'msg', 'ctx', 'cb', 'ev', 'fn', 'src', 'dst', 'tmp', 'val', 'ref', 'rng', 'prn', 'mgr', 'ctrl', 'cmd', 'plr', 'hrp', 'hum', 'gui', 'lbl', 'img', 'frm', 'cls', 'ptr']);
 
-const hasVowel = (s) => /[aeiouy]/i.test(s);
+const hasVowel = (s) => /[aeiou]/i.test(s);
+/** Longest run of consonants, counting y as one: real words have vowels often enough to keep this short. */
+const consonantRun = (s) => Math.max(0, ...(s.toLowerCase().match(/[^aeiou]+/g) || []).map((r) => r.length));
+const SHORT_WORDS = new Set(['To', 'Is', 'In', 'Of', 'By', 'On', 'As', 'Or', 'Id', 'Ui', 'Ok', 'At', 'If', 'No', 'Up', 'Do', 'Go', 'So', 'Be', 'We', 'Me', 'My', 'It', 'Ai', 'Hp', 'Xp', 'Fx', 'Tp', 'Cf', 'Ip', 'Os', 'Vm', 'Ex', 'Ev']);
 
 /** Is every part of the identifier plausibly a word, an abbreviation or an acronym? */
 function readableIdentifier(name) {
@@ -35,14 +38,26 @@ function readableIdentifier(name) {
   for (const part of parts) {
     const found = part.match(/[A-Z]+(?![a-z])|[A-Z]?[a-z]+|\d+/g) || [];
     if (found.join('') !== part) return false;
-    for (const c of found) {
+    found.forEach((c, i) => {
       chunks++;
-      if (/^\d+$/.test(c)) continue;
-      if (/^[a-z]+$/.test(c)) { if (c.length <= 3 || hasVowel(c)) continue; return false; }
-      if (/^[A-Z][a-z]+$/.test(c)) { if (hasVowel(c) || ABBREVIATIONS.has(c.toLowerCase())) continue; return false; }
-      if (/^[A-Z]+$/.test(c)) { if (c.length === 1 || ACRONYMS.has(c)) continue; return false; }
-      return false;
-    }
+      if (/^\d+$/.test(c)) return;
+      if (/^[a-z]+$/.test(c)) {
+        if (c.length <= 3 || (hasVowel(c) && consonantRun(c) <= 5)) return;
+        throw new Error('no');
+      }
+      if (/^[A-Z][a-z]+$/.test(c)) {
+        if (c.length === 2 && !SHORT_WORDS.has(c)) throw new Error('no');
+        if ((hasVowel(c) && consonantRun(c) <= 5) || ABBREVIATIONS.has(c.toLowerCase())) return;
+        throw new Error('no');
+      }
+      if (/^[A-Z]+$/.test(c)) {
+        // a single capital at the very end (`...jQ`) is how random strings end; acronyms have two or more letters
+        if (c.length === 1 && i === found.length - 1 && name.length >= 6 && found.length > 1) throw new Error('no');
+        if (c.length === 1 || ACRONYMS.has(c)) return;
+        throw new Error('no');
+      }
+      throw new Error('no');
+    });
   }
   return chunks <= 6;
 }
@@ -70,7 +85,8 @@ export function looksObfuscated(name) {
   if (/^(?:v|var|local|L|l|a|f|func|fn|u|t|tmp|temp|loc|lv)?_*\d+(?:_+\d+)*_*$/.test(name) && /[a-zA-Z_]/.test(name)) return true;   // v12, L_3_, local4, _12
   if (/prometheus/i.test(name) && name.startsWith('__')) return true;
   if (name.length <= 2) return false;
-  return name.length >= 5 && !readableIdentifier(name);
+  if (name.length < 5) return false;
+  try { return !readableIdentifier(name); } catch { return true; }
 }
 
 // Names the runtime may bind implicitly: Lua 5.1 gives every function declared with `...` a local `arg`

@@ -49,6 +49,38 @@ export function walk(node, fn, parent = null) {
   }
 }
 
+/** Call `fn` on every direct child node (statements, expressions, blocks' statements) of `node`. */
+export function forEachChild(node, fn) {
+  switch (node.type) {
+    case 'Chunk': node.body.forEach(fn); break;
+    case 'Local': node.values.forEach(fn); break;
+    case 'Assign': node.targets.forEach(fn); node.values.forEach(fn); break;
+    case 'CompoundAssign': fn(node.target); fn(node.value); break;
+    case 'CallStmt': fn(node.call); break;
+    case 'Do': node.body.forEach(fn); break;
+    case 'While': fn(node.cond); node.body.forEach(fn); break;
+    case 'Repeat': node.body.forEach(fn); fn(node.cond); break;
+    case 'If': node.clauses.forEach((c) => { fn(c.cond); c.body.forEach(fn); }); if (node.orelse) node.orelse.forEach(fn); break;
+    case 'NumFor': fn(node.start); fn(node.stop); if (node.step) fn(node.step); node.body.forEach(fn); break;
+    case 'GenFor': node.exprs.forEach(fn); node.body.forEach(fn); break;
+    case 'Function': fn(node.target); fn(node.func); break;
+    case 'LocalFunction': fn(node.func); break;
+    case 'Return': node.values.forEach(fn); break;
+    case 'Func': node.body.forEach(fn); break;
+    case 'Index': fn(node.obj); if (!(node.key.type === 'String' && node.dot)) fn(node.key); break;
+    case 'Call': fn(node.fn); node.args.forEach(fn); break;
+    case 'MethodCall': fn(node.obj); node.args.forEach(fn); break;
+    case 'Table': node.fields.forEach((f) => { if (f.kind === 'keyed') fn(f.key); fn(f.value); }); break;
+    case 'Binary': fn(node.left); fn(node.right); break;
+    case 'Unary': fn(node.arg); break;
+    case 'Paren': fn(node.expr); break;
+    case 'IfExpr': fn(node.cond); fn(node.then); fn(node.orelse); break;
+    case 'TypeAssert': fn(node.expr); break;
+    case 'Interp': node.parts.forEach((p) => { if (typeof p !== 'string') fn(p); }); break;
+    default: break;
+  }
+}
+
 class Transformer {
   constructor(visitor) { this.v = visitor; }
 
