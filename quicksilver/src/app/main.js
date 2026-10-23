@@ -839,6 +839,24 @@ async function showSettings() {
   renderStatus();
   toast('Settings saved');
 }
+async function showAbout() {
+  const credit = (name, line, licence) => h('li', [h('b', name), ` ${line} `, h('span.faint', licence)]);
+  await modal({
+    title: 'About QuickSilver',
+    body: [
+      h('p', { style: { margin: 0 } }, `QuickSilver Deobfuscator v${ENGINE_VERSION}. Static analysis and recovery for Lua and Luau source. Everything runs in this page; nothing is uploaded, and scripts are not executed unless you use Trace or allow sandboxed evaluation.`),
+      h('p.note.info', 'Based on Prometheus by Elias Oelschner, https://github.com/prometheus-lua/Prometheus'),
+      h('p', { style: { margin: 0 } }, 'QuickSilver contains no third-party code. Its recovery modules and test corpus were built by studying the following tools and their output:'),
+      h('ul', [
+        credit('Prometheus', 'by Elias Oelschner (https://github.com/prometheus-lua/Prometheus): sample scripts in the test corpus are its output.', 'Prometheus licence, attribution required'),
+        credit('Hercules', 'by zeusssz (https://github.com/zeusssz/hercules-obfuscator): sample scripts are its output.', 'Apache-2.0'),
+        credit('IronBrew 2', 'by DefCon42 (https://github.com/Trollicus/ironbrew-2): its published format was read to write the IronBrew 2 module.', 'MIT'),
+      ]),
+      h('p.faint', { style: { margin: 0 } }, 'Names, trademarks and products belong to their owners. Use QuickSilver only on scripts you own or are authorised to analyse. Research notes, licensing and third-party notices are in the docs folder of the source repository.'),
+    ],
+  });
+}
+$('#btn-about').addEventListener('click', showAbout);
 $('#btn-settings').addEventListener('click', showSettings);
 $('#btn-license').addEventListener('click', async () => { await showLicenseDialog(lic); renderStatus(); renderInspector(); });
 
