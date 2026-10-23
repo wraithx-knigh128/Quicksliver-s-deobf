@@ -16,6 +16,16 @@ import {
 } from './consteval.js';
 
 export const PURE_LIBS = new Set(['string', 'math', 'bit32', 'bit']);
+
+/**
+ * Library calls that obfuscators use to hide literals. Folding them recovers the literal.
+ * Everything else (string.format, math.floor, ...) is ordinary program code: folding it would
+ * evaluate the program instead of un-obfuscating it, so it is only done when asked for.
+ */
+const OBFUSCATION_CALLS = new Set([
+  'string.char', 'string.byte', 'string.sub', 'string.rep', 'string.reverse', 'string.len',
+]);
+const foldable = (lib, name, mode) => mode === 'all' || OBFUSCATION_CALLS.has(`${lib}.${name}`) || lib === 'bit32' || lib === 'bit';
 const PURE_GLOBAL_FUNCS = new Set(['tostring', 'tonumber', 'type']);
 
 /** Value of a literal expression, or NOT_CONST. */
@@ -68,6 +78,11 @@ export function foldPass(chunk, ctx = {}) {
     const replaced = (node) => { changed++; return node; };
 
     transform(chunk, {
+      stmt(s) {
+        // `for i = a, b, 1 do` is `for i = a, b do`: the step defaults to 1
+        if (s.type === 'NumFor' && s.step && s.step.type === 'Number' && s.step.value === 1) { s.step = null; changed++; }
+        return undefined;
+      },
       expr(e) {
         switch (e.type) {
           case 'Paren':
@@ -108,7 +123,7 @@ export function foldPass(chunk, ctx = {}) {
             if (args.some((a) => a === NOT_CONST)) return undefined;
             const callee = libCallee(e.fn, info);
             let r = NOT_CONST;
-            if (callee) r = evalLibCall(callee[0], callee[1], args);
+            if (callee) { if (foldable(callee[0], callee[1], ctx.foldCalls)) r = evalLibCall(callee[0], callee[1], args); }
             else {
               const g = stdGlobal(e.fn, info);
               if (g && PURE_GLOBAL_FUNCS.has(g)) r = evalGlobalCall(g, args);
@@ -121,6 +136,7 @@ export function foldPass(chunk, ctx = {}) {
             if (typeof recv !== 'string') return undefined;
             const args = e.args.map(constOf);
             if (args.some((a) => a === NOT_CONST)) return undefined;
+            if (!foldable('string', e.name, ctx.foldCalls)) return undefined;
             const r = evalStringMethod(e.name, recv, args);
             return r === NOT_CONST ? undefined : replaced(makeConst(r));
           }

@@ -12,6 +12,7 @@ import { transform, walk, clone } from '../core/walk.js';
 import { analyze, STDLIB_GLOBALS } from '../core/scope.js';
 import { NOT_CONST, evalBinary, evalUnary } from './consteval.js';
 import { constOf, makeConst, PURE_LIBS } from './fold.js';
+import { isMachineName } from './rename.js';
 
 // ---- purity ------------------------------------------------------------------
 
@@ -52,12 +53,15 @@ function propagate(chunk) {
 
   for (const v of info.vars) {
     if (v.kind !== 'local' || v.writes.length || !v.hasInit || !v.init || !v.reads.length) continue;
+    if (!isMachineName(v.name)) continue;   // a name the author chose is part of the source; keep it
     const init = v.init;
     const c = constOf(init);
     let make = null;
     if (c !== NOT_CONST && init.type !== 'Paren') {
-      const short = typeof c !== 'string' || c.length <= 64 || v.reads.length === 1;
-      if (short) make = () => makeConst(c);
+      // Numbers and strings stay as the named constants they are. Booleans and nil are inlined because they
+      // decide branches (opaque predicates are built from them); aliases of standard functions are handled below.
+      const worthInlining = typeof c === 'boolean' || c === undefined;
+      if (worthInlining) make = () => makeConst(c);
     } else if (stdAlias(init, info)) {
       const root = init.type === 'Name' ? init.name : init.obj.name;
       if (!localNames.has(root)) make = () => clone(init);   // a same-named local could capture it
@@ -148,18 +152,31 @@ function reduce(chunk) {
 
 // ---- dead code ------------------------------------------------------------------------
 
-function removeDead(chunk) {
+/**
+ * Declarations that nothing reads in the program as it was handed to us. Anything that becomes unused later
+ * is the result of our own transformations and may be deleted; the author's unused locals are left alone.
+ * Take this snapshot once, before any pass has changed the tree.
+ */
+export function snapshotUnused(chunk) {
+  const set = new WeakSet();
+  for (const v of analyze(chunk).vars) if (v.reads.length === 0) set.add(v.decl);
+  return set;
+}
+
+function removeDead(chunk, state) {
   const info = analyze(chunk);
+  const junkInit = (e) => e.type === 'Number' || e.type === 'String' || e.type === 'True' || e.type === 'False' || e.type === 'Nil';
+  const removable = (v, init) => v.reads.length === 0 && (isMachineName(v.name) || !state.unusedAtStart.has(v.decl) || (init && junkInit(init)));
   const dead = (name) => {
     const v = info.varOf.get(name);
-    return v && !v.isGlobal && v.reads.length === 0;
+    return v && !v.isGlobal && v.reads.length === 0 && (isMachineName(v.name) || !state.unusedAtStart.has(v.decl));
   };
   let changed = 0;
   transform(chunk, {
     stmt(s) {
       if (s.type === 'Local') {
         const vars = s.ids.map((id) => info.varOf.get(id));
-        if (vars.every((v) => v.reads.length === 0)) {
+        if (vars.every((v, i) => removable(v, s.values[i]))) {
           if (s.values.every(isPure)) { changed++; return null; }
           if (s.ids.length === 1 && s.values.length === 1 && (s.values[0].type === 'Call' || s.values[0].type === 'MethodCall')) {
             changed++;
@@ -170,9 +187,13 @@ function removeDead(chunk) {
         const v = info.varOf.get(s.id);
         const inside = new Set();
         walk(s.func, (n) => { if (n.type === 'Name') inside.add(n); });
-        if (v.reads.every((r) => inside.has(r)) && v.writes.length === 0) { changed++; return null; }
+        const trivial = s.func.body.every((x) => x.type === 'Local' && x.ids.length === 1 && x.ids[0].name === '_' && x.values.length === 1 && junkInit(x.values[0]));
+        if ((isMachineName(v.name) || trivial || !state.unusedAtStart.has(v.decl)) && v.reads.every((r) => inside.has(r)) && v.writes.length === 0) { changed++; return null; }
       } else if (s.type === 'Assign') {
         if (s.targets.every((t) => t.type === 'Name' && dead(t)) && s.values.every(isPure)) { changed++; return null; }
+      } else if (s.type === 'NumFor') {
+        const empty = s.body.length === 0 && !(s.body.endComments && s.body.endComments.length);
+        if (empty && isPure(s.start) && isPure(s.stop) && (!s.step || isPure(s.step))) { changed++; return null; }
       } else if (s.type === 'If') {
         const empty = (b) => b.length === 0 && !(b.endComments && b.endComments.length);
         if (s.clauses.length === 1 && empty(s.clauses[0].body) && (!s.orelse || empty(s.orelse)) && isPure(s.clauses[0].cond)) {
@@ -254,27 +275,31 @@ function unrollOnce(chunk) {
 }
 
 function tryUnroll(loop, info) {
-  // Candidate state variables: constant-initialised locals that are only ever written inside the loop.
+  // Known values: constant-initialised locals declared before the loop. Those that the loop writes are
+  // its "state"; read-only ones are plain constants and may be read by any statement.
   const env = new Map();
+  const state = new Set();
   for (const v of info.vars) {
     if (v.kind !== 'local' || v.captured || !v.init) continue;
     if (containsNode(loop, [v.decl])) continue;   // loop state is declared before the loop, not inside it
     const c = constOf(v.init);
     if (c === NOT_CONST || v.init.type === 'Paren') continue;
-    if (v.writes.length && !containsNode(loop, v.writes)) continue;
-    if (v.reads.length && !v.writes.length) continue;
-    // The loop's writes disappear when it is unwrapped, so nothing outside may still read the variable.
-    if (v.reads.length && !containsNode(loop, v.reads)) continue;
+    if (v.writes.length) {
+      if (!containsNode(loop, v.writes)) continue;
+      // The loop's writes disappear when it is unwrapped, so nothing outside may still read the variable.
+      if (v.reads.length && !containsNode(loop, v.reads)) continue;
+      state.add(v);
+    }
     env.set(v, c);
   }
-  if (!env.size) return null;
+  if (!state.size) return null;
   const c0 = evalWith(loop.cond, env, info);
   if (c0 === NOT_CONST || c0 === undefined || c0 === false) return null;
 
   const residual = [];
   const touchesState = (node) => {
     let hit = false;
-    walk(node, (n) => { if (n.type === 'Name' && env.has(info.varOf.get(n))) hit = true; });
+    walk(node, (n) => { if (n.type === 'Name' && state.has(info.varOf.get(n))) hit = true; });
     return hit;
   };
 
@@ -283,7 +308,7 @@ function tryUnroll(loop, info) {
     for (const s of body) {
       if (exited) return true;
       if (s.type === 'Break') { exited = true; return true; }
-      if (s.type === 'Assign' && s.targets.every((t) => t.type === 'Name' && env.has(info.varOf.get(t)))) {
+      if (s.type === 'Assign' && s.targets.every((t) => t.type === 'Name' && state.has(info.varOf.get(t)))) {
         const vals = s.values.map((x) => evalWith(x, env, info));
         if (vals.length !== s.targets.length || vals.some((x) => x === NOT_CONST)) return false;
         s.targets.forEach((t, i) => env.set(info.varOf.get(t), vals[i]));
@@ -316,6 +341,62 @@ function tryUnroll(loop, info) {
   if (levelHasBreak(residual)) return null;
   if (residual.length && residual[residual.length - 1].type === 'Return') return null;
   return residual;
+}
+
+// ---- constant tables ----------------------------------------------------------------------------------------
+
+/**
+ * `local chars = { [104] = "h", [105] = "i" }` read only as `chars[104]`: every read is replaced by the
+ * stored value. Only done when the table cannot change or escape, i.e. each use is a plain read with
+ * a literal key.
+ */
+function inlineConstTables(chunk) {
+  const info = analyze(chunk);
+  const parentOf = new Map();
+  const written = new Set(); // tables modified through t[k] = v
+  walk(chunk, (n, parent) => {
+    if (n.type === 'Name') parentOf.set(n, parent);
+    const target = n.type === 'Assign' ? n.targets : n.type === 'CompoundAssign' ? [n.target] : [];
+    for (const t of target) if (t.type === 'Index' && t.obj.type === 'Name') written.add(info.varOf.get(t.obj));
+  });
+  const replace = new Map();
+
+  for (const v of info.vars) {
+    if (v.kind !== 'local' || v.writes.length || written.has(v) || !v.init || v.init.type !== 'Table' || !v.reads.length) continue;
+    const table = v.init;
+    const charMap = table.fields.length > 0 && table.fields.every((f) => f.value.type === 'String' && f.value.value.length === 1);
+    // An obfuscator's string array (machine-named, positional strings, read by constant index at several places)
+    // is worth inlining; a table the author named, or one holding mixed data, is left alone.
+    const stringArray = table.fields.length > 0 && table.fields.every((f) => f.kind === 'item' && f.value.type === 'String') && v.reads.length >= 3;
+    if (!charMap && !(isMachineName(v.name) && stringArray)) continue;
+    const entries = new Map();
+    let ok = table.fields.length > 0;
+    let positional = 1;
+    table.fields.forEach((f, i) => {
+      if (!ok) return;
+      let key;
+      if (f.kind === 'item') key = positional++;
+      else if (f.kind === 'named') key = f.key;
+      else { key = constOf(f.key); if (key === NOT_CONST || key === undefined) { ok = false; return; } }
+      const val = constOf(f.value);
+      const spreads = f.kind === 'item' && i === table.fields.length - 1 && (f.value.type === 'Call' || f.value.type === 'Vararg');
+      if (val === NOT_CONST || spreads) { ok = false; return; }
+      entries.set(key, val);
+    });
+    if (!ok) continue;
+    const uses = [];
+    for (const r of v.reads) {
+      const p = parentOf.get(r);
+      if (!p || p.type !== 'Index' || p.obj !== r) { ok = false; break; }
+      const key = p.key.type === 'String' ? p.key.value : constOf(p.key);
+      if (key === NOT_CONST || key === undefined || !entries.has(key)) { ok = false; break; }
+      uses.push([p, entries.get(key)]);
+    }
+    if (ok) for (const [idx, val] of uses) replace.set(idx, val);
+  }
+  if (!replace.size) return 0;
+  transform(chunk, { expr(e) { return replace.has(e) ? makeConst(replace.get(e)) : undefined; } });
+  return replace.size;
 }
 
 // ---- sink declarations -----------------------------------------------------------------------------
@@ -373,15 +454,18 @@ function sinkDeclarations(chunk) {
 // ---- driver --------------------------------------------------------------------------------------
 
 export function simplifyPass(chunk, ctx = {}) {
-  const stats = { sunk: 0, propagated: 0, reduced: 0, dead: 0, unrolled: 0 };
+  const deadState = { unusedAtStart: ctx.unusedAtStart || snapshotUnused(chunk) };
+  const stats = { sunk: 0, tables: 0, propagated: 0, reduced: 0, dead: 0, unrolled: 0 };
   for (let round = 0; round < 24; round++) {
     const k = sinkDeclarations(chunk);
+    const t = inlineConstTables(chunk);
     const p = propagate(chunk);
     const r = reduce(chunk);
-    const d = removeDead(chunk);
+    const d = removeDead(chunk, deadState);
     const u = unrollOnce(chunk);
+    stats.tables += t;
     stats.sunk += k; stats.propagated += p; stats.reduced += r; stats.dead += d; stats.unrolled += u;
-    if (!(k + p + r + d + u)) break;
+    if (!(k + t + p + r + d + u)) break;
   }
   if (ctx.log) ctx.log('simplify', stats);
   return { changed: Object.values(stats).reduce((x, y) => x + y, 0), stats };

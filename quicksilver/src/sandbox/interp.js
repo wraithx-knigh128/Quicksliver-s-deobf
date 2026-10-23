@@ -874,16 +874,23 @@ export class Compiler {
 }
 
 /**
- * Compile Lua source (a binary string) into a LuaFunction bound to `env`.
- * @throws LuaSyntaxError
+ * Compile an already parsed chunk into a LuaFunction bound to `env`.
+ * The AST is only read, never modified.
  */
-export function compileSource(m, source, chunkName, env) {
-  const ast = parse(source);
+export function compileAst(m, ast, chunkName, env) {
   const info = analyze(ast);
   const compiler = new Compiler(m, info);
   const fn = { type: 'Func', params: [], vararg: true, body: ast.body, isMethod: false, line: 0 };
   const proto = compiler.compileFunction(fn, chunkName || 'main', false);
   return new LuaFunction(proto, [], env || m.globals);
+}
+
+/**
+ * Compile Lua source (a binary string) into a LuaFunction bound to `env`.
+ * @throws LuaSyntaxError
+ */
+export function compileSource(m, source, chunkName, env) {
+  return compileAst(m, parse(source), chunkName, env);
 }
 
 export { LuaSyntaxError, NORMAL, BREAK, RETURN, CONTINUE, EMPTY };
