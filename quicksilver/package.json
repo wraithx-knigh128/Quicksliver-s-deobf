@@ -1,0 +1,15 @@
+{
+  "name": "quicksilver",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "QuickSilver: analysis and recovery of obfuscated Lua / Luau source",
+  "license": "UNLICENSED",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "test": "node --test --test-concurrency=1 tests/",
+    "scorecard": "node tests/tools-scorecard.mjs --write",
+    "license:keygen": "node tools/license/keygen.mjs",
+    "license:issue": "node tools/license/issue.mjs"
+  }
+}
