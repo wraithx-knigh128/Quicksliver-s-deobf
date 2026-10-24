@@ -44,7 +44,8 @@ const families = familyRegistry().map((f) => {
       const usable = rs.filter((r) => r.fidelityAfter != null);
       const tr = traceCard.results.filter((r) => r.tool === f.id && r.config === config && r.toolBehavior === 'equivalent');
       const st = staticCard.results.filter((r) => r.tool === f.id && r.config === config && r.fidelityAfter != null);
-      const checked = rs.filter((r) => r.behavior != null);
+      // behaviour is judged against the original program the fixture was made from
+      const checked = rs.filter((r) => r.behaviorOriginal != null);
       const agg = {
         config,
         samples: rs.length,
@@ -53,7 +54,7 @@ const families = familyRegistry().map((f) => {
         fidelityStatic: round(mean(st.map((r) => r.fidelityAfter))),
         confidence: round(mean(rs.map((r) => r.confidence ?? 0))),
         behaviourChecked: checked.length,
-        behaviourSame: checked.filter((r) => r.behavior === 'same').length,
+        behaviourSame: checked.filter((r) => r.behaviorOriginal === 'same').length,
         traceIdentical: tr.filter((r) => r.outcome === 'identical').length,
         traceChecked: tr.length,
         toolBroken: rs.filter((r) => r.toolBehavior !== 'equivalent').length,

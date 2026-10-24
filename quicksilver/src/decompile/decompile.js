@@ -336,6 +336,9 @@ class FunctionDecompiler {
         else if (ok && j >= 0 && this.reads[j].filter((x) => x === d).length === 1) {
           // the reader may overwrite the register itself (`ADD R1 R1 R2`): then the old value dies there
           yes = !(this.liveOut[j][d] && !this.writes[j].includes(d));
+          // A compiler builds a temporary in the register its consumer reads. A function that is copied out of its
+          // register with MOVE was a variable (`local function f`), so it keeps a name instead of becoming an IIFE.
+          if (yes && o.op === 'closure' && ir[j].op === 'move') yes = false;
         }
         if (yes) { this.forwardReg.add(`${i}:${d}`); if (this.writes[i].length === 1) this.forward[i] = 1; }
       }

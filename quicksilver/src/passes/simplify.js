@@ -203,6 +203,11 @@ function removeDead(chunk, state) {
     stmt(s) {
       if (s.type === 'Local') {
         const vars = s.ids.map((id) => info.varOf.get(id));
+        // a declaration list without values (what a decompiler hoists) loses the names nothing uses
+        if (s.values.length === 0 && s.ids.length > 1) {
+          const keep = s.ids.filter((id, i) => !(removable(vars[i]) && vars[i].writes.length === 0));
+          if (keep.length && keep.length < s.ids.length) { changed++; return { ...s, ids: keep }; }
+        }
         if (vars.every((v, i) => removable(v, s.values[i]))) {
           if (s.values.every((x) => isPure(x, info))) { changed++; return null; }
           if (s.ids.length === 1 && s.values.length === 1 && (s.values[0].type === 'Call' || s.values[0].type === 'MethodCall')) {
@@ -448,7 +453,7 @@ function sinkDeclarations(chunk) {
         if (decl.values.length && bare.length === decl.ids.length) continue;
         for (const id of bare) {
           const v = info.varOf.get(id);
-          if (!v || v.writes.length !== 1) continue;
+          if (!v || v.writes.length === 0) continue;
           const refs = new Set([...v.reads, ...v.writes]);
           const firstUse = stmts.findIndex((s, j) => {
             if (j <= i) return false;
@@ -459,7 +464,7 @@ function sinkDeclarations(chunk) {
           if (firstUse < 0) continue;
           const use = stmts[firstUse];
           if (use.type !== 'Assign' || use.targets.length !== 1 || use.values.length !== 1) continue;
-          if (use.targets[0] !== v.writes[0]) continue;
+          if (!v.writes.includes(use.targets[0])) continue;
           let selfRef = false;
           walk(use.values[0], (n) => { if (refs.has(n)) selfRef = true; });
           if (selfRef) continue;
@@ -478,13 +483,77 @@ function sinkDeclarations(chunk) {
   return changed;
 }
 
+/** The statement lists directly inside a compound statement: loop bodies, branches, `do` blocks. */
+function nestedBlocks(s) {
+  switch (s.type) {
+    case 'NumFor': case 'GenFor': case 'While': case 'Repeat': case 'Do': return [s.body];
+    case 'If': return [...s.clauses.map((c) => c.body), ...(s.orelse ? [s.orelse] : [])];
+    default: return [];
+  }
+}
+
+/**
+ * `local v` ... `for ... do v = e ... end` -> `for ... do local v = e ... end`
+ *
+ * A variable that is declared up front but only ever used inside one block, and whose first use there is an
+ * assignment on the block's own level, cannot carry a value from one pass of the block to the next, so the
+ * declaration may move to that assignment. (A variable that a closure captured is left alone: a new local per
+ * iteration is a different upvalue.) Decompilers declare every register at the top of the function; this puts
+ * the declarations back where a person would write them.
+ */
+function sinkIntoBlocks(chunk) {
+  const info = analyze(chunk);
+  let changed = 0;
+  const containsAny = (node, refs) => { let hit = false; walk(node, (n) => { if (refs.has(n)) hit = true; return !hit; }); return hit; };
+  transform(chunk, {
+    block(stmts) {
+      let out = null;
+      for (let i = 0; i < stmts.length; i++) {
+        const decl = stmts[i];
+        if (decl.type !== 'Local' || decl.attrib) continue;
+        const moved = new Set();
+        for (let n = decl.values.length; n < decl.ids.length; n++) {
+          const id = decl.ids[n];
+          const v = info.varOf.get(id);
+          if (!v || v.captured || v.writes.length === 0 || id.attrib) continue;
+          const refs = new Set([...v.reads, ...v.writes]);
+          const users = [];
+          for (let j = i + 1; j < stmts.length; j++) if (containsAny(stmts[j], refs)) users.push(j);
+          if (users.length !== 1) continue;
+          const host = stmts[users[0]];
+          const bodies = nestedBlocks(host).filter((b) => b.some((x) => containsAny(x, refs)));
+          if (bodies.length !== 1) continue;
+          // everything that mentions the variable must be inside that one block, not in a loop condition or range
+          let inside = 0;
+          for (const r of refs) { let found = false; walk(bodies[0], (m) => { if (m === r) found = true; return !found; }); if (found) inside++; }
+          if (inside !== refs.size) continue;
+          const body = bodies[0];
+          const first = body.findIndex((x) => containsAny(x, refs));
+          const use = body[first];
+          if (use.type !== 'Assign' || use.targets.length !== 1 || use.values.length !== 1 || !refs.has(use.targets[0]) || containsAny(use.values[0], refs)) continue;
+          body[first] = { type: 'Local', ids: [id], values: [use.values[0]], comments: use.comments, trailing: use.trailing, line: use.line, blankBefore: use.blankBefore };
+          moved.add(id);
+          changed++;
+        }
+        if (moved.size) {
+          if (!out) out = stmts.slice();
+          out[i] = { ...decl, ids: decl.ids.filter((x) => !moved.has(x)) };
+        }
+      }
+      if (!out) return undefined;
+      return out.filter((s) => !(s.type === 'Local' && s.ids.length === 0 && s.values.length === 0));
+    },
+  });
+  return changed;
+}
+
 // ---- driver --------------------------------------------------------------------------------------
 
 export function simplifyPass(chunk, ctx = {}) {
   const deadState = { unusedAtStart: ctx.unusedAtStart || snapshotUnused(chunk) };
   const stats = { sunk: 0, tables: 0, propagated: 0, reduced: 0, dead: 0, unrolled: 0 };
   for (let round = 0; round < 24; round++) {
-    const k = sinkDeclarations(chunk);
+    const k = sinkDeclarations(chunk) + sinkIntoBlocks(chunk);
     const t = inlineConstTables(chunk);
     const p = propagate(chunk);
     const r = reduce(chunk);

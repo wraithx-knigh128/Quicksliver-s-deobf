@@ -61,7 +61,7 @@ export function removeUnusedVararg(chunk) {
 }
 
 /** The condition that holds exactly when `cond` does not, written as simply as is exact. */
-function negateCondition(cond) {
+export function negateCondition(cond) {
   if (cond.type === 'Paren') return negateCondition(cond.expr);
   if (cond.type === 'Unary' && cond.op === 'not') return cond.arg;   // only truthiness matters inside `if`
   if (cond.type === 'Binary' && (cond.op === '==' || cond.op === '~=')) return { ...cond, op: cond.op === '==' ? '~=' : '==' };

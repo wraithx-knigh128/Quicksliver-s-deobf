@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-10-24T12:28:40.846Z",
+ "generatedAt": "2026-10-24T12:48:35.433Z",
  "results": [
   {
    "tool": "prometheus",
@@ -20,7 +20,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 26,
+   "ms": 19,
    "detail": null
   },
   {
@@ -31,7 +31,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 122,
+   "ms": 97,
    "detail": null
   },
   {
@@ -42,7 +42,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 171,
+   "ms": 126,
    "detail": null
   },
   {
@@ -64,7 +64,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 5,
+   "ms": 8,
    "detail": null
   },
   {
@@ -86,7 +86,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 2,
+   "ms": 1,
    "detail": null
   },
   {
@@ -97,7 +97,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 2,
+   "ms": 5,
    "detail": null
   },
   {
@@ -130,7 +130,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 11,
+   "ms": 5,
    "detail": null
   },
   {
@@ -141,7 +141,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 5,
+   "ms": 7,
    "detail": null
   },
   {
@@ -163,23 +163,12 @@
    "outcome": "identical",
    "events": 8,
    "expected": 8,
-   "ms": 8,
+   "ms": 18,
    "detail": null
   },
   {
    "tool": "prometheus",
    "config": "Medium",
-   "sample": "s02_renamed_vars",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 8,
-   "expected": 8,
-   "ms": 54,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "Strong",
    "sample": "s02_renamed_vars",
    "toolBehavior": "equivalent",
    "outcome": "identical",
@@ -190,6 +179,17 @@
   },
   {
    "tool": "prometheus",
+   "config": "Strong",
+   "sample": "s02_renamed_vars",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 8,
+   "expected": 8,
+   "ms": 75,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
    "config": "step-EncryptStrings",
    "sample": "s02_renamed_vars",
    "toolBehavior": "equivalent",
@@ -202,6 +202,61 @@
   {
    "tool": "prometheus",
    "config": "step-ConstantArray",
+   "sample": "s02_renamed_vars",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 8,
+   "expected": 8,
+   "ms": 2,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "step-SplitStrings",
+   "sample": "s02_renamed_vars",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 8,
+   "expected": 8,
+   "ms": 1,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "step-NumbersToExpressions",
+   "sample": "s02_renamed_vars",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 8,
+   "expected": 8,
+   "ms": 0,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "step-ProxifyLocals",
+   "sample": "s02_renamed_vars",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 8,
+   "expected": 8,
+   "ms": 2,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "step-WrapInFunction",
+   "sample": "s02_renamed_vars",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 8,
+   "expected": 8,
+   "ms": 0,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "step-AddVararg",
    "sample": "s02_renamed_vars",
    "toolBehavior": "equivalent",
    "outcome": "identical",
@@ -212,68 +267,13 @@
   },
   {
    "tool": "prometheus",
-   "config": "step-SplitStrings",
-   "sample": "s02_renamed_vars",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 8,
-   "expected": 8,
-   "ms": 0,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "step-NumbersToExpressions",
-   "sample": "s02_renamed_vars",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 8,
-   "expected": 8,
-   "ms": 1,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "step-ProxifyLocals",
-   "sample": "s02_renamed_vars",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 8,
-   "expected": 8,
-   "ms": 1,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "step-WrapInFunction",
-   "sample": "s02_renamed_vars",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 8,
-   "expected": 8,
-   "ms": 1,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "step-AddVararg",
-   "sample": "s02_renamed_vars",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 8,
-   "expected": 8,
-   "ms": 0,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
    "config": "step-AntiTamper",
    "sample": "s02_renamed_vars",
    "toolBehavior": "equivalent",
    "outcome": "identical",
    "events": 8,
    "expected": 8,
-   "ms": 3,
+   "ms": 4,
    "detail": null
   },
   {
@@ -284,7 +284,7 @@
    "outcome": "identical",
    "events": 8,
    "expected": 8,
-   "ms": 3,
+   "ms": 2,
    "detail": null
   },
   {
@@ -295,7 +295,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 0,
+   "ms": 1,
    "detail": null
   },
   {
@@ -306,7 +306,7 @@
    "outcome": "differs",
    "events": 14,
    "expected": 14,
-   "ms": 12,
+   "ms": 3,
    "detail": "completed"
   },
   {
@@ -317,7 +317,7 @@
    "outcome": "differs",
    "events": 14,
    "expected": 14,
-   "ms": 45,
+   "ms": 40,
    "detail": "completed"
   },
   {
@@ -328,7 +328,7 @@
    "outcome": "differs",
    "events": 14,
    "expected": 14,
-   "ms": 70,
+   "ms": 67,
    "detail": "completed"
   },
   {
@@ -339,7 +339,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 4,
+   "ms": 3,
    "detail": null
   },
   {
@@ -350,7 +350,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 10,
+   "ms": 4,
    "detail": null
   },
   {
@@ -361,7 +361,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 2,
+   "ms": 1,
    "detail": null
   },
   {
@@ -372,7 +372,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 1,
+   "ms": 9,
    "detail": null
   },
   {
@@ -416,122 +416,23 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 6,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "step-Vmify",
-   "sample": "s03_encoded_strings",
-   "toolBehavior": "diverged",
-   "outcome": "differs",
-   "events": 14,
-   "expected": 14,
-   "ms": 2,
-   "detail": "completed"
-  },
-  {
-   "tool": "prometheus",
-   "config": "Minify",
-   "sample": "s04_control_flow",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 11,
-   "expected": 11,
-   "ms": 2,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "Weak",
-   "sample": "s04_control_flow",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 11,
-   "expected": 11,
-   "ms": 14,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "Medium",
-   "sample": "s04_control_flow",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 11,
-   "expected": 11,
-   "ms": 60,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "Strong",
-   "sample": "s04_control_flow",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 11,
-   "expected": 11,
-   "ms": 129,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "step-EncryptStrings",
-   "sample": "s04_control_flow",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 11,
-   "expected": 11,
    "ms": 5,
    "detail": null
   },
   {
    "tool": "prometheus",
-   "config": "step-ConstantArray",
-   "sample": "s04_control_flow",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 11,
-   "expected": 11,
-   "ms": 6,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "step-SplitStrings",
-   "sample": "s04_control_flow",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 11,
-   "expected": 11,
+   "config": "step-Vmify",
+   "sample": "s03_encoded_strings",
+   "toolBehavior": "diverged",
+   "outcome": "differs",
+   "events": 14,
+   "expected": 14,
    "ms": 3,
-   "detail": null
+   "detail": "completed"
   },
   {
    "tool": "prometheus",
-   "config": "step-NumbersToExpressions",
-   "sample": "s04_control_flow",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 11,
-   "expected": 11,
-   "ms": 2,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "step-ProxifyLocals",
-   "sample": "s04_control_flow",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 11,
-   "expected": 11,
-   "ms": 4,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "step-WrapInFunction",
+   "config": "Minify",
    "sample": "s04_control_flow",
    "toolBehavior": "equivalent",
    "outcome": "identical",
@@ -542,18 +443,7 @@
   },
   {
    "tool": "prometheus",
-   "config": "step-AddVararg",
-   "sample": "s04_control_flow",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 11,
-   "expected": 11,
-   "ms": 1,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "step-AntiTamper",
+   "config": "Weak",
    "sample": "s04_control_flow",
    "toolBehavior": "equivalent",
    "outcome": "identical",
@@ -564,7 +454,106 @@
   },
   {
    "tool": "prometheus",
-   "config": "step-Vmify",
+   "config": "Medium",
+   "sample": "s04_control_flow",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 11,
+   "expected": 11,
+   "ms": 56,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "Strong",
+   "sample": "s04_control_flow",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 11,
+   "expected": 11,
+   "ms": 153,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "step-EncryptStrings",
+   "sample": "s04_control_flow",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 11,
+   "expected": 11,
+   "ms": 4,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "step-ConstantArray",
+   "sample": "s04_control_flow",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 11,
+   "expected": 11,
+   "ms": 11,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "step-SplitStrings",
+   "sample": "s04_control_flow",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 11,
+   "expected": 11,
+   "ms": 2,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "step-NumbersToExpressions",
+   "sample": "s04_control_flow",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 11,
+   "expected": 11,
+   "ms": 1,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "step-ProxifyLocals",
+   "sample": "s04_control_flow",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 11,
+   "expected": 11,
+   "ms": 2,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "step-WrapInFunction",
+   "sample": "s04_control_flow",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 11,
+   "expected": 11,
+   "ms": 1,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "step-AddVararg",
+   "sample": "s04_control_flow",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 11,
+   "expected": 11,
+   "ms": 0,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "step-AntiTamper",
    "sample": "s04_control_flow",
    "toolBehavior": "equivalent",
    "outcome": "identical",
@@ -575,13 +564,24 @@
   },
   {
    "tool": "prometheus",
+   "config": "step-Vmify",
+   "sample": "s04_control_flow",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 11,
+   "expected": 11,
+   "ms": 4,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
    "config": "Minify",
    "sample": "s05_nested_functions",
    "toolBehavior": "equivalent",
    "outcome": "identical",
    "events": 6,
    "expected": 6,
-   "ms": 1,
+   "ms": 2,
    "detail": null
   },
   {
@@ -592,7 +592,7 @@
    "outcome": "identical",
    "events": 6,
    "expected": 6,
-   "ms": 5,
+   "ms": 14,
    "detail": null
   },
   {
@@ -603,7 +603,7 @@
    "outcome": "identical",
    "events": 6,
    "expected": 6,
-   "ms": 28,
+   "ms": 55,
    "detail": null
   },
   {
@@ -614,7 +614,7 @@
    "outcome": "identical",
    "events": 6,
    "expected": 6,
-   "ms": 78,
+   "ms": 110,
    "detail": null
   },
   {
@@ -625,7 +625,7 @@
    "outcome": "identical",
    "events": 6,
    "expected": 6,
-   "ms": 3,
+   "ms": 9,
    "detail": null
   },
   {
@@ -636,7 +636,7 @@
    "outcome": "identical",
    "events": 6,
    "expected": 6,
-   "ms": 3,
+   "ms": 2,
    "detail": null
   },
   {
@@ -647,7 +647,7 @@
    "outcome": "identical",
    "events": 6,
    "expected": 6,
-   "ms": 1,
+   "ms": 2,
    "detail": null
   },
   {
@@ -669,7 +669,7 @@
    "outcome": "identical",
    "events": 6,
    "expected": 6,
-   "ms": 3,
+   "ms": 2,
    "detail": null
   },
   {
@@ -680,7 +680,7 @@
    "outcome": "identical",
    "events": 6,
    "expected": 6,
-   "ms": 5,
+   "ms": 1,
    "detail": null
   },
   {
@@ -691,7 +691,7 @@
    "outcome": "identical",
    "events": 6,
    "expected": 6,
-   "ms": 2,
+   "ms": 1,
    "detail": null
   },
   {
@@ -713,7 +713,7 @@
    "outcome": "identical",
    "events": 6,
    "expected": 6,
-   "ms": 4,
+   "ms": 5,
    "detail": null
   },
   {
@@ -735,7 +735,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 12,
+   "ms": 13,
    "detail": null
   },
   {
@@ -746,7 +746,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 54,
+   "ms": 55,
    "detail": null
   },
   {
@@ -757,7 +757,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 125,
+   "ms": 115,
    "detail": null
   },
   {
@@ -768,7 +768,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 4,
+   "ms": 5,
    "detail": null
   },
   {
@@ -779,7 +779,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 2,
+   "ms": 4,
    "detail": null
   },
   {
@@ -790,7 +790,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 1,
+   "ms": 2,
    "detail": null
   },
   {
@@ -812,7 +812,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 4,
+   "ms": 2,
    "detail": null
   },
   {
@@ -823,7 +823,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 6,
+   "ms": 2,
    "detail": null
   },
   {
@@ -845,7 +845,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 4,
+   "ms": 5,
    "detail": null
   },
   {
@@ -856,7 +856,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 6,
+   "ms": 7,
    "detail": null
   },
   {
@@ -867,7 +867,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 1,
+   "ms": 2,
    "detail": null
   },
   {
@@ -889,7 +889,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 39,
+   "ms": 34,
    "detail": null
   },
   {
@@ -900,7 +900,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 52,
+   "ms": 47,
    "detail": null
   },
   {
@@ -911,7 +911,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 3,
+   "ms": 2,
    "detail": null
   },
   {
@@ -928,28 +928,6 @@
   {
    "tool": "prometheus",
    "config": "step-SplitStrings",
-   "sample": "s07_roblox_style",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 12,
-   "expected": 12,
-   "ms": 1,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "step-NumbersToExpressions",
-   "sample": "s07_roblox_style",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 12,
-   "expected": 12,
-   "ms": 1,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "step-ProxifyLocals",
    "sample": "s07_roblox_style",
    "toolBehavior": "equivalent",
    "outcome": "identical",
@@ -960,7 +938,7 @@
   },
   {
    "tool": "prometheus",
-   "config": "step-WrapInFunction",
+   "config": "step-NumbersToExpressions",
    "sample": "s07_roblox_style",
    "toolBehavior": "equivalent",
    "outcome": "identical",
@@ -971,7 +949,18 @@
   },
   {
    "tool": "prometheus",
-   "config": "step-AddVararg",
+   "config": "step-ProxifyLocals",
+   "sample": "s07_roblox_style",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 12,
+   "expected": 12,
+   "ms": 1,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "step-WrapInFunction",
    "sample": "s07_roblox_style",
    "toolBehavior": "equivalent",
    "outcome": "identical",
@@ -982,13 +971,24 @@
   },
   {
    "tool": "prometheus",
+   "config": "step-AddVararg",
+   "sample": "s07_roblox_style",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 12,
+   "expected": 12,
+   "ms": 1,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
    "config": "step-AntiTamper",
    "sample": "s07_roblox_style",
    "toolBehavior": "equivalent",
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 10,
+   "ms": 8,
    "detail": null
   },
   {
@@ -999,7 +999,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 2,
+   "ms": 1,
    "detail": null
   },
   {
@@ -1010,7 +1010,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 1,
+   "ms": 0,
    "detail": null
   },
   {
@@ -1043,7 +1043,7 @@
    "outcome": "identical",
    "events": 5,
    "expected": 4,
-   "ms": 1280,
+   "ms": 1184,
    "detail": null
   },
   {
@@ -1054,7 +1054,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 45,
+   "ms": 37,
    "detail": null
   },
   {
@@ -1065,7 +1065,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 3,
+   "ms": 6,
    "detail": null
   },
   {
@@ -1076,7 +1076,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 5,
+   "ms": 1,
    "detail": null
   },
   {
@@ -1087,7 +1087,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 2,
+   "ms": 0,
    "detail": null
   },
   {
@@ -1153,7 +1153,7 @@
    "outcome": "syntax-error",
    "events": 0,
    "expected": 4,
-   "ms": 1,
+   "ms": 0,
    "detail": "67:7: unfinished string"
   },
   {
@@ -1164,7 +1164,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 1,
+   "ms": 2,
    "detail": null
   },
   {
@@ -1175,7 +1175,7 @@
    "outcome": "identical",
    "events": 5,
    "expected": 4,
-   "ms": 7,
+   "ms": 6,
    "detail": null
   },
   {
@@ -1208,7 +1208,7 @@
    "outcome": "identical",
    "events": 8,
    "expected": 8,
-   "ms": 3,
+   "ms": 2,
    "detail": null
   },
   {
@@ -1219,7 +1219,7 @@
    "outcome": "identical",
    "events": 8,
    "expected": 8,
-   "ms": 16,
+   "ms": 14,
    "detail": null
   },
   {
@@ -1230,7 +1230,7 @@
    "outcome": "error",
    "events": 0,
    "expected": 8,
-   "ms": 25,
+   "ms": 33,
    "detail": "trace:123: attempt to perform arithmetic on a nil value (local 'Val2')"
   },
   {
@@ -1241,7 +1241,7 @@
    "outcome": "identical",
    "events": 8,
    "expected": 8,
-   "ms": 1,
+   "ms": 3,
    "detail": null
   },
   {
@@ -1274,7 +1274,7 @@
    "outcome": "identical",
    "events": 8,
    "expected": 8,
-   "ms": 1,
+   "ms": 2,
    "detail": null
   },
   {
@@ -1296,7 +1296,7 @@
    "outcome": "identical",
    "events": 8,
    "expected": 8,
-   "ms": 0,
+   "ms": 1,
    "detail": null
   },
   {
@@ -1329,7 +1329,7 @@
    "outcome": "error",
    "events": 5,
    "expected": 8,
-   "ms": 0,
+   "ms": 1,
    "detail": "trace:123: attempt to call a nil value"
   },
   {
@@ -1351,7 +1351,7 @@
    "outcome": "identical",
    "events": 9,
    "expected": 8,
-   "ms": 7,
+   "ms": 17,
    "detail": null
   },
   {
@@ -1373,7 +1373,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 5,
+   "ms": 1,
    "detail": null
   },
   {
@@ -1395,7 +1395,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 6,
+   "ms": 7,
    "detail": null
   },
   {
@@ -1406,7 +1406,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 21,
+   "ms": 25,
    "detail": null
   },
   {
@@ -1450,7 +1450,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 2,
+   "ms": 5,
    "detail": null
   },
   {
@@ -1461,7 +1461,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 0,
+   "ms": 1,
    "detail": null
   },
   {
@@ -1472,7 +1472,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 5,
+   "ms": 1,
    "detail": null
   },
   {
@@ -1494,7 +1494,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 0,
+   "ms": 1,
    "detail": null
   },
   {
@@ -1516,7 +1516,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 2,
+   "ms": 1,
    "detail": null
   },
   {
@@ -1527,7 +1527,7 @@
    "outcome": "identical",
    "events": 15,
    "expected": 14,
-   "ms": 6,
+   "ms": 7,
    "detail": null
   },
   {
@@ -1538,7 +1538,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 1,
+   "ms": 0,
    "detail": null
   },
   {
@@ -1571,7 +1571,7 @@
    "outcome": "identical",
    "events": 11,
    "expected": 11,
-   "ms": 13,
+   "ms": 12,
    "detail": null
   },
   {
@@ -1582,7 +1582,7 @@
    "outcome": "identical",
    "events": 11,
    "expected": 11,
-   "ms": 33,
+   "ms": 31,
    "detail": null
   },
   {
@@ -1593,7 +1593,7 @@
    "outcome": "identical",
    "events": 11,
    "expected": 11,
-   "ms": 2,
+   "ms": 1,
    "detail": null
   },
   {
@@ -1615,7 +1615,7 @@
    "outcome": "identical",
    "events": 11,
    "expected": 11,
-   "ms": 2,
+   "ms": 6,
    "detail": null
   },
   {
@@ -1626,7 +1626,7 @@
    "outcome": "identical",
    "events": 11,
    "expected": 11,
-   "ms": 5,
+   "ms": 2,
    "detail": null
   },
   {
@@ -1670,7 +1670,7 @@
    "outcome": "identical",
    "events": 11,
    "expected": 11,
-   "ms": 1,
+   "ms": 2,
    "detail": null
   },
   {
@@ -1692,7 +1692,7 @@
    "outcome": "identical",
    "events": 11,
    "expected": 11,
-   "ms": 1,
+   "ms": 2,
    "detail": null
   },
   {
@@ -1703,7 +1703,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 11,
-   "ms": 9,
+   "ms": 12,
    "detail": null
   },
   {
@@ -1714,7 +1714,7 @@
    "outcome": "identical",
    "events": 11,
    "expected": 11,
-   "ms": 1,
+   "ms": 2,
    "detail": null
   },
   {
@@ -1725,7 +1725,7 @@
    "outcome": "identical",
    "events": 6,
    "expected": 6,
-   "ms": 3,
+   "ms": 2,
    "detail": null
   },
   {
@@ -1747,7 +1747,7 @@
    "outcome": "syntax-error",
    "events": 0,
    "expected": 6,
-   "ms": 5,
+   "ms": 10,
    "detail": "2:3816: syntax error near 'end'"
   },
   {
@@ -1758,7 +1758,7 @@
    "outcome": "syntax-error",
    "events": 0,
    "expected": 6,
-   "ms": 9,
+   "ms": 6,
    "detail": "2:3889: syntax error near 'end'"
   },
   {
@@ -1769,7 +1769,7 @@
    "outcome": "identical",
    "events": 6,
    "expected": 6,
-   "ms": 35,
+   "ms": 40,
    "detail": null
   },
   {
@@ -1780,7 +1780,7 @@
    "outcome": "identical",
    "events": 6,
    "expected": 6,
-   "ms": 1,
+   "ms": 2,
    "detail": null
   },
   {
@@ -1791,7 +1791,7 @@
    "outcome": "identical",
    "events": 6,
    "expected": 6,
-   "ms": 1,
+   "ms": 3,
    "detail": null
   },
   {
@@ -1813,7 +1813,7 @@
    "outcome": "identical",
    "events": 6,
    "expected": 6,
-   "ms": 1,
+   "ms": 0,
    "detail": null
   },
   {
@@ -1824,7 +1824,7 @@
    "outcome": "identical",
    "events": 6,
    "expected": 6,
-   "ms": 0,
+   "ms": 1,
    "detail": null
   },
   {
@@ -1868,7 +1868,7 @@
    "outcome": "syntax-error",
    "events": 0,
    "expected": 6,
-   "ms": 0,
+   "ms": 1,
    "detail": "69:1: syntax error near 'local'"
   },
   {
@@ -1879,7 +1879,7 @@
    "outcome": "error",
    "events": 4,
    "expected": 6,
-   "ms": 1,
+   "ms": 5,
    "detail": "trace:52: attempt to perform arithmetic on a nil value"
   },
   {
@@ -1890,7 +1890,7 @@
    "outcome": "identical",
    "events": 7,
    "expected": 6,
-   "ms": 13,
+   "ms": 12,
    "detail": null
   },
   {
@@ -1923,7 +1923,7 @@
    "outcome": "error",
    "events": 0,
    "expected": 4,
-   "ms": 1,
+   "ms": 2,
    "detail": "trace:2: attempt to index a nil value (global 'TxzkRBbZa')"
   },
   {
@@ -1945,7 +1945,7 @@
    "outcome": "error",
    "events": 0,
    "expected": 4,
-   "ms": 43,
+   "ms": 37,
    "detail": "trace:128: attempt to perform arithmetic on a nil value (local 'Val4')"
   },
   {
@@ -1967,7 +1967,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 2,
+   "ms": 1,
    "detail": null
   },
   {
@@ -1978,7 +1978,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 1,
+   "ms": 2,
    "detail": null
   },
   {
@@ -1989,7 +1989,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 1,
+   "ms": 2,
    "detail": null
   },
   {
@@ -2033,7 +2033,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 1,
+   "ms": 5,
    "detail": null
   },
   {
@@ -2044,7 +2044,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 0,
+   "ms": 1,
    "detail": null
   },
   {
@@ -2066,7 +2066,7 @@
    "outcome": "identical",
    "events": 5,
    "expected": 4,
-   "ms": 13,
+   "ms": 12,
    "detail": null
   },
   {
@@ -2077,7 +2077,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 2,
+   "ms": 1,
    "detail": null
   },
   {
@@ -2088,7 +2088,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 0,
+   "ms": 1,
    "detail": null
   },
   {
@@ -2121,7 +2121,7 @@
    "outcome": "identical",
    "events": 13,
    "expected": 12,
-   "ms": 1314,
+   "ms": 1224,
    "detail": null
   },
   {
@@ -2132,7 +2132,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 19,
+   "ms": 21,
    "detail": null
   },
   {
@@ -2242,7 +2242,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 0,
+   "ms": 1,
    "detail": null
   },
   {
@@ -2253,7 +2253,7 @@
    "outcome": "identical",
    "events": 13,
    "expected": 12,
-   "ms": 6,
+   "ms": 7,
    "detail": null
   },
   {
@@ -2264,12 +2264,45 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 8,
+   "ms": 5,
    "detail": null
   },
   {
    "tool": "ironbrew2",
    "config": "default",
+   "sample": "s01_minify_basic",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 4,
+   "expected": 4,
+   "ms": 48,
+   "detail": null
+  },
+  {
+   "tool": "ironbrew2",
+   "config": "plain",
+   "sample": "s01_minify_basic",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 4,
+   "expected": 4,
+   "ms": 30,
+   "detail": null
+  },
+  {
+   "tool": "ironbrew2",
+   "config": "mutate",
+   "sample": "s01_minify_basic",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 4,
+   "expected": 4,
+   "ms": 38,
+   "detail": null
+  },
+  {
+   "tool": "ironbrew2",
+   "config": "super",
    "sample": "s01_minify_basic",
    "toolBehavior": "equivalent",
    "outcome": "identical",
@@ -2280,46 +2313,13 @@
   },
   {
    "tool": "ironbrew2",
-   "config": "plain",
-   "sample": "s01_minify_basic",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 4,
-   "expected": 4,
-   "ms": 23,
-   "detail": null
-  },
-  {
-   "tool": "ironbrew2",
-   "config": "mutate",
-   "sample": "s01_minify_basic",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 4,
-   "expected": 4,
-   "ms": 26,
-   "detail": null
-  },
-  {
-   "tool": "ironbrew2",
-   "config": "super",
-   "sample": "s01_minify_basic",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 4,
-   "expected": 4,
-   "ms": 23,
-   "detail": null
-  },
-  {
-   "tool": "ironbrew2",
    "config": "flow",
    "sample": "s01_minify_basic",
    "toolBehavior": "diverged",
    "outcome": "differs",
    "events": 4,
    "expected": 4,
-   "ms": 22,
+   "ms": 29,
    "detail": "completed"
   },
   {
@@ -2330,7 +2330,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 108,
+   "ms": 216,
    "detail": null
   },
   {
@@ -2341,7 +2341,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 37,
+   "ms": 42,
    "detail": null
   },
   {
@@ -2352,7 +2352,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 32,
+   "ms": 33,
    "detail": null
   },
   {
@@ -2363,7 +2363,7 @@
    "outcome": "identical",
    "events": 8,
    "expected": 8,
-   "ms": 39,
+   "ms": 43,
    "detail": null
   },
   {
@@ -2374,7 +2374,7 @@
    "outcome": "identical",
    "events": 8,
    "expected": 8,
-   "ms": 24,
+   "ms": 34,
    "detail": null
   },
   {
@@ -2385,7 +2385,7 @@
    "outcome": "identical",
    "events": 8,
    "expected": 8,
-   "ms": 19,
+   "ms": 22,
    "detail": null
   },
   {
@@ -2396,7 +2396,7 @@
    "outcome": "identical",
    "events": 8,
    "expected": 8,
-   "ms": 24,
+   "ms": 40,
    "detail": null
   },
   {
@@ -2407,7 +2407,7 @@
    "outcome": "error",
    "events": 0,
    "expected": 8,
-   "ms": 21,
+   "ms": 31,
    "detail": "trace:37: attempt to index a nil value"
   },
   {
@@ -2418,7 +2418,7 @@
    "outcome": "identical",
    "events": 8,
    "expected": 8,
-   "ms": 181,
+   "ms": 214,
    "detail": null
   },
   {
@@ -2429,7 +2429,7 @@
    "outcome": "identical",
    "events": 8,
    "expected": 8,
-   "ms": 46,
+   "ms": 53,
    "detail": null
   },
   {
@@ -2440,7 +2440,7 @@
    "outcome": "identical",
    "events": 8,
    "expected": 8,
-   "ms": 29,
+   "ms": 37,
    "detail": null
   },
   {
@@ -2451,7 +2451,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 23,
+   "ms": 38,
    "detail": null
   },
   {
@@ -2462,7 +2462,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 19,
+   "ms": 31,
    "detail": null
   },
   {
@@ -2473,7 +2473,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 21,
+   "ms": 32,
    "detail": null
   },
   {
@@ -2484,7 +2484,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 24,
+   "ms": 32,
    "detail": null
   },
   {
@@ -2495,7 +2495,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 24,
+   "ms": 39,
    "detail": null
   },
   {
@@ -2506,7 +2506,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 386,
+   "ms": 240,
    "detail": null
   },
   {
@@ -2517,7 +2517,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 36,
+   "ms": 23,
    "detail": null
   },
   {
@@ -2528,7 +2528,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 25,
+   "ms": 15,
    "detail": null
   },
   {
@@ -2539,7 +2539,7 @@
    "outcome": "identical",
    "events": 11,
    "expected": 11,
-   "ms": 30,
+   "ms": 31,
    "detail": null
   },
   {
@@ -2550,7 +2550,7 @@
    "outcome": "identical",
    "events": 11,
    "expected": 11,
-   "ms": 23,
+   "ms": 19,
    "detail": null
   },
   {
@@ -2561,7 +2561,7 @@
    "outcome": "identical",
    "events": 11,
    "expected": 11,
-   "ms": 26,
+   "ms": 23,
    "detail": null
   },
   {
@@ -2572,7 +2572,7 @@
    "outcome": "identical",
    "events": 11,
    "expected": 11,
-   "ms": 26,
+   "ms": 27,
    "detail": null
   },
   {
@@ -2583,7 +2583,7 @@
    "outcome": "limit",
    "events": 8,
    "expected": 11,
-   "ms": 8002,
+   "ms": 8004,
    "detail": "stopped (time limit)"
   },
   {
@@ -2594,7 +2594,7 @@
    "outcome": "identical",
    "events": 11,
    "expected": 11,
-   "ms": 539,
+   "ms": 412,
    "detail": null
   },
   {
@@ -2605,7 +2605,7 @@
    "outcome": "identical",
    "events": 11,
    "expected": 11,
-   "ms": 55,
+   "ms": 53,
    "detail": null
   },
   {
@@ -2616,7 +2616,7 @@
    "outcome": "identical",
    "events": 11,
    "expected": 11,
-   "ms": 36,
+   "ms": 25,
    "detail": null
   },
   {
@@ -2627,7 +2627,7 @@
    "outcome": "identical",
    "events": 6,
    "expected": 6,
-   "ms": 52,
+   "ms": 34,
    "detail": null
   },
   {
@@ -2638,7 +2638,7 @@
    "outcome": "identical",
    "events": 6,
    "expected": 6,
-   "ms": 43,
+   "ms": 26,
    "detail": null
   },
   {
@@ -2649,7 +2649,7 @@
    "outcome": "identical",
    "events": 6,
    "expected": 6,
-   "ms": 50,
+   "ms": 21,
    "detail": null
   },
   {
@@ -2660,7 +2660,7 @@
    "outcome": "identical",
    "events": 6,
    "expected": 6,
-   "ms": 54,
+   "ms": 26,
    "detail": null
   },
   {
@@ -2671,7 +2671,7 @@
    "outcome": "identical",
    "events": 6,
    "expected": 6,
-   "ms": 48,
+   "ms": 25,
    "detail": null
   },
   {
@@ -2682,7 +2682,7 @@
    "outcome": "identical",
    "events": 6,
    "expected": 6,
-   "ms": 75,
+   "ms": 43,
    "detail": null
   },
   {
@@ -2693,7 +2693,7 @@
    "outcome": "identical",
    "events": 6,
    "expected": 6,
-   "ms": 50,
+   "ms": 35,
    "detail": null
   },
   {
@@ -2704,7 +2704,7 @@
    "outcome": "identical",
    "events": 6,
    "expected": 6,
-   "ms": 29,
+   "ms": 43,
    "detail": null
   },
   {
@@ -2715,7 +2715,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 55,
+   "ms": 47,
    "detail": null
   },
   {
@@ -2726,7 +2726,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 44,
+   "ms": 29,
    "detail": null
   },
   {
@@ -2737,7 +2737,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 56,
+   "ms": 39,
    "detail": null
   },
   {
@@ -2748,7 +2748,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 70,
+   "ms": 62,
    "detail": null
   },
   {
@@ -2770,7 +2770,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 159,
+   "ms": 219,
    "detail": null
   },
   {
@@ -2781,7 +2781,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 57,
+   "ms": 98,
    "detail": null
   },
   {
@@ -2792,7 +2792,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 48,
+   "ms": 65,
    "detail": null
   },
   {
@@ -2803,7 +2803,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 32,
+   "ms": 35,
    "detail": null
   },
   {
@@ -2814,7 +2814,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 27,
+   "ms": 26,
    "detail": null
   },
   {
@@ -2825,7 +2825,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 24,
+   "ms": 28,
    "detail": null
   },
   {
@@ -2836,7 +2836,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 25,
+   "ms": 31,
    "detail": null
   },
   {
@@ -2847,7 +2847,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 20,
+   "ms": 29,
    "detail": null
   },
   {
@@ -2858,7 +2858,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 170,
+   "ms": 184,
    "detail": null
   },
   {
@@ -2869,7 +2869,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 30,
+   "ms": 27,
    "detail": null
   },
   {
@@ -2880,7 +2880,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 21,
+   "ms": 17,
    "detail": null
   },
   {
@@ -2891,7 +2891,7 @@
    "outcome": "identical",
    "events": 7,
    "expected": 7,
-   "ms": 72,
+   "ms": 54,
    "detail": null
   },
   {
@@ -2902,7 +2902,7 @@
    "outcome": "identical",
    "events": 7,
    "expected": 7,
-   "ms": 21,
+   "ms": 14,
    "detail": null
   },
   {
@@ -2913,7 +2913,7 @@
    "outcome": "identical",
    "events": 7,
    "expected": 7,
-   "ms": 24,
+   "ms": 17,
    "detail": null
   },
   {
@@ -2924,7 +2924,7 @@
    "outcome": "identical",
    "events": 7,
    "expected": 7,
-   "ms": 24,
+   "ms": 18,
    "detail": null
   },
   {
@@ -2957,7 +2957,7 @@
    "outcome": "identical",
    "events": 7,
    "expected": 7,
-   "ms": 84,
+   "ms": 68,
    "detail": null
   },
   {

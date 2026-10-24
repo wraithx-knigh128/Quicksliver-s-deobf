@@ -456,8 +456,21 @@ class Parser {
     return this.maybeAssert(e);
   }
 
+  /**
+   * `::` after an expression is either a Luau type assertion (`x :: T`) or the start of a Lua 5.2 label (`::done::`) that
+   * follows an expression statement. A label sits on its own line or is followed by the end of the block; a type is never
+   * followed by `end`, `else`, `elseif`, `until` or the end of the file.
+   */
+  startsLabel() {
+    if (!this.is('::') || this.peek().t !== 'name' || !this.isAt(2, '::')) return false;
+    const before = this.tokens[this.p - 1];
+    if (before && before.line < this.tok.line) return true;
+    const after = this.peek(3);
+    return after.t === 'eof' || (after.t === 'keyword' && BLOCK_END.has(after.v));
+  }
+
   maybeAssert(e) {
-    while (this.is('::')) {
+    while (this.is('::') && !this.startsLabel()) {
       this.next();
       const text = this.captureType();
       this.features.add('type-assert');

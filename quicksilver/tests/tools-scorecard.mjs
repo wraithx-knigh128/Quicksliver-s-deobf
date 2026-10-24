@@ -44,11 +44,17 @@ for (const [tool, dir] of tools) {
     if (r.output) {
       try { entry.fidelityAfter = fidelity(original, r.output).score; } catch { entry.fidelityAfter = null; }
       entry.outputBytes = r.output.length;
-      if (oracle.available && e.behavior !== 'errored') {
+      if (oracle.available) {
         const rt = Object.entries(e.behaviors || {}).find(([, v]) => v !== 'errored')?.[0] || 'lua51';
-        const before = await oracle.runLua(input, rt);
         const after = await oracle.runLua(r.output, rt);
-        entry.behavior = !after.ok ? `error: ${(after.error || '').slice(0, 80)}` : after.stdout === before.stdout ? 'same' : 'differs';
+        // against the obfuscated script (what recovery must not change) ...
+        if (e.behavior !== 'errored') {
+          const before = await oracle.runLua(input, rt);
+          entry.behavior = !after.ok ? `error: ${(after.error || '').slice(0, 80)}` : after.stdout === before.stdout ? 'same' : 'differs';
+        }
+        // ... and against the original program (what the obfuscator was supposed to preserve)
+        const ref = await oracle.runLua(original, rt);
+        if (ref.ok) entry.behaviorOriginal = !after.ok ? `error: ${(after.error || '').slice(0, 80)}` : after.stdout === ref.stdout ? 'same' : 'differs';
       }
     } else entry.error = r.error;
     results.push(entry);
@@ -65,7 +71,7 @@ for (const r of results) {
 }
 const avg = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : NaN);
 const pct = (x) => (Number.isNaN(x) ? '   - ' : (x * 100).toFixed(0).padStart(3) + '%');
-console.log('config'.padEnd(36), 'n  detect  fid-before  fid-after  conf  behaviour(same/diff/err)');
+console.log('config'.padEnd(36), 'n  detect  fid-before  fid-after  conf  behaviour vs input (same/diff/err)  vs original');
 for (const [k, rs] of groups) {
   const det = rs.filter((r) => r.detected && r.detected.length).length;
   const fb = avg(rs.map((r) => r.fidelityBefore).filter((x) => x != null));
@@ -74,8 +80,10 @@ for (const [k, rs] of groups) {
   const diff = rs.filter((r) => r.behavior === 'differs').length;
   const err = rs.filter((r) => r.behavior && r.behavior.startsWith('error')).length;
   const crash = rs.filter((r) => r.crash || r.error).length;
+  const orig = rs.filter((r) => r.behaviorOriginal != null);
+  const origSame = orig.filter((r) => r.behaviorOriginal === 'same').length;
   const cf = avg(rs.map((r) => r.confidence).filter((x) => x != null));
-  console.log(k.padEnd(36), String(rs.length).padStart(1), `${det}/${rs.length}`.padStart(6), pct(fb).padStart(10), pct(fa).padStart(10), pct(cf).padStart(6), `   ${same}/${diff}/${err}${crash ? '  crashes:' + crash : ''}`);
+  console.log(k.padEnd(36), String(rs.length).padStart(1), `${det}/${rs.length}`.padStart(6), pct(fb).padStart(10), pct(fa).padStart(10), pct(cf).padStart(6), `   ${same}/${diff}/${err}${crash ? '  crashes:' + crash : ''}`.padEnd(40) + `  ${origSame}/${orig.length}`);
 }
 const pairs = results.filter((r) => r.confidence != null && r.fidelityAfter != null);
 if (pairs.length > 3) {

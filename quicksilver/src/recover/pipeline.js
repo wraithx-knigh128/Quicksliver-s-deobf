@@ -15,6 +15,8 @@ import { simplifyPass, snapshotUnused } from '../passes/simplify.js';
 import { evaluatePass } from '../passes/evaluate.js';
 import { renamePass } from '../passes/rename.js';
 import { unwrapWrapper, removeUnusedVararg, tidyIfs } from '../passes/structure.js';
+import { dataflowPass } from '../passes/dataflow.js';
+import { booleanResults, orientComparisons, shortCircuits, tableConstructors, bareNils, functionForms } from '../passes/idioms.js';
 import { removeAntiTamper, undoProxifyLocals } from './prometheus.js';
 import { removeHerculesAntiTamper } from './hercules.js';
 import { assessConfidence } from './confidence.js';
@@ -114,9 +116,10 @@ export function recover(source, userOptions = {}) {
   const run = new Run(parsed.ast, options);
   let unusedAtStart = snapshotUnused(parsed.ast);
 
+  let decompiled = false;
   if (detection.families.some((f) => f.id === 'ironbrew2' && f.confidence >= 0.5)) {
     // a rebuilt program has no author-written dead code to preserve
-    if (run.step('ironbrew2', 'Rebuild the program from the IronBrew 2 VM data', rebuildIronBrew)) unusedAtStart = new WeakSet();
+    if (run.step('ironbrew2', 'Rebuild the program from the IronBrew 2 VM data', rebuildIronBrew)) { unusedAtStart = new WeakSet(); decompiled = true; }
   }
 
   const generic = () => {
@@ -124,8 +127,16 @@ export function recover(source, userOptions = {}) {
     total += run.step('unwrap', 'Unwrap outer wrapper function', (a) => unwrapWrapper(a), { quiet: true });
     total += run.step('prometheus.antitamper', 'Remove Prometheus anti-tamper block', (a) => removeAntiTamper(a), { quiet: true });
     total += run.step('hercules.antitamper', 'Remove Hercules anti-tamper block', (a) => removeHerculesAntiTamper(a), { quiet: true });
+    if (decompiled) {
+      total += run.step('idioms.bool', 'Write boolean results as expressions', (a) => booleanResults(a), { quiet: true });
+      total += run.step('idioms.shortcircuit', 'Write defaults as `a or b`', (a) => shortCircuits(a), { quiet: true });
+      total += run.step('idioms.table', 'Fold field assignments into table constructors', (a) => tableConstructors(a), { quiet: true });
+      total += run.step('idioms.nil', 'Declare locals without an explicit nil', (a) => bareNils(a), { quiet: true });
+      total += run.step('idioms.compare', 'Orient comparisons', (a) => orientComparisons(a), { quiet: true });
+    }
     total += run.step('fold', 'Fold constant expressions', (a) => foldPass(a, { foldCalls: options.foldCalls }));
     total += run.step('simplify', 'Simplify control flow and remove dead code', (a) => simplifyPass(a, { unusedAtStart }));
+    if (decompiled) total += run.step('dataflow', 'Remove dead stores, copies and temporaries', (a) => dataflowPass(a), { quiet: true });
     total += run.step('tidy', 'Tidy flipped tests', (a) => tidyIfs(a), { quiet: true });
     total += run.step('prometheus.proxify', 'Undo Prometheus ProxifyLocals', (a) => undoProxifyLocals(a), { quiet: true });
     if (options.sandbox.enabled) {
@@ -141,6 +152,7 @@ export function recover(source, userOptions = {}) {
   }
   run.step('varargs', 'Remove unused vararg parameters', (a) => removeUnusedVararg(a), { quiet: true });
   if (options.rename !== 'off') run.step('rename', 'Give obfuscated locals readable names', (a) => renamePass(a, { mode: options.rename }), { quiet: true });
+  if (decompiled) run.step('idioms.functions', 'Use function and method declarations', (a) => functionForms(a), { quiet: true });
 
   // ---- output and validation --------------------------------------------------------------------------------
   let output;

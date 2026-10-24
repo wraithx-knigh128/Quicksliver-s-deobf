@@ -88,7 +88,7 @@ export class CompatDashboard {
       parts.push(h('div', { style: { gridColumn: '1 / -1' } }, [
         h('h4', 'Measured per technique'),
         h('table.grid', { style: { marginTop: '4px' } }, [
-          h('thead', h('tr', [h('th', 'Technique'), h('th', 'Status'), h('th', 'Fidelity'), h('th', 'Needs sandbox'), h('th', 'Behaviour'), h('th', { title: 'Trace of the obfuscated script equals the trace of the original program' }, 'Trace'), h('th', 'Note')])),
+          h('thead', h('tr', [h('th', 'Technique'), h('th', 'Status'), h('th', 'Fidelity'), h('th', 'Needs sandbox'), h('th', { title: 'Output of the recovered script equals the output of the original program, on a real Lua' }, 'Behaviour'), h('th', { title: 'Trace of the obfuscated script equals the trace of the original program' }, 'Trace'), h('th', 'Note')])),
           h('tbody', f.techniques.map((t) => h('tr', [
             h('td', [t.label, h('span.faint', `  ${t.kind}`)]),
             h('td', statusBadge(t.status)),
@@ -96,7 +96,7 @@ export class CompatDashboard {
             h('td', t.needsSandbox ? `yes (${pct(t.fidelityStatic)} without)` : 'no'),
             h('td.num', t.behaviourChecked ? `${t.behaviourSame}/${t.behaviourChecked} same` : '—'),
             h('td.num', t.traceChecked ? `${t.traceIdentical}/${t.traceChecked}` : '—'),
-            h('td', [t.note || '', t.toolBroken ? h('div.faint', `the tool itself broke ${t.toolBroken} of ${t.samples} samples`) : null]),
+            h('td', [t.note || '', t.toolBroken ? h('div.faint', `the tool's own output was wrong for ${t.toolBroken} of ${t.samples} samples`) : null]),
           ]))),
         ]),
       ]));
@@ -112,7 +112,7 @@ export class CompatDashboard {
       h('span', [
         h('b', 'How to read this. '),
         'Fidelity is the overlap between the recovered code and the original program the fixture was made from (identifier names ignored). ',
-        'Behaviour compares what the recovered script prints against the obfuscated one on a reference Lua. ',
+        'Behaviour compares what the recovered script prints against what the original program prints, on a real Lua. ',
         '“Supported” needs both. Entries without fixtures are signatures only. ',
         'Trace is a separate fallback: the script is run in the sandbox against stand-in objects and what it does is listed. It is a description of one run, not recovered source, and it needs the sandbox consent.',
       ]),
