@@ -13,8 +13,10 @@ export const DEFAULTS = Object.freeze({
   sandboxFuel: 60_000_000,
   sandboxTimeMs: 10_000,
   compareAgainst: 'formatted', // 'formatted' | 'raw'
-  sidebar: true,
-  inspector: true,
+  sidebar: false,
+  inspector: false,
+  wrap: false,            // soft-wrap the obfuscated source
+  split: 1,               // width of the obfuscated pane relative to the deobfuscated one
 });
 
 export function loadSettings() {
@@ -24,6 +26,7 @@ export function loadSettings() {
     const parsed = JSON.parse(raw);
     const out = { ...DEFAULTS };
     for (const k of Object.keys(DEFAULTS)) if (typeof parsed[k] === typeof DEFAULTS[k]) out[k] = parsed[k];
+    out.split = Math.min(4, Math.max(0.25, out.split));
     out.width = Math.min(240, Math.max(40, Math.round(out.width)));
     out.maxRounds = Math.min(20, Math.max(1, Math.round(out.maxRounds)));
     out.sandboxFuel = Math.min(500_000_000, Math.max(100_000, Math.round(out.sandboxFuel)));

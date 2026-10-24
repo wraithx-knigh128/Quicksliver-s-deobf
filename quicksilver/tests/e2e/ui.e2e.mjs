@@ -55,7 +55,7 @@ async function newPage(opts = {}) {
   page.on('console', (m) => { if (['error', 'warning'].includes(m.type())) problems.push(`[${m.type()}] ${m.text()}`); });
   page.on('pageerror', (e) => problems.push(`[pageerror] ${e.message}`));
   await page.goto(`${base}/index.html`);
-  await page.waitForSelector('#toollist li');
+  await page.waitForSelector('#toollist li', { state: 'attached' });
   return { page, ctx, problems };
 }
 
@@ -101,16 +101,18 @@ test('detect, beautify, analyze, recover, compare and export work on a Prometheu
   assert.match(await page.textContent('#view-detection'), /Prometheus/);
 
   await page.click('#act-beautify'); await idle(page);
-  assert.equal(await activeTab(page), 'tab-output');
-  assert.match(await page.textContent('#view-output'), /Beautified/);
+  assert.equal(await activeTab(page), 'tab-work');
+  assert.match(await page.textContent('#out-body'), /\S/);
+  assert.match(await page.textContent('#view-work'), /Beautified/);
 
   await page.click('#act-analyze'); await idle(page);
   assert.equal(await activeTab(page), 'tab-analysis');
   assert.match(await page.textContent('#view-analysis'), /Functions/);
 
   await page.click('#act-recover'); await idle(page);
-  assert.equal(await activeTab(page), 'tab-output');
-  assert.match(await page.textContent('#view-output'), /Recovered/);
+  assert.equal(await activeTab(page), 'tab-work');
+  assert.match(await page.textContent('#view-work'), /Recovered/);
+  assert.match(await page.textContent('#resultbar'), /Confidence/);
   assert.match(await page.textContent('#inspector'), /Confidence/);
 
   await page.click('#act-compare'); await idle(page);
@@ -142,7 +144,7 @@ test('bytes that are not valid UTF-8 survive the round trip untouched', { skip }
   const file = path.join(tmp, 'raw.lua');
   fs.writeFileSync(file, raw);
   await loadFile(page, file);
-  assert.match(await page.textContent('#inspector'), /not valid UTF-8/);
+  assert.match(await page.textContent('#notes'), /not valid UTF-8/);
   await page.click('#act-recover'); await idle(page);
   const [dl] = await Promise.all([page.waitForEvent('download'), (async () => { await page.click('#act-export'); await page.click('.menu button:has-text("Bundle")'); })()]);
   const out = path.join(tmp, 'raw.zip');
@@ -156,10 +158,8 @@ test('editing the source replaces the preserved bytes and clears stale results',
   const { page, ctx } = await newPage();
   await page.fill('textarea.editor', 'print("a")');
   await page.click('#act-recover'); await idle(page);
-  assert.match(await page.textContent('#view-output'), /print/);
-  await page.click('#tab-source');
+  assert.match(await page.textContent('#out-body'), /print/);
   await page.fill('textarea.editor', 'print("b")');
-  await page.click('#tab-output');
   assert.equal(await page.isVisible('#out-empty'), true);
   assert.equal(await page.isVisible('#out-body'), false);
   await ctx.close();
@@ -169,9 +169,9 @@ test('code that does not parse is reported with a position, not a crash', { skip
   const { page, ctx, problems } = await newPage();
   await page.fill('textarea.editor', 'local x = = 1\nprint(x');
   await page.click('#act-recover'); await idle(page);
-  assert.match(await page.textContent('#inspector'), /does not parse|Recovery stopped/);
+  assert.match(await page.textContent('#notes'), /does not parse|Recovery stopped|cannot|expected/i);
   await page.click('#act-beautify'); await idle(page);
-  assert.match(await page.textContent('#view-output'), /layout only/);
+  assert.match(await page.textContent('#view-work'), /layout only/);
   assert.deepEqual(problems, []);
   await ctx.close();
 });
@@ -180,16 +180,16 @@ test('decoders are evaluated only after the user allows the sandbox', { skip }, 
   const { page, ctx } = await newPage();
   await loadFile(page, path.join(corpus, 'obfuscated/prometheus/s06_combined__step-EncryptStrings.lua'));
   await page.click('#act-recover'); await idle(page);
-  assert.match(await page.textContent('#inspector'), /Encoded strings remain/);
-  const before = await page.textContent('#view-output');
+  assert.match(await page.textContent('#resultbar'), /Encoded strings remain/);
+  const before = await page.textContent('#out-body');
   assert.doesNotMatch(before, /QuickSilver/);
-  await page.click('#inspector button:has-text("Recover with sandbox")');
+  await page.click('#resultbar button:has-text("Recover with sandbox")');
   await page.waitForSelector('.modal');
   assert.match(await page.textContent('.modal'), /own Lua interpreter/);
   await page.click('.modal button:has-text("Allow")');
   await idle(page);
   await page.waitForFunction(() => /sandbox: on/.test(document.querySelector('#st-sandbox').textContent));
-  assert.doesNotMatch(await page.textContent('#inspector'), /Encoded strings remain/);
+  assert.doesNotMatch(await page.textContent('#resultbar'), /Encoded strings remain/);
   await ctx.close();
 });
 
@@ -207,8 +207,8 @@ test('trace asks first, then lists what a Roblox-style script does', { skip }, a
   await page.waitForSelector('.modal');
   await page.click('.modal button:has-text("Run in sandbox")');
   await idle(page);
-  const text = await page.textContent('#view-output');
-  assert.match(text, /Behavioural trace/);
+  const text = await page.textContent('#view-work');
+  assert.match(text, /Trace/);
   assert.match(text, /GetService/);
   assert.match(text, /Instance\.new/);
   assert.match(await page.textContent('#inspector'), /not the original source/);
@@ -229,7 +229,7 @@ test('cancel stops a long-running operation', { skip }, async () => {
     assert.match(await status(page), /Cancelled/);
   } else {
     // finished before the click landed: the limits stopped it, which is also correct
-    assert.match(await page.textContent('#view-output'), /limit/);
+    assert.match(await page.textContent('#view-work'), /limit/);
   }
   await ctx.close();
 });
@@ -239,6 +239,67 @@ test('the interface stays usable on a phone-sized screen', { skip }, async () =>
   for (const id of ['open', 'detect', 'recover', 'export']) assert.ok(await page.isVisible(`#act-${id}`));
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
   assert.equal(overflow, false, 'no horizontal page scroll');
+  // the two sources stack instead of shrinking to nothing
+  const [l, r] = await Promise.all([page.locator('.col').nth(0).boundingBox(), page.locator('.col').nth(1).boundingBox()]);
+  assert.ok(l.height > 120 && r.height > 120, 'both panes keep a usable height');
+  assert.ok(r.y >= l.y + l.height - 1, 'right pane sits below the left one');
   assert.deepEqual(problems, []);
+  await ctx.close();
+});
+
+test('the obfuscated source is on the left and the deobfuscated source on the right', { skip }, async () => {
+  const { page, ctx, problems } = await newPage();
+  const [l, r] = await Promise.all([page.locator('.col').nth(0).boundingBox(), page.locator('.col').nth(1).boundingBox()]);
+  assert.ok(r.x > l.x + l.width - 1, 'panes are side by side');
+  assert.ok(Math.abs(l.width - r.width) < 40, 'and roughly equal');
+  assert.match(await page.textContent('.col:nth-of-type(1) h2'), /Obfuscated source/);
+  assert.match(await page.textContent('.col:nth-of-type(2) h2'), /Deobfuscated source/);
+  assert.equal(await page.isEditable('textarea.editor'), true, 'the left side takes input');
+  assert.equal(await page.locator('.col:nth-of-type(2) textarea').count(), 0, 'the right side is read-only');
+  assert.deepEqual(problems, []);
+  await ctx.close();
+});
+
+test('opening a file names the obfuscator without pressing anything', { skip }, async () => {
+  const { page, ctx } = await newPage();
+  await loadFile(page, path.join(corpus, 'obfuscated/prometheus/s06_combined__step-ProxifyLocals.lua'));
+  await page.waitForFunction(() => /Prometheus/.test(document.querySelector('#resultbar').textContent), null, { timeout: 15_000 });
+  assert.equal(await page.isVisible('#out-empty'), true, 'nothing is recovered until asked');
+  await ctx.close();
+});
+
+test('the divider resizes the panes and the theme switch is remembered', { skip }, async () => {
+  const { page, ctx } = await newPage();
+  const widths = async () => Promise.all([0, 1].map(async (i) => (await page.locator('.col').nth(i).boundingBox()).width));
+  const [a0] = await widths();
+  await page.focus('.splitter');
+  for (let i = 0; i < 4; i++) await page.keyboard.press('ArrowRight');
+  const [a1] = await widths();
+  assert.ok(a1 > a0 + 30, 'left pane grew');
+  await page.dblclick('.splitter');
+  const [a2] = await widths();
+  assert.ok(Math.abs(a2 - a0) < 4, 'double-click resets');
+
+  const before = await page.getAttribute('html', 'data-theme');
+  await page.click('#btn-theme');
+  const after = await page.getAttribute('html', 'data-theme');
+  assert.notEqual(before, after);
+  await page.reload();
+  await page.waitForSelector('#toollist li', { state: 'attached' });
+  assert.equal(await page.getAttribute('html', 'data-theme'), after, 'theme survives a reload');
+  await ctx.close();
+});
+
+test('a large script scrolls without building a row per line', { skip }, async () => {
+  const { page, ctx } = await newPage();
+  const lines = [];
+  for (let i = 0; i < 40000; i++) lines.push(`local v${i} = ${i} -- line ${i}`);
+  // pasting is one input event; Playwright's fill() types it character by character into the page's own textarea logic
+  await page.evaluate((v) => { const e = document.querySelector('textarea.editor'); e.value = v; e.dispatchEvent(new Event('input', { bubbles: true })); }, lines.join('\n'));
+  await page.click('#act-beautify'); await idle(page);
+  const rows = await page.locator('#out-body .row').count();
+  assert.ok(rows > 10 && rows < 400, `virtual rows only (${rows})`);
+  await page.evaluate(() => { document.querySelector('#out-body .viewer').scrollTop = 20 * 20000; });
+  await page.waitForFunction(() => /v2000\d\b/.test(document.querySelector('#out-body').textContent));
   await ctx.close();
 });

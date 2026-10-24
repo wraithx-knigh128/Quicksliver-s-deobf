@@ -1,20 +1,23 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
-<meta name="description" content="Static analysis and recovery of obfuscated Lua and Luau source. Runs entirely in your browser; scripts are never executed.">
+<meta name="color-scheme" content="dark light">
+<meta name="description" content="Recover readable Lua and Luau from obfuscated scripts. Runs entirely in your browser; scripts are never executed unless you ask for the sandbox.">
 <title>QuickSilver Deobfuscator</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="css/app.css">
+<script src="src/app/theme-init.js"></script>
 </head>
 <body>
 
 <svg class="sprite" aria-hidden="true" focusable="false">
   <symbol id="i-mark" viewBox="0 0 16 16"><circle cx="7.5" cy="7.5" r="5.25"/><path d="M10.5 10.5 14 14"/><path d="M5 7.5h5"/></symbol>
   <symbol id="i-open" viewBox="0 0 16 16"><path d="M1.75 4.25V12.5h12.5V6h-6L6.75 4.25z"/></symbol>
+  <symbol id="i-samples" viewBox="0 0 16 16"><path d="M3.25 1.75h6.5l3 3v9.5h-9.5z"/><path d="M9.5 1.75v3.25h3.25M5.5 8.5h5M5.5 11h5"/></symbol>
   <symbol id="i-detect" viewBox="0 0 16 16"><circle cx="8" cy="8" r="4.75"/><path d="M8 1.25v3M8 11.75v3M1.25 8h3M11.75 8h3"/></symbol>
   <symbol id="i-beautify" viewBox="0 0 16 16"><path d="M2 3.5h12M2 6.5h8M5 9.5h9M5 12.5h6"/></symbol>
   <symbol id="i-analyze" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5 14.25 14.25"/></symbol>
@@ -26,6 +29,8 @@
   <symbol id="i-key" viewBox="0 0 16 16"><circle cx="5" cy="8" r="3"/><path d="M8 8h6.25M12 8v2.5M14.25 8v1.5"/></symbol>
   <symbol id="i-side" viewBox="0 0 16 16"><rect x="1.75" y="2.75" width="12.5" height="10.5"/><path d="M6 2.75v10.5"/></symbol>
   <symbol id="i-inspect" viewBox="0 0 16 16"><rect x="1.75" y="2.75" width="12.5" height="10.5"/><path d="M10 2.75v10.5"/></symbol>
+  <symbol id="i-info" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.25"/><path d="M8 7.25v4M8 4.75v.5"/></symbol>
+  <symbol id="i-theme" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.5"/><path d="M8 2.5v11a5.5 5.5 0 0 0 0-11z" class="fill"/></symbol>
   <symbol id="i-copy" viewBox="0 0 16 16"><rect x="5.25" y="5.25" width="8.5" height="8.5"/><path d="M10.75 5.25V2.25h-8.5v8.5h3"/></symbol>
   <symbol id="i-stop" viewBox="0 0 16 16"><rect x="3.75" y="3.75" width="8.5" height="8.5"/></symbol>
   <symbol id="i-up" viewBox="0 0 16 16"><path d="M3.5 10 8 5.5l4.5 4.5"/></symbol>
@@ -37,49 +42,50 @@
 <div id="boot-error" class="boot-error" hidden></div>
 
 <div class="shell" id="shell">
-  <header class="titlebar">
-    <div class="brand"><svg aria-hidden="true"><use href="#i-mark"/></svg><span>QuickSilver</span><span class="ver" id="ver"></span></div>
-    <div class="docname" id="docname"></div>
-    <div class="right">
-      <button class="btn small" id="btn-license" type="button" title="Licence"><svg aria-hidden="true"><use href="#i-key"/></svg><span class="lbl" id="license-label">Licence</span></button>
-      <button class="btn small" id="btn-about" type="button" title="About and credits"><span class="lbl">About</span></button>
-      <button class="btn small" id="btn-settings" type="button" title="Settings"><svg aria-hidden="true"><use href="#i-settings"/></svg><span class="lbl">Settings</span></button>
-      <button class="btn small icon" id="btn-side" type="button" title="Toggle obfuscator list" aria-pressed="true"><svg aria-hidden="true"><use href="#i-side"/></svg></button>
-      <button class="btn small icon" id="btn-inspector" type="button" title="Toggle inspector" aria-pressed="true"><svg aria-hidden="true"><use href="#i-inspect"/></svg></button>
+  <header class="appbar">
+    <div class="brand"><svg aria-hidden="true"><use href="#i-mark"/></svg><span class="name">QuickSilver</span><span class="ver" id="ver"></span></div>
+
+    <nav class="actions" aria-label="Actions">
+      <button class="btn" id="act-open" type="button" title="Open a .lua, .luau or .txt file (Ctrl+O)"><svg aria-hidden="true"><use href="#i-open"/></svg><span class="lbl">Open File</span></button>
+      <button class="btn" id="act-samples" type="button" title="Load an example obfuscated script" aria-haspopup="menu"><svg aria-hidden="true"><use href="#i-samples"/></svg><span class="lbl">Examples</span></button>
+      <span class="sep"></span>
+      <button class="btn" id="act-detect" type="button" title="Identify the obfuscator and language dialect (Alt+D)"><svg aria-hidden="true"><use href="#i-detect"/></svg><span class="lbl">Detect</span></button>
+      <button class="btn" id="act-beautify" type="button" title="Re-indent and re-flow only; nothing is decoded (Alt+B)"><svg aria-hidden="true"><use href="#i-beautify"/></svg><span class="lbl">Beautify</span></button>
+      <button class="btn" id="act-analyze" type="button" title="Static report: APIs, URLs, structure (Alt+A)"><svg aria-hidden="true"><use href="#i-analyze"/></svg><span class="lbl">Analyze</span></button>
+      <button class="btn primary" id="act-recover" type="button" title="Recover readable code (Ctrl+Enter)"><svg aria-hidden="true"><use href="#i-recover"/></svg><span class="lbl">Recover</span></button>
+      <button class="btn" id="act-trace" type="button" title="Run in the sandbox and list what the script does (asks first, Alt+T)"><svg aria-hidden="true"><use href="#i-trace"/></svg><span class="lbl">Trace</span></button>
+      <button class="btn" id="act-compare" type="button" title="Input and recovered code side by side (Alt+C)"><svg aria-hidden="true"><use href="#i-compare"/></svg><span class="lbl">Compare</span></button>
+      <button class="btn" id="act-export" type="button" title="Save the result (Alt+E)" aria-haspopup="menu"><svg aria-hidden="true"><use href="#i-export"/></svg><span class="lbl">Export</span></button>
+      <span class="sep"></span>
+      <button class="btn" id="act-cancel" type="button" hidden><svg aria-hidden="true"><use href="#i-stop"/></svg><span class="lbl">Cancel</span></button>
+      <button class="btn quiet" id="act-clear" type="button" title="Clear the input and all results"><svg aria-hidden="true"><use href="#i-clear"/></svg><span class="lbl">Clear</span></button>
+    </nav>
+
+    <div class="utils">
+      <button class="btn icon" id="btn-side" type="button" title="Obfuscator list" aria-label="Obfuscator list" aria-pressed="false"><svg aria-hidden="true"><use href="#i-side"/></svg></button>
+      <button class="btn icon" id="btn-inspector" type="button" title="Details of the last run" aria-label="Details of the last run" aria-pressed="false"><svg aria-hidden="true"><use href="#i-inspect"/></svg></button>
+      <button class="btn icon" id="btn-license" type="button" title="Licence" aria-label="Licence"><svg aria-hidden="true"><use href="#i-key"/></svg></button>
+      <button class="btn icon" id="btn-settings" type="button" title="Settings" aria-label="Settings"><svg aria-hidden="true"><use href="#i-settings"/></svg></button>
+      <button class="btn icon" id="btn-about" type="button" title="About and credits" aria-label="About and credits"><svg aria-hidden="true"><use href="#i-info"/></svg></button>
+      <button class="btn icon" id="btn-theme" type="button" title="Switch between light and dark" aria-label="Switch between light and dark"><svg aria-hidden="true"><use href="#i-theme"/></svg></button>
     </div>
   </header>
 
-  <nav class="toolbar" aria-label="Actions">
-    <button class="btn" id="act-open" type="button" title="Open a .lua, .luau or .txt file (Ctrl+O)"><svg aria-hidden="true"><use href="#i-open"/></svg><span class="lbl">Open File</span></button>
-    <button class="btn" id="act-samples" type="button" title="Load a test script" aria-haspopup="menu"><span class="lbl">Samples</span><svg class="caret" aria-hidden="true"><use href="#i-down"/></svg></button>
-    <span class="sep"></span>
-    <button class="btn" id="act-detect" type="button" title="Identify the obfuscator and language dialect (Alt+D)"><svg aria-hidden="true"><use href="#i-detect"/></svg><span class="lbl">Detect</span></button>
-    <button class="btn" id="act-beautify" type="button" title="Re-indent and re-flow only; nothing is decoded (Alt+B)"><svg aria-hidden="true"><use href="#i-beautify"/></svg><span class="lbl">Beautify</span></button>
-    <button class="btn" id="act-analyze" type="button" title="Static report: APIs, URLs, structure (Alt+A)"><svg aria-hidden="true"><use href="#i-analyze"/></svg><span class="lbl">Analyze</span></button>
-    <button class="btn primary" id="act-recover" type="button" title="Run the recovery pipeline (Ctrl+Enter)"><svg aria-hidden="true"><use href="#i-recover"/></svg><span class="lbl">Recover</span></button>
-    <button class="btn" id="act-trace" type="button" title="Run in the sandbox and list what the script does (asks first)"><svg aria-hidden="true"><use href="#i-trace"/></svg><span class="lbl">Trace</span></button>
-    <button class="btn" id="act-compare" type="button" title="Input and recovered code side by side (Alt+C)"><svg aria-hidden="true"><use href="#i-compare"/></svg><span class="lbl">Compare</span></button>
-    <button class="btn" id="act-export" type="button" title="Save the result (Alt+E)" aria-haspopup="menu"><svg aria-hidden="true"><use href="#i-export"/></svg><span class="lbl">Export</span></button>
-    <span class="grow"></span>
-    <button class="btn small" id="act-cancel" type="button" hidden><svg aria-hidden="true"><use href="#i-stop"/></svg><span class="lbl">Cancel</span></button>
-    <button class="btn small" id="act-clear" type="button" title="Clear the input and all results"><svg aria-hidden="true"><use href="#i-clear"/></svg><span class="lbl">Clear</span></button>
-  </nav>
-
   <div class="workspace" id="workspace">
-    <aside class="pane side" aria-label="Obfuscators">
-      <div class="pane-head"><span>Obfuscators</span><span class="grow"></span><span class="faint mono" id="side-count"></span></div>
+    <aside class="drawer side" aria-label="Obfuscators">
+      <div class="drawer-head"><span>Obfuscators</span><span class="grow"></span><span class="faint mono" id="side-count"></span></div>
       <div class="filters" id="side-filters"></div>
-      <div class="pane-body"><ul class="toollist" id="toollist"></ul></div>
+      <div class="drawer-body"><ul class="toollist" id="toollist"></ul></div>
     </aside>
 
-    <main class="pane center">
+    <main class="center">
       <div class="tabs" role="tablist" id="tabs"></div>
       <div id="views" class="views"></div>
     </main>
 
-    <aside class="pane inspector" aria-label="Inspector">
-      <div class="pane-head"><span>Inspector</span></div>
-      <div class="pane-body" id="inspector"></div>
+    <aside class="drawer inspector" aria-label="Details">
+      <div class="drawer-head"><span>Details</span></div>
+      <div class="drawer-body" id="inspector"></div>
     </aside>
   </div>
 
@@ -90,6 +96,7 @@
     <span id="st-size" class="faint"></span>
     <span id="st-sandbox" class="faint"></span>
     <span id="st-license" class="faint"></span>
+    <span id="docname" class="faint"></span>
   </footer>
 </div>
 

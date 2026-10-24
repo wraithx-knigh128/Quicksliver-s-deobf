@@ -5,7 +5,8 @@ import { h } from './dom.js';
 import { LH, charWidth } from './viewer.js';
 import { collapseRows } from '../core/diff.js';
 
-const OVERSCAN = 20;
+const OVERSCAN = 30;
+const SLACK = 8;
 
 export class DiffView {
   constructor() {
@@ -51,12 +52,20 @@ export class DiffView {
 
   schedule() {
     if (this.raf) return;
-    this.raf = requestAnimationFrame(() => { this.raf = 0; this.render(); });
+    this.raf = requestAnimationFrame(() => {
+      this.raf = 0;
+      const top = Math.floor(this.root.scrollTop / LH);
+      const bottom = top + Math.ceil(this.root.clientHeight / LH);
+      const inside = (this.winFirst === 0 || top >= this.winFirst + SLACK) && (this.winLast >= this.shown.length || bottom <= this.winLast - SLACK);
+      if (this.winFirst != null && inside && this.winWidth === this.root.clientWidth && this.winHeight === this.root.clientHeight) return;
+      this.render();
+    });
   }
 
   render() {
     const first = Math.max(0, Math.floor(this.root.scrollTop / LH) - OVERSCAN);
     const last = Math.min(this.shown.length, first + Math.ceil(this.root.clientHeight / LH) + OVERSCAN * 2);
+    this.winFirst = first; this.winLast = last; this.winWidth = this.root.clientWidth; this.winHeight = this.root.clientHeight;
     this.body.style.transform = `translateY(${first * LH}px)`;
     const frag = document.createDocumentFragment();
     const cap = Math.max(40, Math.floor((this.root.clientWidth / 2 - 60) / charWidth()));
@@ -64,8 +73,7 @@ export class DiffView {
     for (let i = first; i < last; i++) {
       const r = this.shown[i];
       if (r.kind === 'fold') {
-        frag.append(h('div.diff-row', { style: { gridTemplateColumns: '1fr', color: 'var(--text-faint)' } },
-          h('div.c', { style: { justifyContent: 'center', borderRight: '0', background: 'var(--bg)' } }, `${r.count} unchanged lines`)));
+        frag.append(h('div.diff-row.fold-row', h('div.c', `${r.count} unchanged lines`)));
         continue;
       }
       frag.append(h('div', { class: `diff-row ${r.kind}` }, cell(this.a, r.a), cell(this.b, r.b)));

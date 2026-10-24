@@ -46,17 +46,18 @@ const S = {
   traceConsent: false,
   beautified: null,
   recovered: null,
-  output: null,       // { text, label, kind }
+  outputs: {},        // kind -> { text, label, kind }; the right-hand pane shows outputs[show]
+  show: null,
+  output: null,       // = outputs[show]
   diff: null,
-  tab: 'source',
+  tab: 'work',
   busy: null,
   lastError: null,
   notes: [],          // transient inspector notes
 };
 
 const TABS = [
-  { id: 'source', label: 'Source' },
-  { id: 'output', label: 'Output' },
+  { id: 'work', label: 'Deobfuscator' },
   { id: 'compare', label: 'Compare' },
   { id: 'detection', label: 'Detection' },
   { id: 'analysis', label: 'Analysis' },
@@ -69,7 +70,7 @@ const TABS = [
 const el = {
   shell: $('#shell'), workspace: $('#workspace'), tabs: $('#tabs'), views: $('#views'), inspector: $('#inspector'),
   docname: $('#docname'), ver: $('#ver'), stState: $('#st-state'), stPos: $('#st-pos'), stSize: $('#st-size'), stSandbox: $('#st-sandbox'), stLicense: $('#st-license'),
-  file: $('#file-input'), toollist: $('#toollist'), sideFilters: $('#side-filters'), sideCount: $('#side-count'), licenseLabel: $('#license-label'),
+  file: $('#file-input'), toollist: $('#toollist'), sideFilters: $('#side-filters'), sideCount: $('#side-count'),
   btn: Object.fromEntries(['open', 'samples', 'detect', 'beautify', 'analyze', 'recover', 'trace', 'compare', 'export', 'cancel', 'clear'].map((k) => [k, $(`#act-${k}`)])),
 };
 el.ver.textContent = `v${ENGINE_VERSION}`;
@@ -82,19 +83,28 @@ function emptyState(title, text, action) {
   return h('div.empty', h('b', title), h('span', text), action ? h('div', h('button.btn', { type: 'button', onclick: action.run }, action.label)) : null);
 }
 
-// Source: a plain textarea with a line-number gutter that follows its scroll
+// Workbench: obfuscated source on the left (editable), deobfuscated source on the right (read-only).
 const editor = h('textarea.editor', {
   spellcheck: 'false', autocapitalize: 'off', autocomplete: 'off', wrap: 'off',
-  'aria-label': 'Script source',
-  placeholder: 'Paste Lua or Luau here, drop a .lua / .luau / .txt file, or press Open File.\n\nNothing you paste leaves this page, and nothing is executed.',
+  'aria-label': 'Obfuscated source',
+  placeholder: 'Paste the obfuscated source here, or drop a .lua, .luau or .txt file.\n\nThe text stays in this page. Nothing is uploaded and nothing is executed.',
 });
 const gutterNums = h('div.nums');
 const gutter = h('div.gutter', gutterNums);
-const srcFind = h('input', { type: 'search', placeholder: 'Find', 'aria-label': 'Find in source' });
-views.source = h('div.view', { id: 'view-source' },
-  h('div.codebar', h('span', { id: 'src-info' }), h('span.grow'), srcFind),
-  h('div.code-wrap', gutter, editor));
-const srcInfo = views.source.querySelector('#src-info');
+const srcFind = h('input', { type: 'search', placeholder: 'Find', 'aria-label': 'Find in the obfuscated source' });
+const srcMeta = h('span.meta');
+const wrapBtn = h('button.btn.small', { type: 'button', 'aria-pressed': 'false', title: 'Wrap long lines (minified scripts are one very long line)', onclick: () => setWrap(!settings.wrap) }, 'Wrap');
+const codeWrap = h('div.code-wrap', gutter, editor);
+const leftCol = h('section.col', { 'aria-label': 'Obfuscated source' },
+  h('header.col-head', h('h2', 'Obfuscated source'), srcMeta, h('span.grow'), srcFind, wrapBtn),
+  codeWrap);
+function setWrap(on) {
+  settings = { ...settings, wrap: on };
+  saveSettings(settings);
+  editor.wrap = on ? 'soft' : 'off';
+  codeWrap.classList.toggle('wrapped', on);
+  wrapBtn.setAttribute('aria-pressed', String(on));
+}
 
 function lineCountOf(text) {
   let n = 1;
@@ -102,18 +112,24 @@ function lineCountOf(text) {
   return n;
 }
 let sourceLines = 1;
-function paintGutter() {
+let gutterFirst = -1;
+let gutterLast = -1;
+function paintGutter(force = false) {
+  if (settings.wrap) return; // wrapped lines no longer map one to one onto numbers
   const first = Math.floor(editor.scrollTop / LH);
+  // the sub-line offset moves on every scroll event; the numbers themselves only change when a new line enters
+  gutterNums.style.transform = `translate3d(0, ${-(editor.scrollTop % LH)}px, 0)`;
   const count = Math.ceil(editor.clientHeight / LH) + 2;
   const last = Math.min(sourceLines, first + count);
+  if (!force && first === gutterFirst && last === gutterLast) return;
+  gutterFirst = first; gutterLast = last;
   const nums = [];
   for (let i = first + 1; i <= last; i++) nums.push(i);
   gutterNums.textContent = nums.join('\n');
-  gutterNums.style.transform = `translateY(${-(editor.scrollTop % LH)}px)`;
   gutterNums.style.lineHeight = `${LH}px`;
 }
-editor.addEventListener('scroll', paintGutter);
-new ResizeObserver(paintGutter).observe(editor);
+editor.addEventListener('scroll', () => paintGutter(), { passive: true });
+new ResizeObserver(() => paintGutter(true)).observe(editor);
 
 function caretPosition() {
   const pos = editor.selectionStart;
@@ -122,23 +138,25 @@ function caretPosition() {
   const col = pos - (before.lastIndexOf('\n') + 1) + 1;
   return { line, col };
 }
-let caretRaf = 0;
+let caretTimer = 0;
 function updateCaret() {
-  if (caretRaf) return;
-  caretRaf = requestAnimationFrame(() => {
-    caretRaf = 0;
-    if (S.tab !== 'source') { el.stPos.textContent = ''; return; }
+  if (caretTimer) return;
+  // a long file makes the line/column count a measurable cost, so it is done at most a few times a second
+  caretTimer = setTimeout(() => {
+    caretTimer = 0;
+    if (S.tab !== 'work') { el.stPos.textContent = ''; return; }
     const { line, col } = caretPosition();
     el.stPos.textContent = `Ln ${line}, Col ${col}`;
-  });
+  }, editor.value.length > 400_000 ? 250 : 30);
 }
 for (const ev of ['keyup', 'click', 'select', 'input', 'focus']) editor.addEventListener(ev, updateCaret);
 
 editor.addEventListener('input', () => {
   S.dirty = true;
   sourceLines = lineCountOf(editor.value);
-  paintGutter();
+  paintGutter(true);
   invalidate();
+  scheduleAutoDetect(900);
 });
 
 function selectLine(line, col = 1) {
@@ -147,7 +165,7 @@ function selectLine(line, col = 1) {
   for (let i = 1; i < line; i++) { const nl = text.indexOf('\n', start); if (nl < 0) break; start = nl + 1; }
   let end = text.indexOf('\n', start);
   if (end < 0) end = text.length;
-  switchTab('source');
+  switchTab('work');
   editor.focus();
   editor.setSelectionRange(Math.min(start + Math.max(0, col - 1), end), end);
   editor.scrollTop = Math.max(0, (line - 1) * LH - editor.clientHeight / 3);
@@ -174,18 +192,19 @@ srcFind.addEventListener('keydown', (e) => {
   paintGutter();
 });
 
-// Output
+// Right-hand side: whichever result is selected (recovered, beautified, trace)
 const outViewer = new Viewer();
-const outFind = h('input', { type: 'search', placeholder: 'Find', 'aria-label': 'Find in output' });
-const outCount = h('span.faint.mono');
-const outTitle = h('span');
-views.output = h('div.view', { id: 'view-output' },
-  h('div.codebar', outTitle, h('span.grow'), outCount, outFind,
-    h('button.btn.small.icon', { type: 'button', title: 'Previous match', onclick: () => findOut(-1) }, icon('up')),
-    h('button.btn.small.icon', { type: 'button', title: 'Next match', onclick: () => findOut(1) }, icon('down')),
-    h('button.btn.small', { type: 'button', title: 'Copy the output to the clipboard', onclick: copyOutput }, icon('copy'), h('span.lbl', 'Copy'))),
+const outFind = h('input', { type: 'search', placeholder: 'Find', 'aria-label': 'Find in the deobfuscated source' });
+const outCount = h('span.count');
+const outMeta = h('span.meta');
+const outSwitch = h('div.seg', { role: 'group', 'aria-label': 'Which result to show' });
+const rightCol = h('section.col', { 'aria-label': 'Deobfuscated source' },
+  h('header.col-head', h('h2', 'Deobfuscated source'), outSwitch, outMeta, h('span.grow'), outCount, outFind,
+    h('button.btn.small.icon', { type: 'button', title: 'Previous match', 'aria-label': 'Previous match', onclick: () => findOut(-1) }, icon('up')),
+    h('button.btn.small.icon', { type: 'button', title: 'Next match', 'aria-label': 'Next match', onclick: () => findOut(1) }, icon('down')),
+    h('button.btn.small.outline', { type: 'button', title: 'Copy the result to the clipboard', onclick: copyOutput }, icon('copy'), h('span.lbl', 'Copy'))),
   h('div#out-body.view', outViewer.root),
-  h('div#out-empty.view', emptyState('No output yet', 'Beautify reformats the input. Recover runs the full pipeline.')));
+  h('div#out-empty.view', emptyState('Nothing recovered yet', 'Paste or open an obfuscated script, then press Recover. Beautify only re-indents; it decodes nothing.')));
 function findOut(step) {
   const q = outFind.value;
   if (!q) { outCount.textContent = ''; return; }
@@ -195,8 +214,51 @@ function findOut(step) {
 outFind.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); findOut(e.shiftKey ? -1 : 1); } });
 outFind.addEventListener('input', () => { outViewer.query = ''; findOut(1); });
 async function copyOutput() {
-  if (!S.output) return;
+  if (!S.output) { toast('Nothing to copy yet.'); return; }
   try { await navigator.clipboard.writeText(binaryToText(S.output.text)); toast('Copied'); } catch { toast('The browser blocked clipboard access. Select the text and copy it manually.'); }
+}
+
+const splitter = h('div.splitter', { role: 'separator', 'aria-orientation': 'vertical', 'aria-label': 'Resize the two sources', tabindex: '0', title: 'Drag to resize, double-click to reset' });
+const panes = h('div.panes', leftCol, splitter, rightCol);
+const noteBox = h('div.notes', { id: 'notes', role: 'status' });
+const resultFacts = h('div.facts');
+const resultActs = h('div.acts');
+const resultBar = h('div.resultbar', { id: 'resultbar' }, resultFacts, resultActs);
+views.work = h('div.view.work', { id: 'view-work' }, noteBox, panes, resultBar);
+
+function setSplit(left) {
+  const r = Math.min(0.8, Math.max(0.2, left));
+  panes.style.setProperty('--lw', `${(r / (1 - r)).toFixed(4)}fr`);
+  return r;
+}
+{
+  const saved = settings.split;
+  if (saved && saved !== 1) setSplit(saved / (1 + saved));
+  let drag = false;
+  const move = (e) => {
+    const box = panes.getBoundingClientRect();
+    const usable = box.width - 20 - 9;
+    setSplit((e.clientX - box.left - 10 - 4.5) / usable);
+  };
+  splitter.addEventListener('pointerdown', (e) => { drag = true; splitter.setPointerCapture(e.pointerId); splitter.classList.add('drag'); e.preventDefault(); });
+  splitter.addEventListener('pointermove', (e) => { if (drag) move(e); });
+  const end = (e) => {
+    if (!drag) return;
+    drag = false; splitter.classList.remove('drag');
+    const lw = parseFloat(panes.style.getPropertyValue('--lw')) || 1;
+    settings = { ...settings, split: Number(lw.toFixed(3)) }; saveSettings(settings);
+  };
+  splitter.addEventListener('pointerup', end);
+  splitter.addEventListener('pointercancel', end);
+  splitter.addEventListener('dblclick', () => { panes.style.removeProperty('--lw'); settings = { ...settings, split: 1 }; saveSettings(settings); });
+  splitter.addEventListener('keydown', (e) => {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    e.preventDefault();
+    const cur = parseFloat(panes.style.getPropertyValue('--lw')) || 1;
+    const r = cur / (1 + cur) + (e.key === 'ArrowRight' ? 0.03 : -0.03);
+    const lw = setSplit(r);
+    settings = { ...settings, split: Number((lw / (1 - lw)).toFixed(3)) }; saveSettings(settings);
+  });
 }
 
 // Compare
@@ -205,12 +267,12 @@ const diffStats = h('div.diff-stats');
 const foldBox = h('input', { type: 'checkbox', checked: true, id: 'fold-box' });
 views.compare = h('div.view', { id: 'view-compare' },
   h('div.codebar', diffStats, h('span.grow'),
-    h('label', { style: { display: 'inline-flex', gap: '6px', alignItems: 'center' } }, foldBox, 'Fold unchanged'),
-    h('button.btn.small.icon', { type: 'button', title: 'Previous change', onclick: () => diffView.jump(-1) }, icon('up')),
-    h('button.btn.small.icon', { type: 'button', title: 'Next change', onclick: () => diffView.jump(1) }, icon('down'))),
-  h('div#cmp-heads.diff-row', { style: { height: '24px', borderBottom: '1px solid var(--line)', background: 'var(--bg)', color: 'var(--text-dim)' } },
-    h('div.c', { style: { padding: '0 10px', alignItems: 'center' } }, h('span#cmp-left', 'Input')),
-    h('div.c', { style: { padding: '0 10px', alignItems: 'center', borderRight: '0' } }, h('span', 'Recovered'))),
+    h('label', foldBox, 'Fold unchanged'),
+    h('button.btn.small.icon', { type: 'button', title: 'Previous change', 'aria-label': 'Previous change', onclick: () => diffView.jump(-1) }, icon('up')),
+    h('button.btn.small.icon', { type: 'button', title: 'Next change', 'aria-label': 'Next change', onclick: () => diffView.jump(1) }, icon('down'))),
+  h('div#cmp-heads.diff-row.diff-heads',
+    h('div.c', h('span#cmp-left', 'Input')),
+    h('div.c', h('span', 'Recovered'))),
   h('div#cmp-body.view', diffView.root),
   h('div#cmp-empty.view', emptyState('Nothing to compare yet', 'Compare puts the input and the recovered code side by side. If nothing has been recovered it runs Recover first.')));
 foldBox.addEventListener('change', () => diffView.setFold(foldBox.checked));
@@ -247,6 +309,7 @@ el.tabs.addEventListener('keydown', (e) => {
 });
 
 function switchTab(id) {
+  if (id === 'source' || id === 'output') id = 'work';
   S.tab = id;
   for (const t of TABS) {
     const on = t.id === id;
@@ -254,8 +317,7 @@ function switchTab(id) {
     tabButtons[t.id].tabIndex = on ? 0 : -1;
     views[t.id].hidden = !on;
   }
-  if (id === 'source') { paintGutter(); updateCaret(); } else el.stPos.textContent = '';
-  if (id === 'output') outViewer.render();
+  if (id === 'work') { paintGutter(true); updateCaret(); outViewer.render(); } else el.stPos.textContent = '';
   if (id === 'compare') diffView.render();
   if (id === 'luast') ensureLuast();
   if (id === 'detection' && !S.detection && inputPresent()) runDetect({ quiet: true });
@@ -272,8 +334,8 @@ function showMenu(anchor, items) {
   closeMenu();
   const rect = anchor.getBoundingClientRect();
   const menu = h('div.menu', { role: 'menu' }, items.map((it) => it === '-'
-    ? h('hr', { style: { border: 0, borderTop: '1px solid var(--line)', margin: '3px 0' } })
-    : h('button', { type: 'button', role: 'menuitem', disabled: !!it.disabled, onclick: () => { closeMenu(); it.run(); } }, h('span', it.label), it.sub ? h('span.sub', it.sub) : null)));
+    ? h('hr')
+    : h('button' + (it.indent ? '.indent' : ''), { type: 'button', role: 'menuitem', disabled: !!it.disabled, onclick: () => { closeMenu(); it.run(); } }, h('span', it.label), it.sub ? h('span.sub', it.sub) : null)));
   document.body.append(menu);
   const left = Math.min(rect.left, window.innerWidth - menu.offsetWidth - 8);
   menu.style.left = `${Math.max(8, left)}px`;
@@ -308,12 +370,34 @@ function getInputBytes() {
   return S.raw || binaryToBytes(S.input);
 }
 
-function invalidate() {
+function clearResults() {
   S.version++;
   S.inspected = null;
-  S.detection = null; S.analysis = null; S.luast = null; S.trace = null; S.traceConsent = false; S.beautified = null; S.recovered = null; S.output = null; S.diff = null;
+  S.detection = null; S.analysis = null; S.luast = null; S.trace = null; S.traceConsent = false; S.beautified = null; S.recovered = null; S.diff = null;
+  S.outputs = {}; S.show = null; S.output = null;
   S.notes = [];
-  renderAll();
+}
+
+let statusRaf = 0;
+function invalidate() {
+  const had = !!(S.inspected || S.detection || S.analysis || S.luast || S.trace || S.beautified || S.recovered || S.output || S.diff || S.notes.length);
+  clearResults();
+  if (had) { renderAll(); return; }
+  // typing into an untouched editor: only the counters change, and once per frame at most
+  if (statusRaf) return;
+  statusRaf = requestAnimationFrame(() => { statusRaf = 0; renderStatus(); renderResultBar(); });
+}
+
+let autoTimer = 0;
+const AUTO_DETECT_MAX = 1_500_000;
+/** Names the obfuscator shortly after the input changes. Static only, never blocks a button for long. */
+function scheduleAutoDetect(delay = 700) {
+  clearTimeout(autoTimer);
+  autoTimer = setTimeout(async () => {
+    if (!inputPresent() || S.detection || editor.value.length > AUTO_DETECT_MAX || editor.value.length < 12) return;
+    if (S.busy) { scheduleAutoDetect(400); return; }
+    await runDetect({ quiet: true });
+  }, delay);
 }
 
 function loadBytes(name, bytes) {
@@ -324,17 +408,15 @@ function loadBytes(name, bytes) {
   S.loadedText = editor.value;
   S.dirty = false;
   sourceLines = lineCountOf(editor.value);
-  S.version++;
-  S.inspected = null;
-  S.detection = null; S.analysis = null; S.luast = null; S.trace = null; S.traceConsent = false; S.beautified = null; S.recovered = null; S.output = null; S.diff = null;
-  S.notes = [];
+  clearResults();
   let lossy = false;
   try { new TextDecoder('utf-8', { fatal: true }).decode(bytes); } catch { lossy = true; }
   if (lossy) S.notes.push({ kind: 'info', text: 'This file contains bytes that are not valid UTF-8. The editor shows them as �, but every operation uses the file’s exact bytes until you edit the text.' });
   editor.scrollTop = 0;
-  switchTab('source');
+  switchTab('work');
   renderAll();
-  paintGutter();
+  paintGutter(true);
+  scheduleAutoDetect(60);
 }
 
 async function openFile(file) {
@@ -370,8 +452,8 @@ el.btn.clear.addEventListener('click', () => {
   editor.value = '';
   S.name = 'untitled.lua'; S.raw = null; S.loadedText = ''; S.dirty = true; sourceLines = 1;
   invalidate();
-  paintGutter();
-  switchTab('source');
+  paintGutter(true);
+  switchTab('work');
   editor.focus();
 });
 
@@ -401,7 +483,7 @@ function setStatus(text, kind = '') { el.stState.textContent = text; el.stState.
  */
 async function run(op, options, label, { needsText = true, limits, source } = {}) {
   if (S.busy) return null;
-  if (!inputPresent()) { toast('Nothing to process. Paste code or open a file first.'); switchTab('source'); editor.focus(); return null; }
+  if (!inputPresent()) { toast('Nothing to process. Paste code or open a file first.'); switchTab('work'); editor.focus(); return null; }
   const input = source ?? getInput();
   if (lic.ent.maxBytes && input.length > lic.ent.maxBytes) {
     toast(`Evaluation access is limited to ${fmtBytes(lic.ent.maxBytes)} of input.`, 5000);
@@ -455,10 +537,10 @@ async function runBeautify() {
     return r;
   }
   S.beautified = r;
-  S.output = { text: r.output, label: r.mode === 'ast' ? 'Beautified' : 'Beautified (layout only)', kind: 'beautify' };
+  setOutput('beautify', { text: r.output, label: r.mode === 'ast' ? 'Beautified' : 'Beautified (layout only)', kind: 'beautify' });
   S.notes = r.warnings.map((w) => ({ kind: 'warn', text: w, line: r.parseError ? r.parseError.line : null, col: r.parseError ? r.parseError.col : null }));
   renderAll();
-  switchTab('output');
+  switchTab('work');
   return r;
 }
 
@@ -483,15 +565,21 @@ async function runRecover({ quiet = false } = {}) {
   S.detection = r.detection || S.detection;
   S.notes = [];
   if (r.output != null) {
-    S.output = { text: r.output, label: 'Recovered', kind: 'recover' };
-    S.beautified = S.beautified || null;
+    setOutput('recover', { text: r.output, label: 'Recovered', kind: 'recover' });
   } else {
-    S.output = null;
+    delete S.outputs.recover;
+    if (S.show === 'recover') { S.show = Object.keys(S.outputs)[0] || null; S.output = S.show ? S.outputs[S.show] : null; }
     if (r.error) S.notes = [{ kind: 'bad', text: `Recovery stopped: ${r.error.message}`, line: r.error.line, col: r.error.col }];
   }
   renderAll();
-  if (!quiet) switchTab(r.output != null ? 'output' : 'source');
+  if (!quiet) switchTab('work');
   return r;
+}
+
+function setOutput(kind, out) {
+  S.outputs[kind] = out;
+  S.show = kind;
+  S.output = out;
 }
 
 async function confirmTrace() {
@@ -515,7 +603,7 @@ async function confirmTrace() {
 }
 
 async function runTrace() {
-  if (!inputPresent()) { toast('Nothing to trace. Paste code or open a file first.'); switchTab('source'); editor.focus(); return null; }
+  if (!inputPresent()) { toast('Nothing to trace. Paste code or open a file first.'); switchTab('work'); editor.focus(); return null; }
   if (!(await confirmTrace())) return null;
   const version = S.version;
   const r = await run('trace', { dialect: 'luau' }, 'Tracing', { limits: { timeoutMs: 60_000 } });
@@ -523,9 +611,9 @@ async function runTrace() {
   S.trace = r;
   S.notes = [];
   if (r.status === 'syntax-error') S.notes.push({ kind: 'bad', text: `The script does not parse, so it cannot run: ${r.error}` });
-  S.output = { text: r.script, label: 'Behavioural trace', kind: 'trace' };
+  setOutput('trace', { text: r.script, label: 'Behavioural trace', kind: 'trace' });
   renderAll();
-  switchTab('output');
+  switchTab('work');
   return r;
 }
 
@@ -634,7 +722,7 @@ async function exportBundle() {
   const entries = [{ name: `original/${S.name.replace(/[\\/]/g, '_')}`, data: orig }];
   if (S.recovered && S.recovered.output != null) entries.push({ name: `recovered/${base}.recovered.lua`, data: binaryToBytes(S.recovered.output) });
   if (S.trace) entries.push({ name: `recovered/${base}.trace.lua`, data: binaryToBytes(S.trace.script) });
-  if (S.output && S.output.kind === 'beautify') entries.push({ name: `recovered/${base}.beautified.lua`, data: binaryToBytes(S.output.text) });
+  if (S.outputs.beautify) entries.push({ name: `recovered/${base}.beautified.lua`, data: binaryToBytes(S.outputs.beautify.text) });
   entries.push({ name: 'report.json', data: enc.encode(JSON.stringify(report, null, 2)) });
   entries.push({ name: 'manifest.json', data: enc.encode(JSON.stringify({ tool: 'QuickSilver Deobfuscator', engine: ENGINE_VERSION, created: report.generatedAt, original: { path: entries[0].name, bytes: orig.length, sha256: report.input.sha256 }, files: entries.map((e) => ({ path: e.name, bytes: e.data.length })) }, null, 2)) });
   download(`${base}.quicksilver.zip`, makeZip(entries), 'application/zip');
@@ -664,7 +752,7 @@ el.btn.samples.addEventListener('click', async () => {
     if (items.length) items.push('-');
     items.push({ label: g.label, sub: g.note || '', disabled: true, run() {} });
     for (const s of g.items) items.push({
-      label: `  ${s.label}`, sub: s.sub || '',
+      label: s.label, sub: s.sub || '', indent: true,
       async run() {
         try {
           const res = await fetch(`data/samples/${s.file}`);
@@ -688,41 +776,25 @@ function noteEl(n) {
 
 function renderInspector() {
   const parts = [];
-  if (S.notes.length) parts.push(h('section.section', h('div.body', { style: { paddingTop: '10px' } }, S.notes.map(noteEl))));
   if (!inputPresent()) {
-    parts.push(h('section.section', h('h3', h('span', 'Start')), h('div.body', [
-      h('ol', { style: { margin: 0, paddingLeft: '18px' } }, [
-        h('li', 'Open a .lua, .luau or .txt file, drop one on the window, or paste code into Source.'),
-        h('li', 'Detect names the obfuscator and language dialect.'),
-        h('li', 'Recover runs the pipeline; Compare shows what changed.'),
+    parts.push(h('section.section', h('h3', h('span', 'How it works')), h('div.body', [
+      h('ol', { class: 'steps-list' }, [
+        h('li', 'Paste the obfuscated script on the left, or open a .lua, .luau or .txt file.'),
+        h('li', 'QuickSilver names the obfuscator on its own. Recover writes the readable version on the right.'),
+        h('li', 'Compare shows exactly what changed. Export saves the result.'),
       ]),
-      h('p.note.info', 'Scripts are parsed and rewritten as text. They are never run, unless you switch on the sandbox in Settings.'),
+      h('p.note.info', 'Scripts are parsed and rewritten as text. They are never run, unless you use Trace or switch on the sandbox in Settings.'),
     ])));
   } else {
     const bytes = S.dirty ? editor.value.length : S.input.length;
     parts.push(h('section.section', h('h3', h('span', 'Document')), h('div.body', h('dl.kv', [
       h('dt', 'Name'), h('dd', S.name),
-      h('dt', 'Size'), h('dd', `${fmtBytes(bytes)}${S.dirty ? '' : ''}, ${sourceLines} line${sourceLines === 1 ? '' : 's'}`),
+      h('dt', 'Size'), h('dd', `${fmtBytes(bytes)}, ${sourceLines} line${sourceLines === 1 ? '' : 's'}`),
       h('dt', 'Original'), h('dd', S.raw && !S.dirty ? 'exact bytes kept' : S.raw ? 'edited' : 'typed or pasted'),
     ]))));
   }
   if (S.detection) parts.push(...detectionSummary(S.detection, compatById));
-  if (S.recovered) {
-    parts.push(...recoverySummary(S.recovered));
-    const hints = (S.recovered.confidence && S.recovered.confidence.hints) || [];
-    if (hints.includes('trace') && lic.allow('sandbox')) {
-      parts.push(h('section.section', h('h3', h('span', 'Code is still protected')), h('div.body', [
-        h('p.note.warn', 'A virtual machine or embedded bytecode is still in the output, so the original control flow was not recovered. Trace can still list what the script does when it runs (services, objects, properties, requests).'),
-        h('p', h('button.btn.primary', { type: 'button', onclick: () => runTrace() }, 'Trace in sandbox…')),
-      ])));
-    }
-    if (hints.includes('sandbox') && lic.allow('sandbox')) {
-      parts.push(h('section.section', h('h3', h('span', 'Encoded strings remain')), h('div.body', [
-        h('p.note.warn', 'This script keeps its strings behind decoder functions. Evaluating them means running those functions, which QuickSilver only does inside its own interpreter sandbox and only if you allow it.'),
-        h('p', h('button.btn.primary', { type: 'button', onclick: recoverWithSandbox }, 'Recover with sandbox…')),
-      ])));
-    }
-  }
+  if (S.recovered) parts.push(...recoverySummary(S.recovered));
   if (S.trace) parts.push(traceSection());
   replace(el.inspector, parts);
 }
@@ -792,7 +864,7 @@ async function showSettings() {
     return s;
   };
   const number = (key, min, max, step = 1) => {
-    const n = h('input', { type: 'number', min, max, step, value: draft[key], style: { width: '96px' } });
+    const n = h('input.num-w', { type: 'number', min, max, step, value: draft[key] });
     n.addEventListener('change', () => { draft[key] = Number(n.value); });
     return n;
   };
@@ -810,12 +882,12 @@ async function showSettings() {
     title: 'Settings',
     body: [
       h('div', [
-        h('h4.dim', { style: { margin: '0 0 2px', font: '600 10.5px var(--ui)', letterSpacing: '.08em', textTransform: 'uppercase' } }, 'Formatting'),
+        h('h4.set-title', 'Formatting'),
         field('Indent', select('indent', [['2', '2 spaces'], ['4', '4 spaces'], ['tab', 'Tab']])),
         field('Line width', number('width', 40, 240, 10), 'Tables and call arguments wrap beyond this.'),
       ]),
       h('div', [
-        h('h4.dim', { style: { margin: '0 0 2px', font: '600 10.5px var(--ui)', letterSpacing: '.08em', textTransform: 'uppercase' } }, 'Recovery'),
+        h('h4.set-title', 'Recovery'),
         field('Rename variables', select('rename', [['smart', 'Obfuscated names only'], ['all', 'All locals'], ['off', 'Off']]), 'Names are guesses from usage; the original names are not recoverable.'),
         field('Constant folding', select('foldCalls', [['obfuscation', 'Obfuscator-typical calls'], ['all', 'All pure library calls']])),
         field('Literal style', select('stringStyle', [['normalize', 'Normalise strings and numbers'], ['preserve', 'Keep as written']])),
@@ -823,7 +895,7 @@ async function showSettings() {
         field('Compare against', select('compareAgainst', [['formatted', 'Re-formatted input'], ['raw', 'Input as opened']]), 'A re-formatted input lines up with the output even when the original is minified.'),
       ]),
       h('div', [
-        h('h4.dim', { style: { margin: '0 0 2px', font: '600 10.5px var(--ui)', letterSpacing: '.08em', textTransform: 'uppercase' } }, 'Sandbox'),
+        h('h4.set-title', 'Sandbox'),
         field('Evaluate string decoders', sandboxSwitch, 'Off by default. Runs decoder functions in QuickSilver’s own interpreter, never in the browser.'),
         field('Instruction budget', number('sandboxFuel', 100000, 500000000, 1000000)),
         field('Time limit (ms)', number('sandboxTimeMs', 500, 60000, 500)),
@@ -832,7 +904,7 @@ async function showSettings() {
     buttons: [{ id: 'reset', label: 'Reset' }, { id: 'cancel', label: 'Cancel' }, { id: 'save', label: 'Save', primary: true }],
   });
   if (r === 'save') settings = { ...settings, ...draft };
-  else if (r === 'reset') settings = { ...DEFAULTS, sidebar: settings.sidebar, inspector: settings.inspector };
+  else if (r === 'reset') settings = { ...DEFAULTS, sidebar: settings.sidebar, inspector: settings.inspector, split: settings.split };
   else return;
   saveSettings(settings);
   S.beautified = null; S.diff = null;
@@ -844,7 +916,7 @@ async function showAbout() {
   await modal({
     title: 'About QuickSilver',
     body: [
-      h('p', { style: { margin: 0 } }, `QuickSilver Deobfuscator v${ENGINE_VERSION}. Static analysis and recovery for Lua and Luau source. Everything runs in this page; nothing is uploaded, and scripts are not executed unless you use Trace or allow sandboxed evaluation.`),
+      h('p', { style: { margin: 0 } }, `QuickSilver Deobfuscator v${ENGINE_VERSION}. Recovers readable Lua and Luau from obfuscated scripts. Everything runs in this page; nothing is uploaded, and scripts are not executed unless you use Trace or allow sandboxed evaluation.`),
       h('p.note.info', 'Based on Prometheus by Elias Oelschner, https://github.com/prometheus-lua/Prometheus'),
       h('p', { style: { margin: 0 } }, 'QuickSilver contains no third-party code. Its recovery modules and test corpus were built by studying the following tools and their output:'),
       h('ul', [
@@ -857,21 +929,27 @@ async function showAbout() {
   });
 }
 $('#btn-about').addEventListener('click', showAbout);
+$('#btn-theme').addEventListener('click', () => {
+  const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', next);
+  try { localStorage.setItem('qs.theme', next); } catch { /* storage blocked: the choice lasts until reload */ }
+});
 $('#btn-settings').addEventListener('click', showSettings);
-$('#btn-license').addEventListener('click', async () => { await showLicenseDialog(lic); renderStatus(); renderInspector(); });
+$('#btn-license').addEventListener('click', async () => { await showLicenseDialog(lic); renderStatus(); renderInspector(); renderResultBar(); });
 
 // ---- layout toggles ---------------------------------------------------------------------------------------------------------------------------------
 
 function applyLayout() {
-  el.workspace.classList.toggle('no-side', !settings.sidebar);
-  el.workspace.classList.toggle('no-inspector', !settings.inspector);
+  el.workspace.classList.toggle('with-side', settings.sidebar);
+  el.workspace.classList.toggle('with-inspector', settings.inspector);
   $('#btn-side').setAttribute('aria-pressed', String(settings.sidebar));
   $('#btn-inspector').setAttribute('aria-pressed', String(settings.inspector));
-  $('#btn-side').classList.toggle('active', settings.sidebar);
-  $('#btn-inspector').classList.toggle('active', settings.inspector);
+  renderResultBar();
 }
-$('#btn-side').addEventListener('click', () => { settings = { ...settings, sidebar: !settings.sidebar }; saveSettings(settings); applyLayout(); });
-$('#btn-inspector').addEventListener('click', () => { settings = { ...settings, inspector: !settings.inspector }; saveSettings(settings); applyLayout(); });
+const toggleSide = () => { settings = { ...settings, sidebar: !settings.sidebar }; saveSettings(settings); applyLayout(); };
+const toggleInspector = () => { settings = { ...settings, inspector: !settings.inspector }; saveSettings(settings); applyLayout(); };
+$('#btn-side').addEventListener('click', toggleSide);
+$('#btn-inspector').addEventListener('click', toggleInspector);
 
 // ---- sidebar: obfuscator list ---------------------------------------------------------------------------------------------------------------
 
@@ -892,16 +970,22 @@ function renderSidebar() {
 
 // ---- rendering ----------------------------------------------------------------------------------------------------------------------------------------
 
+const OUT_ORDER = [['recover', 'Recovered'], ['beautify', 'Beautified'], ['trace', 'Trace']];
 function renderOutput() {
   const has = !!S.output;
-  $('#out-body', views.output).hidden = !has;
-  $('#out-empty', views.output).hidden = has;
+  $('#out-body', rightCol).hidden = !has;
+  $('#out-empty', rightCol).hidden = has;
+  const kinds = OUT_ORDER.filter(([k]) => S.outputs[k]);
+  outSwitch.hidden = kinds.length < 2;
+  replace(outSwitch, kinds.map(([k, label]) => h('button', {
+    type: 'button', 'aria-pressed': String(S.show === k),
+    onclick: () => { S.show = k; S.output = S.outputs[k]; renderOutput(); },
+  }, label)));
   if (has) {
-    const bytes = S.output.text.length;
-    outTitle.textContent = `${S.output.label} · ${fmtBytes(bytes)}`;
-    if (outViewer._for !== S.output) { outViewer._for = S.output; outViewer.setText(binaryToText(S.output.text)); outCount.textContent = ''; }
-  } else { outTitle.textContent = 'Output'; outViewer._for = null; }
-  setCount('output', has ? S.output.kind === 'recover' ? (S.recovered.confidence ? pct(S.recovered.confidence.score) : '') : '' : '');
+    const conf = S.output.kind === 'recover' && S.recovered && S.recovered.confidence ? ` · confidence ${pct(S.recovered.confidence.score)}` : '';
+    outMeta.textContent = `${kinds.length < 2 ? `${S.output.label} · ` : ''}${fmtBytes(S.output.text.length)}${conf}`;
+    if (outViewer._for !== S.output) { outViewer._for = S.output; outViewer.setText(binaryToText(S.output.text)); outCount.textContent = ''; if (outFind.value) findOut(1); }
+  } else { outMeta.textContent = ''; outViewer._for = null; }
 }
 
 function renderCompare() {
@@ -934,18 +1018,61 @@ function renderAnalysis() {
 
 function renderStatus() {
   const bytes = !inputPresent() ? 0 : S.dirty ? editor.value.length : S.input.length;
-  el.docname.replaceChildren(h('b', S.name), inputPresent() ? `  ·  ${fmtBytes(bytes)}` : '');
+  el.docname.textContent = inputPresent() ? S.name : '';
+  el.docname.title = S.name;
   el.stSize.textContent = inputPresent() ? `${fmtBytes(bytes)} · ${sourceLines} lines${S.detection ? ` · ${S.detection.dialect.label}` : ''}` : '';
   const sandboxOn = settings.sandbox && lic.allow('sandbox');
   el.stSandbox.textContent = sandboxOn ? 'sandbox: on' : 'sandbox: off';
   el.stSandbox.className = sandboxOn ? 'state-busy' : 'faint';
   el.stLicense.textContent = lic.label();
-  el.licenseLabel.textContent = lic.label();
-  srcInfo.textContent = inputPresent() ? `${S.name}${S.raw && !S.dirty ? ' · bytes preserved' : ''}` : 'Source';
+  srcMeta.textContent = inputPresent() ? `${S.name} · ${fmtBytes(bytes)}${S.raw && !S.dirty ? ' · bytes preserved' : ''}` : '';
+}
+
+function renderNotes() {
+  replace(noteBox, S.notes.slice(0, 3).map(noteEl));
+  noteBox.hidden = !S.notes.length;
+}
+
+/** The strip under the two sources: what was detected, what the last run achieved, and the next sensible step. */
+function renderResultBar() {
+  const facts = [];
+  const acts = [];
+  const fact = (...c) => h('span.fact', ...c);
+  if (!inputPresent()) {
+    facts.push(fact('Paste an obfuscated script on the left, or use Open File. Examples has a script from each supported obfuscator.'));
+  } else {
+    const det = S.detection;
+    if (det) {
+      const top = det.families.find((f) => f.confidence >= 0.5);
+      facts.push(fact(top ? [h('b', top.name), top.version ? ` ${top.version}` : '', ` · ${pct(top.confidence)}`] : [h('b', 'No known obfuscator'), ' matched']));
+      facts.push(fact(det.dialect.label));
+    } else facts.push(fact('Not analysed yet'));
+    const r = S.recovered;
+    if (r && r.confidence) {
+      facts.push(fact(['Confidence ', h('b', pct(r.confidence.score)), ` (${r.confidence.level})`]));
+      const applied = (r.steps || []).filter((x) => x.status === 'applied').length;
+      if (applied) facts.push(fact(`${applied} pass${applied === 1 ? '' : 'es'} applied`));
+      if (r.validation) facts.push(fact(r.validation.ok ? 'output parses' : 'output does not parse'));
+    } else if (r && r.error) facts.push(fact('Recovery stopped'));
+    const hints = (r && r.confidence && r.confidence.hints) || [];
+    if (hints.includes('sandbox') && lic.allow('sandbox')) {
+      facts.push(fact(h('span.badge.warn', 'Encoded strings remain')));
+      acts.push(h('button.btn.small.outline', { type: 'button', onclick: recoverWithSandbox }, 'Recover with sandbox…'));
+    }
+    if (hints.includes('trace') && lic.allow('sandbox')) {
+      facts.push(fact(h('span.badge.warn', 'Still protected by a virtual machine')));
+      acts.push(h('button.btn.small.outline', { type: 'button', onclick: () => runTrace() }, 'Trace in sandbox…'));
+    }
+  }
+  acts.push(h('button.btn.small', { type: 'button', 'aria-pressed': String(settings.inspector), title: 'Passes, confidence reasons and warnings of the last run', onclick: toggleInspector }, 'Details'));
+  replace(resultFacts, facts);
+  replace(resultActs, acts);
 }
 
 function renderAll() {
   renderStatus();
+  renderNotes();
+  renderResultBar();
   renderOutput();
   renderCompare();
   renderDetection();
@@ -972,19 +1099,20 @@ document.addEventListener('keydown', (e) => {
   else if (e.altKey && !e.ctrlKey && !e.metaKey) {
     const map = { KeyD: runDetect, KeyB: runBeautify, KeyA: runAnalyze, KeyR: runRecover, KeyT: runTrace, KeyC: runCompare, KeyE: () => showMenu(el.btn.export, exportItems()) };
     if (map[e.code]) { e.preventDefault(); if (!S.busy) map[e.code](); }
-  } else if (key === 'f' && (e.ctrlKey || e.metaKey) && (S.tab === 'output' || S.tab === 'source')) {
+  } else if (key === 'f' && (e.ctrlKey || e.metaKey) && S.tab === 'work') {
     e.preventDefault();
-    (S.tab === 'output' ? outFind : srcFind).focus();
+    (document.activeElement === editor || document.activeElement === srcFind ? srcFind : outFind).focus();
   }
 });
 
-lic.onchange = () => { renderStatus(); renderInspector(); };
+lic.onchange = () => { renderStatus(); renderInspector(); renderResultBar(); };
 
 async function start() {
+  setWrap(settings.wrap);
   applyLayout();
-  switchTab('source');
+  switchTab('work');
   renderAll();
-  paintGutter();
+  paintGutter(true);
   lic.refresh().catch(() => {});
   try {
     compat = await loadCompat();

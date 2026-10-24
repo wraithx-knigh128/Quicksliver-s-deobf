@@ -4,13 +4,14 @@
 import { h } from './dom.js';
 import { lineStates, lineNodes } from './highlight.js';
 
-export const LH = 18;
-const OVERSCAN = 20;
+export const LH = 20;
+const OVERSCAN = 30;
+const SLACK = 8; // rows of margin before the rendered window is rebuilt: scrolling a few rows costs nothing
 
 let charWidthCache = 0;
 export function charWidth() {
   if (charWidthCache) return charWidthCache;
-  const probe = h('span.mono', { style: { position: 'absolute', visibility: 'hidden', font: '12.5px/18px var(--mono)', whiteSpace: 'pre' } }, 'x'.repeat(200));
+  const probe = h('span.mono', { style: { position: 'absolute', visibility: 'hidden', font: '13px/20px var(--mono)', whiteSpace: 'pre' } }, 'x'.repeat(200));
   document.body.append(probe);
   charWidthCache = probe.getBoundingClientRect().width / 200 || 7.5;
   probe.remove();
@@ -52,7 +53,15 @@ export class Viewer {
 
   schedule() {
     if (this.raf) return;
-    this.raf = requestAnimationFrame(() => { this.raf = 0; this.render(); });
+    this.raf = requestAnimationFrame(() => {
+      this.raf = 0;
+      // the rows already in the DOM cover the viewport with margin to spare: nothing to rebuild
+      const top = Math.floor(this.root.scrollTop / LH);
+      const bottom = top + Math.ceil(this.root.clientHeight / LH);
+      const edge = (this.winFirst === 0 || top >= this.winFirst + SLACK) && (this.winLast >= this.lines.length || bottom <= this.winLast - SLACK);
+      if (this.winFirst != null && edge && this.winHeight === this.root.clientHeight) return;
+      this.render();
+    });
   }
 
   render() {
@@ -60,6 +69,7 @@ export class Viewer {
     const first = Math.max(0, Math.floor(this.root.scrollTop / LH) - OVERSCAN);
     const visible = Math.ceil(this.root.clientHeight / LH) + OVERSCAN * 2;
     const last = Math.min(total, first + visible);
+    this.winFirst = first; this.winLast = last; this.winHeight = this.root.clientHeight;
     this.rows.style.transform = `translateY(${first * LH}px)`;
     const hits = this.matchSet || new Set();
     const frag = document.createDocumentFragment();
