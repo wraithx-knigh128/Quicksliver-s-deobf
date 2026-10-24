@@ -5,7 +5,7 @@
 // deterministic so that evaluating the same script twice gives the same answer.
 
 import {
-  LuaTable, LuaUserdata, LuaFunction, NativeFunction, LuaError, SandboxLimit, SandboxUnsupported,
+  LuaTable, LuaUserdata, LuaBuffer, LuaVector, LuaFunction, NativeFunction, LuaError, SandboxLimit, SandboxUnsupported,
   typeName, toNumber, truthy, isFunction, fromJsArray,
 } from './value.js';
 import { callValue, tostr, index, lessThan, compileSource, concat as vmConcat } from './interp.js';
@@ -73,6 +73,7 @@ export function installStdlib(m, options = {}) {
       return [typeName(a[0])];
     },
     tostring: (a) => [tostr(m, a[0])],
+    ...(dialect === 'luau' ? { typeof: (a) => { if (a.length === 0) throw argError(1, 'typeof', 'value expected'); return [typeName(a[0])]; } } : {}),
     tonumber: (a) => {
       const v = a[0];
       if (a[1] === undefined) {
@@ -406,7 +407,7 @@ export function installStdlib(m, options = {}) {
     },
   });
 
-  const u32 = (n) => (Math.floor(n) % 4294967296 + 4294967296) % 4294967296;
+  const u32 = (n) => ((n >>> 0) === n ? n : (Math.floor(n) % 4294967296 + 4294967296) % 4294967296);
   // ---- math ----
   let seed = 0x2545f491;
   const rnd = () => {
@@ -497,7 +498,7 @@ export function installStdlib(m, options = {}) {
   // ---- bit libraries ----
   const s32 = (n) => u32(n) | 0;
   const bitOps = (conv, names) => {
-    const fold = (f) => (a) => { let r = u32(checkNum(a, 0, 'bit')); for (let i = 1; i < a.length; i++) r = f(r, u32(checkNum(a, i, 'bit'))) >>> 0; return [conv(r)]; };
+    const fold = (f) => (a) => { if (a.length === 2 && typeof a[0] === 'number' && typeof a[1] === 'number') return [conv(f(u32(a[0]), u32(a[1])) >>> 0)]; let r = u32(checkNum(a, 0, 'bit')); for (let i = 1; i < a.length; i++) r = f(r, u32(checkNum(a, i, 'bit'))) >>> 0; return [conv(r)]; };
     const entries = {
       band: fold((x, y) => x & y), bor: fold((x, y) => x | y), bxor: fold((x, y) => x ^ y),
       bnot: (a) => [conv(~u32(checkNum(a, 0, 'bnot')) >>> 0)],
@@ -512,6 +513,9 @@ export function installStdlib(m, options = {}) {
   if (dialect === 'luau') {
     lib(m, 'bit32', {
       ...bitOps((x) => x, (rot) => ({ lrotate: rot(true), rrotate: rot(false) })),
+      countlz: (a) => [Math.clz32(u32(checkNum(a, 0, 'countlz')))],
+      countrz: (a) => { const x = u32(checkNum(a, 0, 'countrz')); return [x === 0 ? 32 : 31 - Math.clz32(x & -x)]; },
+      byteswap: (a) => { const x = u32(checkNum(a, 0, 'byteswap')); return [(((x & 255) << 24) | ((x & 65280) << 8) | ((x >>> 8) & 65280) | (x >>> 24)) >>> 0]; },
       btest: (a) => { let r = 0xffffffff; for (let i = 0; i < a.length; i++) r = (r & u32(checkNum(a, i, 'btest'))) >>> 0; return [r !== 0]; },
       extract: (a) => { const x = u32(checkNum(a, 0, 'extract')); const f = checkInt(a, 1, 'extract'); const w = checkInt(a, 2, 'extract', 1); return [(x >>> f) & (w >= 32 ? 0xffffffff : (1 << w) - 1)]; },
       replace: (a) => {
@@ -528,6 +532,165 @@ export function installStdlib(m, options = {}) {
       tohex: (a) => { const n = checkInt(a, 1, 'tohex', 8); const h = u32(checkNum(a, 0, 'tohex')).toString(16).padStart(8, '0'); return [n < 0 ? h.slice(8 + n).toUpperCase() : h.slice(8 - n)]; },
       bswap: (a) => { const x = u32(checkNum(a, 0, 'bswap')); return [s32(((x & 255) << 24) | ((x & 65280) << 8) | ((x >>> 8) & 65280) | (x >>> 24))]; },
     });
+  }
+
+  // ---- buffer (Luau) ----
+  if (dialect === 'luau') {
+    const MAX_BUFFER = 64 * 1024 * 1024;
+    const checkBuf = (a, i, fname) => {
+      if (!(a[i] instanceof LuaBuffer)) throw argError(i + 1, fname, `buffer expected, got ${i >= a.length ? 'no value' : typeName(a[i])}`);
+      return a[i];
+    };
+    const oob = () => new LuaError('buffer access out of bounds');
+    const view = (b, off, size, fname) => {
+      if (!Number.isFinite(off) || off < 0 || off + size > b.bytes.length) throw oob();
+      return new DataView(b.bytes.buffer, b.bytes.byteOffset + Math.trunc(off), size);
+    };
+    const reader = (name, size, read) => (a) => { const b = checkBuf(a, 0, name); return [read(view(b, checkInt(a, 1, name), size, name))]; };
+    const writer = (name, size, write) => (a) => { const b = checkBuf(a, 0, name); const v = checkNum(a, 2, name); write(view(b, checkInt(a, 1, name), size, name), v); return []; };
+    const wrapInt = (bits, signed) => (v) => { const x = Math.trunc(v); const mod = 2 ** bits; const r = ((x % mod) + mod) % mod; return signed && r >= mod / 2 ? r - mod : r; };
+    lib(m, 'buffer', {
+      create: (a) => {
+        const n = checkInt(a, 0, 'create');
+        if (!(n >= 0)) throw argError(1, 'create', 'invalid size');
+        if (n > MAX_BUFFER) throw new SandboxLimit('memory', `buffer of ${n} bytes`);
+        m.checkMemory && m.checkMemory(n);
+        return [new LuaBuffer(n)];
+      },
+      fromstring: (a) => {
+        const s = checkStr(a, 0, 'fromstring');
+        const b = new LuaBuffer(s.length);
+        for (let i = 0; i < s.length; i++) b.bytes[i] = s.charCodeAt(i) & 255;
+        return [b];
+      },
+      tostring: (a) => {
+        const b = checkBuf(a, 0, 'tostring');
+        let out = '';
+        for (let i = 0; i < b.bytes.length; i += 8192) out += String.fromCharCode.apply(null, b.bytes.subarray(i, i + 8192));
+        return [out];
+      },
+      len: (a) => [checkBuf(a, 0, 'len').bytes.length],
+      readi8: reader('readi8', 1, (v) => v.getInt8(0)),
+      readu8: reader('readu8', 1, (v) => v.getUint8(0)),
+      readi16: reader('readi16', 2, (v) => v.getInt16(0, true)),
+      readu16: reader('readu16', 2, (v) => v.getUint16(0, true)),
+      readi32: reader('readi32', 4, (v) => v.getInt32(0, true)),
+      readu32: reader('readu32', 4, (v) => v.getUint32(0, true)),
+      readf32: reader('readf32', 4, (v) => v.getFloat32(0, true)),
+      readf64: reader('readf64', 8, (v) => v.getFloat64(0, true)),
+      writei8: writer('writei8', 1, (v, x) => v.setInt8(0, wrapInt(8, true)(x))),
+      writeu8: writer('writeu8', 1, (v, x) => v.setUint8(0, wrapInt(8, false)(x))),
+      writei16: writer('writei16', 2, (v, x) => v.setInt16(0, wrapInt(16, true)(x), true)),
+      writeu16: writer('writeu16', 2, (v, x) => v.setUint16(0, wrapInt(16, false)(x), true)),
+      writei32: writer('writei32', 4, (v, x) => v.setInt32(0, wrapInt(32, true)(x), true)),
+      writeu32: writer('writeu32', 4, (v, x) => v.setUint32(0, wrapInt(32, false)(x), true)),
+      writef32: writer('writef32', 4, (v, x) => v.setFloat32(0, x, true)),
+      writef64: writer('writef64', 8, (v, x) => v.setFloat64(0, x, true)),
+      readstring: (a) => {
+        const b = checkBuf(a, 0, 'readstring');
+        const off = checkInt(a, 1, 'readstring');
+        const n = checkInt(a, 2, 'readstring');
+        if (off < 0 || n < 0 || off + n > b.bytes.length) throw oob();
+        return [String.fromCharCode.apply(null, b.bytes.subarray(off, off + n))];
+      },
+      writestring: (a) => {
+        const b = checkBuf(a, 0, 'writestring');
+        const off = checkInt(a, 1, 'writestring');
+        const s = checkStr(a, 2, 'writestring');
+        const n = a[3] === undefined ? s.length : checkInt(a, 3, 'writestring');
+        if (off < 0 || n < 0 || n > s.length || off + n > b.bytes.length) throw oob();
+        for (let i = 0; i < n; i++) b.bytes[off + i] = s.charCodeAt(i) & 255;
+        return [];
+      },
+      copy: (a) => {
+        const dst = checkBuf(a, 0, 'copy');
+        const dOff = checkInt(a, 1, 'copy');
+        const src = checkBuf(a, 2, 'copy');
+        const sOff = a[3] === undefined ? 0 : checkInt(a, 3, 'copy');
+        const n = a[4] === undefined ? src.bytes.length - sOff : checkInt(a, 4, 'copy');
+        if (dOff < 0 || sOff < 0 || n < 0 || sOff + n > src.bytes.length || dOff + n > dst.bytes.length) throw oob();
+        dst.bytes.set(src.bytes.subarray(sOff, sOff + n), dOff);
+        return [];
+      },
+      fill: (a) => {
+        const b = checkBuf(a, 0, 'fill');
+        const off = checkInt(a, 1, 'fill');
+        const v = checkInt(a, 2, 'fill') & 255;
+        const n = a[3] === undefined ? b.bytes.length - off : checkInt(a, 3, 'fill');
+        if (off < 0 || n < 0 || off + n > b.bytes.length) throw oob();
+        b.bytes.fill(v, off, off + n);
+        return [];
+      },
+      readbits: (a) => {
+        const b = checkBuf(a, 0, 'readbits');
+        const bit = checkInt(a, 1, 'readbits');
+        const n = checkInt(a, 2, 'readbits');
+        if (n < 0 || n > 32 || bit < 0 || bit + n > b.bytes.length * 8) throw oob();
+        let r = 0;
+        for (let i = 0; i < n; i++) { const p = bit + i; r += ((b.bytes[p >> 3] >> (p & 7)) & 1) * 2 ** i; }
+        return [r];
+      },
+      writebits: (a) => {
+        const b = checkBuf(a, 0, 'writebits');
+        const bit = checkInt(a, 1, 'writebits');
+        const n = checkInt(a, 2, 'writebits');
+        const v = checkInt(a, 3, 'writebits');
+        if (n < 0 || n > 32 || bit < 0 || bit + n > b.bytes.length * 8) throw oob();
+        for (let i = 0; i < n; i++) {
+          const p = bit + i; const on = Math.floor(v / 2 ** i) % 2 === 1;
+          if (on) b.bytes[p >> 3] |= 1 << (p & 7); else b.bytes[p >> 3] &= ~(1 << (p & 7));
+        }
+        return [];
+      },
+    });
+  }
+
+  // ---- vector (Luau) ----
+  if (dialect === 'luau') {
+    const vecMeta = new LuaTable();
+    const mk = (x, y, z) => { const v = new LuaVector(x, y, z); v.meta = vecMeta; return v; };
+    const isVec = (v) => v instanceof LuaVector;
+    const checkVec = (a, i, fname) => { if (!isVec(a[i])) throw argError(i + 1, fname, `vector expected, got ${i >= a.length ? 'no value' : typeName(a[i])}`); return a[i]; };
+    const lift = (name, op) => nf(name, (a) => {
+      const l = a[0]; const r = a[1];
+      if (isVec(l) && isVec(r)) return [mk(op(l.x, r.x), op(l.y, r.y), op(l.z, r.z))];
+      if (isVec(l) && typeof r === 'number') return [mk(op(l.x, r), op(l.y, r), op(l.z, r))];
+      if (typeof l === 'number' && isVec(r)) return [mk(op(l, r.x), op(l, r.y), op(l, r.z))];
+      throw new LuaError(`attempt to perform arithmetic (${name}) on ${typeName(l)} and ${typeName(r)}`);
+    });
+    vecMeta.set('__add', lift('add', (x, y) => x + y));
+    vecMeta.set('__sub', lift('sub', (x, y) => x - y));
+    vecMeta.set('__mul', lift('mul', (x, y) => x * y));
+    vecMeta.set('__div', lift('div', (x, y) => x / y));
+    vecMeta.set('__idiv', lift('idiv', (x, y) => Math.floor(x / y)));
+    vecMeta.set('__unm', nf('unm', (a) => [mk(-a[0].x, -a[0].y, -a[0].z)]));
+    vecMeta.set('__eq', nf('eq', (a) => [isVec(a[0]) && isVec(a[1]) && a[0].x === a[1].x && a[0].y === a[1].y && a[0].z === a[1].z]));
+    vecMeta.set('__index', nf('index', (a) => {
+      const k = a[1];
+      if (k === 'x' || k === 'X') return [a[0].x];
+      if (k === 'y' || k === 'Y') return [a[0].y];
+      if (k === 'z' || k === 'Z') return [a[0].z];
+      if (k === 'Magnitude') return [Math.hypot(a[0].x, a[0].y, a[0].z)];
+      throw new LuaError(`${typeof k === 'string' ? k : typeName(k)} is not a valid member of vector`);
+    }));
+    const mag = (v) => Math.hypot(v.x, v.y, v.z);
+    const vlib = lib(m, 'vector', {
+      create: (a) => [mk(checkNum(a, 0, 'create'), checkNum(a, 1, 'create'), a[2] === undefined ? 0 : checkNum(a, 2, 'create'))],
+      magnitude: (a) => [mag(checkVec(a, 0, 'magnitude'))],
+      normalize: (a) => { const v = checkVec(a, 0, 'normalize'); const n = mag(v); return [mk(v.x / n, v.y / n, v.z / n)]; },
+      dot: (a) => { const l = checkVec(a, 0, 'dot'); const r = checkVec(a, 1, 'dot'); return [l.x * r.x + l.y * r.y + l.z * r.z]; },
+      cross: (a) => { const l = checkVec(a, 0, 'cross'); const r = checkVec(a, 1, 'cross'); return [mk(l.y * r.z - l.z * r.y, l.z * r.x - l.x * r.z, l.x * r.y - l.y * r.x)]; },
+      angle: (a) => { const l = checkVec(a, 0, 'angle'); const r = checkVec(a, 1, 'angle'); return [Math.acos(Math.max(-1, Math.min(1, (l.x * r.x + l.y * r.y + l.z * r.z) / (mag(l) * mag(r)))))]; },
+      floor: (a) => { const v = checkVec(a, 0, 'floor'); return [mk(Math.floor(v.x), Math.floor(v.y), Math.floor(v.z))]; },
+      ceil: (a) => { const v = checkVec(a, 0, 'ceil'); return [mk(Math.ceil(v.x), Math.ceil(v.y), Math.ceil(v.z))]; },
+      abs: (a) => { const v = checkVec(a, 0, 'abs'); return [mk(Math.abs(v.x), Math.abs(v.y), Math.abs(v.z))]; },
+      sign: (a) => { const v = checkVec(a, 0, 'sign'); return [mk(Math.sign(v.x), Math.sign(v.y), Math.sign(v.z))]; },
+      max: (a) => { const v = checkVec(a, 0, 'max'); let x = v.x; let y = v.y; let z = v.z; for (let i = 1; i < a.length; i++) { const w = checkVec(a, i, 'max'); x = Math.max(x, w.x); y = Math.max(y, w.y); z = Math.max(z, w.z); } return [mk(x, y, z)]; },
+      min: (a) => { const v = checkVec(a, 0, 'min'); let x = v.x; let y = v.y; let z = v.z; for (let i = 1; i < a.length; i++) { const w = checkVec(a, i, 'min'); x = Math.min(x, w.x); y = Math.min(y, w.y); z = Math.min(z, w.z); } return [mk(x, y, z)]; },
+      clamp: (a) => { const v = checkVec(a, 0, 'clamp'); const lo = checkVec(a, 1, 'clamp'); const hi = checkVec(a, 2, 'clamp'); const c = (x, l, h) => Math.min(Math.max(x, l), h); return [mk(c(v.x, lo.x, hi.x), c(v.y, lo.y, hi.y), c(v.z, lo.z, hi.z))]; },
+    });
+    vlib.set('zero', mk(0, 0, 0));
+    vlib.set('one', mk(1, 1, 1));
   }
 
   // ---- coroutine: run-to-completion only ----

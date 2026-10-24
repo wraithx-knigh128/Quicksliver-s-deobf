@@ -11,7 +11,7 @@
 // script runs in QuickSilver's own interpreter (sandbox/), under fuel, time and output limits, and the only
 // things it can reach are the mock objects built here. Nothing is fetched, written or evaluated by the host.
 
-import { LuaTable, LuaUserdata, NativeFunction, LuaFunction, LuaError, SandboxLimit, isFunction } from '../sandbox/value.js';
+import { LuaTable, LuaUserdata, NativeFunction, LuaFunction, LuaError, SandboxLimit, isFunction, typeName } from '../sandbox/value.js';
 import { createMachine, classify } from '../sandbox/sandbox.js';
 import { compileSource, callValue } from '../sandbox/interp.js';
 import { quoteString, formatNumber, isIdentifier } from '../core/printer.js';
@@ -321,7 +321,7 @@ function installEnvironment(rec) {
   define('wait', waitArgs('wait'));
   define('tick', nf('tick', () => [rec.now()]));
   define('time', nf('time', () => [rec.now() - 1_000_000]));
-  define('typeof', nf('typeof', ([v]) => [isMock(v) ? v.cls : v === undefined ? 'nil' : typeof v === 'boolean' ? 'boolean' : typeof v === 'number' ? 'number' : typeof v === 'string' ? 'string' : v instanceof LuaTable ? 'table' : isFunction(v) ? 'function' : 'userdata']));
+  define('typeof', nf('typeof', ([v]) => [isMock(v) ? v.cls : typeName(v)]));
   define('warn', nf('warn', (a) => { rec.push({ kind: 'print', text: `warn(${a.map((x) => rec.repr(x)).join(', ')})`, line: m.line }); return []; }));
   const std = G.get('print');
   define('print', nf('print', (a, mm) => { rec.push({ kind: 'print', text: `print(${a.map((x) => rec.repr(x)).join(', ')})`, line: m.line }); return std.fn(a, mm); }));

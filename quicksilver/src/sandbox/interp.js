@@ -129,6 +129,7 @@ export function index(m, obj, key, desc = '') {
 }
 
 export function setIndex(m, obj, key, value, desc = '') {
+  if (obj instanceof LuaTable && obj.meta === null && !obj.readonly && key !== undefined && key === key) { obj.set(key, value); return; }
   for (let i = 0; i < 100; i++) {
     let h;
     if (obj instanceof LuaTable) {
@@ -447,6 +448,25 @@ export class Compiler {
       case 'If': {
         const clauses = s.clauses.map((c) => ({ cond: this.expr(c.cond), body: this.block(c.body) }));
         const orelse = s.orelse ? this.block(s.orelse) : null;
+        // dispatch trees (VM interpreters) are long chains of one- and two-clause ifs: no loop, no indirection
+        if (clauses.length === 1) {
+          const c0 = clauses[0].cond;
+          const b0 = clauses[0].body;
+          if (orelse) return (f) => { m.line = line; const v = c0(f); return v !== undefined && v !== false ? b0(f) : orelse(f); };
+          return (f) => { m.line = line; const v = c0(f); return v !== undefined && v !== false ? b0(f) : NORMAL; };
+        }
+        if (clauses.length === 2) {
+          const c0 = clauses[0].cond; const b0 = clauses[0].body;
+          const c1 = clauses[1].cond; const b1 = clauses[1].body;
+          return (f) => {
+            m.line = line;
+            let v = c0(f);
+            if (v !== undefined && v !== false) return b0(f);
+            v = c1(f);
+            if (v !== undefined && v !== false) return b1(f);
+            return orelse ? orelse(f) : NORMAL;
+          };
+        }
         return (f) => {
           m.line = line;
           for (let i = 0; i < clauses.length; i++) {
@@ -518,6 +538,12 @@ export class Compiler {
     if (targets.length === 1 && s.values.length === 1 && !this.isMulti(s.values[0])) {
       const t = targets[0];
       const v = this.expr(s.values[0]);
+      if (s.targets[0].type !== 'Name') {
+        const obj = this.expr(s.targets[0].obj);
+        const key = this.expr(s.targets[0].key);
+        const d = this.describe(s.targets[0].obj);
+        return (f) => { m.line = line; const o = obj(f); const k = key(f); setIndex(m, o, k, v(f), d); return NORMAL; };
+      }
       return (f) => { m.line = line; const c = t.prepare(f); t.store(f, c, v(f)); return NORMAL; };
     }
     const vals = this.exprListMulti(s.values);
@@ -754,7 +780,12 @@ export class Compiler {
           };
         }
         const key = this.expr(e.key);
-        return (f) => index(m, obj(f), key(f), d);
+        return (f) => {
+          const o = obj(f);
+          const k = key(f);
+          if (o instanceof LuaTable) { const v = o.get(k); if (v !== undefined || o.meta === null) return v; }
+          return index(m, o, k, d);
+        };
       }
       case 'Call': case 'MethodCall': {
         const call = this.multi(e);
@@ -854,20 +885,24 @@ export class Compiler {
     switch (e.op) {
       case 'and': return (f) => { const a = l(f); return truthy(a) ? r(f) : a; };
       case 'or': return (f) => { const a = l(f); return truthy(a) ? a : r(f); };
-      case '==': return (f) => equals(m, l(f), r(f));
-      case '~=': return (f) => !equals(m, l(f), r(f));
-      case '<': return (f) => lessThan(m, l(f), r(f));
-      case '<=': return (f) => lessEqual(m, l(f), r(f));
-      case '>': return (f) => { const a = l(f); const b = r(f); return lessThan(m, b, a); };
-      case '>=': return (f) => { const a = l(f); const b = r(f); return lessEqual(m, b, a); };
+      case '==': return (f) => { const a = l(f); const b = r(f); return a === b || (typeof a === 'object' && typeof b === 'object' && equals(m, a, b)); };
+      case '~=': return (f) => { const a = l(f); const b = r(f); return !(a === b || (typeof a === 'object' && typeof b === 'object' && equals(m, a, b))); };
+      case '<': return (f) => { const a = l(f); const b = r(f); return typeof a === 'number' && typeof b === 'number' ? a < b : lessThan(m, a, b); };
+      case '<=': return (f) => { const a = l(f); const b = r(f); return typeof a === 'number' && typeof b === 'number' ? a <= b : lessEqual(m, a, b); };
+      case '>': return (f) => { const a = l(f); const b = r(f); return typeof a === 'number' && typeof b === 'number' ? b < a : lessThan(m, b, a); };
+      case '>=': return (f) => { const a = l(f); const b = r(f); return typeof a === 'number' && typeof b === 'number' ? b <= a : lessEqual(m, b, a); };
       case '..': return (f) => concat(m, l(f), r(f), dl, dr);
       case '+': return (f) => { const a = l(f); const b = r(f); return typeof a === 'number' && typeof b === 'number' ? a + b : arith(m, '+', a, b, dl, dr); };
       case '-': return (f) => { const a = l(f); const b = r(f); return typeof a === 'number' && typeof b === 'number' ? a - b : arith(m, '-', a, b, dl, dr); };
       case '*': return (f) => { const a = l(f); const b = r(f); return typeof a === 'number' && typeof b === 'number' ? a * b : arith(m, '*', a, b, dl, dr); };
-      case '/': case '%': case '^': case '//': {
-        const op = e.op;
-        return (f) => arith(m, op, l(f), r(f), dl, dr);
-      }
+      case '/': return (f) => { const a = l(f); const b = r(f); return typeof a === 'number' && typeof b === 'number' ? a / b : arith(m, '/', a, b, dl, dr); };
+      case '%': return (f) => {
+        const a = l(f); const b = r(f);
+        if (typeof a === 'number' && typeof b === 'number') { const q = a % b; return q !== 0 && (q < 0) !== (b < 0) ? q + b : q; }
+        return arith(m, '%', a, b, dl, dr);
+      };
+      case '^': return (f) => { const a = l(f); const b = r(f); return typeof a === 'number' && typeof b === 'number' ? Math.pow(a, b) : arith(m, '^', a, b, dl, dr); };
+      case '//': return (f) => { const a = l(f); const b = r(f); return typeof a === 'number' && typeof b === 'number' ? Math.floor(a / b) : arith(m, '//', a, b, dl, dr); };
       default: throw new SandboxUnsupported(`operator ${e.op}`);
     }
   }

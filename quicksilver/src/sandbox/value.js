@@ -172,6 +172,16 @@ export class LuaUserdata {
   constructor() { this.meta = null; this.addr = nextAddress(); }
 }
 
+/** Luau's `vector`: three floats. Behaves as a userdata whose metatable is shared (set up in the stdlib). */
+export class LuaVector extends LuaUserdata {
+  constructor(x, y, z) { super(); this.x = x; this.y = y; this.z = z; }
+}
+
+/** Luau's `buffer`: a fixed-size block of bytes. type() and typeof() answer "buffer". */
+export class LuaBuffer {
+  constructor(size) { this.bytes = new Uint8Array(size); this.addr = nextAddress(); }
+}
+
 /** Function implemented in JS. `fn(args, machine)` returns an array of results. */
 export class NativeFunction {
   constructor(name, fn) { this.name = name; this.fn = fn; this.addr = nextAddress(); }
@@ -198,7 +208,8 @@ export function typeName(v) {
     default:
       if (v instanceof LuaTable) return 'table';
       if (isFunction(v)) return 'function';
-      if (v instanceof LuaUserdata) return 'userdata';
+      if (v instanceof LuaVector) return 'vector';
+      if (v instanceof LuaBuffer) return 'buffer';
       return 'userdata';
   }
 }
@@ -216,7 +227,9 @@ export function rawToString(v) {
       if (v instanceof LuaTable) return 'table: ' + hex(v.addr);
       if (v instanceof NativeFunction) return 'function: builtin: ' + hex(v.addr);
       if (v instanceof LuaFunction) return 'function: ' + hex(v.addr);
+      if (v instanceof LuaVector) return numberToLuaString(v.x) + ', ' + numberToLuaString(v.y) + ', ' + numberToLuaString(v.z);
       if (v instanceof LuaUserdata) return 'userdata: ' + hex(v.addr);
+      if (v instanceof LuaBuffer) return 'buffer: ' + hex(v.addr);
       return 'userdata: ' + hex(0);
   }
 }
