@@ -78,7 +78,8 @@ const families = familyRegistry().map((f) => {
     };
   }
   const covered = new Set(techniques.map((t) => norm(t.config)));
-  const untested = f.techniques.filter((t) => ![...covered].some((c) => norm(t).startsWith(c) || c.startsWith(norm(t))));
+  const declared = new Set((note.covers || []).map(norm));
+  const untested = f.techniques.filter((t) => !declared.has(norm(t)) && ![...covered].some((c) => norm(t).startsWith(c) || c.startsWith(norm(t))));
   return {
     id: f.id,
     name: f.name,

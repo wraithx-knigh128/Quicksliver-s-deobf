@@ -24,7 +24,7 @@ for (const f of fs.readdirSync(path.join(corpus, 'originals')).filter((x) => x.e
 }
 
 const results = [];
-for (const tool of ['prometheus', 'hercules']) {
+for (const tool of ['prometheus', 'hercules', 'ironbrew2']) {
   const manifest = JSON.parse(fs.readFileSync(path.join(corpus, 'obfuscated', tool, 'manifest.json'), 'utf8'));
   for (const e of manifest.entries) {
     if (e.status !== 'ok') continue;

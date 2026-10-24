@@ -49,7 +49,21 @@ export const NOTES = {
   },
   moonsec_v3: { status: 'unsupported', basis: 'signature', detect: 'Banner comments only; no real output obtained.', limits: ['VM-based loader; not recoverable statically.'] },
   moonveil: { status: 'unsupported', basis: 'signature', detect: 'Documented macro names only; no real output obtained.', limits: ['Configurable VM and function encryption; not recoverable statically.'] },
-  ironbrew2: { status: 'unsupported', basis: 'signature', detect: 'No public signature; only generic VM heuristics apply.', limits: ['Custom bytecode VM; not recoverable statically.'] },
+  ironbrew2: {
+    status: 'supported',
+    basis: 'real-output',
+    // documented techniques that the fixtures exercise although no configuration carries their name
+    covers: ['custom bytecode VM', 'opcode mutation (duplicated handlers)', 'super operators (fused handlers)', 'LZW + XOR serialisation', 'control-flow macros (IB_MAX_CFLOW_START / IB_INLINING_START)', 'string encryption macro'],
+    detect: 'The prelude (LZW + XOR deserialiser, wrapper function names) is matched structurally; the opcode handlers are matched by alpha-equivalent form against the handler templates in IronBrew 2\'s own C# source.',
+    config: {},
+    limits: [
+      'Recovery reads the embedded chunk instead of running the VM: handlers are identified by shape, operand transforms are solved symbolically, the Lua 5.1 chunk is rebuilt and decompiled. A handler that matches no template stops the recovery with an error instead of guessing.',
+      'Local variable names, comments and the original function layout are not in the bytecode, so they are not recoverable (names are regenerated; some local functions come back as expressions).',
+      'The "strings" option decrypts every literal with an inlined routine; recovery reproduces the behaviour but the output is long until the decryptor is evaluated (needs sandboxed evaluation).',
+      'The "flow" option of the real tool produced output that does not run correctly on its own for five of eight samples (see the "tool broken" column); recovery there is judged against the original program, not against the broken output.',
+      'Only IronBrew 2 as built from the public MIT source is covered. Forks that change the VM template or the serialiser need their own templates.',
+    ],
+  },
   luaobfuscator: { status: 'experimental', basis: 'signature', detect: 'Generic string-escape and constant-table heuristics only.', limits: ['No real output obtained to test against.'] },
   fuscator77: { status: 'experimental', basis: 'signature', detect: 'Banner string only.', limits: ['Structure unknown.'] },
   psu: { status: 'unsupported', basis: 'signature', detect: 'No signature known.', limits: ['Nothing public to verify against.'] },
