@@ -364,7 +364,7 @@ function foldGuards(stmts, ctx) {
 function analyseBlock(id, leaf, ctx) {
   const { info, posVar, retVar } = ctx;
   const blk = new Block(id);
-  const stmts = dealias(foldGuards(leaf.flatMap((s) => normalise(s, ctx)).flatMap((s) => (s.type === 'Assign' ? splitAssign(s.targets, s.values) : [s])), ctx), ctx);
+  const stmts = dealias(foldGuards(leaf.flatMap((s) => normalise(s, ctx)).flatMap((s) => (s.type === 'Assign' ? splitAssign(s.targets, s.values, true) : [s])), ctx), ctx);
   const readsPos = (e) => { let hit = false; walk(e, (n) => { if (n.type === 'Name' && info.varOf.get(n) === posVar) hit = true; return !hit; }); return hit; };
 
   // every assignment to the position register: [statement index, pair index]
@@ -546,7 +546,7 @@ function analyseBlock(id, leaf, ctx) {
     }
     blk.term = { kind: 'return', values };
   } else fail(`block ${id}: cannot tell where it jumps`);
-  blk.stmts = out.flatMap((st) => (st.type === 'Assign' ? splitAssign(st.targets, st.values) : [st]));
+  blk.stmts = out.flatMap((st) => (st.type === 'Assign' ? splitAssign(st.targets, st.values, true) : [st]));
   return blk;
 }
 
@@ -911,15 +911,15 @@ function computeWebs(blocks, entry, ctx) {
 
 /**
  * `a, b = x, y` is two statements unless one of them reads a variable an earlier one writes (or calls out, in which case
- * the order of the writes is observable). The compiler packs unrelated copies into one statement to save a token; undoing
+ * the order of the writes is observable, unless the targets are registers, which no callee can see). The compiler packs unrelated copies into one statement to save a token; undoing
  * that is what lets the clean-up passes see single definitions.
  */
-function splitAssign(targets, values) {
+function splitAssign(targets, values, registersOnly = false) {
   if (targets.length < 2 || targets.length !== values.length || !targets.every((t) => t.type === 'Name')) return [{ type: 'Assign', targets, values }];
   const written = new Set();
   for (let i = 0; i < values.length; i++) {
     let bad = false;
-    walk(values[i], (n) => { if (n.type === 'Name' && written.has(n.name)) bad = true; if (n.type === 'Call' || n.type === 'Func') bad = bad || written.size > 0; return !bad; });
+    walk(values[i], (n) => { if (n.type === 'Name' && written.has(n.name)) bad = true; if (!registersOnly && (n.type === 'Call' || n.type === 'Func')) bad = bad || written.size > 0; return !bad; });
     if (bad) return [{ type: 'Assign', targets, values }];
     written.add(targets[i].name);
   }
@@ -944,7 +944,7 @@ function recoverFunction(entryIdIn, upvalNames, ctx) {
 
   // 2. webs
   const webs = computeWebs(blocks, entryId, { ...ctx, fid });
-  const fn = { maxArg: 0, vararg: false, fixed: 0 };
+  const fn = { maxArg: 0, vararg: false, fixed: 0, whole: false };
 
   const cellVar = (node) => {
     const k = webs.upvalIndex(node);
@@ -1011,6 +1011,8 @@ function recoverFunction(entryIdIn, upvalNames, ctx) {
           const v = info.varOf.get(f);
           if (ctx.creators.has(v)) return makeClosure(e);
           if (v === ctx.alloc || v === ctx.free) return fail(`a cell function used inside an expression`);
+          // `unpack(args)` hands on everything the function was called with
+          if (v === ctx.roles.unpack && e.args.length === 1 && isName(stripParens(e.args[0]), ctx.argsVar, info)) { fn.vararg = true; fn.whole = true; return { type: 'Vararg' }; }
         }
         return { type: 'Call', fn: tx(e.fn), args: e.args.map(tx), sugar: e.sugar };
       }
@@ -1110,6 +1112,7 @@ function recoverFunction(entryIdIn, upvalNames, ctx) {
   const last = body[body.length - 1];
   if (last && last.type === 'Return' && !last.values.length) body.pop();
 
+  if (fn.whole && fn.maxArg > 0) fail('a function that reads its arguments both singly and as a whole');
   const declared = webs.usedNames();
   const params = [];
   for (let i = 1; i <= Math.max(fn.maxArg, fn.fixed); i++) params.push({ type: 'Id', name: `_a${fid}_${i}` });

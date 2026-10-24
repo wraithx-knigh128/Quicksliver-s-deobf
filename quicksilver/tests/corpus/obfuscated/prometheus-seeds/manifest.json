@@ -1,0 +1,100 @@
+{
+  "tool": "Prometheus",
+  "author": "levno-710",
+  "source": "https://github.com/prometheus-lua/Prometheus",
+  "sourceRevision": "master",
+  "runtime": "PUC Lua 5.1 via lupa",
+  "seed": 102,
+  "entries": [
+    {
+      "file": "s01_minify_basic__Strong.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "Strong",
+      "seed": 101,
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "bytes": 62803,
+      "status": "ok"
+    },
+    {
+      "file": "s04_control_flow__Strong.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "Strong",
+      "seed": 101,
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "bytes": 78854,
+      "status": "ok"
+    },
+    {
+      "file": "s05_nested_functions__Strong.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "Strong",
+      "seed": 101,
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "bytes": 72643,
+      "status": "ok"
+    },
+    {
+      "file": "s06_combined__Strong.lua",
+      "sample": "s06_combined.lua",
+      "config": "Strong",
+      "seed": 101,
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "bytes": 103259,
+      "status": "ok"
+    },
+    {
+      "file": "s02_renamed_vars__Medium.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "Medium",
+      "seed": 102,
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "bytes": 26087,
+      "status": "ok"
+    },
+    {
+      "file": "s02_renamed_vars__step-Vmify.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "step-Vmify",
+      "seed": 102,
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "bytes": 3432,
+      "status": "ok"
+    },
+    {
+      "file": "s03_encoded_strings__Medium.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "Medium",
+      "seed": 102,
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "bytes": 23892,
+      "status": "ok"
+    },
+    {
+      "file": "s03_encoded_strings__step-Vmify.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "step-Vmify",
+      "seed": 102,
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "bytes": 2601,
+      "status": "ok"
+    },
+    {
+      "file": "s07_roblox_style__Medium.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "Medium",
+      "seed": 102,
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "bytes": 24772,
+      "status": "ok"
+    },
+    {
+      "file": "s07_roblox_style__step-Vmify.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "step-Vmify",
+      "seed": 102,
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "bytes": 2406,
+      "status": "ok"
+    }
+  ]
+}

@@ -9,6 +9,11 @@ derivative works to say so); point --src at a local copy of its `src/` folder.
 Obfuscated output does not carry the Prometheus licence (see its README).
 
   python -I gen_prometheus.py --src /path/to/Prometheus/src --out ../obfuscated/prometheus
+
+Other seeds change the register numbering, the block ids and the order of the statements, which is what the recovery code has to
+cope with; --seed/--only/--samples/--append add a few of those next to the main set:
+
+  python -I gen_prometheus.py --src ... --out ../obfuscated/prometheus-seeds --seed 101 --only Strong --samples s01,s04
 """
 import argparse
 import hashlib
@@ -59,16 +64,31 @@ def main():
     ap.add_argument("--out", required=True)
     ap.add_argument("--originals", default=os.path.join(os.path.dirname(__file__), "..", "originals"))
     ap.add_argument("--commit", default="unknown", help="Prometheus commit/branch the --src copy came from")
+    ap.add_argument("--seed", type=int, default=SEED)
+    ap.add_argument("--only", default="", help="comma separated configurations (Strong, step-Vmify, ...); default all")
+    ap.add_argument("--samples", default="", help="comma separated sample prefixes (s01,s04); default all")
+    ap.add_argument("--append", action="store_true", help="keep the entries already in the output manifest")
     args = ap.parse_args()
 
     import lupa.lua51 as L
 
     manifest = {"tool": "Prometheus", "author": "levno-710", "source": "https://github.com/prometheus-lua/Prometheus",
-                "sourceRevision": args.commit, "runtime": "PUC Lua 5.1 via lupa", "seed": SEED, "entries": []}
+                "sourceRevision": args.commit, "runtime": "PUC Lua 5.1 via lupa", "seed": args.seed, "entries": []}
     os.makedirs(args.out, exist_ok=True)
+    manifest_path = os.path.join(args.out, "manifest.json")
+    if args.append and os.path.exists(manifest_path):
+        with open(manifest_path) as fh:
+            previous = json.load(fh)
+        manifest["entries"] = [e for e in previous.get("entries", [])]
 
     samples = sorted(f for f in os.listdir(args.originals) if f.endswith(".lua"))
+    if args.samples:
+        wanted = args.samples.split(",")
+        samples = [f for f in samples if any(f.startswith(w) for w in wanted)]
     jobs = [("preset", p, p, "") for p in PRESETS] + [("steps", n, n, s) for n, s in STEPS.items()]
+    if args.only:
+        keep = args.only.split(",")
+        jobs = [j for j in jobs if j[1] in keep]
     for sample in samples:
         with open(os.path.join(args.originals, sample), "rb") as fh:
             original = fh.read()
@@ -76,10 +96,10 @@ def main():
             rt = L.LuaRuntime(encoding=None, register_eval=False, register_builtins=False)
             driver = rt.eval(b"function(...) " + LUA_DRIVER.encode() + b" end")
             fname = f"{sample[:-4]}__{label}.lua"
-            entry = {"file": fname, "sample": sample, "config": label,
+            entry = {"file": fname, "sample": sample, "config": label, "seed": args.seed,
                      "sampleSha256": hashlib.sha256(original).hexdigest()}
             try:
-                out = driver(args.src.encode(), original, mode.encode(), name.encode(), steps_lua.encode(), SEED)
+                out = driver(args.src.encode(), original, mode.encode(), name.encode(), steps_lua.encode(), args.seed)
                 if isinstance(out, str):
                     out = out.encode("latin-1")
                 with open(os.path.join(args.out, fname), "wb") as fh:
@@ -89,9 +109,9 @@ def main():
             except Exception as exc:  # keep going; record what the tool itself could not do
                 entry["status"] = "tool-error"
                 entry["error"] = str(exc)[:300]
-            manifest["entries"].append(entry)
+            manifest["entries"] = [e for e in manifest["entries"] if e["file"] != fname] + [entry]
             print(f"{fname:56s} {entry['status']:10s} {entry.get('bytes', '')}")
-    with open(os.path.join(args.out, "manifest.json"), "w") as fh:
+    with open(manifest_path, "w") as fh:
         json.dump(manifest, fh, indent=2)
     return 0
 

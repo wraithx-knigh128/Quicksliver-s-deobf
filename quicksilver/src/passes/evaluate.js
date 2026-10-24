@@ -201,14 +201,15 @@ export function evaluatePass(chunk, ctx = {}) {
   const unparen = (e) => (e.type === 'Paren' ? unparen(e.expr) : e);
   sites = [];
   owner = new Map();
+  const late = new Set();       // sites inside a function body: they run when the function is called, after the set-up
   for (const stmt of top) {
-    const visit = (e) => {
+    const visit = (e, inFunc = false) => {
       if (!e || typeof e !== 'object') return;
       let hit = false;
       if (e.type === 'Index' && e.key.type !== 'String' && isDecoderCall(unparen(e.key)) && noCall(e.obj)) hit = true;
       else if (isDecoderCall(e)) hit = true;
-      if (hit) { sites.push(e); owner.set(e, stmt); return; }
-      forEachChild(e, visit);
+      if (hit) { sites.push(e); owner.set(e, stmt); if (inFunc) late.add(e); return; }
+      forEachChild(e, (c) => visit(c, inFunc || e.type === 'Func'));
     };
     visit(stmt);
   }
@@ -270,9 +271,10 @@ export function evaluatePass(chunk, ctx = {}) {
   }
   const body = [{ type: 'Local', ids: [{ type: 'Id', name: '__qs_r' }], values: [{ type: 'Table', fields: [] }] }];
   for (const s of top) {
-    if (perStmt.has(s)) for (const e of perStmt.get(s)) body.push(wrap(e, ids.get(e)));
+    if (perStmt.has(s)) for (const e of perStmt.get(s)) if (!late.has(e)) body.push(wrap(e, ids.get(e)));
     if (slice.has(s)) body.push(s);
   }
+  for (const e of sites) if (late.has(e)) body.push(wrap(e, ids.get(e)));
   const n = sites.length;
   for (const e of [...sites].reverse()) body.push(wrap(e, ids.get(e) + n));
   body.push({ type: 'Return', values: [rn('__qs_r')] });
