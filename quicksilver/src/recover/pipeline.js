@@ -22,6 +22,7 @@ import { removeAntiTamper, undoProxifyLocals } from './prometheus.js';
 import { removeHerculesAntiTamper } from './hercules.js';
 import { assessConfidence } from './confidence.js';
 import { recoverIronBrew, IronBrewError } from './ironbrew.js';
+import { unflattenVmify, envToGlobals, VmifyError } from './vmify.js';
 import { parseChunk } from '../sandbox/bytecode.js';
 import { decompile } from '../decompile/decompile.js';
 
@@ -76,6 +77,28 @@ class Run {
 }
 
 /**
+ * Prometheus Vmify: the script is a dispatcher over block ids. Rebuild the functions it flattened. Strong applies the
+ * pass twice, so go on while another layer turns up.
+ */
+function rebuildVmify(ast) {
+  let layers = 0;
+  let functions = 0;
+  for (; layers < 4; layers++) {
+    let r;
+    try { r = unflattenVmify(ast); } catch (e) {
+      if (e instanceof VmifyError) {
+        if (layers) break;
+        return { skipped: e.message };
+      }
+      throw e;
+    }
+    if (!r.changed) break;
+    functions += r.functions;
+  }
+  return layers ? { changed: functions, layers, functions } : { skipped: 'not a Vmify script' };
+}
+
+/**
  * IronBrew 2: read the program back out of the VM's own data and decompile it. The AST is replaced in place so that
  * the ordinary passes (folding, clean-up, renaming) go on to work on the recovered program.
  */
@@ -118,16 +141,24 @@ export function recover(source, userOptions = {}) {
   let unusedAtStart = snapshotUnused(parsed.ast);
 
   let decompiled = false;
+  let vmified = false;
   if (detection.families.some((f) => f.id === 'ironbrew2' && f.confidence >= 0.5)) {
     // a rebuilt program has no author-written dead code to preserve
     if (run.step('ironbrew2', 'Rebuild the program from the IronBrew 2 VM data', rebuildIronBrew)) { unusedAtStart = new WeakSet(); decompiled = true; }
   }
+
+  const maybeVmify = detection.families.some((f) => f.id === 'prometheus' && f.confidence >= 0.5);
 
   const generic = () => {
     let total = 0;
     total += run.step('unwrap', 'Unwrap outer wrapper function', (a) => unwrapWrapper(a), { quiet: true });
     total += run.step('prometheus.antitamper', 'Remove Prometheus anti-tamper block', (a) => removeAntiTamper(a), { quiet: true });
     total += run.step('hercules.antitamper', 'Remove Hercules anti-tamper block', (a) => removeHerculesAntiTamper(a), { quiet: true });
+    if (maybeVmify) {
+      // a rebuilt program has no author-written dead code to preserve; Strong applies the pass twice, so this runs each round
+      const n = run.step('prometheus.vmify', 'Rebuild the functions Vmify flattened into a dispatcher', rebuildVmify, { quiet: true });
+      if (n) { total += n; unusedAtStart = new WeakSet(); decompiled = true; vmified = true; }
+    }
     if (decompiled) {
       total += run.step('idioms.bool', 'Write boolean results as expressions', (a) => booleanResults(a), { quiet: true });
       total += run.step('idioms.shortcircuit', 'Write defaults as `a or b`', (a) => shortCircuits(a), { quiet: true });
@@ -138,6 +169,7 @@ export function recover(source, userOptions = {}) {
     }
     total += run.step('fold', 'Fold constant expressions', (a) => foldPass(a, { foldCalls: options.foldCalls }));
     total += run.step('simplify', 'Simplify control flow and remove dead code', (a) => simplifyPass(a, { unusedAtStart }));
+    if (vmified) total += run.step('prometheus.env', 'Read globals from the environment table again', (a) => envToGlobals(a), { quiet: true });
     if (decompiled) total += run.step('regions', 'Evaluate closed constant computations', (a) => regionPass(a), { quiet: true });
     if (decompiled) total += run.step('dataflow', 'Remove dead stores, copies and temporaries', (a) => dataflowPass(a), { quiet: true });
     total += run.step('tidy', 'Tidy flipped tests', (a) => tidyIfs(a), { quiet: true });
@@ -153,6 +185,7 @@ export function recover(source, userOptions = {}) {
   for (let round = 1; round <= options.maxRounds; round++) {
     if (!generic()) break;
   }
+  if (vmified) run.step('prometheus.environment', 'Declare the environment the script still reads', (a) => envToGlobals(a, true), { quiet: true });
   run.step('varargs', 'Remove unused vararg parameters', (a) => removeUnusedVararg(a), { quiet: true });
   if (options.rename !== 'off') run.step('rename', 'Give obfuscated locals readable names', (a) => renamePass(a, { mode: options.rename }), { quiet: true });
   if (decompiled) run.step('idioms.functions', 'Use function and method declarations', (a) => functionForms(a), { quiet: true });

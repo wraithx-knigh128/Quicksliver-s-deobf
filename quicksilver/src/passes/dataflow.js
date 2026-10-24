@@ -18,6 +18,7 @@
 import { analyze } from '../core/scope.js';
 import { walk, clone } from '../core/walk.js';
 import { isPure } from './simplify.js';
+import { numericVars } from './numeric.js';
 
 const LONG_STRING = 24;
 
@@ -625,6 +626,7 @@ export function dataflowPass(chunk) {
   let changed = 0;
   for (let round = 0; round < 6; round++) {
     const info = analyze(chunk);
+    numericVars(chunk, info);
     const v = tracker(info);
     let roundChanged = 0;
     for (const body of functionBodies(chunk, info)) {
@@ -644,6 +646,7 @@ export function dataflowPass(chunk) {
     }
     // 3. temporaries (needs liveness after the edits above, so the tree is analysed again)
     const info2 = analyze(chunk);
+    numericVars(chunk, info2);
     const v2 = tracker(info2);
     for (const body of functionBodies(chunk, info2)) {
       if (hasJumps(body)) continue;

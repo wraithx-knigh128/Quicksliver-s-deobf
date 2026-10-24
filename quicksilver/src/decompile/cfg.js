@@ -287,6 +287,17 @@ class Emitter {
     return false;
   }
 
+  /** Everything reachable from `a`, `a` included. */
+  reachable(a) {
+    const seen = new Set([a]);
+    const stack = [a];
+    while (stack.length) {
+      const n = stack.pop();
+      for (const m of this.g.succ.get(n)) if (!seen.has(m)) { seen.add(m); stack.push(m); }
+    }
+    return seen;
+  }
+
   /** `while true do ... end` for the natural loop with this header. */
   loopAt(info, outer) {
     const { targets } = info;
@@ -297,14 +308,25 @@ class Emitter {
       // The ways out are the normal exit and `break`s that run some clean-up first: the clean-up blocks all lead on to
       // the exit. It is the one target the others can reach.
       const candidates = targets.filter((t) => targets.every((o) => o === t || this.reaches(o, t)));
-      if (candidates.length !== 1) throw new CfgError(`a loop with ${targets.length} unrelated exits`);
-      exit = candidates[0];
-      const stack = targets.filter((t) => t !== exit);
-      while (stack.length) {
-        const n = stack.pop();
-        if (breakNodes.has(n) || n === exit) continue;
-        breakNodes.add(n);
-        for (const m of this.g.succ.get(n)) stack.push(m);
+      if (candidates.length === 1) {
+        exit = candidates[0];
+        const stack = targets.filter((t) => t !== exit);
+        while (stack.length) {
+          const n = stack.pop();
+          if (breakNodes.has(n) || n === exit) continue;
+          breakNodes.add(n);
+          for (const m of this.g.succ.get(n)) stack.push(m);
+        }
+      } else {
+        // `return` inside the loop: ways out that never meet again. One of them stands for "the loop ended" and is written
+        // after the loop; the others are written where the jump is, inside it.
+        const tails = new Map(targets.map((t) => [t, this.reachable(t)]));
+        const disjoint = targets.every((t) => targets.every((o) => o === t || !tails.get(t).has(o)))
+          && targets.every((t) => [...tails.get(t)].every((n) => !info.nodes.has(n)));
+        if (!disjoint) throw new CfgError(`a loop with ${targets.length} unrelated exits`);
+        const first = (t) => Math.min(...[...info.nodes].filter((n) => this.g.succ.get(n).includes(t)).map((n) => this.g.index.get(n)));
+        exit = [...targets].sort((x, y) => first(x) - first(y))[0];
+        for (const t of targets) if (t !== exit) for (const n of tails.get(t)) breakNodes.add(n);
       }
     }
     const loop = { header: info.header, nodes: info.nodes, breakNodes, exit };

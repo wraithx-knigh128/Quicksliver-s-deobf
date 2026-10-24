@@ -13,6 +13,7 @@ import { analyze, STDLIB_GLOBALS } from '../core/scope.js';
 import { NOT_CONST, evalBinary, evalUnary } from './consteval.js';
 import { constOf, makeConst, PURE_LIBS } from './fold.js';
 import { isMachineName } from './rename.js';
+import { numericExpr, isArithmetic, isComparison } from './numeric.js';
 
 // ---- purity ------------------------------------------------------------------
 
@@ -44,8 +45,9 @@ export function isPure(e, info = null) {
     case 'Paren': return isPure(e.expr, info);
     case 'Table': return e.fields.every((f) => (f.kind !== 'keyed' || isPure(f.key, info)) && isPure(f.value, info));
     case 'Index': return isPure(e.obj, info) && isPure(e.key, info);
-    case 'Unary': return e.op === 'not' ? isPure(e.arg, info) : constOf(e.arg) !== NOT_CONST;
+    case 'Unary': return e.op === 'not' ? isPure(e.arg, info) : constOf(e.arg) !== NOT_CONST || (!!info && !!info.numeric && numericExpr(e, info));
     case 'Binary':
+      if (info && info.numeric && (isArithmetic(e.op) || isComparison(e.op)) && numericExpr(e.left, info) && numericExpr(e.right, info)) return true;
       if (e.op === 'and' || e.op === 'or' || e.op === '==' || e.op === '~=') return isPure(e.left, info) && isPure(e.right, info);
       return constOf(e.left) !== NOT_CONST && constOf(e.right) !== NOT_CONST;
     case 'Call': {
@@ -470,7 +472,7 @@ function sinkDeclarations(chunk) {
           if (selfRef) continue;
           const list = work();
           const at = list.indexOf(use);
-          list[at] = { type: 'Local', ids: [id], values: [use.values[0]], comments: use.comments, trailing: use.trailing, line: use.line, blankBefore: use.blankBefore };
+          list[at] = { type: 'Local', ids: [id], values: [use.values[0]], comments: use.comments, trailing: use.trailing, line: use.line, blankBefore: use.blankBefore, computed: use.computed };
           const d = list[list.indexOf(decl)];
           d.ids = d.ids.filter((x) => x !== id);
           changed++;
@@ -531,7 +533,7 @@ function sinkIntoBlocks(chunk) {
           const first = body.findIndex((x) => containsAny(x, refs));
           const use = body[first];
           if (use.type !== 'Assign' || use.targets.length !== 1 || use.values.length !== 1 || !refs.has(use.targets[0]) || containsAny(use.values[0], refs)) continue;
-          body[first] = { type: 'Local', ids: [id], values: [use.values[0]], comments: use.comments, trailing: use.trailing, line: use.line, blankBefore: use.blankBefore };
+          body[first] = { type: 'Local', ids: [id], values: [use.values[0]], comments: use.comments, trailing: use.trailing, line: use.line, blankBefore: use.blankBefore, computed: use.computed };
           moved.add(id);
           changed++;
         }
