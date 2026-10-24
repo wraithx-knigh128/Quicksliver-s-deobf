@@ -446,6 +446,92 @@ function chooseClass(candidates) {
   return candidates[0];
 }
 
+// ---- IronBrew 2's control-flow passes ------------------------------------------------------------------------------------
+
+const COMPARES = new Set(['Eq', 'Lt', 'Le', 'Test', 'TestSet']);
+const sameTest = (x, y) => x.op === y.op && x.a === y.a && x.b === y.b && x.c === y.c;
+
+/**
+ * What IronBrew 2's `ControlFlow` setting does to a function, undone on the instruction list (Lua 5.1 form):
+ *
+ *   * flip      about half of all comparisons are written the other way round: `cmp A; JMP t` becomes
+ *               `cmp !A; JMP over; JMP t`, `over` being just past the second jump;
+ *   * bounce    (inside IB_MAX_CFLOW_START / END) every jump goes through a new jump appended to the end;
+ *   * test spam (same) every comparison is copied along both of its edges, four levels deep. A copy is only reached
+ *               when the original already decided the same comparison, so one of its two exits is dead code that
+ *               jumps to a random place.
+ *
+ * All three change the shape of the code, not what it does, so each is reversed by what it is: jump chains are
+ * followed, a repeated comparison is skipped because its outcome is known, and the code nothing reaches any more is
+ * dropped. Applying this to code IronBrew 2 never touched is harmless: it only removes what can be proven redundant.
+ */
+function cleanControlFlow(code) {
+  const retarget = (i, t) => { code[i] = { ...code[i], b: t - (i + 1) }; };
+  const chase = (i) => {
+    for (let steps = 0; steps <= code.length && i < code.length && code[i].op === 'Jmp'; steps++) i = i + 1 + code[i].b;
+    return i;
+  };
+  // the VM does not need a closing RETURN; Lua's loader does
+  if (!code.length || code[code.length - 1].op !== 'Return') code.push({ op: 'Return', a: 0, b: 1, c: 0 });
+  const thread = () => { for (let i = 0; i < code.length; i++) if (code[i].op === 'Jmp' && code[i].b !== 0) retarget(i, chase(i + 1 + code[i].b)); };
+
+  // (before anything is retargeted: the pattern depends on the original offsets)
+  // flips
+  for (let k = 0; k + 2 < code.length; k++) {
+    const c = code[k];
+    const j1 = code[k + 1];
+    const j2 = code[k + 2];
+    if (!['Eq', 'Lt', 'Le', 'Test'].includes(c.op) || j1.op !== 'Jmp' || j2.op !== 'Jmp' || j1.b !== 1) continue;
+    if (c.op === 'Test') c.c = c.c === 0 ? 1 : 0; else c.a = c.a === 0 ? 1 : 0;
+    code[k + 1] = { op: 'Jmp', a: 0, b: 1 + j2.b, c: 0 };
+    code[k + 2] = { op: 'Jmp', a: 0, b: 0, c: 0 };
+    k += 2;
+  }
+  thread();
+  // repeated comparisons
+  for (let p = 0; p + 1 < code.length; p++) {
+    const t = code[p];
+    if (!COMPARES.has(t.op) || code[p + 1].op !== 'Jmp') continue;
+    for (let guard = 0; guard < 64; guard++) {                       // along the jump: the copy takes its jump too
+      const x = chase(p + 2 + code[p + 1].b);
+      if (x + 1 < code.length && sameTest(code[x], t) && code[x + 1].op === 'Jmp') retarget(p + 1, chase(x + 2 + code[x + 1].b)); else break;
+    }
+    for (let guard = 0; guard < 64 && p + 2 < code.length && code[p + 2].op === 'Jmp'; guard++) {   // past the jump: the copy skips it
+      const y = chase(p + 2);
+      if (y + 1 < code.length && sameTest(code[y], t) && code[y + 1].op === 'Jmp') retarget(p + 2, y + 2); else break;
+    }
+  }
+  thread();
+
+  // drop what nothing reaches and close the gaps (jump offsets are relative, so they are recomputed)
+  const reach = new Uint8Array(code.length);
+  const stack = [0];
+  while (stack.length) {
+    const i = stack.pop();
+    if (i < 0 || i >= code.length || reach[i]) continue;
+    reach[i] = 1;
+    const c = code[i];
+    if (c.op === 'Return') continue;
+    if (c.op === 'Jmp') stack.push(i + 1 + c.b);
+    else if (c.op === 'ForPrep') stack.push(i + 1 + c.b);
+    else if (c.op === 'ForLoop') stack.push(i + 1, i + 1 + c.b);
+    else if (COMPARES.has(c.op) || c.op === 'TForLoop' || (c.op === 'LoadBool' && c.c !== 0)) stack.push(i + 1, i + 2);
+    else stack.push(i + 1);
+  }
+  const index = new Int32Array(code.length + 1).fill(-1);
+  const kept = [];
+  code.forEach((c, i) => { if (reach[i]) { index[i] = kept.length; kept.push(c); } });
+  if (kept[kept.length - 1].op !== 'Return') kept.push({ op: 'Return', a: 0, b: 1, c: 0 });
+  if (kept.length === code.length) return code;
+  kept.forEach((c, k) => {
+    if (c.op === 'Jmp' || c.op === 'ForLoop' || c.op === 'ForPrep') {
+      const old = code.indexOf(c);
+      c.b = index[old + 1 + c.b] - (k + 1);
+    }
+  });
+  return kept;
+}
+
 function rebuildProto(proto, handlers) {
   const n = proto.instrs.length;
   const classes = new Array(n).fill(null);
@@ -473,7 +559,7 @@ function rebuildProto(proto, handlers) {
       // Helper opcodes of IronBrew 2's own transforms. NewStack re-creates the frame at the top of a function (a
       // no-op there); SetTop publishes how many values an inlined call returned, which only matters to an
       // instruction that consumes an open result list, so those functions are refused below.
-      code.push({ op: 'Move', a: 0, b: 0, c: 0, helper: cls.op });
+      code.push({ op: 'Move', a: 0, b: 0, c: 0, helper: cls.op, top: ins.a });
       continue;
     }
     if (!(cls.op in OP51)) fail(`${cls.name} is not an instruction IronBrew 2 emits for a Lua 5.1 program`);
@@ -495,29 +581,29 @@ function rebuildProto(proto, handlers) {
     }
     code.push({ op: cls.op, a, b, c });
   }
-  // IronBrew 2's control-flow pass flips about half of the comparisons: `cmp A; JMP t` becomes `cmp !A; JMP over; JMP t`
-  // with `over` just past the second jump. Both forms mean the same; this undoes the flip without moving any instruction
-  // (the second jump becomes a jump to the next instruction, which the decompiler ignores).
-  for (let k = 0; k + 2 < code.length; k++) {
-    const c = code[k];
-    const j1 = code[k + 1];
-    const j2 = code[k + 2];
-    if (!['Eq', 'Lt', 'Le', 'Test'].includes(c.op) || j1.op !== 'Jmp' || j2.op !== 'Jmp' || j1.b !== 1) continue;
-    if (c.op === 'Test') c.c = c.c === 0 ? 1 : 0; else c.a = c.a === 0 ? 1 : 0;
-    code[k + 1] = { op: 'Jmp', a: 0, b: 1 + j2.b, c: 0 };
-    code[k + 2] = { op: 'Jmp', a: 0, b: 0, c: 0 };
-    k += 2;
-  }
-  // a SetTop is followed by the jump out of the inlined body; the instruction it lands on is the only one that could
-  // read the value count, and only if it takes an open result list (B = 0)
+  // A SetTop is followed by the jump out of an inlined body, and says where the returned values end. Only the
+  // instruction the jump lands on can read that, and only if it takes an open value list (B = 0). When every return
+  // of the inlined function ends at the same register, the count is a fact about the program and the consumer gets
+  // it back as an ordinary operand; if the returns disagree, the count is only known at run time.
+  const tops = new Map();
   for (let i = 0; i < code.length - 1; i++) {
     if (code[i].helper !== 'SetTop' || code[i + 1].op !== 'Jmp') continue;
-    const landing = code[i + 2 + code[i + 1].b];
-    if (landing && landing.b === 0 && !landing.helper && ['Call', 'TailCall', 'Return', 'SetList'].includes(landing.op)) {
-      fail('an inlined call returns a variable number of values, which Lua 5.1 bytecode cannot express');
-    }
+    const at = i + 2 + code[i + 1].b;
+    const landing = code[at];
+    if (!landing || landing.b !== 0 || landing.helper || !['Call', 'TailCall', 'Return', 'SetList'].includes(landing.op)) continue;
+    if (!tops.has(at)) tops.set(at, new Set());
+    tops.get(at).add(code[i].top);
   }
-  return code;
+  for (const [at, set] of tops) {
+    if (set.size !== 1) fail('an inlined call returns a variable number of values, which Lua 5.1 bytecode cannot express');
+    const top = [...set][0];
+    const c = code[at];
+    if (c.op === 'Call' || c.op === 'TailCall') c.b = top - c.a + 1;
+    else if (c.op === 'Return') c.b = top - c.a + 2;
+    else c.b = top - c.a;
+    if (c.b < 1) fail('an inlined call returns fewer values than the instruction that follows it takes');
+  }
+  return cleanControlFlow(code);
 }
 
 function encode(ins) {

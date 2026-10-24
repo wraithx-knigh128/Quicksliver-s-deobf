@@ -86,6 +86,7 @@ def main():
     ap.add_argument("--originals", default=os.path.join(HERE, "..", "originals"))
     ap.add_argument("--commit", default="unknown")
     ap.add_argument("--only", default="", help="comma separated variant labels")
+    ap.add_argument("--samples", default="", help="comma separated sample file names; the entries of the other samples in an existing manifest are kept")
     args = ap.parse_args()
 
     env = dict(os.environ, DOTNET_ROOT=args.dotnet_root, DOTNET_SYSTEM_GLOBALIZATION_INVARIANT="1", DOTNET_CLI_TELEMETRY_OPTOUT="1")
@@ -103,7 +104,13 @@ def main():
                 "sourceRevision": args.commit, "runtime": "built from source: .NET Core 3.1.23 runtime, Roslyn csc, luac/luajit via lupa shims",
                 "seed": None, "entries": []}
     wanted = [v for v in args.only.split(",") if v] or list(VARIANTS)
-    for sample in sorted(f for f in os.listdir(args.originals) if f.endswith(".lua")):
+    only_samples = [x for x in args.samples.split(",") if x]
+    kept = []
+    mpath = os.path.join(args.out, "manifest.json")
+    if only_samples and os.path.exists(mpath):
+        kept = [e for e in json.load(open(mpath))["entries"] if e["sample"] not in only_samples]
+    manifest["entries"] = kept
+    for sample in sorted(f for f in os.listdir(args.originals) if f.endswith(".lua") and (not only_samples or f in only_samples)):
         original = open(os.path.join(args.originals, sample), "rb").read()
         for label in wanted:
             flags = VARIANTS[label]

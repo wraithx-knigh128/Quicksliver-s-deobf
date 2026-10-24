@@ -925,6 +925,138 @@
         "lua54": "errored"
       },
       "behavior": "equivalent"
+    },
+    {
+      "file": "s08_ironbrew_macros__default.lua",
+      "sample": "s08_ironbrew_macros.lua",
+      "config": "default",
+      "flags": [],
+      "sampleSha256": "5d2ba22d895713dd1a955c8310b1e77d7a5961e854ea58fa77a1089a4041880f",
+      "status": "ok",
+      "bytes": 18831,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s08_ironbrew_macros__plain.lua",
+      "sample": "s08_ironbrew_macros.lua",
+      "config": "plain",
+      "flags": [
+        "--no-flow",
+        "--no-mutate",
+        "--no-super"
+      ],
+      "sampleSha256": "5d2ba22d895713dd1a955c8310b1e77d7a5961e854ea58fa77a1089a4041880f",
+      "status": "ok",
+      "bytes": 12735,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s08_ironbrew_macros__mutate.lua",
+      "sample": "s08_ironbrew_macros.lua",
+      "config": "mutate",
+      "flags": [
+        "--no-flow",
+        "--no-super"
+      ],
+      "sampleSha256": "5d2ba22d895713dd1a955c8310b1e77d7a5961e854ea58fa77a1089a4041880f",
+      "status": "ok",
+      "bytes": 14805,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s08_ironbrew_macros__super.lua",
+      "sample": "s08_ironbrew_macros.lua",
+      "config": "super",
+      "flags": [
+        "--no-flow",
+        "--no-mutate"
+      ],
+      "sampleSha256": "5d2ba22d895713dd1a955c8310b1e77d7a5961e854ea58fa77a1089a4041880f",
+      "status": "ok",
+      "bytes": 14639,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s08_ironbrew_macros__flow.lua",
+      "sample": "s08_ironbrew_macros.lua",
+      "config": "flow",
+      "flags": [
+        "--no-mutate",
+        "--no-super"
+      ],
+      "sampleSha256": "5d2ba22d895713dd1a955c8310b1e77d7a5961e854ea58fa77a1089a4041880f",
+      "status": "ok",
+      "bytes": 14876,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "instruction budget exceeded"
+    },
+    {
+      "file": "s08_ironbrew_macros__strings.lua",
+      "sample": "s08_ironbrew_macros.lua",
+      "config": "strings",
+      "flags": [
+        "--strings"
+      ],
+      "sampleSha256": "5d2ba22d895713dd1a955c8310b1e77d7a5961e854ea58fa77a1089a4041880f",
+      "status": "ok",
+      "bytes": 49936,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s08_ironbrew_macros__lineinfo.lua",
+      "sample": "s08_ironbrew_macros.lua",
+      "config": "lineinfo",
+      "flags": [
+        "--lineinfo"
+      ],
+      "sampleSha256": "5d2ba22d895713dd1a955c8310b1e77d7a5961e854ea58fa77a1089a4041880f",
+      "status": "ok",
+      "bytes": 20045,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s08_ironbrew_macros__nocompress.lua",
+      "sample": "s08_ironbrew_macros.lua",
+      "config": "nocompress",
+      "flags": [
+        "--no-compress"
+      ],
+      "sampleSha256": "5d2ba22d895713dd1a955c8310b1e77d7a5961e854ea58fa77a1089a4041880f",
+      "status": "ok",
+      "bytes": 29540,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
     }
   ]
 }
