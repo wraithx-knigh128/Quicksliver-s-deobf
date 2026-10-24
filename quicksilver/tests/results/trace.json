@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-10-24T12:48:35.433Z",
+ "generatedAt": "2026-10-24T15:42:04.648Z",
  "results": [
   {
    "tool": "prometheus",
@@ -20,7 +20,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 19,
+   "ms": 17,
    "detail": null
   },
   {
@@ -31,7 +31,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 97,
+   "ms": 76,
    "detail": null
   },
   {
@@ -42,7 +42,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 126,
+   "ms": 114,
    "detail": null
   },
   {
@@ -59,39 +59,6 @@
   {
    "tool": "prometheus",
    "config": "step-ConstantArray",
-   "sample": "s01_minify_basic",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 4,
-   "expected": 4,
-   "ms": 8,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "step-SplitStrings",
-   "sample": "s01_minify_basic",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 4,
-   "expected": 4,
-   "ms": 1,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "step-NumbersToExpressions",
-   "sample": "s01_minify_basic",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 4,
-   "expected": 4,
-   "ms": 1,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "step-ProxifyLocals",
    "sample": "s01_minify_basic",
    "toolBehavior": "equivalent",
    "outcome": "identical",
@@ -102,667 +69,700 @@
   },
   {
    "tool": "prometheus",
-   "config": "step-WrapInFunction",
-   "sample": "s01_minify_basic",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 4,
-   "expected": 4,
-   "ms": 1,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "step-AddVararg",
-   "sample": "s01_minify_basic",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 4,
-   "expected": 4,
-   "ms": 1,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "step-AntiTamper",
-   "sample": "s01_minify_basic",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 4,
-   "expected": 4,
-   "ms": 5,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "step-Vmify",
-   "sample": "s01_minify_basic",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 4,
-   "expected": 4,
-   "ms": 7,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "Minify",
-   "sample": "s02_renamed_vars",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 8,
-   "expected": 8,
-   "ms": 1,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "Weak",
-   "sample": "s02_renamed_vars",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 8,
-   "expected": 8,
-   "ms": 18,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "Medium",
-   "sample": "s02_renamed_vars",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 8,
-   "expected": 8,
-   "ms": 56,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "Strong",
-   "sample": "s02_renamed_vars",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 8,
-   "expected": 8,
-   "ms": 75,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "step-EncryptStrings",
-   "sample": "s02_renamed_vars",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 8,
-   "expected": 8,
-   "ms": 3,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "step-ConstantArray",
-   "sample": "s02_renamed_vars",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 8,
-   "expected": 8,
-   "ms": 2,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
    "config": "step-SplitStrings",
-   "sample": "s02_renamed_vars",
+   "sample": "s01_minify_basic",
    "toolBehavior": "equivalent",
    "outcome": "identical",
-   "events": 8,
-   "expected": 8,
+   "events": 4,
+   "expected": 4,
    "ms": 1,
    "detail": null
   },
   {
    "tool": "prometheus",
    "config": "step-NumbersToExpressions",
-   "sample": "s02_renamed_vars",
+   "sample": "s01_minify_basic",
    "toolBehavior": "equivalent",
    "outcome": "identical",
-   "events": 8,
-   "expected": 8,
-   "ms": 0,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "step-ProxifyLocals",
-   "sample": "s02_renamed_vars",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 8,
-   "expected": 8,
-   "ms": 2,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "step-WrapInFunction",
-   "sample": "s02_renamed_vars",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 8,
-   "expected": 8,
-   "ms": 0,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "step-AddVararg",
-   "sample": "s02_renamed_vars",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 8,
-   "expected": 8,
-   "ms": 9,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "step-AntiTamper",
-   "sample": "s02_renamed_vars",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 8,
-   "expected": 8,
-   "ms": 4,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "step-Vmify",
-   "sample": "s02_renamed_vars",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 8,
-   "expected": 8,
-   "ms": 2,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "Minify",
-   "sample": "s03_encoded_strings",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 14,
-   "expected": 14,
-   "ms": 1,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "Weak",
-   "sample": "s03_encoded_strings",
-   "toolBehavior": "diverged",
-   "outcome": "differs",
-   "events": 14,
-   "expected": 14,
-   "ms": 3,
-   "detail": "completed"
-  },
-  {
-   "tool": "prometheus",
-   "config": "Medium",
-   "sample": "s03_encoded_strings",
-   "toolBehavior": "diverged",
-   "outcome": "differs",
-   "events": 14,
-   "expected": 14,
-   "ms": 40,
-   "detail": "completed"
-  },
-  {
-   "tool": "prometheus",
-   "config": "Strong",
-   "sample": "s03_encoded_strings",
-   "toolBehavior": "diverged",
-   "outcome": "differs",
-   "events": 14,
-   "expected": 14,
-   "ms": 67,
-   "detail": "completed"
-  },
-  {
-   "tool": "prometheus",
-   "config": "step-EncryptStrings",
-   "sample": "s03_encoded_strings",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 14,
-   "expected": 14,
-   "ms": 3,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "step-ConstantArray",
-   "sample": "s03_encoded_strings",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 14,
-   "expected": 14,
-   "ms": 4,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "step-SplitStrings",
-   "sample": "s03_encoded_strings",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 14,
-   "expected": 14,
-   "ms": 1,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "step-NumbersToExpressions",
-   "sample": "s03_encoded_strings",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 14,
-   "expected": 14,
-   "ms": 9,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "step-ProxifyLocals",
-   "sample": "s03_encoded_strings",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 14,
-   "expected": 14,
-   "ms": 2,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "step-WrapInFunction",
-   "sample": "s03_encoded_strings",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 14,
-   "expected": 14,
-   "ms": 1,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "step-AddVararg",
-   "sample": "s03_encoded_strings",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 14,
-   "expected": 14,
-   "ms": 1,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "step-AntiTamper",
-   "sample": "s03_encoded_strings",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 14,
-   "expected": 14,
-   "ms": 5,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "step-Vmify",
-   "sample": "s03_encoded_strings",
-   "toolBehavior": "diverged",
-   "outcome": "differs",
-   "events": 14,
-   "expected": 14,
-   "ms": 3,
-   "detail": "completed"
-  },
-  {
-   "tool": "prometheus",
-   "config": "Minify",
-   "sample": "s04_control_flow",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 11,
-   "expected": 11,
-   "ms": 1,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "Weak",
-   "sample": "s04_control_flow",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 11,
-   "expected": 11,
-   "ms": 8,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "Medium",
-   "sample": "s04_control_flow",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 11,
-   "expected": 11,
-   "ms": 56,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "Strong",
-   "sample": "s04_control_flow",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 11,
-   "expected": 11,
-   "ms": 153,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "step-EncryptStrings",
-   "sample": "s04_control_flow",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 11,
-   "expected": 11,
-   "ms": 4,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "step-ConstantArray",
-   "sample": "s04_control_flow",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 11,
-   "expected": 11,
-   "ms": 11,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "step-SplitStrings",
-   "sample": "s04_control_flow",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 11,
-   "expected": 11,
-   "ms": 2,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "step-NumbersToExpressions",
-   "sample": "s04_control_flow",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 11,
-   "expected": 11,
+   "events": 4,
+   "expected": 4,
    "ms": 1,
    "detail": null
   },
   {
    "tool": "prometheus",
    "config": "step-ProxifyLocals",
-   "sample": "s04_control_flow",
+   "sample": "s01_minify_basic",
    "toolBehavior": "equivalent",
    "outcome": "identical",
-   "events": 11,
-   "expected": 11,
+   "events": 4,
+   "expected": 4,
    "ms": 2,
    "detail": null
   },
   {
    "tool": "prometheus",
    "config": "step-WrapInFunction",
-   "sample": "s04_control_flow",
+   "sample": "s01_minify_basic",
    "toolBehavior": "equivalent",
    "outcome": "identical",
-   "events": 11,
-   "expected": 11,
-   "ms": 1,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "step-AddVararg",
-   "sample": "s04_control_flow",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 11,
-   "expected": 11,
-   "ms": 0,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "step-AntiTamper",
-   "sample": "s04_control_flow",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 11,
-   "expected": 11,
+   "events": 4,
+   "expected": 4,
    "ms": 6,
    "detail": null
   },
   {
    "tool": "prometheus",
-   "config": "step-Vmify",
-   "sample": "s04_control_flow",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 11,
-   "expected": 11,
-   "ms": 4,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "Minify",
-   "sample": "s05_nested_functions",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 6,
-   "expected": 6,
-   "ms": 2,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "Weak",
-   "sample": "s05_nested_functions",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 6,
-   "expected": 6,
-   "ms": 14,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "Medium",
-   "sample": "s05_nested_functions",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 6,
-   "expected": 6,
-   "ms": 55,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "Strong",
-   "sample": "s05_nested_functions",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 6,
-   "expected": 6,
-   "ms": 110,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "step-EncryptStrings",
-   "sample": "s05_nested_functions",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 6,
-   "expected": 6,
-   "ms": 9,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "step-ConstantArray",
-   "sample": "s05_nested_functions",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 6,
-   "expected": 6,
-   "ms": 2,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "step-SplitStrings",
-   "sample": "s05_nested_functions",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 6,
-   "expected": 6,
-   "ms": 2,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "step-NumbersToExpressions",
-   "sample": "s05_nested_functions",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 6,
-   "expected": 6,
-   "ms": 1,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "step-ProxifyLocals",
-   "sample": "s05_nested_functions",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 6,
-   "expected": 6,
-   "ms": 2,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "step-WrapInFunction",
-   "sample": "s05_nested_functions",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 6,
-   "expected": 6,
-   "ms": 1,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
    "config": "step-AddVararg",
-   "sample": "s05_nested_functions",
+   "sample": "s01_minify_basic",
    "toolBehavior": "equivalent",
    "outcome": "identical",
-   "events": 6,
-   "expected": 6,
+   "events": 4,
+   "expected": 4,
    "ms": 1,
    "detail": null
   },
   {
    "tool": "prometheus",
    "config": "step-AntiTamper",
-   "sample": "s05_nested_functions",
+   "sample": "s01_minify_basic",
    "toolBehavior": "equivalent",
    "outcome": "identical",
-   "events": 6,
-   "expected": 6,
-   "ms": 5,
+   "events": 4,
+   "expected": 4,
+   "ms": 4,
    "detail": null
   },
   {
    "tool": "prometheus",
    "config": "step-Vmify",
-   "sample": "s05_nested_functions",
+   "sample": "s01_minify_basic",
    "toolBehavior": "equivalent",
    "outcome": "identical",
-   "events": 6,
-   "expected": 6,
+   "events": 4,
+   "expected": 4,
    "ms": 5,
    "detail": null
   },
   {
    "tool": "prometheus",
    "config": "Minify",
-   "sample": "s06_combined",
+   "sample": "s02_renamed_vars",
    "toolBehavior": "equivalent",
    "outcome": "identical",
-   "events": 4,
-   "expected": 4,
-   "ms": 2,
+   "events": 8,
+   "expected": 8,
+   "ms": 1,
    "detail": null
   },
   {
    "tool": "prometheus",
    "config": "Weak",
-   "sample": "s06_combined",
+   "sample": "s02_renamed_vars",
    "toolBehavior": "equivalent",
    "outcome": "identical",
-   "events": 4,
-   "expected": 4,
-   "ms": 13,
+   "events": 8,
+   "expected": 8,
+   "ms": 7,
    "detail": null
   },
   {
    "tool": "prometheus",
    "config": "Medium",
-   "sample": "s06_combined",
+   "sample": "s02_renamed_vars",
    "toolBehavior": "equivalent",
    "outcome": "identical",
-   "events": 4,
-   "expected": 4,
+   "events": 8,
+   "expected": 8,
    "ms": 55,
    "detail": null
   },
   {
    "tool": "prometheus",
    "config": "Strong",
-   "sample": "s06_combined",
+   "sample": "s02_renamed_vars",
    "toolBehavior": "equivalent",
    "outcome": "identical",
-   "events": 4,
-   "expected": 4,
+   "events": 8,
+   "expected": 8,
+   "ms": 55,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "step-EncryptStrings",
+   "sample": "s02_renamed_vars",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 8,
+   "expected": 8,
+   "ms": 3,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "step-ConstantArray",
+   "sample": "s02_renamed_vars",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 8,
+   "expected": 8,
+   "ms": 7,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "step-SplitStrings",
+   "sample": "s02_renamed_vars",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 8,
+   "expected": 8,
+   "ms": 0,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "step-NumbersToExpressions",
+   "sample": "s02_renamed_vars",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 8,
+   "expected": 8,
+   "ms": 1,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "step-ProxifyLocals",
+   "sample": "s02_renamed_vars",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 8,
+   "expected": 8,
+   "ms": 1,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "step-WrapInFunction",
+   "sample": "s02_renamed_vars",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 8,
+   "expected": 8,
+   "ms": 1,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "step-AddVararg",
+   "sample": "s02_renamed_vars",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 8,
+   "expected": 8,
+   "ms": 0,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "step-AntiTamper",
+   "sample": "s02_renamed_vars",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 8,
+   "expected": 8,
+   "ms": 3,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "step-Vmify",
+   "sample": "s02_renamed_vars",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 8,
+   "expected": 8,
+   "ms": 2,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "Minify",
+   "sample": "s03_encoded_strings",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 14,
+   "expected": 14,
+   "ms": 1,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "Weak",
+   "sample": "s03_encoded_strings",
+   "toolBehavior": "diverged",
+   "outcome": "differs",
+   "events": 14,
+   "expected": 14,
+   "ms": 8,
+   "detail": "completed"
+  },
+  {
+   "tool": "prometheus",
+   "config": "Medium",
+   "sample": "s03_encoded_strings",
+   "toolBehavior": "diverged",
+   "outcome": "differs",
+   "events": 14,
+   "expected": 14,
+   "ms": 29,
+   "detail": "completed"
+  },
+  {
+   "tool": "prometheus",
+   "config": "Strong",
+   "sample": "s03_encoded_strings",
+   "toolBehavior": "diverged",
+   "outcome": "differs",
+   "events": 14,
+   "expected": 14,
+   "ms": 48,
+   "detail": "completed"
+  },
+  {
+   "tool": "prometheus",
+   "config": "step-EncryptStrings",
+   "sample": "s03_encoded_strings",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 14,
+   "expected": 14,
+   "ms": 2,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "step-ConstantArray",
+   "sample": "s03_encoded_strings",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 14,
+   "expected": 14,
+   "ms": 10,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "step-SplitStrings",
+   "sample": "s03_encoded_strings",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 14,
+   "expected": 14,
+   "ms": 1,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "step-NumbersToExpressions",
+   "sample": "s03_encoded_strings",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 14,
+   "expected": 14,
+   "ms": 0,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "step-ProxifyLocals",
+   "sample": "s03_encoded_strings",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 14,
+   "expected": 14,
+   "ms": 2,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "step-WrapInFunction",
+   "sample": "s03_encoded_strings",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 14,
+   "expected": 14,
+   "ms": 0,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "step-AddVararg",
+   "sample": "s03_encoded_strings",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 14,
+   "expected": 14,
+   "ms": 1,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "step-AntiTamper",
+   "sample": "s03_encoded_strings",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 14,
+   "expected": 14,
+   "ms": 3,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "step-Vmify",
+   "sample": "s03_encoded_strings",
+   "toolBehavior": "diverged",
+   "outcome": "differs",
+   "events": 14,
+   "expected": 14,
+   "ms": 1,
+   "detail": "completed"
+  },
+  {
+   "tool": "prometheus",
+   "config": "Minify",
+   "sample": "s04_control_flow",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 11,
+   "expected": 11,
+   "ms": 1,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "Weak",
+   "sample": "s04_control_flow",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 11,
+   "expected": 11,
+   "ms": 9,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "Medium",
+   "sample": "s04_control_flow",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 11,
+   "expected": 11,
+   "ms": 32,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "Strong",
+   "sample": "s04_control_flow",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 11,
+   "expected": 11,
    "ms": 115,
    "detail": null
   },
   {
    "tool": "prometheus",
    "config": "step-EncryptStrings",
+   "sample": "s04_control_flow",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 11,
+   "expected": 11,
+   "ms": 4,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "step-ConstantArray",
+   "sample": "s04_control_flow",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 11,
+   "expected": 11,
+   "ms": 4,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "step-SplitStrings",
+   "sample": "s04_control_flow",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 11,
+   "expected": 11,
+   "ms": 1,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "step-NumbersToExpressions",
+   "sample": "s04_control_flow",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 11,
+   "expected": 11,
+   "ms": 1,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "step-ProxifyLocals",
+   "sample": "s04_control_flow",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 11,
+   "expected": 11,
+   "ms": 3,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "step-WrapInFunction",
+   "sample": "s04_control_flow",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 11,
+   "expected": 11,
+   "ms": 1,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "step-AddVararg",
+   "sample": "s04_control_flow",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 11,
+   "expected": 11,
+   "ms": 4,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "step-AntiTamper",
+   "sample": "s04_control_flow",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 11,
+   "expected": 11,
+   "ms": 7,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "step-Vmify",
+   "sample": "s04_control_flow",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 11,
+   "expected": 11,
+   "ms": 10,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "Minify",
+   "sample": "s05_nested_functions",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 6,
+   "expected": 6,
+   "ms": 0,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "Weak",
+   "sample": "s05_nested_functions",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 6,
+   "expected": 6,
+   "ms": 6,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "Medium",
+   "sample": "s05_nested_functions",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 6,
+   "expected": 6,
+   "ms": 33,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "Strong",
+   "sample": "s05_nested_functions",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 6,
+   "expected": 6,
+   "ms": 71,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "step-EncryptStrings",
+   "sample": "s05_nested_functions",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 6,
+   "expected": 6,
+   "ms": 2,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "step-ConstantArray",
+   "sample": "s05_nested_functions",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 6,
+   "expected": 6,
+   "ms": 2,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "step-SplitStrings",
+   "sample": "s05_nested_functions",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 6,
+   "expected": 6,
+   "ms": 0,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "step-NumbersToExpressions",
+   "sample": "s05_nested_functions",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 6,
+   "expected": 6,
+   "ms": 1,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "step-ProxifyLocals",
+   "sample": "s05_nested_functions",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 6,
+   "expected": 6,
+   "ms": 6,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "step-WrapInFunction",
+   "sample": "s05_nested_functions",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 6,
+   "expected": 6,
+   "ms": 0,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "step-AddVararg",
+   "sample": "s05_nested_functions",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 6,
+   "expected": 6,
+   "ms": 1,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "step-AntiTamper",
+   "sample": "s05_nested_functions",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 6,
+   "expected": 6,
+   "ms": 3,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "step-Vmify",
+   "sample": "s05_nested_functions",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 6,
+   "expected": 6,
+   "ms": 2,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "Minify",
+   "sample": "s06_combined",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 4,
+   "expected": 4,
+   "ms": 1,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "Weak",
+   "sample": "s06_combined",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 4,
+   "expected": 4,
+   "ms": 8,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "Medium",
+   "sample": "s06_combined",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 4,
+   "expected": 4,
+   "ms": 34,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "Strong",
+   "sample": "s06_combined",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 4,
+   "expected": 4,
+   "ms": 117,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "step-EncryptStrings",
    "sample": "s06_combined",
    "toolBehavior": "equivalent",
    "outcome": "identical",
@@ -790,7 +790,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 2,
+   "ms": 1,
    "detail": null
   },
   {
@@ -812,7 +812,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 2,
+   "ms": 8,
    "detail": null
   },
   {
@@ -823,7 +823,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 2,
+   "ms": 1,
    "detail": null
   },
   {
@@ -845,7 +845,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 5,
+   "ms": 4,
    "detail": null
   },
   {
@@ -856,7 +856,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 7,
+   "ms": 3,
    "detail": null
   },
   {
@@ -878,7 +878,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 5,
+   "ms": 3,
    "detail": null
   },
   {
@@ -889,7 +889,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 34,
+   "ms": 31,
    "detail": null
   },
   {
@@ -900,7 +900,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 47,
+   "ms": 40,
    "detail": null
   },
   {
@@ -922,7 +922,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 3,
+   "ms": 2,
    "detail": null
   },
   {
@@ -933,7 +933,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 0,
+   "ms": 1,
    "detail": null
   },
   {
@@ -944,7 +944,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 1,
+   "ms": 0,
    "detail": null
   },
   {
@@ -966,7 +966,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 0,
+   "ms": 5,
    "detail": null
   },
   {
@@ -988,7 +988,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 8,
+   "ms": 3,
    "detail": null
   },
   {
@@ -1010,7 +1010,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 0,
+   "ms": 1,
    "detail": null
   },
   {
@@ -1032,7 +1032,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 4,
+   "ms": 3,
    "detail": null
   },
   {
@@ -1043,7 +1043,7 @@
    "outcome": "identical",
    "events": 5,
    "expected": 4,
-   "ms": 1184,
+   "ms": 1065,
    "detail": null
   },
   {
@@ -1054,7 +1054,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 37,
+   "ms": 38,
    "detail": null
   },
   {
@@ -1065,7 +1065,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 6,
+   "ms": 4,
    "detail": null
   },
   {
@@ -1076,7 +1076,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 1,
+   "ms": 0,
    "detail": null
   },
   {
@@ -1087,7 +1087,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 0,
+   "ms": 1,
    "detail": null
   },
   {
@@ -1120,7 +1120,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 1,
+   "ms": 0,
    "detail": null
   },
   {
@@ -1131,7 +1131,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 0,
+   "ms": 1,
    "detail": null
   },
   {
@@ -1153,7 +1153,7 @@
    "outcome": "syntax-error",
    "events": 0,
    "expected": 4,
-   "ms": 0,
+   "ms": 1,
    "detail": "67:7: unfinished string"
   },
   {
@@ -1164,7 +1164,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 2,
+   "ms": 1,
    "detail": null
   },
   {
@@ -1230,7 +1230,7 @@
    "outcome": "error",
    "events": 0,
    "expected": 8,
-   "ms": 33,
+   "ms": 34,
    "detail": "trace:123: attempt to perform arithmetic on a nil value (local 'Val2')"
   },
   {
@@ -1241,7 +1241,7 @@
    "outcome": "identical",
    "events": 8,
    "expected": 8,
-   "ms": 3,
+   "ms": 2,
    "detail": null
   },
   {
@@ -1274,7 +1274,7 @@
    "outcome": "identical",
    "events": 8,
    "expected": 8,
-   "ms": 2,
+   "ms": 1,
    "detail": null
   },
   {
@@ -1285,7 +1285,7 @@
    "outcome": "identical",
    "events": 8,
    "expected": 8,
-   "ms": 1,
+   "ms": 0,
    "detail": null
   },
   {
@@ -1318,7 +1318,7 @@
    "outcome": "identical",
    "events": 8,
    "expected": 8,
-   "ms": 1,
+   "ms": 0,
    "detail": null
   },
   {
@@ -1351,7 +1351,7 @@
    "outcome": "identical",
    "events": 9,
    "expected": 8,
-   "ms": 17,
+   "ms": 7,
    "detail": null
   },
   {
@@ -1362,7 +1362,7 @@
    "outcome": "identical",
    "events": 8,
    "expected": 8,
-   "ms": 1,
+   "ms": 5,
    "detail": null
   },
   {
@@ -1395,7 +1395,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 7,
+   "ms": 5,
    "detail": null
   },
   {
@@ -1406,7 +1406,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 25,
+   "ms": 26,
    "detail": null
   },
   {
@@ -1417,7 +1417,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 2,
+   "ms": 1,
    "detail": null
   },
   {
@@ -1450,7 +1450,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 5,
+   "ms": 1,
    "detail": null
   },
   {
@@ -1461,7 +1461,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 1,
+   "ms": 4,
    "detail": null
   },
   {
@@ -1483,7 +1483,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 1,
+   "ms": 0,
    "detail": null
   },
   {
@@ -1505,7 +1505,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 1,
+   "ms": 0,
    "detail": null
   },
   {
@@ -1527,7 +1527,7 @@
    "outcome": "identical",
    "events": 15,
    "expected": 14,
-   "ms": 7,
+   "ms": 5,
    "detail": null
   },
   {
@@ -1538,7 +1538,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 0,
+   "ms": 1,
    "detail": null
   },
   {
@@ -1560,7 +1560,7 @@
    "outcome": "identical",
    "events": 11,
    "expected": 11,
-   "ms": 2,
+   "ms": 1,
    "detail": null
   },
   {
@@ -1582,7 +1582,7 @@
    "outcome": "identical",
    "events": 11,
    "expected": 11,
-   "ms": 31,
+   "ms": 27,
    "detail": null
   },
   {
@@ -1593,7 +1593,7 @@
    "outcome": "identical",
    "events": 11,
    "expected": 11,
-   "ms": 1,
+   "ms": 2,
    "detail": null
   },
   {
@@ -1604,7 +1604,7 @@
    "outcome": "identical",
    "events": 11,
    "expected": 11,
-   "ms": 1,
+   "ms": 0,
    "detail": null
   },
   {
@@ -1615,7 +1615,7 @@
    "outcome": "identical",
    "events": 11,
    "expected": 11,
-   "ms": 6,
+   "ms": 1,
    "detail": null
   },
   {
@@ -1626,7 +1626,7 @@
    "outcome": "identical",
    "events": 11,
    "expected": 11,
-   "ms": 2,
+   "ms": 4,
    "detail": null
   },
   {
@@ -1648,7 +1648,7 @@
    "outcome": "identical",
    "events": 11,
    "expected": 11,
-   "ms": 1,
+   "ms": 0,
    "detail": null
   },
   {
@@ -1670,7 +1670,7 @@
    "outcome": "identical",
    "events": 11,
    "expected": 11,
-   "ms": 2,
+   "ms": 1,
    "detail": null
   },
   {
@@ -1692,7 +1692,7 @@
    "outcome": "identical",
    "events": 11,
    "expected": 11,
-   "ms": 2,
+   "ms": 1,
    "detail": null
   },
   {
@@ -1703,7 +1703,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 11,
-   "ms": 12,
+   "ms": 7,
    "detail": null
   },
   {
@@ -1714,7 +1714,7 @@
    "outcome": "identical",
    "events": 11,
    "expected": 11,
-   "ms": 2,
+   "ms": 1,
    "detail": null
   },
   {
@@ -1725,7 +1725,7 @@
    "outcome": "identical",
    "events": 6,
    "expected": 6,
-   "ms": 2,
+   "ms": 1,
    "detail": null
   },
   {
@@ -1736,7 +1736,7 @@
    "outcome": "identical",
    "events": 6,
    "expected": 6,
-   "ms": 3,
+   "ms": 2,
    "detail": null
   },
   {
@@ -1747,7 +1747,7 @@
    "outcome": "syntax-error",
    "events": 0,
    "expected": 6,
-   "ms": 10,
+   "ms": 3,
    "detail": "2:3816: syntax error near 'end'"
   },
   {
@@ -1758,7 +1758,7 @@
    "outcome": "syntax-error",
    "events": 0,
    "expected": 6,
-   "ms": 6,
+   "ms": 9,
    "detail": "2:3889: syntax error near 'end'"
   },
   {
@@ -1769,7 +1769,7 @@
    "outcome": "identical",
    "events": 6,
    "expected": 6,
-   "ms": 40,
+   "ms": 32,
    "detail": null
   },
   {
@@ -1791,7 +1791,7 @@
    "outcome": "identical",
    "events": 6,
    "expected": 6,
-   "ms": 3,
+   "ms": 0,
    "detail": null
   },
   {
@@ -1813,7 +1813,7 @@
    "outcome": "identical",
    "events": 6,
    "expected": 6,
-   "ms": 0,
+   "ms": 1,
    "detail": null
   },
   {
@@ -1824,7 +1824,7 @@
    "outcome": "identical",
    "events": 6,
    "expected": 6,
-   "ms": 1,
+   "ms": 0,
    "detail": null
   },
   {
@@ -1857,7 +1857,7 @@
    "outcome": "identical",
    "events": 6,
    "expected": 6,
-   "ms": 1,
+   "ms": 0,
    "detail": null
   },
   {
@@ -1879,7 +1879,7 @@
    "outcome": "error",
    "events": 4,
    "expected": 6,
-   "ms": 5,
+   "ms": 1,
    "detail": "trace:52: attempt to perform arithmetic on a nil value"
   },
   {
@@ -1890,7 +1890,7 @@
    "outcome": "identical",
    "events": 7,
    "expected": 6,
-   "ms": 12,
+   "ms": 10,
    "detail": null
   },
   {
@@ -1912,7 +1912,7 @@
    "outcome": "error",
    "events": 0,
    "expected": 4,
-   "ms": 1,
+   "ms": 0,
    "detail": "trace:2: attempt to index a nil value (global 'ycbhbXasaqVk')"
   },
   {
@@ -1923,7 +1923,7 @@
    "outcome": "error",
    "events": 0,
    "expected": 4,
-   "ms": 2,
+   "ms": 1,
    "detail": "trace:2: attempt to index a nil value (global 'TxzkRBbZa')"
   },
   {
@@ -1945,7 +1945,7 @@
    "outcome": "error",
    "events": 0,
    "expected": 4,
-   "ms": 37,
+   "ms": 29,
    "detail": "trace:128: attempt to perform arithmetic on a nil value (local 'Val4')"
   },
   {
@@ -1978,7 +1978,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 2,
+   "ms": 1,
    "detail": null
   },
   {
@@ -1989,7 +1989,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 2,
+   "ms": 1,
    "detail": null
   },
   {
@@ -2033,7 +2033,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 5,
+   "ms": 1,
    "detail": null
   },
   {
@@ -2044,7 +2044,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 1,
+   "ms": 0,
    "detail": null
   },
   {
@@ -2055,7 +2055,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 1,
+   "ms": 4,
    "detail": null
   },
   {
@@ -2066,7 +2066,7 @@
    "outcome": "identical",
    "events": 5,
    "expected": 4,
-   "ms": 12,
+   "ms": 10,
    "detail": null
   },
   {
@@ -2121,7 +2121,7 @@
    "outcome": "identical",
    "events": 13,
    "expected": 12,
-   "ms": 1224,
+   "ms": 956,
    "detail": null
   },
   {
@@ -2132,7 +2132,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 21,
+   "ms": 13,
    "detail": null
   },
   {
@@ -2143,7 +2143,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 2,
+   "ms": 1,
    "detail": null
   },
   {
@@ -2154,7 +2154,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 2,
+   "ms": 0,
    "detail": null
   },
   {
@@ -2176,7 +2176,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 2,
+   "ms": 1,
    "detail": null
   },
   {
@@ -2187,7 +2187,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 0,
+   "ms": 1,
    "detail": null
   },
   {
@@ -2198,7 +2198,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 1,
+   "ms": 0,
    "detail": null
   },
   {
@@ -2231,7 +2231,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 1,
+   "ms": 0,
    "detail": null
   },
   {
@@ -2253,7 +2253,7 @@
    "outcome": "identical",
    "events": 13,
    "expected": 12,
-   "ms": 7,
+   "ms": 4,
    "detail": null
   },
   {
@@ -2264,23 +2264,12 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 5,
+   "ms": 1,
    "detail": null
   },
   {
    "tool": "ironbrew2",
    "config": "default",
-   "sample": "s01_minify_basic",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 4,
-   "expected": 4,
-   "ms": 48,
-   "detail": null
-  },
-  {
-   "tool": "ironbrew2",
-   "config": "plain",
    "sample": "s01_minify_basic",
    "toolBehavior": "equivalent",
    "outcome": "identical",
@@ -2291,13 +2280,24 @@
   },
   {
    "tool": "ironbrew2",
+   "config": "plain",
+   "sample": "s01_minify_basic",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 4,
+   "expected": 4,
+   "ms": 19,
+   "detail": null
+  },
+  {
+   "tool": "ironbrew2",
    "config": "mutate",
    "sample": "s01_minify_basic",
    "toolBehavior": "equivalent",
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 38,
+   "ms": 31,
    "detail": null
   },
   {
@@ -2308,7 +2308,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 34,
+   "ms": 22,
    "detail": null
   },
   {
@@ -2319,7 +2319,7 @@
    "outcome": "differs",
    "events": 4,
    "expected": 4,
-   "ms": 29,
+   "ms": 15,
    "detail": "completed"
   },
   {
@@ -2330,7 +2330,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 216,
+   "ms": 107,
    "detail": null
   },
   {
@@ -2341,7 +2341,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 42,
+   "ms": 28,
    "detail": null
   },
   {
@@ -2352,7 +2352,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 33,
+   "ms": 21,
    "detail": null
   },
   {
@@ -2363,7 +2363,7 @@
    "outcome": "identical",
    "events": 8,
    "expected": 8,
-   "ms": 43,
+   "ms": 23,
    "detail": null
   },
   {
@@ -2374,7 +2374,7 @@
    "outcome": "identical",
    "events": 8,
    "expected": 8,
-   "ms": 34,
+   "ms": 19,
    "detail": null
   },
   {
@@ -2385,7 +2385,7 @@
    "outcome": "identical",
    "events": 8,
    "expected": 8,
-   "ms": 22,
+   "ms": 12,
    "detail": null
   },
   {
@@ -2396,7 +2396,7 @@
    "outcome": "identical",
    "events": 8,
    "expected": 8,
-   "ms": 40,
+   "ms": 23,
    "detail": null
   },
   {
@@ -2407,7 +2407,7 @@
    "outcome": "error",
    "events": 0,
    "expected": 8,
-   "ms": 31,
+   "ms": 19,
    "detail": "trace:37: attempt to index a nil value"
   },
   {
@@ -2418,7 +2418,7 @@
    "outcome": "identical",
    "events": 8,
    "expected": 8,
-   "ms": 214,
+   "ms": 127,
    "detail": null
   },
   {
@@ -2429,7 +2429,7 @@
    "outcome": "identical",
    "events": 8,
    "expected": 8,
-   "ms": 53,
+   "ms": 27,
    "detail": null
   },
   {
@@ -2440,7 +2440,7 @@
    "outcome": "identical",
    "events": 8,
    "expected": 8,
-   "ms": 37,
+   "ms": 19,
    "detail": null
   },
   {
@@ -2451,7 +2451,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 38,
+   "ms": 20,
    "detail": null
   },
   {
@@ -2462,7 +2462,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 31,
+   "ms": 18,
    "detail": null
   },
   {
@@ -2473,7 +2473,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 32,
+   "ms": 19,
    "detail": null
   },
   {
@@ -2484,7 +2484,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 32,
+   "ms": 20,
    "detail": null
   },
   {
@@ -2495,7 +2495,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 39,
+   "ms": 16,
    "detail": null
   },
   {
@@ -2506,7 +2506,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 240,
+   "ms": 231,
    "detail": null
   },
   {
@@ -2517,7 +2517,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 23,
+   "ms": 22,
    "detail": null
   },
   {
@@ -2528,7 +2528,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 15,
+   "ms": 25,
    "detail": null
   },
   {
@@ -2539,12 +2539,78 @@
    "outcome": "identical",
    "events": 11,
    "expected": 11,
-   "ms": 31,
+   "ms": 32,
    "detail": null
   },
   {
    "tool": "ironbrew2",
    "config": "plain",
+   "sample": "s04_control_flow",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 11,
+   "expected": 11,
+   "ms": 23,
+   "detail": null
+  },
+  {
+   "tool": "ironbrew2",
+   "config": "mutate",
+   "sample": "s04_control_flow",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 11,
+   "expected": 11,
+   "ms": 24,
+   "detail": null
+  },
+  {
+   "tool": "ironbrew2",
+   "config": "super",
+   "sample": "s04_control_flow",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 11,
+   "expected": 11,
+   "ms": 26,
+   "detail": null
+  },
+  {
+   "tool": "ironbrew2",
+   "config": "flow",
+   "sample": "s04_control_flow",
+   "toolBehavior": "errored",
+   "outcome": "limit",
+   "events": 8,
+   "expected": 11,
+   "ms": 8008,
+   "detail": "stopped (time limit)"
+  },
+  {
+   "tool": "ironbrew2",
+   "config": "strings",
+   "sample": "s04_control_flow",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 11,
+   "expected": 11,
+   "ms": 337,
+   "detail": null
+  },
+  {
+   "tool": "ironbrew2",
+   "config": "lineinfo",
+   "sample": "s04_control_flow",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 11,
+   "expected": 11,
+   "ms": 29,
+   "detail": null
+  },
+  {
+   "tool": "ironbrew2",
+   "config": "nocompress",
    "sample": "s04_control_flow",
    "toolBehavior": "equivalent",
    "outcome": "identical",
@@ -2555,79 +2621,13 @@
   },
   {
    "tool": "ironbrew2",
-   "config": "mutate",
-   "sample": "s04_control_flow",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 11,
-   "expected": 11,
-   "ms": 23,
-   "detail": null
-  },
-  {
-   "tool": "ironbrew2",
-   "config": "super",
-   "sample": "s04_control_flow",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 11,
-   "expected": 11,
-   "ms": 27,
-   "detail": null
-  },
-  {
-   "tool": "ironbrew2",
-   "config": "flow",
-   "sample": "s04_control_flow",
-   "toolBehavior": "errored",
-   "outcome": "limit",
-   "events": 8,
-   "expected": 11,
-   "ms": 8004,
-   "detail": "stopped (time limit)"
-  },
-  {
-   "tool": "ironbrew2",
-   "config": "strings",
-   "sample": "s04_control_flow",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 11,
-   "expected": 11,
-   "ms": 412,
-   "detail": null
-  },
-  {
-   "tool": "ironbrew2",
-   "config": "lineinfo",
-   "sample": "s04_control_flow",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 11,
-   "expected": 11,
-   "ms": 53,
-   "detail": null
-  },
-  {
-   "tool": "ironbrew2",
-   "config": "nocompress",
-   "sample": "s04_control_flow",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 11,
-   "expected": 11,
-   "ms": 25,
-   "detail": null
-  },
-  {
-   "tool": "ironbrew2",
    "config": "default",
    "sample": "s05_nested_functions",
    "toolBehavior": "equivalent",
    "outcome": "identical",
    "events": 6,
    "expected": 6,
-   "ms": 34,
+   "ms": 31,
    "detail": null
   },
   {
@@ -2638,7 +2638,7 @@
    "outcome": "identical",
    "events": 6,
    "expected": 6,
-   "ms": 26,
+   "ms": 24,
    "detail": null
   },
   {
@@ -2649,7 +2649,7 @@
    "outcome": "identical",
    "events": 6,
    "expected": 6,
-   "ms": 21,
+   "ms": 22,
    "detail": null
   },
   {
@@ -2660,7 +2660,7 @@
    "outcome": "identical",
    "events": 6,
    "expected": 6,
-   "ms": 26,
+   "ms": 24,
    "detail": null
   },
   {
@@ -2671,7 +2671,7 @@
    "outcome": "identical",
    "events": 6,
    "expected": 6,
-   "ms": 25,
+   "ms": 24,
    "detail": null
   },
   {
@@ -2682,7 +2682,7 @@
    "outcome": "identical",
    "events": 6,
    "expected": 6,
-   "ms": 43,
+   "ms": 41,
    "detail": null
   },
   {
@@ -2693,7 +2693,7 @@
    "outcome": "identical",
    "events": 6,
    "expected": 6,
-   "ms": 35,
+   "ms": 30,
    "detail": null
   },
   {
@@ -2704,34 +2704,12 @@
    "outcome": "identical",
    "events": 6,
    "expected": 6,
-   "ms": 43,
+   "ms": 25,
    "detail": null
   },
   {
    "tool": "ironbrew2",
    "config": "default",
-   "sample": "s06_combined",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 4,
-   "expected": 4,
-   "ms": 47,
-   "detail": null
-  },
-  {
-   "tool": "ironbrew2",
-   "config": "plain",
-   "sample": "s06_combined",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 4,
-   "expected": 4,
-   "ms": 29,
-   "detail": null
-  },
-  {
-   "tool": "ironbrew2",
-   "config": "mutate",
    "sample": "s06_combined",
    "toolBehavior": "equivalent",
    "outcome": "identical",
@@ -2742,13 +2720,35 @@
   },
   {
    "tool": "ironbrew2",
+   "config": "plain",
+   "sample": "s06_combined",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 4,
+   "expected": 4,
+   "ms": 28,
+   "detail": null
+  },
+  {
+   "tool": "ironbrew2",
+   "config": "mutate",
+   "sample": "s06_combined",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 4,
+   "expected": 4,
+   "ms": 35,
+   "detail": null
+  },
+  {
+   "tool": "ironbrew2",
    "config": "super",
    "sample": "s06_combined",
    "toolBehavior": "equivalent",
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 62,
+   "ms": 36,
    "detail": null
   },
   {
@@ -2759,7 +2759,7 @@
    "outcome": "error",
    "events": 0,
    "expected": 4,
-   "ms": 55,
+   "ms": 33,
    "detail": "trace:37: attempt to perform arithmetic on a nil value"
   },
   {
@@ -2770,7 +2770,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 219,
+   "ms": 142,
    "detail": null
   },
   {
@@ -2781,7 +2781,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 98,
+   "ms": 53,
    "detail": null
   },
   {
@@ -2792,89 +2792,12 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 65,
+   "ms": 38,
    "detail": null
   },
   {
    "tool": "ironbrew2",
    "config": "default",
-   "sample": "s07_roblox_style",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 12,
-   "expected": 12,
-   "ms": 35,
-   "detail": null
-  },
-  {
-   "tool": "ironbrew2",
-   "config": "plain",
-   "sample": "s07_roblox_style",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 12,
-   "expected": 12,
-   "ms": 26,
-   "detail": null
-  },
-  {
-   "tool": "ironbrew2",
-   "config": "mutate",
-   "sample": "s07_roblox_style",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 12,
-   "expected": 12,
-   "ms": 28,
-   "detail": null
-  },
-  {
-   "tool": "ironbrew2",
-   "config": "super",
-   "sample": "s07_roblox_style",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 12,
-   "expected": 12,
-   "ms": 31,
-   "detail": null
-  },
-  {
-   "tool": "ironbrew2",
-   "config": "flow",
-   "sample": "s07_roblox_style",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 12,
-   "expected": 12,
-   "ms": 29,
-   "detail": null
-  },
-  {
-   "tool": "ironbrew2",
-   "config": "strings",
-   "sample": "s07_roblox_style",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 12,
-   "expected": 12,
-   "ms": 184,
-   "detail": null
-  },
-  {
-   "tool": "ironbrew2",
-   "config": "lineinfo",
-   "sample": "s07_roblox_style",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 12,
-   "expected": 12,
-   "ms": 27,
-   "detail": null
-  },
-  {
-   "tool": "ironbrew2",
-   "config": "nocompress",
    "sample": "s07_roblox_style",
    "toolBehavior": "equivalent",
    "outcome": "identical",
@@ -2885,18 +2808,106 @@
   },
   {
    "tool": "ironbrew2",
+   "config": "plain",
+   "sample": "s07_roblox_style",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 12,
+   "expected": 12,
+   "ms": 16,
+   "detail": null
+  },
+  {
+   "tool": "ironbrew2",
+   "config": "mutate",
+   "sample": "s07_roblox_style",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 12,
+   "expected": 12,
+   "ms": 16,
+   "detail": null
+  },
+  {
+   "tool": "ironbrew2",
+   "config": "super",
+   "sample": "s07_roblox_style",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 12,
+   "expected": 12,
+   "ms": 17,
+   "detail": null
+  },
+  {
+   "tool": "ironbrew2",
+   "config": "flow",
+   "sample": "s07_roblox_style",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 12,
+   "expected": 12,
+   "ms": 14,
+   "detail": null
+  },
+  {
+   "tool": "ironbrew2",
+   "config": "strings",
+   "sample": "s07_roblox_style",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 12,
+   "expected": 12,
+   "ms": 123,
+   "detail": null
+  },
+  {
+   "tool": "ironbrew2",
+   "config": "lineinfo",
+   "sample": "s07_roblox_style",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 12,
+   "expected": 12,
+   "ms": 18,
+   "detail": null
+  },
+  {
+   "tool": "ironbrew2",
+   "config": "nocompress",
+   "sample": "s07_roblox_style",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 12,
+   "expected": 12,
+   "ms": 14,
+   "detail": null
+  },
+  {
+   "tool": "ironbrew2",
    "config": "default",
    "sample": "s08_ironbrew_macros",
    "toolBehavior": "equivalent",
    "outcome": "identical",
    "events": 7,
    "expected": 7,
-   "ms": 54,
+   "ms": 46,
    "detail": null
   },
   {
    "tool": "ironbrew2",
    "config": "plain",
+   "sample": "s08_ironbrew_macros",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 7,
+   "expected": 7,
+   "ms": 16,
+   "detail": null
+  },
+  {
+   "tool": "ironbrew2",
+   "config": "mutate",
    "sample": "s08_ironbrew_macros",
    "toolBehavior": "equivalent",
    "outcome": "identical",
@@ -2907,7 +2918,7 @@
   },
   {
    "tool": "ironbrew2",
-   "config": "mutate",
+   "config": "super",
    "sample": "s08_ironbrew_macros",
    "toolBehavior": "equivalent",
    "outcome": "identical",
@@ -2918,24 +2929,13 @@
   },
   {
    "tool": "ironbrew2",
-   "config": "super",
-   "sample": "s08_ironbrew_macros",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 7,
-   "expected": 7,
-   "ms": 18,
-   "detail": null
-  },
-  {
-   "tool": "ironbrew2",
    "config": "flow",
    "sample": "s08_ironbrew_macros",
    "toolBehavior": "errored",
    "outcome": "limit",
    "events": 1,
    "expected": 7,
-   "ms": 8002,
+   "ms": 8003,
    "detail": "stopped (time limit)"
   },
   {
@@ -2946,7 +2946,7 @@
    "outcome": "identical",
    "events": 7,
    "expected": 7,
-   "ms": 342,
+   "ms": 421,
    "detail": null
   },
   {
@@ -2957,7 +2957,7 @@
    "outcome": "identical",
    "events": 7,
    "expected": 7,
-   "ms": 68,
+   "ms": 76,
    "detail": null
   },
   {
@@ -2968,7 +2968,7 @@
    "outcome": "identical",
    "events": 7,
    "expected": 7,
-   "ms": 42,
+   "ms": 38,
    "detail": null
   }
  ]

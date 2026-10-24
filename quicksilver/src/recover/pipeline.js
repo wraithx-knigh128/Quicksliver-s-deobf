@@ -16,7 +16,8 @@ import { evaluatePass } from '../passes/evaluate.js';
 import { renamePass } from '../passes/rename.js';
 import { unwrapWrapper, removeUnusedVararg, tidyIfs } from '../passes/structure.js';
 import { dataflowPass } from '../passes/dataflow.js';
-import { booleanResults, orientComparisons, shortCircuits, tableConstructors, bareNils, functionForms } from '../passes/idioms.js';
+import { regionPass } from '../passes/regions.js';
+import { booleanResults, orientComparisons, shortCircuits, tableConstructors, methodCalls, bareNils, functionForms } from '../passes/idioms.js';
 import { removeAntiTamper, undoProxifyLocals } from './prometheus.js';
 import { removeHerculesAntiTamper } from './hercules.js';
 import { assessConfidence } from './confidence.js';
@@ -131,11 +132,13 @@ export function recover(source, userOptions = {}) {
       total += run.step('idioms.bool', 'Write boolean results as expressions', (a) => booleanResults(a), { quiet: true });
       total += run.step('idioms.shortcircuit', 'Write defaults as `a or b`', (a) => shortCircuits(a), { quiet: true });
       total += run.step('idioms.table', 'Fold field assignments into table constructors', (a) => tableConstructors(a), { quiet: true });
+      total += run.step('idioms.method', 'Write o.m(o, ...) as o:m(...)', (a) => methodCalls(a), { quiet: true });
       total += run.step('idioms.nil', 'Declare locals without an explicit nil', (a) => bareNils(a), { quiet: true });
       total += run.step('idioms.compare', 'Orient comparisons', (a) => orientComparisons(a), { quiet: true });
     }
     total += run.step('fold', 'Fold constant expressions', (a) => foldPass(a, { foldCalls: options.foldCalls }));
     total += run.step('simplify', 'Simplify control flow and remove dead code', (a) => simplifyPass(a, { unusedAtStart }));
+    if (decompiled) total += run.step('regions', 'Evaluate closed constant computations', (a) => regionPass(a), { quiet: true });
     if (decompiled) total += run.step('dataflow', 'Remove dead stores, copies and temporaries', (a) => dataflowPass(a), { quiet: true });
     total += run.step('tidy', 'Tidy flipped tests', (a) => tidyIfs(a), { quiet: true });
     total += run.step('prometheus.proxify', 'Undo Prometheus ProxifyLocals', (a) => undoProxifyLocals(a), { quiet: true });

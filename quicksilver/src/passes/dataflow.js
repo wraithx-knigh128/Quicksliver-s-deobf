@@ -21,18 +21,118 @@ import { isPure } from './simplify.js';
 
 const LONG_STRING = 24;
 
-class Unsupported extends Error {}
+export class Unsupported extends Error {}
 
 /** The tracked variable a Name/Id node refers to, or null. */
-function tracker(info) {
+export function tracker(info) {
   return (node) => {
     const v = info.varOf.get(node);
     return v && !v.isGlobal && !v.captured && !(node.attrib) ? v : null;
   };
 }
 
+/** Like `tracker`, but a local that a closure captured counts too (see `captureExposure` for what that requires). */
+export function trackerWithCaptured(info) {
+  return (node) => {
+    const v = info.varOf.get(node);
+    return v && !v.isGlobal && !(node.attrib) ? v : null;
+  };
+}
+
+/** The expressions a statement evaluates itself (not those of the statements nested in it). */
+function ownExpressions(s) {
+  switch (s.type) {
+    case 'Local': return s.values;
+    case 'Assign': return [...s.targets, ...s.values];
+    case 'CompoundAssign': return [s.target, s.value];
+    case 'CallStmt': return [s.call];
+    case 'Return': return s.values;
+    case 'If': return s.clauses.map((c) => c.cond);
+    case 'While': case 'Repeat': return [s.cond];
+    case 'NumFor': return [s.start, s.stop, ...(s.step ? [s.step] : [])];
+    case 'GenFor': return s.exprs;
+    case 'Function': return [s.target, s.func];
+    case 'LocalFunction': return [s.func];
+    default: return [];
+  }
+}
+
+/**
+ * Which captured variables can a closure read or write after a given point of one function body?
+ *
+ * A closure can only see a variable once it has been created, so before the first closure that mentions a variable the
+ * variable is as private as any other local. Afterwards it may be read at any time (the closure can be called from
+ * anywhere), and inside a loop that creates such a closure the next pass is "afterwards" too. Statements are numbered in
+ * source order; a variable is exposed after statement S if a closure mentioning it was created in or before S, or in a
+ * loop that contains S.
+ *
+ * @returns {{after(s): Set<Var>, before(s): Set<Var>}}
+ */
+export function captureExposure(body, info, params = []) {
+  const declared = new Set();
+  const note = (id) => { const x = info.varOf.get(id); if (x) declared.add(x); };
+  params.forEach(note);
+  const first = new Map();        // Var -> ordinal of the first statement creating a closure that mentions it
+  const loopsOfVar = new Map();   // Var -> loops containing such a creation
+  const ord = new Map();
+  const last = new Map();
+  const loopsOf = new Map();
+  let counter = 0;
+  const loopStack = [];
+
+  const mentions = (func) => {
+    const out = new Set();
+    walk(func, (n) => { if (n.type === 'Name') { const x = info.varOf.get(n); if (x && !x.isGlobal) out.add(x); } return undefined; });
+    return out;
+  };
+
+  const visit = (stmts) => {
+    for (const s of stmts) {
+      ord.set(s, counter++);
+      loopsOf.set(s, loopStack.slice());
+      if (s.type === 'Local') s.ids.forEach(note);
+      else if (s.type === 'LocalFunction') note(s.id);
+      else if (s.type === 'NumFor') note(s.id);
+      else if (s.type === 'GenFor') s.ids.forEach(note);
+      // closures created by this statement's own expressions
+      for (const e of ownExpressions(s)) {
+        walk(e, (n) => {
+          if (n.type !== 'Func') return undefined;
+          for (const x of mentions(n)) {
+            if (!first.has(x) || first.get(x) > ord.get(s)) first.set(x, ord.get(s));
+            if (!loopsOfVar.has(x)) loopsOfVar.set(x, new Set());
+            for (const l of loopStack) loopsOfVar.get(x).add(l);
+          }
+          return false;
+        });
+      }
+      const isLoop = s.type === 'While' || s.type === 'Repeat' || s.type === 'NumFor' || s.type === 'GenFor';
+      if (isLoop) loopStack.push(s);
+      for (const b of childBlocks(s)) visit(b);
+      if (isLoop) loopStack.pop();
+      last.set(s, counter - 1);
+    }
+  };
+  visit(body);
+
+  const exposed = (s, n) => {
+    const out = new Set();
+    for (const [x, at] of first) {
+      if (!declared.has(x)) continue;
+      if (n(at)) { out.add(x); continue; }
+      const loops = loopsOfVar.get(x);
+      if (loops && loopsOf.get(s)?.some((l) => loops.has(l))) out.add(x);
+    }
+    return out;
+  };
+  return {
+    after: (s) => (ord.has(s) ? exposed(s, (at) => last.get(s) >= at) : new Set()),
+    before: (s) => (ord.has(s) ? exposed(s, (at) => ord.get(s) > at) : new Set()),
+  };
+}
+
 /** Statement lists directly inside a statement. */
-function childBlocks(s) {
+export function childBlocks(s) {
   switch (s.type) {
     case 'Do': case 'While': case 'Repeat': case 'NumFor': case 'GenFor': return [s.body];
     case 'If': return [...s.clauses.map((c) => c.body), ...(s.orelse ? [s.orelse] : [])];
@@ -41,17 +141,21 @@ function childBlocks(s) {
 }
 
 /** Tracked variables written anywhere inside `node` (not inside nested functions). */
-function writtenIn(node, v) {
+export function writtenIn(node, v) {
   const out = new Set();
+  const add = (id) => { const x = v(id); if (x) out.add(x); };
   walk(node, (n) => {
     if (n.type === 'Func') return false;
-    if (n.type === 'Assign') for (const t of n.targets) if (t.type === 'Name') { const x = v(t); if (x) out.add(x); }
-    else if (n.type === 'CompoundAssign' && n.target.type === 'Name') { const x = v(n.target); if (x) out.add(x); }
-    else if (n.type === 'Local') for (const id of n.ids) { const x = v(id); if (x) out.add(x); }
-    else if (n.type === 'LocalFunction') { const x = v(n.id); if (x) out.add(x); }
-    else if (n.type === 'Function' && n.target.type === 'Name') { const x = v(n.target); if (x) out.add(x); }
-    else if (n.type === 'NumFor') { const x = v(n.id); if (x) out.add(x); }
-    else if (n.type === 'GenFor') for (const id of n.ids) { const x = v(id); if (x) out.add(x); }
+    switch (n.type) {
+      case 'Assign': for (const t of n.targets) if (t.type === 'Name') add(t); break;
+      case 'CompoundAssign': if (n.target.type === 'Name') add(n.target); break;
+      case 'Local': n.ids.forEach(add); break;
+      case 'LocalFunction': add(n.id); break;
+      case 'Function': if (n.target.type === 'Name') add(n.target); break;
+      case 'NumFor': add(n.id); break;
+      case 'GenFor': n.ids.forEach(add); break;
+      default: break;
+    }
     return undefined;
   });
   return out;
@@ -63,10 +167,11 @@ const minus = (a, b) => { const s = new Set(a); for (const x of b) s.delete(x); 
 
 // ---- liveness -------------------------------------------------------------------------------------------------
 
-class Liveness {
-  constructor(info, v, { edit = false, record = null } = {}) {
+export class Liveness {
+  constructor(info, v, { edit = false, record = null, exposure = null } = {}) {
     this.info = info;
     this.v = v;
+    this.exposure = exposure;   // captured variables a closure may still read after a statement (see captureExposure)
     this.edit = edit;
     this.record = record;   // Map: statement -> variables live after it
     this.breaks = [];
@@ -88,6 +193,7 @@ class Liveness {
     const result = [];
     for (let i = stmts.length - 1; i >= 0; i--) {
       const s = stmts[i];
+      if (this.exposure) { const e = this.exposure.after(s); if (e.size) live = union(live, e); }
       if (this.record) this.record.set(s, live);
       const r = this.stmt(s, live);
       live = r.live;
@@ -231,7 +337,7 @@ class Copies {
         case 'Name': {
           const x = this.v(n);
           const atom = x && env.get(x);
-          if (!atom) return n;
+          if (!atom || atom.long) return n;
           this.changed++;
           const copy = clone(atom.node);
           if (atom.var) this.info.varOf.set(copy, atom.var);
@@ -274,10 +380,15 @@ class Copies {
 
   /** The value a store makes the variable a copy of, if it is a plain variable or a small constant. A constant is only
    *  propagated into a register that is reused (see `reused`); a single-assignment local keeps the name it was given. */
-  atomOf(e, target) {
+  atomOf(e, target, env) {
     if (e.type === 'Name') {
       const x = this.v(e);
       return x && x !== target ? { var: x, node: e } : null;
+    }
+    if (e.type === 'String' && e.value.length > LONG_STRING) {
+      // the same long text held by another variable that has not changed since: an alias of it
+      for (const [y, a] of env) if (y !== target && a.long === e.value) return { var: y, node: { type: 'Name', name: y.name } };
+      return { var: null, node: e, long: e.value };
     }
     return isSmallLiteral(e) ? { var: null, node: e } : null;
   }
@@ -293,8 +404,8 @@ class Copies {
           if (!x) return;
           this.kill(env, x);
           if (s.ids.length === s.values.length && !id.attrib) {
-            const atom = this.atomOf(s.values[i], x);
-            if (atom && (atom.var || this.reused(x))) env.set(x, atom);
+            const atom = this.atomOf(s.values[i], x, env);
+            if (atom && (atom.var || atom.long || s.computed || this.reused(x))) env.set(x, atom);
           }
         });
         break;
@@ -305,8 +416,8 @@ class Copies {
         const targets = s.targets.map((t) => (t.type === 'Name' ? v(t) : null));
         for (const x of targets) if (x) this.kill(env, x);
         if (s.targets.length === 1 && s.values.length === 1 && targets[0]) {
-          const atom = this.atomOf(s.values[0], targets[0]);
-          if (atom && (atom.var || this.reused(targets[0]))) env.set(targets[0], atom);
+          const atom = this.atomOf(s.values[0], targets[0], env);
+          if (atom && (atom.var || atom.long || s.computed || this.reused(targets[0]))) env.set(targets[0], atom);
         }
         break;
       }
@@ -405,6 +516,8 @@ function evaluationOrder(s) {
     case 'CallStmt': visit(s.call, false); break;
     case 'Return': s.values.forEach((e) => visit(e, false)); break;
     case 'If': visit(s.clauses[0].cond, false); break;
+    case 'GenFor': s.exprs.forEach((e) => visit(e, false)); break;
+    case 'NumFor': visit(s.start, false); visit(s.stop, false); if (s.step) visit(s.step, false); break;
     default: return null;
   }
   return events;
@@ -438,6 +551,8 @@ function replaceNode(s, target, value) {
     case 'CallStmt': s.call = go(s.call); break;
     case 'Return': s.values = s.values.map(go); break;
     case 'If': s.clauses[0].cond = go(s.clauses[0].cond); break;
+    case 'GenFor': s.exprs = s.exprs.map(go); break;
+    case 'NumFor': s.start = go(s.start); s.stop = go(s.stop); if (s.step) s.step = go(s.step); break;
     default: break;
   }
   return done;
@@ -489,13 +604,18 @@ function forwardTemps(stmts, ctx) {
 
 // ---- driver ---------------------------------------------------------------------------------------------------
 
-function functionBodies(chunk, info) {
+export function functionBodies(chunk, info) {
   const out = [chunk.body];
   for (const f of info.funcs) out.push(f.body);
   return out;
 }
 
-function hasJumps(body) {
+/** Every function of the chunk with the parameters that belong to it. */
+export function functionUnits(chunk, info) {
+  return [{ body: chunk.body, params: [] }, ...info.funcs.map((f) => ({ body: f.body, params: f.params }))];
+}
+
+export function hasJumps(body) {
   let found = false;
   walk(body, (n) => { if (n.type === 'Func') return false; if (n.type === 'Goto' || n.type === 'Label' || n.type === 'Continue') found = true; return undefined; });
   return found;

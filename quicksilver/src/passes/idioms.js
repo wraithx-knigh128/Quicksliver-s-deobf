@@ -7,6 +7,7 @@
 //   booleanResults      `if a < b then v = true else v = false end return v`  ->  `return a < b`
 //   shortCircuits       `v = a  if not v then v = b end`  ->  `v = a or b`   (and `if v then v = b end` -> `v = a and b`)
 //   tableConstructors   `local t = {}  t.a = 1  t.b = 2`  ->  `local t = { a = 1, b = 2 }`
+//   methodCalls         `f = o.m  f(o, a)`  ->  `o:m(a)`   (once the temporary is gone: `o.m(o, a)`)
 //   bareNils            `local x = nil`  ->  `local x`
 //   orientComparisons   `0 < n`  ->  `n > 0`   (the compiler swaps the operands of `>` and `>=`)
 //   functionForms       `T.f = function(...)`  ->  `function T.f(...)`,  `T.f = function(p, ...)`  ->  `function T:f(...)`
@@ -105,14 +106,24 @@ export function tableConstructors(chunk) {
         const fields = table.fields.slice();
         const seen = new Set(fields.filter((f) => f.kind === 'named').map((f) => f.key));
         let j = i + 1;
+        let positional = fields.filter((f) => f.kind === 'item').length;
         for (; j < stmts.length; j++) {
           const a = stmts[j];
           if (a.type !== 'Assign' || a.targets.length !== 1 || a.values.length !== 1 || a.comments?.length) break;
           const t = a.targets[0];
-          if (t.type !== 'Index' || t.obj.type !== 'Name' || t.obj.name !== name || t.key.type !== 'String' || !isIdentifier(t.key.value)) break;
-          if (seen.has(t.key.value) || mentions(a.values[0], name) || (captured && !isInert(a.values[0]))) break;
-          seen.add(t.key.value);
-          fields.push({ kind: 'named', key: t.key.value, value: a.values[0] });
+          if (t.type !== 'Index' || t.obj.type !== 'Name' || t.obj.name !== name) break;
+          if (mentions(a.values[0], name) || (captured && !isInert(a.values[0]))) break;
+          if (t.key.type === 'String' && isIdentifier(t.key.value)) {
+            if (seen.has(t.key.value)) break;
+            seen.add(t.key.value);
+            fields.push({ kind: 'named', key: t.key.value, value: a.values[0] });
+          } else if (t.key.type === 'Number' && Number.isInteger(t.key.value) && t.key.value === positional + 1
+            && a.values[0].type !== 'Call' && a.values[0].type !== 'MethodCall' && a.values[0].type !== 'Vararg'
+            && !fields.some((f) => f.kind === 'keyed')) {
+            // `t[1] = a; t[2] = b` is `{ a, b }`; a call is left out because as the last item it would spread its results
+            positional++;
+            fields.push({ kind: 'item', value: a.values[0] });
+          } else break;
         }
         if (j === i + 1) { out.push(s); continue; }
         changed += j - i - 1;
@@ -121,6 +132,21 @@ export function tableConstructors(chunk) {
         i = j - 1;
       }
       return changed ? out : undefined;
+    },
+  });
+  return { changed };
+}
+
+export function methodCalls(chunk) {
+  let changed = 0;
+  transform(chunk, {
+    expr(e) {
+      if (e.type !== 'Call' || e.fn.type !== 'Index' || e.fn.key.type !== 'String' || !isIdentifier(e.fn.key.value)) return undefined;
+      const obj = e.fn.obj;
+      const first = e.args[0];
+      if (obj.type !== 'Name' || !first || first.type !== 'Name' || first.name !== obj.name) return undefined;
+      changed++;
+      return { type: 'MethodCall', obj, name: e.fn.key.value, args: e.args.slice(1), sugar: null };
     },
   });
   return { changed };

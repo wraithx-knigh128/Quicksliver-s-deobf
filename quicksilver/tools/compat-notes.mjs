@@ -59,7 +59,7 @@ export const NOTES = {
     limits: [
       'Recovery reads the embedded chunk instead of running the VM: handlers are identified by shape, operand transforms are solved symbolically, the Lua 5.1 chunk is rebuilt and decompiled. A handler that matches no template stops the recovery with an error instead of guessing.',
       'Local variable names, comments and the original function layout are not in the bytecode, so they are not recoverable (names are regenerated; some local functions come back as expressions).',
-      'The "strings" option decrypts every literal with an inlined routine; recovery reproduces the behaviour but the output is long until the decryptor is evaluated (needs sandboxed evaluation).',
+      'The "strings" option decrypts every literal with a routine written out in place. Recovery finds those stretches (only constants, only pure standard functions, no closures) and replaces each by the text it computes, using the sandbox interpreter on that stretch alone; it needs no consent because nothing but the stretch is run. Other register-reuse noise remains, so the result is partial.',
       'The "flow" option of the real tool produced output that does not run correctly on its own for five of eight samples (see the "tool broken" column); recovery there is judged against the original program, not against the broken output.',
       'Only IronBrew 2 as built from the public MIT source is covered. Forks that change the VM template or the serialiser need their own templates.',
     ],
