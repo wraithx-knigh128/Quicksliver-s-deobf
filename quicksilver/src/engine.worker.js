@@ -11,6 +11,9 @@ const OPS = {
   recover: api.recoverSource,
   luast: api.luast,
   trace: api.traceSource,
+  rename: api.renameScript,
+  dump: api.dumpSource,
+  origin: api.originCheck,
   diff: (source, options) => api.diffSources(source, options.other),
 };
 

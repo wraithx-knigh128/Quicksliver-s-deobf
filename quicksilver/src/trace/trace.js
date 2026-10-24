@@ -470,6 +470,20 @@ export function traceScript(source, options = {}) {
     return null;
   };
 
+  // `table.concat` is how many scripts assemble the text they are about to load; keep what it returns
+  const concats = [];
+  if (opts.captureConcat) {
+    const tbl = m.globals.get('table');
+    const orig = tbl instanceof LuaTable ? tbl.get('concat') : null;
+    if (orig instanceof NativeFunction) {
+      tbl.set('concat', nf('concat', (a) => {
+        const r = orig.fn(a);
+        if (typeof r[0] === 'string' && r[0].length >= 64 && concats.length < 40) concats.push({ index: concats.length + 1, source: r[0] });
+        return r;
+      }));
+    }
+  }
+
   let main = null;
   const outcome = run(() => { main = compileSource(m, source, m.chunkName, m.globals); callValue(m, main, [], ''); });
 
@@ -503,6 +517,7 @@ export function traceScript(source, options = {}) {
     script: renderScript(rec, ended),
     events: rec.all.map((e) => ({ kind: e.kind, text: e.text.replace(/@@fn:\d+@@/g, 'function(...) end'), line: e.line, request: e.request || null })),
     layers: rec.layers,
+    concats,
     requests: [...new Set(rec.all.filter((e) => e.request).map((e) => e.request))],
     undefinedGlobals: [...rec.undefinedGlobals].slice(0, 100),
     globalWrites: [...rec.globalWrites].slice(0, 100),

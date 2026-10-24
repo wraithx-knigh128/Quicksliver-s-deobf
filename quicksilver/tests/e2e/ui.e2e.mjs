@@ -303,3 +303,145 @@ test('a large script scrolls without building a row per line', { skip }, async (
   await page.waitForFunction(() => /v2000\d\b/.test(document.querySelector('#out-body').textContent));
   await ctx.close();
 });
+
+// ---- tools bar -------------------------------------------------------------------------------------------------------------------
+
+test('the tools bar names every tool in words, even on a narrow window', { skip }, async () => {
+  const { page, ctx, problems } = await newPage({ viewport: { width: 1000, height: 800 } });
+  const names = { 'act-recover': 'Deobfuscate', 'tool-luraph': 'Luraph', 'tool-ironbrew': 'IronBrew', 'tool-moonveil': 'MoonVeil', 'act-detect': 'Detect', 'act-beautify': 'Beautify', 'act-rename': 'Rename', 'act-dump': 'Dump', 'act-origin': 'Origin check', 'act-help': 'Help' };
+  for (const [id, text] of Object.entries(names)) {
+    assert.ok(await page.isVisible(`#${id} .lbl`), `${id} shows its label`);
+    assert.equal((await page.textContent(`#${id} .lbl`)).trim(), text);
+  }
+  assert.deepEqual(problems, []);
+  await ctx.close();
+});
+
+test('help explains the page and shows the top of the dialog', { skip }, async () => {
+  const { page, ctx } = await newPage();
+  await page.click('#act-help');
+  await page.waitForSelector('.modal');
+  assert.match(await page.textContent('.modal'), /1\. Put your script in/);
+  assert.equal(await page.evaluate(() => document.querySelector('.modal').scrollTop), 0, 'the dialog opens at its top');
+  assert.match(await page.textContent('.modal'), /nobody can turn that back into the source automatically/);
+  await page.keyboard.press('Escape');
+  assert.equal(await page.locator('.modal').count(), 0);
+  await ctx.close();
+});
+
+test('rename shows readable names on the right and leaves the input alone', { skip }, async () => {
+  const { page, ctx } = await newPage();
+  const src = 'local a, b = 1, 2\nlocal function c(d) return d + a end\nprint(c(b))';
+  await page.fill('textarea.editor', src);
+  await page.click('#act-rename'); await idle(page);
+  assert.match(await page.textContent('#view-work'), /Renamed/);
+  assert.match(await page.textContent('#out-body'), /local function fn\(param\)/);
+  assert.equal(await page.inputValue('textarea.editor'), src);
+  await ctx.close();
+});
+
+test('IronBrew rebuilds an IronBrew 2 script and says what it cannot do for others', { skip }, async () => {
+  const { page, ctx } = await newPage();
+  await loadFile(page, path.join(corpus, 'obfuscated/ironbrew2/s06_combined__default.lua'));
+  await page.click('#tool-ironbrew'); await idle(page);
+  const out = await page.textContent('#out-body');
+  assert.match(out, /setmetatable/);
+  assert.match(out, /function\s/);
+  await page.click('#act-clear');
+  await page.fill('textarea.editor', 'print("hello")');
+  await page.click('#tool-ironbrew'); await idle(page);
+  assert.match(await page.textContent('#notes'), /IronBrew 2 was not recognised/);
+  assert.match(await page.textContent('#notes'), /IronBrew 1 is not supported/);
+  await ctx.close();
+});
+
+test('Luraph is honest about what it can do, asks before running, then dumps', { skip }, async () => {
+  const { page, ctx } = await newPage();
+  const payload = 'local t = {}\\n' + Array.from({ length: 10 }, (_, i) => `t[${i + 1}] = "value ${i}"`).join('\\n') + '\\nprint(#t)';
+  await page.fill('textarea.editor', `local code = "${payload.replace(/"/g, '\\"')}"\nloadstring(code)()`);
+  await page.click('#tool-luraph');
+  await page.waitForSelector('.modal');
+  const said = await page.textContent('.modal');
+  assert.match(said, /cannot turn that back into the original source/);
+  assert.match(said, /Only run scripts you own/);
+  await page.click('.modal button:has-text("Cancel")');
+  assert.equal(await page.isVisible('#out-body'), false, 'nothing ran after Cancel');
+
+  await page.click('#tool-luraph');
+  await page.waitForSelector('.modal');
+  await page.click('.modal button:has-text("Run in sandbox")');
+  await idle(page);
+  assert.match(await page.textContent('#view-work'), /Dump/);
+  assert.match(await page.textContent('#out-body'), /value 9/);
+  assert.match(await page.textContent('#inspector'), /loaded chunk 1/);
+  await ctx.close();
+});
+
+test('Dump on its own asks first and captures table.concat output', { skip }, async () => {
+  const { page, ctx } = await newPage();
+  await page.fill('textarea.editor', 'local out = {}\nfor i = 1, 30 do out[#out + 1] = "segment " .. i .. " of the hidden text" end\nlocal text = table.concat(out, "\\n")');
+  await page.click('#act-dump');
+  await page.waitForSelector('.modal');
+  assert.match(await page.textContent('.modal'), /table\.concat/);
+  await page.click('.modal button:has-text("Run in sandbox")');
+  await idle(page);
+  assert.match(await page.textContent('#out-body'), /segment 30 of the hidden text/);
+  await ctx.close();
+});
+
+// ---- origin check ----------------------------------------------------------------------------------------------------------------
+
+test('origin check shows both readings with their evidence and never searches without asking', { skip }, async () => {
+  const { page, ctx } = await newPage();
+  await loadFile(page, path.join(corpus, 'origin/assistant_inventory.lua'));
+  await page.click('#act-origin'); await idle(page);
+  assert.equal(await activeTab(page), 'tab-origin');
+  const text = await page.textContent('#view-origin');
+  assert.match(text, /Written by AI/);
+  assert.match(text, /Copied from elsewhere/);
+  assert.match(text, /Emoji in messages or comments/);
+  assert.match(text, /not proof/);
+  assert.ok(await page.isVisible('#view-origin button:has-text("Search GitHub for these lines")'));
+
+  // the search lists exactly what would be sent and can be cancelled
+  await page.click('#view-origin button:has-text("Search GitHub for these lines")');
+  await page.waitForSelector('.modal');
+  assert.match(await page.textContent('.modal'), /will be sent to this site's server/);
+  assert.ok(await page.locator('.modal li').count() >= 4);
+  await page.click('.modal button:has-text("Cancel")');
+  assert.match(await page.textContent('#view-origin'), /Not searched yet/);
+
+  // on a server without the function the answer says so instead of failing silently
+  await page.click('#view-origin button:has-text("Search GitHub for these lines")');
+  await page.waitForSelector('.modal');
+  await page.click('.modal button:has-text("Search")');
+  await page.waitForSelector('#view-origin :text("not available on this server")');
+  await ctx.close();
+});
+
+test('origin check reads the style of the code, not of an obfuscated blob or of rebuilt code', { skip }, async () => {
+  const { page, ctx } = await newPage();
+  await loadFile(page, path.join(corpus, 'obfuscated/prometheus/s06_combined__Weak.lua'));
+  await page.click('#act-origin'); await idle(page);
+  assert.match(await page.textContent('#view-origin'), /Deobfuscate first, then check/);
+
+  await page.click('#act-clear');
+  await loadFile(page, path.join(corpus, 'obfuscated/ironbrew2/s06_combined__default.lua'));
+  await page.click('#act-recover'); await idle(page);
+  await page.click('#act-origin'); await idle(page);
+  assert.match(await page.textContent('#view-origin'), /rebuilt this code from IronBrew 2/);
+  assert.match(await page.textContent('#view-origin'), /Cannot be read from rebuilt code/);
+  await ctx.close();
+});
+
+test('From link explains itself when the server cannot fetch', { skip }, async () => {
+  const { page, ctx } = await newPage();
+  await page.click('#act-link');
+  await page.waitForSelector('.modal');
+  assert.match(await page.textContent('.modal'), /It is only read, never run/);
+  await page.fill('.modal input', 'https://raw.githubusercontent.com/a/b/main/x.lua');
+  await page.click('.modal button:has-text("Get file")');
+  await page.waitForSelector('#toast:not([hidden])');
+  assert.match(await page.textContent('#toast'), /deployed site/);
+  await ctx.close();
+});

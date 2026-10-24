@@ -12,6 +12,8 @@ import { toLuast } from './analyze/luast.js';
 import { recover } from './recover/pipeline.js';
 import { diffLines, toRows } from './core/diff.js';
 import { traceScript } from './trace/trace.js';
+import { renamePass } from './passes/rename.js';
+import { originAnalysis } from './origin/index.js';
 
 export const ENGINE_VERSION = '1.0.0';
 
@@ -92,6 +94,51 @@ export function luast(source, options = {}) {
  */
 export function traceSource(source, options = {}) {
   return timed(() => traceScript(source, options));
+}
+
+/**
+ * Give machine-made local names readable ones, and change nothing else (the layout is the printer's).
+ * @param {{indent?: string, width?: number, mode?: 'smart'|'all'}} [options]
+ */
+export function renameScript(source, options = {}) {
+  return timed(() => {
+    let ast;
+    try { ast = parse(source); } catch (e) {
+      if (!(e instanceof LuaSyntaxError)) throw e;
+      return { ok: false, error: { message: e.message, line: e.line, col: e.col }, output: null, renamed: 0 };
+    }
+    const r = renamePass(ast, { mode: options.mode || 'smart' });
+    const output = print(ast, { indent: options.indent ?? '  ', width: options.width ?? 100, blankLines: 'smart', strings: 'preserve', numbers: 'preserve' });
+    return { ok: true, output, renamed: r.renamed || 0 };
+  });
+}
+
+/**
+ * The text a script builds before it runs it. Runs the script in the sandbox (the interface asks first), keeps every chunk
+ * handed to load/loadstring and every long `table.concat` result, and says which one looks like the real payload: the last
+ * chunk that parses as Lua, or else the longest text. Like trace, this is a description of one run.
+ */
+export function dumpSource(source, options = {}) {
+  return timed(() => {
+    const t = traceScript(source, { fuel: 150_000_000, timeMs: 45_000, captureConcat: true, callHandlers: false, ...options });
+    const candidates = [
+      ...t.layers.map((l) => ({ kind: 'chunk', n: l.index, source: l.source })),
+      ...t.concats.map((c) => ({ kind: 'concat', n: c.index, source: c.source })),
+    ].map((c, id) => {
+      let parses = false;
+      try { parse(c.source); parses = true; } catch { /* not Lua */ }
+      return { id, kind: c.kind, label: c.kind === 'chunk' ? `loaded chunk ${c.n}` : `table.concat result ${c.n}`, bytes: c.source.length, parses, source: c.source };
+    });
+    const parsing = candidates.filter((c) => c.parses && c.kind === 'chunk');
+    const best = parsing.length ? parsing[parsing.length - 1]
+      : candidates.filter((c) => c.parses).sort((a, b) => b.bytes - a.bytes)[0] || candidates.sort((a, b) => b.bytes - a.bytes)[0] || null;
+    return { ok: t.ok, status: t.status, ended: t.ended, error: t.error, candidates, best: best ? best.id : null, requests: t.requests, stats: t.stats, output: t.output };
+  });
+}
+
+/** Local half of the origin check: style signals, hints of other authors, and the lines worth searching for online. */
+export function originCheck(source) {
+  return timed(() => ({ ok: true, ...originAnalysis(source) }));
 }
 
 /** Line diff of two texts, as side-by-side rows (see core/diff.js). */

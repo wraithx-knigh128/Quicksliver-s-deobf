@@ -36,23 +36,31 @@
   <symbol id="i-up" viewBox="0 0 16 16"><path d="M3.5 10 8 5.5l4.5 4.5"/></symbol>
   <symbol id="i-down" viewBox="0 0 16 16"><path d="M3.5 6 8 10.5 12.5 6"/></symbol>
   <symbol id="i-clear" viewBox="0 0 16 16"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></symbol>
+  <symbol id="i-link" viewBox="0 0 16 16"><path d="M6.5 9.5l3-3M5.25 7.25 3.9 8.6a2.5 2.5 0 0 0 3.5 3.5l1.35-1.35M10.75 8.75l1.35-1.35a2.5 2.5 0 0 0-3.5-3.5L7.25 5.25"/></symbol>
+  <symbol id="i-help" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.25"/><path d="M6.25 6.4a1.75 1.75 0 1 1 2.6 1.5c-.6.35-.85.75-.85 1.35M8 11.6v.1"/></symbol>
+  <symbol id="i-rename" viewBox="0 0 16 16"><path d="M2 8.6V2.5h6.1l5.9 5.9-5.6 5.6z"/><circle cx="5.2" cy="5.2" r=".8"/></symbol>
+  <symbol id="i-dump" viewBox="0 0 16 16"><path d="M8 2v8M5 7.5l3 3 3-3M2.5 13.5h11"/></symbol>
+  <symbol id="i-origin" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5 14 14M5 7l1.5 1.5L9.2 5.6"/></symbol>
+  <symbol id="i-luraph" viewBox="0 0 16 16"><rect x="2.5" y="3" width="11" height="3.5"/><rect x="2.5" y="9.5" width="11" height="3.5"/><path d="M5 4.75h.01M5 11.25h.01"/></symbol>
+  <symbol id="i-ironbrew" viewBox="0 0 16 16"><path d="M3 3.5h10v3.5a5 5 0 0 1-10 0z"/><path d="M6 2h4"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 16 16"><path d="M12.6 9.6A5.6 5.6 0 1 1 6.4 3.4a4.5 4.5 0 0 0 6.2 6.2z"/></symbol>
+  <symbol id="i-wand" viewBox="0 0 16 16"><path d="M3 13 11 5M10 2.5v2M13.5 6h-2M12.4 3.6l-1.2 1.2M3.5 4.5v2M2.5 5.5h2"/></symbol>
 </svg>
 
 <noscript><p class="noscript">QuickSilver needs JavaScript. Everything runs locally in the page; nothing is uploaded.</p></noscript>
 <div id="boot-error" class="boot-error" hidden></div>
 
 <div class="shell" id="shell">
+  <div class="top">
   <header class="appbar">
     <div class="brand"><svg aria-hidden="true"><use href="#i-mark"/></svg><span class="name">QuickSilver</span><span class="ver" id="ver"></span></div>
 
     <nav class="actions" aria-label="Actions">
       <button class="btn" id="act-open" type="button" title="Open a .lua, .luau or .txt file (Ctrl+O)"><svg aria-hidden="true"><use href="#i-open"/></svg><span class="lbl">Open File</span></button>
+      <button class="btn" id="act-link" type="button" title="Get a script from a link (raw GitHub, Pastebin, Discord attachment, ...)"><svg aria-hidden="true"><use href="#i-link"/></svg><span class="lbl">From link</span></button>
       <button class="btn" id="act-samples" type="button" title="Load an example obfuscated script" aria-haspopup="menu"><svg aria-hidden="true"><use href="#i-samples"/></svg><span class="lbl">Examples</span></button>
       <span class="sep"></span>
-      <button class="btn" id="act-detect" type="button" title="Identify the obfuscator and language dialect (Alt+D)"><svg aria-hidden="true"><use href="#i-detect"/></svg><span class="lbl">Detect</span></button>
-      <button class="btn" id="act-beautify" type="button" title="Re-indent and re-flow only; nothing is decoded (Alt+B)"><svg aria-hidden="true"><use href="#i-beautify"/></svg><span class="lbl">Beautify</span></button>
       <button class="btn" id="act-analyze" type="button" title="Static report: APIs, URLs, structure (Alt+A)"><svg aria-hidden="true"><use href="#i-analyze"/></svg><span class="lbl">Analyze</span></button>
-      <button class="btn primary" id="act-recover" type="button" title="Recover readable code (Ctrl+Enter)"><svg aria-hidden="true"><use href="#i-recover"/></svg><span class="lbl">Recover</span></button>
       <button class="btn" id="act-trace" type="button" title="Run in the sandbox and list what the script does (asks first, Alt+T)"><svg aria-hidden="true"><use href="#i-trace"/></svg><span class="lbl">Trace</span></button>
       <button class="btn" id="act-compare" type="button" title="Input and recovered code side by side (Alt+C)"><svg aria-hidden="true"><use href="#i-compare"/></svg><span class="lbl">Compare</span></button>
       <button class="btn" id="act-export" type="button" title="Save the result (Alt+E)" aria-haspopup="menu"><svg aria-hidden="true"><use href="#i-export"/></svg><span class="lbl">Export</span></button>
@@ -70,6 +78,27 @@
       <button class="btn icon" id="btn-theme" type="button" title="Switch between light and dark" aria-label="Switch between light and dark"><svg aria-hidden="true"><use href="#i-theme"/></svg></button>
     </div>
   </header>
+
+  <div class="toolbar" role="toolbar" aria-label="Deobfuscation tools">
+    <button class="btn primary big" id="act-recover" type="button" title="Work out what protects the script and recover readable code (Ctrl+Enter)"><svg aria-hidden="true"><use href="#i-wand"/></svg><span class="lbl">Deobfuscate</span></button>
+    <div class="tgroup" role="group" aria-label="If you know the obfuscator">
+      <span class="glabel">Obfuscator</span>
+      <button class="btn chip" id="tool-luraph" type="button" title="Luraph v14 / v15: dumps what the script does in the sandbox (the virtual machine cannot be turned back into source)"><svg aria-hidden="true"><use href="#i-luraph"/></svg><span class="lbl">Luraph</span></button>
+      <button class="btn chip" id="tool-ironbrew" type="button" title="IronBrew 2: rebuilds the original program from the virtual machine"><svg aria-hidden="true"><use href="#i-ironbrew"/></svg><span class="lbl">IronBrew</span></button>
+      <button class="btn chip" id="tool-moonveil" type="button" title="MoonVeil: identifies it and dumps what the script does in the sandbox"><svg aria-hidden="true"><use href="#i-moon"/></svg><span class="lbl">MoonVeil</span></button>
+    </div>
+    <div class="tgroup" role="group" aria-label="Quick tools">
+      <span class="glabel">Tools</span>
+      <button class="btn chip" id="act-detect" type="button" title="Identify the obfuscator and language dialect (Alt+D)"><svg aria-hidden="true"><use href="#i-detect"/></svg><span class="lbl">Detect</span></button>
+      <button class="btn chip" id="act-beautify" type="button" title="Re-indent and re-flow only; nothing is decoded (Alt+B)"><svg aria-hidden="true"><use href="#i-beautify"/></svg><span class="lbl">Beautify</span></button>
+      <button class="btn chip" id="act-rename" type="button" title="Give machine-made variable names readable ones"><svg aria-hidden="true"><use href="#i-rename"/></svg><span class="lbl">Rename</span></button>
+      <button class="btn chip" id="act-dump" type="button" title="Run in the sandbox and capture the text the script builds before it loads it (table.concat / loadstring)"><svg aria-hidden="true"><use href="#i-dump"/></svg><span class="lbl">Dump</span></button>
+      <button class="btn chip" id="act-origin" type="button" title="Does it read like AI-written code, or like code copied from someone else?"><svg aria-hidden="true"><use href="#i-origin"/></svg><span class="lbl">Origin check</span></button>
+    </div>
+    <span class="grow"></span>
+    <button class="btn chip" id="act-help" type="button" title="How to use this page" aria-label="Help"><svg aria-hidden="true"><use href="#i-help"/></svg><span class="lbl">Help</span></button>
+  </div>
+  </div>
 
   <div class="workspace" id="workspace">
     <aside class="drawer side" aria-label="Obfuscators">

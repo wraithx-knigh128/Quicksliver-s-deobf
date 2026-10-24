@@ -16,6 +16,9 @@ import { LicenseState, showLicenseDialog } from './license-ui.js';
 import { loadCompat, CompatDashboard } from './compat.js';
 import { detectionView, analysisView, recoverySummary, detectionSummary, statusBadge, STATUS_LABEL } from './views.js';
 import { makeZip } from './zip.js';
+import { showHelp } from './help.js';
+import { originView } from './origin-view.js';
+import { mergeOnline } from '../origin/index.js';
 import { readFileBytes, download, baseName, FileRejected, ACCEPTED } from './files.js';
 import { bytesToBinary, binaryToBytes, binaryToText, textToBinary } from '../core/bytes.js';
 
@@ -44,6 +47,11 @@ const S = {
   luast: null,
   trace: null,
   traceConsent: false,
+  dump: null,
+  origin: null,       // { subject, analysis }
+  originOnline: null,
+  originBusy: false,
+  originSubject: 'auto',
   beautified: null,
   recovered: null,
   outputs: {},        // kind -> { text, label, kind }; the right-hand pane shows outputs[show]
@@ -61,6 +69,7 @@ const TABS = [
   { id: 'compare', label: 'Compare' },
   { id: 'detection', label: 'Detection' },
   { id: 'analysis', label: 'Analysis' },
+  { id: 'origin', label: 'Origin' },
   { id: 'luast', label: 'Luast' },
   { id: 'compat', label: 'Compatibility' },
 ];
@@ -71,7 +80,10 @@ const el = {
   shell: $('#shell'), workspace: $('#workspace'), tabs: $('#tabs'), views: $('#views'), inspector: $('#inspector'),
   docname: $('#docname'), ver: $('#ver'), stState: $('#st-state'), stPos: $('#st-pos'), stSize: $('#st-size'), stSandbox: $('#st-sandbox'), stLicense: $('#st-license'),
   file: $('#file-input'), toollist: $('#toollist'), sideFilters: $('#side-filters'), sideCount: $('#side-count'),
-  btn: Object.fromEntries(['open', 'samples', 'detect', 'beautify', 'analyze', 'recover', 'trace', 'compare', 'export', 'cancel', 'clear'].map((k) => [k, $(`#act-${k}`)])),
+  btn: {
+    ...Object.fromEntries(['open', 'link', 'samples', 'detect', 'beautify', 'rename', 'dump', 'origin', 'help', 'analyze', 'recover', 'trace', 'compare', 'export', 'cancel', 'clear'].map((k) => [k, $(`#act-${k}`)])),
+    ...Object.fromEntries(['luraph', 'ironbrew', 'moonveil'].map((k) => [k, $(`#tool-${k}`)])),
+  },
 };
 el.ver.textContent = `v${ENGINE_VERSION}`;
 
@@ -280,6 +292,7 @@ foldBox.addEventListener('change', () => diffView.setFold(foldBox.checked));
 // Detection / Analysis / Luast / Compatibility
 views.detection = h('div.view', { id: 'view-detection' });
 views.analysis = h('div.view', { id: 'view-analysis' });
+views.origin = h('div.view', { id: 'view-origin' });
 const tree = new TreeView();
 const treeInfo = h('span');
 views.luast = h('div.view', { id: 'view-luast' },
@@ -374,13 +387,14 @@ function clearResults() {
   S.version++;
   S.inspected = null;
   S.detection = null; S.analysis = null; S.luast = null; S.trace = null; S.traceConsent = false; S.beautified = null; S.recovered = null; S.diff = null;
+  S.dump = null; S.origin = null; S.originOnline = null; S.originSubject = 'auto';
   S.outputs = {}; S.show = null; S.output = null;
   S.notes = [];
 }
 
 let statusRaf = 0;
 function invalidate() {
-  const had = !!(S.inspected || S.detection || S.analysis || S.luast || S.trace || S.beautified || S.recovered || S.output || S.diff || S.notes.length);
+  const had = !!(S.inspected || S.detection || S.analysis || S.luast || S.trace || S.beautified || S.recovered || S.output || S.diff || S.dump || S.origin || S.notes.length);
   clearResults();
   if (had) { renderAll(); return; }
   // typing into an untouched editor: only the counters change, and once per frame at most
@@ -462,7 +476,7 @@ el.btn.clear.addEventListener('click', () => {
 let ticker = 0;
 function setBusy(label) {
   S.busy = label;
-  for (const [k, b] of Object.entries(el.btn)) if (k !== 'cancel' && k !== 'clear') b.disabled = !!label;
+  for (const [k, b] of Object.entries(el.btn)) if (k !== 'cancel' && k !== 'clear' && k !== 'help') b.disabled = !!label;
   el.btn.cancel.hidden = !label;
   clearInterval(ticker);
   if (label) {
@@ -615,6 +629,205 @@ async function runTrace() {
   renderAll();
   switchTab('work');
   return r;
+}
+
+
+// ---- more tools: rename, dump, the obfuscator buttons, link, origin ----------------------------------------------------------------
+
+async function runRename() {
+  const version = S.version;
+  const r = await run('rename', { indent: indentString(settings), width: settings.width }, 'Renaming');
+  if (!r || version !== S.version) return null;
+  if (!r.ok) {
+    S.notes = [{ kind: 'bad', text: `Cannot rename: ${r.error.line}:${r.error.col} ${r.error.message}. The script has to parse first; Beautify can still repair its layout.` }];
+    renderAll();
+    return r;
+  }
+  setOutput('rename', { text: r.output, label: 'Renamed', kind: 'rename' });
+  S.notes = [{ kind: r.renamed ? 'ok' : 'info', text: r.renamed ? `${r.renamed} variable${r.renamed === 1 ? '' : 's'} renamed.` : 'Nothing to rename: the variable names already look like names a person chose.' }];
+  renderAll();
+  switchTab('work');
+  return r;
+}
+
+async function confirmDump(name) {
+  if (!lic.allow('sandbox')) { toast('The sandbox is not part of this licence.'); return false; }
+  if (S.traceConsent) return true;
+  const r = await modal({
+    title: name ? `${name}: run it in the sandbox?` : 'Run this script in the sandbox?',
+    body: [
+      h('p', { style: { margin: 0 } }, 'Dump runs the script in QuickSilver’s own Lua interpreter and keeps the text it hands to loadstring and the long strings it joins with table.concat. That text is often the real script.'),
+      h('ul', [
+        h('li', 'It runs inside a web worker in an interpreter written for this tool, not in the browser’s JavaScript engine. It can only reach stand-in Roblox objects.'),
+        h('li', 'Nothing is fetched, saved or sent. Network calls are recorded and answered with an empty chunk.'),
+        h('li', 'Instruction and time limits apply, and Cancel stops it at any moment.'),
+      ]),
+      h('p.note.warn', 'Only run scripts you own or are authorised to analyse.'),
+    ],
+    buttons: [{ id: 'cancel', label: 'Cancel' }, { id: 'ok', label: 'Run in sandbox', primary: true }],
+  });
+  if (r === 'ok') S.traceConsent = true;
+  return r === 'ok';
+}
+
+async function runDump({ name = '', consented = false } = {}) {
+  if (!inputPresent()) { toast('Nothing to dump. Paste code or open a file first.'); switchTab('work'); editor.focus(); return null; }
+  if (!consented && !(await confirmDump(name))) return null;
+  S.traceConsent = true;
+  const version = S.version;
+  const r = await run('dump', { dialect: 'luau' }, 'Dumping', { limits: { timeoutMs: 120_000 } });
+  if (!r || version !== S.version) return null;
+  S.dump = r;
+  S.notes = [];
+  const best = r.candidates.find((c) => c.id === r.best);
+  if (best) {
+    setOutput('dump', { text: best.source, label: `Dump: ${best.label}`, kind: 'dump' });
+    S.notes.push({ kind: best.parses ? 'ok' : 'info', text: `Captured ${r.candidates.length} piece${r.candidates.length === 1 ? '' : 's'} of text. Showing the ${best.label} (${fmtBytes(best.bytes)})${best.parses ? ', which parses as Lua' : ', which does not parse as Lua'}. Use “Use as input” in Details to work on another one.` });
+  } else {
+    S.notes.push({ kind: 'warn', text: 'The script did not load or join any text while it ran, so there is nothing to dump. Trace lists what it does instead.' });
+  }
+  if (r.status === 'limit') S.notes.push({ kind: 'warn', text: `The run stopped at the sandbox limit (${r.ended}). What was captured up to that point is shown; a heavy virtual machine may need more than this tool allows.` });
+  else if (r.status === 'error') S.notes.push({ kind: 'warn', text: `The script stopped with an error inside the sandbox: ${r.error}` });
+  else if (r.status === 'syntax-error') S.notes.push({ kind: 'bad', text: `The script does not parse, so it cannot run: ${r.error}` });
+  renderAll();
+  switchTab('work');
+  return r;
+}
+
+/** Luraph and MoonVeil: say plainly what is possible, then dump (and trace if the dump found nothing). */
+async function runVmTool(id, name) {
+  if (!inputPresent()) { toast(`Nothing to process. Paste a ${name} script or open a file first.`); switchTab('work'); editor.focus(); return; }
+  const d = await runDetect({ quiet: true });
+  if (!d) return;
+  const fam = d.detection.families.find((f) => f.id === id && f.confidence >= 0.5);
+  const other = d.detection.families.find((f) => f.id !== id && f.confidence >= 0.5);
+  const seen = fam ? `Detected: ${fam.name}${fam.version ? ` ${fam.version}` : ''} (${pct(fam.confidence)}).`
+    : other ? `This does not look like ${name}: it matched ${other.name} (${pct(other.confidence)}). Use Deobfuscate for that.`
+      : `No ${name} banner was found. ${id === 'luraph' ? 'Luraph v15 scripts carry no banner, so that proves nothing either way.' : ''}`;
+  const r = await modal({
+    title: `${name}`,
+    body: [
+      h('p', { style: { margin: 0 } }, seen),
+      h('p', id === 'luraph'
+        ? 'Luraph v14 / v15 turns a script into a private virtual machine whose instructions are different in every script. QuickSilver cannot turn that back into the original source, and no tool can promise to.'
+        : 'MoonVeil compiles a script into a configurable virtual machine. QuickSilver can recognise it but cannot turn it back into the original source.'),
+      h('p', 'What it can do is run the script in its sandbox and show you what comes out: the text the script builds and loads, and what it does (services, objects, URLs). Heavy scripts can run past the sandbox budget; then you get what was captured up to that point.'),
+      h('p.note.warn', 'The script runs in QuickSilver’s own interpreter, never in the browser. Only run scripts you own or are authorised to analyse.'),
+    ],
+    buttons: [{ id: 'cancel', label: 'Cancel' }, { id: 'ok', label: 'Run in sandbox', primary: true }],
+  });
+  if (r !== 'ok') return;
+  S.traceConsent = true;
+  const dump = await runDump({ name, consented: true });
+  if (dump && !dump.candidates.length && dump.status !== 'syntax-error') await runTrace();
+}
+
+async function runIronBrewTool() {
+  if (!inputPresent()) { toast('Nothing to process. Paste an IronBrew script or open a file first.'); switchTab('work'); editor.focus(); return; }
+  const d = await runDetect({ quiet: true });
+  if (!d) return;
+  const ib = d.detection.families.find((f) => f.id === 'ironbrew2' && f.confidence >= 0.5);
+  let warning = null;
+  if (!ib) {
+    const other = d.detection.families.find((f) => f.confidence >= 0.5);
+    warning = { kind: 'warn', text: `IronBrew 2 was not recognised${other ? ` (this looks like ${other.name})` : ''}. IronBrew 1 is not supported. The general deobfuscator ran instead.` };
+  }
+  const version = S.version;
+  const r = await runRecover();
+  if (warning && r && version === S.version) { S.notes.unshift(warning); renderAll(); }
+}
+
+async function openLinkDialog() {
+  const input = h('input', { type: 'url', placeholder: 'https://raw.githubusercontent.com/user/repo/main/script.lua', 'aria-label': 'Link to the script', style: { width: '100%' } });
+  const msg = h('p.note.info', { style: { margin: '8px 0 0' } }, 'Raw GitHub, gist, Pastebin, rentry, paste.ee and Discord attachment links work. A normal GitHub or Pastebin page link is turned into its raw link.');
+  const r = await modal({
+    title: 'Get a script from a link',
+    body: [h('p', { style: { margin: '0 0 8px' } }, 'The link is fetched by this site’s server (your browser cannot fetch other sites directly) and the file is put in the editor. It is only read, never run.'), input, msg],
+    buttons: [{ id: 'cancel', label: 'Cancel' }, { id: 'ok', label: 'Get file', primary: true }],
+  });
+  const url = input.value.trim();
+  if (r !== 'ok' || !url) return;
+  setBusy('Fetching');
+  try {
+    const res = await fetch(`/api/fetch?url=${encodeURIComponent(url)}`, { credentials: 'omit', referrerPolicy: 'no-referrer' });
+    if (!res.ok) {
+      let why = `The server answered ${res.status}.`;
+      try { why = (await res.json()).error || why; } catch { if (res.status === 404) why = 'Fetching links needs the deployed site (its /api/fetch function). It is not available on this server.'; }
+      toast(why, 7000);
+      return;
+    }
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    const name = res.headers.get('x-qs-name') || 'download.lua';
+    loadBytes(name, bytes);
+    toast(`Fetched ${name} (${fmtBytes(bytes.length)})`);
+  } catch (e) {
+    toast(`Could not fetch the link: ${e.message}`, 7000);
+  } finally { setBusy(null); }
+}
+
+/**
+ * What the origin check looks at: the result on the right if there is one, otherwise the input. Code QuickSilver rebuilt
+ * from an obfuscator (names, comments and layout are its own) says nothing about its author's style.
+ */
+function originSubject() {
+  if (S.originSubject !== 'input' && S.output && S.output.kind !== 'trace') {
+    const top = S.detection && S.detection.families.find((f) => f.confidence >= 0.5);
+    const derived = S.output.kind === 'recover' && !!top;
+    return { label: `the result in the right box (${S.output.label})`, text: S.output.text, derived, derivedFrom: top ? top.name : null };
+  }
+  return { label: 'the input', text: getInput(), derived: false };
+}
+
+async function runOrigin() {
+  if (!inputPresent()) { toast('Nothing to check. Paste code or open a file first.'); switchTab('work'); editor.focus(); return null; }
+  const subject = originSubject();
+  const r = await run('origin', {}, 'Reading the style', { needsText: false, source: subject.text });
+  if (!r) return null;
+  S.origin = { subject: subject.label, text: subject.text, derived: subject.derived, derivedFrom: subject.derivedFrom, analysis: r };
+  S.originOnline = null;
+  renderOrigin();
+  switchTab('origin');
+  return r;
+}
+
+async function searchOnline() {
+  const o = S.origin;
+  if (!o || !o.analysis.assessable) return;
+  const lines = o.analysis.fingerprints;
+  const ok = await modal({
+    title: 'Search GitHub for these lines?',
+    body: [
+      h('p', { style: { margin: 0 } }, `These ${lines.length} line${lines.length === 1 ? '' : 's'} (shortened) will be sent to this site's server, which searches GitHub's public code for them. The rest of the script is not sent.`),
+      h('ul.list.mono', { style: { maxHeight: '220px', overflow: 'auto', fontSize: '12px' } }, lines.map((l) => h('li', { style: { overflowWrap: 'anywhere' } }, l.query))),
+      h('p.note', 'If you do not want any of this text to leave your browser, cancel.'),
+    ],
+    buttons: [{ id: 'cancel', label: 'Cancel' }, { id: 'ok', label: 'Search', primary: true }],
+  });
+  if (ok !== 'ok') return;
+  S.originBusy = true;
+  renderOrigin();
+  let online;
+  try {
+    const res = await fetch('/api/origin', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fingerprints: lines.map((l) => ({ query: l.query })) }), credentials: 'omit', referrerPolicy: 'no-referrer' });
+    if (res.status === 404 || res.status === 405) online = { configured: false, error: 'The online search runs as a function of the deployed site (/api/origin). It is not available on this server.' };
+    else {
+      const body = await res.json().catch(() => ({}));
+      online = res.ok ? body : { configured: true, error: body.error || `The server answered ${res.status}.` };
+    }
+  } catch (e) { online = { configured: false, error: `The search could not be reached: ${e.message}` }; }
+  S.originBusy = false;
+  if (S.origin !== o) return;
+  S.originOnline = mergeOnline(o.analysis, o.text, online);
+  renderOrigin();
+}
+
+function renderOrigin() {
+  const o = S.origin;
+  replace(views.origin, originView(
+    { subject: o ? o.subject : '', analysis: o ? o.analysis : null, online: S.originOnline, busy: S.originBusy, derived: !!(o && o.derived), derivedFrom: o && o.derivedFrom },
+    { search: searchOnline, deobfuscate: async () => { await runRecover(); await runOrigin(); }, useInput: () => { S.originSubject = 'input'; runOrigin(); } },
+  ));
+  setCount('origin', o && o.analysis.assessable && !o.derived ? pct(o.analysis.ai.score) : '');
 }
 
 async function runCompare() {
@@ -796,6 +1009,7 @@ function renderInspector() {
   if (S.detection) parts.push(...detectionSummary(S.detection, compatById));
   if (S.recovered) parts.push(...recoverySummary(S.recovered));
   if (S.trace) parts.push(traceSection());
+  if (S.dump) parts.push(dumpSection());
   replace(el.inspector, parts);
 }
 
@@ -822,6 +1036,30 @@ function traceSection() {
   }
   if (t.undefinedGlobals.length) body.push(h('div', [h('div.dim', 'Globals it looked for and did not find'), h('p.mono', { style: { overflowWrap: 'anywhere', margin: '2px 0' } }, t.undefinedGlobals.join(', '))]));
   return h('section.section', h('h3', h('span', 'Trace')), h('div.body', body));
+}
+
+function dumpSection() {
+  const d = S.dump;
+  const kv = (rows) => h('dl.kv', rows.flatMap(([k, v]) => [h('dt', k), h('dd', v)]));
+  const body = [
+    kv([['Ended', d.ended], ['Captured', `${d.candidates.length} piece${d.candidates.length === 1 ? '' : 's'} of text`], ['Instructions', d.stats.fuelUsed.toLocaleString()]]),
+    h('p.note.warn', 'A dump is what the script built during this one run. It is not guaranteed to be the whole original script.'),
+  ];
+  if (d.candidates.length) {
+    body.push(h('ul.list', d.candidates.map((c) => h('li', [
+      h('span', c.label), ` ${fmtBytes(c.bytes)} `, h('span.badge' + (c.parses ? '.ok' : ''), c.parses ? 'Lua' : 'not Lua'), ' ',
+      h('button.btn.small', { type: 'button', onclick: () => { setOutput('dump', { text: c.source, label: `Dump: ${c.label}`, kind: 'dump' }); renderAll(); } }, 'Show'), ' ',
+      h('button.btn.small', { type: 'button', onclick: () => useChunk(c.label, c.source) }, 'Use as input'),
+    ]))));
+  }
+  if (d.requests && d.requests.length) body.push(h('div', [h('div.dim', `Requests recorded, not performed (${d.requests.length})`), h('ul.list.mono', d.requests.map((u) => h('li', { style: { overflowWrap: 'anywhere' } }, u)))]));
+  return h('section.section', h('h3', h('span', 'Dump')), h('div.body', body));
+}
+
+function useChunk(label, source) {
+  loadBytes(`${baseName(S.name)}.dump.lua`, binaryToBytes(source));
+  S.notes.push({ kind: 'info', text: `The ${label} captured while dumping the previous script is now the input, so Detect, Deobfuscate and the rest apply to it.` });
+  renderInspector();
 }
 
 function useLayer(layer) {
@@ -970,7 +1208,7 @@ function renderSidebar() {
 
 // ---- rendering ----------------------------------------------------------------------------------------------------------------------------------------
 
-const OUT_ORDER = [['recover', 'Recovered'], ['beautify', 'Beautified'], ['trace', 'Trace']];
+const OUT_ORDER = [['recover', 'Recovered'], ['beautify', 'Beautified'], ['rename', 'Renamed'], ['dump', 'Dump'], ['trace', 'Trace']];
 function renderOutput() {
   const has = !!S.output;
   $('#out-body', rightCol).hidden = !has;
@@ -1077,6 +1315,7 @@ function renderAll() {
   renderCompare();
   renderDetection();
   renderAnalysis();
+  renderOrigin();
   renderInspector();
   renderSidebar();
   if (S.tab === 'luast') ensureLuast();
@@ -1090,6 +1329,14 @@ el.btn.analyze.addEventListener('click', () => runAnalyze());
 el.btn.recover.addEventListener('click', () => runRecover());
 el.btn.trace.addEventListener('click', () => runTrace());
 el.btn.compare.addEventListener('click', () => runCompare());
+el.btn.rename.addEventListener('click', () => runRename());
+el.btn.dump.addEventListener('click', () => runDump());
+el.btn.origin.addEventListener('click', () => runOrigin());
+el.btn.link.addEventListener('click', () => openLinkDialog());
+el.btn.help.addEventListener('click', () => showHelp());
+el.btn.luraph.addEventListener('click', () => runVmTool('luraph', 'Luraph'));
+el.btn.moonveil.addEventListener('click', () => runVmTool('moonveil', 'MoonVeil'));
+el.btn.ironbrew.addEventListener('click', () => runIronBrewTool());
 
 document.addEventListener('keydown', (e) => {
   if (e.defaultPrevented) return;

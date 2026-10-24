@@ -78,6 +78,6 @@ export function modal({ title, body, buttons = [{ id: 'ok', label: 'Close', prim
       h('div.modal', { role: 'dialog', 'aria-modal': 'true', 'aria-label': title }, h('h2', title), h('div.mbody', body), foot));
     document.body.append(back);
     document.addEventListener('keydown', onKey, true);
-    (foot.querySelector('.primary') || foot.lastElementChild).focus();
+    (foot.querySelector('.primary') || foot.lastElementChild).focus({ preventScroll: true });
   });
 }
