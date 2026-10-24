@@ -195,8 +195,10 @@ const RULES = {
     rule('banner', 'banner', 0.95, (c) => { const m = /77fuscator\s+v?([0-9][0-9.]*)/i.exec(c.src); return m ? { text: `77fuscator banner (${m[1]})`, version: m[1] } : false; }),
   ],
   ironbrew2: [
-    rule('banner', 'banner', 0.6, (c) => /Iron\s?Brew/i.test(c.src) && 'mentions IronBrew'),
-    rule('vm-shape', 'heuristic', 0.4, (c) => c.facts && c.vm.score >= 5 && 'VM-shaped script: deserializer, opcode dispatcher and encoded payload (generic; not specific to IronBrew)'),
+    rule('watermark', 'banner', 0.97, (c) => { const m = /IronBrew:tm: obfuscation; Version ([0-9][0-9.]*)/.exec(c.src); return m ? { text: `IronBrew 2 watermark (version ${m[1]})`, version: m[1] } : false; }),
+    rule('prelude', 'structure', 0.92, (c) => c.ast && isIronBrewPrelude(c.ast) && 'the eleven library locals every IronBrew 2 VM starts with (string.byte, string.char, string.sub, table.concat, table.insert, math.ldexp, getfenv, setmetatable, select, unpack, tonumber)'),
+    rule('mention', 'banner', 0.3, (c) => /Iron\s?Brew/i.test(c.src) && 'mentions IronBrew'),
+    rule('vm-shape', 'heuristic', 0.3, (c) => c.facts && c.vm.score >= 5 && 'VM-shaped script: deserializer, opcode dispatcher and encoded payload (generic; not specific to IronBrew)'),
   ],
   luaobfuscator: [
     rule('mention', 'banner', 0.6, (c) => /luaobfuscator\.com/i.test(c.src) && 'mentions luaobfuscator.com'),
@@ -209,6 +211,25 @@ const RULES = {
   synapse_xen: [rule('mention', 'banner', 0.5, (c) => /Synapse\s*Xen/i.test(c.src) && 'mentions Synapse Xen')],
   wearedevs: [rule('mention', 'banner', 0.5, (c) => /wearedevs\.net|WeAreDevs/i.test(c.src) && 'mentions WeAreDevs')],
 };
+
+/** The fixed run of `local x = <library function>` statements IronBrew 2's generator writes before anything else. */
+const IB2_PRELUDE = ['string.byte', 'string.char', 'string.sub', 'table.concat', 'table.insert', 'math.ldexp', 'getfenv|_ENV', 'setmetatable', 'select', 'unpack|table.unpack', 'tonumber'];
+function isIronBrewPrelude(ast) {
+  if (ast.body.length < 14) return false;
+  const path = (e) => (e.type === 'Name' ? e.name : e.type === 'Index' && e.key.type === 'String' && e.obj.type === 'Name' ? `${e.obj.name}.${e.key.value}` : null);
+  for (let i = 0; i < IB2_PRELUDE.length; i++) {
+    const s = ast.body[i];
+    if (!s || s.type !== 'Local' || s.ids.length !== 1 || s.values.length !== 1) return false;
+    const v = s.values[0];
+    const want = IB2_PRELUDE[i];
+    if (want.includes('|')) {
+      const [a, b] = want.split('|');
+      if (v.type !== 'Binary' || v.op !== 'or' || path(v.left) !== a) return false;
+      if (b === '_ENV' ? v.right.type !== 'Func' : path(v.right) !== b) return false;
+    } else if (path(v) !== want) return false;
+  }
+  return true;
+}
 
 /** How VM-like is the script? Used as generic, non-family-specific evidence. */
 function vmShape(facts, ast) {
@@ -274,7 +295,7 @@ export function detect(source, knownAst = null) {
   }
   if (ast) facts = collectFacts(ast, source);
 
-  const ctx = { src: source, facts, vm: vmShape(facts, ast || { body: [] }) };
+  const ctx = { src: source, facts, ast, vm: vmShape(facts, ast || { body: [] }) };
 
   // families
   for (const [id, rules] of Object.entries(RULES)) {

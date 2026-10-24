@@ -93,6 +93,22 @@ export const SNIPPETS = {
     local function add(v) acc[#acc + 1] = v return #acc end
     add(1) add(2) print(#acc)
   `,
+  capturedVarargTable: `
+    local function compose(...)
+      local fns = { ... }
+      return function(x)
+        for i = #fns, 1, -1 do x = fns[i](x) end
+        return x
+      end
+    end
+    print(compose(function(a) return a + 1 end, function(a) return a * 2 end)(5))
+    local function counter(start, ...)
+      local state = { start, ... }
+      return function() state[1] = state[1] + 1 return #state, state[1] end
+    end
+    local c = counter(10, 20, 30)
+    print(c()) print(c())
+  `,
   varargs: `
     local function va(...) local t = { ... } return select('#', ...), #t, ... end
     print(va(1, 2, 3))

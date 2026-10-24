@@ -82,7 +82,7 @@ export function looksObfuscated(name) {
   if (/^_+$/.test(name)) return true;
   if (/^[Il1O0_]{3,}$/.test(name)) return true;                        // lIIlIlIl, O0O0OO
   if (/^_*0x[0-9a-fA-F]+$/.test(name)) return true;                    // _0x1a2b
-  if (/^(?:v|var|local|L|l|a|f|func|fn|u|t|tmp|temp|loc|lv)?_*\d+(?:_+\d+)*_*$/.test(name) && /[a-zA-Z_]/.test(name)) return true;   // v12, L_3_, local4, _12
+  if (/^_*(?:v|var|local|L|l|a|f|func|fn|u|t|tmp|temp|loc|lv|r)?_*\d+(?:_+\d+)*_*$/.test(name) && /[a-zA-Z_]/.test(name)) return true;   // v12, L_3_, local4, _12, _r0_2 (decompiled)
   if (/prometheus/i.test(name) && name.startsWith('__')) return true;
   if (name.length <= 2) return false;
   if (name.length < 5) return false;

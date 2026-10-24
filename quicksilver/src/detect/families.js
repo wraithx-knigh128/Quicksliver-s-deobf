@@ -60,11 +60,12 @@ export const FAMILIES = {
   ironbrew2: {
     name: 'IronBrew 2',
     kind: 'open-source',
-    evidence: 'none',
-    maxConfidence: 0.45,
-    summary: 'Lua obfuscator that compiles scripts to a custom bytecode VM. Output is minified with random names.',
-    techniques: ['custom bytecode VM', 'opcode shuffling', 'constant encoding'],
-    sources: [],
+    evidence: 'source',
+    maxConfidence: 0.99,
+    summary: 'Open-source (MIT) Lua 5.1 obfuscator in C# that compiles a script with luac and re-emits it as a custom register VM plus a compressed, XOR-masked program string.',
+    techniques: ['custom bytecode VM', 'opcode mutation (duplicated handlers)', 'super operators (fused handlers)', 'LZW + XOR serialisation',
+      'control-flow macros (IB_MAX_CFLOW_START / IB_INLINING_START)', 'string encryption macro'],
+    sources: ['https://github.com/Trollicus/ironbrew-2'],
   },
   luaobfuscator: {
     name: 'LuaObfuscator.com',

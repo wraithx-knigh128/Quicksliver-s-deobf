@@ -1,0 +1,930 @@
+{
+  "tool": "IronBrew 2",
+  "version": "2.7.0",
+  "source": "https://github.com/Trollicus/ironbrew-2",
+  "sourceRevision": "4063f3aa6b24d24c0d3ce44da55dbd9d591c2cfd",
+  "runtime": "built from source: .NET Core 3.1.23 runtime, Roslyn csc, luac/luajit via lupa shims",
+  "seed": null,
+  "entries": [
+    {
+      "file": "s01_minify_basic__default.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "default",
+      "flags": [],
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 17279,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__plain.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "plain",
+      "flags": [
+        "--no-flow",
+        "--no-mutate",
+        "--no-super"
+      ],
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 12725,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__mutate.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "mutate",
+      "flags": [
+        "--no-flow",
+        "--no-super"
+      ],
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 14658,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__super.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "super",
+      "flags": [
+        "--no-flow",
+        "--no-mutate"
+      ],
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 15493,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__flow.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "flow",
+      "flags": [
+        "--no-mutate",
+        "--no-super"
+      ],
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 12720,
+      "behaviors": {
+        "lua51": "diverged",
+        "lua54": "errored"
+      },
+      "behavior": "diverged"
+    },
+    {
+      "file": "s01_minify_basic__strings.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "strings",
+      "flags": [
+        "--strings"
+      ],
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 35741,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__lineinfo.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "lineinfo",
+      "flags": [
+        "--lineinfo"
+      ],
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 18090,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__nocompress.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "nocompress",
+      "flags": [
+        "--no-compress"
+      ],
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 21455,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__default.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "default",
+      "flags": [],
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 18470,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__plain.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "plain",
+      "flags": [
+        "--no-flow",
+        "--no-mutate",
+        "--no-super"
+      ],
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 12953,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__mutate.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "mutate",
+      "flags": [
+        "--no-flow",
+        "--no-super"
+      ],
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 14861,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__super.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "super",
+      "flags": [
+        "--no-flow",
+        "--no-mutate"
+      ],
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 16336,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__flow.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "flow",
+      "flags": [
+        "--no-mutate",
+        "--no-super"
+      ],
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 13055,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:37: attempt to index field '?' (a nil value)"
+    },
+    {
+      "file": "s02_renamed_vars__strings.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "strings",
+      "flags": [
+        "--strings"
+      ],
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 38062,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__lineinfo.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "lineinfo",
+      "flags": [
+        "--lineinfo"
+      ],
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 19251,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__nocompress.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "nocompress",
+      "flags": [
+        "--no-compress"
+      ],
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 22580,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__default.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "default",
+      "flags": [],
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 17232,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__plain.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "plain",
+      "flags": [
+        "--no-flow",
+        "--no-mutate",
+        "--no-super"
+      ],
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 12511,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__mutate.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "mutate",
+      "flags": [
+        "--no-flow",
+        "--no-super"
+      ],
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 14156,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__super.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "super",
+      "flags": [
+        "--no-flow",
+        "--no-mutate"
+      ],
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 15833,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__flow.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "flow",
+      "flags": [
+        "--no-mutate",
+        "--no-super"
+      ],
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 12624,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__strings.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "strings",
+      "flags": [
+        "--strings"
+      ],
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 56681,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__lineinfo.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "lineinfo",
+      "flags": [
+        "--lineinfo"
+      ],
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 17982,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__nocompress.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "nocompress",
+      "flags": [
+        "--no-compress"
+      ],
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 20634,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__default.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "default",
+      "flags": [],
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 18667,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__plain.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "plain",
+      "flags": [
+        "--no-flow",
+        "--no-mutate",
+        "--no-super"
+      ],
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 13598,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__mutate.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "mutate",
+      "flags": [
+        "--no-flow",
+        "--no-super"
+      ],
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 15852,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__super.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "super",
+      "flags": [
+        "--no-flow",
+        "--no-mutate"
+      ],
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 16266,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__flow.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "flow",
+      "flags": [
+        "--no-mutate",
+        "--no-super"
+      ],
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 13725,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "instruction budget exceeded"
+    },
+    {
+      "file": "s04_control_flow__strings.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "strings",
+      "flags": [
+        "--strings"
+      ],
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 65256,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__lineinfo.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "lineinfo",
+      "flags": [
+        "--lineinfo"
+      ],
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 19535,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__nocompress.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "nocompress",
+      "flags": [
+        "--no-compress"
+      ],
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 22668,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__default.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "default",
+      "flags": [],
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 20327,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__plain.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "plain",
+      "flags": [
+        "--no-flow",
+        "--no-mutate",
+        "--no-super"
+      ],
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 13788,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__mutate.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "mutate",
+      "flags": [
+        "--no-flow",
+        "--no-super"
+      ],
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 16374,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__super.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "super",
+      "flags": [
+        "--no-flow",
+        "--no-mutate"
+      ],
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 17640,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__flow.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "flow",
+      "flags": [
+        "--no-mutate",
+        "--no-super"
+      ],
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 13811,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__strings.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "strings",
+      "flags": [
+        "--strings"
+      ],
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 25190,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__lineinfo.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "lineinfo",
+      "flags": [
+        "--lineinfo"
+      ],
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 21289,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__nocompress.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "nocompress",
+      "flags": [
+        "--no-compress"
+      ],
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 27062,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__default.lua",
+      "sample": "s06_combined.lua",
+      "config": "default",
+      "flags": [],
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 25056,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__plain.lua",
+      "sample": "s06_combined.lua",
+      "config": "plain",
+      "flags": [
+        "--no-flow",
+        "--no-mutate",
+        "--no-super"
+      ],
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 15408,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__mutate.lua",
+      "sample": "s06_combined.lua",
+      "config": "mutate",
+      "flags": [
+        "--no-flow",
+        "--no-super"
+      ],
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 18582,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__super.lua",
+      "sample": "s06_combined.lua",
+      "config": "super",
+      "flags": [
+        "--no-flow",
+        "--no-mutate"
+      ],
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 22028,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__flow.lua",
+      "sample": "s06_combined.lua",
+      "config": "flow",
+      "flags": [
+        "--no-mutate",
+        "--no-super"
+      ],
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 15514,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:37: attempt to perform arithmetic on field '?' (a nil value)"
+    },
+    {
+      "file": "s06_combined__strings.lua",
+      "sample": "s06_combined.lua",
+      "config": "strings",
+      "flags": [
+        "--strings"
+      ],
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 44450,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__lineinfo.lua",
+      "sample": "s06_combined.lua",
+      "config": "lineinfo",
+      "flags": [
+        "--lineinfo"
+      ],
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 26472,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__nocompress.lua",
+      "sample": "s06_combined.lua",
+      "config": "nocompress",
+      "flags": [
+        "--no-compress"
+      ],
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 34497,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__default.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "default",
+      "flags": [],
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 15882,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__plain.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "plain",
+      "flags": [
+        "--no-flow",
+        "--no-mutate",
+        "--no-super"
+      ],
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 12146,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__mutate.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "mutate",
+      "flags": [
+        "--no-flow",
+        "--no-super"
+      ],
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 13277,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__super.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "super",
+      "flags": [
+        "--no-flow",
+        "--no-mutate"
+      ],
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 14616,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__flow.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "flow",
+      "flags": [
+        "--no-mutate",
+        "--no-super"
+      ],
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 12127,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__strings.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "strings",
+      "flags": [
+        "--strings"
+      ],
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 31889,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__lineinfo.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "lineinfo",
+      "flags": [
+        "--lineinfo"
+      ],
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 16323,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__nocompress.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "nocompress",
+      "flags": [
+        "--no-compress"
+      ],
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 17911,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    }
+  ]
+}

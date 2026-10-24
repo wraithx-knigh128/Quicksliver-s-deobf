@@ -14,10 +14,13 @@ import { foldPass } from '../passes/fold.js';
 import { simplifyPass, snapshotUnused } from '../passes/simplify.js';
 import { evaluatePass } from '../passes/evaluate.js';
 import { renamePass } from '../passes/rename.js';
-import { unwrapWrapper, removeUnusedVararg } from '../passes/structure.js';
+import { unwrapWrapper, removeUnusedVararg, tidyIfs } from '../passes/structure.js';
 import { removeAntiTamper, undoProxifyLocals } from './prometheus.js';
 import { removeHerculesAntiTamper } from './hercules.js';
 import { assessConfidence } from './confidence.js';
+import { recoverIronBrew, IronBrewError } from './ironbrew.js';
+import { parseChunk } from '../sandbox/bytecode.js';
+import { decompile } from '../decompile/decompile.js';
 
 export const DEFAULT_OPTIONS = Object.freeze({
   sandbox: { enabled: false, fuel: 60_000_000, timeMs: 10_000, dialect: 'luau' },
@@ -69,6 +72,23 @@ class Run {
   }
 }
 
+/**
+ * IronBrew 2: read the program back out of the VM's own data and decompile it. The AST is replaced in place so that
+ * the ordinary passes (folding, clean-up, renaming) go on to work on the recovered program.
+ */
+function rebuildIronBrew(ast) {
+  let r;
+  try { r = recoverIronBrew(ast); } catch (e) {
+    if (e instanceof IronBrewError) return { skipped: e.message };
+    throw e;
+  }
+  const out = decompile(parseChunk(r.bytes));
+  if (out.failures.length) throw new Error(`the decompiler could not structure ${out.failures.length} function(s): ${out.failures[0]}`);
+  ast.body = out.ast.body;
+  ast.features = out.ast.features || ast.features;
+  return { changed: r.stats.instructions, ...r.stats };
+}
+
 /** Parse, or return a structured error. */
 export function tryParse(source) {
   try {
@@ -92,7 +112,12 @@ export function recover(source, userOptions = {}) {
   }
   const detection = detect(source, parsed.ast);
   const run = new Run(parsed.ast, options);
-  const unusedAtStart = snapshotUnused(parsed.ast);
+  let unusedAtStart = snapshotUnused(parsed.ast);
+
+  if (detection.families.some((f) => f.id === 'ironbrew2' && f.confidence >= 0.5)) {
+    // a rebuilt program has no author-written dead code to preserve
+    if (run.step('ironbrew2', 'Rebuild the program from the IronBrew 2 VM data', rebuildIronBrew)) unusedAtStart = new WeakSet();
+  }
 
   const generic = () => {
     let total = 0;
@@ -101,6 +126,7 @@ export function recover(source, userOptions = {}) {
     total += run.step('hercules.antitamper', 'Remove Hercules anti-tamper block', (a) => removeHerculesAntiTamper(a), { quiet: true });
     total += run.step('fold', 'Fold constant expressions', (a) => foldPass(a, { foldCalls: options.foldCalls }));
     total += run.step('simplify', 'Simplify control flow and remove dead code', (a) => simplifyPass(a, { unusedAtStart }));
+    total += run.step('tidy', 'Tidy flipped tests', (a) => tidyIfs(a), { quiet: true });
     total += run.step('prometheus.proxify', 'Undo Prometheus ProxifyLocals', (a) => undoProxifyLocals(a), { quiet: true });
     if (options.sandbox.enabled) {
       total += run.step('evaluate', 'Evaluate string decoders (sandbox)', (a) => evaluatePass(a, { sandbox: options.sandbox }));

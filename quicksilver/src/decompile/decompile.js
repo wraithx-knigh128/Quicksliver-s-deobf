@@ -275,6 +275,25 @@ class FunctionDecompiler {
     this.writes = writes;
   }
 
+  /**
+   * Without local names a register that some closure captures has to be a named variable, but only the values that can
+   * reach the capture: a temporary that is overwritten before any closure sees the register is an ordinary temporary.
+   * Anything the scan cannot follow in a straight line is assumed to reach it.
+   */
+  writeReachesCapture(i, d) {
+    const { ir, n } = this;
+    const own = ir[i];
+    if (own.op === 'closure' && own.ups.some((u) => u.instack && u.idx === d)) return true;   // a function that refers to itself
+    for (let k = i + 1; k < n; k++) {
+      const x = ir[k];
+      if (x.op === 'closure' && x.ups.some((u) => u.instack && u.idx === d)) return true;
+      if (this.isTarget[k] || x.op === 'jmp' || x.op === 'cjmp' || x.op === 'testset' || x.op === 'forprep' || x.op === 'forloop' || x.op === 'tforcall' || x.op === 'tforloop') return true;
+      if (x.op === 'ret') return false;
+      if (this.writes[k].includes(d)) return false;
+    }
+    return false;
+  }
+
   /** Is the register `d` written by IR op `i` a temporary that is read exactly once, soon, and nowhere else? */
   forwardability() {
     const { n, ir } = this;
@@ -292,7 +311,9 @@ class FunctionDecompiler {
       if (o.op === 'call' && o.nres !== 1) continue;
       if (o.op === 'vararg' && o.n !== 1) continue;
       for (const d of this.writes[i]) {
-        if (this.captured.has(d)) continue;
+        // a captured register has to be a named variable, except that a fresh table may still collect its fields
+        // first: it is written out under its name as soon as something needs the name (see stepClosure)
+        if (this.captured.has(d) && o.op !== 'newtable' && this.writeReachesCapture(i, d)) continue;
         if (this.localActive(d, o.pc)) continue;
         const building = o.op === 'newtable';
         let j = -1;
@@ -413,7 +434,14 @@ class FunctionDecompiler {
   flushEntry(out, r, e) {
     if (e.selfOf !== undefined) return; // the object half of SELF; only meaningful inside a method call
     if (e.table) e.expr = e.table;
-    if (e.method) throw new Unstructured('method lookup not followed by its call');
+    if (e.method) {
+      // Something else has to run between `obj:method` and its call (an argument that needs statements of its own, as
+      // after inlining). Lua's own order is: read the object, look the method up, evaluate the arguments, call; so the
+      // two halves are written out as temporaries and the call uses them.
+      out.push({ type: 'Assign', targets: [nameNode(this.tempName(r + 1))], values: [e.method.obj] });
+      out.push({ type: 'Assign', targets: [nameNode(this.tempName(r))], values: [this.indexNode(nameNode(this.tempName(r + 1)), e.method.key)] });
+      return;
+    }
     out.push({ type: 'Assign', targets: [nameNode(this.tempName(r))], values: [e.expr] });
   }
 
@@ -1088,6 +1116,8 @@ class FunctionDecompiler {
       }
       return this.upName(u.idx);
     });
+    // the closure refers to these registers by name, so a value still waiting in one of them has to be written out first
+    if (o.ups.some((u) => u.instack && this.P.has(u.idx))) this.flushAll(out);
     const envUps = o.ups.map((u) => (!u.instack && this.o.envUps && this.o.envUps[u.idx] === true));
     let func;
     try {

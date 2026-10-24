@@ -54,7 +54,7 @@ function lift51(f) {
     const { A, B, C } = d;
     const push = (o) => { o.pc = pc; ir.push(o); return o; };
     switch (d.op) {
-      case O51.MOVE: push({ op: 'move', d: A, s: B }); break;
+      case O51.MOVE: if (A !== B) push({ op: 'move', d: A, s: B }); break; // a move onto itself does nothing
       case O51.LOADK: push({ op: 'loadk', d: A, v: f.k[d.Bx] }); break;
       case O51.LOADBOOL: {
         push({ op: 'loadk', d: A, v: B !== 0 });
@@ -79,7 +79,7 @@ function lift51(f) {
       case O51.NOT: push({ op: 'un', d: A, uop: 'not', a: R(B) }); break;
       case O51.LEN: push({ op: 'un', d: A, uop: '#', a: R(B) }); break;
       case O51.CONCAT: push({ op: 'concat', d: A, from: B, to: C }); break;
-      case O51.JMP: { const j = push({ op: 'jmp', t: -1 }); jumpsFrom.push([j, pc + 1 + d.sBx]); break; }
+      case O51.JMP: { if (d.sBx === 0) break; /* a jump to the next instruction does nothing */ const j = push({ op: 'jmp', t: -1 }); jumpsFrom.push([j, pc + 1 + d.sBx]); break; }
       case O51.EQ: case O51.LT: case O51.LE: {
         const next = decodeInstruction(code[pc + 1]);
         if (next.op !== O51.JMP) throw new LiftError(`comparison at ${pc} is not followed by a jump`);
@@ -186,7 +186,7 @@ function lift54(f, opts) {
       pc++;
     };
     switch (d.op) {
-      case O54.MOVE: push({ op: 'move', d: A, s: B }); break;
+      case O54.MOVE: if (A !== B) push({ op: 'move', d: A, s: B }); break;
       case O54.LOADI: push({ op: 'loadk', d: A, v: d.sBx }); break;
       case O54.LOADF: push({ op: 'loadk', d: A, v: d.sBx, float: true }); break;
       case O54.LOADK: push({ op: 'loadk', d: A, v: f.k[d.Bx], float: !!(f.kFloat && f.kFloat[d.Bx]) }); break;
@@ -238,7 +238,7 @@ function lift54(f, opts) {
       case O54.CONCAT: push({ op: 'concat', d: A, from: A, to: A + B - 1 }); break;
       case O54.CLOSE: push({ op: 'close', from: A }); break;
       case O54.TBC: break;
-      case O54.JMP: { const j = push({ op: 'jmp', t: -1 }); jumpsFrom.push([j, pc + 1 + d.sJ]); break; }
+      case O54.JMP: { if (d.sJ === 0) break; const j = push({ op: 'jmp', t: -1 }); jumpsFrom.push([j, pc + 1 + d.sJ]); break; }
       case O54.EQ: jumpAfter({ op: 'cjmp', kind: 'eq', a: R(A), b: R(B), sense: d.k !== 0, t: -1 }); break;
       case O54.LT: jumpAfter({ op: 'cjmp', kind: 'lt', a: R(A), b: R(B), sense: d.k !== 0, t: -1 }); break;
       case O54.LE: jumpAfter({ op: 'cjmp', kind: 'le', a: R(A), b: R(B), sense: d.k !== 0, t: -1 }); break;

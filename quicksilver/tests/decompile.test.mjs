@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 import { bytesToBinary } from '../src/core/bytes.js';
 import { quoteString, print } from '../src/core/printer.js';
 import { parse } from '../src/core/parser.js';
-import { parseChunk } from '../src/sandbox/bytecode.js';
+import { parseChunk, dumpChunk51 } from '../src/sandbox/bytecode.js';
 import { decompile } from '../src/decompile/decompile.js';
 import * as oracle from './helpers/lua-oracle.mjs';
 import { SNIPPETS, SNIPPETS_54 } from './corpus/decompile/snippets.mjs';
@@ -30,8 +30,11 @@ async function compile(src, runtime) {
 
 async function roundTrip(src, runtime, strip = false) {
   let bin = await compile(src, runtime);
-  if (strip) {
-    const code = `local f = assert(${runtime === 'lua51' ? 'loadstring' : 'load'}(${quoteString(src)}))\nlocal d = string.dump(f, true)\nprint((d:gsub('.', function(c) return string.format('%02x', c:byte()) end)))`;
+  if (strip && runtime === 'lua51') {
+    // Lua 5.1's string.dump ignores its `strip` argument, so the debug information is removed here
+    bin = dumpChunk51(parseChunk(bin), { strip: true });
+  } else if (strip) {
+    const code = `local f = assert(load(${quoteString(src)}))\nlocal d = string.dump(f, true)\nprint((d:gsub('.', function(c) return string.format('%02x', c:byte()) end)))`;
     const r = await oracle.runLua(code, runtime);
     assert.ok(r.ok, r.error);
     bin = hexToBin(r.stdout.trim());

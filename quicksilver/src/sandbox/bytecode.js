@@ -98,7 +98,7 @@ export function parseChunk(bin) {
 
   const readFunction = (parentSource, depth) => {
     if (depth > 200) throw new BytecodeError('function nesting too deep');
-    const f = { source: r.string() || parentSource, line: r.int(), lastLine: r.int(), nups: r.byte(), numParams: r.byte(), isVararg: r.byte() & 1, maxStack: r.byte() };
+    const f = { source: r.string() || parentSource, line: r.int(), lastLine: r.int(), nups: r.byte(), numParams: r.byte(), isVararg: r.byte() !== 0, maxStack: r.byte() };
     const ncode = r.int();
     if (ncode > 4_000_000) throw new BytecodeError('implausible instruction count');
     f.code = new Uint32Array(ncode);
@@ -132,6 +132,64 @@ export function parseChunk(bin) {
   const main = readFunction(null, 0);
   main.version = 0x51;
   return { version: 0x51, header, main, bytes: r.p };
+}
+
+/**
+ * Write a parsed Lua 5.1 chunk back out as bytes (the inverse of parseChunk). With `strip`, the debug information
+ * (source name, line numbers, local and upvalue names) is left out, which gives the kind of chunk obfuscators ship.
+ * @returns {string} binary string
+ */
+export function dumpChunk51(chunk, { strip = false } = {}) {
+  const h = chunk.header || { little: true, intSize: 4, sizeT: 8, numSize: 8 };
+  const out = [];
+  const u8 = (v) => out.push(v & 255);
+  const uint = (v, size) => {
+    const bytes = [];
+    for (let i = 0; i < size; i++) bytes.push(Math.floor(v / 2 ** (8 * i)) % 256);
+    out.push(...(h.little ? bytes : bytes.reverse()));
+  };
+  const int = (v) => uint(v, h.intSize);
+  const str = (v) => {
+    if (v === null || v === undefined) { uint(0, h.sizeT); return; }
+    uint(v.length + 1, h.sizeT);
+    for (let i = 0; i < v.length; i++) u8(v.charCodeAt(i));
+    u8(0);
+  };
+  const num = (v) => {
+    const dv = new DataView(new ArrayBuffer(8));
+    if (h.numSize === 8) dv.setFloat64(0, v, h.little); else dv.setFloat32(0, v, h.little);
+    for (let i = 0; i < h.numSize; i++) u8(dv.getUint8(i));
+  };
+  out.push(0x1b, 0x4c, 0x75, 0x61, 0x51, 0, h.little ? 1 : 0, h.intSize, h.sizeT, 4, h.numSize, 0);
+  const fn = (f) => {
+    str(strip ? null : f.source);
+    int(f.line || 0); int(f.lastLine || 0);
+    u8(f.nups); u8(f.numParams); u8(f.isVararg ? 2 : 0); u8(f.maxStack);
+    int(f.code.length);
+    for (const w of f.code) uint(w, 4);
+    int(f.k.length);
+    for (const k of f.k) {
+      if (k === undefined) u8(0);
+      else if (typeof k === 'boolean') { u8(1); u8(k ? 1 : 0); }
+      else if (typeof k === 'number') { u8(3); num(k); }
+      else { u8(4); str(k); }
+    }
+    int(f.protos.length);
+    for (const c of f.protos) fn(c);
+    const lines = strip ? [] : f.lines || [];
+    int(lines.length);
+    for (const l of lines) int(l);
+    const locals = strip ? [] : f.locals || [];
+    int(locals.length);
+    for (const l of locals) { str(l.name); int(l.start); int(l.end); }
+    const ups = strip ? [] : f.upNames || [];
+    int(ups.length);
+    for (const n of ups) str(n);
+  };
+  fn(chunk.main);
+  let bin = '';
+  for (let i = 0; i < out.length; i += 8192) bin += String.fromCharCode.apply(null, out.slice(i, i + 8192));
+  return bin;
 }
 
 // ---- disassembler ---------------------------------------------------------------------------------------------------------------

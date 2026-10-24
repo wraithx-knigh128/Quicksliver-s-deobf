@@ -2,6 +2,7 @@
 //
 //   unwrapWrapper       `return (function(...) BODY end)(...)` -> BODY
 //   removeUnusedVararg  `function(a, ...)` where `...` is never read -> `function(a)`
+//   tidyIfs             `if c then else B end` -> `if not c then B end` (left behind when a test was flipped)
 
 import { transform, walk } from '../core/walk.js';
 
@@ -54,6 +55,31 @@ export function removeUnusedVararg(chunk) {
     expr(e) {
       if (e.type === 'Func' && e.vararg && !usesVararg(e.body)) { e.vararg = false; changed++; }
       return undefined;
+    },
+  });
+  return { changed };
+}
+
+/** The condition that holds exactly when `cond` does not, written as simply as is exact. */
+function negateCondition(cond) {
+  if (cond.type === 'Paren') return negateCondition(cond.expr);
+  if (cond.type === 'Unary' && cond.op === 'not') return cond.arg;   // only truthiness matters inside `if`
+  if (cond.type === 'Binary' && (cond.op === '==' || cond.op === '~=')) return { ...cond, op: cond.op === '==' ? '~=' : '==' };
+  if (cond.type === 'True') return { type: 'False' };
+  if (cond.type === 'False' || cond.type === 'Nil') return { type: 'True' };
+  // not (a < b) is not a >= b when a value is NaN, so ordering tests keep the explicit `not`
+  const inner = cond.type === 'Binary' || cond.type === 'Call' || cond.type === 'Index' || cond.type === 'Name' ? cond : { type: 'Paren', expr: cond };
+  return { type: 'Unary', op: 'not', arg: inner.type === 'Binary' ? { type: 'Paren', expr: inner } : inner };
+}
+
+/** Compilers emit `if c then <nothing> else B end` for a flipped test; say it the way a person would. */
+export function tidyIfs(chunk) {
+  let changed = 0;
+  transform(chunk, {
+    stmt(s) {
+      if (s.type !== 'If' || s.clauses.length !== 1 || s.clauses[0].body.length || !s.orelse || !s.orelse.length) return undefined;
+      changed++;
+      return { ...s, clauses: [{ cond: negateCondition(s.clauses[0].cond), body: s.orelse }], orelse: null };
     },
   });
   return { changed };
