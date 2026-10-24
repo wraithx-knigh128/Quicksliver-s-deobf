@@ -43,9 +43,9 @@ export function placeDeclarations(body, names) {
     return hit;
   };
   const mentionsName = (node, name) => mentions(node).has(name);
-  const inHeader = (s, name) => headerNodes(s).some((e) => mentionsName(e, name)) || (s.type === 'Repeat' && mentionsName(s.cond, name));
+  const inHeader = (s, name) => headerNodes(s).some((e) => mentionsName(e, name));
 
-  /** Does the block write `name` before it reads it, in the first statement that mentions it? */
+  /** Is the first statement of the block that mentions `name` a plain `name = expr` that does not read it? */
   const definesFirst = (stmts, name) => {
     const s = stmts.find((x) => mentionsName(x, name));
     if (!s || s.type !== 'Assign' || s.targets.length !== 1 || s.values.length !== 1) return false;
@@ -53,49 +53,50 @@ export function placeDeclarations(body, names) {
     return t.type === 'Name' && t.name === name && !mentionsName(s.values[0], name);
   };
 
-  function place(stmts, pending) {
-    const first = new Map();
-    const count = new Map();
-    stmts.forEach((s, i) => {
-      for (const n of mentions(s)) if (pending.has(n)) { if (!first.has(n)) first.set(n, i); count.set(n, (count.get(n) || 0) + 1); }
-    });
-    const here = [];                                 // [index, name]
-    const down = new Map();                          // statement -> Map(block -> Set(name))
-    for (const n of pending) {
-      if (!first.has(n)) continue;
-      const i = first.get(n);
-      const s = stmts[i];
-      if (count.get(n) === 1 && !inHeader(s, n)) {
-        const inside = childBlocks(s).filter((b) => b.some((x) => mentionsName(x, n)));
-        if (inside.length === 1 && (!isLoop(s) || definesFirst(inside[0], n))) {
-          if (!down.has(s)) down.set(s, new Map());
-          const m = down.get(s);
-          if (!m.has(inside[0])) m.set(inside[0], new Set());
-          m.get(inside[0]).add(n);
-          continue;
-        }
-      }
-      here.push([i, n]);
+  /**
+   * The innermost block that holds every mention of the name, found by going down while the name appears in exactly one
+   * statement and, inside it, in exactly one block. Crossing a loop is only allowed when the name is written before it is
+   * read each time the landing block runs; otherwise the declaration goes in front of the outermost loop crossed.
+   */
+  function landing(stmts, name) {
+    let block = stmts;
+    let crossed = null;
+    for (;;) {
+      const at = [];
+      block.forEach((x, i) => { if (mentionsName(x, name)) at.push(i); });
+      if (at.length !== 1) break;
+      const s = block[at[0]];
+      if (inHeader(s, name)) break;
+      const inside = childBlocks(s).filter((b) => b.some((x) => mentionsName(x, name)));
+      if (inside.length !== 1) break;
+      if (isLoop(s) && !crossed) crossed = { block, index: at[0] };
+      block = inside[0];
     }
-    for (const [s, blocks] of down) for (const [b, set] of blocks) place(b, set);
+    if (crossed && !definesFirst(block, name)) block = crossed.block;
+    return block;
+  }
 
-    // declare, last index first so earlier ones stay valid; names at the same statement keep one `local` line
-    here.sort((a, b) => b[0] - a[0]);
-    for (let k = 0; k < here.length;) {
-      const i = here[k][0];
-      const group = [];
-      while (k < here.length && here[k][0] === i) group.push(here[k++][1]);
-      const s = stmts[i];
+  const byBlock = new Map();                         // block -> names declared in it
+  for (const name of names) {
+    if (!body.some((x) => mentionsName(x, name))) continue;
+    const block = landing(body, name);
+    if (!byBlock.has(block)) byBlock.set(block, []);
+    byBlock.get(block).push(name);
+  }
+  for (const [stmts, list] of byBlock) {
+    const first = new Map();
+    list.forEach((name) => first.set(name, stmts.findIndex((x) => mentionsName(x, name))));
+    const order = [...new Set(first.values())].sort((a, b) => b - a);
+    for (const i of order) {
+      const group = list.filter((name) => first.get(name) === i);
+      const st = stmts[i];
       const rest = [];
       for (const n of group) {
-        if (s.type === 'Assign' && s.targets.length === 1 && s.values.length === 1 && s.targets[0].type === 'Name' && s.targets[0].name === n && !mentionsName(s.values[0], n)) {
-          stmts[i] = { type: 'Local', ids: [{ type: 'Id', name: n }], values: s.values, computed: s.computed, line: s.line, comments: s.comments, blankBefore: s.blankBefore };
-          cache.delete(stmts[i]);
+        if (st.type === 'Assign' && st.targets.length === 1 && st.values.length === 1 && st.targets[0].type === 'Name' && st.targets[0].name === n && !mentionsName(st.values[0], n)) {
+          stmts[i] = { type: 'Local', ids: [{ type: 'Id', name: n }], values: st.values, computed: st.computed, line: st.line, comments: st.comments, blankBefore: st.blankBefore };
         } else rest.push(n);
       }
       if (rest.length) stmts.splice(i, 0, { type: 'Local', ids: rest.map((name) => ({ type: 'Id', name })), values: [] });
     }
   }
-
-  place(body, new Set(names));
 }

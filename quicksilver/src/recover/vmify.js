@@ -24,25 +24,14 @@
 // Every step either understands the shape it is looking at or throws VmifyError; nothing is guessed. The caller keeps the
 // original tree when it throws.
 
-import { print } from '../core/printer.js';
 import { analyze } from '../core/scope.js';
 import { walk, clone } from '../core/walk.js';
 import { structure as structureCfg, CfgError } from '../decompile/cfg.js';
 import { placeDeclarations } from './decls.js';
+import { VmifyError, fail, stripParens, isName, num, nameNode, varOf } from './vmify-util.js';
+import { locateLoose, declaredIn, lastReason } from './vmify-locate.js';
 
-export class VmifyError extends Error {}
-
-const fail = (msg) => { throw new VmifyError(msg); };
-
-// ---- small AST helpers ---------------------------------------------------------------------------------------------
-
-const stripParens = (e) => { while (e && e.type === 'Paren') e = e.expr; return e; };
-const isName = (e, v, info) => e && e.type === 'Name' && info.varOf.get(e) === v;
-const num = (value) => ({ type: 'Number', value, raw: null });
-const nameNode = (name) => ({ type: 'Name', name });
-
-/** The Var behind a Name node, or undefined. */
-const varOf = (info, e) => (e && e.type === 'Name' ? info.varOf.get(e) : undefined);
+export { VmifyError };
 
 // ---- 1. locate -----------------------------------------------------------------------------------------------------
 
@@ -170,23 +159,48 @@ function testPos(cond, posVar, id, info) {
   }
 }
 
-/** The leaf (statement list) the dispatcher runs when pos == id. */
-function blockOf(treeBody, posVar, id, info) {
-  let block = treeBody;
+/**
+ * The leaf (statement list) the dispatcher runs when pos == id.
+ *
+ * The search tree is `if pos < N then ... else ... end` nested down to one block per leaf. When it has been through a
+ * register machine the conditions arrive as temporaries (`local t = pos < N` and then `if t`), possibly computed twice or not
+ * used at all; those belong to the tree, not to the leaf, and are evaluated here as they are met.
+ */
+function blockOf(tree, posVar, id, info) {
+  let body = tree;
+  const temps = new Map();
+  const evalCond = (cond) => {
+    const c = stripParens(cond);
+    if (!c) return undefined;
+    if (c.type === 'Name') { const v = info.varOf.get(c); return v && temps.has(v) ? temps.get(v) : undefined; }
+    if (c.type === 'Unary' && c.op === 'not') { const r = evalCond(c.arg); return r === undefined ? undefined : !r; }
+    return testPos(c, posVar, id, info);
+  };
   for (let guard = 0; guard < 64; guard++) {
-    if (block.length !== 1 || block[0].type !== 'If') return block;
-    const s = block[0];
-    const first = testPos(s.clauses[0].cond, posVar, id, info);
-    if (first === undefined) return block;          // an `if` that is not part of the search tree: a leaf made of one statement
-    let next = null;
-    for (const c of s.clauses) {
-      const t = testPos(c.cond, posVar, id, info);
-      if (t === undefined) fail('a dispatcher condition that is not a comparison of the position');
-      if (t) { next = c.body; break; }
+    let i = 0;
+    let chosen = null;
+    for (; i < body.length; i++) {
+      const s = body[i];
+      const single = (s.type === 'Local' && s.ids.length === 1 && s.values.length === 1) ? [s.ids[0], s.values[0]]
+        : (s.type === 'Assign' && s.targets.length === 1 && s.values.length === 1 && s.targets[0].type === 'Name') ? [s.targets[0], s.values[0]] : null;
+      if (single) {
+        const r = evalCond(single[1]);
+        if (r !== undefined) { const v = info.varOf.get(single[0]); if (v) temps.set(v, r); continue; }
+      }
+      if (s.type === 'If') {
+        if (evalCond(s.clauses[0].cond) === undefined) break;          // an `if` of the leaf's own
+        for (const c of s.clauses) {
+          const t = evalCond(c.cond);
+          if (t === undefined) fail('a dispatcher condition that is not a comparison of the position');
+          if (t) { chosen = c.body; break; }
+        }
+        if (!chosen) chosen = s.orelse;
+        if (!chosen) fail(`block ${id} falls off the dispatcher`);
+      }
+      break;
     }
-    if (!next) next = s.orelse;
-    if (!next) fail(`block ${id} falls off the dispatcher`);
-    block = next;
+    if (chosen === null) return body.slice(i);
+    body = chosen;
   }
   return fail('dispatcher tree too deep');
 }
@@ -211,10 +225,146 @@ class Block {
 
 const successorsOf = (term) => (term.kind === 'goto' ? [term.to] : term.kind === 'branch' ? [term.t, term.f] : []);
 
+
+/** Does the expression contain a number, nil or false: something a jump can be made of? */
+function hasJumpConstant(e) {
+  let found = false;
+  walk(e, (n) => { if (n.type === 'Number' || n.type === 'Nil' || n.type === 'False') found = true; return !found; });
+  return found;
+}
+
+/**
+ * A block that came out of another register machine declares its temporaries with `local`. They are registers like the rest,
+ * so a declaration becomes the assignment of its initial values (nil for a bare `local x`).
+ */
+function normalise(s, ctx) {
+  if (s.type === 'Assign' || s.type === 'CallStmt') return [s];
+  if (s.type === 'If' && isGuard(s)) return [s];
+  if (s.type === 'Local') {
+    const targets = s.ids.map((id) => { const n = nameNode(id.name); const v = ctx.info.varOf.get(id); if (v) ctx.info.varOf.set(n, v); return n; });
+    const values = s.values.length ? s.values : targets.map(() => ({ type: 'Nil' }));
+    return [{ type: 'Assign', targets, values }];
+  }
+  return fail(`a block contains a ${s.type}`);
+}
+
+/**
+ * A register machine that reads one of the VM's tables copies it into a register first (`local t = cells; t[k]`). Within a
+ * block those copies are followed to the table itself and dropped, so the translation only ever sees the tables by name. A
+ * copy that is still used in some other block is reported when it is met there.
+ */
+function dealias(stmts, ctx) {
+  const { info } = ctx;
+  const alias = new Map();                                       // register Var -> machinery Var
+  const lit = new Map();                                         // register Var -> { expr, deps }: a block id or an upvalue list it holds
+  const out = [];
+  const rewrite = (node) => {
+    walk(node, (n) => {
+      if (n.type === 'Name') {
+        const v = info.varOf.get(n);
+        const a = v && alias.get(v);
+        if (a) { info.varOf.set(n, a); n.name = a.name; }
+        return undefined;
+      }
+      // `create(id, upvalues)` with the arguments held in registers: put them back
+      if (n.type === 'Call' && n.args.length === 2) {
+        const f = stripParens(n.fn);
+        if (f.type === 'Name' && ctx.creators.has(alias.get(info.varOf.get(f)) || info.varOf.get(f))) {
+          n.args = n.args.map((x) => { const a = stripParens(x); const v = a.type === 'Name' ? info.varOf.get(a) : null; return v && lit.has(v) ? copyLiteral(lit.get(v).expr) : x; });
+        }
+      }
+      return undefined;
+    });
+  };
+  const copyLiteral = (e) => {
+    if (e.type === 'Number') return { ...e };
+    return { type: 'Table', fields: e.fields.map((f) => { const inner = stripParens(f.value); const n = { type: 'Name', name: inner.name }; info.varOf.set(n, info.varOf.get(inner)); return { kind: 'item', value: n }; }) };
+  };
+  const assigned = (v) => {
+    alias.delete(v);
+    lit.delete(v);
+    for (const [k, e] of lit) if (e.deps.includes(v)) lit.delete(k);
+  };
+  const isFree = (e) => {
+    const c = stripParens(e);
+    if (!c || c.type !== 'Call' || c.args.length !== 1) return false;
+    const f = stripParens(c.fn);
+    const v = f.type === 'Name' ? info.varOf.get(f) : null;
+    return !!v && (v === ctx.free || alias.get(v) === ctx.free);
+  };
+  for (let s of stmts) {
+    if (s.type === 'CallStmt') { rewrite(s.call); out.push(s); continue; }
+    // `a, R = f(a), free(R)`: releasing a cell is a statement of its own, so take it out of the parallel assignment
+    if (s.targets.length > 1 && s.targets.length === s.values.length && s.values.some(isFree)) {
+      const keep = s.values.map((v, i) => i).filter((i) => !isFree(s.values[i]));
+      if (!keep.length) continue;
+      s = { ...s, targets: keep.map((i) => s.targets[i]), values: keep.map((i) => s.values[i]) };
+    }
+    s.values.forEach(rewrite);
+    s.targets.forEach((t) => { if (t.type !== 'Name') rewrite(t); });
+    if (s.targets.length === 1 && s.values.length === 1 && s.targets[0].type === 'Name') {
+      const t = info.varOf.get(s.targets[0]);
+      const val = stripParens(s.values[0]);
+      const rv = val.type === 'Name' ? info.varOf.get(val) : null;
+      if (t && ctx.isRegister(t) && rv && ctx.roleVars.has(rv)) { alias.set(t, rv); ctx.droppedAliases.add(t); continue; }
+    }
+    for (const t of s.targets) if (t.type === 'Name') assigned(info.varOf.get(t));
+    if (s.targets.length === 1 && s.values.length === 1 && s.targets[0].type === 'Name') {
+      const t = info.varOf.get(s.targets[0]);
+      const val = stripParens(s.values[0]);
+      if (t && val.type === 'Number') lit.set(t, { expr: val, deps: [] });
+      else if (t && val.type === 'Table' && val.fields.every((x) => x.kind === 'item' && stripParens(x.value).type === 'Name')) {
+        lit.set(t, { expr: val, deps: val.fields.map((x) => info.varOf.get(stripParens(x.value))).filter(Boolean) });
+      }
+    }
+    out.push(s);
+  }
+  return out;
+}
+
+/** `if c then v = e end`: the shape a register machine gives `v = c and e` (or, with `not c`, `v = c or e`). */
+function isGuard(s) {
+  if (s.clauses.length !== 1 || s.orelse || s.clauses[0].body.length !== 1) return false;
+  const body = s.clauses[0].body[0];
+  if (body.type !== 'Assign' || body.targets.length !== 1 || body.values.length !== 1 || body.targets[0].type !== 'Name') return false;
+  const c = stripParens(s.clauses[0].cond);
+  const name = c.type === 'Unary' && c.op === 'not' ? stripParens(c.arg) : c;
+  return name.type === 'Name';
+}
+
+/**
+ * Put such a guard back into an expression when the variable it assigns was set from the variable it tests, with neither
+ * touched in between: `v = c ... if c then v = e end` becomes `v = c and e` at the place of the `if`.
+ */
+function foldGuards(stmts, ctx) {
+  const { info } = ctx;
+  const writes = (st, v) => st.type === 'Assign' && st.targets.some((t) => t.type === 'Name' && info.varOf.get(t) === v);
+  const out = [];
+  for (const st of stmts) {
+    if (st.type !== 'If') { out.push(st); continue; }
+    const cond = stripParens(st.clauses[0].cond);
+    const negated = cond.type === 'Unary' && cond.op === 'not';
+    const cName = negated ? stripParens(cond.arg) : cond;
+    const c = info.varOf.get(cName);
+    const body = st.clauses[0].body[0];
+    const v = info.varOf.get(body.targets[0]);
+    let at = -1;
+    for (let i = out.length - 1; i >= 0 && at < 0; i--) {
+      const p = out[i];
+      if (p.type === 'Assign' && p.targets.length === 1 && p.values.length === 1 && p.targets[0].type === 'Name' && info.varOf.get(p.targets[0]) === v
+        && stripParens(p.values[0]).type === 'Name' && info.varOf.get(stripParens(p.values[0])) === c) { at = i; break; }
+      if (writes(p, v) || writes(p, c)) break;
+    }
+    if (at < 0 || !c || !v) return fail('a conditional inside a block that is not a short-circuit');
+    out.push({ type: 'Assign', targets: [body.targets[0]], values: [{ type: 'Binary', op: negated ? 'or' : 'and', left: cName, right: body.values[0] }] });
+  }
+  return out;
+}
+
 function analyseBlock(id, leaf, ctx) {
   const { info, posVar, retVar } = ctx;
   const blk = new Block(id);
-  const stmts = leaf.slice();
+  const stmts = dealias(foldGuards(leaf.flatMap((s) => normalise(s, ctx)).flatMap((s) => (s.type === 'Assign' ? splitAssign(s.targets, s.values) : [s])), ctx), ctx);
   const readsPos = (e) => { let hit = false; walk(e, (n) => { if (n.type === 'Name' && info.varOf.get(n) === posVar) hit = true; return !hit; }); return hit; };
 
   // every assignment to the position register: [statement index, pair index]
@@ -237,6 +387,17 @@ function analyseBlock(id, leaf, ctx) {
 
   const out = [];                 // statements of the block, rewritten
   const consts = new Map();       // Var -> number, registers that hold a known number right now
+  const defs = new Map();         // Var -> { expr, stamp }: the expression it was last set to in this block
+  const version = new Map();      // Var -> how many times it has been written in this block
+  const resolving = new Set();
+  const readCount = new Map();    // Var -> how many times the block reads it
+  {
+    const count = (node) => walk(node, (n) => { if (n.type === 'Name') { const w = info.varOf.get(n); if (w) readCount.set(w, (readCount.get(w) || 0) + 1); } });
+    for (const st of stmts) {
+      if (st.type === 'CallStmt') count(st.call);
+      else { st.values.forEach(count); st.targets.forEach((t) => { if (t.type !== 'Name') count(t); }); }
+    }
+  }
   let posForm = { k: 'unk', expr: null };
 
   const evalForm = (e, pre) => {
@@ -248,16 +409,40 @@ function analyseBlock(id, leaf, ctx) {
         const v = info.varOf.get(e);
         if (v === posVar) return posForm;
         if (v && consts.has(v)) return { k: 'num', v: consts.get(v) };
+        // a register set earlier in the block to something that settles the jump on its own (a block id, nil, the missing global)
+        if (v && defs.has(v) && !resolving.has(v)) {
+          const d = defs.get(v);
+          // only while nothing the definition read has been overwritten since
+          if ([...d.stamp].every(([w, n]) => (version.get(w) || 0) === n)) {
+            resolving.add(v);
+            const extra = [];
+            const f = evalForm(d.expr, extra);
+            resolving.delete(v);
+            // only a settled jump, or a single two-way test, stands for the register; anything bigger is a value it computes
+            const simple = f.k === 'num' || f.k === 'nil' || f.k === 'exit'
+              || (f.k === 'cond' && f.t.k === 'num' && (f.f.k === 'num' || f.f.k === 'falsy'));
+            if (simple) { pre.push(...extra); return f; }
+          }
+        }
         return { k: 'unk', expr: e };
       }
       case 'Index': {
-        const o = stripParens(e.obj);
-        if (o.type === 'Name' && info.varOf.get(o) === ctx.roles.env && e.key.type === 'String') return { k: 'exit' };
+        let o = stripParens(e.obj);
+        for (let hop = 0; hop < 4 && o.type === 'Name' && defs.has(info.varOf.get(o)) && stripParens(defs.get(info.varOf.get(o)).expr).type === 'Name'; hop++) o = stripParens(defs.get(info.varOf.get(o)).expr);
+        if (o.type === 'Name' && info.varOf.get(o) === ctx.roles.env) {
+          // the read of a global that does not exist. Read through a register, it has to be that register's only use: a
+          // global that is also passed on or tested (`getfenv and getfenv()`) is an ordinary lookup
+          const via = [...resolving].pop();
+          if (via === undefined || (readCount.get(via) || 0) <= 1) return { k: 'exit' };
+        }
+        return { k: 'unk', expr: e };
         return { k: 'unk', expr: e };
       }
       case 'Binary': {
-        if (e.op === 'and') return andForm(evalForm(e.left, pre), evalForm(e.right, pre), pre);
-        if (e.op === 'or') return orForm(evalForm(e.left, pre), evalForm(e.right, pre));
+        // an operand with no block id or nil in it is a condition to be tested as a whole, however it is built
+        const part = (x) => (stripParens(x).type === 'Name' || hasJumpConstant(x) ? evalForm(x, pre) : { k: 'unk', expr: x });
+        if (e.op === 'and') return andForm(part(e.left), part(e.right), pre);
+        if (e.op === 'or') return orForm(part(e.left), part(e.right));
         return { k: 'unk', expr: e };
       }
       default: return { k: 'unk', expr: e };
@@ -279,7 +464,7 @@ function analyseBlock(id, leaf, ctx) {
   const orForm = (a, b) => {
     switch (a.k) {
       case 'num': return a;
-      case 'nil': case 'falsy': return b;
+      case 'nil': case 'falsy': case 'exit': return b;
       case 'cond': return { k: 'cond', c: a.c, t: orForm(a.t, b), f: orForm(a.f, b) };
       case 'unk': return { k: 'unk', expr: null };
       default: return fail('unexpected form in an or');
@@ -320,6 +505,18 @@ function analyseBlock(id, leaf, ctx) {
     if (s.values.length > s.targets.length) keepVals.push(...s.values.slice(s.targets.length));
     if (keep.length) out.push(keep.length === s.targets.length && keepVals.length === s.values.length ? s : { type: 'Assign', targets: keep, values: keepVals });
     for (const [tv, vv] of effects) { if (tv) { if (vv === undefined) consts.delete(tv); else consts.set(tv, vv); } }
+    s.targets.forEach((t, k) => {
+      if (t.type !== 'Name') return;
+      const tv = info.varOf.get(t);
+      if (!tv) return;
+      version.set(tv, (version.get(tv) || 0) + 1);
+      if (tv === posVar) return;
+      if (s.values[k] !== undefined && s.targets.length === s.values.length) {
+        const stamp = new Map();
+        walk(s.values[k], (n) => { if (n.type === 'Name') { const w = info.varOf.get(n); if (w) stamp.set(w, version.get(w) || 0); } });
+        defs.set(tv, { expr: s.values[k], stamp });
+      } else defs.delete(tv);
+    });
   }
 
   // how the block ends
@@ -336,7 +533,10 @@ function analyseBlock(id, leaf, ctx) {
       if (st.type !== 'Assign') continue;
       const at = st.targets.findIndex((t) => t.type === 'Name' && info.varOf.get(t) === retVar);
       if (at < 0) continue;
-      const val = st.values[at];
+      let val = st.values[at];
+      // `ret = t` where t is a table built earlier in the block, from values that have not changed since
+      const named = val && stripParens(val).type === 'Name' ? defs.get(info.varOf.get(stripParens(val))) : null;
+      if (named && stripParens(named.expr).type === 'Table' && [...named.stamp].every(([w, n]) => (version.get(w) || 0) === n)) val = stripParens(named.expr);
       if (val && val.type === 'Table' && val.fields.every((x) => x.kind === 'item')) {
         values = val.fields.map((x) => x.value);
         if (st.targets.length === 1) out.splice(q, 1);
@@ -561,7 +761,8 @@ function computeWebs(blocks, entry, ctx) {
   const ops = new Map();
   const stmtOps = new Map();       // statement -> { uses, defs }
   const termOps = new Map();       // block id -> uses of its branch condition / returned values
-  const cellDefs = new Set();
+  const cellDefs = new Map();      // def Name node -> { kind: 'alloc' } | { kind: 'upval', k }
+  const copies = [];               // register-to-register copies: { def, src }
   let defCount = 0;
   const defIdOf = new Map();       // def Name node -> id
   const regOfDef = [];
@@ -579,8 +780,12 @@ function computeWebs(blocks, entry, ctx) {
             const v = isReg(t);
             if (v) {
               defs.push({ use: false, node: t, reg: v });
-              const val = s.values[k];
-              if (val && val.type === 'Call' && isName(stripParens(val.fn), ctx.alloc, info)) cellDefs.add(t);
+              if (s.targets.length === s.values.length) {
+                const val = stripParens(s.values[k]);
+                if (val.type === 'Call' && isName(stripParens(val.fn), ctx.alloc, info)) cellDefs.set(t, { kind: 'alloc' });
+                else if (val.type === 'Index' && isName(stripParens(val.obj), ctx.upvalsVar, info) && val.key.type === 'Number') cellDefs.set(t, { kind: 'upval', k: val.key.value });
+                else if (val.type === 'Name' && isReg(val)) copies.push({ def: t, src: val });
+              }
             }
           } else if (t.type === 'Index') { collectUses(t.obj, uses); if (!(t.key.type === 'String' && t.dot)) collectUses(t.key, uses); }
         });
@@ -654,23 +859,52 @@ function computeWebs(blocks, entry, ctx) {
     }
   }
 
+  // A register that holds a cell (a captured variable, or one of the enclosing function's) and the registers it is copied to
+  // are the same variable, so they share a web. Cell-ness spreads along the copies until nothing changes.
+  const cellRootsNow = () => new Set([...cellDefs.keys()].map((n) => find(defIdOf.get(n))));
+  for (let changed = true; changed;) {
+    changed = false;
+    const roots = cellRootsNow();
+    for (const { def, src } of copies) {
+      const from = useDef.get(src);
+      if (from === undefined) continue;
+      if (roots.has(find(from)) && find(defIdOf.get(def)) !== find(from)) { union(from, defIdOf.get(def)); changed = true; }
+    }
+  }
+  const rootInfo = new Map();                                      // root -> { alloc, upvals: Set }
+  for (const [n, d] of cellDefs) {
+    const root = find(defIdOf.get(n));
+    if (!rootInfo.has(root)) rootInfo.set(root, { alloc: false, upvals: new Set() });
+    const r = rootInfo.get(root);
+    if (d.kind === 'alloc') r.alloc = true; else r.upvals.add(d.k);
+  }
+
   const names = new Map();
   const counter = { n: 0 };
   const nameOfRoot = (root) => {
     if (!names.has(root)) names.set(root, `_r${ctx.fid}_${++counter.n}`);
     return names.get(root);
   };
-  const webOf = new Map();
-  for (const [node, d] of defIdOf) webOf.set(node, find(d));
-  for (const [node, d] of useDef) webOf.set(node, find(d));
-  const cellRoots = new Set([...cellDefs].map((n) => find(defIdOf.get(n))));
+  const webId = new Map();
+  for (const [node, d] of defIdOf) webId.set(node, d);
+  for (const [node, d] of useDef) webId.set(node, d);
+  const rootOf = (node) => { const d = webId.get(node); return d === undefined ? undefined : find(d); };
+  const cellOf = (node) => { const root = rootOf(node); return root === undefined ? null : rootInfo.get(root) || null; };
   return {
     stmtOps, termOps,
-    rootOf: (node) => { const root = webOf.get(node); return root === undefined ? null : root; },
+    rootOf: (node) => { const r = rootOf(node); return r === undefined ? null : r; },
     entryOnly: (node) => entryOnlyUses.has(node),
-    webName: (node) => { const root = webOf.get(node); return root === undefined ? null : nameOfRoot(root); },
-    isCell: (node) => { const root = webOf.get(node); return root !== undefined && cellRoots.has(root); },
-    usedNames: () => [...names.entries()].filter(([root]) => !cellRoots.has(root)).map(([, n]) => n),
+    webName: (node) => { const root = rootOf(node); return root === undefined ? null : nameOfRoot(root); },
+    isCell: (node) => cellOf(node) !== null,
+    /** The index of the enclosing function's upvalue this register holds, or null if it is a variable of its own. */
+    upvalIndex: (node) => {
+      const c = cellOf(node);
+      if (!c) return null;
+      if (c.alloc) return c.upvals.size ? fail('a cell register that is both a local variable and an upvalue') : null;
+      if (c.upvals.size !== 1) return fail('a cell register that holds different upvalues');
+      return [...c.upvals][0];
+    },
+    usedNames: () => [...names.entries()].filter(([root]) => !rootInfo.has(root)).map(([, n]) => n),
   };
 }
 
@@ -696,15 +930,11 @@ function splitAssign(targets, values) {
 
 const KEEP_NAMES = new Set(['select', 'unpack']);
 
-const printDebug = (e) => { try { return JSON.stringify(e, (k, v) => (k === 'line' ? undefined : v)).slice(0, 160); } catch { return String(e && e.type); } };
-
 function recoverFunction(entryIdIn, upvalNames, ctx) {
   let entryId = entryIdIn;
   const { info } = ctx;
-  ctx.fid++;
-  const fid = ctx.fid;
-  const saved = { fid: ctx.fid };
-  void saved;
+  ctx.count++;
+  const fid = `${ctx.layer}_${ctx.count}`;
 
   // 1. the blocks of this function
   const blocks = collectBlocks(entryId, ctx);
@@ -716,7 +946,17 @@ function recoverFunction(entryIdIn, upvalNames, ctx) {
   const webs = computeWebs(blocks, entryId, { ...ctx, fid });
   const fn = { maxArg: 0, vararg: false, fixed: 0 };
 
-  const cellVar = (node) => { const n = webs.webName(node); if (!n) fail('a cell register without a web'); return n; };
+  const cellVar = (node) => {
+    const k = webs.upvalIndex(node);
+    if (k !== null) {
+      const up = upvalNames[k - 1];
+      if (!up) fail('an upvalue the closure was not given');
+      return up;
+    }
+    const n = webs.webName(node);
+    if (!n) fail('a cell register without a web');
+    return n;
+  };
 
   // 3. expressions
   const txCellKey = (key) => {
@@ -737,7 +977,7 @@ function recoverFunction(entryIdIn, upvalNames, ctx) {
       if (!n) fail('an upvalue the closure was not given');
       return n;
     }
-    return fail(`a closure upvalue that is not a variable of the enclosing function (${printDebug(e)})`);
+    return fail(`a closure upvalue that is not a variable of the enclosing function (${e.name || e.type})`);
   };
 
   const tx = (e) => {
@@ -749,6 +989,10 @@ function recoverFunction(entryIdIn, upvalNames, ctx) {
         if (v === ctx.roles.unpack) return nameNode('unpack');
         if (v === ctx.roles.select) return nameNode('select');
         if (v === ctx.argsVar) return fail('the argument table is used as a value');
+        if (v && ctx.droppedAliases.has(v)) return fail('a copy of one of the VM tables is used in a block other than the one that made it');
+        // a variable of the script around the VM (the string table a decryptor keeps) is still in scope where the program runs
+        if (v && !v.isGlobal && !ctx.insideOuter.has(v)) return nameNode(e.name);
+        if (v && v.isGlobal) return nameNode(e.name);
         return fail(`a name this tool does not understand: ${e.name}`);
       }
       case 'Index': {
@@ -766,7 +1010,7 @@ function recoverFunction(entryIdIn, upvalNames, ctx) {
         if (f.type === 'Name') {
           const v = info.varOf.get(f);
           if (ctx.creators.has(v)) return makeClosure(e);
-          if (v === ctx.alloc || v === ctx.free) return fail('a cell function used inside an expression');
+          if (v === ctx.alloc || v === ctx.free) return fail(`a cell function used inside an expression`);
         }
         return { type: 'Call', fn: tx(e.fn), args: e.args.map(tx), sugar: e.sugar };
       }
@@ -794,7 +1038,7 @@ function recoverFunction(entryIdIn, upvalNames, ctx) {
   };
 
   const makeClosure = (call) => {
-    if (call.args.length !== 2 || call.args[0].type !== 'Number' || call.args[1].type !== 'Table') fail('a closure creation with an unexpected shape');
+    if (call.args.length !== 2 || call.args[0].type !== 'Number' || call.args[1].type !== 'Table') fail(`a closure creation with an unexpected shape`);
     const names = call.args[1].fields.map((f) => entryOf(f.value));
     return recoverFunction(call.args[0].value, names, ctx);
   };
@@ -804,10 +1048,18 @@ function recoverFunction(entryIdIn, upvalNames, ctx) {
   for (const [id, b] of blocks) {
     const list = [];
     for (const s of b.stmts) {
-      if (s.type === 'CallStmt') { list.push({ type: 'CallStmt', call: tx(s.call) }); continue; }
+      if (s.type === 'CallStmt') {
+        // `free(cell)` on its own: the variable simply goes out of scope
+        const c = stripParens(s.call);
+        if (c.type === 'Call' && isName(stripParens(c.fn), ctx.free, info)) continue;
+        list.push({ type: 'CallStmt', call: tx(s.call) });
+        continue;
+      }
       // `R = alloc()` declares a captured variable; `R = free(R)` ends its scope
       if (s.targets.length === 1 && s.values.length === 1 && s.targets[0].type === 'Name') {
         const v = stripParens(s.values[0]);
+        // `R = upvals[k]` and `R2 = R` only move a cell around: R is the variable itself
+        if (webs.isCell(s.targets[0]) && ((v.type === 'Index' && isName(stripParens(v.obj), ctx.upvalsVar, info) && v.key.type === 'Number') || (v.type === 'Name' && ctx.isRegister(info.varOf.get(v)) && webs.isCell(v)))) continue;
         if (v.type === 'Call' && isName(stripParens(v.fn), ctx.alloc, info)) {
           if (!webs.isCell(s.targets[0])) fail('an upvalue allocation that is not a cell');
           list.push({ type: 'Local', ids: [{ type: 'Id', name: cellVar(s.targets[0]) }], values: [] });
@@ -871,25 +1123,68 @@ function recoverFunction(entryIdIn, upvalNames, ctx) {
  * Replace a Vmify script by the program it runs. Returns { changed, functions, blocks }; throws VmifyError when the
  * script is not one or something about it is not understood (the caller keeps the original then).
  */
-export function unflattenVmify(original) {
-  // everything below works on a copy: the registers held in the overflow table are rewritten in place, and a script that
-  // turns out not to be understood has to come back untouched
-  const chunk = clone(original);
-  const info = analyze(chunk);
-  const L = locate(chunk, info);
-  if (!L) return { changed: 0, skipped: 'not a Vmify script' };
+/** What the exact locator found, in the same terms the loose one reports. */
+function describeExact(L, info) {
   const f = L.container;
   const loop = f.body.find((s) => s.type === 'While');
   const declaration = f.body.find((s) => s.type === 'Local' && s.values.length === 0);
-  // past 99 registers the compiler keeps the rest in one table: `local T = {}` ahead of the declarations
   const tables = f.body.filter((s) => s.type === 'Local' && s.values.length === 1 && s.ids.length === 1 && s.values[0].type === 'Table' && !s.values[0].fields.length);
   if (!declaration || f.body.some((s) => s.type === 'Local' && s.values.length && !tables.includes(s))) fail('the register declarations have an unexpected shape');
-  if (tables.length > 1) fail('more than one register table');
-  const overflow = tables.length ? info.varOf.get(tables[0].ids[0]) : null;
   const regs = new Set(declaration.ids.map((id) => info.varOf.get(id)));
-  if (overflow) {
+  const posVar = info.varOf.get(f.params[0]);
+  regs.add(posVar);
+  const lastStmt = f.body[f.body.length - 1];
+  if (lastStmt.type !== 'Return' || lastStmt.values.length !== 1) fail('the container does not end the way Vmify containers do');
+  const retCall = stripParens(lastStmt.values[0]);
+  const retVar = retCall.type === 'Call' ? varOf(info, stripParens(retCall.args[0])) : null;
+  if (!retVar) fail('cannot find the return register');
+  regs.add(retVar);
+  return {
+    ...L, loose: false, loop, tree: loop.body, posVar, retVar, regs,
+    argsVar: info.varOf.get(f.params[1]), upvalsVar: info.varOf.get(f.params[2]), proxyVar: info.varOf.get(f.params[3]),
+    insideOuter: declaredIn(L.outer, info),
+    splice: (target, body) => target.body.splice(target.body.length - 1, 1, ...body),
+  };
+}
+
+/** `a, b = x, y` as separate statements wherever that cannot change what runs, so every variable has visible definitions. */
+function splitMultiAssign(chunk) {
+  const visit = (stmts) => {
+    for (let i = 0; i < stmts.length; i++) {
+      const st = stmts[i];
+      if (st.type === 'Assign' && st.targets.length > 1) {
+        const parts = splitAssign(st.targets, st.values);
+        if (parts.length > 1) { stmts.splice(i, 1, ...parts); i += parts.length - 1; }
+      }
+      const blocks = st.type === 'If' ? [...st.clauses.map((c) => c.body), ...(st.orelse ? [st.orelse] : [])]
+        : st.type === 'While' || st.type === 'Repeat' || st.type === 'NumFor' || st.type === 'GenFor' || st.type === 'Do' ? [st.body] : [];
+      for (const b of blocks) visit(b);
+      walk(st, (n) => { if (n !== st && n.type === 'Func') { visit(n.body); return false; } return undefined; });
+    }
+  };
+  visit(chunk.body);
+}
+
+export function unflattenVmify(original, options = {}) {
+  // everything below works on a copy: the registers held in the overflow table are rewritten in place, and a script that
+  // turns out not to be understood has to come back untouched
+  const chunk = clone(original);
+  splitMultiAssign(chunk);
+  const info = analyze(chunk);
+  const exact = locate(chunk, info);
+  const L = exact ? describeExact(exact, info) : locateLoose(chunk, info);
+  if (!L) return { changed: 0, skipped: lastReason ? `not a Vmify script (${lastReason})` : 'not a Vmify script' };
+  const f = L.container;
+  const regs = new Set(L.regs);
+
+  // past 99 registers the compiler keeps the rest in one table: `local T = {}` ahead of the declarations
+  const tables = f.body.filter((s) => s.type === 'Local' && s.values.length === 1 && s.ids.length === 1 && s.values[0].type === 'Table' && !s.values[0].fields.length);
+  if (tables.length > 1) fail('more than one register table');
+  if (tables.length) {
+    const overflow = info.varOf.get(tables[0].ids[0]);
+    regs.delete(overflow);
     const slots = new Map();
-    walk(loop.body, (n) => {
+    walk(L.tree, (n) => {
       if (n.type === 'Index' && n.obj.type === 'Name' && info.varOf.get(n.obj) === overflow && n.key.type === 'Number') {
         let v = slots.get(n.key.value);
         if (!v) { v = { name: `slot${n.key.value}`, isGlobal: false, synthetic: true, reads: [], writes: [] }; slots.set(n.key.value, v); regs.add(v); }
@@ -903,37 +1198,30 @@ export function unflattenVmify(original) {
       return undefined;
     });
   }
-  const posVar = info.varOf.get(f.params[0]);
-  regs.add(posVar);
-  const lastStmt = f.body[f.body.length - 1];
-  if (lastStmt.type !== 'Return' || lastStmt.values.length !== 1) fail('the container does not end the way Vmify containers do');
-  const retCall = stripParens(lastStmt.values[0]);
-  const retVar = retCall.type === 'Call' ? varOf(info, stripParens(retCall.args[0])) : null;
-  if (!retVar) fail('cannot find the return register');
-  regs.add(retVar);
 
-  let synthetic = 0;
   const ctx = {
-    info, roles: L.roles, posVar, retVar,
-    argsVar: info.varOf.get(f.params[1]), upvalsVar: info.varOf.get(f.params[2]), proxyVar: info.varOf.get(f.params[3]),
-    cellsVar: L.cells, countsVar: L.counts, alloc: L.alloc, free: L.free, creators: L.creators,
-    treeBody: loop.body,
-    hasTamperMarker: containsString(loop.body, 'Tamper Detected!'),
+    info, roles: L.roles, posVar: L.posVar, retVar: L.retVar,
+    argsVar: L.argsVar, upvalsVar: L.upvalsVar, proxyVar: L.proxyVar,
+    cellsVar: L.cells, alloc: L.alloc, free: L.free, creators: L.creators,
+    treeBody: L.tree,
+    insideOuter: L.insideOuter,
+    hasTamperMarker: containsString(L.tree, 'Tamper Detected!'),
     blockCache: new Map(),
+    droppedAliases: new Set(),
+    roleVars: new Set([L.roles.env, L.roles.unpack, L.roles.select, L.upvalsVar, L.proxyVar, L.cells, L.alloc, L.free, ...L.creators].filter(Boolean)),
     startId: L.startId,
-    fid: 0, nextSynthetic: 0,
+    layer: options.layer || 1, count: 0, nextSynthetic: 0,
     isRegister: (v) => regs.has(v),
     registerList: () => [...regs],
-    syntheticVar(name) { const v = { name: `${name}`, isGlobal: false, synthetic: true, reads: [], writes: [] }; regs.add(v); synthetic++; return v; },
+    syntheticVar(name) { const v = { name: `${name}`, isGlobal: false, synthetic: true, reads: [], writes: [] }; regs.add(v); return v; },
     nameOf(v) { const n = nameNode(v.name); info.varOf.set(n, v); return n; },
   };
-  void synthetic;
   const main = recoverFunction(L.startId, [], ctx);
   // the script is the body of its main function; its vararg is the script's own, and so are the arguments it reads
   const body = main.body;
   if (main.params.length) body.unshift({ type: 'Local', ids: main.params, values: [{ type: 'Vararg' }] });
-  original.body = [...original.body.slice(0, -1), ...body];
-  return { changed: ctx.fid, functions: ctx.fid };
+  L.splice(original, body);
+  return { changed: ctx.count, functions: ctx.count };
 }
 
 function containsString(node, text) {

@@ -215,8 +215,11 @@ export function shortCircuits(chunk) {
         if (name && next && next.type === 'If' && next.clauses.length === 1 && !next.orelse && next.clauses[0].body.length === 1) {
           const { cond, body } = next.clauses[0];
           const set = body[0];
-          const negated = cond.type === 'Unary' && cond.op === 'not' && cond.arg.type === 'Name' && cond.arg.name === name;
-          const plain = cond.type === 'Name' && cond.name === name;
+          // the test reads the variable that was set, or the variable it was set from (`v = c  if c then v = e end`)
+          const copiedFrom = value.type === 'Name' ? value.name : null;
+          const testsIt = (n) => n && n.type === 'Name' && (n.name === name || (copiedFrom !== null && n.name === copiedFrom));
+          const negated = cond.type === 'Unary' && cond.op === 'not' && testsIt(cond.arg);
+          const plain = testsIt(cond);
           if ((negated || plain) && set.type === 'Assign' && set.targets.length === 1 && set.values.length === 1
             && set.targets[0].type === 'Name' && set.targets[0].name === name && !mentions(set.values[0], name)
             && !(set.values[0].type === 'Vararg')) {
@@ -231,6 +234,32 @@ export function shortCircuits(chunk) {
         out.push(s);
       }
       return changed ? out : undefined;
+    },
+  });
+  return { changed };
+}
+
+
+/**
+ * A call that yields several values is wrapped by a register machine as `unpack({ f(x) })`, which says what `f(x)` says. The
+ * wrapper is removed wherever the call stands for all of its results already.
+ */
+export function multiResults(chunk) {
+  const info = analyze(chunk);
+  let changed = 0;
+  const isUnpack = (fn) => {
+    if (fn.type === 'Name') { const v = info.varOf.get(fn); return fn.name === 'unpack' && v && v.isGlobal && v.writes.length === 0; }
+    return fn.type === 'Index' && fn.obj.type === 'Name' && fn.obj.name === 'table' && fn.key.type === 'String' && fn.key.value === 'unpack' && !!info.varOf.get(fn.obj) && info.varOf.get(fn.obj).isGlobal;
+  };
+  transform(chunk, {
+    expr(e) {
+      if (e.type !== 'Call' || !isUnpack(e.fn) || e.args.length !== 1) return undefined;
+      const t = e.args[0];
+      if (t.type !== 'Table' || t.fields.length !== 1 || t.fields[0].kind !== 'item') return undefined;
+      const inner = t.fields[0].value;
+      if (inner.type !== 'Call' && inner.type !== 'MethodCall') return undefined;
+      changed++;
+      return inner;
     },
   });
   return { changed };

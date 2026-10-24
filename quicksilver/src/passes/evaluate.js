@@ -300,7 +300,6 @@ export function evaluatePass(chunk, ctx = {}) {
   for (const e of sites) {
     const a = table.get(ids.get(e));
     const b = table.get(ids.get(e) + n);
-    if (!single(a) || !single(b) || a.get(2) !== b.get(2) || !usable(a.get(2))) { result.rejected++; continue; }
     const v = decoderOf(e);
     const tally = perDecoder.get(v) || { strings: 0, others: 0 };
     if (typeof a.get(2) === 'string') tally.strings++; else tally.others++;
@@ -311,10 +310,14 @@ export function evaluatePass(chunk, ctx = {}) {
   for (const [e, value, v] of candidates) {
     const t = perDecoder.get(v);
     const stringy = t.strings / (t.strings + t.others) >= 0.75;
-    if (stringy || accessorShaped.has(v)) accepted.set(e, value); else result.rejected++;
+    // a text decoder's number results are keys into a table it fills as a side effect; the call has to stay
+    if (accessorShaped.has(v) || (stringy && typeof value === 'string')) accepted.set(e, value); else result.rejected++;
   }
   if (accepted.size) {
     transform(chunk, { expr(e) { return accepted.has(e) ? makeConst(accepted.get(e)) : undefined; } });
+    // a decoder called only for its side effect leaves a constant where the statement was; nothing is left to run
+    const isConst = (e) => e && (e.type === 'Number' || e.type === 'String' || e.type === 'True' || e.type === 'False' || e.type === 'Nil');
+    transform(chunk, { block(stmts) { return stmts.some((st) => st.type === 'CallStmt' && isConst(st.call)) ? stmts.filter((st) => !(st.type === 'CallStmt' && isConst(st.call))) : undefined; } });
     result.changed = accepted.size;
     result.removedStatements = removeSpentDecoder(chunk, slice, deps);
     result.changed += result.removedStatements;

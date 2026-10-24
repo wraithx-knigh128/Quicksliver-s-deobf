@@ -17,7 +17,7 @@ import { renamePass } from '../passes/rename.js';
 import { unwrapWrapper, removeUnusedVararg, tidyIfs } from '../passes/structure.js';
 import { dataflowPass } from '../passes/dataflow.js';
 import { regionPass } from '../passes/regions.js';
-import { booleanResults, orientComparisons, shortCircuits, tableConstructors, methodCalls, bareNils, functionForms } from '../passes/idioms.js';
+import { booleanResults, orientComparisons, shortCircuits, tableConstructors, methodCalls, bareNils, functionForms, multiResults } from '../passes/idioms.js';
 import { removeAntiTamper, undoProxifyLocals } from './prometheus.js';
 import { removeHerculesAntiTamper } from './hercules.js';
 import { assessConfidence } from './confidence.js';
@@ -43,6 +43,7 @@ class Run {
     this.options = options;
     this.steps = new Map();
     this.warnings = [];
+    this.vmifyLayers = 0;
   }
 
   /** Run one pass under a snapshot. `fn(ast)` returns { changed, ...detail }. */
@@ -80,12 +81,12 @@ class Run {
  * Prometheus Vmify: the script is a dispatcher over block ids. Rebuild the functions it flattened. Strong applies the
  * pass twice, so go on while another layer turns up.
  */
-function rebuildVmify(ast) {
+function rebuildVmify(ast, run) {
   let layers = 0;
   let functions = 0;
   for (; layers < 4; layers++) {
     let r;
-    try { r = unflattenVmify(ast); } catch (e) {
+    try { r = unflattenVmify(ast, { layer: ++run.vmifyLayers }); } catch (e) {
       if (e instanceof VmifyError) {
         if (layers) break;
         return { skipped: e.message };
@@ -156,10 +157,11 @@ export function recover(source, userOptions = {}) {
     total += run.step('hercules.antitamper', 'Remove Hercules anti-tamper block', (a) => removeHerculesAntiTamper(a), { quiet: true });
     if (maybeVmify) {
       // a rebuilt program has no author-written dead code to preserve; Strong applies the pass twice, so this runs each round
-      const n = run.step('prometheus.vmify', 'Rebuild the functions Vmify flattened into a dispatcher', rebuildVmify, { quiet: true });
+      const n = run.step('prometheus.vmify', 'Rebuild the functions Vmify flattened into a dispatcher', (a) => rebuildVmify(a, run), { quiet: true });
       if (n) { total += n; unusedAtStart = new WeakSet(); decompiled = true; vmified = true; }
     }
     if (decompiled) {
+      total += run.step('idioms.results', 'Drop the unpack({ f() }) wrappers around calls', (a) => multiResults(a), { quiet: true });
       total += run.step('idioms.bool', 'Write boolean results as expressions', (a) => booleanResults(a), { quiet: true });
       total += run.step('idioms.shortcircuit', 'Write defaults as `a or b`', (a) => shortCircuits(a), { quiet: true });
       total += run.step('idioms.table', 'Fold field assignments into table constructors', (a) => tableConstructors(a), { quiet: true });

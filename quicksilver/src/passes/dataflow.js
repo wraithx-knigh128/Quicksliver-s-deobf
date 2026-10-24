@@ -19,6 +19,7 @@ import { analyze } from '../core/scope.js';
 import { walk, clone } from '../core/walk.js';
 import { isPure } from './simplify.js';
 import { numericVars } from './numeric.js';
+import { isMachineName } from './rename.js';
 
 const LONG_STRING = 24;
 
@@ -527,17 +528,25 @@ function evaluationOrder(s) {
 const isTrivialValue = (e, v) => e.type === 'Number' || e.type === 'String' || e.type === 'True' || e.type === 'False' || e.type === 'Nil' || e.type === 'Func' || (e.type === 'Name' && v(e));
 const multiValued = (e) => e.type === 'Call' || e.type === 'MethodCall' || e.type === 'Vararg';
 
-/** Replace the one Name node `target` inside statement `s` by `value`. */
+/**
+ * Replace the one Name node `target` inside statement `s` by `value`. A call or `...` put in the last position of an argument,
+ * table or value list would start to yield all its results instead of one, so that is refused (`blocked`).
+ */
 function replaceNode(s, target, value) {
   let done = false;
-  const go = (n) => {
-    if (n === target) { done = true; return value; }
+  let blocked = false;
+  const go = (n, multi = false) => {
+    if (n === target) {
+      if (multi && multiValued(value)) { blocked = true; return n; }
+      done = true;
+      return value;
+    }
     switch (n.type) {
       case 'Func': return n;
       case 'Index': n.obj = go(n.obj); if (!(n.key.type === 'String' && n.dot)) n.key = go(n.key); return n;
-      case 'Call': n.fn = go(n.fn); n.args = n.args.map(go); return n;
-      case 'MethodCall': n.obj = go(n.obj); n.args = n.args.map(go); return n;
-      case 'Table': for (const f of n.fields) { if (f.kind === 'keyed') f.key = go(f.key); f.value = go(f.value); } return n;
+      case 'Call': n.fn = go(n.fn); n.args = n.args.map((a, i) => go(a, i === n.args.length - 1)); return n;
+      case 'MethodCall': n.obj = go(n.obj); n.args = n.args.map((a, i) => go(a, i === n.args.length - 1)); return n;
+      case 'Table': n.fields.forEach((f, i) => { if (f.kind === 'keyed') f.key = go(f.key); f.value = go(f.value, f.kind === 'item' && i === n.fields.length - 1); }); return n;
       case 'Binary': n.left = go(n.left); n.right = go(n.right); return n;
       case 'Unary': n.arg = go(n.arg); return n;
       case 'Paren': n.expr = go(n.expr); return n;
@@ -546,17 +555,18 @@ function replaceNode(s, target, value) {
       default: return n;
     }
   };
+  const list = (values) => values.map((e, i) => go(e, i === values.length - 1));
   switch (s.type) {
-    case 'Assign': s.targets = s.targets.map((t) => (t.type === 'Name' ? t : go(t))); s.values = s.values.map(go); break;
-    case 'Local': s.values = s.values.map(go); break;
+    case 'Assign': s.targets = s.targets.map((t) => (t.type === 'Name' ? t : go(t))); s.values = list(s.values); break;
+    case 'Local': s.values = list(s.values); break;
     case 'CallStmt': s.call = go(s.call); break;
-    case 'Return': s.values = s.values.map(go); break;
+    case 'Return': s.values = list(s.values); break;
     case 'If': s.clauses[0].cond = go(s.clauses[0].cond); break;
-    case 'GenFor': s.exprs = s.exprs.map(go); break;
+    case 'GenFor': s.exprs = list(s.exprs); break;
     case 'NumFor': s.start = go(s.start); s.stop = go(s.stop); if (s.step) s.step = go(s.step); break;
     default: break;
   }
-  return done;
+  return done && !blocked;
 }
 
 function forwardTemps(stmts, ctx) {
@@ -569,13 +579,13 @@ function forwardTemps(stmts, ctx) {
     let isLocal = false;
     if (a.type === 'Assign' && a.targets.length === 1 && a.values.length === 1 && a.targets[0].type === 'Name') { x = v(a.targets[0]); value = a.values[0]; }
     else if (a.type === 'Local' && a.ids.length === 1 && a.values.length === 1 && !a.ids[0].attrib) { x = v(a.ids[0]); value = a.values[0]; isLocal = true; }
-    if (!x || multiValued(value)) continue;
+    if (!x) continue;
     const next = stmts[i + 1];
     // `local t = e` immediately stored somewhere else (`y = t`) is a temporary of the register machine, not a name the
     // author chose; a small closure is written in place the same way
     const copyOut = isLocal && x.writes.length === 0 && x.reads.length === 1 && next.type === 'Assign' && next.targets.length === 1
       && next.values.length === 1 && next.values[0].type === 'Name' && v(next.values[0]) === x;
-    if (isLocal && !copyOut) continue;
+    if (isLocal && !copyOut && !isMachineName(x.name)) continue;
     if (value.type === 'Func' && !(copyOut && value.body.length <= 1)) continue;
     const b = stmts[i + 1];
     const events = evaluationOrder(b);
