@@ -197,7 +197,19 @@ export function evaluatePass(chunk, ctx = {}) {
     const v = info.varOf.get(e.fn);
     return decoders.has(v) && closed(e).ok;
   };
-  const noCall = (e) => { const c = closed(e); return c.ok && !c.call; };
+  // the environment table (`local env = getfenv and getfenv() or _ENV`) is indexed with decoded names all over a program, but a
+  // lookup in it yields a function: never a decoder result, and not a table whose state the slice has to reproduce
+  const envLike = (e) => {
+    const x = e.type === 'Paren' ? e.expr : e;
+    if (x.type !== 'Name') return false;
+    const v = info.varOf.get(x);
+    const st = v && declOf.get(v);
+    if (!st || st.type !== 'Local') return false;
+    let hit = false;
+    walk(st, (n) => { if (n.type === 'Name' && (n.name === 'getfenv' || n.name === '_ENV' || n.name === '_G')) { const w = info.varOf.get(n); if (w && w.isGlobal) hit = true; } });
+    return hit;
+  };
+  const noCall = (e) => { const c = closed(e); return c.ok && !c.call && !envLike(e); };
   const unparen = (e) => (e.type === 'Paren' ? unparen(e.expr) : e);
   sites = [];
   owner = new Map();
@@ -216,6 +228,16 @@ export function evaluatePass(chunk, ctx = {}) {
   result.sites = sites.length;
   if (!sites.length) { result.skipped = 'no decoder calls with closed arguments'; return result; }
 
+  // a table of constants (the array a constant-array scheme keeps its strings in)
+  const dataTable = (v) => {
+    const st = declOf.get(v);
+    if (!st || st.type !== 'Local') return false;
+    const i = st.ids.findIndex((id) => info.varOf.get(id) === v);
+    const init = i >= 0 ? st.values[i] : null;
+    return !!init && init.type === 'Table' && init.fields.length >= 2
+      && init.fields.every((f) => f.kind !== 'keyed' && ['String', 'Number', 'True', 'False', 'Nil'].includes(f.value.type));
+  };
+
   // ---- dependency slice -------------------------------------------------------------------------------
   const consumer = new Set(sites.map((e) => owner.get(e)));
   const deps = new Set();
@@ -229,7 +251,10 @@ export function evaluatePass(chunk, ctx = {}) {
       const declares = declOf.get(s) === undefined && s.type !== 'Local' && s.type !== 'LocalFunction'
         ? []
         : (s.type === 'Local' ? s.ids.map((id) => info.varOf.get(id)) : [info.varOf.get(s.id)]);
-      const declaresDep = declares.some((v) => deps.has(v));
+      // `local a = list`: a second name for a table the decoder reads, through which it may be changed as well
+      const aliasesDep = s.type === 'Local' && s.values.length === s.ids.length
+        && s.values.some((x) => x.type === 'Name' && deps.has(info.varOf.get(x)) && dataTable(info.varOf.get(x)));
+      const declaresDep = declares.some((v) => deps.has(v)) || aliasesDep;
       const mutatesDep = !consumer.has(s) && s.type !== 'Local' && s.type !== 'LocalFunction' && [...r.vars].some((v) => deps.has(v));
       if (declaresDep || mutatesDep) {
         slice.add(s);
