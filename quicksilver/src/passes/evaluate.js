@@ -300,6 +300,7 @@ export function evaluatePass(chunk, ctx = {}) {
   for (const e of sites) {
     const a = table.get(ids.get(e));
     const b = table.get(ids.get(e) + n);
+    if (!single(a) || !single(b) || a.get(2) !== b.get(2) || !usable(a.get(2))) { result.rejected++; continue; }
     const v = decoderOf(e);
     const tally = perDecoder.get(v) || { strings: 0, others: 0 };
     if (typeof a.get(2) === 'string') tally.strings++; else tally.others++;
