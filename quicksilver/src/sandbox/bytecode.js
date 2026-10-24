@@ -427,12 +427,13 @@ function parseChunk54(r, bin) {
     const nk = r.varint();
     if (nk > 4_000_000) throw new BytecodeError('implausible constant count');
     f.k = new Array(nk);
+    f.kFloat = new Array(nk).fill(false);
     for (let i = 0; i < nk; i++) {
       const t = r.byte();
       if (t === 0) f.k[i] = undefined;
       else if (t === 1) f.k[i] = false;
       else if (t === 17) f.k[i] = true;
-      else if (t === 19) f.k[i] = r.double54();
+      else if (t === 19) { f.k[i] = r.double54(); f.kFloat[i] = true; }
       else if (t === 3) f.k[i] = r.int64();
       else if (t === 4 || t === 20) f.k[i] = r.string54() ?? '';
       else throw new BytecodeError(`unknown constant type ${t}`);
