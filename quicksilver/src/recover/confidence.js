@@ -48,6 +48,17 @@ export function assessConfidence(before, output, ctx) {
     const hard = f.evidence.find((e) => e.unrecoverable);
     if (hard && f !== vm) note(-0.55, `${hard.text}: still present in the output.`);
   }
+  // A VM the input showed and no pass rebuilt. Clean-up can rewrite the signature away (an inlined alias is gone) while the program is still
+  // inside the VM, so the verdict cannot depend on the signature surviving.
+  const REBUILT_BY = { ironbrew2: ['ironbrew2'], hercules: ['layers'] };
+  for (const f of before.families) {
+    const hard = f.confidence >= 0.5 && f.evidence.find((e) => e.unrecoverable);
+    if (!hard) continue;
+    if (after.families.some((a) => a.id === f.id && a.evidence.some((e) => e.unrecoverable))) continue; // counted above
+    if ((REBUILT_BY[f.id] || []).some((id) => steps.some((x) => x.id === id && x.status === 'applied'))) continue;
+    note(-0.55, `${hard.text}: nothing rebuilt it.`);
+    if (!hints.includes('trace')) hints.push('trace');
+  }
   // A vendor banner comment is not obfuscation; only structural evidence counts as "still obfuscated".
   for (const f of after.families) {
     if (f.confidence < 0.5 || f === vm) continue;

@@ -21,6 +21,7 @@ import { regionPass } from '../passes/regions.js';
 import { booleanResults, orientComparisons, shortCircuits, tableConstructors, methodCalls, bareNils, functionForms, multiResults, numericLoops, loopForms, unsetLocals } from '../passes/idioms.js';
 import { removeAntiTamper, undoProxifyLocals } from './prometheus.js';
 import { removeHerculesAntiTamper } from './hercules.js';
+import { removeColisseumGuard } from './colisseum.js';
 import { assessConfidence } from './confidence.js';
 import { recoverIronBrew, IronBrewError } from './ironbrew.js';
 import { unflattenVmify, envToGlobals, VmifyError } from './vmify.js';
@@ -156,6 +157,7 @@ export function recover(source, userOptions = {}) {
     total += run.step('unwrap', 'Unwrap outer wrapper function', (a) => unwrapWrapper(a), { quiet: true });
     total += run.step('prometheus.antitamper', 'Remove Prometheus anti-tamper block', (a) => removeAntiTamper(a), { quiet: true });
     total += run.step('hercules.antitamper', 'Remove Hercules anti-tamper block', (a) => removeHerculesAntiTamper(a), { quiet: true });
+    total += run.step('colisseum.guard', 'Remove the Colisseum tamper guard', (a) => removeColisseumGuard(a), { quiet: true });
     if (maybeVmify) {
       // a rebuilt program has no author-written dead code to preserve; Strong applies the pass twice, so this runs each round
       const n = run.step('prometheus.vmify', 'Rebuild the functions Vmify flattened into a dispatcher', (a) => rebuildVmify(a, run), { quiet: true });

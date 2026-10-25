@@ -203,7 +203,7 @@ export function typeName(v) {
   switch (typeof v) {
     case 'undefined': return 'nil';
     case 'boolean': return 'boolean';
-    case 'number': return 'number';
+    case 'number': case 'bigint': return 'number';
     case 'string': return 'string';
     default:
       if (v instanceof LuaTable) return 'table';
@@ -223,6 +223,7 @@ export function rawToString(v) {
     case 'boolean': return v ? 'true' : 'false';
     case 'number': return numberToLuaString(v);
     case 'string': return v;
+    case 'bigint': return v.toString();
     default:
       if (v instanceof LuaTable) return 'table: ' + hex(v.addr);
       if (v instanceof NativeFunction) return 'function: builtin: ' + hex(v.addr);

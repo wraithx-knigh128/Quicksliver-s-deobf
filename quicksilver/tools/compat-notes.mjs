@@ -87,6 +87,65 @@ export const NOTES = {
   clyde: { status: 'unsupported', basis: 'signature', detect: 'No signature known.', limits: ['Nothing public to verify against.'] },
   xhider: { status: 'unsupported', basis: 'signature', detect: 'No signature known.', limits: ['Nothing public to verify against.'] },
   synapse_xen: { status: 'unsupported', basis: 'signature', detect: 'No signature known.', limits: ['Nothing public to verify against.'] },
+  colisseum: {
+    status: 'partial',
+    basis: 'real-output',
+    covers: ['minify and rename (coli_ names)', 'encrypted strings', 'tamper guard (debug hook, executor globals, replaced standard functions, line-number check)', 'native VM (total)', 'register VM with ChaCha20-encrypted bytecode (fortress)'],
+    detect: 'Signatures verified against output of the real tool for every preset: the credit line, the error brand, the coli_ names, the tamper guard block and the VM entry call. The AGPL-3.0 licence of the tool does not allow committing its output, so the fixtures are generated locally (tests/corpus/tools/gen_external.py, run through the isolated runner) and the tests that use them skip when they are absent.',
+    config: {
+      easy: { technique: 'easy preset (minify and rename)' },
+      medium: { technique: 'medium preset (strings, anti-tamper)' },
+      hard: { technique: 'hard preset (control flow, junk)' },
+      full: { technique: 'full preset' },
+      total: { technique: 'total preset (VM)' },
+      fortress: { technique: 'fortress preset (register VM)' },
+    },
+    limits: [
+      'easy, medium, hard and full are source-level: the tamper guard is recognised by its strings and removed without being run, the string decryptor is evaluated in the sandbox, and the junk branches are dropped. The output prints what the original program prints; names are guesses from use.',
+      'The decryptor multiplies past 2^53 and was written for Lua 5.4 integers (it gives noise on Lua 5.1, LuaJIT and Luau doubles). The sandbox therefore evaluates it both ways and keeps the reading that is text; if neither is, the strings are left encoded and the report says so. Without the sandbox the strings stay encoded.',
+      'total (native VM) and fortress (register VM with an encrypted bytecode blob) are detected from the VM entry call and flagged as not recovered: the program exists only as data for an interpreter. Recovery is not attempted.',
+      'The behavioural trace is stopped by the tamper guard of every preset except easy, because the trace\u2019s stand-in environment defines executor functions and the guard counts them (error 0x6B0C). Remove the guard first (medium, hard, full: Deobfuscate, then Trace the result). In the plain sandbox total runs to the end and fortress stops at 0x3E44 (the guard sees the sandbox\u2019s debug library is not native).',
+      'The total and fortress fixtures only run without an instruction-count hook, on LuaJIT: their anti-tamper treats a hook as an attack, so they were verified with tests/corpus/tools/run_lua_nohook.py.',
+    ],
+  },
+  zenfus: {
+    status: 'unsupported',
+    basis: 'real-output',
+    // the default settings switch on every pass the README lists (ControlFlow, DeadInstructions, ByteCompress, EncryptConstants, SuperOP)
+    covers: ['Lua 5.4 bytecode VM', 'constant encryption', 'dead instruction injection', 'super-operator fusion', 'control flow', 'byte compression'],
+    detect: 'Signatures from the tool\u2019s source and verified on its output: the wrapper (function(pack, move, unpack, env, pCall, Err) ...) and the VM names lua_wrap_state, run_vm and hexToString.',
+    config: {},
+    limits: [
+      'The program is compiled with luac 5.4, its constants are encrypted, dead instructions and super-operators are added, and a generated VM runs the hex-encoded stream. It is detected and flagged as not recovered; no lifter for its instruction format was written.',
+      'The behavioural trace works (the sandbox gained Lua 5.4 bitwise operators, goto, string.unpack, _ENV and integer arithmetic for it) and reproduces what the original program does for every fixture where the tool\u2019s own output is correct. A trace describes one run; it is not the original source.',
+      'Zenfus\u2019s own output misbehaves for six of the eight programs (see the "tool broken" column); those fixtures are excluded from behaviour claims.',
+    ],
+  },
+  simple_lua: {
+    status: 'supported',
+    basis: 'real-output',
+    covers: ['decimal codes', 'base64', 'split into pieces', 'load()'],
+    detect: 'The fixed helper names of the tool\u2019s template (_0x38ndf, _0x93mdw, _0x47fjs, _0x62tdg, _0x29dke). The repository has no licence file, so the fixtures are generated locally and not committed.',
+    config: {},
+    limits: [
+      'The program is written as decimal escapes, base64-encoded, cut into five-character pieces and loaded at run time. With the sandbox on, the loader is run alone to read the text it hands to load, and that text replaces the script. Without the sandbox the layer is only detected.',
+      'This is a loader-style packer: anything the loader does besides decoding (touching other globals, printing) stops the replacement. Variable names of the original are kept because the payload is the original source.',
+    ],
+  },
+  aztupbrew: {
+    status: 'unsupported',
+    basis: 'signature',
+    detect: 'The banner (AztupBrew(Fork of IronBrew2): obfuscation; Version 2.7.2) and the eight-local prelude of the VM. One public sample exists (a script that prints "1", in a repository without a licence), so structure was checked against it only.',
+    config: {},
+    limits: [
+      'A fork of IronBrew 2 whose VM data layout differs from the one the IronBrew 2 rebuild reads. The rebuild is not attempted on it; a VM is reported as not recovered.',
+      'The trace of the one sample reproduces its output. With one sample, nothing is known about how other settings of the tool look.',
+    ],
+  },
+  joker: { status: 'unsupported', basis: 'signature', detect: 'Name mention only.', limits: ['The repository is a README with screenshots: no code and no sample output. Nothing to verify against.'] },
+  zerolua: { status: 'unsupported', basis: 'signature', detect: 'Name mention only.', limits: ['The repository is a README: no code and no sample output. The service is hosted; its output was not available.'] },
+  fivem_strong: { status: 'unsupported', basis: 'signature', detect: 'Name mention only.', limits: ['The repository is an advertisement for a paid service: a README and a file holding a Discord invite.'] },
+  neuroforge: { status: 'unsupported', basis: 'signature', detect: 'Name mention only.', limits: ['The repository (Lua-Polymorph-VM-Forge) contains no Lua: a README, images, an hourly workflow that rewrites a stamp file, and an obfuscated web page with a download button. It was read as text only and nothing from it was run. Treat it as untrusted.'] },
   wearedevs: { status: 'experimental', basis: 'signature', detect: 'Generic heuristics only.', limits: ['Output format not verified.'] },
 };
 

@@ -31,6 +31,8 @@ def main():
     ap.add_argument("--runtimes", default="lua51,luajit,lua54,lua54c")
     ap.add_argument("--originals", default=os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "originals"))
     ap.add_argument("--budget", type=int, default=200_000_000)
+    ap.add_argument("--nohook", action="store_true", help="run without the instruction-count hook (in a subprocess with a timeout): for outputs whose anti-tamper rejects hooks")
+    ap.add_argument("--timeout", type=int, default=180)
     args = ap.parse_args()
     runner = load_runner()
 
@@ -41,6 +43,14 @@ def main():
     counts = {"equivalent": 0, "diverged": 0, "errored": 0, "skipped": 0}
 
     def run_file(fp, rt):
+        if args.nohook:
+            import subprocess
+            try:
+                done = subprocess.run([sys.executable, "-I", os.path.join(os.path.dirname(os.path.abspath(__file__)), "run_lua_nohook.py"), fp, "--runtime", rt],
+                                      capture_output=True, timeout=args.timeout)
+                return json.loads(done.stdout.decode("utf-8") or "{}") if done.returncode == 0 else {"ok": False, "stdout": "", "error": done.stderr.decode("latin-1")[-200:]}
+            except subprocess.TimeoutExpired:
+                return {"ok": False, "stdout": "", "error": f"no result after {args.timeout} s"}
         with open(fp, "rb") as fh:
             return runner.run(fh.read().decode("latin-1"), rt, args.budget)
 

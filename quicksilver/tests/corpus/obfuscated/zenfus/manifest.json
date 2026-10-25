@@ -1,0 +1,124 @@
+{
+  "tool": "Zenfus",
+  "source": "https://github.com/Zaenalos/Zenfus",
+  "licence": "MIT",
+  "sourceRevision": "94d4ae1",
+  "seed": 1337,
+  "runner": "tests/corpus/tools/run_isolated.py (virtual files, no host access)",
+  "entries": [
+    {
+      "file": "s01_minify_basic__default.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "default",
+      "runtime": "lua54",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 26346,
+      "seconds": 0.01,
+      "behaviors": {
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__default.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "default",
+      "runtime": "lua54",
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 28377,
+      "seconds": 0.01,
+      "behaviors": {
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:327: attempt to perform arithmetic on a table value (field '?')"
+    },
+    {
+      "file": "s03_encoded_strings__default.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "default",
+      "runtime": "lua54",
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 24289,
+      "seconds": 0.0,
+      "behaviors": {
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__default.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "default",
+      "runtime": "lua54",
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 35130,
+      "seconds": 0.01,
+      "behaviors": {
+        "lua54": "diverged"
+      },
+      "behavior": "diverged"
+    },
+    {
+      "file": "s05_nested_functions__default.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "default",
+      "runtime": "lua54",
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 39904,
+      "seconds": 0.01,
+      "behaviors": {
+        "lua54": "diverged"
+      },
+      "behavior": "diverged"
+    },
+    {
+      "file": "s06_combined__default.lua",
+      "sample": "s06_combined.lua",
+      "config": "default",
+      "runtime": "lua54",
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 46570,
+      "seconds": 0.01,
+      "behaviors": {
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:568: attempt to call a nil value (field '?')"
+    },
+    {
+      "file": "s07_roblox_style__default.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "default",
+      "runtime": "lua54",
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 19988,
+      "seconds": 0.0,
+      "behaviors": {
+        "lua54": "diverged"
+      },
+      "behavior": "diverged"
+    },
+    {
+      "file": "s08_ironbrew_macros__default.lua",
+      "sample": "s08_ironbrew_macros.lua",
+      "config": "default",
+      "runtime": "lua54",
+      "sampleSha256": "5d2ba22d895713dd1a955c8310b1e77d7a5961e854ea58fa77a1089a4041880f",
+      "status": "ok",
+      "bytes": 24314,
+      "seconds": 0.01,
+      "behaviors": {
+        "lua54": "diverged"
+      },
+      "behavior": "diverged"
+    }
+  ]
+}

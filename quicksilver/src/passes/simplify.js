@@ -13,7 +13,7 @@ import { analyze, STDLIB_GLOBALS } from '../core/scope.js';
 import { NOT_CONST, evalBinary, evalUnary } from './consteval.js';
 import { constOf, makeConst, PURE_LIBS } from './fold.js';
 import { isMachineName } from './rename.js';
-import { numericExpr, isArithmetic, isComparison } from './numeric.js';
+import { numericExpr, numericVars, isArithmetic, isComparison } from './numeric.js';
 
 // ---- purity ------------------------------------------------------------------
 
@@ -194,6 +194,8 @@ export function snapshotUnused(chunk) {
 
 function removeDead(chunk, state) {
   const info = analyze(chunk);
+  // arithmetic and comparisons over variables that only ever hold numbers cannot fail or call anything: `if n * 0 ~= 0 then end` is junk
+  numericVars(chunk, info);
   const junkInit = (e) => e.type === 'Number' || e.type === 'String' || e.type === 'True' || e.type === 'False' || e.type === 'Nil';
   const removable = (v, init) => v.reads.length === 0 && (isMachineName(v.name) || !state.unusedAtStart.has(v.decl) || (init && junkInit(init)));
   const dead = (name) => {

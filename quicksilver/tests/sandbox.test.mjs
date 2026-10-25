@@ -104,3 +104,59 @@ test('table stores keep the rules of nil and NaN keys and read-only tables', () 
   assert.equal(value('local t = setmetatable({}, { __newindex = function(t, k, v) rawset(t, k, v * 2) end }) t.a = 4 return t.a'), 8);
   assert.equal(value('local t = {} t[1] = "a" t[2] = "b" return #t'), 2);
 });
+
+// ---- Lua 5.4 additions: bitwise operators, goto, string.pack / unpack, _ENV, integer arithmetic ----------------------------------------
+// The programs print integers and strings only, so the same text can be compared with a real Lua 5.4 when the oracle is configured.
+
+import { after } from 'node:test';
+import * as oracle from './helpers/lua-oracle.mjs';
+after(() => oracle.stopOracle());
+const skip54 = oracle.available ? false : 'QS_LUA_PYTHON is not set (reference Lua unavailable)';
+const printed = (src, options = {}) => { const r = run(src, options); assert.equal(r.ok, true, r.error); return r.output; };
+
+const LUA54_PROGRAMS = {
+  'bitwise operators on 64-bit integers': 'print(5 & 3, 5 | 3, 5 ~ 3, ~5, 1 << 4, 256 >> 4, -1 >> 60, 1 << 63, 1 << 64, 3.0 & 1)\nprint(0xFFFFFFFF & 0xFF, (1 << 62) + (1 << 62), ~0, -1 << 1)',
+  'goto continue and a backward goto': 'for i = 1, 5 do\n  if i % 2 == 0 then goto continue end\n  print("i", i)\n  ::continue::\nend\nlocal n = 0\n::top::\nn = n + 1\nif n < 5 then goto top end\nprint("n", n)',
+  'goto out of nested loops': 'local k = 0\nwhile true do\n  k = k + 1\n  for j = 1, 3 do\n    if k == 3 then goto out end\n  end\nend\n::out::\nprint("out", k)',
+  'string.pack and string.unpack': 'local s = string.pack("<I2 >I3 z s1 c4 b", 513, 66051, "hi", "abc", "xy", -2)\nprint(#s, string.packsize("<I2 >I3 c4 b"))\nprint(string.unpack("<I2 >I3 z s1 c4 b", s))\nprint(string.unpack("<I8", "\\255\\255\\255\\255\\255\\255\\255\\127"))\nprint(string.unpack("<i4", "\\255\\255\\255\\255"))\nprint((pcall(string.unpack, "<I4", "ab")))',
+  'integer multiplication keeps 64 bits': 'local s = 112478026\nlocal r = (s * 1103515245 + 12345) % 2147483648\nprint(r)\nlocal x = 1\nfor i = 1, 70 do x = x * 3 end\nprint(x)\nprint(math.maxinteger + 1 == math.mininteger)',
+  '_ENV is the global table': 'x = 7\nprint(_ENV.x, _ENV == _G)',
+};
+
+for (const [name, program] of Object.entries(LUA54_PROGRAMS)) {
+  test(`Lua 5.4: ${name} prints what Lua 5.4 prints`, { skip: skip54 }, async () => {
+    const want = await oracle.runLua(program, 'lua54');
+    assert.ok(want.ok, want.error);
+    const got = run(program, { fuel: 5_000_000 });
+    // the sandbox keeps doubles unless asked for integers; the integer program needs the 5.4 mode
+    const r54 = runSource(program, { fuel: 5_000_000, timeMs: 10_000, dialect: 'luau', numMode: 'int64' });
+    assert.equal(r54.ok, true, r54.error);
+    assert.equal(r54.output, want.stdout);
+    if (!/\* 1103515245|x \* 3|maxinteger/.test(program)) assert.equal(got.output, want.stdout, 'doubles agree with Lua 5.4 where no integer exceeds 2^53');
+  });
+}
+
+test('Lua 5.4: bitwise operators, goto and pack/unpack give the documented values without the oracle', () => {
+  assert.equal(printed('print(5 & 3, 5 | 3, 5 ~ 3, ~5, 1 << 4, 256 >> 4)'), '1\t7\t6\t-6\t16\t16\n');
+  assert.equal(printed('print(-1 >> 60, 1 << 63, 1 << 64)'), '15\t-9223372036854775808\t0\n');
+  assert.equal(printed('for i = 1, 4 do if i == 2 then goto continue end print(i) ::continue:: end'), '1\n3\n4\n');
+  assert.equal(printed('print(string.unpack("<I2", "\\1\\2"))'), '513\t3\n');
+  assert.equal(printed('print(string.pack(">I3", 66051) == "\\1\\2\\3", string.packsize("<i4 d"))'), 'true\t12\n');
+  assert.match(failure('return 1.5 & 1'), /no integer representation/);
+  assert.match(failure('return {} | 1'), /bitwise operation on a table value/);
+  assert.match(failure('return "7" | 0'), /bitwise operation on a string value/, 'Lua 5.4 does not coerce strings in bitwise operators');
+  assert.match(failure('return string.pack("!4 i4", 1)'), /alignment/);
+});
+
+test('numeric modes: doubles lose bits past 2^53 and the watch counts it; int64 keeps them', () => {
+  const src = 'local s = 112478026\nreturn (s * 1103515245 + 12345) % 2147483648';
+  const watched = runSource(src, { dialect: 'luau', numMode: 'watch' });
+  assert.equal(watched.ok, true);
+  assert.equal(watched.returned[0], 901191360, 'doubles');
+  assert.ok(watched.machine.precisionLoss > 0, 'the loss is counted');
+  const exact = runSource(src, { dialect: 'luau', numMode: 'int64' });
+  assert.equal(exact.returned[0], 901191355, 'Lua 5.4 integers');
+  const plain = runSource('return 3 * 4 + 5', { dialect: 'luau', numMode: 'watch' });
+  assert.equal(plain.returned[0], 17);
+  assert.equal(plain.machine.precisionLoss, 0, 'nothing counted when every result is exact');
+});

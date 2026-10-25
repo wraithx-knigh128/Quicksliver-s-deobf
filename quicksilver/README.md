@@ -23,7 +23,7 @@ The page is laid out like a code editor: **Obfuscated source** above, **Deobfusc
 
 ### What it can recover, measured
 
-Numbers are measured on output of the real tools (Prometheus, Hercules, IronBrew 2) generated from programs written for this project, not on hand-written look-alikes. The full table is
+Numbers are measured on output of the real tools (Prometheus, Hercules, IronBrew 2, Zenfus, Colisseum, Simple-Lua-Obfuscator) generated from programs written for this project, not on hand-written look-alikes. The full table is
 `docs/COMPATIBILITY.md` (generated); the same data is the **Compatibility** tab. In short:
 
 * **IronBrew 2**: the embedded chunk is read (not run), the handlers are identified by shape, the Lua 5.1 chunk is rebuilt and decompiled. Supported.
@@ -32,6 +32,11 @@ Numbers are measured on output of the real tools (Prometheus, Hercules, IronBrew
   Original variable and function names are not in the output and cannot be recovered; names are guesses from use.
 * **Hercules**: the module and preset outputs, including the bytecode-encoding module (with the sandbox on, the compiled Lua 5.4 chunk is read out and decompiled; the original local and function names come back because the chunk keeps its
   debug information). Its virtual-machine module is detected and reported but not recovered.
+* **Colisseum** (AGPL-3.0, pure Lua): the `easy`, `medium`, `hard` and `full` presets come back as the original program (100% fidelity and the same output on all 32 fixtures; the tamper guard is removed without being run and the
+  string decryptor is evaluated in the sandbox, with Lua 5.4 integers because that is what it was written for). `total` and `fortress` compile the program for a VM: detected and reported as not recovered.
+* **Zenfus** (MIT; a generated Lua 5.4 bytecode VM) and **AztupBrew** (a fork of IronBrew 2, one public sample): detected and flagged as VMs that are not recovered statically; the opt-in trace reproduces what the program does
+  (the sandbox runs Lua 5.4 bitwise operators, `goto`, `string.unpack` and integers for this). **Simple-Lua-Obfuscator** (base64 pieces handed to `load`): recovered with the sandbox on.
+  Four more named candidates (Joker, Zero Lua, Strong FiveM, "NeuroForge") turned out to be READMEs and advertisements without code and are only recognised by name; one of them is documented as untrusted. See `docs/RESEARCH.md`.
 * **Loader-style packers** (a program encoded as ASCII codes, hex, binary, URL escapes, base64, XOR, reversed text, ... and handed to `loadstring`): literal and folded payloads are unwrapped without running anything; a payload computed by a
   decoder is read in the sandbox when the script is nothing but that loader. Measured on 66 packers I wrote for this project (labelled synthetic: they are not the output of any real tool).
 * **Luraph (v14 / v15 / v15.1), MoonSec V3, MoonVeil, PSU and the rest**: detected from banners and structure where that is possible. The original source of a Luraph or MoonVeil script **cannot** be
@@ -82,6 +87,9 @@ node tools/build-samples.mjs          # data/samples/ from the corpus and the sc
 `QS_LUA_PYTHON` points at a Python with [`lupa`](https://pypi.org/project/lupa/); it provides real Lua 5.1, LuaJIT and Lua 5.4 so recovered scripts can be compared with the originals **by what they print**.
 Without it those tests are reported as skipped, not passed.
 
+Output of tools whose licence does not allow committing it (Colisseum, Simple-Lua-Obfuscator, the AztupBrew sample) is generated into the git-ignored `tests/corpus/obfuscated-local/` with
+`tests/corpus/tools/gen_external.py` (the tools are run through `run_isolated.py`, never through their own command lines; see `docs/ARCHITECTURE.md`). The tests that use it are skipped, with the reason, when it is absent.
+
 ## Layout
 
 ```
@@ -91,7 +99,7 @@ src/passes/                    folding, simplification, dataflow, idioms, renami
 src/detect/                    obfuscator signatures and dialect detection
 src/recover/                   per-family recovery (Prometheus, Vmify, Hercules, IronBrew 2) and the pipeline
 src/decompile/                 Lua bytecode lifting, control-flow structuring
-src/sandbox/, src/trace/       a Lua interpreter written for this tool, and the behavioural trace
+src/sandbox/, src/trace/       a Lua interpreter written for this tool (with the Lua 5.4 features obfuscator output uses), and the behavioural trace
 src/origin/                    the style reading behind the origin check
 api/                           Vercel functions
 data/                          samples and compat.json (generated)

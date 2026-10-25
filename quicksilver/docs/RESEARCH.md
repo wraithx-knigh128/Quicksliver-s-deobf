@@ -146,6 +146,99 @@ Where running a tool was not possible or not permitted, the workflow was: read w
 on it exactly as on real tool output (66 examples, each checked on real Lua 5.1 to print what the original program prints). These are labelled **synthetic** everywhere they appear (Examples tab, the obfuscator table, `docs/COMPATIBILITY.md`).
 They show that the loader-unwrapping pass works on the technique class; they do **not** show that any particular third-party tool is handled, because none of those tools produced them.
 
+## Third research pass: eight named candidates (October 2026)
+
+Eight projects were named: Lua-Polymorph-VM-Forge, JokerObfuscator, Simple-Lua-Obfuscator, Zero-Lua-Roblox-Obfuscator, Zenfus, Colisseum, Fivem-Strong-Obfuscator and AztupBrew.
+Each was cloned into its own empty directory (blobless clones for the small ones, so that files were read as text with `git show` and never checked out), and its README, file list and licence were read before anything else.
+Only **three** of the eight contain an obfuscator that can be run (Colisseum, Zenfus, Simple-Lua-Obfuscator). One more (AztupBrew) is represented by a single public output. **Four contain no obfuscator code at all.**
+
+| Candidate | Repository, revision | Licence | What is there | What was done |
+|---|---|---|---|---|
+| **Colisseum** | `de-TourLLC/colisseum` `5c76832` | AGPL-3.0 | pure-Lua obfuscator, six presets (easy, medium, hard, full, total, fortress) **[source]** | run through the isolated runner; 48 outputs; detection, recovery, tests |
+| **Zenfus** | `Zaenalos/Zenfus` `94d4ae1` | MIT | pure-Lua obfuscator: luac 5.4 → instruction tree → passes → generated VM; "based on IB2" **[source]** | run through the isolated runner; 8 outputs (committed); detection, trace, tests |
+| **Simple-Lua-Obfuscator** | `CloudHub111/Simple-Lua-Obfuscator` `e4e3d25` | none stated | one Lua file written as a Roblox script template that reads a global `script` **[source]** | run through the isolated runner; 8 outputs (local only); detection, loader unwrapping, tests |
+| **AztupBrew** | `noahcoolboy/bad-aztupbrew-deobfuscator` `210e76a` (a third-party JavaScript deobfuscator with one `example.lua`) | none stated | one AztupBrew output (a script that prints "1"); the obfuscator itself is not public **[sample]** | detection (banner and prelude), trace; the JavaScript was not run |
+| **Joker Obfuscator** | `0x3yte/JokerObfuscator` `0fb105e` | none | a README with screenshots and links to a website and a Discord server | name recognised only |
+| **Zero Lua** | `FakeModz/Zero-Lua-Roblox-Obfuscator` `284d24c` | none | a README for a hosted web tool (zerolua.pages.dev), with a keyword list | name recognised only |
+| **Strong FiveM Lua Obfuscator** | `Revuexz/fivem-strong-obfuscator` `7210104` | none | a README advertising a paid service, and `obf.lua` holding a Discord invite | name recognised only |
+| **Lua-Polymorph-VM-Forge ("NeuroForge VM")** | `GRUPOMORAESIMOVEIS/Lua-Polymorph-VM-Forge` `7a814fd` | MIT badge, no licence file | **no Lua**: a marketing README, two SVG images, an `index.html`, an hourly workflow and a stamp file | read as text only, nothing run, **treated as untrusted** |
+
+### How the three runnable tools were run
+
+None of them was started through its own command line. Colisseum's `cli.lua` shells out to create directories and checks GitHub for updates; Zenfus's needs an external `luac` and temp files; Simple-Lua-Obfuscator is a Roblox script template.
+`tests/corpus/tools/run_isolated.py` instead loads the tool's own `.lua` files into a [lupa](https://pypi.org/project/lupa/) Lua state (the same dev-only dependency the behavioural tests use) with:
+a **virtual file system** (only the tool's `.lua`/`.json` files are visible, read-only; anything it writes is captured in memory); `io`, `os.execute`, `os.remove`, `package.loadlib` and the network removed;
+`require`, `dofile` and `loadfile` resolved only inside that file system; an instruction-count hook and a CPU-time limit. A tiny driver per tool (`tests/corpus/tools/drivers/`) calls the same library entry point as the CLI, with a fixed seed.
+No file of the tools is modified or copied into QuickSilver. `tests/corpus/tools/gen_external.py` writes the fixtures; `verify_fixtures.py` runs each against the original program on Lua 5.1, LuaJIT and Lua 5.4 and records which runtimes print the same thing.
+
+Output is committed only where the licence allows (Zenfus, MIT). Colisseum (AGPL-3.0) and Simple-Lua-Obfuscator and the AztupBrew sample (no licence file) are generated or copied into `tests/corpus/obfuscated-local/`, which is git-ignored;
+their tests skip with a reason when it is absent. Everything below that mentions them was measured on those local files.
+
+### Colisseum
+
+* **Presets.** `easy` minifies and renames (`coli_jLjLj` names, a credit line). `medium`, `hard` and `full` add a large tamper-guard block in front of the program (debug hook, executor globals, replaced standard functions, changed string metatable,
+  line numbers of error messages; it raises an error with a four-digit code) and encrypt the strings with a keystream decryptor. `total` and `fortress` compile the program for a VM (native tree-walking VM, and a register VM with an encrypted blob) and
+  bind the guard into the interpreter.
+* **Generation and verification.** 48 outputs (6 presets × 8 programs). `easy` through `full` print what the original prints on Lua 5.4 (`easy` also on 5.1 and LuaJIT). On 5.1 and LuaJIT `medium`, `hard` and `full` print noise or stop inside `string.format` on it: the decryptor needs 5.4 integers.
+  `total` and `fortress` were generated and run on LuaJIT, and **only equal the original when run without an instruction-count hook**: their anti-tamper treats the hook as an attack, so the first verification marked them as errored.
+  `tests/corpus/tools/run_lua_nohook.py` runs them in a subprocess with a timeout instead; all 16 are then equivalent.
+* **A real bug the fixtures found.** The first run of the pipeline on `medium` printed `"p\146ÏHn\169G"` where the program says `"primes: "`. The decryptor multiplies past 2^53 (`seed * 1103515245`). Lua 5.4 integers keep every bit; the sandbox, like Lua 5.1 and Luau, uses doubles and
+  silently lost them. The wrong text was inlined as if it were right. The fix is in two parts (see "What changed in the engine"): arithmetic that leaves the range doubles hold exactly is now counted, and when there is any it is evaluated both ways and the reading that gives text is used.
+* **Measured** (`tests/results/scorecard.json`, sandbox on): detection 48/48; `easy` 67% → 100% fidelity, `medium`/`hard`/`full` 9–11% → 100%, behaviour identical to the original 32/32; `total` and `fortress` 3% → 3% (reported as VM, confidence 35%, trace offered).
+  Without the sandbox the strings of `medium` and above stay encoded.
+* **Limits.** The VM presets are not lifted: the program exists only as data for the interpreter, and the register VM's blob is encrypted. The behavioural trace of a guarded preset stops at error `0x6B0C`
+  because the trace's stand-in environment defines the executor functions the guard counts. Remove the guard first (Deobfuscate, then Trace). In the plain sandbox `total` runs to the end and `fortress` stops at `0x3E44` (its guard sees that the sandbox's `debug` library is not native).
+  Trace identical to the original: 8/48 (the `easy` preset). That number is low because of the guard, and is reported as it is.
+
+### Zenfus
+
+* **What it does.** The README: compile with `luac5.4`, deserialise to an instruction tree, run passes (constant encryption, dead instructions, super-operators, control flow, byte compression), generate a VM around the result. The generated script is a wrapper
+  `(function(pack, move, unpack, env, pCall, Err) ... end)(table.pack, table.move, table.unpack, _ENV, pcall, error)` holding `hexToString`, `lua_wrap_state` and `run_vm` and a hex string.
+* **Generation.** 8 outputs, committed. The tool's own output runs correctly for **2 of the 8** programs on Lua 5.4; for the other six it fails with runtime errors of its own making (for example `attempt to perform arithmetic on a table value`). Those six are labelled *tool broken* and left out of behaviour claims.
+* **Measured.** Detection 8/8 (confidence 0.99, flagged as a VM that is not recovered, confidence of the result 20%, trace offered). Static recovery: none, and none is claimed. Trace: the two correct outputs give exactly the trace of the original program.
+* **What it took to trace it.** The sandbox could not run Zenfus at all: it had no Lua 5.4 bitwise operators, no `goto`, no `string.unpack`, no `_ENV`, no 64-bit integers (see below). Each missing piece was found by running the next fixture and reading the first error.
+* **Limit.** No lifter for the instruction format was written. It would have to undo constant encryption, remove dead instructions, expand super-operators and then hand a Lua 5.4 chunk to the existing decompiler: a project of the size of the IronBrew 2 module, for a tool that breaks its own output for six programs in eight.
+
+### Simple-Lua-Obfuscator
+
+* **What it does.** Writes the program as a string of decimal escapes, base64-encodes it, cuts it into five-character pieces held in a table and runs `load("<escapes>")()` after decoding. The helper names are fixed in the template (`_0x38ndf`, `_0x93mdw`, `_0x47fjs`, `_0x62tdg`, `_0x29dke`), which is what detection uses.
+* **Measured.** Detection 8/8; with the sandbox on, 6% → 100% fidelity and identical behaviour on 8/8. The loader is run alone to read the text it hands to `load`, as in the loader class; the generic layer pass needed one extension (a helper function the loader defines and uses is allowed; a global it only sets is not).
+* **Limit.** Without the sandbox the layer is only detected. The licence is unknown, so its output is not committed.
+
+### AztupBrew
+
+Only one output exists in public: the example in a third-party deobfuscator's repository. Its banner `AztupBrew(Fork of IronBrew2): obfuscation; Version 2.7.2` and the eight library locals its VM starts with (IronBrew 2's has eleven) are now signatures.
+The IronBrew 2 rebuild stops on it (the serialised layout differs), as it should. With one sample, no claim is made about other settings. The trace reproduces the output of the sample (`1`). The repository's JavaScript deobfuscator was not run and no code from it is used.
+
+### The four repositories without an obfuscator
+
+* **JokerObfuscator, Zero-Lua-Roblox-Obfuscator, fivem-strong-obfuscator**: README-only. They describe or advertise hosted or paid services (a website and Discord server in the first two, a paid licence and a Discord invite in the third). There is no code and no sample of their output, so nothing can be tested; QuickSilver recognises the names when a script mentions them and caps the confidence at 0.3.
+  The feature lists they print ("anti-decompile", "28 layers", "Galois dynamic dispatch") are marketing text and are not treated as facts about the output.
+* **Lua-Polymorph-VM-Forge**: the project is called "NeuroForge VM" in its README, but the repository holds no Lua. Its files are a README of generic prose, two large SVG images (one a "Download" button that links to a GitHub Pages site), an `index.html` whose body is a hidden `div` of
+  base64 text and a script that XOR-decodes it with a key and `document.write`s the result, and a GitHub Actions workflow with randomised names that runs every hour and appends timestamps and random numbers to a stamp file (a way of making a repository look active).
+  Nothing in it was run, the HTML was not opened in a browser and the hidden payload was not decoded: that is exactly what a page built to deliver something else would want a reader to do. What it contains cannot be established from the outside, so it is **recorded as untrusted** (in the family registry and here), and nothing from it is integrated.
+
+### What changed in the engine, and why
+
+Every change below was prompted by a fixture, not by an assumption, and each has a test (`tests/candidates.test.mjs`, `tests/sandbox.test.mjs`). The 336 pre-existing fixtures were re-measured afterwards: fidelity and behaviour are unchanged for all of them; one confidence figure rose (0.55 → 0.75).
+
+* **Sandbox, Lua 5.3/5.4 features**: bitwise operators on 64-bit integers (strings are refused as in 5.4), `goto` and labels, `string.pack`/`unpack`/`packsize` (no alignment options), a free `_ENV`, `math.maxinteger`. Checked against a real Lua 5.4 on programs that print integers and strings.
+* **Numeric modes** (`numMode`): `watch` counts `+ - *` results on whole numbers that doubles cannot hold exactly; `int64` computes them exactly (BigInt only where needed). The decoder evaluation and the trace use them together: where the readings agree nothing is decided, where they differ the one that gives text is used and the note says so,
+  and if neither does the sites are left alone. A test with a decoder written for doubles checks that the doubles reading wins when it is the readable one.
+* **Decoder evaluation**: a function containing a linear-congruential keystream (`1103515245` and `2147483648`) is a decoder from its first call (a script with two hidden strings has two call sites, below the threshold for machine-named functions). Calls to the program's own helpers
+  that return numbers are no longer counted as decoders that failed.
+* **Colisseum tamper guard** (`src/recover/colisseum.js`): removed when the block contains all three of the error brand, the hook global name and the key of its first check.
+* **Layers**: a helper function the loader defines and uses is allowed; a global that is only assigned is not (the check used to count the assignment target as a use).
+* **Dead code**: an empty `if` whose test is arithmetic over locals that only ever hold numbers is dropped (`if n * 0 ~= 0 then end`).
+* **Printer**: a label was printed as `::undefined::`. Any Lua 5.4 output with `goto continue` was written back broken.
+* **Confidence**: a VM that the input showed and no step rebuilt now lowers the score and offers the trace even when clean-up has rewritten the signature away (the AztupBrew prelude is gone after aliases are inlined; the score was 0.9 for a script that was still a VM).
+
+### What was not done, and why
+
+* No lifter for Zenfus, Colisseum `total`/`fortress` or AztupBrew. Each is a separate VM format and a project of its own; the fixtures show where the sizes lie.
+* No attempt to make the trace hide that it is a sandbox from a tamper guard. The guard is removed where it can be (static), reported where it cannot.
+* Nothing was fetched from the four README-only repositories' websites or Discord servers.
+
 ## Technique taxonomy and what each needs
 
 | Technique | Seen in | Static recovery | Needs execution | Notes |
@@ -159,7 +252,11 @@ They show that the loader-unwrapping pass works on the technique class; they do 
 | Anti-tamper blocks | Prometheus, Hercules | yes when separable | no | embedded inside a VM they cannot be removed statically |
 | Proxy locals | Prometheus | yes | no | |
 | Layered `loadstring` | many loaders | no | capture the payload | `Trace` records every chunk passed to `load` |
-| Control-flow flattening / register VM | Prometheus Vmify, Hercules VM | not implemented | trace | see below |
+| Keystream string decryptor (linear-congruential) | Colisseum medium and above | no | decoder evaluation (sandbox), with Lua 5.4 integers | the multiplication passes 2^53; doubles give noise |
+| Tamper guard block | Colisseum, Prometheus, Hercules | yes when the block is recognisable | no | removed by its strings, not run |
+| Control-flow flattening / register VM | Prometheus Vmify, Hercules VM | Vmify only | trace | see below |
+| Bytecode VM generated per script (Lua 5.4 stream) | Zenfus, Colisseum total / fortress | not implemented | trace (not for guarded presets) | detected and reported |
+| Base64 pieces handed to `load` | Simple-Lua-Obfuscator | yes | the loader alone (sandbox) | |
 | Custom bytecode VM with per-file keys | IronBrew 2, Luraph, MoonSec | needs per-VM work | trace | |
 | Compiled Lua chunks | Hercules | reader and executor exist | trace | decompiling to source is a separate problem |
 

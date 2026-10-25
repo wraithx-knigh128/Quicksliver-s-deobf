@@ -13,11 +13,16 @@
 //   * the slice may reference nothing but untouched standard globals;
 //   * it runs in the sandbox interpreter (no host access) under fuel, time and depth limits;
 //   * every expression is evaluated twice, forward and in reverse order, and only results that agree
-//     are used. A decoder with hidden state (a call counter, say) would not agree.
+//     are used. A decoder with hidden state (a call counter, say) would not agree;
+//   * the sandbox computes with doubles (Lua 5.1 / Luau). Lua 5.4 integers are exact up to 2^63, so a decoder that
+//     multiplies past 2^53 gives different text on the two. The run counts such results; when there are any, the slice is
+//     run again with 5.4 integers and the two are compared: equal results are used, different ones only when exactly one
+//     of the two reads as text (see chooseArithmetic), otherwise those sites are left alone.
 
 import { walk, transform, forEachChild } from '../core/walk.js';
 import { analyze, STDLIB_GLOBALS } from '../core/scope.js';
 import { createMachine, classify } from '../sandbox/sandbox.js';
+import { readsAsText } from '../sandbox/numeric.js';
 import { compileAst, callValue } from '../sandbox/interp.js';
 import { LuaTable } from '../sandbox/value.js';
 import { constOf, makeConst, PURE_LIBS } from './fold.js';
@@ -51,6 +56,31 @@ export function evaluatePass(chunk, ctx = {}) {
   first.removedStatements = (first.removedStatements || 0) + (second.removedStatements || 0);
   for (const d of second.decoders) if (!first.decoders.some((x) => x.name === d.name)) first.decoders.push(d);
   return first;
+}
+
+/**
+ * The same sites evaluated with doubles (`floats`) and with Lua 5.4 integers (`ints`): both are tables of `[ok, value]` pairs
+ * per site number. Returns the sites whose value is trustworthy as `{ use: 'float'|'integer', unresolved: Set(site numbers) }`.
+ * Where the two agree there is nothing to decide. Where they differ, the text of one reads as text and the other as noise
+ * for nearly every differing site: that is evidence for the runtime the script was made for, and the answer says which.
+ */
+function chooseArithmetic(floats, ints, count) {
+  const differ = [];
+  for (let k = 1; k <= count; k++) {
+    const a = floats(k);
+    const b = ints(k);
+    if (a.ok !== b.ok || (a.ok && a.value !== b.value)) differ.push([a, b]);
+  }
+  if (!differ.length) return { use: 'float', differing: 0, unresolved: new Set() };
+  const text = (r) => r.ok && typeof r.value === 'string' && readsAsText(r.value);
+  const strings = differ.filter(([a, b]) => (a.ok && typeof a.value === 'string') || (b.ok && typeof b.value === 'string'));
+  const floatText = strings.filter(([a]) => text(a)).length;
+  const intText = strings.filter(([, b]) => text(b)).length;
+  // noise passes the text test by chance about once in three bytes, so a verdict needs a dozen bytes to rest on
+  const enough = strings.reduce((n, [a, b]) => n + Math.max((a.ok && typeof a.value === 'string' && a.value.length) || 0, (b.ok && typeof b.value === 'string' && b.value.length) || 0), 0) >= 12;
+  if (enough && intText >= 0.9 * strings.length && floatText <= 0.34 * strings.length) return { use: 'integer', differing: differ.length, unresolved: new Set() };
+  if (enough && floatText >= 0.9 * strings.length && intText <= 0.34 * strings.length) return { use: 'float', differing: differ.length, unresolved: new Set() };
+  return { use: null, differing: differ.length, unresolved: null };
 }
 
 function evaluateOnce(chunk, ctx = {}) {
@@ -208,10 +238,20 @@ function evaluateOnce(chunk, ctx = {}) {
   }
   const siteCount = new Map();
   for (const s of sites) for (const v of callTargets(s)) siteCount.set(v, (siteCount.get(v) || 0) + 1);
+  // `s = (s * 1103515245 + 12345) % 2147483648` inside a function: a linear-congruential keystream, the core of a string decryptor. Such a
+  // function is a decoder from its first call; a script with one or two hidden strings has no more call sites than that.
+  const keystream = new Set();
+  for (const [v, st] of declOf) {
+    const f = st.type === 'LocalFunction' ? st.func : st.type === 'Local' && st.values.length === 1 && st.ids.length === 1 ? st.values[0] : null;
+    if (!f || f.type !== 'Func') continue;
+    const seen = new Set();
+    walk(f.body, (n) => { if (n.type === 'Number' && (n.value === 1103515245 || n.value === 2147483648)) seen.add(n.value); return undefined; });
+    if (seen.size === 2) keystream.add(v);
+  }
   const decoders = new Set();
   for (const [v, n] of siteCount) {
     const machineName = looksObfuscated(v.name) || isShortName(v.name);
-    const threshold = (ctx.knownDecoders && ctx.knownDecoders.has(v.name)) || (offsetAccessor.has(v) && machineName) ? 1 : machineName ? minSites : (opts.minSitesReadable ?? MIN_SITES_READABLE_NAME);
+    const threshold = (ctx.knownDecoders && ctx.knownDecoders.has(v.name)) || (offsetAccessor.has(v) && machineName) || keystream.has(v) ? 1 : machineName ? minSites : (opts.minSitesReadable ?? MIN_SITES_READABLE_NAME);
     if (n >= threshold) decoders.add(v);
   }
   result.decoders = [...decoders].map((v) => ({ name: v.name, sites: siteCount.get(v) }));
@@ -332,10 +372,15 @@ function evaluateOnce(chunk, ctx = {}) {
   body.push({ type: 'Return', values: [rn('__qs_r')] });
   const synthetic = { type: 'Chunk', body, endComments: [], features: new Set() };
 
-  const m = createMachine({ fuel: opts.fuel ?? 60_000_000, timeMs: opts.timeMs ?? 10_000, dialect: opts.dialect || 'luau' });
+  const execute = (numMode) => {
+    const m = createMachine({ fuel: opts.fuel ?? 60_000_000, timeMs: opts.timeMs ?? 10_000, dialect: opts.dialect || 'luau', numMode });
+    const t = callValue(m, compileAst(m, synthetic, 'decoder', m.globals), [], '')[0];
+    return { table: t, loss: m.precisionLoss };
+  };
   let table;
+  let precisionLoss = 0;
   try {
-    table = callValue(m, compileAst(m, synthetic, 'decoder', m.globals), [], '')[0];
+    ({ table, loss: precisionLoss } = execute('watch'));
   } catch (e) {
     const c = classify(e);
     result.error = c.error || 'evaluation failed';
@@ -343,6 +388,29 @@ function evaluateOnce(chunk, ctx = {}) {
     return result;
   }
   if (!(table instanceof LuaTable)) { result.skipped = 'the sandbox returned no results'; return result; }
+
+  // Some arithmetic went past 2^53, where doubles and Lua 5.4 integers disagree: run again with integers and compare.
+  const unresolved = new Set();
+  if (precisionLoss > 0) {
+    let ints = null;
+    try { ints = execute('int64').table; } catch { ints = null; } // a sandbox limit, or a library call that cannot take a 64-bit integer
+    const pair = (t, k) => {
+      const a = t instanceof LuaTable ? t.get(k) : undefined;
+      const b = t instanceof LuaTable ? t.get(k + sites.length) : undefined;
+      return a instanceof LuaTable && b instanceof LuaTable && a.get(1) === true && a.get(3) === undefined && b.get(1) === true && b.get(2) === a.get(2) ? { ok: true, value: a.get(2) } : { ok: false };
+    };
+    if (!(ints instanceof LuaTable)) {
+      result.arithmetic = { note: 'some arithmetic leaves the range doubles hold exactly (Lua 5.1/Luau and Lua 5.4 would give different text) and the integer rerun did not finish', differing: null };
+      for (let k = 1; k <= sites.length; k++) unresolved.add(k);
+    } else {
+      const verdict = chooseArithmetic((k) => pair(table, k), (k) => pair(ints, k), sites.length);
+      if (verdict.use === 'integer') { table = ints; result.arithmetic = { use: 'Lua 5.4 integers', differing: verdict.differing }; } else if (verdict.use === 'float') result.arithmetic = { use: 'doubles', differing: verdict.differing };
+      else {
+        result.arithmetic = { use: null, differing: verdict.differing, note: 'the text depends on the Lua version and neither reading is clearly text' };
+        for (let k = 1; k <= sites.length; k++) { if (pair(table, k).ok !== pair(ints, k).ok || pair(table, k).value !== pair(ints, k).value) unresolved.add(k); }
+      }
+    }
+  }
 
   // ---- accept consistent results --------------------------------------------------------------------------
   const accepted = new Map();
@@ -354,7 +422,7 @@ function evaluateOnce(chunk, ctx = {}) {
   for (const e of sites) {
     const a = table.get(ids.get(e));
     const b = table.get(ids.get(e) + n);
-    if (!single(a) || !single(b) || a.get(2) !== b.get(2) || !usable(a.get(2))) { result.rejected++; continue; }
+    if (unresolved.has(ids.get(e)) || !single(a) || !single(b) || a.get(2) !== b.get(2) || !usable(a.get(2))) { result.rejected++; continue; }
     const v = decoderOf(e);
     const tally = perDecoder.get(v) || { strings: 0, others: 0 };
     if (typeof a.get(2) === 'string') tally.strings++; else tally.others++;
@@ -366,7 +434,9 @@ function evaluateOnce(chunk, ctx = {}) {
     const t = perDecoder.get(v);
     const stringy = t.strings / (t.strings + t.others) >= 0.75;
     // a text decoder's number results are keys into a table it fills as a side effect; the call has to stay
-    if (accessorShaped.has(v) || (stringy && typeof value === 'string')) accepted.set(e, value); else result.rejected++;
+    if (accessorShaped.has(v) || (stringy && typeof value === 'string')) accepted.set(e, value);
+    else if (!stringy) result.notDecoder = (result.notDecoder || 0) + 1; // mostly numbers: the program's own helper, not a decoder that failed
+    else result.rejected++;
   }
   if (accepted.size) {
     transform(chunk, { expr(e) { return accepted.has(e) ? makeConst(accepted.get(e)) : undefined; } });

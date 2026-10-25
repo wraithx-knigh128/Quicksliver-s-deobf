@@ -21,7 +21,11 @@ const sandbox = !args.includes('--no-sandbox');
 const write = args.includes('--write');
 const outName = args.includes('--out') ? args[args.indexOf('--out') + 1] : 'scorecard.json';
 
-const tools = [['prometheus', 'obfuscated/prometheus'], ['hercules', 'obfuscated/hercules'], ['ironbrew2', 'obfuscated/ironbrew2'], ['loaders', 'obfuscated/loaders']];
+const tools = [['prometheus', 'obfuscated/prometheus'], ['hercules', 'obfuscated/hercules'], ['ironbrew2', 'obfuscated/ironbrew2'], ['loaders', 'obfuscated/loaders'], ['zenfus', 'obfuscated/zenfus']];
+// Output of tools whose licence does not allow committing it (AGPL, or no licence) is generated locally by gen_external.py into a git-ignored folder; it is measured when present.
+for (const [tool, dir] of [['colisseum', 'obfuscated-local/colisseum'], ['simple_lua', 'obfuscated-local/simple_lua']]) {
+  if (fs.existsSync(path.join(corpus, dir, 'manifest.json'))) tools.push([tool, dir]);
+}
 const results = [];
 const read = (p) => bytesToBinary(fs.readFileSync(p));
 

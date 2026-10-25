@@ -2,7 +2,7 @@
 //
 //   node tools/build-samples.mjs
 //
-// The obfuscated files are the real output of Prometheus, Hercules and IronBrew 2 (tests/corpus/obfuscated), generated
+// The obfuscated files are the real output of Prometheus, Hercules, IronBrew 2 and Zenfus (tests/corpus/obfuscated), generated
 // from the original programs in tests/corpus/originals; see the manifests there for seeds and revisions.
 
 import fs from 'node:fs';
@@ -83,6 +83,12 @@ const tools = [
     dir: 'ironbrew2', label: 'IronBrew 2 (real tool output)', note: 'Trollicus/ironbrew-2, built from source',
     picks: [['plain', 'VM only'], ['default', 'default settings'], ['mutate', 'opcode mutation'], ['super', 'super operators'], ['flow', 'control flow (the tool\'s output is broken)'], ['strings', 'string encryption'], ['lineinfo', 'with line info']],
     extra: [['s08_ironbrew_macros', 'default', 'IB_* macros, default settings']],
+  },
+  {
+    // MIT licence, so the output can be shipped. Zenfus's own output misbehaves for six of the eight programs; the labels in the Examples tab say which.
+    dir: 'zenfus', label: 'Zenfus (real tool output, VM; not recovered statically)', note: 'Zaenalos/Zenfus, MIT; run Trace to see what the script does',
+    picks: [['default', 'default settings']],
+    extra: [['s01_minify_basic', 'default', 'smallest program (behaves like its original)'], ['s03_encoded_strings', 'default', 'string program (behaves like its original)']],
   },
 ];
 for (const t of tools) {

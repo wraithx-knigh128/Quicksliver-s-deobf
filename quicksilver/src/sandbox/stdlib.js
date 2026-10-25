@@ -12,6 +12,7 @@ import { callValue, tostr, index, lessThan, compileSource, concat as vmConcat } 
 import { LuaSyntaxError } from '../core/parser.js';
 import { numberToLuaString, stringToNumber } from '../passes/consteval.js';
 import { strFind, gmatchIter, strGsub, strFormat } from './lstring.js';
+import { strPack, strUnpack, strPackSize } from './lpack.js';
 import { isBytecode, loadBytecode, BytecodeError } from './bytecode.js';
 
 const nf = (name, fn) => new NativeFunction(name, fn);
@@ -277,6 +278,11 @@ export function installStdlib(m, options = {}) {
       }
       return [out];
     },
+    ...(dialect === 'lua51' || dialect === 'luajit' ? {} : {
+      pack: (a) => { const out = strPack(checkStr(a, 0, 'pack'), a.slice(1)); m.checkString(out.length); return [out]; },
+      unpack: (a) => strUnpack(checkStr(a, 0, 'unpack'), checkStr(a, 1, 'unpack'), a[2] === undefined ? undefined : checkInt(a, 2, 'unpack')),
+      packsize: (a) => [strPackSize(checkStr(a, 0, 'packsize'))],
+    }),
     format: (a) => {
       const out = strFormat(checkStr(a, 0, 'format'), a.slice(1), (v) => tostr(m, v), toNumber);
       m.checkString(out.length);
@@ -420,6 +426,7 @@ export function installStdlib(m, options = {}) {
   lib(m, 'math', {
     pi: Math.PI,
     huge: Infinity,
+    ...(dialect === 'lua51' || dialect === 'luajit' ? {} : { maxinteger: 9223372036854775807n, mininteger: -9223372036854775808n }),
     abs: mathFn('abs', Math.abs), ceil: mathFn('ceil', Math.ceil), floor: mathFn('floor', Math.floor),
     sqrt: mathFn('sqrt', Math.sqrt), sin: mathFn('sin', Math.sin), cos: mathFn('cos', Math.cos), tan: mathFn('tan', Math.tan),
     asin: mathFn('asin', Math.asin), acos: mathFn('acos', Math.acos), atan: mathFn('atan', Math.atan),
@@ -457,8 +464,8 @@ export function installStdlib(m, options = {}) {
     sign: (a) => [Math.sign(checkNum(a, 0, 'sign'))],
     round: (a) => { const x = checkNum(a, 0, 'round'); return [x < 0 ? -Math.floor(-x + 0.5) : Math.floor(x + 0.5)]; },
     // Lua 5.3+ helpers. Numbers are doubles here, so "integer" means integer-valued.
-    tointeger: (a) => { const x = toNumber(a[0]); return [typeof a[0] !== 'boolean' && x !== undefined && Number.isInteger(x) ? x : undefined]; },
-    type: (a) => [typeof a[0] === 'number' ? (Number.isInteger(a[0]) ? 'integer' : 'float') : undefined],
+    tointeger: (a) => { if (typeof a[0] === 'bigint') return [a[0]]; const x = toNumber(a[0]); return [typeof a[0] !== 'boolean' && x !== undefined && Number.isInteger(x) ? x : undefined]; },
+    type: (a) => [typeof a[0] === 'bigint' ? 'integer' : typeof a[0] === 'number' ? (Number.isInteger(a[0]) ? 'integer' : 'float') : undefined],
     ult: (a) => [u32(checkNum(a, 0, 'ult')) < u32(checkNum(a, 1, 'ult'))],
   });
 

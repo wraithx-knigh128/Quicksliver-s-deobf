@@ -57,6 +57,55 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
+### Zenfus
+
+* Copyright (c) 2026 Zaenalos, MIT License, `https://github.com/Zaenalos/Zenfus` (revision `94d4ae1`).
+* `tests/corpus/obfuscated/zenfus/**` and the Zenfus entries of `data/samples/**` are output of the tool, generated in memory by `tests/corpus/tools/run_isolated.py` with the driver
+  `tests/corpus/tools/drivers/zenfus.lua` (original work; it calls the tool's own Deserializer, Obfuscator and Generator and modifies nothing). The output contains code written out by the tool's templates; the notice below applies to it.
+  No source file of Zenfus is copied into QuickSilver.
+
+```
+MIT License
+
+Copyright (c) 2026 Zaenalos
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+## Tools whose output is used locally and is not committed
+
+The licences below do not (Colisseum) or may not (the others) allow redistributing what the tools emit, so none of their output is in the repository. The tests that need it read
+`tests/corpus/obfuscated-local/`, which is git-ignored, and are skipped with a reason when it is absent. `tests/corpus/tools/gen_external.py` regenerates it from a checkout that you supply.
+
+* **Colisseum** (`https://github.com/de-TourLLC/colisseum`, revision `5c76832`): GNU Affero General Public License v3.0. Its output carries code written out by its templates, so none is committed or shipped. QuickSilver's
+  Colisseum module (`src/recover/colisseum.js`) and detection rules were written after reading the tool's source and output and copy none of it; they match strings the tool prints (its error text, its hook global, its credit line,
+  its name prefix), which are facts about its output. The driver `tests/corpus/tools/drivers/colisseum.lua` is original and loads the tool from a path you supply.
+* **Simple-Lua-Obfuscator** (`https://github.com/CloudHub111/Simple-Lua-Obfuscator`, revision `e4e3d25`): no licence file, so all rights are reserved by default; its output is not committed. Only the fixed names
+  its template uses (`_0x38ndf` and four others) appear in QuickSilver, as a detection signature.
+* **AztupBrew sample** (`https://github.com/noahcoolboy/bad-aztupbrew-deobfuscator`, file `example.lua`, no licence file): one public output of AztupBrew, used in a skipped-if-absent test. Only its banner text and the
+  sequence of library locals it begins with appear in QuickSilver, as detection signatures. The JavaScript deobfuscator in the same repository was not run and no code from it is used.
+
+## Repositories that were read as text only
+
+`0x3yte/JokerObfuscator`, `FakeModz/Zero-Lua-Roblox-Obfuscator`, `Revuexz/fivem-strong-obfuscator` and `GRUPOMORAESIMOVEIS/Lua-Polymorph-VM-Forge` hold no obfuscator code (see `docs/RESEARCH.md`, third research pass).
+Their README text was read; nothing from them is used except the product names, which the detector recognises as mentions. Nothing in `Lua-Polymorph-VM-Forge` was run or opened in a browser.
+
 ## Tools that were only read for methodology
 
 * `Gork3m/IronBrew2-Deobfuscator` (GitHub; no licence file; marked unfinished): read to confirm how IronBrew 2 deobfuscation is generally approached. **No code from it is used.**
@@ -66,7 +115,7 @@ SOFTWARE.
 
 | Component | Licence | Used for |
 |---|---|---|
-| `lupa` (Python bindings; bundles PUC Lua 5.1, 5.4 and LuaJIT 2.1) | MIT (lupa), MIT (Lua, LuaJIT) | reference interpreters for behavioural tests (`tests/helpers/lua-oracle.mjs`) |
+| `lupa` (Python bindings; bundles PUC Lua 5.1, 5.4 and LuaJIT 2.1) | MIT (lupa), MIT (Lua, LuaJIT) | reference interpreters for behavioural tests (`tests/helpers/lua-oracle.mjs`) and the isolated runner that generates third-party fixtures (`tests/corpus/tools/run_isolated.py`) |
 | Playwright / Chromium | Apache-2.0 / BSD-style | browser end-to-end tests (`tests/e2e`) |
 | Node.js | MIT | test runner and build scripts |
 
@@ -74,6 +123,6 @@ None of these is imported by the deployed site.
 
 ## Names and marks
 
-Luraph, MoonSec, MoonVeil, PSU, IronBrew, Prometheus, Hercules, Roblox and other names are used only to identify the software they belong to. No affiliation or endorsement is implied.
-No obfuscator other than those listed above produced any file in this repository, and no vendor material was copied. The further open-source obfuscators named in `docs/RESEARCH.md`
+Luraph, MoonSec, MoonVeil, PSU, IronBrew, AztupBrew, Prometheus, Hercules, Colisseum, Zenfus, Roblox and other names are used only to identify the software they belong to. No affiliation or endorsement is implied.
+No obfuscator other than Prometheus, Hercules, IronBrew 2 and Zenfus produced any file in this repository, and no vendor material was copied. The further open-source obfuscators named in `docs/RESEARCH.md`
 (second research pass) were cloned and read only; one of them was started once and ended with an error before writing output. None of their code or output is included.

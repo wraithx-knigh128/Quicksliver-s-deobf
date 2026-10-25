@@ -14,7 +14,7 @@
 // A script that does anything else around the loader is never replaced wholesale; the loaded text is still shown by Dump.
 
 import { walk, transform } from '../core/walk.js';
-import { analyze } from '../core/scope.js';
+import { analyze, STDLIB_GLOBALS } from '../core/scope.js';
 import { parse } from '../core/parser.js';
 import { print } from '../core/printer.js';
 import { isBytecode, parseChunk } from '../sandbox/bytecode.js';
@@ -28,6 +28,8 @@ const DECODER_GLOBALS = new Set([
   'assert', 'error', 'pcall', 'rawget', 'rawset', 'rawequal', 'rawlen', 'setmetatable', 'getmetatable', 'load', 'loadstring',
 ]);
 
+/** Globals the Roblox / executor environments define: a loader that overwrites one is doing something, not just loading. */
+const ROBLOX_GLOBALS = new Set(['game', 'workspace', 'script', 'shared', 'plugin', 'Instance', 'Enum', 'Vector3', 'CFrame', 'Color3', 'UDim2', 'task', 'wait', 'spawn', 'delay', 'warn', 'tick', 'time', 'typeof', 'getgenv', 'getrenv', 'getfenv', 'setfenv', 'getrawmetatable', 'hookfunction', 'syn', 'http', 'request', 'writefile', 'readfile']);
 const unparen = (e) => (e && e.type === 'Paren' ? unparen(e.expr) : e);
 
 /** Does `body` read the `...` of its own chunk? (A nested function's `...` is its own.) */
@@ -118,8 +120,8 @@ export function unwrapLayers(chunk, ctx = {}) {
   // ---- 2. a script that is nothing but a loader ---------------------------------------------------------------------------
   const plan = loaderPlan(chunk, info, loadCall, isGlobal);
   if (plan && !result.inlined) {
-    const setup = chunk.body.filter((s, i) => i !== plan.finalIndex);
-    const why = notJustALoader(setup, info);
+    const setup = plan.stmts.filter((s, i) => i !== plan.finalIndex);
+    const { why, helpers } = notJustALoader(setup, plan.stmts[plan.finalIndex], info);
     if (why) {
       result.skipped = `the script loads text but also ${why}; use Dump to see what it loads`;
     } else if (!ctx.sandbox || !ctx.sandbox.enabled) {
@@ -131,6 +133,10 @@ export function unwrapLayers(chunk, ctx = {}) {
       if (text != null) {
         try {
           const p = payloadAst(text);
+          // the helpers the loader defined as globals go away with it; the program must not have been written to use them
+          let uses = null;
+          walk(p.ast.body, (n) => { if (!uses && n.type === 'Name' && helpers.has(n.name)) uses = n.name; });
+          if (uses) throw new Error(`the loaded program reads '${uses}', a global the loader defines`);
           chunk.body = p.ast.body;
           chunk.features = new Set([...(chunk.features || []), ...(p.ast.features || [])]);
           result.replaced = 1; result.layers++; if (p.bytecode) result.bytecode++;
@@ -148,7 +154,9 @@ export function unwrapLayers(chunk, ctx = {}) {
  * and what it loads. `pcall(f)` counts as calling f.
  */
 function loaderPlan(chunk, info, loadCall, isGlobal) {
-  const body = chunk.body;
+  // everything wrapped in `do ... end` (or the loader in a trailing block) reads the same as the statements spread out
+  const opened = (list) => list.flatMap((st, i) => (st.type === 'Do' && i === list.length - 1 ? opened(st.body) : [st]));
+  const body = opened(chunk.body);
   if (!body.length) return null;
   const finalIndex = body.length - 1;
   const last = body[finalIndex];
@@ -157,7 +165,7 @@ function loaderPlan(chunk, info, loadCall, isGlobal) {
   if (!call || call.type !== 'Call') return null;
   if (isGlobal(call.fn) && call.fn.name === 'pcall' && call.args.length >= 1) call = { type: 'Call', fn: call.args[0], args: call.args.slice(1) };
   const direct = loadCall(call.fn);
-  if (direct) return { finalIndex, load: direct };
+  if (direct) return { finalIndex, load: direct, stmts: body };
   const target = unparen(call.fn);
   if (target && target.type === 'Name') {
     const v = info.varOf.get(target);
@@ -166,7 +174,7 @@ function loaderPlan(chunk, info, loadCall, isGlobal) {
       if (s.type !== 'Local' || s.ids.length !== 1 || s.values.length !== 1) continue;
       if (info.varOf.get(s.ids[0]) !== v) continue;
       const L = loadCall(s.values[0]);
-      if (L) return { finalIndex, load: L };
+      if (L) return { finalIndex, load: L, stmts: body };
     }
   }
   return null;
@@ -174,33 +182,48 @@ function loaderPlan(chunk, info, loadCall, isGlobal) {
 
 /**
  * Why the statements around a loader are more than a decoder, or null when they are only that: they may compute with standard
- * libraries and write local variables and tables, nothing else.
+ * libraries and write local variables and tables. A global the loader defines for itself (`function _0x93mdw(a) ... end`) is a helper,
+ * not a side effect, when it is used and has a name no environment would give it; it is reported so the caller can check the loaded
+ * program does not rely on it.
  */
-function notJustALoader(stmts, info) {
+function notJustALoader(stmts, final, info) {
   let why = null;
   const bad = (m) => { if (!why) why = m; };
+  const helpers = new Set();
+  const written = new Set(); // the Name nodes that are only being assigned to: those are not uses
+  const rootOf = (t) => { let r = t; while (r && r.type === 'Index') r = r.obj; return r; };
+  const isGlobalName = (n) => { const v = n && n.type === 'Name' ? info.varOf.get(n) : null; return !!(v && v.isGlobal); };
+  // pass 1: which globals does the script write, and by what means
   for (const s of stmts) {
     walk(s, (n) => {
-      if (why) return false;
-      if (n.type === 'Name') {
-        const v = info.varOf.get(n);
-        if (v && v.isGlobal && !DECODER_GLOBALS.has(n.name)) bad(`uses the global '${n.name}'`);
-      } else if (n.type === 'Assign' || n.type === 'CompoundAssign') {
+      if (n.type === 'Assign' || n.type === 'CompoundAssign') {
         for (const t of n.targets || [n.target]) {
-          let root = t;
-          while (root && root.type === 'Index') root = root.obj;
-          const v = root && root.type === 'Name' ? info.varOf.get(root) : null;
-          if (!v || v.isGlobal) bad('writes to a global or to something that is not a local variable');
+          const r = rootOf(t);
+          if (!isGlobalName(r)) continue;
+          if (t.type === 'Name') { helpers.add(t.name); written.add(t); } else bad('writes into a global table');
         }
       } else if (n.type === 'Function') {
-        let root = n.target;
-        while (root && root.type === 'Index') root = root.obj;
-        const v = root && root.type === 'Name' ? info.varOf.get(root) : null;
-        if (!v || v.isGlobal) bad('defines a global function');
+        const r = rootOf(n.target);
+        if (isGlobalName(r)) { if (n.target.type === 'Name') { helpers.add(n.target.name); written.add(n.target); } else bad('defines a field of a global'); }
       }
       return undefined;
     });
-    if (why) break;
   }
-  return why;
+  // a helper must be something no environment defines, and must be used by the script itself
+  const used = new Set();
+  for (const s of [...stmts, final]) walk(s, (n) => { if (n.type === 'Name' && !written.has(n) && isGlobalName(n) && helpers.has(n.name)) used.add(n.name); return undefined; });
+  for (const name of helpers) {
+    if (DECODER_GLOBALS.has(name) || STDLIB_GLOBALS.has(name) || ROBLOX_GLOBALS.has(name)) bad(`replaces the global '${name}'`);
+  }
+  // pass 2: every other global it touches must be one a decoder may use
+  for (const s of [...stmts, final]) {
+    walk(s, (n) => {
+      if (why) return false;
+      if (n.type === 'Name' && isGlobalName(n) && !DECODER_GLOBALS.has(n.name) && !helpers.has(n.name)) bad(`uses the global '${n.name}'`);
+      return undefined;
+    });
+  }
+  // helpers that are written but never read are leftovers of something else (a flag, an export): not just a loader
+  for (const name of helpers) if (!why && !used.has(name)) bad(`writes to a global ('${name}') that nothing in the loader reads`);
+  return { why, helpers };
 }

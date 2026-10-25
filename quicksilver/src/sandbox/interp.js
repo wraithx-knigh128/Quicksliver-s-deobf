@@ -22,6 +22,7 @@ const NORMAL = 0;
 const BREAK = 1;
 const RETURN = 2;
 const CONTINUE = 3;
+const GOTO = 4;     // the label is in Frame.gl; the nearest enclosing block that holds it takes over
 const EMPTY = Object.freeze([]);
 
 class Box { constructor(v) { this.v = v; } }
@@ -33,6 +34,7 @@ class Frame {
     this.env = env;
     this.va = EMPTY;
     this.ret = EMPTY;
+    this.gl = null;
   }
 }
 
@@ -54,6 +56,11 @@ export class Machine {
     this.hooks = { onLoad: null };
     this.clock = 0;
     this.lastTick = 0;
+    // Numbers are doubles (Lua 5.1 / Luau). `numMode` opts in to two refinements, used by decoder evaluation only:
+    //   'watch'  count integer + - * results that doubles cannot hold exactly (precisionLoss), nothing else changes;
+    //   'int64'  Lua 5.4 integers: such results are kept exact, as 64-bit wrapping BigInts, until a % or // brings them back.
+    this.numMode = options.numMode || null;
+    this.precisionLoss = 0;
   }
 
   tick(n = 1) {
@@ -159,7 +166,61 @@ function luaMod(a, b) {
   return r !== 0 && (r < 0) !== (b < 0) ? r + b : r;
 }
 
+const TWO53 = 9007199254740992;
+const normInt = (b) => (b >= -9007199254740991n && b <= 9007199254740991n ? Number(b) : b);
+const isNum = (v) => typeof v === 'number' || typeof v === 'bigint';
+
+/** Arithmetic when an operand is a BigInt (only produced in 'int64' mode); undefined when an operand is not a number at all. */
+function bigArith(m, op, a, b) {
+  const x = isNum(a) ? a : toNumber(a);
+  const y = isNum(b) ? b : toNumber(b);
+  if (x === undefined || y === undefined) return undefined;
+  const whole = (v) => typeof v === 'bigint' || Number.isInteger(v);
+  if (!whole(x) || !whole(y) || op === '/' || op === '^') {
+    const fx = Number(x); const fy = Number(y);
+    switch (op) {
+      case '+': return fx + fy;
+      case '-': return fx - fy;
+      case '*': return fx * fy;
+      case '/': return fx / fy;
+      case '%': return luaMod(fx, fy);
+      case '^': return Math.pow(fx, fy);
+      default: return Math.floor(fx / fy);
+    }
+  }
+  const X = BigInt(x); const Y = BigInt(y);
+  let r;
+  switch (op) {
+    case '+': r = X + Y; break;
+    case '-': r = X - Y; break;
+    case '*': r = X * Y; break;
+    case '%':
+      if (Y === 0n) throw m.error("attempt to perform 'n%%0'");
+      r = X % Y;
+      if (r !== 0n && (r < 0n) !== (Y < 0n)) r += Y;
+      break;
+    default:
+      if (Y === 0n) throw m.error("attempt to perform 'n//0'");
+      r = X / Y;
+      if (X % Y !== 0n && (X < 0n) !== (Y < 0n)) r -= 1n;
+  }
+  return normInt(BigInt.asIntN(64, r));
+}
+
+/** + - * on two plain numbers under a numMode: counts, or widens to an exact integer, when the double result is no longer exact. */
+function modeArith(m, op, a, b) {
+  const r = op === '+' ? a + b : op === '-' ? a - b : a * b;
+  if (r < TWO53 && r > -TWO53) return r;
+  if (!Number.isInteger(a) || !Number.isInteger(b)) return r;
+  if (m.numMode === 'watch') { m.precisionLoss++; return r; }
+  return bigArith(m, op, a, b);
+}
+
 export function arith(m, op, a, b, da = '', db = '') {
+  if (typeof a === 'bigint' || typeof b === 'bigint') {
+    const r = bigArith(m, op, a, b);
+    if (r !== undefined) return r;
+  }
   const x = toNumber(a);
   const y = toNumber(b);
   if (x !== undefined && y !== undefined && typeof a !== 'boolean' && typeof b !== 'boolean') {
@@ -183,7 +244,63 @@ export function arith(m, op, a, b, da = '', db = '') {
   throw m.error(`attempt to perform arithmetic on a ${typeName(bad)} value${d}`);
 }
 
+// ---- Lua 5.4 bitwise operators: operands are integers (floats with a whole value convert), the result is a 64-bit integer ----
+
+const BIT_EVENT = { '&': '__band', '|': '__bor', '~': '__bxor', '<<': '__shl', '>>': '__shr' };
+const small = (v) => typeof v === 'number' && v >= -2147483648 && v <= 2147483647 && Number.isInteger(v);
+
+// Lua 5.4 does not turn strings into numbers for bitwise operators (5.3 did): "7" | 0 is an error there.
+function bitOperand(m, v) {
+  if (typeof v === 'bigint') return v;
+  if (typeof v !== 'number') return undefined;
+  if (!Number.isFinite(v) || Math.floor(v) !== v) throw m.error('number has no integer representation');
+  return BigInt.asIntN(64, BigInt(v));
+}
+
+const shiftLeft = (x, n) => {
+  if (n <= -64n || n >= 64n) return 0n;
+  return n >= 0n ? BigInt.asIntN(64, x << n) : BigInt.asIntN(64, BigInt.asUintN(64, x) >> -n);
+};
+
+export function bitop(m, op, a, b, da = '', db = '') {
+  if (small(a) && small(b)) {
+    if (op === '&') return a & b;
+    if (op === '|') return a | b;
+    if (op === '~') return a ^ b;
+  }
+  const x = bitOperand(m, a);
+  const y = bitOperand(m, b);
+  if (x === undefined || y === undefined) {
+    let h = metaHandler(m, a, BIT_EVENT[op]);
+    if (h === undefined) h = metaHandler(m, b, BIT_EVENT[op]);
+    if (h !== undefined) return callValue(m, h, [a, b], '')[0];
+    const bad = x === undefined ? a : b;
+    throw m.error(`attempt to perform bitwise operation on a ${typeName(bad)} value${x === undefined ? da : db}`);
+  }
+  let r;
+  switch (op) {
+    case '&': r = x & y; break;
+    case '|': r = x | y; break;
+    case '~': r = x ^ y; break;
+    case '<<': r = shiftLeft(x, y); break;
+    default: r = shiftLeft(x, -y);
+  }
+  return normInt(BigInt.asIntN(64, r));
+}
+
+export function bitNot(m, a, d = '') {
+  if (small(a)) return -a - 1;
+  const x = bitOperand(m, a);
+  if (x === undefined) {
+    const h = metaHandler(m, a, '__bnot');
+    if (h !== undefined) return callValue(m, h, [a, a], '')[0];
+    throw m.error(`attempt to perform bitwise operation on a ${typeName(a)} value${d}`);
+  }
+  return normInt(BigInt.asIntN(64, ~x));
+}
+
 export function negate(m, a, d = '') {
+  if (typeof a === 'bigint') return normInt(BigInt.asIntN(64, -a));
   const x = toNumber(a);
   if (x !== undefined && typeof a !== 'boolean') return -x;
   const h = metaHandler(m, a, '__unm');
@@ -237,7 +354,7 @@ function compareError(m, a, b) {
 }
 
 export function lessThan(m, a, b) {
-  if (typeof a === 'number' && typeof b === 'number') return a < b;
+  if (isNum(a) && isNum(b)) return a < b;
   if (typeof a === 'string' && typeof b === 'string') return a < b;
   let h = metaHandler(m, a, '__lt');
   if (h === undefined) h = metaHandler(m, b, '__lt');
@@ -246,7 +363,7 @@ export function lessThan(m, a, b) {
 }
 
 export function lessEqual(m, a, b) {
-  if (typeof a === 'number' && typeof b === 'number') return a <= b;
+  if (isNum(a) && isNum(b)) return a <= b;
   if (typeof a === 'string' && typeof b === 'string') return a <= b;
   let h = metaHandler(m, a, '__le');
   if (h === undefined) h = metaHandler(m, b, '__le');
@@ -384,6 +501,21 @@ export class Compiler {
   block(stmts) {
     const code = stmts.map((s) => this.stmt(s));
     const n = code.length;
+    const labels = new Map();
+    stmts.forEach((s, i) => { if (s.type === 'Label') labels.set(s.name, i); });
+    if (labels.size) {
+      const m = this.m;
+      return (f) => {
+        let i = 0;
+        while (i < n) {
+          const sig = code[i](f);
+          if (sig === NORMAL) { i++; continue; }
+          if (sig === GOTO && labels.has(f.gl)) { m.tick(); i = labels.get(f.gl); continue; }
+          return sig;
+        }
+        return NORMAL;
+      };
+    }
     if (n === 0) return () => NORMAL;
     if (n === 1) return code[0];
     return (f) => {
@@ -425,7 +557,7 @@ export class Compiler {
             m.tick();
             const sig = body(f);
             if (sig === BREAK) break;
-            if (sig === RETURN) return RETURN;
+            if (sig === RETURN || sig === GOTO) return sig;
           }
           return NORMAL;
         };
@@ -439,7 +571,7 @@ export class Compiler {
             m.tick();
             const sig = body(f);
             if (sig === BREAK) break;
-            if (sig === RETURN) return RETURN;
+            if (sig === RETURN || sig === GOTO) return sig;
             if (truthy(cond(f))) break;
           }
           return NORMAL;
@@ -481,8 +613,8 @@ export class Compiler {
       case 'Break': return () => BREAK;
       case 'Continue': return () => CONTINUE;
       case 'TypeAlias': return () => NORMAL;
-      case 'Goto': case 'Label':
-        throw new SandboxUnsupported('goto / labels');
+      case 'Label': return () => NORMAL;
+      case 'Goto': { const label = s.label; return (f) => { f.gl = label; return GOTO; }; }
       default:
         throw new Error('interp: unknown statement ' + s.type);
     }
@@ -612,7 +744,7 @@ export class Compiler {
         f.s[e.slot] = e.boxed ? new Box(i) : i;
         const sig = body(f);
         if (sig === BREAK) break;
-        if (sig === RETURN) return RETURN;
+        if (sig === RETURN || sig === GOTO) return sig;
       }
       return NORMAL;
     };
@@ -646,7 +778,7 @@ export class Compiler {
           assign(f, [i + 1, v]);
           const sig = body(f);
           if (sig === BREAK) return NORMAL;
-          if (sig === RETURN) return RETURN;
+          if (sig === RETURN || sig === GOTO) return sig;
         }
         if (t.hash !== null) {
           for (const k of [...t.hash.keys()]) {
@@ -656,7 +788,7 @@ export class Compiler {
             assign(f, [k, v]);
             const sig = body(f);
             if (sig === BREAK) return NORMAL;
-            if (sig === RETURN) return RETURN;
+            if (sig === RETURN || sig === GOTO) return sig;
           }
         }
         return NORMAL;
@@ -669,7 +801,7 @@ export class Compiler {
         assign(f, vals);
         const sig = body(f);
         if (sig === BREAK) break;
-        if (sig === RETURN) return RETURN;
+        if (sig === RETURN || sig === GOTO) return sig;
       }
       return NORMAL;
     };
@@ -815,6 +947,8 @@ export class Compiler {
     const v = this.info.varOf.get(e);
     if (v.isGlobal) {
       const name = e.name;
+      // Lua 5.2+: a free `_ENV` is the environment itself (writing to it is not modelled)
+      if (name === '_ENV') return (f) => { const x = f.env.getStr('_ENV'); return x !== undefined ? x : f.env; };
       return (f) => {
         const env = f.env;
         const x = env.getStr(name);
@@ -872,6 +1006,7 @@ export class Compiler {
       case 'not': return (f) => !truthy(a(f));
       case '-': return (f) => { const v = a(f); return typeof v === 'number' ? -v : negate(m, v, d); };
       case '#': return (f) => length(m, a(f), d);
+      case '~': return (f) => bitNot(m, a(f), d);
       default: throw new SandboxUnsupported(`unary operator ${e.op}`);
     }
   }
@@ -892,9 +1027,12 @@ export class Compiler {
       case '>': return (f) => { const a = l(f); const b = r(f); return typeof a === 'number' && typeof b === 'number' ? b < a : lessThan(m, b, a); };
       case '>=': return (f) => { const a = l(f); const b = r(f); return typeof a === 'number' && typeof b === 'number' ? b <= a : lessEqual(m, b, a); };
       case '..': return (f) => concat(m, l(f), r(f), dl, dr);
-      case '+': return (f) => { const a = l(f); const b = r(f); return typeof a === 'number' && typeof b === 'number' ? a + b : arith(m, '+', a, b, dl, dr); };
-      case '-': return (f) => { const a = l(f); const b = r(f); return typeof a === 'number' && typeof b === 'number' ? a - b : arith(m, '-', a, b, dl, dr); };
-      case '*': return (f) => { const a = l(f); const b = r(f); return typeof a === 'number' && typeof b === 'number' ? a * b : arith(m, '*', a, b, dl, dr); };
+      case '+': if (m.numMode) return (f) => { const a = l(f); const b = r(f); return typeof a === 'number' && typeof b === 'number' ? modeArith(m, '+', a, b) : arith(m, '+', a, b, dl, dr); };
+        return (f) => { const a = l(f); const b = r(f); return typeof a === 'number' && typeof b === 'number' ? a + b : arith(m, '+', a, b, dl, dr); };
+      case '-': if (m.numMode) return (f) => { const a = l(f); const b = r(f); return typeof a === 'number' && typeof b === 'number' ? modeArith(m, '-', a, b) : arith(m, '-', a, b, dl, dr); };
+        return (f) => { const a = l(f); const b = r(f); return typeof a === 'number' && typeof b === 'number' ? a - b : arith(m, '-', a, b, dl, dr); };
+      case '*': if (m.numMode) return (f) => { const a = l(f); const b = r(f); return typeof a === 'number' && typeof b === 'number' ? modeArith(m, '*', a, b) : arith(m, '*', a, b, dl, dr); };
+        return (f) => { const a = l(f); const b = r(f); return typeof a === 'number' && typeof b === 'number' ? a * b : arith(m, '*', a, b, dl, dr); };
       case '/': return (f) => { const a = l(f); const b = r(f); return typeof a === 'number' && typeof b === 'number' ? a / b : arith(m, '/', a, b, dl, dr); };
       case '%': return (f) => {
         const a = l(f); const b = r(f);
@@ -903,6 +1041,7 @@ export class Compiler {
       };
       case '^': return (f) => { const a = l(f); const b = r(f); return typeof a === 'number' && typeof b === 'number' ? Math.pow(a, b) : arith(m, '^', a, b, dl, dr); };
       case '//': return (f) => { const a = l(f); const b = r(f); return typeof a === 'number' && typeof b === 'number' ? Math.floor(a / b) : arith(m, '//', a, b, dl, dr); };
+      case '&': case '|': case '~': case '<<': case '>>': { const op = e.op; return (f) => bitop(m, op, l(f), r(f), dl, dr); }
       default: throw new SandboxUnsupported(`operator ${e.op}`);
     }
   }
@@ -928,4 +1067,4 @@ export function compileSource(m, source, chunkName, env) {
   return compileAst(m, parse(source), chunkName, env);
 }
 
-export { LuaSyntaxError, NORMAL, BREAK, RETURN, CONTINUE, EMPTY };
+export { LuaSyntaxError, NORMAL, BREAK, RETURN, CONTINUE, GOTO, EMPTY };

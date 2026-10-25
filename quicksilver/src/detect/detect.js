@@ -15,6 +15,7 @@ import { walk } from '../core/walk.js';
 import { looksObfuscated, isShortName } from '../passes/rename.js';
 import { FAMILIES, TRAITS } from './families.js';
 import { detectDialect } from './dialect.js';
+import { isColisseumGuard } from '../recover/colisseum.js';
 
 // ---- facts -----------------------------------------------------------------------------------------
 
@@ -63,6 +64,8 @@ function collectFacts(ast, src) {
     names: info.vars.map((v) => v.name),
     globals: new Set(info.globals.keys()),
     nodeCount: 0,
+    colisseumNames: 0,
+    vmRunCalls: 0,
     antiTamperBlocks: 0,
     splitHelpers: 0,
     localAliasBlock: 0,
@@ -80,6 +83,11 @@ function collectFacts(ast, src) {
         if (n.args.length === 2 && n.args[0].type === 'Table' && n.args[0].fields.length === 1
           && n.args[1].type === 'Table' && n.args[1].fields.length >= 2
           && n.args[1].fields.every((x) => x.kind === 'named' && x.key.startsWith('__'))) f.metaProxies++;
+        // X.run(proto, { environment = E, anchor = A, ... }): the entry call of Colisseum's two VM presets
+        if (n.args.length >= 2) {
+          const last = n.args[n.args.length - 1];
+          if (last.type === 'Table' && ['environment', 'anchor'].every((k) => last.fields.some((x) => x.kind === 'named' && x.key === k))) f.vmRunCalls++;
+        }
         break;
       }
       case 'Local':
@@ -140,6 +148,8 @@ function collectFacts(ast, src) {
     walk(n, (m) => { if (m.type === 'String' && m.value === 'Tamper Detected!') tamper = true; });
     if (tamper) f.antiTamperBlocks++;
   });
+
+  f.colisseumNames = f.names.filter((x) => /^coli_[jLl]{3,}$/.test(x) || /^coli_\w{4,}$/.test(x)).length;
 
   // textual statistics
   const lines = src.split('\n');
@@ -209,6 +219,28 @@ const RULES = {
   clyde: [rule('mention', 'banner', 0.5, (c) => /Clyde\s*Protection/i.test(c.src) && 'mentions Clyde Protection')],
   xhider: [rule('mention', 'banner', 0.5, (c) => /X\s?Hider/i.test(c.src) && 'mentions XHider')],
   synapse_xen: [rule('mention', 'banner', 0.5, (c) => /Synapse\s*Xen/i.test(c.src) && 'mentions Synapse Xen')],
+  colisseum: [
+    rule('credit', 'banner', 0.9, (c) => { const m = /This file was obfuscated using Colisseum(?: Obfuscator)?(?: v([0-9][0-9.]*))?/.exec(c.src); return m ? { text: `Colisseum credit line${m[1] ? ` (v${m[1]})` : ''}`, version: m[1] || null } : false; }),
+    rule('brand', 'structure', 0.9, (c) => c.src.includes('Oh Noes!, An error ocurred: 0x') && 'tamper error text "... Oh Noes!, An error ocurred: 0x<code>" (the Colisseum brand)'),
+    rule('names', 'structure', 0.7, (c) => c.facts && c.facts.colisseumNames >= 6 && `${c.facts.colisseumNames} identifiers of the form coli_jLjLj (the default name generator)`),
+    rule('tamper-guard', 'structure', 0.97, (c) => c.ast && c.ast.body.some(isColisseumGuard) && 'tamper guard block (environment checks that raise coded errors, hook global __COLISSEUM_TAMPER__)'),
+    rule('vm', 'structure', 0.85, (c) => c.facts && c.facts.vmRunCalls > 0 && 'virtual machine entry call run(proto, { environment, anchor })', true),
+  ],
+  zenfus: [
+    rule('wrapper', 'structure', 0.9, (c) => /function\(pack,move,unpack,env,pCall,Err\)/.test(c.src.replace(/\s+/g, '')) && 'wrapper (function(pack, move, unpack, env, pCall, Err) ... end)(table.pack, table.move, table.unpack, _ENV, pcall, error)'),
+    rule('vm', 'structure', 0.95, (c) => c.facts && ['lua_wrap_state', 'run_vm', 'hexToString'].every((n) => c.facts.names.includes(n)) && 'Zenfus VM: lua_wrap_state / run_vm / hexToString around a hex-encoded Lua 5.4 instruction stream', true),
+  ],
+  simple_lua: [
+    rule('template', 'structure', 0.95, (c) => ['_0x38ndf', '_0x93mdw', '_0x47fjs', '_0x62tdg', '_0x29dke'].every((n) => c.src.includes(n)) && 'the fixed helper names of Simple-Lua-Obfuscator (_0x38ndf piece table, _0x93mdw base64 decoder, _0x47fjs splitter)'),
+  ],
+  aztupbrew: [
+    rule('banner', 'banner', 0.97, (c) => { const m = /AztupBrew\s*\(Fork of IronBrew2\)\s*:\s*obfuscation;\s*Version\s*([0-9][0-9.]*)/.exec(c.src); return m ? { text: `AztupBrew banner (version ${m[1]})`, version: m[1] } : false; }),
+    rule('prelude', 'structure', 0.9, (c) => c.ast && isAztupPrelude(c.ast) && 'the eight library locals an AztupBrew VM starts with (string.char, string.sub, table.concat, math.ldexp, getfenv, select, unpack, tonumber)', true),
+  ],
+  joker: [rule('mention', 'banner', 0.5, (c) => /jokerobfuscator\.com|Joker\s*Obfuscator/i.test(c.src) && 'mentions Joker Obfuscator')],
+  zerolua: [rule('mention', 'banner', 0.5, (c) => /zerolua\.pages\.dev|Zero\s*Lua\s*(?:Roblox\s*)?Obfuscator/i.test(c.src) && 'mentions Zero Lua')],
+  fivem_strong: [rule('mention', 'banner', 0.5, (c) => /dsc\.gg\/revuex|Strong\s+FiveM\s+Lua\s+Obfuscator|fivem-strong-obfuscator/i.test(c.src) && 'mentions the Strong FiveM Lua Obfuscator')],
+  neuroforge: [rule('mention', 'banner', 0.5, (c) => /NeuroForge/i.test(c.src) && 'mentions NeuroForge VM')],
   wearedevs: [rule('mention', 'banner', 0.5, (c) => /wearedevs\.net|WeAreDevs/i.test(c.src) && 'mentions WeAreDevs')],
 };
 
@@ -222,6 +254,29 @@ function isIronBrewPrelude(ast) {
     if (!s || s.type !== 'Local' || s.ids.length !== 1 || s.values.length !== 1) return false;
     const v = s.values[0];
     const want = IB2_PRELUDE[i];
+    if (want.includes('|')) {
+      const [a, b] = want.split('|');
+      if (v.type !== 'Binary' || v.op !== 'or' || path(v.left) !== a) return false;
+      if (b === '_ENV' ? v.right.type !== 'Func' : path(v.right) !== b) return false;
+    } else if (path(v) !== want) return false;
+  }
+  return true;
+}
+
+/** The run of `local x = <library function>` statements AztupBrew's generator writes first (inside its `return (function(...) ... end)` wrapper). */
+const AZTUP_PRELUDE = ['string.char', 'string.sub', 'table.concat', 'math.ldexp', 'getfenv|_ENV', 'select', 'unpack|table.unpack', 'tonumber'];
+function isAztupPrelude(ast) {
+  const ret = ast.body[ast.body.length - 1];
+  if (!ret || ret.type !== 'Return' || ret.values.length !== 1) return false;
+  const call = ret.values[0];
+  if (call.type !== 'Call' || call.fn.type !== 'Paren' || call.fn.expr.type !== 'Func') return false;
+  const body = call.fn.expr.body;
+  const path = (e) => (e.type === 'Name' ? e.name : e.type === 'Index' && e.key.type === 'String' && e.obj.type === 'Name' ? `${e.obj.name}.${e.key.value}` : null);
+  for (let i = 0; i < AZTUP_PRELUDE.length; i++) {
+    const s = body[i];
+    if (!s || s.type !== 'Local' || s.ids.length !== 1 || s.values.length !== 1) return false;
+    const v = s.values[0];
+    const want = AZTUP_PRELUDE[i];
     if (want.includes('|')) {
       const [a, b] = want.split('|');
       if (v.type !== 'Binary' || v.op !== 'or' || path(v.left) !== a) return false;

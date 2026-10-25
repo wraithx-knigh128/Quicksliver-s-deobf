@@ -24,14 +24,18 @@ for (const f of fs.readdirSync(path.join(corpus, 'originals')).filter((x) => x.e
 }
 
 const results = [];
-for (const tool of ['prometheus', 'hercules', 'ironbrew2']) {
-  const manifest = JSON.parse(fs.readFileSync(path.join(corpus, 'obfuscated', tool, 'manifest.json'), 'utf8'));
+// [name, folder]: the AGPL / unlicensed outputs are generated locally (tests/corpus/tools/gen_external.py) and measured when present
+const tools = [['prometheus', 'obfuscated/prometheus'], ['hercules', 'obfuscated/hercules'], ['ironbrew2', 'obfuscated/ironbrew2'], ['zenfus', 'obfuscated/zenfus'],
+  ['colisseum', 'obfuscated-local/colisseum'], ['simple_lua', 'obfuscated-local/simple_lua']]
+  .filter(([, dir]) => fs.existsSync(path.join(corpus, dir, 'manifest.json')));
+for (const [tool, dir] of tools) {
+  const manifest = JSON.parse(fs.readFileSync(path.join(corpus, dir, 'manifest.json'), 'utf8'));
   for (const e of manifest.entries) {
     if (e.status !== 'ok') continue;
     const base = baseline.get(e.sample);
     const t0 = Date.now();
     let r;
-    try { r = traceScript(read(path.join(corpus, 'obfuscated', tool, e.file)), {}); } catch (err) { results.push({ tool, config: e.config, sample: e.sample, outcome: 'crash', error: String(err.message).slice(0, 120) }); continue; }
+    try { r = traceScript(read(path.join(corpus, dir, e.file)), {}); } catch (err) { results.push({ tool, config: e.config, sample: e.sample, outcome: 'crash', error: String(err.message).slice(0, 120) }); continue; }
     const same = key(r) === key(base);
     results.push({
       tool, config: e.config, sample: e.sample.replace(/\.lua$/, ''), toolBehavior: e.behavior,

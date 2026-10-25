@@ -199,7 +199,7 @@ class Printer {
       case 'Break': return 'break';
       case 'Continue': return 'continue';
       case 'Goto': return 'goto ' + s.label;
-      case 'Label': return '::' + s.label + '::';
+      case 'Label': return '::' + s.name + '::';
       case 'TypeAlias': return s.text;
       default:
         throw new Error('printer: unknown statement type ' + s.type);

@@ -1318,6 +1318,8 @@ async function showAbout() {
         credit('Prometheus', 'by Elias Oelschner (https://github.com/prometheus-lua/Prometheus): sample scripts in the test corpus are its output.', 'Prometheus licence, attribution required'),
         credit('Hercules', 'by zeusssz (https://github.com/zeusssz/hercules-obfuscator): sample scripts are its output.', 'Apache-2.0'),
         credit('IronBrew 2', 'by DefCon42 (https://github.com/Trollicus/ironbrew-2): its published format was read to write the IronBrew 2 module.', 'MIT'),
+        credit('Zenfus', 'by Zaenalos (https://github.com/Zaenalos/Zenfus): sample scripts are its output.', 'MIT'),
+        credit('Colisseum', 'by de-TourLLC (https://github.com/de-TourLLC/colisseum): studied to write the detection and the tamper-guard removal; its output is used only in local tests and is not distributed.', 'AGPL-3.0'),
       ]),
       h('p.faint', { style: { margin: 0 } }, 'Names, trademarks and products belong to their owners. Use QuickSilver only on scripts you own or are authorised to analyse. Research notes, licensing and third-party notices are in the docs folder of the source repository.'),
     ],

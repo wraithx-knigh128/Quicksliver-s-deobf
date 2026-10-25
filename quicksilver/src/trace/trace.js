@@ -16,6 +16,7 @@ import { createMachine, classify } from '../sandbox/sandbox.js';
 import { compileSource, callValue } from '../sandbox/interp.js';
 import { quoteString, formatNumber, isIdentifier } from '../core/printer.js';
 import { LuaSyntaxError } from '../core/parser.js';
+import { readsAsText } from '../sandbox/numeric.js';
 
 const nf = (name, fn) => new NativeFunction(name, fn);
 
@@ -443,8 +444,31 @@ function renderScript(rec, status) {
  * @param {{fuel?: number, timeMs?: number, maxEvents?: number, maxWaits?: number, callHandlers?: boolean, dialect?: string, stopAfterLoads?: number}} [options]
  */
 export function traceScript(source, options = {}) {
+  // Run with the precision watch on. If arithmetic went past 2^53 the sandbox's doubles and Lua 5.4 integers disagree: run again
+  // with integers and keep the run whose text reads as text (see sandbox/numeric.js).
+  const first = traceOnce(source, { ...options, numMode: 'watch' });
+  if (!first.precisionLoss) return first.result;
+  const second = traceOnce(source, { ...options, numMode: 'int64' });
+  const key = (t) => `${t.output}\u0000${t.events.map((e) => e.text).join('\u0000')}`;
+  const readable = (t) => readsAsText(t.output) && t.events.every((e) => readsAsText(e.text));
+  const a = first.result;
+  const b = second.result;
+  let pick = a;
+  let note;
+  if (key(a) === key(b) && a.status === b.status) note = null;
+  else if (readable(b) && b.status === 'completed' && (!readable(a) || a.status !== 'completed')) { pick = b; note = 'Lua 5.4 integers (arithmetic went past 2^53, where they differ from the doubles of Lua 5.1 / Luau, and only this run produced readable text)'; }
+  else if (readable(a) && !readable(b)) note = 'doubles (arithmetic went past 2^53; the Lua 5.4 integer run produced unreadable text)';
+  else note = 'doubles (arithmetic went past 2^53, so the result depends on the Lua version; the Lua 5.4 integer run differs and neither reading is clearly text)';
+  if (note) {
+    pick = { ...pick, arithmetic: note };
+    pick.script = `-- Arithmetic: ${note}\n${pick.script}`;
+  }
+  return pick;
+}
+
+function traceOnce(source, options) {
   const opts = { ...LIMITS, callHandlers: true, dialect: 'luau', ...options };
-  const m = createMachine({ fuel: opts.fuel, timeMs: opts.timeMs, dialect: opts.dialect });
+  const m = createMachine({ fuel: opts.fuel, timeMs: opts.timeMs, dialect: opts.dialect, numMode: opts.numMode });
   m.chunkName = 'trace';
   const rec = new Recorder(m, opts);
   installEnvironment(rec);
@@ -511,7 +535,7 @@ export function traceScript(source, options = {}) {
 
   const status = outcome === 'syntax' ? 'syntax-error' : outcome === 'error' ? 'error' : outcome === 'limit' ? 'limit' : outcome === 'halt' ? 'halted' : 'completed';
   const calls = rec.all.filter((e) => e.kind === 'call');
-  return {
+  const result_ = {
     ok: outcome !== 'syntax',
     status,
     ended,
@@ -526,4 +550,5 @@ export function traceScript(source, options = {}) {
     output: m.output.join(''),
     stats: { events: rec.all.length, calls: calls.length, sets: rec.all.filter((e) => e.kind === 'set').length, loads: rec.layers.length, handlers: handlersRun, waits: rec.waits, fuelUsed: startFuel - m.fuel, truncated: rec.truncated },
   };
+  return { result: result_, precisionLoss: m.precisionLoss };
 }
