@@ -66,6 +66,9 @@ const activeTab = (page) => page.getAttribute('[role=tab][aria-selected=true]', 
 async function loadFile(page, file) {
   await page.setInputFiles('#file-input', file);
   await page.waitForFunction((n) => document.querySelector('#docname').textContent.includes(n), path.basename(file));
+  // the page names the obfuscator on its own a moment after a file opens; wait for that, so a click that follows is not
+  // swallowed by buttons the automatic detection has just disabled
+  await page.waitForFunction(() => !/Not analysed yet/.test(document.querySelector('#resultbar').textContent) && document.querySelector('#act-cancel').hidden, null, { timeout: 15_000 }).catch(() => {});
 }
 
 test('page loads cleanly and lists every obfuscator', { skip }, async () => {
@@ -239,24 +242,116 @@ test('the interface stays usable on a phone-sized screen', { skip }, async () =>
   for (const id of ['open', 'detect', 'recover', 'export']) assert.ok(await page.isVisible(`#act-${id}`));
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
   assert.equal(overflow, false, 'no horizontal page scroll');
-  // the two sources stack instead of shrinking to nothing
+  // the two editors keep a usable height
   const [l, r] = await Promise.all([page.locator('.col').nth(0).boundingBox(), page.locator('.col').nth(1).boundingBox()]);
   assert.ok(l.height > 120 && r.height > 120, 'both panes keep a usable height');
-  assert.ok(r.y >= l.y + l.height - 1, 'right pane sits below the left one');
+  assert.ok(r.y >= l.y + l.height - 1, 'the deobfuscated editor sits below the obfuscated one');
   assert.deepEqual(problems, []);
   await ctx.close();
 });
 
-test('the obfuscated source is on the left and the deobfuscated source on the right', { skip }, async () => {
+test('the obfuscated source is above and the deobfuscated source below', { skip }, async () => {
   const { page, ctx, problems } = await newPage();
-  const [l, r] = await Promise.all([page.locator('.col').nth(0).boundingBox(), page.locator('.col').nth(1).boundingBox()]);
-  assert.ok(r.x > l.x + l.width - 1, 'panes are side by side');
-  assert.ok(Math.abs(l.width - r.width) < 40, 'and roughly equal');
+  const [t, b] = await Promise.all([page.locator('.col').nth(0).boundingBox(), page.locator('.col').nth(1).boundingBox()]);
+  assert.ok(b.y >= t.y + t.height - 1, 'editors are stacked');
+  assert.ok(Math.abs(t.width - b.width) < 2 && t.width > 800, 'and both use the full width');
+  assert.ok(t.height > 150 && b.height > 150, 'each keeps a usable height');
   assert.match(await page.textContent('.col:nth-of-type(1) h2'), /Obfuscated source/);
   assert.match(await page.textContent('.col:nth-of-type(2) h2'), /Deobfuscated source/);
-  assert.equal(await page.isEditable('textarea.editor'), true, 'the left side takes input');
-  assert.equal(await page.locator('.col:nth-of-type(2) textarea').count(), 0, 'the right side is read-only');
+  assert.equal(await page.isEditable('textarea.editor'), true, 'the top editor takes input');
+  assert.equal(await page.locator('.col:nth-of-type(2) textarea').count(), 0, 'the bottom one is read-only');
   assert.deepEqual(problems, []);
+  await ctx.close();
+});
+
+test('both editors colour Lua, the input one without giving up the plain textarea', { skip }, async () => {
+  const { page, ctx, problems } = await newPage();
+  const code = 'local function f(a)\n  -- note\n  return string.format("%d", a + 1)\nend\nprint(f(2))';
+  await page.evaluate((v) => { const e = document.querySelector('textarea.editor'); e.value = v; e.dispatchEvent(new Event('input', { bubbles: true })); }, code);
+  await page.waitForSelector('.hl .t-kw');
+  const kinds = await page.evaluate(() => ({
+    kw: [...document.querySelectorAll('.hl .t-kw')].map((n) => n.textContent),
+    ctl: [...document.querySelectorAll('.hl .t-ctl')].map((n) => n.textContent),
+    str: document.querySelectorAll('.hl .t-str').length,
+    com: document.querySelectorAll('.hl .t-com').length,
+    fn: [...document.querySelectorAll('.hl .t-fn')].map((n) => n.textContent),
+    ink: getComputedStyle(document.querySelector('textarea.editor')).color,
+    rows: document.querySelectorAll('.hl .hl-row').length,
+  }));
+  assert.deepEqual(kinds.kw, ['local', 'function']);
+  assert.ok(kinds.ctl.includes('return') && kinds.ctl.includes('end'));
+  assert.ok(kinds.str >= 1 && kinds.com === 1);
+  assert.ok(kinds.fn.includes('f') && kinds.fn.includes('format') && kinds.fn.includes('print'));
+  assert.equal(kinds.ink, 'rgba(0, 0, 0, 0)', 'the textarea itself is transparent; the layer under it carries the colour');
+  assert.equal(kinds.rows, 5);
+  // one line number per row (the numbers are separated by newlines, which must not collapse)
+  const gutter = await page.evaluate(() => { const n = document.querySelector('.gutter .nums'); return { text: n.textContent, height: n.getBoundingClientRect().height, lh: parseFloat(n.style.lineHeight) }; });
+  assert.equal(gutter.text, '1\n2\n3\n4\n5');
+  assert.ok(Math.abs(gutter.height - 5 * gutter.lh) < 2, `numbers stack one per row (${gutter.height}px for 5 rows)`);
+  // the layer shows exactly the text of the textarea, row for row
+  const same = await page.evaluate(() => [...document.querySelectorAll('.hl .hl-row')].map((r) => r.textContent).join('\n') === document.querySelector('textarea.editor').value);
+  assert.ok(same, 'overlay text equals the textarea text');
+  // typing still works and the layer follows
+  await page.click('textarea.editor');
+  await page.keyboard.press('Control+End');
+  await page.keyboard.type('\nlocal z = nil');
+  await page.waitForFunction(() => document.querySelectorAll('.hl .hl-row').length === 6);
+  // the result pane colours too
+  await page.click('#act-beautify'); await idle(page);
+  assert.ok(await page.locator('#out-body .t-kw').count() > 0, 'output is coloured');
+  assert.deepEqual(problems, []);
+  await ctx.close();
+});
+
+test('a minified one-line script is coloured by the columns on screen, not all at once', { skip }, async () => {
+  const { page, ctx, problems } = await newPage();
+  await page.evaluate(() => {
+    const parts = [];
+    for (let i = 0; i < 30000; i++) parts.push(`local v${i}=${i} if v${i} then v${i}="s${i}" end`);
+    const e = document.querySelector('textarea.editor');
+    e.value = parts.join(' ');
+    e.dispatchEvent(new Event('input', { bubbles: true }));
+  });
+  await page.waitForSelector('.hl .t-kw');
+  const drawn = await page.evaluate(() => document.querySelector('.hl-rows').textContent.length);
+  assert.ok(drawn > 200 && drawn < 20_000, `only the visible window is drawn (${drawn} characters)`);
+  // scrolling right redraws the window at the new place
+  await page.evaluate(() => { const e = document.querySelector('textarea.editor'); e.scrollLeft = 400_000; });
+  await page.waitForFunction(() => /v3\d{4}|v2\d{4}/.test(document.querySelector('.hl-rows').textContent) || document.querySelector('.hl-rows').textContent.includes('v'));
+  const at = await page.evaluate(() => { const e = document.querySelector('textarea.editor'); const first = document.querySelector('.hl-rows .t-kw'); return { left: e.scrollLeft, text: document.querySelector('.hl-rows').textContent.slice(0, 40), have: !!first }; });
+  assert.ok(at.left > 0 && at.have);
+  assert.deepEqual(problems, []);
+  await ctx.close();
+});
+
+test('the timer counts while an operation runs and keeps the time it took', { skip }, async () => {
+  const { page, ctx } = await newPage();
+  assert.match(await page.textContent('#timer-text'), /^0\.00 s$/);
+  await loadFile(page, path.join(corpus, 'obfuscated/prometheus/s06_combined__step-ProxifyLocals.lua'));
+  await page.click('#act-recover');
+  await page.waitForSelector('#timer.running');
+  await idle(page);
+  await page.waitForSelector('#timer.done');
+  assert.match(await page.textContent('#timer-text'), /^\d+\.\d\d s$|^\d+:\d\d\.\d$/);
+  assert.match(await page.textContent('#timer-op'), /Recovering/);
+  assert.match(await page.getAttribute('#timer', 'title'), /Recovering/);
+  await ctx.close();
+});
+
+test('an editor can take the whole height and give it back', { skip }, async () => {
+  const { page, ctx } = await newPage();
+  const heights = () => Promise.all([0, 1].map(async (i) => (await page.locator('.col').nth(i).boundingBox())?.height || 0));
+  const [t0, b0] = await heights();
+  assert.ok(t0 > 100 && b0 > 100);
+  await page.click('.col:nth-of-type(1) .col-head button[aria-label="Maximise this editor"]');
+  const [t1, b1] = await heights();
+  assert.equal(b1, 0, 'the other editor is hidden');
+  assert.ok(t1 > t0 + b0 - 20, 'the top editor got the room');
+  await page.click('.col:nth-of-type(1) .col-head button[aria-label="Show both editors again"]');
+  const [t2, b2] = await heights();
+  assert.ok(Math.abs(t2 - t0) < 3 && Math.abs(b2 - b0) < 3, 'both are back');
+  await page.dblclick('.col:nth-of-type(2) .col-head h2');
+  assert.equal((await heights())[0], 0, 'double-clicking a title bar maximises that editor');
   await ctx.close();
 });
 
@@ -268,17 +363,25 @@ test('opening a file names the obfuscator without pressing anything', { skip }, 
   await ctx.close();
 });
 
-test('the divider resizes the panes and the theme switch is remembered', { skip }, async () => {
+test('the divider resizes the editors and the theme switch is remembered', { skip }, async () => {
   const { page, ctx } = await newPage();
-  const widths = async () => Promise.all([0, 1].map(async (i) => (await page.locator('.col').nth(i).boundingBox()).width));
-  const [a0] = await widths();
+  const heights = async () => Promise.all([0, 1].map(async (i) => (await page.locator('.col').nth(i).boundingBox()).height));
+  const [a0] = await heights();
   await page.focus('.splitter');
-  for (let i = 0; i < 4; i++) await page.keyboard.press('ArrowRight');
-  const [a1] = await widths();
-  assert.ok(a1 > a0 + 30, 'left pane grew');
+  for (let i = 0; i < 4; i++) await page.keyboard.press('ArrowDown');
+  const [a1] = await heights();
+  assert.ok(a1 > a0 + 30, 'top editor grew');
   await page.dblclick('.splitter');
-  const [a2] = await widths();
+  const [a2] = await heights();
   assert.ok(Math.abs(a2 - a0) < 4, 'double-click resets');
+  // dragging the divider works with the pointer too
+  const box = await page.locator('.splitter').boundingBox();
+  await page.mouse.move(box.x + 200, box.y + 2);
+  await page.mouse.down();
+  await page.mouse.move(box.x + 200, box.y - 120, { steps: 6 });
+  await page.mouse.up();
+  const [a3] = await heights();
+  assert.ok(a3 < a0 - 60, 'dragging up shrinks the top editor');
 
   const before = await page.getAttribute('html', 'data-theme');
   await page.click('#btn-theme');

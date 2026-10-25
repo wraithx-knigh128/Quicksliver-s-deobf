@@ -4,6 +4,7 @@
 import { h } from './dom.js';
 import { LH, charWidth } from './viewer.js';
 import { collapseRows } from '../core/diff.js';
+import { lineStates, lineNodes } from './highlight.js';
 
 const OVERSCAN = 30;
 const SLACK = 8;
@@ -29,6 +30,8 @@ export class DiffView {
   setData(a, b, rows) {
     this.a = a;
     this.b = b;
+    this.sa = lineStates(a);
+    this.sb = lineStates(b);
     this.rows = rows;
     this.hunk = -1;
     this.reflow();
@@ -69,14 +72,14 @@ export class DiffView {
     this.body.style.transform = `translateY(${first * LH}px)`;
     const frag = document.createDocumentFragment();
     const cap = Math.max(40, Math.floor((this.root.clientWidth / 2 - 60) / charWidth()));
-    const cell = (lines, idx) => h('div.c', h('span.ln', idx >= 0 ? String(idx + 1) : ''), h('span.tx', idx >= 0 ? clip(lines[idx], cap) : ''));
+    const cell = (lines, st, idx) => h('div.c', h('span.ln', idx >= 0 ? String(idx + 1) : ''), h('span.tx', idx >= 0 ? lineNodes(clip(lines[idx], cap), st.states[idx], st.kind[idx]) : ''));
     for (let i = first; i < last; i++) {
       const r = this.shown[i];
       if (r.kind === 'fold') {
         frag.append(h('div.diff-row.fold-row', h('div.c', `${r.count} unchanged lines`)));
         continue;
       }
-      frag.append(h('div', { class: `diff-row ${r.kind}` }, cell(this.a, r.a), cell(this.b, r.b)));
+      frag.append(h('div', { class: `diff-row ${r.kind}` }, cell(this.a, this.sa, r.a), cell(this.b, this.sb, r.b)));
     }
     this.body.replaceChildren(frag);
   }

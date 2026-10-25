@@ -44,6 +44,9 @@
   <symbol id="i-luraph" viewBox="0 0 16 16"><rect x="2.5" y="3" width="11" height="3.5"/><rect x="2.5" y="9.5" width="11" height="3.5"/><path d="M5 4.75h.01M5 11.25h.01"/></symbol>
   <symbol id="i-ironbrew" viewBox="0 0 16 16"><path d="M3 3.5h10v3.5a5 5 0 0 1-10 0z"/><path d="M6 2h4"/></symbol>
   <symbol id="i-moon" viewBox="0 0 16 16"><path d="M12.6 9.6A5.6 5.6 0 1 1 6.4 3.4a4.5 4.5 0 0 0 6.2 6.2z"/></symbol>
+  <symbol id="i-timer" viewBox="0 0 16 16"><circle cx="8" cy="9" r="5"/><path d="M8 9V6M6.5 2h3M12.2 4.3l1-1"/></symbol>
+  <symbol id="i-max" viewBox="0 0 16 16"><path d="M3 6V3h3M10 3h3v3M13 10v3h-3M6 13H3v-3"/></symbol>
+  <symbol id="i-restore" viewBox="0 0 16 16"><path d="M6 3v3H3M13 6h-3V3M10 13v-3h3M3 10h3v3"/></symbol>
   <symbol id="i-wand" viewBox="0 0 16 16"><path d="M3 13 11 5M10 2.5v2M13.5 6h-2M12.4 3.6l-1.2 1.2M3.5 4.5v2M2.5 5.5h2"/></symbol>
 </svg>
 
@@ -51,8 +54,7 @@
 <div id="boot-error" class="boot-error" hidden></div>
 
 <div class="shell" id="shell">
-  <div class="top">
-  <header class="appbar">
+  <header class="titlebar">
     <div class="brand"><svg aria-hidden="true"><use href="#i-mark"/></svg><span class="name">QuickSilver</span><span class="ver" id="ver"></span></div>
 
     <nav class="actions" aria-label="Actions">
@@ -69,18 +71,13 @@
       <button class="btn quiet" id="act-clear" type="button" title="Clear the input and all results"><svg aria-hidden="true"><use href="#i-clear"/></svg><span class="lbl">Clear</span></button>
     </nav>
 
-    <div class="utils">
-      <button class="btn icon" id="btn-side" type="button" title="Obfuscator list" aria-label="Obfuscator list" aria-pressed="false"><svg aria-hidden="true"><use href="#i-side"/></svg></button>
-      <button class="btn icon" id="btn-inspector" type="button" title="Details of the last run" aria-label="Details of the last run" aria-pressed="false"><svg aria-hidden="true"><use href="#i-inspect"/></svg></button>
-      <button class="btn icon" id="btn-license" type="button" title="Licence" aria-label="Licence"><svg aria-hidden="true"><use href="#i-key"/></svg></button>
-      <button class="btn icon" id="btn-settings" type="button" title="Settings" aria-label="Settings"><svg aria-hidden="true"><use href="#i-settings"/></svg></button>
-      <button class="btn icon" id="btn-about" type="button" title="About and credits" aria-label="About and credits"><svg aria-hidden="true"><use href="#i-info"/></svg></button>
-      <button class="btn icon" id="btn-theme" type="button" title="Switch between light and dark" aria-label="Switch between light and dark"><svg aria-hidden="true"><use href="#i-theme"/></svg></button>
+    <div class="timer" id="timer" role="timer" title="Time taken by the running operation, then by the last one">
+      <svg aria-hidden="true"><use href="#i-timer"/></svg><span id="timer-text">0.00 s</span><span id="timer-op" class="op"></span>
     </div>
   </header>
 
   <div class="toolbar" role="toolbar" aria-label="Deobfuscation tools">
-    <button class="btn primary big" id="act-recover" type="button" title="Work out what protects the script and recover readable code (Ctrl+Enter)"><svg aria-hidden="true"><use href="#i-wand"/></svg><span class="lbl">Deobfuscate</span></button>
+    <button class="btn primary" id="act-recover" type="button" title="Work out what protects the script and recover readable code (Ctrl+Enter)"><svg aria-hidden="true"><use href="#i-wand"/></svg><span class="lbl">Deobfuscate</span></button>
     <div class="tgroup" role="group" aria-label="If you know the obfuscator">
       <span class="glabel">Obfuscator</span>
       <button class="btn chip" id="tool-luraph" type="button" title="Luraph v14 / v15: dumps what the script does in the sandbox (the virtual machine cannot be turned back into source)"><svg aria-hidden="true"><use href="#i-luraph"/></svg><span class="lbl">Luraph</span></button>
@@ -98,7 +95,16 @@
     <span class="grow"></span>
     <button class="btn chip" id="act-help" type="button" title="How to use this page" aria-label="Help"><svg aria-hidden="true"><use href="#i-help"/></svg><span class="lbl">Help</span></button>
   </div>
-  </div>
+
+  <nav class="activity" aria-label="Panels and settings">
+    <button class="btn icon" id="btn-side" type="button" title="Obfuscator list" aria-label="Obfuscator list" aria-pressed="false"><svg aria-hidden="true"><use href="#i-side"/></svg></button>
+    <button class="btn icon" id="btn-inspector" type="button" title="Details of the last run" aria-label="Details of the last run" aria-pressed="false"><svg aria-hidden="true"><use href="#i-inspect"/></svg></button>
+    <span class="grow"></span>
+    <button class="btn icon" id="btn-license" type="button" title="Licence" aria-label="Licence"><svg aria-hidden="true"><use href="#i-key"/></svg></button>
+    <button class="btn icon" id="btn-theme" type="button" title="Switch between light and dark" aria-label="Switch between light and dark"><svg aria-hidden="true"><use href="#i-theme"/></svg></button>
+    <button class="btn icon" id="btn-about" type="button" title="About and credits" aria-label="About and credits"><svg aria-hidden="true"><use href="#i-info"/></svg></button>
+    <button class="btn icon" id="btn-settings" type="button" title="Settings" aria-label="Settings"><svg aria-hidden="true"><use href="#i-settings"/></svg></button>
+  </nav>
 
   <div class="workspace" id="workspace">
     <aside class="drawer side" aria-label="Obfuscators">

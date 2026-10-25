@@ -9,6 +9,7 @@
 import { $, h, icon, clear, replace, toast, modal, fmtBytes, fmtMs, pct } from './dom.js';
 import { Engine, EngineError } from './engine-client.js';
 import { Viewer, LH } from './viewer.js';
+import { HighlightLayer } from './hl-layer.js';
 import { DiffView } from './diffview.js';
 import { TreeView } from './tree.js';
 import { loadSettings, saveSettings, recoverOptions, indentString, DEFAULTS } from './settings.js';
@@ -106,15 +107,24 @@ const gutter = h('div.gutter', gutterNums);
 const srcFind = h('input', { type: 'search', placeholder: 'Find', 'aria-label': 'Find in the obfuscated source' });
 const srcMeta = h('span.meta');
 const wrapBtn = h('button.btn.small', { type: 'button', 'aria-pressed': 'false', title: 'Wrap long lines (minified scripts are one very long line)', onclick: () => setWrap(!settings.wrap) }, 'Wrap');
-const codeWrap = h('div.code-wrap', gutter, editor);
+const hl = new HighlightLayer(editor);
+const codeWrap = h('div.code-wrap', gutter, h('div.edit-stack', hl.root, editor));
+const maxButtons = {};
+function maxButton(which) {
+  const b = h('button.btn.small.icon', { type: 'button', 'aria-pressed': 'false', title: 'Give this editor the whole height (double-click its title bar too)', 'aria-label': 'Maximise this editor', onclick: () => toggleMax(which) }, icon('max'));
+  maxButtons[which] = b;
+  return b;
+}
 const leftCol = h('section.col', { 'aria-label': 'Obfuscated source' },
-  h('header.col-head', h('h2', 'Obfuscated source'), srcMeta, h('span.grow'), srcFind, wrapBtn),
+  h('header.col-head', { ondblclick: (e) => { if (e.target.closest('input,button')) return; toggleMax('top'); } },
+    h('h2', 'Obfuscated source'), srcMeta, h('span.grow'), srcFind, wrapBtn, maxButton('top')),
   codeWrap);
 function setWrap(on) {
   settings = { ...settings, wrap: on };
   saveSettings(settings);
   editor.wrap = on ? 'soft' : 'off';
   codeWrap.classList.toggle('wrapped', on);
+  hl.setEnabled(!on);
   wrapBtn.setAttribute('aria-pressed', String(on));
 }
 
@@ -159,6 +169,7 @@ function updateCaret() {
     if (S.tab !== 'work') { el.stPos.textContent = ''; return; }
     const { line, col } = caretPosition();
     el.stPos.textContent = `Ln ${line}, Col ${col}`;
+    hl.setCaretLine(inputPresent() ? line : 0);
   }, editor.value.length > 400_000 ? 250 : 30);
 }
 for (const ev of ['keyup', 'click', 'select', 'input', 'focus']) editor.addEventListener(ev, updateCaret);
@@ -166,6 +177,7 @@ for (const ev of ['keyup', 'click', 'select', 'input', 'focus']) editor.addEvent
 editor.addEventListener('input', () => {
   S.dirty = true;
   sourceLines = lineCountOf(editor.value);
+  hl.invalidate();
   paintGutter(true);
   invalidate();
   scheduleAutoDetect(900);
@@ -211,10 +223,12 @@ const outCount = h('span.count');
 const outMeta = h('span.meta');
 const outSwitch = h('div.seg', { role: 'group', 'aria-label': 'Which result to show' });
 const rightCol = h('section.col', { 'aria-label': 'Deobfuscated source' },
-  h('header.col-head', h('h2', 'Deobfuscated source'), outSwitch, outMeta, h('span.grow'), outCount, outFind,
+  h('header.col-head', { ondblclick: (e) => { if (e.target.closest('input,button')) return; toggleMax('bottom'); } },
+    h('h2', 'Deobfuscated source'), outSwitch, outMeta, h('span.grow'), outCount, outFind,
     h('button.btn.small.icon', { type: 'button', title: 'Previous match', 'aria-label': 'Previous match', onclick: () => findOut(-1) }, icon('up')),
     h('button.btn.small.icon', { type: 'button', title: 'Next match', 'aria-label': 'Next match', onclick: () => findOut(1) }, icon('down')),
-    h('button.btn.small.outline', { type: 'button', title: 'Copy the result to the clipboard', onclick: copyOutput }, icon('copy'), h('span.lbl', 'Copy'))),
+    h('button.btn.small', { type: 'button', title: 'Copy the result to the clipboard', onclick: copyOutput }, icon('copy'), h('span.lbl', 'Copy')),
+    maxButton('bottom')),
   h('div#out-body.view', outViewer.root),
   h('div#out-empty.view', emptyState('Nothing recovered yet', 'Paste or open an obfuscated script, then press Recover. Beautify only re-indents; it decodes nothing.')));
 function findOut(step) {
@@ -230,7 +244,7 @@ async function copyOutput() {
   try { await navigator.clipboard.writeText(binaryToText(S.output.text)); toast('Copied'); } catch { toast('The browser blocked clipboard access. Select the text and copy it manually.'); }
 }
 
-const splitter = h('div.splitter', { role: 'separator', 'aria-orientation': 'vertical', 'aria-label': 'Resize the two sources', tabindex: '0', title: 'Drag to resize, double-click to reset' });
+const splitter = h('div.splitter', { role: 'separator', 'aria-orientation': 'horizontal', 'aria-label': 'Resize the two sources', tabindex: '0', title: 'Drag to resize, double-click to reset' });
 const panes = h('div.panes', leftCol, splitter, rightCol);
 const noteBox = h('div.notes', { id: 'notes', role: 'status' });
 const resultFacts = h('div.facts');
@@ -238,38 +252,53 @@ const resultActs = h('div.acts');
 const resultBar = h('div.resultbar', { id: 'resultbar' }, resultFacts, resultActs);
 views.work = h('div.view.work', { id: 'view-work' }, noteBox, panes, resultBar);
 
-function setSplit(left) {
-  const r = Math.min(0.8, Math.max(0.2, left));
-  panes.style.setProperty('--lw', `${(r / (1 - r)).toFixed(4)}fr`);
+/** One editor can take the whole height (the other keeps its text and comes back with the same button). */
+function toggleMax(which) {
+  const on = panes.dataset.max !== which;
+  panes.dataset.max = on ? which : '';
+  for (const [k, b] of Object.entries(maxButtons)) {
+    const mine = on && k === which;
+    b.setAttribute('aria-pressed', String(mine));
+    b.replaceChildren(icon(mine ? 'restore' : 'max'));
+    b.title = mine ? 'Show both editors again' : 'Give this editor the whole height (double-click its title bar too)';
+    b.setAttribute('aria-label', mine ? 'Show both editors again' : 'Maximise this editor');
+  }
+  requestAnimationFrame(() => { paintGutter(true); outViewer.render(); hl.invalidate(); });
+}
+
+const SASH = 5;
+function setSplit(top) {
+  const r = Math.min(0.85, Math.max(0.15, top));
+  panes.style.setProperty('--th', `${(r / (1 - r)).toFixed(4)}fr`);
   return r;
 }
 {
   const saved = settings.split;
   if (saved && saved !== 1) setSplit(saved / (1 + saved));
+  const reset = () => { settings = { ...settings, split: DEFAULTS.split }; saveSettings(settings); setSplit(DEFAULTS.split / (1 + DEFAULTS.split)); };
   let drag = false;
   const move = (e) => {
     const box = panes.getBoundingClientRect();
-    const usable = box.width - 20 - 9;
-    setSplit((e.clientX - box.left - 10 - 4.5) / usable);
+    setSplit((e.clientY - box.top - SASH / 2) / (box.height - SASH));
   };
   splitter.addEventListener('pointerdown', (e) => { drag = true; splitter.setPointerCapture(e.pointerId); splitter.classList.add('drag'); e.preventDefault(); });
   splitter.addEventListener('pointermove', (e) => { if (drag) move(e); });
-  const end = (e) => {
+  const end = () => {
     if (!drag) return;
     drag = false; splitter.classList.remove('drag');
-    const lw = parseFloat(panes.style.getPropertyValue('--lw')) || 1;
-    settings = { ...settings, split: Number(lw.toFixed(3)) }; saveSettings(settings);
+    const th = parseFloat(panes.style.getPropertyValue('--th')) || 1;
+    settings = { ...settings, split: Number(th.toFixed(3)) }; saveSettings(settings);
   };
   splitter.addEventListener('pointerup', end);
   splitter.addEventListener('pointercancel', end);
-  splitter.addEventListener('dblclick', () => { panes.style.removeProperty('--lw'); settings = { ...settings, split: 1 }; saveSettings(settings); });
+  splitter.addEventListener('dblclick', reset);
   splitter.addEventListener('keydown', (e) => {
-    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
     e.preventDefault();
-    const cur = parseFloat(panes.style.getPropertyValue('--lw')) || 1;
-    const r = cur / (1 + cur) + (e.key === 'ArrowRight' ? 0.03 : -0.03);
-    const lw = setSplit(r);
-    settings = { ...settings, split: Number((lw / (1 - lw)).toFixed(3)) }; saveSettings(settings);
+    const cur = parseFloat(panes.style.getPropertyValue('--th')) || 1;
+    const r = cur / (1 + cur) + (e.key === 'ArrowDown' ? 0.04 : -0.04);
+    const top = setSplit(r);
+    settings = { ...settings, split: Number((top / (1 - top)).toFixed(3)) }; saveSettings(settings);
   });
 }
 
@@ -330,7 +359,7 @@ function switchTab(id) {
     tabButtons[t.id].tabIndex = on ? 0 : -1;
     views[t.id].hidden = !on;
   }
-  if (id === 'work') { paintGutter(true); updateCaret(); outViewer.render(); } else el.stPos.textContent = '';
+  if (id === 'work') { paintGutter(true); updateCaret(); outViewer.render(); hl.invalidate(); } else el.stPos.textContent = '';
   if (id === 'compare') diffView.render();
   if (id === 'luast') ensureLuast();
   if (id === 'detection' && !S.detection && inputPresent()) runDetect({ quiet: true });
@@ -419,6 +448,7 @@ function loadBytes(name, bytes) {
   S.input = bytesToBinary(bytes);
   S.raw = bytes;
   editor.value = binaryToText(S.input);
+  hl.invalidate();
   S.loadedText = editor.value;
   S.dirty = false;
   sourceLines = lineCountOf(editor.value);
@@ -464,6 +494,7 @@ window.addEventListener('drop', (e) => {
 
 el.btn.clear.addEventListener('click', () => {
   editor.value = '';
+  hl.invalidate();
   S.name = 'untitled.lua'; S.raw = null; S.loadedText = ''; S.dirty = true; sourceLines = 1;
   invalidate();
   paintGutter(true);
@@ -473,18 +504,42 @@ el.btn.clear.addEventListener('click', () => {
 
 // ---- running operations ------------------------------------------------------------------------------------------------------------------
 
+// The timer in the title bar: counts while an operation runs, then keeps the time it took. The tooltip lists the last few.
+const timerBox = $('#timer');
+const timerText = $('#timer-text');
+const timerOp = $('#timer-op');
+const timings = [];
+const fmtClock = (ms) => (ms < 60_000 ? `${(ms / 1000).toFixed(2)} s` : `${Math.floor(ms / 60_000)}:${String(Math.floor(ms / 1000) % 60).padStart(2, '0')}.${Math.floor((ms % 1000) / 100)}`);
+
 let ticker = 0;
+let runStart = 0;
+let runLabel = '';
 function setBusy(label) {
   S.busy = label;
   for (const [k, b] of Object.entries(el.btn)) if (k !== 'cancel' && k !== 'clear' && k !== 'help') b.disabled = !!label;
   el.btn.cancel.hidden = !label;
   clearInterval(ticker);
   if (label) {
-    const t0 = performance.now();
-    const tick = () => { el.stState.textContent = `${label}… ${((performance.now() - t0) / 1000).toFixed(1)} s`; };
+    runStart = performance.now();
+    runLabel = label;
+    timerBox.classList.add('running');
+    timerBox.classList.remove('done');
+    timerOp.textContent = label;
+    const tick = () => { timerText.textContent = fmtClock(performance.now() - runStart); };
+    el.stState.textContent = `${label}…`;
     el.stState.className = 'state-busy';
     tick();
-    ticker = setInterval(tick, 200);
+    ticker = setInterval(tick, 80);
+  } else if (runStart) {
+    const took = performance.now() - runStart;
+    runStart = 0;
+    timings.unshift({ label: runLabel, ms: took });
+    timings.length = Math.min(timings.length, 8);
+    timerBox.classList.remove('running');
+    timerBox.classList.add('done');
+    timerText.textContent = fmtClock(took);
+    timerOp.textContent = runLabel;
+    timerBox.title = `Time taken by the last operations (newest first):\n${timings.map((t) => `${fmtClock(t.ms).padStart(8)}  ${t.label}`).join('\n')}`;
   }
 }
 el.btn.cancel.addEventListener('click', () => engine.cancel());
@@ -497,6 +552,7 @@ function setStatus(text, kind = '') { el.stState.textContent = text; el.stState.
  */
 async function run(op, options, label, { needsText = true, limits, source } = {}) {
   if (S.busy) return null;
+  clearTimeout(autoTimer); // an action the user asked for supersedes the automatic detection that is still waiting to start
   if (!inputPresent()) { toast('Nothing to process. Paste code or open a file first.'); switchTab('work'); editor.focus(); return null; }
   const input = source ?? getInput();
   if (lic.ent.maxBytes && input.length > lic.ent.maxBytes) {
@@ -1290,6 +1346,7 @@ function renderResultBar() {
       facts.push(fact(['Confidence ', h('b', pct(r.confidence.score)), ` (${r.confidence.level})`]));
       const applied = (r.steps || []).filter((x) => x.status === 'applied').length;
       if (applied) facts.push(fact(`${applied} pass${applied === 1 ? '' : 'es'} applied`));
+      if (r.ms) facts.push(fact(`took ${fmtMs(r.ms)}`));
       if (r.validation) facts.push(fact(r.validation.ok ? 'output parses' : 'output does not parse'));
     } else if (r && r.error) facts.push(fact('Recovery stopped'));
     const hints = (r && r.confidence && r.confidence.hints) || [];

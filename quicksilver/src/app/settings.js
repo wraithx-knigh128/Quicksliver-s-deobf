@@ -16,7 +16,7 @@ export const DEFAULTS = Object.freeze({
   sidebar: false,
   inspector: false,
   wrap: false,            // soft-wrap the obfuscated source
-  split: 1,               // width of the obfuscated pane relative to the deobfuscated one
+  split: 0.75,            // height of the obfuscated editor relative to the deobfuscated one
 });
 
 export function loadSettings() {
