@@ -21,7 +21,7 @@ const sandbox = !args.includes('--no-sandbox');
 const write = args.includes('--write');
 const outName = args.includes('--out') ? args[args.indexOf('--out') + 1] : 'scorecard.json';
 
-const tools = [['prometheus', 'obfuscated/prometheus'], ['hercules', 'obfuscated/hercules'], ['ironbrew2', 'obfuscated/ironbrew2']];
+const tools = [['prometheus', 'obfuscated/prometheus'], ['hercules', 'obfuscated/hercules'], ['ironbrew2', 'obfuscated/ironbrew2'], ['loaders', 'obfuscated/loaders']];
 const results = [];
 const read = (p) => bytesToBinary(fs.readFileSync(p));
 

@@ -37,8 +37,21 @@ export const NOTES = {
     detect: 'Signatures verified against output of the real tool for every module and preset.',
     config: {},
     limits: [
-      'The virtual-machine and bytecode-encoding modules embed a compiled Lua chunk. It is detected and flagged; its source is not recovered.',
+      'The bytecode-encoding module hides a compiled Lua 5.4 chunk behind a hex string and an offset. With sandboxed evaluation on, the chunk is read out, decompiled and put in place of the script; without it the module is only detected. The chunk carries debug information, so the original local and function names come back.',
+      'The virtual-machine module embeds a Lua-in-Lua interpreter and its data. It is detected and flagged; its source is not recovered.',
       'The tool itself produced non-equivalent output for some module/sample pairs (see the "tool broken" column); those cases are excluded from behaviour claims.',
+    ],
+  },
+  loaders: {
+    status: 'supported',
+    basis: 'synthetic',
+    detect: 'Not a single signature: the loadstring-layer trait is reported. Recovery is measured on packers written for this project (tests/corpus/tools/gen_loaders.mjs), not on any real tool.',
+    config: {},
+    limits: [
+      'Literal, folded and string.char payloads are unwrapped without running anything. A payload computed by a decoder (hex, base64, XOR, URL escapes, ...) is read only when sandboxed evaluation is on, and only when the script is nothing but that loader: the other statements may use standard libraries and local variables, nothing else.',
+      'A script that does anything else around the loader (touches the game, writes globals, prints) is never replaced wholesale; Dump still shows the text it loads.',
+      'Payloads that read `...`, return values, or need the network (`HttpGet`) are left alone. Compiled Lua 5.1 and 5.4 payloads are decompiled.',
+      'These are generic packers I wrote from the encodings other tools document. Whether a real obfuscator that uses the same encodings is handled depends on its decoder staying within the standard libraries; none of them was run.',
     ],
   },
   luraph: {
@@ -80,10 +93,9 @@ export const NOTES = {
 /** Per-configuration status overrides where the measured numbers alone would mislead. */
 export const OVERRIDES = {
   hercules: {
-    'mod-bytecode_encoding': { status: 'unsupported', note: 'The script is stored as a compiled chunk; QuickSilver reports it but cannot decompile it.' },
     'mod-virtual_machine': { status: 'unsupported', note: 'The script runs inside an interpreter written in Lua; the original program is only present as data.' },
     'mod-function_inlining': { status: 'unsupported', note: 'No dedicated pass; the output is left as the tool wrote it.' },
-    heavy: { status: 'unsupported', note: 'Includes the virtual-machine module.' },
-    maximum: { status: 'unsupported', note: 'Includes the virtual-machine and bytecode modules.' },
+    heavy: { status: 'unsupported', note: 'Combines function inlining (no dedicated pass; every small function becomes an inline closure) with string encoding, wrappers and anti-tamper. It does not contain the virtual-machine module.' },
+    maximum: { status: 'unsupported', note: 'Includes the virtual-machine module. With the sandbox on, the bytecode layer around it is now read and decompiled, which leaves the interpreter and its data: more transparent, but further from the original program, so fidelity drops.' },
   },
 };

@@ -73,7 +73,7 @@ async function loadFile(page, file) {
 
 test('page loads cleanly and lists every obfuscator', { skip }, async () => {
   const { page, ctx, problems } = await newPage();
-  assert.equal(await page.locator('#toollist li').count(), 15);
+  assert.equal(await page.locator('#toollist li').count(), 16);
   assert.equal(await page.textContent('#ver'), 'v1.0.0');
   for (const id of ['open', 'detect', 'beautify', 'analyze', 'recover', 'compare', 'export']) assert.ok(await page.isVisible(`#act-${id}`), `${id} button`);
   // strict CSP: no inline styles or scripts were needed to render
@@ -447,6 +447,32 @@ test('the Examples tab lists every bundled script and times a recovery on reques
   assert.equal(await activeTab(page), 'tab-work');
   assert.match(await page.inputValue('textarea.editor'), /^return\(function/);
   assert.ok((await page.textContent('#out-body')).length > 100, 'the recovered code is shown');
+  assert.deepEqual(problems, []);
+  await ctx.close();
+});
+
+test('readable examples open straight into the AI check, and the sandbox can be switched on from the Examples tab', { skip }, async () => {
+  const { page, ctx, problems } = await newPage();
+  await page.click('#tab-examples');
+  await page.waitForSelector('.examples-table tbody tr.row-main');
+  const row = page.locator('tr.row-main', { hasText: 'origin__assistant_inventory.lua' });
+  assert.equal(await row.locator('button[aria-label^="Time "]').count(), 0, 'no timer for a script that is not obfuscated');
+  await row.locator('button:has-text("Open + AI check")').click();
+  await page.waitForSelector('#tab-origin[aria-selected=true]');
+  await page.waitForFunction(() => /Written by AI\s*\d+%/.test(document.querySelector('#originbar').textContent));
+  assert.match(await page.textContent('#view-origin'), /Written by AI/);
+
+  // a packer whose payload is computed needs the sandbox; the button asks first
+  await page.click('#tab-examples');
+  assert.match(await page.textContent('#view-examples .codebar'), /Sandbox: off/);
+  await page.click('#view-examples button:has-text("Sandbox: off")');
+  await page.click('.modal button:has-text("Allow")');
+  await page.waitForFunction(() => /Sandbox: on/.test(document.querySelector('#view-examples .codebar').textContent));
+  const packed = page.locator('tr.row-main', { hasText: 'loaders__s06_combined__xor.lua' });
+  await packed.locator('button[aria-label^="Time "]').click();
+  await page.waitForFunction(() => document.querySelector('#act-cancel').hidden && document.querySelector('#timer.done'), null, { timeout: 60_000 });
+  await page.click('#tab-work');
+  await packed.scrollIntoViewIfNeeded().catch(() => {});
   assert.deepEqual(problems, []);
   await ctx.close();
 });

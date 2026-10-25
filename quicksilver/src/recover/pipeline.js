@@ -15,6 +15,7 @@ import { simplifyPass, snapshotUnused } from '../passes/simplify.js';
 import { evaluatePass } from '../passes/evaluate.js';
 import { renamePass } from '../passes/rename.js';
 import { unwrapWrapper, removeUnusedVararg, tidyIfs } from '../passes/structure.js';
+import { unwrapLayers } from '../passes/layers.js';
 import { dataflowPass } from '../passes/dataflow.js';
 import { regionPass } from '../passes/regions.js';
 import { booleanResults, orientComparisons, shortCircuits, tableConstructors, methodCalls, bareNils, functionForms, multiResults, numericLoops, loopForms, unsetLocals } from '../passes/idioms.js';
@@ -171,6 +172,13 @@ export function recover(source, userOptions = {}) {
       total += run.step('idioms.compare', 'Orient comparisons', (a) => orientComparisons(a), { quiet: true });
     }
     total += run.step('fold', 'Fold constant expressions', (a) => foldPass(a, { foldCalls: options.foldCalls }));
+    // the loaded text of `loadstring(...)()` becomes the program; compiled Lua in it is decompiled, so the rebuilt-program clean-ups apply
+    let layers = null;
+    const nLayers = run.step('layers', 'Unwrap loadstring layers', (a) => { layers = unwrapLayers(a, { sandbox: options.sandbox }); return layers; }, { quiet: true });
+    if (nLayers) {
+      total += nLayers;
+      if (layers.bytecode) { unusedAtStart = new WeakSet(); decompiled = true; }
+    }
     total += run.step('simplify', 'Simplify control flow and remove dead code', (a) => simplifyPass(a, { unusedAtStart }));
     if (vmified) total += run.step('prometheus.env', 'Read globals from the environment table again', (a) => envToGlobals(a), { quiet: true });
     if (decompiled) total += run.step('regions', 'Evaluate closed constant computations', (a) => regionPass(a), { quiet: true });

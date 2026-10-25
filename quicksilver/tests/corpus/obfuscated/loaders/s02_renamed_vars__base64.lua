@@ -1,0 +1,21 @@
+local alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+local function decode(text)
+  local out, acc, bits = {}, 0, 0
+  for i = 1, #text do
+    local ch = text:sub(i, i)
+    local v = alphabet:find(ch, 1, true)
+    if v then
+      acc = acc * 64 + (v - 1)
+      bits = bits + 6
+      if bits >= 8 then
+        bits = bits - 8
+        local div = 2 ^ bits
+        out[#out + 1] = string.char(math.floor(acc / div))
+        acc = acc % div
+      end
+    end
+  end
+  return table.concat(out)
+end
+local run = (loadstring or load)(decode("LS0gczAyOiBkZXNjcmlwdGl2ZSBpZGVudGlmaWVycy4gVXNlZCB0byB0ZXN0IGlkZW50aWZpZXIgcmVuYW1pbmcgLyByZWFkYWJpbGl0eSByZWNvdmVyeS4KbG9jYWwgaW52ZW50b3J5ID0ge30KbG9jYWwgdG90YWxXZWlnaHQgPSAwCmxvY2FsIG1heENhcnJ5V2VpZ2h0ID0gNDAKCmxvY2FsIGZ1bmN0aW9uIGFkZEl0ZW0obmFtZSwgd2VpZ2h0LCBxdWFudGl0eSkKICBsb2NhbCBlbnRyeSA9IGludmVudG9yeVtuYW1lXQogIGxvY2FsIGFkZGVkID0gd2VpZ2h0ICogcXVhbnRpdHkKICBpZiB0b3RhbFdlaWdodCArIGFkZGVkID4gbWF4Q2FycnlXZWlnaHQgdGhlbgogICAgcmV0dXJuIGZhbHNlLCAidG9vIGhlYXZ5OiAiIC4uIG5hbWUKICBlbmQKICBpZiBlbnRyeSA9PSBuaWwgdGhlbgogICAgZW50cnkgPSB7IHdlaWdodCA9IHdlaWdodCwgcXVhbnRpdHkgPSAwIH0KICAgIGludmVudG9yeVtuYW1lXSA9IGVudHJ5CiAgZW5kCiAgZW50cnkucXVhbnRpdHkgPSBlbnRyeS5xdWFudGl0eSArIHF1YW50aXR5CiAgdG90YWxXZWlnaHQgPSB0b3RhbFdlaWdodCArIGFkZGVkCiAgcmV0dXJuIHRydWUKZW5kCgpsb2NhbCBmdW5jdGlvbiByZW1vdmVJdGVtKG5hbWUsIHF1YW50aXR5KQogIGxvY2FsIGVudHJ5ID0gaW52ZW50b3J5W25hbWVdCiAgaWYgZW50cnkgPT0gbmlsIG9yIGVudHJ5LnF1YW50aXR5IDwgcXVhbnRpdHkgdGhlbgogICAgcmV0dXJuIGZhbHNlLCAibm90IGVub3VnaCAiIC4uIG5hbWUKICBlbmQKICBlbnRyeS5xdWFudGl0eSA9IGVudHJ5LnF1YW50aXR5IC0gcXVhbnRpdHkKICB0b3RhbFdlaWdodCA9IHRvdGFsV2VpZ2h0IC0gZW50cnkud2VpZ2h0ICogcXVhbnRpdHkKICBpZiBlbnRyeS5xdWFudGl0eSA9PSAwIHRoZW4KICAgIGludmVudG9yeVtuYW1lXSA9IG5pbAogIGVuZAogIHJldHVybiB0cnVlCmVuZAoKbG9jYWwgZnVuY3Rpb24gcmVwb3J0KCkKICBsb2NhbCBuYW1lcyA9IHt9CiAgZm9yIGl0ZW1OYW1lIGluIHBhaXJzKGludmVudG9yeSkgZG8KICAgIG5hbWVzWyNuYW1lcyArIDFdID0gaXRlbU5hbWUKICBlbmQKICB0YWJsZS5zb3J0KG5hbWVzKQogIGZvciBfLCBpdGVtTmFtZSBpbiBpcGFpcnMobmFtZXMpIGRvCiAgICBsb2NhbCBlbnRyeSA9IGludmVudG9yeVtpdGVtTmFtZV0KICAgIHByaW50KGl0ZW1OYW1lIC4uICIgeCIgLi4gZW50cnkucXVhbnRpdHkgLi4gIiAoIiAuLiBlbnRyeS53ZWlnaHQgKiBlbnRyeS5xdWFudGl0eSAuLiAia2cpIikKICBlbmQKICBwcmludCgidG90YWwgd2VpZ2h0OiAiIC4uIHRvdGFsV2VpZ2h0KQplbmQKCnByaW50KGFkZEl0ZW0oInJvcGUiLCAzLCAyKSkKcHJpbnQoYWRkSXRlbSgibGFudGVybiIsIDUsIDEpKQpwcmludChhZGRJdGVtKCJhbnZpbCIsIDMwLCAyKSkKcHJpbnQocmVtb3ZlSXRlbSgicm9wZSIsIDEpKQpwcmludChyZW1vdmVJdGVtKCJzd29yZCIsIDEpKQpyZXBvcnQoKQo="))
+run()

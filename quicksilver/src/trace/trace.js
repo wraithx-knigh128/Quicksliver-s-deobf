@@ -440,7 +440,7 @@ function renderScript(rec, status) {
 
 /**
  * @param {string} source binary string
- * @param {{fuel?: number, timeMs?: number, maxEvents?: number, maxWaits?: number, callHandlers?: boolean, dialect?: string}} [options]
+ * @param {{fuel?: number, timeMs?: number, maxEvents?: number, maxWaits?: number, callHandlers?: boolean, dialect?: string, stopAfterLoads?: number}} [options]
  */
 export function traceScript(source, options = {}) {
   const opts = { ...LIMITS, callHandlers: true, dialect: 'luau', ...options };
@@ -454,6 +454,8 @@ export function traceScript(source, options = {}) {
     const index = rec.layers.length + 1;
     rec.layers.push({ index, chunkName: typeof chunkName === 'string' ? chunkName : null, source: src });
     rec.push({ kind: 'load', text: `-- loadstring: chunk ${index} (${src.length} bytes)`, line: m.line, layer: index });
+    // a caller that only wants the first chunk (layer unwrapping) does not need the script to go on and run it
+    if (opts.stopAfterLoads && rec.layers.length >= opts.stopAfterLoads) throw new TraceStop('chunk captured');
   };
 
   const startFuel = m.fuel;

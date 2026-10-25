@@ -10,6 +10,13 @@ const BASIS = {
   signature: 'Signature only; nothing was run',
 };
 const ORDER = ['supported', 'partial', 'experimental', 'unsupported'];
+/** The same status in words for someone who just wants to know what they will get. */
+const MEANING = {
+  supported: 'Readable source back, checked against the original',
+  partial: 'Most of it is undone; some parts stay',
+  experimental: 'Recognised; recovery was not measured',
+  unsupported: 'Recognised only; the source cannot be rebuilt',
+};
 
 export async function loadCompat() {
   const res = await fetch('data/compat.json', { cache: 'no-cache' });
@@ -62,16 +69,17 @@ export class CompatDashboard {
       }, [
         h('td', [h('b', f.name), h('div.faint', f.kind)]),
         h('td', statusBadge(f.status)),
-        h('td', BASIS[f.basis]),
+        h('td', MEANING[f.status]),
+        h('td.faint', BASIS[f.basis]),
         h('td.num', m ? `${pct(m.fidelityBefore)} → ${pct(m.fidelityAfter)}` : '—'),
         h('td.num', m ? String(m.fixtures) : '—'),
       ]));
-      if (open) body.append(h('tr', h('td.detail-cell', { colspan: '5' }, this.detail(f))));
+      if (open) body.append(h('tr', h('td.detail-cell', { colspan: '6' }, this.detail(f))));
     }
 
     clear(this.root);
     this.root.append(bar, filters, h('div.table-wrap', h('table.grid', [
-      h('thead', h('tr', [h('th', 'Obfuscator'), h('th', 'Status'), h('th', 'Evidence'), h('th', { title: 'Mean similarity to the original source, before → after recovery' }, 'Fidelity'), h('th', 'Fixtures')])),
+      h('thead', h('tr', [h('th', 'Obfuscator'), h('th', 'Status'), h('th', 'What you get'), h('th', 'Tested on'), h('th', { title: 'Mean similarity to the original source, before → after recovery' }, 'Fidelity'), h('th', 'Fixtures')])),
       body,
     ])), this.footer());
   }

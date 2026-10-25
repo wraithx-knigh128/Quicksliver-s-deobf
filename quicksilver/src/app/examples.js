@@ -18,6 +18,7 @@ export class ExamplesBoard {
    *   begin: (label: string) => boolean,
    *   end: () => void,
    *   sandbox: () => boolean,
+   *   toggleSandbox: () => Promise<void>,
    * }} ctl
    */
   constructor(ctl) {
@@ -30,8 +31,9 @@ export class ExamplesBoard {
     this.runAll = h('button.btn.small.outline', { type: 'button', title: 'Recover every obfuscated example in turn and time each one', onclick: () => this.timeAll() }, icon('timer'), h('span.lbl', 'Time all'));
     this.stopBtn = h('button.btn.small', { type: 'button', hidden: true, onclick: () => { this.stop = true; this.stopBtn.disabled = true; } }, icon('stop'), h('span.lbl', 'Stop after this one'));
     this.note = h('span.faint');
+    this.sandboxBtn = h('button.btn.small.outline', { type: 'button', title: 'Some examples hide their text behind a decoder; reading it means running that decoder in QuickSilver\u2019s sandbox (asks first)', onclick: async () => { await this.ctl.toggleSandbox(); this.refreshNote(); } });
     this.body = h('div.table-wrap');
-    this.root = h('div.view.examples', h('div.codebar', this.summary, h('span.grow'), this.note, this.runAll, this.stopBtn), this.body);
+    this.root = h('div.view.examples', h('div.codebar', this.summary, h('span.grow'), this.note, this.sandboxBtn, this.runAll, this.stopBtn), this.body);
   }
 
   async show() {
@@ -42,7 +44,10 @@ export class ExamplesBoard {
   }
 
   refreshNote() {
-    this.note.textContent = this.ctl.sandbox() ? 'sandbox on: string decoders are evaluated' : 'sandbox off: encoded strings stay encoded (Settings)';
+    const on = this.ctl.sandbox();
+    this.note.textContent = on ? 'decoders are run in the sandbox' : 'encoded text stays encoded';
+    this.sandboxBtn.textContent = on ? 'Sandbox: on' : 'Sandbox: off';
+    this.sandboxBtn.setAttribute('aria-pressed', String(on));
   }
 
   build() {
@@ -58,15 +63,18 @@ export class ExamplesBoard {
           status: h('td.res'), time: h('td.num.time'), off: h('td.off'),
         };
         const open = h('button.btn.small', { type: 'button', title: 'Put this example in the editor', onclick: () => this.ctl.open(item, false) }, 'Open');
-        const run = h('button.btn.small', { type: 'button', title: 'Open it and press Deobfuscate', onclick: () => this.ctl.open(item, true) }, 'Open + deobfuscate');
-        const time = h('button.btn.small.icon', { type: 'button', title: 'Time the recovery of this example only', 'aria-label': `Time ${item.label}`, onclick: () => this.timeOne(item) }, icon('timer'));
+        // readable examples are for the AI check; obfuscated ones for the recovery and its timer
+        const run = g.plain
+          ? h('button.btn.small', { type: 'button', title: 'Open it and press AI check', onclick: () => this.ctl.open(item, 'ai') }, 'Open + AI check')
+          : h('button.btn.small', { type: 'button', title: 'Open it and press Deobfuscate', onclick: () => this.ctl.open(item, true) }, 'Open + deobfuscate');
+        const time = g.plain ? null : h('button.btn.small.icon', { type: 'button', title: 'Time the recovery of this example only', 'aria-label': `Time ${item.label}`, onclick: () => this.timeOne(item) }, icon('timer'));
         const row = h('tr.row-main', { dataset: { file: item.file } },
           h('td', h('b', item.label), h('div.faint', item.file)),
           h('td.num', item.sub || fmtBytes(item.bytes)),
           cells.off,
           cells.time, cells.status,
           h('td.acts', time, open, run));
-        this.rows.set(item.file, { item, cells, buttons: [time, open, run], state: { kind: 'idle' }, obfuscated: !g.plain });
+        this.rows.set(item.file, { item, cells, buttons: [time, open, run].filter(Boolean), state: { kind: 'idle' }, obfuscated: !g.plain });
         this.paintOffline(item, cells.off);
         this.paint(item.file);
         tbody.append(row);

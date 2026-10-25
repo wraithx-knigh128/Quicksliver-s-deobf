@@ -77,7 +77,7 @@ const tools = [
   },
   {
     dir: 'hercules', label: 'Hercules (real tool output)', note: 'zeusssz/hercules-obfuscator',
-    picks: [['light', 'light preset'], ['balanced', 'balanced preset'], ['mod-control_flow', 'control flow'], ['mod-string_encoding', 'string encoding'], ['mod-string_to_expressions', 'string to expressions'], ['mod-garbage_code', 'garbage code'], ['mod-opaque_predicates', 'opaque predicates'], ['mod-antitamper', 'anti-tamper'], ['mod-wrap_in_function', 'wrap in function'], ['mod-bytecode_encoding', 'bytecode encoding (not recoverable)'], ['mod-virtual_machine', 'virtual machine (not recoverable)']],
+    picks: [['light', 'light preset'], ['balanced', 'balanced preset'], ['mod-control_flow', 'control flow'], ['mod-string_encoding', 'string encoding'], ['mod-string_to_expressions', 'string to expressions'], ['mod-garbage_code', 'garbage code'], ['mod-opaque_predicates', 'opaque predicates'], ['mod-antitamper', 'anti-tamper'], ['mod-wrap_in_function', 'wrap in function'], ['mod-bytecode_encoding', 'bytecode encoding (compiled chunk; needs the sandbox)'], ['mod-virtual_machine', 'virtual machine (not recoverable)']],
   },
   {
     dir: 'ironbrew2', label: 'IronBrew 2 (real tool output)', note: 'Trollicus/ironbrew-2, built from source',
@@ -109,6 +109,25 @@ for (const t of tools) {
     });
   }
   groups.push({ label: t.label, note: t.note, items });
+}
+
+// loader-style packers written for this project (tests/corpus/tools/gen_loaders.mjs): not the output of any real tool
+{
+  const manifest = JSON.parse(fs.readFileSync(path.join(corpus, 'obfuscated/loaders/manifest.json'), 'utf8'));
+  const labels = {
+    reverse: 'Reversed text', escapes: 'Decimal escapes', charcodes: 'string.char(...)', pieces: 'Split pieces', ascii: 'ASCII codes', hex: 'Hexadecimal',
+    binary: 'Binary groups', url: 'URL escapes', base64: 'Base64', xor: 'XOR cipher', layered: 'Two layers (base64 around hex)',
+  };
+  const items = [];
+  for (const e of manifest.entries.filter((x) => x.sample === `${SAMPLE}.lua`)) {
+    const name = `loaders__${SAMPLE}__${e.config}.lua`;
+    const m = copy(path.join(corpus, 'obfuscated/loaders', e.file), name);
+    items.push({
+      file: name, label: labels[e.config] || e.config, sub: sizeLabel(m.bytes), bytes: m.bytes, sha256: m.sha256, measured: measuredFor('loaders', e.config, e.sample),
+      note: `Written for this project (not the output of any real obfuscator): ${e.note}. ${e.needsSandbox ? 'The payload is computed by the script, so the sandbox has to be on to read it.' : 'The payload is known without running anything.'}`,
+    });
+  }
+  groups.push({ label: 'Loadstring packers (written for this project)', note: 'not a real tool: generic encodings put in front of loadstring', items });
 }
 
 fs.writeFileSync(path.join(out, 'index.json'), `${JSON.stringify({ generated: new Date().toISOString(), groups }, null, 1)}\n`);

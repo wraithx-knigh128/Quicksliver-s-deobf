@@ -74,7 +74,7 @@ const TABS = [
   { id: 'origin', label: 'AI check' },
   { id: 'luast', label: 'Luast' },
   { id: 'examples', label: 'Examples' },
-  { id: 'compat', label: 'Compatibility' },
+  { id: 'compat', label: 'Obfuscators' },
 ];
 
 // ---- elements ------------------------------------------------------------------------------------------------------------------------
@@ -348,6 +348,12 @@ const board = new ExamplesBoard({
   begin: (label) => { if (S.busy) { toast('Another operation is running.'); return false; } setBusy(label); return true; },
   end: () => { setBusy(null); setStatus('Timing finished'); },
   sandbox: () => !!(settings.sandbox && lic.allow('sandbox')),
+  toggleSandbox: async () => {
+    if (settings.sandbox) settings = { ...settings, sandbox: false };
+    else { if (!(await confirmSandbox())) return; settings = { ...settings, sandbox: true }; }
+    saveSettings(settings);
+    renderStatus();
+  },
 });
 board.root.id = 'view-examples';
 views.examples = board.root;
@@ -1102,6 +1108,7 @@ async function openSample(s, recover = false) {
     loadBytes(s.file, new Uint8Array(await res.arrayBuffer()));
     if (s.note) { S.notes.push({ kind: 'info', text: s.note }); renderInspector(); renderNotes(); }
   } catch (e) { toast(`Could not load the sample: ${e.message}`); return; }
+  if (recover === 'ai') { await runDetect({ quiet: true }); await runOrigin(); return; }
   if (recover) await runRecover();
 }
 

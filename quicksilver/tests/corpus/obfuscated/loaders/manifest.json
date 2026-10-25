@@ -1,0 +1,931 @@
+{
+ "tool": "Loader packers (synthetic)",
+ "synthetic": true,
+ "source": "tests/corpus/tools/gen_loaders.mjs: written for this project from the documented encodings; not the output of any real obfuscator",
+ "entries": [
+  {
+   "file": "s01_minify_basic__ascii.lua",
+   "sample": "s01_minify_basic.lua",
+   "config": "ascii",
+   "status": "ok",
+   "bytes": 3738,
+   "needsSandbox": true,
+   "note": "decimal character codes separated by commas, decoded with gmatch + string.char",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea"
+  },
+  {
+   "file": "s01_minify_basic__hex.lua",
+   "sample": "s01_minify_basic.lua",
+   "config": "hex",
+   "status": "ok",
+   "bytes": 2187,
+   "needsSandbox": true,
+   "note": "hexadecimal digits, decoded with gsub",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea"
+  },
+  {
+   "file": "s01_minify_basic__binary.lua",
+   "sample": "s01_minify_basic.lua",
+   "config": "binary",
+   "status": "ok",
+   "bytes": 9349,
+   "needsSandbox": true,
+   "note": "eight-digit binary groups, decoded with gmatch and tonumber(x, 2)",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea"
+  },
+  {
+   "file": "s01_minify_basic__url.lua",
+   "sample": "s01_minify_basic.lua",
+   "config": "url",
+   "status": "ok",
+   "bytes": 3211,
+   "needsSandbox": true,
+   "note": "percent-escapes for every byte, decoded with gsub",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea"
+  },
+  {
+   "file": "s01_minify_basic__base64.lua",
+   "sample": "s01_minify_basic.lua",
+   "config": "base64",
+   "status": "ok",
+   "bytes": 1932,
+   "needsSandbox": true,
+   "note": "base64 text with a decoder written in plain Lua 5.1 arithmetic",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea"
+  },
+  {
+   "file": "s01_minify_basic__xor.lua",
+   "sample": "s01_minify_basic.lua",
+   "config": "xor",
+   "status": "ok",
+   "bytes": 3378,
+   "needsSandbox": true,
+   "note": "a repeating-key XOR cipher, the key kept next to the cipher text, xor done with arithmetic",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea"
+  },
+  {
+   "file": "s01_minify_basic__reverse.lua",
+   "sample": "s01_minify_basic.lua",
+   "config": "reverse",
+   "status": "ok",
+   "bytes": 1060,
+   "needsSandbox": false,
+   "note": "the program text reversed, put right with string.reverse",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea"
+  },
+  {
+   "file": "s01_minify_basic__escapes.lua",
+   "sample": "s01_minify_basic.lua",
+   "config": "escapes",
+   "status": "ok",
+   "bytes": 4099,
+   "needsSandbox": false,
+   "note": "the program as one string literal of decimal escapes",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea"
+  },
+  {
+   "file": "s01_minify_basic__charcodes.lua",
+   "sample": "s01_minify_basic.lua",
+   "config": "charcodes",
+   "status": "ok",
+   "bytes": 4803,
+   "needsSandbox": false,
+   "note": "string.char(...) with every code spelled out",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea"
+  },
+  {
+   "file": "s01_minify_basic__pieces.lua",
+   "sample": "s01_minify_basic.lua",
+   "config": "pieces",
+   "status": "ok",
+   "bytes": 1309,
+   "needsSandbox": false,
+   "note": "the program cut into pieces and joined with the concatenation operator",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea"
+  },
+  {
+   "file": "s01_minify_basic__layered.lua",
+   "sample": "s01_minify_basic.lua",
+   "config": "layered",
+   "status": "ok",
+   "bytes": 3488,
+   "needsSandbox": true,
+   "note": "two layers: base64 around the hexadecimal packer around the program",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea"
+  },
+  {
+   "file": "s02_renamed_vars__ascii.lua",
+   "sample": "s02_renamed_vars.lua",
+   "config": "ascii",
+   "status": "ok",
+   "bytes": 5377,
+   "needsSandbox": true,
+   "note": "decimal character codes separated by commas, decoded with gmatch + string.char",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61"
+  },
+  {
+   "file": "s02_renamed_vars__hex.lua",
+   "sample": "s02_renamed_vars.lua",
+   "config": "hex",
+   "status": "ok",
+   "bytes": 3041,
+   "needsSandbox": true,
+   "note": "hexadecimal digits, decoded with gsub",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61"
+  },
+  {
+   "file": "s02_renamed_vars__binary.lua",
+   "sample": "s02_renamed_vars.lua",
+   "config": "binary",
+   "status": "ok",
+   "bytes": 13192,
+   "needsSandbox": true,
+   "note": "eight-digit binary groups, decoded with gmatch and tonumber(x, 2)",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61"
+  },
+  {
+   "file": "s02_renamed_vars__url.lua",
+   "sample": "s02_renamed_vars.lua",
+   "config": "url",
+   "status": "ok",
+   "bytes": 4492,
+   "needsSandbox": true,
+   "note": "percent-escapes for every byte, decoded with gsub",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61"
+  },
+  {
+   "file": "s02_renamed_vars__base64.lua",
+   "sample": "s02_renamed_vars.lua",
+   "config": "base64",
+   "status": "ok",
+   "bytes": 2500,
+   "needsSandbox": true,
+   "note": "base64 text with a decoder written in plain Lua 5.1 arithmetic",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61"
+  },
+  {
+   "file": "s02_renamed_vars__xor.lua",
+   "sample": "s02_renamed_vars.lua",
+   "config": "xor",
+   "status": "ok",
+   "bytes": 4577,
+   "needsSandbox": true,
+   "note": "a repeating-key XOR cipher, the key kept next to the cipher text, xor done with arithmetic",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61"
+  },
+  {
+   "file": "s02_renamed_vars__reverse.lua",
+   "sample": "s02_renamed_vars.lua",
+   "config": "reverse",
+   "status": "ok",
+   "bytes": 1487,
+   "needsSandbox": false,
+   "note": "the program text reversed, put right with string.reverse",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61"
+  },
+  {
+   "file": "s02_renamed_vars__escapes.lua",
+   "sample": "s02_renamed_vars.lua",
+   "config": "escapes",
+   "status": "ok",
+   "bytes": 5807,
+   "needsSandbox": false,
+   "note": "the program as one string literal of decimal escapes",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61"
+  },
+  {
+   "file": "s02_renamed_vars__charcodes.lua",
+   "sample": "s02_renamed_vars.lua",
+   "config": "charcodes",
+   "status": "ok",
+   "bytes": 6954,
+   "needsSandbox": false,
+   "note": "string.char(...) with every code spelled out",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61"
+  },
+  {
+   "file": "s02_renamed_vars__pieces.lua",
+   "sample": "s02_renamed_vars.lua",
+   "config": "pieces",
+   "status": "ok",
+   "bytes": 1836,
+   "needsSandbox": false,
+   "note": "the program cut into pieces and joined with the concatenation operator",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61"
+  },
+  {
+   "file": "s02_renamed_vars__layered.lua",
+   "sample": "s02_renamed_vars.lua",
+   "config": "layered",
+   "status": "ok",
+   "bytes": 4628,
+   "needsSandbox": true,
+   "note": "two layers: base64 around the hexadecimal packer around the program",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61"
+  },
+  {
+   "file": "s03_encoded_strings__ascii.lua",
+   "sample": "s03_encoded_strings.lua",
+   "config": "ascii",
+   "status": "ok",
+   "bytes": 3771,
+   "needsSandbox": true,
+   "note": "decimal character codes separated by commas, decoded with gmatch + string.char",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd"
+  },
+  {
+   "file": "s03_encoded_strings__hex.lua",
+   "sample": "s03_encoded_strings.lua",
+   "config": "hex",
+   "status": "ok",
+   "bytes": 2161,
+   "needsSandbox": true,
+   "note": "hexadecimal digits, decoded with gsub",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd"
+  },
+  {
+   "file": "s03_encoded_strings__binary.lua",
+   "sample": "s03_encoded_strings.lua",
+   "config": "binary",
+   "status": "ok",
+   "bytes": 9232,
+   "needsSandbox": true,
+   "note": "eight-digit binary groups, decoded with gmatch and tonumber(x, 2)",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd"
+  },
+  {
+   "file": "s03_encoded_strings__url.lua",
+   "sample": "s03_encoded_strings.lua",
+   "config": "url",
+   "status": "ok",
+   "bytes": 3172,
+   "needsSandbox": true,
+   "note": "percent-escapes for every byte, decoded with gsub",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd"
+  },
+  {
+   "file": "s03_encoded_strings__base64.lua",
+   "sample": "s03_encoded_strings.lua",
+   "config": "base64",
+   "status": "ok",
+   "bytes": 1912,
+   "needsSandbox": true,
+   "note": "base64 text with a decoder written in plain Lua 5.1 arithmetic",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd"
+  },
+  {
+   "file": "s03_encoded_strings__xor.lua",
+   "sample": "s03_encoded_strings.lua",
+   "config": "xor",
+   "status": "ok",
+   "bytes": 3286,
+   "needsSandbox": true,
+   "note": "a repeating-key XOR cipher, the key kept next to the cipher text, xor done with arithmetic",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd"
+  },
+  {
+   "file": "s03_encoded_strings__reverse.lua",
+   "sample": "s03_encoded_strings.lua",
+   "config": "reverse",
+   "status": "ok",
+   "bytes": 1047,
+   "needsSandbox": false,
+   "note": "the program text reversed, put right with string.reverse",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd"
+  },
+  {
+   "file": "s03_encoded_strings__escapes.lua",
+   "sample": "s03_encoded_strings.lua",
+   "config": "escapes",
+   "status": "ok",
+   "bytes": 4047,
+   "needsSandbox": false,
+   "note": "the program as one string literal of decimal escapes",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd"
+  },
+  {
+   "file": "s03_encoded_strings__charcodes.lua",
+   "sample": "s03_encoded_strings.lua",
+   "config": "charcodes",
+   "status": "ok",
+   "bytes": 4823,
+   "needsSandbox": false,
+   "note": "string.char(...) with every code spelled out",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd"
+  },
+  {
+   "file": "s03_encoded_strings__pieces.lua",
+   "sample": "s03_encoded_strings.lua",
+   "config": "pieces",
+   "status": "ok",
+   "bytes": 1284,
+   "needsSandbox": false,
+   "note": "the program cut into pieces and joined with the concatenation operator",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd"
+  },
+  {
+   "file": "s03_encoded_strings__layered.lua",
+   "sample": "s03_encoded_strings.lua",
+   "config": "layered",
+   "status": "ok",
+   "bytes": 3456,
+   "needsSandbox": true,
+   "note": "two layers: base64 around the hexadecimal packer around the program",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd"
+  },
+  {
+   "file": "s04_control_flow__ascii.lua",
+   "sample": "s04_control_flow.lua",
+   "config": "ascii",
+   "status": "ok",
+   "bytes": 5704,
+   "needsSandbox": true,
+   "note": "decimal character codes separated by commas, decoded with gmatch + string.char",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765"
+  },
+  {
+   "file": "s04_control_flow__hex.lua",
+   "sample": "s04_control_flow.lua",
+   "config": "hex",
+   "status": "ok",
+   "bytes": 3337,
+   "needsSandbox": true,
+   "note": "hexadecimal digits, decoded with gsub",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765"
+  },
+  {
+   "file": "s04_control_flow__binary.lua",
+   "sample": "s04_control_flow.lua",
+   "config": "binary",
+   "status": "ok",
+   "bytes": 14524,
+   "needsSandbox": true,
+   "note": "eight-digit binary groups, decoded with gmatch and tonumber(x, 2)",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765"
+  },
+  {
+   "file": "s04_control_flow__url.lua",
+   "sample": "s04_control_flow.lua",
+   "config": "url",
+   "status": "ok",
+   "bytes": 4936,
+   "needsSandbox": true,
+   "note": "percent-escapes for every byte, decoded with gsub",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765"
+  },
+  {
+   "file": "s04_control_flow__base64.lua",
+   "sample": "s04_control_flow.lua",
+   "config": "base64",
+   "status": "ok",
+   "bytes": 2696,
+   "needsSandbox": true,
+   "note": "base64 text with a decoder written in plain Lua 5.1 arithmetic",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765"
+  },
+  {
+   "file": "s04_control_flow__xor.lua",
+   "sample": "s04_control_flow.lua",
+   "config": "xor",
+   "status": "ok",
+   "bytes": 5025,
+   "needsSandbox": true,
+   "note": "a repeating-key XOR cipher, the key kept next to the cipher text, xor done with arithmetic",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765"
+  },
+  {
+   "file": "s04_control_flow__reverse.lua",
+   "sample": "s04_control_flow.lua",
+   "config": "reverse",
+   "status": "ok",
+   "bytes": 1635,
+   "needsSandbox": false,
+   "note": "the program text reversed, put right with string.reverse",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765"
+  },
+  {
+   "file": "s04_control_flow__escapes.lua",
+   "sample": "s04_control_flow.lua",
+   "config": "escapes",
+   "status": "ok",
+   "bytes": 6399,
+   "needsSandbox": false,
+   "note": "the program as one string literal of decimal escapes",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765"
+  },
+  {
+   "file": "s04_control_flow__charcodes.lua",
+   "sample": "s04_control_flow.lua",
+   "config": "charcodes",
+   "status": "ok",
+   "bytes": 7446,
+   "needsSandbox": false,
+   "note": "string.char(...) with every code spelled out",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765"
+  },
+  {
+   "file": "s04_control_flow__pieces.lua",
+   "sample": "s04_control_flow.lua",
+   "config": "pieces",
+   "status": "ok",
+   "bytes": 2042,
+   "needsSandbox": false,
+   "note": "the program cut into pieces and joined with the concatenation operator",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765"
+  },
+  {
+   "file": "s04_control_flow__layered.lua",
+   "sample": "s04_control_flow.lua",
+   "config": "layered",
+   "status": "ok",
+   "bytes": 5024,
+   "needsSandbox": true,
+   "note": "two layers: base64 around the hexadecimal packer around the program",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765"
+  },
+  {
+   "file": "s05_nested_functions__ascii.lua",
+   "sample": "s05_nested_functions.lua",
+   "config": "ascii",
+   "status": "ok",
+   "bytes": 5287,
+   "needsSandbox": true,
+   "note": "decimal character codes separated by commas, decoded with gmatch + string.char",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb"
+  },
+  {
+   "file": "s05_nested_functions__hex.lua",
+   "sample": "s05_nested_functions.lua",
+   "config": "hex",
+   "status": "ok",
+   "bytes": 3067,
+   "needsSandbox": true,
+   "note": "hexadecimal digits, decoded with gsub",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb"
+  },
+  {
+   "file": "s05_nested_functions__binary.lua",
+   "sample": "s05_nested_functions.lua",
+   "config": "binary",
+   "status": "ok",
+   "bytes": 13309,
+   "needsSandbox": true,
+   "note": "eight-digit binary groups, decoded with gmatch and tonumber(x, 2)",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb"
+  },
+  {
+   "file": "s05_nested_functions__url.lua",
+   "sample": "s05_nested_functions.lua",
+   "config": "url",
+   "status": "ok",
+   "bytes": 4531,
+   "needsSandbox": true,
+   "note": "percent-escapes for every byte, decoded with gsub",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb"
+  },
+  {
+   "file": "s05_nested_functions__base64.lua",
+   "sample": "s05_nested_functions.lua",
+   "config": "base64",
+   "status": "ok",
+   "bytes": 2516,
+   "needsSandbox": true,
+   "note": "base64 text with a decoder written in plain Lua 5.1 arithmetic",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb"
+  },
+  {
+   "file": "s05_nested_functions__xor.lua",
+   "sample": "s05_nested_functions.lua",
+   "config": "xor",
+   "status": "ok",
+   "bytes": 4617,
+   "needsSandbox": true,
+   "note": "a repeating-key XOR cipher, the key kept next to the cipher text, xor done with arithmetic",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb"
+  },
+  {
+   "file": "s05_nested_functions__reverse.lua",
+   "sample": "s05_nested_functions.lua",
+   "config": "reverse",
+   "status": "ok",
+   "bytes": 1500,
+   "needsSandbox": false,
+   "note": "the program text reversed, put right with string.reverse",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb"
+  },
+  {
+   "file": "s05_nested_functions__escapes.lua",
+   "sample": "s05_nested_functions.lua",
+   "config": "escapes",
+   "status": "ok",
+   "bytes": 5859,
+   "needsSandbox": false,
+   "note": "the program as one string literal of decimal escapes",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb"
+  },
+  {
+   "file": "s05_nested_functions__charcodes.lua",
+   "sample": "s05_nested_functions.lua",
+   "config": "charcodes",
+   "status": "ok",
+   "bytes": 6877,
+   "needsSandbox": false,
+   "note": "string.char(...) with every code spelled out",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb"
+  },
+  {
+   "file": "s05_nested_functions__pieces.lua",
+   "sample": "s05_nested_functions.lua",
+   "config": "pieces",
+   "status": "ok",
+   "bytes": 1872,
+   "needsSandbox": false,
+   "note": "the program cut into pieces and joined with the concatenation operator",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb"
+  },
+  {
+   "file": "s05_nested_functions__layered.lua",
+   "sample": "s05_nested_functions.lua",
+   "config": "layered",
+   "status": "ok",
+   "bytes": 4664,
+   "needsSandbox": true,
+   "note": "two layers: base64 around the hexadecimal packer around the program",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb"
+  },
+  {
+   "file": "s06_combined__ascii.lua",
+   "sample": "s06_combined.lua",
+   "config": "ascii",
+   "status": "ok",
+   "bytes": 8039,
+   "needsSandbox": true,
+   "note": "decimal character codes separated by commas, decoded with gmatch + string.char",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514"
+  },
+  {
+   "file": "s06_combined__hex.lua",
+   "sample": "s06_combined.lua",
+   "config": "hex",
+   "status": "ok",
+   "bytes": 4553,
+   "needsSandbox": true,
+   "note": "hexadecimal digits, decoded with gsub",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514"
+  },
+  {
+   "file": "s06_combined__binary.lua",
+   "sample": "s06_combined.lua",
+   "config": "binary",
+   "status": "ok",
+   "bytes": 19996,
+   "needsSandbox": true,
+   "note": "eight-digit binary groups, decoded with gmatch and tonumber(x, 2)",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514"
+  },
+  {
+   "file": "s06_combined__url.lua",
+   "sample": "s06_combined.lua",
+   "config": "url",
+   "status": "ok",
+   "bytes": 6760,
+   "needsSandbox": true,
+   "note": "percent-escapes for every byte, decoded with gsub",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514"
+  },
+  {
+   "file": "s06_combined__base64.lua",
+   "sample": "s06_combined.lua",
+   "config": "base64",
+   "status": "ok",
+   "bytes": 3508,
+   "needsSandbox": true,
+   "note": "base64 text with a decoder written in plain Lua 5.1 arithmetic",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514"
+  },
+  {
+   "file": "s06_combined__xor.lua",
+   "sample": "s06_combined.lua",
+   "config": "xor",
+   "status": "ok",
+   "bytes": 6804,
+   "needsSandbox": true,
+   "note": "a repeating-key XOR cipher, the key kept next to the cipher text, xor done with arithmetic",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514"
+  },
+  {
+   "file": "s06_combined__reverse.lua",
+   "sample": "s06_combined.lua",
+   "config": "reverse",
+   "status": "ok",
+   "bytes": 2245,
+   "needsSandbox": false,
+   "note": "the program text reversed, put right with string.reverse",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514"
+  },
+  {
+   "file": "s06_combined__escapes.lua",
+   "sample": "s06_combined.lua",
+   "config": "escapes",
+   "status": "ok",
+   "bytes": 8831,
+   "needsSandbox": false,
+   "note": "the program as one string literal of decimal escapes",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514"
+  },
+  {
+   "file": "s06_combined__charcodes.lua",
+   "sample": "s06_combined.lua",
+   "config": "charcodes",
+   "status": "ok",
+   "bytes": 10508,
+   "needsSandbox": false,
+   "note": "string.char(...) with every code spelled out",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514"
+  },
+  {
+   "file": "s06_combined__pieces.lua",
+   "sample": "s06_combined.lua",
+   "config": "pieces",
+   "status": "ok",
+   "bytes": 2802,
+   "needsSandbox": false,
+   "note": "the program cut into pieces and joined with the concatenation operator",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514"
+  },
+  {
+   "file": "s06_combined__layered.lua",
+   "sample": "s06_combined.lua",
+   "config": "layered",
+   "status": "ok",
+   "bytes": 6644,
+   "needsSandbox": true,
+   "note": "two layers: base64 around the hexadecimal packer around the program",
+   "behavior": "equivalent",
+   "behaviors": {
+    "lua51": "equivalent"
+   },
+   "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514"
+  }
+ ]
+}

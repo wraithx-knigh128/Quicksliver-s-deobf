@@ -139,6 +139,13 @@ What this adds to the taxonomy below: the Python-side tools (zynaa, RealObfuscat
 evaluation already handles in principle; RealObfuscator's VM mode and fusgato are **per-build bytecode VMs** in the same class as IronBrew 2, Luraph and MoonSec, for which each needs its own
 handler-template work, which requires real output of the tool.
 
+### How examples were made for tools that could not be run
+
+Where running a tool was not possible or not permitted, the workflow was: read what the tool documents (README, file list, licence), identify the *technique class* it uses, write a small independent generator for that class
+(`tests/corpus/tools/gen_loaders.mjs`: ASCII codes, hexadecimal, binary groups, URL escapes, base64, a XOR cipher, reversed text, decimal escapes, `string.char`, split pieces, and a two-layer combination), and measure the recovery
+on it exactly as on real tool output (66 examples, each checked on real Lua 5.1 to print what the original program prints). These are labelled **synthetic** everywhere they appear (Examples tab, the obfuscator table, `docs/COMPATIBILITY.md`).
+They show that the loader-unwrapping pass works on the technique class; they do **not** show that any particular third-party tool is handled, because none of those tools produced them.
+
 ## Technique taxonomy and what each needs
 
 | Technique | Seen in | Static recovery | Needs execution | Notes |
