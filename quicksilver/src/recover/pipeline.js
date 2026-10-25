@@ -17,7 +17,7 @@ import { renamePass } from '../passes/rename.js';
 import { unwrapWrapper, removeUnusedVararg, tidyIfs } from '../passes/structure.js';
 import { dataflowPass } from '../passes/dataflow.js';
 import { regionPass } from '../passes/regions.js';
-import { booleanResults, orientComparisons, shortCircuits, tableConstructors, methodCalls, bareNils, functionForms, multiResults } from '../passes/idioms.js';
+import { booleanResults, orientComparisons, shortCircuits, tableConstructors, methodCalls, bareNils, functionForms, multiResults, numericLoops, loopForms, unsetLocals } from '../passes/idioms.js';
 import { removeAntiTamper, undoProxifyLocals } from './prometheus.js';
 import { removeHerculesAntiTamper } from './hercules.js';
 import { assessConfidence } from './confidence.js';
@@ -166,6 +166,7 @@ export function recover(source, userOptions = {}) {
       total += run.step('idioms.shortcircuit', 'Write defaults as `a or b`', (a) => shortCircuits(a), { quiet: true });
       total += run.step('idioms.table', 'Fold field assignments into table constructors', (a) => tableConstructors(a), { quiet: true });
       total += run.step('idioms.method', 'Write o.m(o, ...) as o:m(...)', (a) => methodCalls(a), { quiet: true });
+      total += run.step('idioms.unset', 'Read temporaries that were never assigned as nil', (a) => unsetLocals(a), { quiet: true });
       total += run.step('idioms.nil', 'Declare locals without an explicit nil', (a) => bareNils(a), { quiet: true });
       total += run.step('idioms.compare', 'Orient comparisons', (a) => orientComparisons(a), { quiet: true });
     }
@@ -174,6 +175,8 @@ export function recover(source, userOptions = {}) {
     if (vmified) total += run.step('prometheus.env', 'Read globals from the environment table again', (a) => envToGlobals(a), { quiet: true });
     if (decompiled) total += run.step('regions', 'Evaluate closed constant computations', (a) => regionPass(a), { quiet: true });
     if (decompiled) total += run.step('dataflow', 'Remove dead stores, copies and temporaries', (a) => dataflowPass(a), { quiet: true });
+    if (decompiled) total += run.step('idioms.loops', 'Write counting loops as for loops', (a) => numericLoops(a), { quiet: true });
+    if (decompiled) total += run.step('idioms.whiles', 'Move loop exit tests into the loop header', (a) => loopForms(a), { quiet: true });
     total += run.step('tidy', 'Tidy flipped tests', (a) => tidyIfs(a), { quiet: true });
     total += run.step('prometheus.proxify', 'Undo Prometheus ProxifyLocals', (a) => undoProxifyLocals(a), { quiet: true });
     if (options.sandbox.enabled) {

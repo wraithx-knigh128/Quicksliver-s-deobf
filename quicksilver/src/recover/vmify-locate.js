@@ -71,7 +71,12 @@ function dispatcherOf(f, info) {
   if (!loop) return null;
   const p0 = info.varOf.get(f.params[0]);
   const c = stripParens(loop.cond);
-  if (c.type === 'Name' && info.varOf.get(c) === p0) return { loop, tree: loop.body, posVar: p0 };
+  if (c.type === 'Name') {
+    // `while pos do`, with pos the parameter itself or a local that started as a copy of it
+    const pv = info.varOf.get(c);
+    if (pv === p0) return { loop, tree: loop.body, posVar: p0 };
+    if (pv && pv.hasInit && pv.init && stripParens(pv.init).type === 'Name' && info.varOf.get(stripParens(pv.init)) === p0) return { loop, tree: loop.body, posVar: pv };
+  }
   if (c.type === 'True') {
     // `while pos do` written as `while true do if not pos then break end ...` with pos a copy of the parameter
     const first = loop.body[0];

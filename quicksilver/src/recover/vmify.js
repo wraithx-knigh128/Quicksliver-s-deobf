@@ -984,7 +984,13 @@ function recoverFunction(entryIdIn, upvalNames, ctx) {
     switch (e.type) {
       case 'Name': {
         const v = info.varOf.get(e);
-        if (v && ctx.isRegister(v)) { const n = webs.webName(e); if (!n) fail(`register ${e.name} has no web`); return nameNode(n); }
+        if (v && ctx.isRegister(v)) {
+          // read before anything was assigned on any path to it: nil
+          if (webs.entryOnly(e)) return { type: 'Nil' };
+          const n = webs.webName(e);
+          if (!n) fail(`register ${e.name} has no web`);
+          return nameNode(n);
+        }
         if (v === ctx.roles.env) return nameNode('__env');
         if (v === ctx.roles.unpack) return nameNode('unpack');
         if (v === ctx.roles.select) return nameNode('select');

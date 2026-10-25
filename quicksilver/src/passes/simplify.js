@@ -22,7 +22,7 @@ const PURE_CALLEES = new Set([
   'setmetatable', 'rawget', 'rawequal', 'type', 'tostring', 'tonumber', 'select', 'unpack',
   'string.char', 'string.byte', 'string.sub', 'string.rep', 'string.reverse', 'string.lower', 'string.upper',
   'string.len', 'string.format', 'math.floor', 'math.ceil', 'math.abs', 'math.sqrt', 'math.max', 'math.min',
-  'table.concat', 'table.unpack',
+  'table.concat', 'table.unpack', 'getfenv', 'getmetatable',
 ]);
 
 /** Name of the standard function a callee refers to (`string.char`), or null. Needs scope info. */

@@ -9,7 +9,10 @@
 //   tableConstructors   `local t = {}  t.a = 1  t.b = 2`  ->  `local t = { a = 1, b = 2 }`
 //   methodCalls         `f = o.m  f(o, a)`  ->  `o:m(a)`   (once the temporary is gone: `o.m(o, a)`)
 //   bareNils            `local x = nil`  ->  `local x`
+//   unsetLocals         a temporary declared without a value and never assigned is `nil` where it is read
 //   orientComparisons   `0 < n`  ->  `n > 0`   (the compiler swaps the operands of `>` and `>=`)
+//   numericLoops        `local i = 0  while true do i = i + 1  if not (i <= n) then break end  ...  end`  ->  `for i = 1, n do ... end`
+//   loopForms           `while true do if c then break end ... end`  ->  `while not c do ... end`,  a break test at the end -> `repeat ... until c`
 //   functionForms       `T.f = function(...)`  ->  `function T.f(...)`,  `T.f = function(p, ...)`  ->  `function T:f(...)`
 //                       when the script calls `:f(`,  `local f = function` -> `local function f`
 //
@@ -19,6 +22,7 @@ import { transform, walk } from '../core/walk.js';
 import { analyze } from '../core/scope.js';
 import { isIdentifier } from '../core/printer.js';
 import { negateCondition } from './structure.js';
+import { isMachineName } from './rename.js';
 
 const COMPARISON = new Set(['==', '~=', '<', '<=', '>', '>=']);
 
@@ -163,6 +167,22 @@ export function bareNils(chunk) {
   return { changed };
 }
 
+/** A machine-named local declared without a value and never assigned is nil wherever it is read. */
+export function unsetLocals(chunk) {
+  const info = analyze(chunk);
+  let changed = 0;
+  transform(chunk, {
+    expr(e) {
+      if (e.type !== 'Name') return undefined;
+      const v = info.varOf.get(e);
+      if (!v || v.isGlobal || v.kind !== 'local' || v.hasInit || v.writes.length || !v.init || v.init.type !== 'Nil' || !isMachineName(v.name)) return undefined;
+      changed++;
+      return { type: 'Nil' };
+    },
+  });
+  return { changed };
+}
+
 const isLiteral = (e) => e.type === 'Number' || e.type === 'String' || (e.type === 'Unary' && e.op === '-' && e.arg.type === 'Number');
 
 export function orientComparisons(chunk) {
@@ -239,6 +259,188 @@ export function shortCircuits(chunk) {
   return { changed };
 }
 
+
+// ---- loops ---------------------------------------------------------------------------------------------------------
+
+const isBreakGuard = (s) => s && s.type === 'If' && s.clauses.length === 1 && !s.orelse && s.clauses[0].body.length === 1 && s.clauses[0].body[0].type === 'Break';
+const unparen = (e) => { while (e && e.type === 'Paren') e = e.expr; return e; };
+const num = (value) => ({ type: 'Number', value, raw: null });
+
+function hasJump(body) {
+  let found = false;
+  walk(body, (n) => { if (n.type === 'Func') return false; if (n.type === 'Continue' || n.type === 'Goto' || n.type === 'Label') found = true; return undefined; });
+  return found;
+}
+
+/** `while true do if c then break end ... end` is `while not c do ... end`; a break test as the last statement makes it `repeat ... until c`. */
+export function loopForms(chunk) {
+  let changed = 0;
+  const info = analyze(chunk);
+  // `local done = e  until done`: the flag is only there to carry the test
+  const inlineFlag = (body, cond) => {
+    const c = unparen(cond);
+    const prev = body[body.length - 1];
+    if (c.type === 'Name' && prev && prev.type === 'Local' && prev.ids.length === 1 && prev.values.length === 1) {
+      const fv = info.varOf.get(prev.ids[0]);
+      if (fv && fv === info.varOf.get(c) && fv.reads.length === 1 && fv.writes.length === 0) return { body: body.slice(0, -1), cond: prev.values[0] };
+    }
+    return { body, cond };
+  };
+  transform(chunk, {
+    stmt(s) {
+      if (s.type === 'Repeat') {
+        const r = inlineFlag(s.body, s.cond);
+        if (r.cond === s.cond) return undefined;
+        changed++;
+        return { ...s, body: r.body, cond: r.cond };
+      }
+      if (s.type !== 'While' || unparen(s.cond).type !== 'True') return undefined;
+      const first = s.body[0];
+      if (isBreakGuard(first)) {
+        changed++;
+        return { ...s, cond: negateCondition(first.clauses[0].cond), body: s.body.slice(1) };
+      }
+      const last = s.body[s.body.length - 1];
+      if (isBreakGuard(last) && s.body.length > 1 && !hasJump(s.body)) {
+        changed++;
+        const r = inlineFlag(s.body.slice(0, -1), last.clauses[0].cond);
+        return { type: 'Repeat', body: r.body, cond: r.cond, comments: s.comments, line: s.line, blankBefore: s.blankBefore };
+      }
+      return undefined;
+    },
+  });
+  return { changed };
+}
+
+/**
+ * A `for` loop through a register machine: the counter is stepped, compared with the limit and the loop left when it is past.
+ * Read back into `for i = a, b, k do`, as long as nothing outside the loop looks at the counter and the limit stays put.
+ */
+export function numericLoops(chunk) {
+  let changed = 0;
+  for (let round = 0; round < 64; round++) {
+    const info = analyze(chunk);
+    let done = false;
+    transform(chunk, {
+      block(stmts) {
+        if (done) return undefined;
+        for (let i = 0; i < stmts.length; i++) {
+          const rewritten = tryNumericLoop(stmts, i, info);
+          if (rewritten) { done = true; changed++; return rewritten; }
+        }
+        return undefined;
+      },
+    });
+    if (!done) break;
+  }
+  return { changed };
+}
+
+/** The statement list with the loop at `at` written as a `for`, or null. */
+function tryNumericLoop(stmts, at, info) {
+  const loop = stmts[at];
+  if (loop.type !== 'While' || unparen(loop.cond).type !== 'True' || loop.body.length < 3 || hasJump(loop.body)) return null;
+  const v = (n) => (n && n.type === 'Name' ? info.varOf.get(n) : null);
+  const loopNodes = new Set();
+  walk(loop, (n) => { loopNodes.add(n); });
+
+  // 1. the step: `c = c + k`, or `local n = c + k  c = n` (n is then the loop variable)
+  const stepOf = (e, c) => {
+    const x = unparen(e);
+    if (x.type !== 'Binary' || (x.op !== '+' && x.op !== '-')) return null;
+    const l = unparen(x.left);
+    const r = unparen(x.right);
+    if (v(l) === c && r.type === 'Number' && r.value !== 0) return x.op === '+' ? r.value : -r.value;
+    if (x.op === '+' && v(r) === c && l.type === 'Number' && l.value !== 0) return l.value;
+    return null;
+  };
+  const first = loop.body[0];
+  let counter = null;
+  let loopVar = null;
+  let k = null;
+  let used = 0;
+  if (first.type === 'Assign' && first.targets.length === 1 && first.values.length === 1 && first.targets[0].type === 'Name') {
+    counter = v(first.targets[0]);
+    k = counter ? stepOf(first.values[0], counter) : null;
+    loopVar = counter;
+    used = 1;
+  } else if (first.type === 'Local' && first.ids.length === 1 && first.values.length === 1) {
+    const second = loop.body[1];
+    if (!second || second.type !== 'Assign' || second.targets.length !== 1 || second.values.length !== 1 || second.targets[0].type !== 'Name') return null;
+    counter = v(second.targets[0]);
+    loopVar = info.varOf.get(first.ids[0]);
+    if (!counter || !loopVar || v(unparen(second.values[0])) !== loopVar || loopVar.writes.length) return null;
+    k = stepOf(first.values[0], counter);
+    used = 2;
+  } else return null;
+  if (!counter || counter.isGlobal || !loopVar || !k || !Number.isFinite(k)) return null;
+
+  // 2. the comparison locals, then `if not (i <= limit) then break end`
+  const flags = new Map();                       // Var -> its comparison
+  let j = used;
+  for (; j < loop.body.length; j++) {
+    const st = loop.body[j];
+    if (st.type !== 'Local' || st.ids.length !== 1 || st.values.length !== 1) break;
+    const cmp = unparen(st.values[0]);
+    if (cmp.type !== 'Binary' || !COMPARISON.has(cmp.op)) break;
+    flags.set(info.varOf.get(st.ids[0]), cmp);
+  }
+  const guard = loop.body[j];
+  if (!isBreakGuard(guard)) return null;
+  let cond = unparen(guard.clauses[0].cond);
+  if (cond.type !== 'Unary' || cond.op !== 'not') return null;
+  cond = unparen(cond.arg);
+  if (cond.type === 'Name' && flags.has(v(cond))) cond = flags.get(v(cond));
+  if (cond.type !== 'Binary') return null;
+  // the test, read as `loopVar <= limit` when counting up and `loopVar >= limit` when counting down
+  const left = unparen(cond.left);
+  const right = unparen(cond.right);
+  let limit = null;
+  let op = null;
+  if (v(left) === loopVar) { limit = right; op = cond.op; }
+  else if (v(right) === loopVar) { limit = left; op = { '<=': '>=', '>=': '<=', '<': '>', '>': '<' }[cond.op]; }
+  if (!limit || !((k > 0 && op === '<=') || (k < 0 && op === '>='))) return null;
+  const body = loop.body.slice(j + 1);
+
+  // 3. nothing else may look at the flags or the counter, and the limit has to stay where it is
+  for (const [fv] of flags) if (fv.reads.some((r) => !loopNodes.has(r) || body.some((st) => { let hit = false; walk(st, (n) => { if (n === r) hit = true; }); return hit; }))) return null;
+  const limitVar = limit.type === 'Name' ? v(limit) : null;
+  if (!(limit.type === 'Number' || (limitVar && !limitVar.isGlobal && limitVar.writes.every((w) => !loopNodes.has(w))))) return null;
+  let initIndex = -1;
+  for (let q = at - 1; q >= Math.max(0, at - 3) && initIndex < 0; q--) {
+    const st = stmts[q];
+    const set = st.type === 'Local' ? [st.ids[0] && info.varOf.get(st.ids[0]), st.values[0]] : st.type === 'Assign' && st.targets[0].type === 'Name' ? [info.varOf.get(st.targets[0]), st.values[0]] : null;
+    if (set && set[0] === counter && (st.values || []).length === 1 && unparen(set[1]).type === 'Number' && (st.type === 'Assign' ? st.targets.length === 1 : st.ids.length === 1)) initIndex = q;
+  }
+  if (initIndex < 0) return null;
+  const init = stmts[initIndex];
+  const outsideWrites = counter.writes.filter((w) => !loopNodes.has(w)).length;
+  if (outsideWrites !== (init.type === 'Assign' ? 1 : 0)) return null;
+  if (counter.writes.filter((w) => loopNodes.has(w)).length !== 1) return null;
+  if (counter.reads.some((r) => !loopNodes.has(r))) return null;
+  if (loopVar !== counter && counter.reads.length !== 1) return null;
+
+  // 4. a limit held in a register that nothing else reads is the limit expression itself
+  let stopExpr = limit;
+  let dropIndex = -1;
+  if (limitVar && limitVar.hasInit && limitVar.writes.length === 0 && limitVar.reads.length === 1) {
+    for (let q = initIndex - 1; q >= Math.max(0, initIndex - 2); q--) {
+      const st = stmts[q];
+      if (st.type === 'Local' && st.ids.length === 1 && st.values.length === 1 && info.varOf.get(st.ids[0]) === limitVar && stmts.slice(q + 1, at).every((x) => x === init)) { stopExpr = st.values[0]; dropIndex = q; break; }
+    }
+  }
+
+  const header = {
+    type: 'NumFor',
+    id: { type: 'Id', name: loopVar.name },
+    start: num(unparen(init.values[0]).value + k),
+    stop: stopExpr,
+    step: k === 1 ? null : num(k),
+    body,
+    comments: loop.comments, line: loop.line, blankBefore: loop.blankBefore,
+  };
+  return stmts.flatMap((st, q) => (q === initIndex || q === dropIndex ? [] : [q === at ? header : st]));
+}
 
 /**
  * A call that yields several values is wrapped by a register machine as `unpack({ f(x) })`, which says what `f(x)` says. The
