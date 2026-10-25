@@ -10,6 +10,7 @@ import { $, h, icon, clear, replace, toast, modal, fmtBytes, fmtMs, pct } from '
 import { Engine, EngineError } from './engine-client.js';
 import { Viewer, LH } from './viewer.js';
 import { HighlightLayer } from './hl-layer.js';
+import { ExamplesBoard } from './examples.js';
 import { DiffView } from './diffview.js';
 import { TreeView } from './tree.js';
 import { loadSettings, saveSettings, recoverOptions, indentString, DEFAULTS } from './settings.js';
@@ -19,7 +20,7 @@ import { detectionView, analysisView, recoverySummary, detectionSummary, statusB
 import { makeZip } from './zip.js';
 import { showHelp } from './help.js';
 import { originView } from './origin-view.js';
-import { mergeOnline } from '../origin/index.js';
+import { mergeOnline, originAnalysis } from '../origin/index.js';
 import { readFileBytes, download, baseName, FileRejected, ACCEPTED } from './files.js';
 import { bytesToBinary, binaryToBytes, binaryToText, textToBinary } from '../core/bytes.js';
 
@@ -70,8 +71,9 @@ const TABS = [
   { id: 'compare', label: 'Compare' },
   { id: 'detection', label: 'Detection' },
   { id: 'analysis', label: 'Analysis' },
-  { id: 'origin', label: 'Origin' },
+  { id: 'origin', label: 'AI check' },
   { id: 'luast', label: 'Luast' },
+  { id: 'examples', label: 'Examples' },
   { id: 'compat', label: 'Compatibility' },
 ];
 
@@ -100,7 +102,6 @@ function emptyState(title, text, action) {
 const editor = h('textarea.editor', {
   spellcheck: 'false', autocapitalize: 'off', autocomplete: 'off', wrap: 'off',
   'aria-label': 'Obfuscated source',
-  placeholder: 'Paste the obfuscated source here, or drop a .lua, .luau or .txt file.\n\nThe text stays in this page. Nothing is uploaded and nothing is executed.',
 });
 const gutterNums = h('div.nums');
 const gutter = h('div.gutter', gutterNums);
@@ -108,7 +109,14 @@ const srcFind = h('input', { type: 'search', placeholder: 'Find', 'aria-label': 
 const srcMeta = h('span.meta');
 const wrapBtn = h('button.btn.small', { type: 'button', 'aria-pressed': 'false', title: 'Wrap long lines (minified scripts are one very long line)', onclick: () => setWrap(!settings.wrap) }, 'Wrap');
 const hl = new HighlightLayer(editor);
-const codeWrap = h('div.code-wrap', gutter, h('div.edit-stack', hl.root, editor));
+// What the top editor says while it is empty: what this page is for, and the two ways to start
+const hero = h('div.hero',
+  h('h2', 'Paste obfuscated Lua.', h('span', 'Get readable code back.')),
+  h('div.hero-actions',
+    h('button.btn.primary.big', { type: 'button', onclick: () => el.file.click() }, 'Open file'),
+    h('button.drop', { type: 'button', onclick: () => el.btn.samples.click() }, 'Load an example script')),
+  h('p.fine', 'Runs in your browser. Nothing is uploaded and nothing is executed.'));
+const codeWrap = h('div.code-wrap', gutter, h('div.edit-stack', hl.root, editor, hero));
 const maxButtons = {};
 function maxButton(which) {
   const b = h('button.btn.small.icon', { type: 'button', 'aria-pressed': 'false', title: 'Give this editor the whole height (double-click its title bar too)', 'aria-label': 'Maximise this editor', onclick: () => toggleMax(which) }, icon('max'));
@@ -230,7 +238,7 @@ const rightCol = h('section.col', { 'aria-label': 'Deobfuscated source' },
     h('button.btn.small', { type: 'button', title: 'Copy the result to the clipboard', onclick: copyOutput }, icon('copy'), h('span.lbl', 'Copy')),
     maxButton('bottom')),
   h('div#out-body.view', outViewer.root),
-  h('div#out-empty.view', emptyState('Nothing recovered yet', 'Paste or open an obfuscated script, then press Recover. Beautify only re-indents; it decodes nothing.')));
+  h('div#out-empty.view', emptyState('Nothing recovered yet', 'Paste or open an obfuscated script, then press Deobfuscate. Beautify only re-indents; it decodes nothing.')));
 function findOut(step) {
   const q = outFind.value;
   if (!q) { outCount.textContent = ''; return; }
@@ -250,7 +258,9 @@ const noteBox = h('div.notes', { id: 'notes', role: 'status' });
 const resultFacts = h('div.facts');
 const resultActs = h('div.acts');
 const resultBar = h('div.resultbar', { id: 'resultbar' }, resultFacts, resultActs);
-views.work = h('div.view.work', { id: 'view-work' }, noteBox, panes, resultBar);
+// AI check: always in view under the editors, so nobody has to know there is a tab for it
+const originBar = h('div.originbar', { id: 'originbar', role: 'status', 'aria-label': 'AI check' });
+views.work = h('div.view.work', { id: 'view-work' }, noteBox, panes, originBar, resultBar);
 
 /** One editor can take the whole height (the other keeps its text and comes back with the same button). */
 function toggleMax(which) {
@@ -330,6 +340,17 @@ views.luast = h('div.view', { id: 'view-luast' },
     h('button.btn.small', { type: 'button', onclick: () => tree.collapseAll() }, 'Collapse')),
   h('div#luast-body.view', tree.root), h('div#luast-empty.view'));
 views.compat = h('div.view', { id: 'view-compat' }, emptyState('Loading', 'Reading data/compat.json'));
+// Examples: every bundled script with an offline check and a timer (wired to the engine further down, once the helpers exist)
+const board = new ExamplesBoard({
+  samples: () => loadSamples(),
+  open: (item, recover) => openSample(item, recover),
+  bench: (item) => benchSample(item),
+  begin: (label) => { if (S.busy) { toast('Another operation is running.'); return false; } setBusy(label); return true; },
+  end: () => { setBusy(null); setStatus('Timing finished'); },
+  sandbox: () => !!(settings.sandbox && lic.allow('sandbox')),
+});
+board.root.id = 'view-examples';
+views.examples = board.root;
 
 for (const t of TABS) el.views.append(views[t.id]);
 
@@ -362,6 +383,7 @@ function switchTab(id) {
   if (id === 'work') { paintGutter(true); updateCaret(); outViewer.render(); hl.invalidate(); } else el.stPos.textContent = '';
   if (id === 'compare') diffView.render();
   if (id === 'luast') ensureLuast();
+  if (id === 'examples') board.show();
   if (id === 'detection' && !S.detection && inputPresent()) runDetect({ quiet: true });
   if (id === 'analysis' && !S.analysis && inputPresent()) runAnalyze({ quiet: true });
 }
@@ -592,6 +614,7 @@ async function runDetect({ quiet = false } = {}) {
   const r = await run('detect', {}, 'Detecting', { needsText: false });
   if (!r || version !== S.version) return null;
   S.detection = r.detection;
+  autoOrigin();
   renderAll();
   if (!quiet) switchTab('detection');
   return r;
@@ -641,6 +664,7 @@ async function runRecover({ quiet = false } = {}) {
     if (S.show === 'recover') { S.show = Object.keys(S.outputs)[0] || null; S.output = S.show ? S.outputs[S.show] : null; }
     if (r.error) S.notes = [{ kind: 'bad', text: `Recovery stopped: ${r.error.message}`, line: r.error.line, col: r.error.col }];
   }
+  autoOrigin();
   renderAll();
   if (!quiet) switchTab('work');
   return r;
@@ -839,11 +863,27 @@ async function runOrigin() {
   const subject = originSubject();
   const r = await run('origin', {}, 'Reading the style', { needsText: false, source: subject.text });
   if (!r) return null;
-  S.origin = { subject: subject.label, text: subject.text, derived: subject.derived, derivedFrom: subject.derivedFrom, analysis: r };
-  S.originOnline = null;
-  renderOrigin();
+  setOrigin(subject, r);
   switchTab('origin');
   return r;
+}
+
+function setOrigin(subject, analysis) {
+  S.origin = { subject: subject.label, text: subject.text, derived: subject.derived, derivedFrom: subject.derivedFrom, analysis };
+  S.originOnline = null;
+  renderOrigin();
+}
+
+/**
+ * The AI reading happens by itself: it is local, a few milliseconds of text statistics, so it runs on the page (not in the worker, which a button
+ * the person pressed may be using) as soon as the script is known. Large inputs wait for the button.
+ */
+const AUTO_ORIGIN_MAX = 400_000;
+function autoOrigin() {
+  if (!inputPresent() || S.dirty && editor.value.length > AUTO_ORIGIN_MAX) return;
+  const subject = originSubject();
+  if (subject.text.length > AUTO_ORIGIN_MAX) return;
+  try { setOrigin(subject, originAnalysis(subject.text)); } catch { /* the reading is a hint; a failure leaves the bar empty */ }
 }
 
 async function searchOnline() {
@@ -884,6 +924,45 @@ function renderOrigin() {
     { search: searchOnline, deobfuscate: async () => { await runRecover(); await runOrigin(); }, useInput: () => { S.originSubject = 'input'; runOrigin(); } },
   ));
   setCount('origin', o && o.analysis.assessable && !o.derived ? pct(o.analysis.ai.score) : '');
+  renderOriginBar();
+}
+
+/** One line under the editors: how AI-written it reads, how copied it looks, and what to press next. */
+function renderOriginBar() {
+  const o = S.origin;
+  const a = o && o.analysis;
+  const item = (title, value, label, extra) => h('span.ob-item', h('span.ob-title', title), ' ', h('b.ob-value', value), ' ', h('span.ob-label', label), extra || null);
+  const parts = [h('span.ob-name', 'AI check'), ' '];
+  const acts = [];
+  if (!inputPresent()) {
+    parts.push(' ', h('span.faint', 'Paste code to see how likely it is to be AI-written, vibe-coded or copied from someone else.'));
+  } else if (!a) {
+    parts.push(h('span.faint', 'Reading the style…'));
+  } else if (!a.assessable) {
+    parts.push(h('span.ob-label', 'Obfuscated code has no readable style, so there is nothing to measure yet.'));
+    acts.push(h('button.btn.small', { type: 'button', onclick: async () => { await runRecover(); await runOrigin(); } }, 'Deobfuscate, then check'));
+  } else {
+    const online = S.originOnline;
+    const hints = a.skid.signals.length;
+    const share = online && online.searched && online.share !== null ? online.share : null;
+    if (o.derived) {
+      parts.push(item('Written by AI', '—', `not readable: rebuilt from ${o.derivedFrom || 'an obfuscator'}`));
+    } else {
+      const lvl = a.ai.score >= 0.6 ? 'ai-high' : a.ai.score >= 0.4 ? 'ai-mid' : 'ai-low';
+      parts.push(h('span.ob-item.' + lvl, h('span.ob-title', 'Written by AI'), ' ', h('b.ob-value', a.ai.measured < 2 ? '—' : pct(a.ai.score)), ' ', h('span.ob-label', a.ai.label)));
+    }
+    if (share !== null) {
+      parts.push(item('Copied (skidded)', pct(share), online.label));
+    } else if (online && online.searched) {
+      parts.push(item('Copied (skidded)', '0%', online.label));
+    } else {
+      parts.push(item('Copied (skidded)', hints ? pct(a.skid.hint) : '—', hints ? `possible, ${hints} clue${hints === 1 ? '' : 's'} in the text` : 'not searched yet'));
+      if (a.fingerprints.length) acts.push(h('button.btn.small', { type: 'button', disabled: S.originBusy, title: 'Search GitHub’s public code for distinctive lines of this script (asks first)', onclick: searchOnline }, S.originBusy ? 'Searching…' : 'Search GitHub'));
+    }
+    if (a.confidence === 'low') parts.push(h('span.faint', 'short script: treat as a guess'));
+  }
+  acts.push(h('button.btn.small', { type: 'button', title: 'The signals behind these numbers', onclick: () => switchTab('origin') }, 'AI details'));
+  replace(originBar, h('div.ob-main', parts), h('div.ob-acts', acts));
 }
 
 async function runCompare() {
@@ -1014,24 +1093,39 @@ async function loadSamples() {
   }
   return samples;
 }
+/** Put a bundled example in the editor, and press Deobfuscate when asked to. */
+async function openSample(s, recover = false) {
+  if (S.busy) { toast('Another operation is running.'); return; }
+  try {
+    const res = await fetch(`data/samples/${s.file}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    loadBytes(s.file, new Uint8Array(await res.arrayBuffer()));
+    if (s.note) { S.notes.push({ kind: 'info', text: s.note }); renderInspector(); renderNotes(); }
+  } catch (e) { toast(`Could not load the sample: ${e.message}`); return; }
+  if (recover) await runRecover();
+}
+
+/** Recover one example in the background (no editor, no tab switch) and report how long it took. */
+async function benchSample(s) {
+  const res = await fetch(`data/samples/${s.file}`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const input = bytesToBinary(new Uint8Array(await res.arrayBuffer()));
+  const allowSandbox = lic.allow('sandbox');
+  const t0 = performance.now();
+  const r = await engine.run('recover', input, { ...recoverOptions(settings, { allowSandbox }), format: { indent: indentString(settings), width: settings.width } }, { timeoutMs: 180_000 });
+  return { wall: performance.now() - t0, r };
+}
+
 el.btn.samples.addEventListener('click', async () => {
   const idx = await loadSamples();
   const items = [];
   for (const g of idx.groups) {
     if (items.length) items.push('-');
     items.push({ label: g.label, sub: g.note || '', disabled: true, run() {} });
-    for (const s of g.items) items.push({
-      label: s.label, sub: s.sub || '', indent: true,
-      async run() {
-        try {
-          const res = await fetch(`data/samples/${s.file}`);
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          loadBytes(s.file, new Uint8Array(await res.arrayBuffer()));
-          if (s.note) { S.notes.push({ kind: 'info', text: s.note }); renderInspector(); }
-        } catch (e) { toast(`Could not load the sample: ${e.message}`); }
-      },
-    });
+    for (const s of g.items) items.push({ label: s.label, sub: s.sub || '', indent: true, run: () => openSample(s) });
   }
+  items.push('-');
+  items.push({ label: 'Time every example…', sub: 'Examples tab', run: () => { switchTab('examples'); } });
   showMenu(el.btn.samples, items);
 });
 
@@ -1312,6 +1406,7 @@ function renderAnalysis() {
 
 function renderStatus() {
   const bytes = !inputPresent() ? 0 : S.dirty ? editor.value.length : S.input.length;
+  hero.hidden = inputPresent();
   el.docname.textContent = inputPresent() ? S.name : '';
   el.docname.title = S.name;
   el.stSize.textContent = inputPresent() ? `${fmtBytes(bytes)} · ${sourceLines} lines${S.detection ? ` · ${S.detection.dialect.label}` : ''}` : '';
@@ -1333,7 +1428,7 @@ function renderResultBar() {
   const acts = [];
   const fact = (...c) => h('span.fact', ...c);
   if (!inputPresent()) {
-    facts.push(fact('Paste an obfuscated script on the left, or use Open File. Examples has a script from each supported obfuscator.'));
+    facts.push(fact('Paste an obfuscated script above, or use Open File. Load example has a script from each supported obfuscator; the Examples tab times them.'));
   } else {
     const det = S.detection;
     if (det) {

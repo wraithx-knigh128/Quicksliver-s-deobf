@@ -25,8 +25,10 @@ export const NOTES = {
       Strong: { technique: 'Strong preset' },
     },
     limits: [
-      'Vmify (the flattened register VM) is detected but its control flow is not reconstructed. Every preset that contains it (Weak, Medium, Strong) therefore stays at low fidelity.',
+      'Vmify (the flattened register VM) is unflattened: the dispatcher is walked, every block is turned back into statements and the control flow is rebuilt (also for the two Vmify layers of the Strong preset). The output behaves like the obfuscated script on real Lua 5.1; the original variable and function names are not in the output and cannot be recovered.',
+      'The anti-tamper check that Medium and Strong compile into the VM is removed by taint analysis when it is separable from the program; if a script mixes the two it is left alone and the step reports why.',
       'String decoders (EncryptStrings, ConstantArray) are evaluated only when sandboxed evaluation is switched on.',
+      'Recovery of the Strong preset takes several seconds in the browser (the two layers are rebuilt one after the other).',
     ],
   },
   hercules: {
@@ -83,11 +85,5 @@ export const OVERRIDES = {
     'mod-function_inlining': { status: 'unsupported', note: 'No dedicated pass; the output is left as the tool wrote it.' },
     heavy: { status: 'unsupported', note: 'Includes the virtual-machine module.' },
     maximum: { status: 'unsupported', note: 'Includes the virtual-machine and bytecode modules.' },
-  },
-  prometheus: {
-    'step-Vmify': { status: 'unsupported', note: 'The flattened VM is detected; its control flow is not reconstructed.' },
-    Weak: { status: 'unsupported', note: 'Contains Vmify.' },
-    Medium: { status: 'unsupported', note: 'Contains Vmify and a VM-embedded anti-tamper block.' },
-    Strong: { status: 'unsupported', note: 'Contains Vmify and a VM-embedded anti-tamper block.' },
   },
 };

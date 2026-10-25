@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-10-24T15:40:46.379Z",
+ "generatedAt": "2026-10-25T05:59:02.168Z",
  "sandbox": true,
  "results": [
   {
@@ -9,7 +9,7 @@
    "file": "s01_minify_basic__Minify.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.9917808219178083,
-   "ms": 26,
+   "ms": 20,
    "ok": true,
    "confidence": 0.9,
    "detected": [],
@@ -29,21 +29,30 @@
    "file": "s01_minify_basic__Weak.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.06103092783505155,
-   "ms": 166,
+   "ms": 224,
    "ok": true,
-   "confidence": 0.35,
+   "confidence": 0.9,
    "detected": [
     "prometheus:0.98"
    ],
    "steps": [
     "unwrap×1",
-    "fold×16",
-    "simplify×39",
-    "evaluate×41",
-    "rename×80"
+    "prometheus.vmify×5",
+    "idioms.nil×8",
+    "fold×31",
+    "simplify×153",
+    "dataflow×225",
+    "evaluate×28",
+    "idioms.results×3",
+    "idioms.compare×1",
+    "prometheus.env×9",
+    "idioms.whiles×1",
+    "idioms.loops×3",
+    "rename×25",
+    "idioms.functions×4"
    ],
-   "fidelityAfter": 0.0936058009228741,
-   "outputBytes": 11066,
+   "fidelityAfter": 0.6984924623115578,
+   "outputBytes": 1149,
    "behavior": "same",
    "behaviorOriginal": "same"
   },
@@ -54,23 +63,33 @@
    "file": "s01_minify_basic__Medium.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.022002912150137516,
-   "ms": 1157,
+   "ms": 840,
    "ok": true,
-   "confidence": 0.2,
+   "confidence": 0.9,
    "detected": [
     "prometheus:0.98"
    ],
    "steps": [
     "unwrap×1",
-    "fold×1420",
-    "simplify×39",
-    "evaluate×114",
-    "rename×112"
+    "prometheus.vmify×7",
+    "fold×1443",
+    "simplify×287",
+    "evaluate×151",
+    "idioms.nil×38",
+    "dataflow×521",
+    "idioms.whiles×5",
+    "idioms.results×3",
+    "idioms.unset×4",
+    "idioms.compare×1",
+    "prometheus.env×15",
+    "idioms.loops×3",
+    "rename×25",
+    "idioms.functions×4"
    ],
-   "fidelityAfter": 0.02978961087320797,
-   "outputBytes": 48811,
-   "behavior": "error: sample:791: Tamper Detected!",
-   "behaviorOriginal": "error: sample:791: Tamper Detected!"
+   "fidelityAfter": 0.5634517766497462,
+   "outputBytes": 1148,
+   "behavior": "same",
+   "behaviorOriginal": "same"
   },
   {
    "tool": "prometheus",
@@ -79,23 +98,34 @@
    "file": "s01_minify_basic__Strong.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.021679339912635497,
-   "ms": 3854,
+   "ms": 5088,
    "ok": true,
-   "confidence": 0.2,
+   "confidence": 0.9,
    "detected": [
     "prometheus:0.98"
    ],
    "steps": [
     "unwrap×1",
-    "fold×3859",
-    "simplify×39",
-    "evaluate×149",
-    "rename×245"
+    "prometheus.vmify×24",
+    "fold×3895",
+    "simplify×853",
+    "evaluate×198",
+    "idioms.nil×77",
+    "dataflow×1525",
+    "idioms.whiles×7",
+    "idioms.results×18",
+    "idioms.shortcircuit×11",
+    "idioms.unset×15",
+    "prometheus.env×24",
+    "idioms.compare×1",
+    "idioms.loops×3",
+    "rename×23",
+    "idioms.functions×4"
    ],
-   "fidelityAfter": 0.023944345575149652,
-   "outputBytes": 103108,
-   "behavior": "error: sample:668: Tamper Detected!",
-   "behaviorOriginal": "error: sample:668: Tamper Detected!"
+   "fidelityAfter": 0.7486910994764397,
+   "outputBytes": 1077,
+   "behavior": "same",
+   "behaviorOriginal": "same"
   },
   {
    "tool": "prometheus",
@@ -104,7 +134,7 @@
    "file": "s01_minify_basic__step-EncryptStrings.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.33055555555555555,
-   "ms": 28,
+   "ms": 17,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -152,7 +182,7 @@
    "file": "s01_minify_basic__step-SplitStrings.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.6700507614213198,
-   "ms": 3,
+   "ms": 4,
    "ok": true,
    "confidence": 0.75,
    "detected": [
@@ -217,7 +247,7 @@
    "file": "s01_minify_basic__step-WrapInFunction.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.981029810298103,
-   "ms": 4,
+   "ms": 3,
    "ok": true,
    "confidence": 0.9,
    "detected": [],
@@ -238,7 +268,7 @@
    "file": "s01_minify_basic__step-AddVararg.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.9917808219178083,
-   "ms": 2,
+   "ms": 3,
    "ok": true,
    "confidence": 0.9,
    "detected": [],
@@ -259,7 +289,7 @@
    "file": "s01_minify_basic__step-AntiTamper.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.3606102635228849,
-   "ms": 6,
+   "ms": 5,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -282,18 +312,28 @@
    "file": "s01_minify_basic__step-Vmify.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.09317585301837271,
-   "ms": 45,
+   "ms": 72,
    "ok": true,
-   "confidence": 0.35,
+   "confidence": 0.9,
    "detected": [
     "prometheus:0.93"
    ],
    "steps": [
-    "fold×8",
-    "rename×80"
+    "prometheus.vmify×5",
+    "idioms.nil×8",
+    "fold×23",
+    "simplify×120",
+    "dataflow×237",
+    "idioms.results×3",
+    "idioms.compare×1",
+    "prometheus.env×9",
+    "idioms.whiles×1",
+    "idioms.loops×3",
+    "rename×25",
+    "idioms.functions×4"
    ],
-   "fidelityAfter": 0.0936058009228741,
-   "outputBytes": 11066,
+   "fidelityAfter": 0.6984924623115578,
+   "outputBytes": 1149,
    "behavior": "same",
    "behaviorOriginal": "same"
   },
@@ -304,7 +344,7 @@
    "file": "s02_renamed_vars__Minify.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 1,
-   "ms": 4,
+   "ms": 3,
    "ok": true,
    "confidence": 0.9,
    "detected": [],
@@ -324,21 +364,29 @@
    "file": "s02_renamed_vars__Weak.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.0757396449704142,
-   "ms": 86,
+   "ms": 82,
    "ok": true,
-   "confidence": 0.35,
+   "confidence": 0.9,
    "detected": [
     "prometheus:0.98"
    ],
    "steps": [
     "unwrap×1",
-    "fold×63",
-    "simplify×39",
-    "evaluate×51",
-    "rename×69"
+    "prometheus.vmify×4",
+    "idioms.nil×11",
+    "fold×46",
+    "simplify×122",
+    "dataflow×201",
+    "evaluate×41",
+    "idioms.results×5",
+    "idioms.unset×3",
+    "prometheus.env×10",
+    "idioms.shortcircuit×1",
+    "rename×30",
+    "idioms.functions×3"
    ],
-   "fidelityAfter": 0.11282051282051282,
-   "outputBytes": 10785,
+   "fidelityAfter": 0.6850828729281768,
+   "outputBytes": 1660,
    "behavior": "same",
    "behaviorOriginal": "same"
   },
@@ -349,23 +397,33 @@
    "file": "s02_renamed_vars__Medium.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.02952029520295203,
-   "ms": 1130,
+   "ms": 798,
    "ok": true,
-   "confidence": 0.2,
+   "confidence": 0.9,
    "detected": [
     "prometheus:0.98"
    ],
    "steps": [
     "unwrap×1",
-    "fold×1672",
-    "simplify×39",
-    "evaluate×124",
-    "rename×127"
+    "prometheus.vmify×6",
+    "fold×1676",
+    "simplify×282",
+    "evaluate×170",
+    "idioms.nil×41",
+    "dataflow×582",
+    "idioms.whiles×4",
+    "idioms.results×5",
+    "idioms.unset×7",
+    "idioms.compare×1",
+    "prometheus.env×16",
+    "idioms.shortcircuit×1",
+    "rename×31",
+    "idioms.functions×3"
    ],
-   "fidelityAfter": 0.03320438426821406,
-   "outputBytes": 56735,
-   "behavior": "error: sample:318: Tamper Detected!",
-   "behaviorOriginal": "error: sample:318: Tamper Detected!"
+   "fidelityAfter": 0.4908424908424908,
+   "outputBytes": 1689,
+   "behavior": "same",
+   "behaviorOriginal": "same"
   },
   {
    "tool": "prometheus",
@@ -374,23 +432,34 @@
    "file": "s02_renamed_vars__Strong.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.0291994224290069,
-   "ms": 3888,
+   "ms": 3539,
    "ok": true,
-   "confidence": 0.2,
+   "confidence": 0.71,
    "detected": [
     "prometheus:0.98"
    ],
    "steps": [
     "unwrap×1",
-    "fold×3822",
-    "simplify×39",
-    "evaluate×157",
-    "rename×225"
+    "prometheus.vmify×21",
+    "fold×3843",
+    "simplify×779",
+    "evaluate×201",
+    "idioms.nil×84",
+    "dataflow×1589",
+    "idioms.whiles×6",
+    "idioms.results×30",
+    "idioms.unset×24",
+    "prometheus.env×24",
+    "idioms.shortcircuit×3",
+    "idioms.loops×2",
+    "prometheus.environment×1",
+    "rename×70",
+    "idioms.functions×5"
    ],
-   "fidelityAfter": 0.03176640462056794,
-   "outputBytes": 101770,
-   "behavior": "error: sample:1746: Tamper Detected!",
-   "behaviorOriginal": "error: sample:1746: Tamper Detected!"
+   "fidelityAfter": 0.36507936507936506,
+   "outputBytes": 3492,
+   "behavior": "same",
+   "behaviorOriginal": "same"
   },
   {
    "tool": "prometheus",
@@ -423,7 +492,7 @@
    "file": "s02_renamed_vars__step-ConstantArray.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.21953065859197576,
-   "ms": 15,
+   "ms": 21,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -470,7 +539,7 @@
    "file": "s02_renamed_vars__step-NumbersToExpressions.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.8764940239043825,
-   "ms": 5,
+   "ms": 4,
    "ok": true,
    "confidence": 0.9,
    "detected": [],
@@ -490,7 +559,7 @@
    "file": "s02_renamed_vars__step-ProxifyLocals.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.3845223700120919,
-   "ms": 11,
+   "ms": 6,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -514,7 +583,7 @@
    "file": "s02_renamed_vars__step-WrapInFunction.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.9914893617021276,
-   "ms": 4,
+   "ms": 2,
    "ok": true,
    "confidence": 0.9,
    "detected": [],
@@ -579,18 +648,27 @@
    "file": "s02_renamed_vars__step-Vmify.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.11217335882727852,
-   "ms": 50,
+   "ms": 43,
    "ok": true,
-   "confidence": 0.35,
+   "confidence": 0.9,
    "detected": [
     "prometheus:0.93"
    ],
    "steps": [
-    "fold×8",
-    "rename×69"
+    "prometheus.vmify×4",
+    "idioms.nil×11",
+    "fold×4",
+    "simplify×102",
+    "dataflow×217",
+    "idioms.results×5",
+    "idioms.unset×3",
+    "prometheus.env×10",
+    "idioms.shortcircuit×1",
+    "rename×30",
+    "idioms.functions×3"
    ],
-   "fidelityAfter": 0.11282051282051282,
-   "outputBytes": 10785,
+   "fidelityAfter": 0.6850828729281768,
+   "outputBytes": 1660,
    "behavior": "same",
    "behaviorOriginal": "same"
   },
@@ -601,7 +679,7 @@
    "file": "s03_encoded_strings__Minify.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 1,
-   "ms": 4,
+   "ms": 3,
    "ok": true,
    "confidence": 0.9,
    "detected": [],
@@ -621,21 +699,25 @@
    "file": "s03_encoded_strings__Weak.lua",
    "toolBehavior": "diverged",
    "fidelityBefore": 0.052855120339782916,
-   "ms": 75,
+   "ms": 93,
    "ok": true,
-   "confidence": 0.35,
+   "confidence": 0.75,
    "detected": [
     "prometheus:0.98"
    ],
    "steps": [
     "unwrap×1",
-    "fold×13",
-    "simplify×39",
-    "evaluate×55",
-    "rename×52"
+    "prometheus.vmify×1",
+    "idioms.nil×14",
+    "fold×9",
+    "simplify×93",
+    "dataflow×118",
+    "idioms.results×5",
+    "prometheus.environment×1",
+    "rename×91"
    ],
-   "fidelityAfter": 0.0831918505942275,
-   "outputBytes": 8011,
+   "fidelityAfter": 0.09174311926605505,
+   "outputBytes": 7672,
    "behavior": "same",
    "behaviorOriginal": "differs"
   },
@@ -646,23 +728,31 @@
    "file": "s03_encoded_strings__Medium.lua",
    "toolBehavior": "diverged",
    "fidelityBefore": 0.016888600194868465,
-   "ms": 1002,
+   "ms": 718,
    "ok": true,
-   "confidence": 0.2,
+   "confidence": 0.9,
    "detected": [
     "prometheus:0.98"
    ],
    "steps": [
     "unwrap×1",
-    "fold×1651",
-    "simplify×39",
-    "evaluate×128",
-    "rename×119"
+    "prometheus.vmify×3",
+    "fold×1656",
+    "simplify×270",
+    "evaluate×167",
+    "idioms.nil×44",
+    "dataflow×528",
+    "idioms.whiles×4",
+    "idioms.results×5",
+    "idioms.method×7",
+    "idioms.unset×2",
+    "prometheus.env×21",
+    "rename×23"
    ],
-   "fidelityAfter": 0.020655270655270654,
-   "outputBytes": 53414,
-   "behavior": "error: sample:922: Tamper Detected!",
-   "behaviorOriginal": "error: sample:922: Tamper Detected!"
+   "fidelityAfter": 0.5647058823529412,
+   "outputBytes": 1464,
+   "behavior": "same",
+   "behaviorOriginal": "differs"
   },
   {
    "tool": "prometheus",
@@ -671,23 +761,32 @@
    "file": "s03_encoded_strings__Strong.lua",
    "toolBehavior": "diverged",
    "fidelityBefore": 0.016563819421890225,
-   "ms": 3169,
+   "ms": 2910,
    "ok": true,
-   "confidence": 0.2,
+   "confidence": 0.9,
    "detected": [
     "prometheus:0.98"
    ],
    "steps": [
     "unwrap×1",
-    "fold×3205",
-    "simplify×39",
-    "evaluate×157",
-    "rename×199"
+    "prometheus.vmify×14",
+    "fold×3222",
+    "simplify×704",
+    "evaluate×222",
+    "idioms.nil×87",
+    "dataflow×1352",
+    "idioms.whiles×6",
+    "idioms.results×33",
+    "idioms.unset×20",
+    "prometheus.env×30",
+    "idioms.shortcircuit×3",
+    "idioms.method×4",
+    "rename×34"
    ],
-   "fidelityAfter": 0.02013640792465086,
-   "outputBytes": 85629,
-   "behavior": "error: sample:1390: Tamper Detected!",
-   "behaviorOriginal": "error: sample:1390: Tamper Detected!"
+   "fidelityAfter": 0.4315352697095436,
+   "outputBytes": 1733,
+   "behavior": "same",
+   "behaviorOriginal": "differs"
   },
   {
    "tool": "prometheus",
@@ -696,7 +795,7 @@
    "file": "s03_encoded_strings__step-EncryptStrings.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.2709497206703911,
-   "ms": 10,
+   "ms": 9,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -720,7 +819,7 @@
    "file": "s03_encoded_strings__step-ConstantArray.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.16080402010050251,
-   "ms": 29,
+   "ms": 25,
    "ok": true,
    "confidence": 0.71,
    "detected": [
@@ -744,7 +843,7 @@
    "file": "s03_encoded_strings__step-SplitStrings.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.672463768115942,
-   "ms": 5,
+   "ms": 6,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -786,7 +885,7 @@
    "file": "s03_encoded_strings__step-ProxifyLocals.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.41134751773049644,
-   "ms": 4,
+   "ms": 6,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -831,7 +930,7 @@
    "file": "s03_encoded_strings__step-AddVararg.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 1,
-   "ms": 4,
+   "ms": 3,
    "ok": true,
    "confidence": 0.9,
    "detected": [],
@@ -851,7 +950,7 @@
    "file": "s03_encoded_strings__step-AntiTamper.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.34523809523809523,
-   "ms": 3,
+   "ms": 5,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -874,18 +973,25 @@
    "file": "s03_encoded_strings__step-Vmify.lua",
    "toolBehavior": "diverged",
    "fidelityBefore": 0.0829805249788315,
-   "ms": 56,
+   "ms": 59,
    "ok": true,
-   "confidence": 0.35,
+   "confidence": 0.9,
    "detected": [
     "prometheus:0.93"
    ],
    "steps": [
-    "fold×5",
-    "rename×52"
+    "prometheus.vmify×1",
+    "idioms.nil×14",
+    "fold×1",
+    "simplify×97",
+    "dataflow×189",
+    "idioms.results×5",
+    "idioms.method×3",
+    "prometheus.env×15",
+    "rename×26"
    ],
-   "fidelityAfter": 0.0831918505942275,
-   "outputBytes": 8011,
+   "fidelityAfter": 0.5178571428571429,
+   "outputBytes": 1546,
    "behavior": "same",
    "behaviorOriginal": "differs"
   },
@@ -896,7 +1002,7 @@
    "file": "s04_control_flow__Minify.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.9962962962962963,
-   "ms": 4,
+   "ms": 5,
    "ok": true,
    "confidence": 0.9,
    "detected": [],
@@ -916,21 +1022,31 @@
    "file": "s04_control_flow__Weak.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.0656498673740053,
-   "ms": 130,
+   "ms": 182,
    "ok": true,
-   "confidence": 0.35,
+   "confidence": 0.9,
    "detected": [
     "prometheus:0.98"
    ],
    "steps": [
     "unwrap×1",
-    "fold×67",
-    "simplify×39",
-    "evaluate×58",
-    "rename×86"
+    "prometheus.vmify×6",
+    "idioms.nil×15",
+    "fold×58",
+    "simplify×174",
+    "dataflow×272",
+    "idioms.whiles×3",
+    "evaluate×43",
+    "idioms.results×4",
+    "idioms.unset×1",
+    "prometheus.env×9",
+    "idioms.method×1",
+    "idioms.loops×2",
+    "rename×35",
+    "idioms.functions×5"
    ],
-   "fidelityAfter": 0.08337468982630274,
-   "outputBytes": 15609,
+   "fidelityAfter": 0.6097946287519748,
+   "outputBytes": 2142,
    "behavior": "same",
    "behaviorOriginal": "same"
   },
@@ -941,23 +1057,35 @@
    "file": "s04_control_flow__Medium.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.029350773648109747,
-   "ms": 1428,
+   "ms": 1017,
    "ok": true,
-   "confidence": 0.2,
+   "confidence": 0.9,
    "detected": [
     "prometheus:0.98"
    ],
    "steps": [
     "unwrap×1",
-    "fold×1827",
-    "simplify×39",
-    "evaluate×131",
-    "rename×121"
+    "prometheus.vmify×8",
+    "fold×1844",
+    "simplify×328",
+    "evaluate×180",
+    "idioms.nil×45",
+    "dataflow×666",
+    "idioms.whiles×7",
+    "idioms.results×4",
+    "idioms.unset×5",
+    "idioms.compare×1",
+    "prometheus.env×15",
+    "idioms.shortcircuit×2",
+    "idioms.method×1",
+    "idioms.loops×2",
+    "rename×35",
+    "idioms.functions×5"
    ],
-   "fidelityAfter": 0.03381719572499601,
-   "outputBytes": 63284,
-   "behavior": "error: sample:1050: Tamper Detected!",
-   "behaviorOriginal": "error: sample:1050: Tamper Detected!"
+   "fidelityAfter": 0.4518167456556082,
+   "outputBytes": 2140,
+   "behavior": "same",
+   "behaviorOriginal": "same"
   },
   {
    "tool": "prometheus",
@@ -966,23 +1094,35 @@
    "file": "s04_control_flow__Strong.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.02775562290636465,
-   "ms": 5604,
+   "ms": 7921,
    "ok": true,
-   "confidence": 0.2,
+   "confidence": 0.71,
    "detected": [
     "prometheus:0.98"
    ],
    "steps": [
     "unwrap×1",
-    "fold×5156",
-    "simplify×39",
-    "evaluate×168",
-    "rename×230"
+    "prometheus.vmify×27",
+    "fold×5185",
+    "simplify×1029",
+    "evaluate×216",
+    "idioms.nil×88",
+    "dataflow×1958",
+    "idioms.whiles×9",
+    "idioms.results×26",
+    "idioms.shortcircuit×9",
+    "idioms.unset×20",
+    "idioms.compare×1",
+    "prometheus.env×24",
+    "idioms.loops×4",
+    "idioms.method×1",
+    "rename×76",
+    "idioms.functions×7"
    ],
-   "fidelityAfter": 0.029669803796458765,
-   "outputBytes": 134778,
-   "behavior": "error: sample:1404: Tamper Detected!",
-   "behaviorOriginal": "error: sample:1404: Tamper Detected!"
+   "fidelityAfter": 0.38065843621399176,
+   "outputBytes": 3963,
+   "behavior": "same",
+   "behaviorOriginal": "same"
   },
   {
    "tool": "prometheus",
@@ -991,7 +1131,7 @@
    "file": "s04_control_flow__step-EncryptStrings.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.34404145077720205,
-   "ms": 13,
+   "ms": 14,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -1015,7 +1155,7 @@
    "file": "s04_control_flow__step-ConstantArray.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.23044692737430167,
-   "ms": 23,
+   "ms": 22,
    "ok": true,
    "confidence": 0.71,
    "detected": [
@@ -1082,7 +1222,7 @@
    "file": "s04_control_flow__step-ProxifyLocals.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.3982202447163515,
-   "ms": 8,
+   "ms": 9,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -1106,7 +1246,7 @@
    "file": "s04_control_flow__step-WrapInFunction.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.9889705882352942,
-   "ms": 5,
+   "ms": 3,
    "ok": true,
    "confidence": 0.9,
    "detected": [],
@@ -1148,7 +1288,7 @@
    "file": "s04_control_flow__step-AntiTamper.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.4263392857142857,
-   "ms": 7,
+   "ms": 5,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -1171,18 +1311,29 @@
    "file": "s04_control_flow__step-Vmify.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.08333333333333333,
-   "ms": 65,
+   "ms": 90,
    "ok": true,
-   "confidence": 0.35,
+   "confidence": 0.9,
    "detected": [
     "prometheus:0.93"
    ],
    "steps": [
-    "fold×5",
-    "rename×86"
+    "prometheus.vmify×6",
+    "idioms.nil×15",
+    "fold×14",
+    "simplify×147",
+    "dataflow×287",
+    "idioms.whiles×3",
+    "idioms.results×4",
+    "idioms.unset×1",
+    "prometheus.env×9",
+    "idioms.method×1",
+    "idioms.loops×2",
+    "rename×35",
+    "idioms.functions×5"
    ],
-   "fidelityAfter": 0.08337468982630274,
-   "outputBytes": 15609,
+   "fidelityAfter": 0.6097946287519748,
+   "outputBytes": 2142,
    "behavior": "same",
    "behaviorOriginal": "same"
   },
@@ -1193,7 +1344,7 @@
    "file": "s05_nested_functions__Minify.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.9981785063752276,
-   "ms": 5,
+   "ms": 4,
    "ok": true,
    "confidence": 0.9,
    "detected": [],
@@ -1213,21 +1364,29 @@
    "file": "s05_nested_functions__Weak.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.0688298918387414,
-   "ms": 131,
+   "ms": 109,
    "ok": true,
-   "confidence": 0.35,
+   "confidence": 0.9,
    "detected": [
     "prometheus:0.98"
    ],
    "steps": [
     "unwrap×1",
-    "fold×13",
-    "simplify×39",
-    "evaluate×41",
-    "rename×115"
+    "prometheus.vmify×16",
+    "idioms.nil×16",
+    "fold×19",
+    "simplify×167",
+    "dataflow×245",
+    "evaluate×20",
+    "idioms.results×6",
+    "idioms.unset×2",
+    "prometheus.env×10",
+    "idioms.loops×1",
+    "rename×61",
+    "idioms.functions×13"
    ],
-   "fidelityAfter": 0.08651162790697674,
-   "outputBytes": 14980,
+   "fidelityAfter": 0.4608567208271787,
+   "outputBytes": 2331,
    "behavior": "same",
    "behaviorOriginal": "same"
   },
@@ -1238,23 +1397,32 @@
    "file": "s05_nested_functions__Medium.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.029008606949314633,
-   "ms": 883,
+   "ms": 672,
    "ok": true,
-   "confidence": 0.2,
+   "confidence": 0.75,
    "detected": [
     "prometheus:0.98"
    ],
    "steps": [
     "unwrap×1",
-    "fold×1507",
-    "simplify×39",
+    "prometheus.vmify×18",
+    "fold×1529",
+    "simplify×300",
     "evaluate×114",
-    "rename×123"
+    "idioms.nil×45",
+    "dataflow×480",
+    "idioms.whiles×4",
+    "idioms.results×6",
+    "idioms.unset×6",
+    "prometheus.env×16",
+    "idioms.loops×3",
+    "rename×95",
+    "idioms.functions×16"
    ],
-   "fidelityAfter": 0.038787023977433006,
-   "outputBytes": 50247,
-   "behavior": "error: sample:347: Tamper Detected!",
-   "behaviorOriginal": "error: sample:347: Tamper Detected!"
+   "fidelityAfter": 0.296969696969697,
+   "outputBytes": 3971,
+   "behavior": "same",
+   "behaviorOriginal": "same"
   },
   {
    "tool": "prometheus",
@@ -1263,23 +1431,35 @@
    "file": "s05_nested_functions__Strong.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.029327382849856552,
-   "ms": 5668,
+   "ms": 7368,
    "ok": true,
-   "confidence": 0.2,
+   "confidence": 0.59,
    "detected": [
     "prometheus:0.98"
    ],
    "steps": [
     "unwrap×1",
-    "fold×4519",
-    "simplify×39",
-    "evaluate×157",
-    "rename×276"
+    "prometheus.vmify×43",
+    "fold×4546",
+    "simplify×952",
+    "evaluate×186",
+    "idioms.nil×85",
+    "dataflow×1911",
+    "idioms.whiles×6",
+    "idioms.results×45",
+    "idioms.shortcircuit×9",
+    "idioms.unset×20",
+    "idioms.compare×1",
+    "prometheus.env×24",
+    "idioms.loops×3",
+    "prometheus.environment×1",
+    "rename×102",
+    "idioms.functions×16"
    ],
-   "fidelityAfter": 0.02996493465094039,
-   "outputBytes": 118862,
-   "behavior": "error: sample:2417: Tamper Detected!",
-   "behaviorOriginal": "error: sample:2417: Tamper Detected!"
+   "fidelityAfter": 0.29651162790697677,
+   "outputBytes": 4310,
+   "behavior": "same",
+   "behaviorOriginal": "same"
   },
   {
    "tool": "prometheus",
@@ -1288,7 +1468,7 @@
    "file": "s05_nested_functions__step-EncryptStrings.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.40046565774155995,
-   "ms": 15,
+   "ms": 13,
    "ok": true,
    "confidence": 0.75,
    "detected": [
@@ -1311,7 +1491,7 @@
    "file": "s05_nested_functions__step-ConstantArray.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.25443786982248523,
-   "ms": 23,
+   "ms": 17,
    "ok": true,
    "confidence": 0.75,
    "detected": [
@@ -1357,7 +1537,7 @@
    "file": "s05_nested_functions__step-NumbersToExpressions.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.7865168539325843,
-   "ms": 7,
+   "ms": 3,
    "ok": true,
    "confidence": 0.9,
    "detected": [],
@@ -1377,7 +1557,7 @@
    "file": "s05_nested_functions__step-ProxifyLocals.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.3117370892018779,
-   "ms": 16,
+   "ms": 8,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -1422,7 +1602,7 @@
    "file": "s05_nested_functions__step-AddVararg.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.9981785063752276,
-   "ms": 8,
+   "ms": 3,
    "ok": true,
    "confidence": 0.9,
    "detected": [],
@@ -1443,7 +1623,7 @@
    "file": "s05_nested_functions__step-AntiTamper.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.3867403314917127,
-   "ms": 5,
+   "ms": 4,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -1466,18 +1646,27 @@
    "file": "s05_nested_functions__step-Vmify.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.08647140864714087,
-   "ms": 88,
+   "ms": 69,
    "ok": true,
-   "confidence": 0.35,
+   "confidence": 0.9,
    "detected": [
     "prometheus:0.93"
    ],
    "steps": [
-    "fold×5",
-    "rename×115"
+    "prometheus.vmify×16",
+    "idioms.nil×16",
+    "fold×11",
+    "simplify×130",
+    "dataflow×247",
+    "idioms.results×6",
+    "idioms.unset×2",
+    "prometheus.env×10",
+    "idioms.loops×1",
+    "rename×61",
+    "idioms.functions×13"
    ],
-   "fidelityAfter": 0.08651162790697674,
-   "outputBytes": 14980,
+   "fidelityAfter": 0.4608567208271787,
+   "outputBytes": 2331,
    "behavior": "same",
    "behaviorOriginal": "same"
   },
@@ -1488,7 +1677,7 @@
    "file": "s06_combined__Minify.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.7425860023724793,
-   "ms": 9,
+   "ms": 5,
    "ok": true,
    "confidence": 0.9,
    "detected": [],
@@ -1508,21 +1697,30 @@
    "file": "s06_combined__Weak.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.0739240506329114,
-   "ms": 229,
+   "ms": 169,
    "ok": true,
-   "confidence": 0.35,
+   "confidence": 0.9,
    "detected": [
     "prometheus:0.98"
    ],
    "steps": [
     "unwrap×1",
-    "fold×121",
-    "simplify×39",
-    "evaluate×113",
-    "rename×80"
+    "prometheus.vmify×14",
+    "idioms.nil×10",
+    "fold×100",
+    "simplify×183",
+    "dataflow×429",
+    "evaluate×90",
+    "idioms.results×11",
+    "idioms.method×9",
+    "idioms.unset×3",
+    "prometheus.env×14",
+    "idioms.loops×1",
+    "rename×49",
+    "idioms.functions×13"
    ],
-   "fidelityAfter": 0.1054532322137956,
-   "outputBytes": 19023,
+   "fidelityAfter": 0.6240681576144835,
+   "outputBytes": 2737,
    "behavior": "same",
    "behaviorOriginal": "same"
   },
@@ -1533,23 +1731,34 @@
    "file": "s06_combined__Medium.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.042095416276894296,
-   "ms": 2129,
+   "ms": 1292,
    "ok": true,
-   "confidence": 0.2,
+   "confidence": 0.9,
    "detected": [
     "prometheus:0.98"
    ],
    "steps": [
     "unwrap×1",
-    "fold×2111",
-    "simplify×39",
-    "evaluate×186",
-    "rename×127"
+    "prometheus.vmify×16",
+    "fold×2121",
+    "simplify×388",
+    "evaluate×259",
+    "idioms.nil×40",
+    "dataflow×997",
+    "idioms.whiles×5",
+    "idioms.results×11",
+    "idioms.method×9",
+    "idioms.unset×7",
+    "idioms.compare×1",
+    "prometheus.env×20",
+    "idioms.loops×1",
+    "rename×48",
+    "idioms.functions×13"
    ],
-   "fidelityAfter": 0.04552541315871531,
-   "outputBytes": 77390,
-   "behavior": "error: sample:1696: Tamper Detected!",
-   "behaviorOriginal": "error: sample:1696: Tamper Detected!"
+   "fidelityAfter": 0.6307857911733046,
+   "outputBytes": 2672,
+   "behavior": "same",
+   "behaviorOriginal": "same"
   },
   {
    "tool": "prometheus",
@@ -1558,23 +1767,35 @@
    "file": "s06_combined__Strong.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.039600873090115375,
-   "ms": 7027,
+   "ms": 13965,
    "ok": true,
-   "confidence": 0.2,
+   "confidence": 0.67,
    "detected": [
     "prometheus:0.98"
    ],
    "steps": [
     "unwrap×1",
-    "fold×6756",
-    "simplify×39",
-    "evaluate×223",
-    "rename×234"
+    "prometheus.vmify×35",
+    "fold×6779",
+    "simplify×1241",
+    "evaluate×322",
+    "idioms.nil×79",
+    "dataflow×2810",
+    "idioms.whiles×7",
+    "idioms.results×47",
+    "idioms.shortcircuit×8",
+    "idioms.unset×23",
+    "idioms.compare×1",
+    "prometheus.env×29",
+    "idioms.method×9",
+    "idioms.loops×3",
+    "rename×92",
+    "idioms.functions×15"
    ],
-   "fidelityAfter": 0.04178359837854693,
-   "outputBytes": 143355,
-   "behavior": "error: sample:1807: Tamper Detected!",
-   "behaviorOriginal": "error: sample:1807: Tamper Detected!"
+   "fidelityAfter": 0.4255650818394388,
+   "outputBytes": 4662,
+   "behavior": "same",
+   "behaviorOriginal": "same"
   },
   {
    "tool": "prometheus",
@@ -1583,7 +1804,7 @@
    "file": "s06_combined__step-EncryptStrings.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.35050071530758226,
-   "ms": 35,
+   "ms": 20,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -1607,7 +1828,7 @@
    "file": "s06_combined__step-ConstantArray.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.26307099614749585,
-   "ms": 36,
+   "ms": 27,
    "ok": true,
    "confidence": 0.55,
    "detected": [
@@ -1631,7 +1852,7 @@
    "file": "s06_combined__step-SplitStrings.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.6605504587155964,
-   "ms": 6,
+   "ms": 5,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -1654,7 +1875,7 @@
    "file": "s06_combined__step-NumbersToExpressions.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.6636871508379888,
-   "ms": 7,
+   "ms": 4,
    "ok": true,
    "confidence": 0.95,
    "detected": [],
@@ -1673,7 +1894,7 @@
    "file": "s06_combined__step-ProxifyLocals.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.45750595710881653,
-   "ms": 7,
+   "ms": 9,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -1697,7 +1918,7 @@
    "file": "s06_combined__step-WrapInFunction.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.7390791027154664,
-   "ms": 5,
+   "ms": 7,
    "ok": true,
    "confidence": 0.9,
    "detected": [],
@@ -1718,7 +1939,7 @@
    "file": "s06_combined__step-AddVararg.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.7425860023724793,
-   "ms": 5,
+   "ms": 6,
    "ok": true,
    "confidence": 0.9,
    "detected": [],
@@ -1739,7 +1960,7 @@
    "file": "s06_combined__step-AntiTamper.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.48206839032527105,
-   "ms": 6,
+   "ms": 10,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -1762,18 +1983,28 @@
    "file": "s06_combined__step-Vmify.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.10541516245487365,
-   "ms": 105,
+   "ms": 117,
    "ok": true,
-   "confidence": 0.35,
+   "confidence": 0.9,
    "detected": [
     "prometheus:0.93"
    ],
    "steps": [
-    "fold×4",
-    "rename×80"
+    "prometheus.vmify×14",
+    "idioms.nil×10",
+    "fold×6",
+    "simplify×176",
+    "dataflow×463",
+    "idioms.results×11",
+    "idioms.method×9",
+    "idioms.unset×3",
+    "prometheus.env×14",
+    "idioms.loops×1",
+    "rename×49",
+    "idioms.functions×13"
    ],
-   "fidelityAfter": 0.1054532322137956,
-   "outputBytes": 19023,
+   "fidelityAfter": 0.6240681576144835,
+   "outputBytes": 2737,
    "behavior": "same",
    "behaviorOriginal": "same"
   },
@@ -1803,7 +2034,7 @@
    "file": "s07_roblox_style__Weak.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.05161943319838057,
-   "ms": 48,
+   "ms": 60,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -1811,13 +2042,20 @@
    ],
    "steps": [
     "unwrap×1",
-    "fold×13",
-    "simplify×39",
-    "evaluate×58",
-    "rename×54"
+    "prometheus.vmify×3",
+    "idioms.nil×10",
+    "fold×9",
+    "simplify×109",
+    "dataflow×160",
+    "evaluate×48",
+    "idioms.method×8",
+    "idioms.unset×1",
+    "prometheus.env×7",
+    "rename×15",
+    "idioms.functions×2"
    ],
-   "fidelityAfter": 0.10700389105058365,
-   "outputBytes": 6626,
+   "fidelityAfter": 0.9027777777777778,
+   "outputBytes": 947,
    "behavior": "same",
    "behaviorOriginal": "same"
   },
@@ -1828,23 +2066,32 @@
    "file": "s07_roblox_style__Medium.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.015958312978342288,
-   "ms": 1147,
+   "ms": 751,
    "ok": true,
-   "confidence": 0.2,
+   "confidence": 0.9,
    "detected": [
     "prometheus:0.98"
    ],
    "steps": [
     "unwrap×1",
-    "fold×1551",
-    "simplify×39",
-    "evaluate×131",
-    "rename×122"
+    "prometheus.vmify×5",
+    "fold×1555",
+    "simplify×262",
+    "evaluate×182",
+    "idioms.nil×41",
+    "dataflow×549",
+    "idioms.whiles×4",
+    "idioms.method×8",
+    "idioms.unset×5",
+    "idioms.compare×1",
+    "prometheus.env×13",
+    "rename×17",
+    "idioms.functions×2"
    ],
-   "fidelityAfter": 0.02019147084421236,
-   "outputBytes": 53348,
-   "behavior": "error: sample:526: Tamper Detected!",
-   "behaviorOriginal": "error: sample:526: Tamper Detected!"
+   "fidelityAfter": 0.7560137457044673,
+   "outputBytes": 995,
+   "behavior": "same",
+   "behaviorOriginal": "same"
   },
   {
    "tool": "prometheus",
@@ -1853,23 +2100,35 @@
    "file": "s07_roblox_style__Strong.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.0149812734082397,
-   "ms": 2910,
+   "ms": 2363,
    "ok": true,
-   "confidence": 0.2,
+   "confidence": 0.75,
    "detected": [
     "prometheus:0.98"
    ],
    "steps": [
     "unwrap×1",
-    "fold×2746",
-    "simplify×39",
-    "evaluate×162",
-    "rename×226"
+    "prometheus.vmify×18",
+    "fold×2764",
+    "simplify×642",
+    "evaluate×214",
+    "idioms.nil×64",
+    "dataflow×1291",
+    "idioms.whiles×6",
+    "idioms.results×7",
+    "idioms.unset×9",
+    "idioms.compare×1",
+    "prometheus.env×22",
+    "idioms.shortcircuit×2",
+    "idioms.method×9",
+    "idioms.loops×2",
+    "rename×53",
+    "idioms.functions×4"
    ],
-   "fidelityAfter": 0.016283992835043153,
-   "outputBytes": 84414,
-   "behavior": "error: sample:1212: Tamper Detected!",
-   "behaviorOriginal": "error: sample:1212: Tamper Detected!"
+   "fidelityAfter": 0.3134087237479806,
+   "outputBytes": 2705,
+   "behavior": "same",
+   "behaviorOriginal": "same"
   },
   {
    "tool": "prometheus",
@@ -1878,7 +2137,7 @@
    "file": "s07_roblox_style__step-EncryptStrings.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.21052631578947367,
-   "ms": 9,
+   "ms": 12,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -1902,7 +2161,7 @@
    "file": "s07_roblox_style__step-ConstantArray.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.12647554806070826,
-   "ms": 14,
+   "ms": 16,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -1926,7 +2185,7 @@
    "file": "s07_roblox_style__step-SplitStrings.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.662379421221865,
-   "ms": 2,
+   "ms": 3,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -1969,7 +2228,7 @@
    "file": "s07_roblox_style__step-ProxifyLocals.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.3201267828843106,
-   "ms": 6,
+   "ms": 8,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -2033,7 +2292,7 @@
    "file": "s07_roblox_style__step-AntiTamper.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.322884012539185,
-   "ms": 3,
+   "ms": 4,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -2055,18 +2314,26 @@
    "file": "s07_roblox_style__step-Vmify.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.1066925315227934,
-   "ms": 23,
+   "ms": 25,
    "ok": true,
    "confidence": 0.9,
    "detected": [
     "prometheus:0.90"
    ],
    "steps": [
-    "fold×5",
-    "rename×54"
+    "prometheus.vmify×3",
+    "idioms.nil×10",
+    "fold×1",
+    "simplify×81",
+    "dataflow×167",
+    "idioms.method×8",
+    "idioms.unset×1",
+    "prometheus.env×7",
+    "rename×15",
+    "idioms.functions×2"
    ],
-   "fidelityAfter": 0.10700389105058365,
-   "outputBytes": 6626,
+   "fidelityAfter": 0.9027777777777778,
+   "outputBytes": 947,
    "behavior": "same",
    "behaviorOriginal": "same"
   },
@@ -2077,7 +2344,7 @@
    "file": "s01_minify_basic__light.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.6329113924050633,
-   "ms": 6,
+   "ms": 4,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -2100,7 +2367,7 @@
    "file": "s01_minify_basic__balanced.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.379746835443038,
-   "ms": 11,
+   "ms": 8,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -2124,7 +2391,7 @@
    "file": "s01_minify_basic__heavy.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.0825147347740668,
-   "ms": 75,
+   "ms": 32,
    "ok": true,
    "confidence": 0.75,
    "detected": [
@@ -2149,7 +2416,7 @@
    "file": "s01_minify_basic__maximum.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.175,
-   "ms": 211,
+   "ms": 162,
    "ok": true,
    "confidence": 0.2,
    "detected": [
@@ -2171,7 +2438,7 @@
    "file": "s01_minify_basic__mod-virtual_machine.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.06627017841971113,
-   "ms": 92,
+   "ms": 88,
    "ok": true,
    "confidence": 0.35,
    "detected": [
@@ -2194,7 +2461,7 @@
    "file": "s01_minify_basic__mod-antitamper.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.34600262123197906,
-   "ms": 4,
+   "ms": 8,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -2216,7 +2483,7 @@
    "file": "s01_minify_basic__mod-control_flow.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.6485148514851485,
-   "ms": 4,
+   "ms": 8,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -2238,7 +2505,7 @@
    "file": "s01_minify_basic__mod-string_to_expressions.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.35390946502057613,
-   "ms": 5,
+   "ms": 6,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -2260,7 +2527,7 @@
    "file": "s01_minify_basic__mod-string_encoding.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.4821092278719397,
-   "ms": 8,
+   "ms": 4,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -2371,7 +2638,7 @@
    "file": "s01_minify_basic__mod-function_inlining.lua",
    "toolBehavior": "errored",
    "fidelityBefore": null,
-   "ms": 0,
+   "ms": 1,
    "ok": false,
    "confidence": null,
    "detected": [
@@ -2391,7 +2658,7 @@
    "file": "s01_minify_basic__mod-dynamic_code.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.9282051282051282,
-   "ms": 6,
+   "ms": 4,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -2413,7 +2680,7 @@
    "file": "s01_minify_basic__mod-bytecode_encoding.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.175,
-   "ms": 2,
+   "ms": 1,
    "ok": true,
    "confidence": 0.2,
    "detected": [
@@ -2456,7 +2723,7 @@
    "file": "s02_renamed_vars__light.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.6309278350515464,
-   "ms": 6,
+   "ms": 5,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -2478,7 +2745,7 @@
    "file": "s02_renamed_vars__balanced.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.3776595744680851,
-   "ms": 11,
+   "ms": 10,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -2502,7 +2769,7 @@
    "file": "s02_renamed_vars__heavy.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.06269899583639481,
-   "ms": 71,
+   "ms": 54,
    "ok": true,
    "confidence": 0.75,
    "detected": [
@@ -2527,7 +2794,7 @@
    "file": "s02_renamed_vars__mod-virtual_machine.lua",
    "toolBehavior": "errored",
    "fidelityBefore": 0.0823327615780446,
-   "ms": 58,
+   "ms": 40,
    "ok": true,
    "confidence": 0.35,
    "detected": [
@@ -2549,7 +2816,7 @@
    "file": "s02_renamed_vars__mod-antitamper.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.3737024221453287,
-   "ms": 4,
+   "ms": 2,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -2570,7 +2837,7 @@
    "file": "s02_renamed_vars__mod-control_flow.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.6317829457364341,
-   "ms": 4,
+   "ms": 5,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -2591,7 +2858,7 @@
    "file": "s02_renamed_vars__mod-string_to_expressions.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.3333333333333333,
-   "ms": 6,
+   "ms": 5,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -2613,7 +2880,7 @@
    "file": "s02_renamed_vars__mod-string_encoding.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.4658385093167702,
-   "ms": 8,
+   "ms": 6,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -2656,7 +2923,7 @@
    "file": "s02_renamed_vars__mod-variable_renaming.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.6309278350515464,
-   "ms": 5,
+   "ms": 6,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -2678,7 +2945,7 @@
    "file": "s02_renamed_vars__mod-garbage_code.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.512,
-   "ms": 4,
+   "ms": 5,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -2699,7 +2966,7 @@
    "file": "s02_renamed_vars__mod-opaque_predicates.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.9414141414141414,
-   "ms": 7,
+   "ms": 8,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -2721,7 +2988,7 @@
    "file": "s02_renamed_vars__mod-function_inlining.lua",
    "toolBehavior": "errored",
    "fidelityBefore": 0.4585987261146497,
-   "ms": 5,
+   "ms": 7,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -2741,7 +3008,7 @@
    "file": "s02_renamed_vars__mod-dynamic_code.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.8726591760299626,
-   "ms": 5,
+   "ms": 8,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -2763,7 +3030,7 @@
    "file": "s02_renamed_vars__mod-bytecode_encoding.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.18493150684931506,
-   "ms": 2,
+   "ms": 3,
    "ok": true,
    "confidence": 0.2,
    "detected": [
@@ -2785,7 +3052,7 @@
    "file": "s02_renamed_vars__mod-compressor.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 1,
-   "ms": 2,
+   "ms": 3,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -2804,7 +3071,7 @@
    "file": "s03_encoded_strings__light.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.6051873198847262,
-   "ms": 5,
+   "ms": 6,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -2827,7 +3094,7 @@
    "file": "s03_encoded_strings__balanced.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.27575757575757576,
-   "ms": 10,
+   "ms": 13,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -2851,7 +3118,7 @@
    "file": "s03_encoded_strings__heavy.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.038353803059685415,
-   "ms": 83,
+   "ms": 68,
    "ok": true,
    "confidence": 0.75,
    "detected": [
@@ -2876,7 +3143,7 @@
    "file": "s03_encoded_strings__mod-virtual_machine.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.05830903790087463,
-   "ms": 52,
+   "ms": 44,
    "ok": true,
    "confidence": 0.35,
    "detected": [
@@ -2899,7 +3166,7 @@
    "file": "s03_encoded_strings__mod-antitamper.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.32357043235704325,
-   "ms": 3,
+   "ms": 2,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -2921,7 +3188,7 @@
    "file": "s03_encoded_strings__mod-control_flow.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.6338797814207651,
-   "ms": 4,
+   "ms": 3,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -2943,7 +3210,7 @@
    "file": "s03_encoded_strings__mod-string_to_expressions.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.15789473684210525,
-   "ms": 6,
+   "ms": 5,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -2987,7 +3254,7 @@
    "file": "s03_encoded_strings__mod-wrap_in_function.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.9905956112852664,
-   "ms": 3,
+   "ms": 2,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -3032,7 +3299,7 @@
    "file": "s03_encoded_strings__mod-garbage_code.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.5132743362831859,
-   "ms": 4,
+   "ms": 3,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -3054,7 +3321,7 @@
    "file": "s03_encoded_strings__mod-opaque_predicates.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.8586956521739131,
-   "ms": 3,
+   "ms": 2,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -3076,7 +3343,7 @@
    "file": "s03_encoded_strings__mod-function_inlining.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 1,
-   "ms": 3,
+   "ms": 2,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -3097,7 +3364,7 @@
    "file": "s03_encoded_strings__mod-dynamic_code.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.8586956521739131,
-   "ms": 6,
+   "ms": 2,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -3119,7 +3386,7 @@
    "file": "s03_encoded_strings__mod-bytecode_encoding.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.25806451612903225,
-   "ms": 1,
+   "ms": 2,
    "ok": true,
    "confidence": 0.2,
    "detected": [
@@ -3162,7 +3429,7 @@
    "file": "s04_control_flow__light.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.650088809946714,
-   "ms": 6,
+   "ms": 3,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -3185,7 +3452,7 @@
    "file": "s04_control_flow__balanced.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.37850467289719625,
-   "ms": 11,
+   "ms": 10,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -3209,7 +3476,7 @@
    "file": "s04_control_flow__heavy.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.04689743180730579,
-   "ms": 214,
+   "ms": 168,
    "ok": true,
    "confidence": 0.75,
    "detected": [
@@ -3234,7 +3501,7 @@
    "file": "s04_control_flow__mod-virtual_machine.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.0791044776119403,
-   "ms": 78,
+   "ms": 65,
    "ok": true,
    "confidence": 0.35,
    "detected": [
@@ -3257,7 +3524,7 @@
    "file": "s04_control_flow__mod-antitamper.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.40894568690095845,
-   "ms": 5,
+   "ms": 4,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -3301,7 +3568,7 @@
    "file": "s04_control_flow__mod-string_to_expressions.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.2724358974358974,
-   "ms": 8,
+   "ms": 5,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -3323,7 +3590,7 @@
    "file": "s04_control_flow__mod-string_encoding.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.4503311258278146,
-   "ms": 6,
+   "ms": 7,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -3345,7 +3612,7 @@
    "file": "s04_control_flow__mod-wrap_in_function.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.9944547134935305,
-   "ms": 5,
+   "ms": 4,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -3367,7 +3634,7 @@
    "file": "s04_control_flow__mod-variable_renaming.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.650088809946714,
-   "ms": 5,
+   "ms": 3,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -3412,7 +3679,7 @@
    "file": "s04_control_flow__mod-opaque_predicates.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.9746376811594203,
-   "ms": 4,
+   "ms": 5,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -3434,7 +3701,7 @@
    "file": "s04_control_flow__mod-function_inlining.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.48231511254019294,
-   "ms": 5,
+   "ms": 4,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -3455,7 +3722,7 @@
    "file": "s04_control_flow__mod-dynamic_code.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.8996655518394648,
-   "ms": 9,
+   "ms": 7,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -3477,7 +3744,7 @@
    "file": "s04_control_flow__mod-bytecode_encoding.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.14634146341463414,
-   "ms": 3,
+   "ms": 2,
    "ok": true,
    "confidence": 0.2,
    "detected": [
@@ -3499,7 +3766,7 @@
    "file": "s04_control_flow__mod-compressor.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 1,
-   "ms": 4,
+   "ms": 3,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -3520,7 +3787,7 @@
    "file": "s05_nested_functions__light.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.5739130434782609,
-   "ms": 8,
+   "ms": 6,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -3543,7 +3810,7 @@
    "file": "s05_nested_functions__balanced.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.39903264812575573,
-   "ms": 11,
+   "ms": 10,
    "ok": true,
    "confidence": 0.75,
    "detected": [
@@ -3566,7 +3833,7 @@
    "file": "s05_nested_functions__heavy.lua",
    "toolBehavior": "errored",
    "fidelityBefore": null,
-   "ms": 1,
+   "ms": 2,
    "ok": false,
    "confidence": null,
    "detected": [
@@ -3606,7 +3873,7 @@
    "file": "s05_nested_functions__mod-virtual_machine.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.08490566037735849,
-   "ms": 66,
+   "ms": 49,
    "ok": true,
    "confidence": 0.35,
    "detected": [
@@ -3629,7 +3896,7 @@
    "file": "s05_nested_functions__mod-antitamper.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.36880927291886195,
-   "ms": 7,
+   "ms": 5,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -3651,7 +3918,7 @@
    "file": "s05_nested_functions__mod-control_flow.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.5852842809364549,
-   "ms": 10,
+   "ms": 5,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -3695,7 +3962,7 @@
    "file": "s05_nested_functions__mod-string_encoding.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.5035765379113019,
-   "ms": 8,
+   "ms": 7,
    "ok": true,
    "confidence": 0.75,
    "detected": [
@@ -3717,7 +3984,7 @@
    "file": "s05_nested_functions__mod-wrap_in_function.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.9945553539019963,
-   "ms": 3,
+   "ms": 5,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -3739,7 +4006,7 @@
    "file": "s05_nested_functions__mod-variable_renaming.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.5739130434782609,
-   "ms": 6,
+   "ms": 7,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -3762,7 +4029,7 @@
    "file": "s05_nested_functions__mod-garbage_code.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.49647390691114246,
-   "ms": 5,
+   "ms": 7,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -3806,7 +4073,7 @@
    "file": "s05_nested_functions__mod-function_inlining.lua",
    "toolBehavior": "errored",
    "fidelityBefore": null,
-   "ms": 0,
+   "ms": 1,
    "ok": false,
    "confidence": null,
    "detected": [
@@ -3826,7 +4093,7 @@
    "file": "s05_nested_functions__mod-dynamic_code.lua",
    "toolBehavior": "errored",
    "fidelityBefore": 0.9256756756756757,
-   "ms": 5,
+   "ms": 6,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -3847,7 +4114,7 @@
    "file": "s05_nested_functions__mod-bytecode_encoding.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.14414414414414414,
-   "ms": 2,
+   "ms": 1,
    "ok": true,
    "confidence": 0.2,
    "detected": [
@@ -3890,7 +4157,7 @@
    "file": "s06_combined__light.lua",
    "toolBehavior": "errored",
    "fidelityBefore": 0.6828143021914648,
-   "ms": 7,
+   "ms": 8,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -3912,7 +4179,7 @@
    "file": "s06_combined__balanced.lua",
    "toolBehavior": "errored",
    "fidelityBefore": 0.4918032786885246,
-   "ms": 12,
+   "ms": 13,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -3935,7 +4202,7 @@
    "file": "s06_combined__heavy.lua",
    "toolBehavior": "errored",
    "fidelityBefore": 0.15776223776223777,
-   "ms": 47,
+   "ms": 44,
    "ok": true,
    "confidence": 0.75,
    "detected": [
@@ -3959,7 +4226,7 @@
    "file": "s06_combined__mod-virtual_machine.lua",
    "toolBehavior": "errored",
    "fidelityBefore": 0.10600706713780919,
-   "ms": 76,
+   "ms": 69,
    "ok": true,
    "confidence": 0.35,
    "detected": [
@@ -4003,7 +4270,7 @@
    "file": "s06_combined__mod-control_flow.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.6765375854214123,
-   "ms": 8,
+   "ms": 9,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -4047,7 +4314,7 @@
    "file": "s06_combined__mod-string_encoding.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.576,
-   "ms": 8,
+   "ms": 13,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -4069,7 +4336,7 @@
    "file": "s06_combined__mod-wrap_in_function.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.9963898916967509,
-   "ms": 6,
+   "ms": 4,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -4091,7 +4358,7 @@
    "file": "s06_combined__mod-variable_renaming.lua",
    "toolBehavior": "errored",
    "fidelityBefore": 0.6828143021914648,
-   "ms": 10,
+   "ms": 7,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -4113,7 +4380,7 @@
    "file": "s06_combined__mod-garbage_code.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.6145833333333334,
-   "ms": 6,
+   "ms": 5,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -4135,7 +4402,7 @@
    "file": "s06_combined__mod-opaque_predicates.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.9345372460496614,
-   "ms": 8,
+   "ms": 9,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -4157,7 +4424,7 @@
    "file": "s06_combined__mod-function_inlining.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.9042424242424243,
-   "ms": 5,
+   "ms": 6,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -4178,7 +4445,7 @@
    "file": "s06_combined__mod-dynamic_code.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.915929203539823,
-   "ms": 8,
+   "ms": 7,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -4243,7 +4510,7 @@
    "file": "s07_roblox_style__light.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.7038327526132404,
-   "ms": 3,
+   "ms": 5,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -4265,7 +4532,7 @@
    "file": "s07_roblox_style__balanced.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.3181818181818182,
-   "ms": 8,
+   "ms": 15,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -4289,7 +4556,7 @@
    "file": "s07_roblox_style__heavy.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.05180388529139685,
-   "ms": 50,
+   "ms": 46,
    "ok": true,
    "confidence": 0.75,
    "detected": [
@@ -4314,7 +4581,7 @@
    "file": "s07_roblox_style__maximum.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.22,
-   "ms": 361,
+   "ms": 272,
    "ok": true,
    "confidence": 0.2,
    "detected": [
@@ -4336,7 +4603,7 @@
    "file": "s07_roblox_style__mod-virtual_machine.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.05632411067193676,
-   "ms": 66,
+   "ms": 60,
    "ok": true,
    "confidence": 0.35,
    "detected": [
@@ -4401,7 +4668,7 @@
    "file": "s07_roblox_style__mod-string_to_expressions.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.19583333333333333,
-   "ms": 6,
+   "ms": 5,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -4423,7 +4690,7 @@
    "file": "s07_roblox_style__mod-string_encoding.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.4043478260869565,
-   "ms": 7,
+   "ms": 12,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -4466,7 +4733,7 @@
    "file": "s07_roblox_style__mod-variable_renaming.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.7038327526132404,
-   "ms": 5,
+   "ms": 3,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -4531,7 +4798,7 @@
    "file": "s07_roblox_style__mod-function_inlining.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.6881720430107527,
-   "ms": 3,
+   "ms": 1,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -4552,7 +4819,7 @@
    "file": "s07_roblox_style__mod-dynamic_code.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.9096774193548387,
-   "ms": 3,
+   "ms": 2,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -4574,7 +4841,7 @@
    "file": "s07_roblox_style__mod-bytecode_encoding.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.22,
-   "ms": 2,
+   "ms": 1,
    "ok": true,
    "confidence": 0.2,
    "detected": [
@@ -4596,7 +4863,7 @@
    "file": "s07_roblox_style__mod-compressor.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 1,
-   "ms": 2,
+   "ms": 1,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -4615,7 +4882,7 @@
    "file": "s01_minify_basic__default.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.03580110497237569,
-   "ms": 90,
+   "ms": 60,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -4640,7 +4907,7 @@
    "file": "s01_minify_basic__plain.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.07270916334661355,
-   "ms": 31,
+   "ms": 23,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -4665,7 +4932,7 @@
    "file": "s01_minify_basic__mutate.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.056247775008899964,
-   "ms": 29,
+   "ms": 33,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -4690,7 +4957,7 @@
    "file": "s01_minify_basic__super.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.0408271474019088,
-   "ms": 40,
+   "ms": 39,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -4715,7 +4982,7 @@
    "file": "s01_minify_basic__flow.lua",
    "toolBehavior": "diverged",
    "fidelityBefore": 0.07164179104477612,
-   "ms": 33,
+   "ms": 37,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -4740,7 +5007,7 @@
    "file": "s01_minify_basic__strings.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.02491506228765572,
-   "ms": 367,
+   "ms": 315,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -4750,14 +5017,14 @@
     "ironbrew2×887",
     "idioms.compare×32",
     "fold×9",
-    "simplify×38",
-    "dataflow×139",
+    "simplify×41",
+    "dataflow×144",
     "regions×6",
-    "rename×22",
+    "rename×18",
     "idioms.functions×4"
    ],
-   "fidelityAfter": 0.7382198952879581,
-   "outputBytes": 1068,
+   "fidelityAfter": 0.8283378746594006,
+   "outputBytes": 968,
    "behavior": "same",
    "behaviorOriginal": "same"
   },
@@ -4768,7 +5035,7 @@
    "file": "s01_minify_basic__lineinfo.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.03625377643504532,
-   "ms": 42,
+   "ms": 37,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -4793,7 +5060,7 @@
    "file": "s01_minify_basic__nocompress.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.03610923042202663,
-   "ms": 40,
+   "ms": 35,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -4890,7 +5157,7 @@
    "file": "s02_renamed_vars__super.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.04756353462345535,
-   "ms": 31,
+   "ms": 30,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -4914,7 +5181,7 @@
    "file": "s02_renamed_vars__flow.lua",
    "toolBehavior": "errored",
    "fidelityBefore": 0.08716248223590715,
-   "ms": 27,
+   "ms": 25,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -4937,7 +5204,7 @@
    "file": "s02_renamed_vars__strings.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.03144553184662281,
-   "ms": 553,
+   "ms": 465,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -4945,16 +5212,17 @@
    ],
    "steps": [
     "ironbrew2×1179",
+    "idioms.unset×7",
     "idioms.compare×44",
     "fold×3",
     "simplify×123",
     "regions×11",
-    "dataflow×90",
-    "rename×21",
+    "dataflow×92",
+    "rename×19",
     "idioms.functions×3"
    ],
-   "fidelityAfter": 0.9364406779661016,
-   "outputBytes": 1219,
+   "fidelityAfter": 0.9914163090128756,
+   "outputBytes": 1169,
    "behavior": "same",
    "behaviorOriginal": "same"
   },
@@ -4965,7 +5233,7 @@
    "file": "s02_renamed_vars__lineinfo.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.04092560719066743,
-   "ms": 44,
+   "ms": 50,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -4989,7 +5257,7 @@
    "file": "s02_renamed_vars__nocompress.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.04349593495934959,
-   "ms": 57,
+   "ms": 52,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -5013,56 +5281,6 @@
    "file": "s03_encoded_strings__default.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.0298572046733016,
-   "ms": 46,
-   "ok": true,
-   "confidence": 0.9,
-   "detected": [
-    "ironbrew2:0.99"
-   ],
-   "steps": [
-    "ironbrew2×115",
-    "idioms.shortcircuit×1",
-    "fold×1",
-    "simplify×10",
-    "rename×15"
-   ],
-   "fidelityAfter": 0.8643533123028391,
-   "outputBytes": 831,
-   "behavior": "same",
-   "behaviorOriginal": "same"
-  },
-  {
-   "tool": "ironbrew2",
-   "config": "plain",
-   "sample": "s03_encoded_strings",
-   "file": "s03_encoded_strings__plain.lua",
-   "toolBehavior": "equivalent",
-   "fidelityBefore": 0.06630434782608696,
-   "ms": 33,
-   "ok": true,
-   "confidence": 0.9,
-   "detected": [
-    "ironbrew2:0.99"
-   ],
-   "steps": [
-    "ironbrew2×115",
-    "idioms.shortcircuit×1",
-    "fold×1",
-    "simplify×10",
-    "rename×15"
-   ],
-   "fidelityAfter": 0.8643533123028391,
-   "outputBytes": 831,
-   "behavior": "same",
-   "behaviorOriginal": "same"
-  },
-  {
-   "tool": "ironbrew2",
-   "config": "mutate",
-   "sample": "s03_encoded_strings",
-   "file": "s03_encoded_strings__mutate.lua",
-   "toolBehavior": "equivalent",
-   "fidelityBefore": 0.052083333333333336,
    "ms": 26,
    "ok": true,
    "confidence": 0.9,
@@ -5074,10 +5292,63 @@
     "idioms.shortcircuit×1",
     "fold×1",
     "simplify×10",
-    "rename×15"
+    "dataflow×1",
+    "rename×14"
    ],
-   "fidelityAfter": 0.8643533123028391,
-   "outputBytes": 831,
+   "fidelityAfter": 0.9872611464968153,
+   "outputBytes": 809,
+   "behavior": "same",
+   "behaviorOriginal": "same"
+  },
+  {
+   "tool": "ironbrew2",
+   "config": "plain",
+   "sample": "s03_encoded_strings",
+   "file": "s03_encoded_strings__plain.lua",
+   "toolBehavior": "equivalent",
+   "fidelityBefore": 0.06630434782608696,
+   "ms": 20,
+   "ok": true,
+   "confidence": 0.9,
+   "detected": [
+    "ironbrew2:0.99"
+   ],
+   "steps": [
+    "ironbrew2×115",
+    "idioms.shortcircuit×1",
+    "fold×1",
+    "simplify×10",
+    "dataflow×1",
+    "rename×14"
+   ],
+   "fidelityAfter": 0.9872611464968153,
+   "outputBytes": 809,
+   "behavior": "same",
+   "behaviorOriginal": "same"
+  },
+  {
+   "tool": "ironbrew2",
+   "config": "mutate",
+   "sample": "s03_encoded_strings",
+   "file": "s03_encoded_strings__mutate.lua",
+   "toolBehavior": "equivalent",
+   "fidelityBefore": 0.052083333333333336,
+   "ms": 18,
+   "ok": true,
+   "confidence": 0.9,
+   "detected": [
+    "ironbrew2:0.99"
+   ],
+   "steps": [
+    "ironbrew2×115",
+    "idioms.shortcircuit×1",
+    "fold×1",
+    "simplify×10",
+    "dataflow×1",
+    "rename×14"
+   ],
+   "fidelityAfter": 0.9872611464968153,
+   "outputBytes": 809,
    "behavior": "same",
    "behaviorOriginal": "same"
   },
@@ -5088,7 +5359,7 @@
    "file": "s03_encoded_strings__super.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.033299697275479316,
-   "ms": 33,
+   "ms": 23,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -5099,10 +5370,11 @@
     "idioms.shortcircuit×1",
     "fold×1",
     "simplify×10",
-    "rename×15"
+    "dataflow×1",
+    "rename×14"
    ],
-   "fidelityAfter": 0.8643533123028391,
-   "outputBytes": 831,
+   "fidelityAfter": 0.9872611464968153,
+   "outputBytes": 809,
    "behavior": "same",
    "behaviorOriginal": "same"
   },
@@ -5113,7 +5385,7 @@
    "file": "s03_encoded_strings__flow.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.06521739130434782,
-   "ms": 31,
+   "ms": 22,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -5124,10 +5396,11 @@
     "idioms.shortcircuit×1",
     "fold×1",
     "simplify×10",
-    "rename×15"
+    "dataflow×1",
+    "rename×14"
    ],
-   "fidelityAfter": 0.8643533123028391,
-   "outputBytes": 831,
+   "fidelityAfter": 0.9872611464968153,
+   "outputBytes": 809,
    "behavior": "same",
    "behaviorOriginal": "same"
   },
@@ -5138,7 +5411,7 @@
    "file": "s03_encoded_strings__strings.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.02013640792465086,
-   "ms": 834,
+   "ms": 647,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -5168,7 +5441,7 @@
    "file": "s03_encoded_strings__lineinfo.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.03032244287849669,
-   "ms": 53,
+   "ms": 40,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -5179,10 +5452,11 @@
     "idioms.shortcircuit×1",
     "fold×1",
     "simplify×10",
-    "rename×15"
+    "dataflow×1",
+    "rename×14"
    ],
-   "fidelityAfter": 0.8643533123028391,
-   "outputBytes": 831,
+   "fidelityAfter": 0.9872611464968153,
+   "outputBytes": 809,
    "behavior": "same",
    "behaviorOriginal": "same"
   },
@@ -5193,7 +5467,7 @@
    "file": "s03_encoded_strings__nocompress.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.029477445288075034,
-   "ms": 50,
+   "ms": 28,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -5204,10 +5478,11 @@
     "idioms.shortcircuit×1",
     "fold×1",
     "simplify×10",
-    "rename×15"
+    "dataflow×1",
+    "rename×14"
    ],
-   "fidelityAfter": 0.8643533123028391,
-   "outputBytes": 831,
+   "fidelityAfter": 0.9872611464968153,
+   "outputBytes": 809,
    "behavior": "same",
    "behaviorOriginal": "same"
   },
@@ -5218,7 +5493,7 @@
    "file": "s04_control_flow__default.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.04561049445005046,
-   "ms": 47,
+   "ms": 43,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -5243,7 +5518,7 @@
    "file": "s04_control_flow__plain.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.08989764129951046,
-   "ms": 30,
+   "ms": 29,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -5293,7 +5568,7 @@
    "file": "s04_control_flow__super.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.05413609916519099,
-   "ms": 32,
+   "ms": 27,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -5318,7 +5593,7 @@
    "file": "s04_control_flow__flow.lua",
    "toolBehavior": "errored",
    "fidelityBefore": 0.0897887323943662,
-   "ms": 28,
+   "ms": 26,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -5342,7 +5617,7 @@
    "file": "s04_control_flow__strings.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.03349816557664699,
-   "ms": 1227,
+   "ms": 999,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -5350,6 +5625,7 @@
    ],
    "steps": [
     "ironbrew2×2444",
+    "idioms.unset×5",
     "idioms.compare×100",
     "fold×7",
     "simplify×88",
@@ -5371,7 +5647,7 @@
    "file": "s04_control_flow__lineinfo.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.04470398711236408,
-   "ms": 56,
+   "ms": 38,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -5396,7 +5672,7 @@
    "file": "s04_control_flow__nocompress.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.04614425275410518,
-   "ms": 62,
+   "ms": 34,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -5421,7 +5697,7 @@
    "file": "s05_nested_functions__default.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.04161849710982659,
-   "ms": 77,
+   "ms": 45,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -5447,7 +5723,7 @@
    "file": "s05_nested_functions__plain.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.08890735355213959,
-   "ms": 57,
+   "ms": 36,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -5473,7 +5749,7 @@
    "file": "s05_nested_functions__mutate.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.0688673875924872,
-   "ms": 45,
+   "ms": 57,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -5499,7 +5775,7 @@
    "file": "s05_nested_functions__super.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.04887901434053726,
-   "ms": 42,
+   "ms": 44,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -5525,7 +5801,7 @@
    "file": "s05_nested_functions__flow.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.09140008309098463,
-   "ms": 62,
+   "ms": 32,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -5551,7 +5827,7 @@
    "file": "s05_nested_functions__strings.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.03952821166719796,
-   "ms": 122,
+   "ms": 123,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -5559,17 +5835,18 @@
    ],
    "steps": [
     "ironbrew2×391",
+    "idioms.unset×1",
     "idioms.compare×8",
     "fold×1",
     "simplify×86",
     "regions×2",
-    "dataflow×8",
+    "dataflow×9",
     "idioms.nil×1",
-    "rename×41",
+    "rename×40",
     "idioms.functions×7"
    ],
-   "fidelityAfter": 0.842832469775475,
-   "outputBytes": 1631,
+   "fidelityAfter": 0.8506944444444444,
+   "outputBytes": 1609,
    "behavior": "same",
    "behaviorOriginal": "same"
   },
@@ -5580,7 +5857,7 @@
    "file": "s05_nested_functions__lineinfo.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.04087638979725311,
-   "ms": 63,
+   "ms": 54,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -5606,7 +5883,7 @@
    "file": "s05_nested_functions__nocompress.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.0429707325325664,
-   "ms": 98,
+   "ms": 60,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -5632,7 +5909,7 @@
    "file": "s06_combined__default.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.052697224820704706,
-   "ms": 92,
+   "ms": 73,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -5644,12 +5921,12 @@
     "idioms.shortcircuit×1",
     "idioms.compare×1",
     "simplify×17",
-    "dataflow×2",
-    "rename×31",
+    "dataflow×3",
+    "rename×30",
     "idioms.functions×12"
    ],
-   "fidelityAfter": 0.9182692307692307,
-   "outputBytes": 2056,
+   "fidelityAfter": 0.97708082026538,
+   "outputBytes": 2032,
    "behavior": "same",
    "behaviorOriginal": "same"
   },
@@ -5660,7 +5937,7 @@
    "file": "s06_combined__plain.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.10931768158473955,
-   "ms": 78,
+   "ms": 53,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -5672,12 +5949,12 @@
     "idioms.shortcircuit×1",
     "idioms.compare×1",
     "simplify×17",
-    "dataflow×2",
-    "rename×31",
+    "dataflow×3",
+    "rename×30",
     "idioms.functions×12"
    ],
-   "fidelityAfter": 0.9182692307692307,
-   "outputBytes": 2056,
+   "fidelityAfter": 0.97708082026538,
+   "outputBytes": 2032,
    "behavior": "same",
    "behaviorOriginal": "same"
   },
@@ -5688,7 +5965,7 @@
    "file": "s06_combined__mutate.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.08075772681954138,
-   "ms": 75,
+   "ms": 54,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -5700,12 +5977,12 @@
     "idioms.shortcircuit×1",
     "idioms.compare×1",
     "simplify×17",
-    "dataflow×2",
-    "rename×31",
+    "dataflow×3",
+    "rename×30",
     "idioms.functions×12"
    ],
-   "fidelityAfter": 0.9182692307692307,
-   "outputBytes": 2056,
+   "fidelityAfter": 0.97708082026538,
+   "outputBytes": 2032,
    "behavior": "same",
    "behaviorOriginal": "same"
   },
@@ -5716,7 +5993,7 @@
    "file": "s06_combined__super.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.05113813532896788,
-   "ms": 81,
+   "ms": 57,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -5728,12 +6005,12 @@
     "idioms.shortcircuit×1",
     "idioms.compare×1",
     "simplify×17",
-    "dataflow×2",
-    "rename×31",
+    "dataflow×3",
+    "rename×30",
     "idioms.functions×12"
    ],
-   "fidelityAfter": 0.9182692307692307,
-   "outputBytes": 2056,
+   "fidelityAfter": 0.97708082026538,
+   "outputBytes": 2032,
    "behavior": "same",
    "behaviorOriginal": "same"
   },
@@ -5744,7 +6021,7 @@
    "file": "s06_combined__flow.lua",
    "toolBehavior": "errored",
    "fidelityBefore": 0.10935779816513762,
-   "ms": 71,
+   "ms": 60,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -5756,12 +6033,12 @@
     "idioms.shortcircuit×1",
     "idioms.compare×1",
     "simplify×17",
-    "dataflow×2",
-    "rename×31",
+    "dataflow×3",
+    "rename×30",
     "idioms.functions×12"
    ],
-   "fidelityAfter": 0.9182692307692307,
-   "outputBytes": 2056,
+   "fidelityAfter": 0.97708082026538,
+   "outputBytes": 2032,
    "behaviorOriginal": "same"
   },
   {
@@ -5771,7 +6048,7 @@
    "file": "s06_combined__strings.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.047708138447146865,
-   "ms": 572,
+   "ms": 450,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -5781,16 +6058,18 @@
     "ironbrew2×1104",
     "idioms.bool×2",
     "idioms.shortcircuit×1",
+    "idioms.unset×5",
     "idioms.compare×37",
     "fold×2",
     "simplify×166",
     "regions×9",
-    "dataflow×58",
-    "rename×32",
+    "dataflow×65",
+    "idioms.method×2",
+    "rename×25",
     "idioms.functions×11"
    ],
-   "fidelityAfter": 0.6892523364485982,
-   "outputBytes": 2169,
+   "fidelityAfter": 0.7575392038600723,
+   "outputBytes": 2024,
    "behavior": "same",
    "behaviorOriginal": "same"
   },
@@ -5801,7 +6080,7 @@
    "file": "s06_combined__lineinfo.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.05176177112566261,
-   "ms": 106,
+   "ms": 70,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -5813,12 +6092,12 @@
     "idioms.shortcircuit×1",
     "idioms.compare×1",
     "simplify×17",
-    "dataflow×2",
-    "rename×31",
+    "dataflow×3",
+    "rename×30",
     "idioms.functions×12"
    ],
-   "fidelityAfter": 0.9182692307692307,
-   "outputBytes": 2056,
+   "fidelityAfter": 0.97708082026538,
+   "outputBytes": 2032,
    "behavior": "same",
    "behaviorOriginal": "same"
   },
@@ -5829,7 +6108,7 @@
    "file": "s06_combined__nocompress.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.050202681633925786,
-   "ms": 86,
+   "ms": 72,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -5841,12 +6120,12 @@
     "idioms.shortcircuit×1",
     "idioms.compare×1",
     "simplify×17",
-    "dataflow×2",
-    "rename×31",
+    "dataflow×3",
+    "rename×30",
     "idioms.functions×12"
    ],
-   "fidelityAfter": 0.9182692307692307,
-   "outputBytes": 2056,
+   "fidelityAfter": 0.97708082026538,
+   "outputBytes": 2032,
    "behavior": "same",
    "behaviorOriginal": "same"
   },
@@ -5857,7 +6136,7 @@
    "file": "s07_roblox_style__default.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.03148387096774193,
-   "ms": 31,
+   "ms": 25,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -5884,7 +6163,7 @@
    "file": "s07_roblox_style__plain.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.0678167757287329,
-   "ms": 22,
+   "ms": 19,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -5911,7 +6190,7 @@
    "file": "s07_roblox_style__mutate.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.05558086560364465,
-   "ms": 24,
+   "ms": 20,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -5938,7 +6217,7 @@
    "file": "s07_roblox_style__super.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.03687184061849539,
-   "ms": 27,
+   "ms": 21,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -5965,7 +6244,7 @@
    "file": "s07_roblox_style__flow.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.06662700773349196,
-   "ms": 21,
+   "ms": 18,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -5992,7 +6271,7 @@
    "file": "s07_roblox_style__strings.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.01921511154535092,
-   "ms": 501,
+   "ms": 455,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -6001,17 +6280,18 @@
    "steps": [
     "ironbrew2×1111",
     "idioms.table×3",
+    "idioms.unset×2",
     "idioms.compare×45",
     "fold×3",
     "simplify×95",
     "regions×11",
-    "dataflow×101",
-    "idioms.method×2",
-    "rename×14",
+    "dataflow×106",
+    "idioms.method×4",
+    "rename×9",
     "idioms.functions×1"
    ],
-   "fidelityAfter": 0.5470588235294118,
-   "outputBytes": 1165,
+   "fidelityAfter": 0.5830721003134797,
+   "outputBytes": 970,
    "behavior": "same",
    "behaviorOriginal": "same"
   },
@@ -6022,7 +6302,7 @@
    "file": "s07_roblox_style__lineinfo.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.031504065040650404,
-   "ms": 34,
+   "ms": 28,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -6049,7 +6329,7 @@
    "file": "s07_roblox_style__nocompress.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.032162958992227285,
-   "ms": 31,
+   "ms": 28,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -6076,7 +6356,7 @@
    "file": "s08_ironbrew_macros__default.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.035406933857880504,
-   "ms": 30,
+   "ms": 26,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -6084,14 +6364,15 @@
    ],
    "steps": [
     "ironbrew2×486",
+    "idioms.unset×3",
     "fold×3",
-    "simplify×17",
-    "dataflow×31",
-    "rename×11",
+    "simplify×18",
+    "dataflow×33",
+    "rename×9",
     "idioms.functions×1"
    ],
-   "fidelityAfter": 0.563265306122449,
-   "outputBytes": 608,
+   "fidelityAfter": 0.5690376569037657,
+   "outputBytes": 572,
    "behavior": "same",
    "behaviorOriginal": "same"
   },
@@ -6102,7 +6383,7 @@
    "file": "s08_ironbrew_macros__plain.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.06514341273699563,
-   "ms": 22,
+   "ms": 16,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -6128,7 +6409,7 @@
    "file": "s08_ironbrew_macros__mutate.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.04879701796001355,
-   "ms": 24,
+   "ms": 17,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -6154,7 +6435,7 @@
    "file": "s08_ironbrew_macros__super.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.04392922513727883,
-   "ms": 25,
+   "ms": 17,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -6180,7 +6461,7 @@
    "file": "s08_ironbrew_macros__flow.lua",
    "toolBehavior": "errored",
    "fidelityBefore": 0.06564102564102564,
-   "ms": 30,
+   "ms": 21,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -6188,14 +6469,15 @@
    ],
    "steps": [
     "ironbrew2×482",
+    "idioms.unset×3",
     "fold×3",
-    "simplify×17",
-    "dataflow×31",
-    "rename×11",
+    "simplify×18",
+    "dataflow×33",
+    "rename×9",
     "idioms.functions×1"
    ],
-   "fidelityAfter": 0.563265306122449,
-   "outputBytes": 608,
+   "fidelityAfter": 0.5690376569037657,
+   "outputBytes": 572,
    "behaviorOriginal": "same"
   },
   {
@@ -6205,7 +6487,7 @@
    "file": "s08_ironbrew_macros__strings.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.0231383412090598,
-   "ms": 303,
+   "ms": 189,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -6213,9 +6495,10 @@
    ],
    "steps": [
     "ironbrew2×4015",
+    "idioms.unset×6",
     "idioms.compare×24",
     "fold×7",
-    "simplify×62",
+    "simplify×63",
     "regions×6",
     "dataflow×64",
     "rename×5",
@@ -6233,7 +6516,7 @@
    "file": "s08_ironbrew_macros__lineinfo.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.03488372093023256,
-   "ms": 41,
+   "ms": 22,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -6241,14 +6524,15 @@
    ],
    "steps": [
     "ironbrew2×493",
+    "idioms.unset×3",
     "fold×3",
-    "simplify×17",
-    "dataflow×31",
-    "rename×11",
+    "simplify×18",
+    "dataflow×33",
+    "rename×9",
     "idioms.functions×1"
    ],
-   "fidelityAfter": 0.563265306122449,
-   "outputBytes": 608,
+   "fidelityAfter": 0.5690376569037657,
+   "outputBytes": 572,
    "behavior": "same",
    "behaviorOriginal": "same"
   },
@@ -6259,7 +6543,7 @@
    "file": "s08_ironbrew_macros__nocompress.lua",
    "toolBehavior": "equivalent",
    "fidelityBefore": 0.036196788172317106,
-   "ms": 34,
+   "ms": 24,
    "ok": true,
    "confidence": 0.9,
    "detected": [
@@ -6267,14 +6551,15 @@
    ],
    "steps": [
     "ironbrew2×488",
+    "idioms.unset×3",
     "fold×3",
-    "simplify×17",
-    "dataflow×31",
-    "rename×11",
+    "simplify×18",
+    "dataflow×33",
+    "rename×9",
     "idioms.functions×1"
    ],
-   "fidelityAfter": 0.563265306122449,
-   "outputBytes": 608,
+   "fidelityAfter": 0.5690376569037657,
+   "outputBytes": 572,
    "behavior": "same",
    "behaviorOriginal": "same"
   }

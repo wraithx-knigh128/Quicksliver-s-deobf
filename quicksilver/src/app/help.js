@@ -10,11 +10,13 @@ export function showHelp() {
     title: 'How to use QuickSilver',
     body: h('div.help', [
       h('h3', '1. Put your script in'),
-      h('p', 'Paste it on the left, press Open File, drop a .lua / .luau / .txt file on the page, or use From link (raw GitHub, Pastebin, rentry, a Discord attachment). It stays in your browser. Nothing is run.'),
+      h('p', 'Paste it in the top editor (Obfuscated source), press Open File, drop a .lua / .luau / .txt file on the page, or use From link (raw GitHub, Pastebin, rentry, a Discord attachment). Load example opens a ready-made obfuscated script. It stays in your browser. Nothing is run.'),
       h('h3', '2. Press Deobfuscate'),
-      h('p', 'QuickSilver works out what protects the script and writes the readable version on the right. The strip under the two boxes says what it found and how sure it is.'),
+      h('p', 'QuickSilver works out what protects the script and writes the readable version in the bottom editor (Deobfuscated source). The strip under the editors says what it found, how sure it is and how long it took. The clock in the title bar shows the time of the running operation and then of the last one.'),
       h('h3', '3. Check and save'),
-      h('p', 'Compare puts the two versions side by side. Export saves the result, a report or a zip with everything.'),
+      h('p', 'Compare puts the two versions side by side. Export saves the result, a report or a zip with everything. Drag the divider between the editors to resize them, or press the arrows button of one editor to give it the whole height.'),
+      h('h3', 'The Examples tab'),
+      h('p', 'Lists every bundled example by the obfuscator that made it. Time all recovers each one in turn and shows how long it took and what came out, next to what the offline test suite measured for it.'),
       h('h3', 'If you already know the obfuscator'),
       h('table.help-table', h('tbody', [
         row('IronBrew', 'IronBrew 2: the original program is rebuilt from the virtual machine. IronBrew 1 is not supported.'),

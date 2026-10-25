@@ -33,7 +33,27 @@ const MIN_SITES_READABLE_NAME = 12;
 
 const rn = (name) => ({ type: 'Name', name });
 
+/**
+ * Replaces decoder calls with the text they produce. A `table[decode(...)]` lookup is tried as a whole first; when it has no value to
+ * give (`class[decode('__index')] = class` assigns to it, or the table is filled in later) the constant key inside it is still worth
+ * having, so a second run offers the remaining keys on their own.
+ */
 export function evaluatePass(chunk, ctx = {}) {
+  const first = evaluateOnce(chunk, ctx);
+  if (!first.indexRejected || ctx.keysOnly) return first;
+  // what remains are a few calls of the decoder found the first time; a function called once with constant arguments is not a decoder
+  const second = evaluateOnce(chunk, { ...ctx, keysOnly: true, knownDecoders: new Set(first.decoders.map((d) => d.name)) });
+  if (second.skipped) return first;
+  first.changed += second.changed;
+  first.evaluated += second.evaluated;
+  first.rejected += second.rejected;
+  first.sites += second.sites;
+  first.removedStatements = (first.removedStatements || 0) + (second.removedStatements || 0);
+  for (const d of second.decoders) if (!first.decoders.some((x) => x.name === d.name)) first.decoders.push(d);
+  return first;
+}
+
+function evaluateOnce(chunk, ctx = {}) {
   const opts = ctx.sandbox || {};
   const result = { changed: 0, sites: 0, evaluated: 0, rejected: 0, decoders: [], skipped: null, error: null };
   if (!opts.enabled) { result.skipped = 'sandboxed evaluation is not enabled'; return result; }
@@ -173,18 +193,25 @@ export function evaluatePass(chunk, ctx = {}) {
   };
   // `local function get(i) return ARRAY[i - 17] end` is an array accessor whatever type it returns.
   const accessorShaped = new Set();
+  const offsetAccessor = new Set();
   for (const [v, st] of declOf) {
     const f = st.type === 'LocalFunction' ? st.func : (st.type === 'Local' && st.values.length === 1 && st.ids.length === 1 ? st.values[0] : null);
     if (f && f.type === 'Func' && f.body.length === 1 && f.body[0].type === 'Return' && f.body[0].values.length === 1) {
       const r = f.body[0].values[0];
-      if (r.type === 'Index' && r.obj.type === 'Name' && viable.has(info.varOf.get(r.obj))) accessorShaped.add(v);
+      if (r.type === 'Index' && r.obj.type === 'Name' && viable.has(info.varOf.get(r.obj))) {
+        accessorShaped.add(v);
+        // `list[n - 5296]`: the offset that a constant-array scheme hides its indices behind. Ordinary code indexes by the parameter itself.
+        const k = r.key;
+        if (k.type === 'Binary' && (k.op === '+' || k.op === '-') && ((k.left.type === 'Name' && k.right.type === 'Number') || (k.left.type === 'Number' && k.right.type === 'Name' && k.op === '+'))) offsetAccessor.add(v);
+      }
     }
   }
   const siteCount = new Map();
   for (const s of sites) for (const v of callTargets(s)) siteCount.set(v, (siteCount.get(v) || 0) + 1);
   const decoders = new Set();
   for (const [v, n] of siteCount) {
-    const threshold = looksObfuscated(v.name) || isShortName(v.name) ? minSites : (opts.minSitesReadable ?? MIN_SITES_READABLE_NAME);
+    const machineName = looksObfuscated(v.name) || isShortName(v.name);
+    const threshold = (ctx.knownDecoders && ctx.knownDecoders.has(v.name)) || (offsetAccessor.has(v) && machineName) ? 1 : machineName ? minSites : (opts.minSitesReadable ?? MIN_SITES_READABLE_NAME);
     if (n >= threshold) decoders.add(v);
   }
   result.decoders = [...decoders].map((v) => ({ name: v.name, sites: siteCount.get(v) }));
@@ -218,7 +245,7 @@ export function evaluatePass(chunk, ctx = {}) {
     const visit = (e, inFunc = false) => {
       if (!e || typeof e !== 'object') return;
       let hit = false;
-      if (e.type === 'Index' && e.key.type !== 'String' && isDecoderCall(unparen(e.key)) && noCall(e.obj)) hit = true;
+      if (!ctx.keysOnly && e.type === 'Index' && e.key.type !== 'String' && isDecoderCall(unparen(e.key)) && noCall(e.obj)) hit = true;
       else if (isDecoderCall(e)) hit = true;
       if (hit) { sites.push(e); owner.set(e, stmt); if (inFunc) late.add(e); return; }
       forEachChild(e, (c) => visit(c, inFunc || e.type === 'Func'));
@@ -351,6 +378,7 @@ export function evaluatePass(chunk, ctx = {}) {
     result.changed += result.removedStatements;
   }
   result.evaluated = accepted.size;
+  result.indexRejected = sites.filter((e) => e.type === 'Index' && !accepted.has(e)).length;
   return result;
 }
 

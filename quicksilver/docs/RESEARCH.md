@@ -117,6 +117,28 @@ If a family is not described here, it is because nothing reliable could be found
 * **Anul** (paid, BuiltByBit), **LennyObf**, **PY44N/Lua-Obfuscator**, **Luarmor** (loader-style service): names only.
 * **LuaPro**: a pure-Lua AST toolkit that lists deobfuscation (constant folding, dead-code elimination) as not yet implemented **[docs, snippet]**.
 
+## Second research pass: more open-source obfuscators (October 2026)
+
+A web search for open-source Lua / Luau obfuscators turned up the projects below. Each was shallow-cloned into its own directory and its README, file list and licence were read.
+**None of them was executed to produce samples**, with one exception noted below: the session's permission policy declined to run further third-party code from the clones, and the
+one attempt that did run (zynaa/LuaObfuscator, levels 0-3) ended in `Fatal error occurred.` with no output file each time, so there is no real output of any of them in the test corpus
+and QuickSilver makes **no detection or recovery claim** for them. They are listed so the next pass knows where to start.
+
+| Project | What the README / files say | Licence | Status here |
+|---|---|---|---|
+| **RealObfuscator** (linkoro57), v1.6.0, rev `bfcf28d` | Python CLI for Luau: identifier renaming, string and number encoding, control-flow transforms, dead code, integrity checks, and a VM mode that compiles to encrypted bytecode with per-build opcode shuffling and "positional whitening" of constants **[source: README]** | GPL-3.0 | not run. Output of a GPL tool can embed the tool's runtime template, so its output should not be bundled as a sample without a licence review. |
+| **RBXLuaObfuscator** (kosuke14), last commit 2022-07 | single `obfuscator.lua` for Lua 5.1 / Luau, "no loadstring": embeds a Lua-to-bytecode compiler; the author's own README says the output "is too easy to read by using `print`" **[source: README, file list]** | none stated in the repository | not run |
+| **zynaa/LuaObfuscator**, last commit 2018 | Python 3.4+: tokenises the script, strips strings and replaces them with ciphered ones decoded by a per-level `__decrypt_N.lua` template, rearranges code; levels 0-3 **[source: README, file list]** | not stated in the files read | run four times (levels 0-3) on `s06_combined.lua`: every run printed `Fatal error occurred.` and wrote nothing; not diagnosed (it needs "Python 3.4.3+ VERY IMPORTANT" per its README; this machine has 3.13) |
+| **peardel/fusgato-v1** | Luvit project: compiles to Lua bytecode, applies obfuscations to it (`/bytecode`), emits a generated interpreter (`/vm`) and minifies with luasrcdiet; the author calls it half-working **[source: README]** | MIT | not run (needs Luvit) |
+| **Micro-Scripting/LuaU-Obfuscator** | a Roblox ModuleScript (`main.luau`) that re-encodes source as ASCII, hex, binary, URL and Base64 strings **[docs, search snippet]** | see its `LICENSE` | not read in detail |
+| **Obscura** | a Roblox DevForum post (MIT, Python, Luau, v1.1.0) appears in search results **[third-party, title only]**; the post could not be fetched and no repository URL was found | MIT (per the listing) | not located |
+| **RBXCoreProtect** | fork of RBXLuaObfuscator whose usage example loads the obfuscator from a remote URL at run time | not checked | deliberately not cloned or run (code fetched at run time) |
+| **Lua-Obfuscator** (fleecelolll / fleecewtf) | a Windows GUI that drives Hercules; one copy says "source-available, not open source" **[docs, search snippet]** | restricted | nothing to add beyond Hercules |
+
+What this adds to the taxonomy below: the Python-side tools (zynaa, RealObfuscator) generate **loader-style** output (a decryptor template plus encoded strings), which the string-decoder
+evaluation already handles in principle; RealObfuscator's VM mode and fusgato are **per-build bytecode VMs** in the same class as IronBrew 2, Luraph and MoonSec, for which each needs its own
+handler-template work, which requires real output of the tool.
+
 ## Technique taxonomy and what each needs
 
 | Technique | Seen in | Static recovery | Needs execution | Notes |

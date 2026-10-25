@@ -411,12 +411,58 @@ test('a large script scrolls without building a row per line', { skip }, async (
 
 test('the tools bar names every tool in words, even on a narrow window', { skip }, async () => {
   const { page, ctx, problems } = await newPage({ viewport: { width: 1000, height: 800 } });
-  const names = { 'act-recover': 'Deobfuscate', 'tool-luraph': 'Luraph', 'tool-ironbrew': 'IronBrew', 'tool-moonveil': 'MoonVeil', 'act-detect': 'Detect', 'act-beautify': 'Beautify', 'act-rename': 'Rename', 'act-dump': 'Dump', 'act-origin': 'Origin check', 'act-help': 'Help' };
+  const names = { 'act-recover': 'Deobfuscate', 'tool-luraph': 'Luraph', 'tool-ironbrew': 'IronBrew', 'tool-moonveil': 'MoonVeil', 'act-detect': 'Detect', 'act-beautify': 'Beautify', 'act-rename': 'Rename', 'act-dump': 'Dump', 'act-origin': 'AI check', 'act-help': 'Help' };
   for (const [id, text] of Object.entries(names)) {
     assert.ok(await page.isVisible(`#${id} .lbl`), `${id} shows its label`);
     assert.equal((await page.textContent(`#${id} .lbl`)).trim(), text);
   }
   assert.deepEqual(problems, []);
+  await ctx.close();
+});
+
+test('the Examples tab lists every bundled script and times a recovery on request', { skip }, async () => {
+  const { page, ctx, problems } = await newPage();
+  await page.click('#tab-examples');
+  await page.waitForSelector('.examples-table tbody tr.row-main');
+  const rows = await page.locator('.examples-table tr.row-main').count();
+  assert.ok(rows >= 30, `${rows} examples listed`);
+  const groups = await page.locator('.examples-table tr.group').allTextContents();
+  assert.ok(groups.some((g) => /Prometheus/.test(g)) && groups.some((g) => /Hercules/.test(g)) && groups.some((g) => /IronBrew 2/.test(g)));
+  // the offline measurement that came with the sample set is shown, and says when the tool's own output is broken
+  const offline = await page.locator('.examples-table td.off').allTextContents();
+  assert.ok(offline.some((t) => /→ \d+%/.test(t)), 'offline fidelity is shown');
+
+  // time one example: Prometheus' Vmify step is quick and is recognised
+  const row = page.locator('tr.row-main', { hasText: 'prometheus__s06_combined__Vmify.lua' });
+  await row.locator('button[aria-label^="Time "]').click();
+  await page.waitForFunction(() => document.querySelector('#act-cancel').hidden && document.querySelector('#timer.done'), null, { timeout: 60_000 });
+  assert.match(await row.locator('td.time').textContent(), /^\d+\.\d\d s$/);
+  assert.match(await row.locator('td.res').textContent(), /Prometheus.*confidence \d+%.*parses/);
+  assert.match(await page.textContent('#view-examples .summary'), /1 of \d+ timed/);
+
+  // open + deobfuscate puts the example in the editor and runs the normal recovery
+  await row.locator('button:has-text("Open + deobfuscate")').click();
+  await page.waitForSelector('#out-body .row', { timeout: 60_000 });
+  await idle(page);
+  assert.equal(await activeTab(page), 'tab-work');
+  assert.match(await page.inputValue('textarea.editor'), /^return\(function/);
+  assert.ok((await page.textContent('#out-body')).length > 100, 'the recovered code is shown');
+  assert.deepEqual(problems, []);
+  await ctx.close();
+});
+
+test('Time all can be stopped between two examples', { skip }, async () => {
+  const { page, ctx } = await newPage();
+  await page.click('#tab-examples');
+  await page.waitForSelector('.examples-table tbody tr.row-main');
+  await page.click('#view-examples button:has-text("Time all")');
+  await page.waitForSelector('#view-examples button:has-text("Stop after this one"):not([hidden])');
+  await page.click('#view-examples button:has-text("Stop after this one")');
+  await page.waitForFunction(() => document.querySelector('#act-cancel').hidden, null, { timeout: 120_000 });
+  const done = await page.locator('.examples-table td.res', { hasText: 'confidence' }).count();
+  const total = await page.locator('.examples-table tr.row-main').count();
+  assert.ok(done >= 1 && done < total - 4, `stopped after ${done} of ${total}`);
+  assert.equal(await page.isVisible('#view-examples button:has-text("Stop after this one")'), false);
   await ctx.close();
 });
 
@@ -534,6 +580,60 @@ test('origin check reads the style of the code, not of an obfuscated blob or of 
   await page.click('#act-origin'); await idle(page);
   assert.match(await page.textContent('#view-origin'), /rebuilt this code from IronBrew 2/);
   assert.match(await page.textContent('#view-origin'), /Cannot be read from rebuilt code/);
+  await ctx.close();
+});
+
+test('the AI check is always in view and reads the code by itself', { skip }, async () => {
+  const { page, ctx, problems } = await newPage();
+  const bar = () => page.textContent('#originbar').then((t) => t.replace(/\s+/g, ' '));
+  const reading = async (file) => {
+    await loadFile(page, path.join(corpus, 'origin', file));
+    await page.waitForFunction(() => /Written by AI/.test(document.querySelector('#originbar').textContent) && !/Reading the style/.test(document.querySelector('#originbar').textContent), null, { timeout: 15_000 });
+    return bar();
+  };
+  assert.match(await bar(), /AI check.*Paste code to see how likely/);
+
+  const assistant = await reading('assistant_inventory.lua');
+  const percent = Number(/Written by AI (\d+)%/.exec(assistant)[1]);
+  assert.ok(percent >= 60, `an assistant-style module reads as AI-written (${percent}%): ${assistant}`);
+  assert.match(assistant, /AI-(written|assisted)/);
+  assert.match(assistant, /Copied \(skidded\)/);
+  assert.match(assistant, /not searched yet/);
+  assert.match(await page.textContent('#tab-origin'), /AI check\s*\d+%/, 'the tab carries the number too');
+
+  // a quick hand-written script reads clearly lower
+  await page.click('#act-clear');
+  const scrappy = await reading('scrappy_autofarm.lua');
+  const low = Number(/Written by AI (\d+)%/.exec(scrappy)[1]);
+  assert.ok(low < percent - 25, `hand-written ${low}% is well below assistant-style ${percent}%`);
+
+  // credit lines, invites and pasted-together style show up as clues of copying
+  await page.click('#act-clear');
+  const patch = await reading('patchwork_credited.lua');
+  assert.match(patch, /Copied \(skidded\) \d+% possible, \d+ clues? in the text/);
+
+  // searching GitHub always asks first and shows what would be sent
+  await page.click('#originbar button:has-text("Search GitHub")');
+  await page.waitForSelector('.modal');
+  assert.ok(await page.locator('.modal li').count() >= 1);
+  await page.click('.modal button:has-text("Cancel")');
+  assert.match(await bar(), /possible, \d+ clues? in the text/, 'cancelling sent nothing');
+
+  // clearing the editor clears the reading
+  await page.click('#act-clear');
+  assert.match(await bar(), /Paste code to see how likely/);
+  assert.deepEqual(problems, []);
+  await ctx.close();
+});
+
+test('the AI check says so when the code is obfuscated, and offers to deobfuscate first', { skip }, async () => {
+  const { page, ctx } = await newPage();
+  await loadFile(page, path.join(corpus, 'obfuscated/prometheus/s06_combined__Weak.lua'));
+  await page.waitForFunction(() => /no readable style/.test(document.querySelector('#originbar').textContent), null, { timeout: 15_000 });
+  assert.equal(await page.isVisible('#originbar button:has-text("Deobfuscate, then check")'), true);
+  await page.click('#originbar button:has-text("Deobfuscate, then check")');
+  await idle(page);
+  await page.waitForFunction(() => /rebuilt from Prometheus/.test(document.querySelector('#originbar').textContent), null, { timeout: 30_000 });
   await ctx.close();
 });
 

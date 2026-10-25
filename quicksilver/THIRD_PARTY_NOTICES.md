@@ -75,4 +75,5 @@ None of these is imported by the deployed site.
 ## Names and marks
 
 Luraph, MoonSec, MoonVeil, PSU, IronBrew, Prometheus, Hercules, Roblox and other names are used only to identify the software they belong to. No affiliation or endorsement is implied.
-No obfuscator other than those listed above was run, and no vendor material was copied.
+No obfuscator other than those listed above produced any file in this repository, and no vendor material was copied. The further open-source obfuscators named in `docs/RESEARCH.md`
+(second research pass) were cloned and read only; one of them was started once and ended with an error before writing output. None of their code or output is included.

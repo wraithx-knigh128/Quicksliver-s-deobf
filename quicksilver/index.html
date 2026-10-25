@@ -60,7 +60,7 @@
     <nav class="actions" aria-label="Actions">
       <button class="btn" id="act-open" type="button" title="Open a .lua, .luau or .txt file (Ctrl+O)"><svg aria-hidden="true"><use href="#i-open"/></svg><span class="lbl">Open File</span></button>
       <button class="btn" id="act-link" type="button" title="Get a script from a link (raw GitHub, Pastebin, Discord attachment, ...)"><svg aria-hidden="true"><use href="#i-link"/></svg><span class="lbl">From link</span></button>
-      <button class="btn" id="act-samples" type="button" title="Load an example obfuscated script" aria-haspopup="menu"><svg aria-hidden="true"><use href="#i-samples"/></svg><span class="lbl">Examples</span></button>
+      <button class="btn" id="act-samples" type="button" title="Load an example obfuscated script" aria-haspopup="menu"><svg aria-hidden="true"><use href="#i-samples"/></svg><span class="lbl">Load example</span></button>
       <span class="sep"></span>
       <button class="btn" id="act-analyze" type="button" title="Static report: APIs, URLs, structure (Alt+A)"><svg aria-hidden="true"><use href="#i-analyze"/></svg><span class="lbl">Analyze</span></button>
       <button class="btn" id="act-trace" type="button" title="Run in the sandbox and list what the script does (asks first, Alt+T)"><svg aria-hidden="true"><use href="#i-trace"/></svg><span class="lbl">Trace</span></button>
@@ -73,6 +73,14 @@
 
     <div class="timer" id="timer" role="timer" title="Time taken by the running operation, then by the last one">
       <svg aria-hidden="true"><use href="#i-timer"/></svg><span id="timer-text">0.00 s</span><span id="timer-op" class="op"></span>
+    </div>
+    <div class="utils" role="group" aria-label="Panels and settings">
+      <button class="btn icon" id="btn-side" type="button" title="Obfuscator list" aria-label="Obfuscator list" aria-pressed="false"><svg aria-hidden="true"><use href="#i-side"/></svg></button>
+      <button class="btn icon" id="btn-inspector" type="button" title="Details of the last run" aria-label="Details of the last run" aria-pressed="false"><svg aria-hidden="true"><use href="#i-inspect"/></svg></button>
+      <button class="btn icon" id="btn-license" type="button" title="Licence" aria-label="Licence"><svg aria-hidden="true"><use href="#i-key"/></svg></button>
+      <button class="btn icon" id="btn-theme" type="button" title="Switch between light and dark" aria-label="Switch between light and dark"><svg aria-hidden="true"><use href="#i-theme"/></svg></button>
+      <button class="btn icon" id="btn-about" type="button" title="About and credits" aria-label="About and credits"><svg aria-hidden="true"><use href="#i-info"/></svg></button>
+      <button class="btn icon" id="btn-settings" type="button" title="Settings" aria-label="Settings"><svg aria-hidden="true"><use href="#i-settings"/></svg></button>
     </div>
   </header>
 
@@ -90,21 +98,11 @@
       <button class="btn chip" id="act-beautify" type="button" title="Re-indent and re-flow only; nothing is decoded (Alt+B)"><svg aria-hidden="true"><use href="#i-beautify"/></svg><span class="lbl">Beautify</span></button>
       <button class="btn chip" id="act-rename" type="button" title="Give machine-made variable names readable ones"><svg aria-hidden="true"><use href="#i-rename"/></svg><span class="lbl">Rename</span></button>
       <button class="btn chip" id="act-dump" type="button" title="Run in the sandbox and capture the text the script builds before it loads it (table.concat / loadstring)"><svg aria-hidden="true"><use href="#i-dump"/></svg><span class="lbl">Dump</span></button>
-      <button class="btn chip" id="act-origin" type="button" title="Does it read like AI-written code, or like code copied from someone else?"><svg aria-hidden="true"><use href="#i-origin"/></svg><span class="lbl">Origin check</span></button>
+      <button class="btn chip" id="act-origin" type="button" title="AI check: does it read like AI-written (vibe-coded) code, or like code copied from someone else?"><svg aria-hidden="true"><use href="#i-origin"/></svg><span class="lbl">AI check</span></button>
     </div>
     <span class="grow"></span>
     <button class="btn chip" id="act-help" type="button" title="How to use this page" aria-label="Help"><svg aria-hidden="true"><use href="#i-help"/></svg><span class="lbl">Help</span></button>
   </div>
-
-  <nav class="activity" aria-label="Panels and settings">
-    <button class="btn icon" id="btn-side" type="button" title="Obfuscator list" aria-label="Obfuscator list" aria-pressed="false"><svg aria-hidden="true"><use href="#i-side"/></svg></button>
-    <button class="btn icon" id="btn-inspector" type="button" title="Details of the last run" aria-label="Details of the last run" aria-pressed="false"><svg aria-hidden="true"><use href="#i-inspect"/></svg></button>
-    <span class="grow"></span>
-    <button class="btn icon" id="btn-license" type="button" title="Licence" aria-label="Licence"><svg aria-hidden="true"><use href="#i-key"/></svg></button>
-    <button class="btn icon" id="btn-theme" type="button" title="Switch between light and dark" aria-label="Switch between light and dark"><svg aria-hidden="true"><use href="#i-theme"/></svg></button>
-    <button class="btn icon" id="btn-about" type="button" title="About and credits" aria-label="About and credits"><svg aria-hidden="true"><use href="#i-info"/></svg></button>
-    <button class="btn icon" id="btn-settings" type="button" title="Settings" aria-label="Settings"><svg aria-hidden="true"><use href="#i-settings"/></svg></button>
-  </nav>
 
   <div class="workspace" id="workspace">
     <aside class="drawer side" aria-label="Obfuscators">
