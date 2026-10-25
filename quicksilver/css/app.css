@@ -572,6 +572,9 @@ textarea.form { height: 92px; padding: 6px 8px; width: 100%; font: 12px var(--mo
   .toolbar { padding: 6px 12px; }
   .panes { grid-template-rows: minmax(0, 1fr) 5px minmax(0, 1fr); }
   .originbar { padding-left: 12px; }
+  .ob-main { flex: 1 0 100%; }
+  .ob-item { white-space: normal; }
+  .ob-acts { margin-left: 0; }
   .workspace.with-side, .workspace.with-inspector, .workspace.with-side.with-inspector { grid-template-columns: 0 minmax(0, 1fr) 0; }
   .workspace.with-side .drawer.side, .workspace.with-inspector .drawer.inspector { position: fixed; z-index: 30; top: 0; bottom: var(--statusbar); width: min(340px, 92vw); visibility: visible; box-shadow: var(--shadow); border: 0; }
   .workspace.with-side .drawer.side { left: 0; }

@@ -16,9 +16,9 @@ The page is laid out like a code editor: **Obfuscated source** above, **Deobfusc
 | Open File / From link / Load example | `.lua`, `.luau` or `.txt` only (anything else is refused by extension; compiled Lua chunks are reported as such rather than shown as text). From link fetches through this site's own function from a short allow-list (raw GitHub, gist, Pastebin, rentry, paste.ee, Discord attachments) and only reads. |
 | **Deobfuscate** (Ctrl+Enter) | Detects what protects the script and runs the recovery pipeline. |
 | Luraph · IronBrew · MoonVeil | Say plainly what is and is not possible for that family, then run the matching path (IronBrew 2: rebuild; Luraph and MoonVeil: sandbox dump). |
-| Detect · Beautify · Rename · Dump · Origin check | Identify the obfuscator; re-indent only; give machine-made names readable ones; capture what a script loads when it runs in the sandbox; estimate whether code reads as AI-written or copied. |
+| Detect · Beautify · Rename · Dump · AI check | Identify the obfuscator; re-indent only; give machine-made names readable ones; capture what a script loads when it runs in the sandbox; estimate whether code reads as AI-written or copied. |
 | Analyze · Trace · Compare · Export | Static report; behavioural trace in the sandbox; side-by-side diff of input and result; save the result, a JSON report or a zip bundle. |
-| Tabs | Deobfuscator · Compare · Detection · Analysis · Origin · Luast (syntax tree) · Examples · Compatibility. |
+| Tabs | Deobfuscator · Compare · Detection · Analysis · AI check · Luast (syntax tree) · Examples · Obfuscators. |
 | Timer | The pill in the title bar counts while an operation runs and keeps the time it took; its tooltip lists the last few. The **Examples** tab times every bundled example. |
 
 ### What it can recover, measured
@@ -30,15 +30,19 @@ Numbers are measured on output of the real tools (Prometheus, Hercules, IronBrew
 * **Prometheus**: formatting, name mangling, string splitting, number rewriting, proxied locals, anti-tamper, wrappers, and (with the sandbox switched on) EncryptStrings and ConstantArray. The Vmify
   register VM, including the two layers of the Strong preset, is unflattened back into statements and control flow. The recovered program prints what the obfuscated one prints, on a real Lua 5.1.
   Original variable and function names are not in the output and cannot be recovered; names are guesses from use.
-* **Hercules**: the module and preset outputs except its virtual-machine and bytecode modules, which are detected and reported but not recovered.
+* **Hercules**: the module and preset outputs, including the bytecode-encoding module (with the sandbox on, the compiled Lua 5.4 chunk is read out and decompiled; the original local and function names come back because the chunk keeps its
+  debug information). Its virtual-machine module is detected and reported but not recovered.
+* **Loader-style packers** (a program encoded as ASCII codes, hex, binary, URL escapes, base64, XOR, reversed text, ... and handed to `loadstring`): literal and folded payloads are unwrapped without running anything; a payload computed by a
+  decoder is read in the sandbox when the script is nothing but that loader. Measured on 66 packers I wrote for this project (labelled synthetic: they are not the output of any real tool).
 * **Luraph (v14 / v15 / v15.1), MoonSec V3, MoonVeil, PSU and the rest**: detected from banners and structure where that is possible. The original source of a Luraph or MoonVeil script **cannot** be
   recovered statically and the tool does not pretend to; the sandbox dump and trace describe what one run does. No real output of any closed-source obfuscator was available, so nothing about them is tested
   beyond detection signatures.
 * A trace or a dump describes one run. It is not the original source.
 
-### Origin check
+### AI check
 
-A local reading of coding style (comment habits, naming, structure, signs of copied credit lines or public libraries) gives a likelihood that code was AI-written and a separate likelihood that it was
+A strip under the editors reads the script by itself (nothing leaves the page) and shows how likely it is to be AI-written or vibe-coded, and how likely it is to be copied (skidded). The AI percentage comes from style signals;
+the copied percentage starts as clues in the text (credit lines, invites, library embeds, a change of style halfway) and becomes a measurement after the GitHub search. A local reading of coding style (comment habits, naming, structure, signs of copied credit lines or public libraries) gives a likelihood that code was AI-written and a separate likelihood that it was
 copied. It is an estimate, not proof, and says so on the page. The optional online part sends up to a handful of distinctive lines, after a confirmation dialog, to this site's `/api/origin` function, which searches GitHub's public
 code. It needs the `QS_ORIGIN_GITHUB_TOKEN` environment variable; without it the page says the search is not set up. The online path has been tested against recorded responses only.
 
