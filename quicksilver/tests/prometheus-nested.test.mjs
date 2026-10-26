@@ -45,13 +45,38 @@ for (const seed of [1337, 101, 77]) {
   });
 }
 
-test('Prometheus Strong (two VM layers), seed 1337: not fully recovered, but what comes out still behaves as the original', { skip }, async () => {
-  const want = await oracle.runLua(original, 'lua51');
-  const r = recover(read('seed-1337/n01_nested_loops__Strong.lua'), { sandbox: { enabled: true } });
-  assert.equal(r.ok, true);
-  const back = await oracle.runLua(r.output, 'lua51');
-  assert.ok(back.ok, back.error);
-  assert.equal(back.stdout, want.stdout);
-  // the second layer is not read: the report must say so instead of claiming a recovery
-  assert.notEqual(r.confidence.level, 'high');
+for (const seed of [1337, 101, 77]) {
+  test(`Prometheus Strong (two VM layers), seed ${seed}: both layers are taken apart and the program behaves as before`, { skip }, async () => {
+    const want = await oracle.runLua(original, 'lua51');
+    const tool = read(`seed-${seed}/n01_nested_loops__Strong.lua`);
+    const made = await oracle.runLua(tool, 'lua51');
+    assert.ok(made.ok && made.stdout === want.stdout, 'the tool itself kept the behaviour');
+
+    const r = recover(tool, { sandbox: { enabled: true }, annotate: false });
+    assert.equal(r.ok, true);
+    const back = await oracle.runLua(r.output, 'lua51');
+    assert.ok(back.ok, `${back.error}\n${r.output.slice(0, 400)}`);
+    assert.equal(back.stdout, want.stdout, 'what comes out prints what the original prints');
+    // the second layer used to stay: some 800 lines of dispatcher. Both layers are rebuilt now.
+    assert.ok(lines(r.output) < 300, `${lines(r.output)} lines for a program of ${lines(original)}`);
+    assert.doesNotMatch(r.output, /while true do\s+if \w+ (<|>) \d{5,}/, 'no dispatcher tree is left');
+    assert.notEqual(r.confidence.level, 'low');
+    assert.notEqual(r.confidence.level, 'minimal');
+  });
+}
+
+test('Prometheus Strong, seed 101: the report in front of the result is the complete one', () => {
+  // what is left is named (here nothing is), and a result without anything left carries no report
+  const r = recover(read('seed-101/n01_nested_loops__Strong.lua'), { sandbox: { enabled: true } });
+  assert.equal(r.confidence.level, 'high');
+  assert.equal(r.report.show, false);
+});
+
+test('Prometheus Strong, seeds 1337 and 77: what the engine could not finish is said in the result', () => {
+  for (const seed of [1337, 77]) {
+    const r = recover(read(`seed-${seed}/n01_nested_loops__Strong.lua`), { sandbox: { enabled: true } });
+    assert.equal(r.confidence.level, 'medium', `seed ${seed}`);
+    assert.match(r.output, /^-- QuickSilver recovery report/);
+    assert.match(r.output.split('(end of report)')[0], /Left unresolved/);
+  }
 });

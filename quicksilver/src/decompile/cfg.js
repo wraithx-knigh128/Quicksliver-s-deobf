@@ -29,8 +29,36 @@ const BREAK = { type: 'Break' };
  * @returns {object[]} statements
  */
 export function structure(blocks, entry, helpers) {
+  ({ blocks, entry } = threadEmptyJumps(blocks, entry));
   const g = new Graph(blocks, entry);
   return new Emitter(g, blocks, helpers).run();
+}
+
+/**
+ * A block with no statements that only jumps on says nothing; the blocks that jump to it can jump to its target. Left in, such a block is
+ * reached from several places and has to be written at each of them (it is a `continue`, or the join of two arms), which the emitter would
+ * refuse. The input is not changed.
+ */
+function threadEmptyJumps(blocks, entry) {
+  const empty = new Map();
+  for (const [id, b] of blocks) if (!b.stmts.length && b.term.kind === 'goto' && b.term.to !== id) empty.set(id, b.term.to);
+  if (!empty.size) return { blocks, entry };
+  const final = (id) => {
+    const seen = new Set();
+    while (empty.has(id) && !seen.has(id)) { seen.add(id); id = empty.get(id); }
+    return id;
+  };
+  // a cycle made only of empty blocks is an endless loop that does nothing: leave those blocks as they are
+  for (const id of [...empty.keys()]) { const t = final(id); if (empty.has(t)) empty.delete(id); }
+  if (!empty.size) return { blocks, entry };
+  const out = new Map();
+  for (const [id, b] of blocks) {
+    const t = b.term;
+    if (t.kind === 'goto') out.set(id, { ...b, term: { ...t, to: final(t.to) } });
+    else if (t.kind === 'branch') out.set(id, { ...b, term: { ...t, t: final(t.t), f: final(t.f) } });
+    else out.set(id, b);
+  }
+  return { blocks: out, entry: final(entry) };
 }
 
 // ---- graph -------------------------------------------------------------------------------------------------------
@@ -259,6 +287,10 @@ class Emitter {
     }
     let j = this.g.ipdom.get(cur);
     if (j === this.g.X || (loop && !loop.nodes.has(j))) j = null;
+    // A join is where the arms come together in one pass. An arm that goes round the loop first (a `continue`) meets the post-dominator only in the
+    // next iteration, after the loop body has run again, so the block is not a join: it belongs to the other arm. (`if even then total = total + n end`
+    // followed by `if n > 9 then break end` is a different program from the `elseif` it came from.)
+    if (j !== null && ![t.t, t.f].every((x) => x === j || this.reachable(x).has(j) || !this.goesRound(x))) j = null;
     // an arm that goes straight back to the top of the loop is a `continue`: the other arm runs on to the top as well, and that is where they meet
     // (looking forward from the loop header would find the whole body again, and a block of this very iteration as the "join")
     if (j === null && loop && (t.t === loop.header || t.f === loop.header) && loop.nodes.has(loop.header)) j = loop.header;
@@ -320,8 +352,24 @@ class Emitter {
     return this.reachable(a).has(b);
   }
 
+  /** Can control get from `a` to a back edge (to the top of a loop) without taking one first? */
+  goesRound(a) {
+    if (!this.roundCache) this.roundCache = new Map();
+    if (this.roundCache.has(a)) return this.roundCache.get(a);
+    let hit = false;
+    for (const n of this.reachable(a)) {
+      for (const m of this.g.succ.get(n)) if (this.g.index.get(m) <= this.g.index.get(n)) hit = true;
+      if (hit) break;
+    }
+    this.roundCache.set(a, hit);
+    return hit;
+  }
+
   /** Everything reachable from `a` without taking a back edge, `a` included. */
   reachable(a) {
+    if (!this.fwdCache) this.fwdCache = new Map();
+    const cached = this.fwdCache.get(a);
+    if (cached) return cached;
     const seen = new Set([a]);
     const stack = [a];
     while (stack.length) {
@@ -332,6 +380,7 @@ class Emitter {
         stack.push(m);
       }
     }
+    this.fwdCache.set(a, seen);
     return seen;
   }
 

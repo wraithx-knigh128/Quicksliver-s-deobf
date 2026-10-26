@@ -14,6 +14,15 @@
       "sampleSha256": "165d20b2990dd386d5ed657d5476ce12494a19820158d3cd348ed11a0f1cb85a",
       "bytes": 30583,
       "status": "ok"
+    },
+    {
+      "file": "n01_nested_loops__Strong.lua",
+      "sample": "n01_nested_loops.lua",
+      "config": "Strong",
+      "seed": 101,
+      "sampleSha256": "165d20b2990dd386d5ed657d5476ce12494a19820158d3cd348ed11a0f1cb85a",
+      "bytes": 87287,
+      "status": "ok"
     }
   ]
 }

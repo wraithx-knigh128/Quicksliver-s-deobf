@@ -30,7 +30,7 @@ Numbers are measured on output of the real tools (Prometheus, Hercules, IronBrew
 
 * **IronBrew 2**: the embedded chunk is read (not run), the handlers are identified by shape, the Lua 5.1 chunk is rebuilt and decompiled. Supported.
 * **Prometheus**: formatting, name mangling, string splitting, number rewriting, proxied locals, anti-tamper, wrappers, and (with the sandbox switched on) EncryptStrings and ConstantArray. The Vmify
-  register VM, including the two layers of the Strong preset, is unflattened back into statements and control flow. The recovered program prints what the obfuscated one prints, on a real Lua 5.1. (Measured limit: for a program with nested loops that exit early, the Medium preset is rebuilt completely while the second layer of Strong is not read; see `docs/ARCHITECTURE.md`.)
+  register VM, including the two layers of the Strong preset, is unflattened back into statements and control flow. The recovered program prints what the obfuscated one prints, on a real Lua 5.1. (Measured on a program with nested loops that exit early: Medium and both layers of Strong are rebuilt on three seeds and print what the original prints; some Strong results keep the string decryptor and say so. See `docs/ARCHITECTURE.md`.)
   Original variable and function names are not in the output and cannot be recovered; names are guesses from use.
 * **Hercules**: the module and preset outputs, including the bytecode-encoding module (with the sandbox on, the compiled Lua 5.4 chunk is read out and decompiled; the original local and function names come back because the chunk keeps its
   debug information). Its virtual-machine module is detected and reported but not recovered.

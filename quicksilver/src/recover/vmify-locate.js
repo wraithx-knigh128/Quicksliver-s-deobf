@@ -280,6 +280,28 @@ function describe(chunk, info, f, outer, d) {
     return undefined;
   });
 
+  // The cells can also be released by a handler that a proxy carries (`{ __gc = release }`, `meta.__gc = release`): the container never calls the
+  // release function itself, the collector does. The handler is a variable of the machinery that holds the function.
+  if (alloc && !freeFn) {
+    const handlerVar = (e) => {
+      e = stripParens(e);
+      const v = e && e.type === 'Name' ? canonical(varOf(info, e), info) : null;
+      return v && !v.isGlobal && machinery.has(v) ? v : null;
+    };
+    const isGc = (k) => { k = k && stripParens(k); return !!k && k.type === 'String' && k.value === '__gc'; };
+    walk(outer.body, (n) => {
+      if (freeFn) return false;
+      if (n.type === 'Table') {
+        for (const fd of n.fields) {
+          if ((fd.kind === 'named' && fd.key === '__gc') || (fd.kind === 'keyed' && isGc(fd.key))) freeFn = freeFn || handlerVar(fd.value);
+        }
+      } else if (n.type === 'Assign') {
+        n.targets.forEach((t, i) => { if (t.type === 'Index' && isGc(t.key)) freeFn = freeFn || handlerVar(n.values[i]); });
+      }
+      return undefined;
+    });
+  }
+
   // the tables behind alloc and free: alloc counts, free clears the count and the cell
   let counts = null;
   let cells = null;

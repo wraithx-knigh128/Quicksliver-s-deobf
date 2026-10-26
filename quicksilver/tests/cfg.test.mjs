@@ -164,3 +164,28 @@ test('a loop inside another: its break and its normal exit are told apart althou
   assert.equal(out.split('J').length - 1, 1, out);
   assert.match(out, /break/);
 });
+
+test('an arm that goes round the loop is not joined with the other arm at the block after the loop test', () => {
+  // while true do n = n + 1; if even then total = total + n elseif n > 9 then break end end
+  const out = run({
+    b1: blk('n=n+1', { kind: 'branch', cond: c('even'), t: 'b2', f: 'b3' }),
+    b2: blk('total+=n', { kind: 'goto', to: 'b1' }),
+    b3: blk('', { kind: 'branch', cond: c('n>9'), t: 'exit', f: 'b1' }),
+    exit: blk('print', { kind: 'exit' }),
+  }, 'b1');
+  // the test of b3 belongs to the else arm: written after the `if` it would also run after total+=n
+  assert.equal(out, 'while true do\n  n=n+1\n  if even then\n    total+=n\n  else\n    if n>9 then\n      break\n    end\n  end\nend\nprint');
+});
+
+test('jumps through empty blocks are followed: a block that only jumps on is not written twice', () => {
+  const out = run({
+    h: blk('H', { kind: 'branch', cond: c('a'), t: 'x', f: 'y' }),
+    x: blk('X', { kind: 'branch', cond: c('stop'), t: 'end', f: 'e' }),
+    y: blk('Y', { kind: 'goto', to: 'e' }),
+    e: blk('', { kind: 'goto', to: 'h' }),
+    end: blk('END', { kind: 'exit' }),
+  }, 'h');
+  assert.equal(out.split('X').length - 1, 1, out);
+  assert.equal(out.split('Y').length - 1, 1, out);
+  assert.match(out, /break/);
+});
