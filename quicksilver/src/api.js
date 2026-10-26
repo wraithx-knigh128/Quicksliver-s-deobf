@@ -14,6 +14,7 @@ import { diffLines, toRows } from './core/diff.js';
 import { traceScript } from './trace/trace.js';
 import { renamePass } from './passes/rename.js';
 import { originAnalysis } from './origin/index.js';
+import { verifyRecovery } from './adaptive/verify.js';
 
 export const ENGINE_VERSION = '1.0.0';
 
@@ -134,6 +135,14 @@ export function dumpSource(source, options = {}) {
       : candidates.filter((c) => c.parses).sort((a, b) => b.bytes - a.bytes)[0] || candidates.sort((a, b) => b.bytes - a.bytes)[0] || null;
     return { ok: t.ok, status: t.status, ended: t.ended, error: t.error, candidates, best: best ? best.id : null, requests: t.requests, stats: t.stats, output: t.output };
   });
+}
+
+/**
+ * Run the original and the recovered program in the sandbox (the interface asks first) and compare what each one did. `options.recovered`
+ * is the recovered text.
+ */
+export function verifySource(source, options = {}) {
+  return timed(() => verifyRecovery(source, options.recovered, options));
 }
 
 /** Local half of the origin check: style signals, hints of other authors, and the lines worth searching for online. */

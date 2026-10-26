@@ -27,6 +27,7 @@ import { unflattenMoonVeil } from './moonveil-cff.js';
 import { liftMoonVeilVm, VmUnsupported } from './moonveil-vm/index.js';
 import { decodeMoonVeilConstants, simplifyCells, moonveilShape } from './moonveil.js';
 import { assessConfidence } from './confidence.js';
+import { AdaptiveEngine } from '../adaptive/engine.js';
 import { recoverIronBrew, IronBrewError } from './ironbrew.js';
 import { unflattenVmify, envToGlobals, VmifyError } from './vmify.js';
 import { parseChunk } from '../sandbox/bytecode.js';
@@ -37,6 +38,8 @@ export const DEFAULT_OPTIONS = Object.freeze({
   rename: 'smart',            // 'smart' | 'all' | 'off'
   foldCalls: 'obfuscation',   // 'obfuscation' | 'all'
   maxRounds: 8,
+  adaptive: true,             // after the family steps and the generic rounds: read the structure of what is left and recover what can be recovered (src/adaptive/)
+  adaptiveBudgetMs: 12000,
   moonveilVm: true,           // read a MoonVeil VM program back out of its data (static; falls back to the general passes when the script does not fit)
   reuseInstructions: true,    // lift an instruction once per kind and reuse it (false lifts every one: slower, same result)
   onProgress: null,           // called with { phase, done?, total? } while long steps run
@@ -237,6 +240,23 @@ export function recover(source, userOptions = {}) {
     if (!generic() || vmLifted) break;
   }
   if (vmLifted) decompiled = true;
+  // whatever the steps above did not know about: structure-driven strategies that choose themselves from what the code is made of
+  let adaptive = null;
+  if (options.adaptive) {
+    run.step('adaptive', 'Read the structure of the code and recover what can be recovered', (a) => {
+      adaptive = new AdaptiveEngine().run(a, {
+        sandbox: options.sandbox,
+        budgetMs: options.adaptiveBudgetMs,
+        foldCalls: options.foldCalls,
+        unusedAtStart: decompiled ? new WeakSet() : unusedAtStart,
+        rebuilt: decompiled,
+        observeOnly: vmLifted,
+        onProgress: options.onProgress || undefined,
+      });
+      return { changed: adaptive.changed, scoreBefore: adaptive.score.before, scoreAfter: adaptive.score.after, left: adaptive.residual.length };
+    });
+    if (adaptive && adaptive.rebuilt) decompiled = true;
+  }
   if (vmified) run.step('prometheus.environment', 'Declare the environment the script still reads', (a) => envToGlobals(a, true), { quiet: true });
   if (!vmLifted) run.step('varargs', 'Remove unused vararg parameters', (a) => removeUnusedVararg(a), { quiet: true });
   // the rebuilt program is already named and laid out; the later passes would only rename what was named on purpose
@@ -253,9 +273,10 @@ export function recover(source, userOptions = {}) {
   const validation = validateOutput(output, run.ast, options);
   if (!validation.ok) run.warnings.push(validation.message);
   const steps = [...run.steps.values()];
-  const confidence = assessConfidence(detection, output, { steps, validation, ast: run.ast });
+  const confidence = assessConfidence(detection, output, { steps, validation, ast: run.ast, adaptive });
 
   return {
+    adaptive,
     ok: validation.ok,
     output,
     steps,

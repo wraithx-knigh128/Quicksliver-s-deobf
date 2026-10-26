@@ -9,6 +9,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
+import { obfuscate } from '../tests/helpers/mutators.mjs';
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const corpus = path.join(root, 'tests/corpus');
@@ -147,6 +148,32 @@ for (const t of tools) {
     });
   }
   groups.push({ label: 'Loadstring packers (written for this project)', note: 'not a real tool: generic encodings put in front of loadstring', items });
+}
+
+// independent transformations (tests/helpers/mutators.mjs): written for this project and not the output of any real obfuscator. They are what the
+// structure reader (src/adaptive/) is tested on, so the page has a way to try it
+{
+  const source = fs.readFileSync(path.join(corpus, 'adaptive/a05_simulation.lua'), 'latin1');
+  const forms = [
+    ['flatten-chain', 'Flattened control flow (if / elseif chain)', [['flatten', { style: 'chain', next: 'literal', exit: 'sentinel' }]], 'every function and the main chunk become a loop that picks its block by a state number', false],
+    ['flatten-tree', 'Flattened control flow (binary search, delta states)', [['flatten', { style: 'tree', next: 'delta', exit: 'break' }]], 'the next state is written as a difference from the current one', false],
+    ['flatten-seq', 'Flattened control flow (sequential ifs, conditional states)', [['flatten', { style: 'seq', next: 'choice', exit: 'sentinel' }]], 'the blocks are one if after the other and the next state is chosen with `cond and A or B`', false],
+    ['strings', 'Strings behind a decoder', [['strings', { scheme: 'indexed' }]], 'every string is a call of a decoder over a table of shifted bytes', true],
+    ['proxies-opaque', 'Call proxies and opaque predicates', [['proxies', { layers: 2 }], ['opaque', { density: 0.5 }]], 'operators and constants behind tiny functions, branches guarded by conditions arithmetic settles', false],
+    ['everything', 'Everything at once, wrapped', ['proxies', 'opaque', ['flatten', { style: 'tree', next: 'delta' }], ['strings', { scheme: 'indexed' }], 'rename', 'wrap'], 'proxies, opaque predicates, flattening, string decoder, renamed locals, wrapper', true],
+  ];
+  const items = [];
+  forms.forEach(([config, label, steps, what, needsSandbox], i) => {
+    const out_ = obfuscate(source, steps, 40 + i).code;
+    const name = `transformed__a05_simulation__${config}.lua`;
+    fs.writeFileSync(path.join(out, name), out_, 'latin1');
+    const buf = Buffer.from(out_, 'latin1');
+    items.push({
+      file: name, label, sub: sizeLabel(buf.length), bytes: buf.length, sha256: crypto.createHash('sha256').update(buf).digest('hex'), measured: null,
+      note: `Written for this project (not the output of any real obfuscator): ${what}. ${needsSandbox ? 'The strings are computed by a decoder in the script, so the sandbox has to be on to read them.' : 'Nothing has to be run to read it.'} The structure reader recovers this from the shape of the code alone.`,
+    });
+  });
+  groups.push({ label: 'Independent transformations (written for this project)', note: 'not a real tool: made to test recovery of structure no obfuscator list knows', items });
 }
 
 fs.writeFileSync(path.join(out, 'index.json'), `${JSON.stringify({ generated: new Date().toISOString(), groups }, null, 1)}\n`);

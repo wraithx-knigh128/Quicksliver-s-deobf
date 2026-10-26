@@ -1,5 +1,5 @@
 {
- "generated": "2026-10-25T11:40:14.838Z",
+ "generated": "2026-10-26T08:55:53.029Z",
  "groups": [
   {
    "label": "Original programs (not obfuscated)",
@@ -837,6 +837,66 @@
       "behaviour": "same"
      },
      "note": "Written for this project (not the output of any real obfuscator): two layers: base64 around the hexadecimal packer around the program. The payload is computed by the script, so the sandbox has to be on to read it."
+    }
+   ]
+  },
+  {
+   "label": "Independent transformations (written for this project)",
+   "note": "not a real tool: made to test recovery of structure no obfuscator list knows",
+   "items": [
+    {
+     "file": "transformed__a05_simulation__flatten-chain.lua",
+     "label": "Flattened control flow (if / elseif chain)",
+     "sub": "8.6 KiB",
+     "bytes": 8803,
+     "sha256": "9c5d158c4d86c8cdeb7aec17c8bffb033002ff84e0d69935a7ca7a73b1a7e8bf",
+     "measured": null,
+     "note": "Written for this project (not the output of any real obfuscator): every function and the main chunk become a loop that picks its block by a state number. Nothing has to be run to read it. The structure reader recovers this from the shape of the code alone."
+    },
+    {
+     "file": "transformed__a05_simulation__flatten-tree.lua",
+     "label": "Flattened control flow (binary search, delta states)",
+     "sub": "12.3 KiB",
+     "bytes": 12579,
+     "sha256": "8ec010218acf47fef9e61679fad8bc1765d34b3a2fa997b399c8806d6c1b4ef1",
+     "measured": null,
+     "note": "Written for this project (not the output of any real obfuscator): the next state is written as a difference from the current one. Nothing has to be run to read it. The structure reader recovers this from the shape of the code alone."
+    },
+    {
+     "file": "transformed__a05_simulation__flatten-seq.lua",
+     "label": "Flattened control flow (sequential ifs, conditional states)",
+     "sub": "8.5 KiB",
+     "bytes": 8668,
+     "sha256": "3290a76512f086dd91786e7b61efb4a66108b90a9044f3b21949a8d78480b2ad",
+     "measured": null,
+     "note": "Written for this project (not the output of any real obfuscator): the blocks are one if after the other and the next state is chosen with `cond and A or B`. Nothing has to be run to read it. The structure reader recovers this from the shape of the code alone."
+    },
+    {
+     "file": "transformed__a05_simulation__strings.lua",
+     "label": "Strings behind a decoder",
+     "sub": "3.6 KiB",
+     "bytes": 3727,
+     "sha256": "0619b067729de8c2654fc28d561c0d0a45efd6918f8f44c4509a293d3b21d7aa",
+     "measured": null,
+     "note": "Written for this project (not the output of any real obfuscator): every string is a call of a decoder over a table of shifted bytes. The strings are computed by a decoder in the script, so the sandbox has to be on to read them. The structure reader recovers this from the shape of the code alone."
+    },
+    {
+     "file": "transformed__a05_simulation__proxies-opaque.lua",
+     "label": "Call proxies and opaque predicates",
+     "sub": "5.4 KiB",
+     "bytes": 5538,
+     "sha256": "10ed231c7e5ef09189a77187687a4d093434ed0f56840a8c46931ae8ca01fb88",
+     "measured": null,
+     "note": "Written for this project (not the output of any real obfuscator): operators and constants behind tiny functions, branches guarded by conditions arithmetic settles. Nothing has to be run to read it. The structure reader recovers this from the shape of the code alone."
+    },
+    {
+     "file": "transformed__a05_simulation__everything.lua",
+     "label": "Everything at once, wrapped",
+     "sub": "18.2 KiB",
+     "bytes": 18668,
+     "sha256": "c91849e9fbc3f21d3ffd5b0aa1dac18e172f07be2eeaad8b2f0b6a7f595872a0",
+     "measured": null,
+     "note": "Written for this project (not the output of any real obfuscator): proxies, opaque predicates, flattening, string decoder, renamed locals, wrapper. The strings are computed by a decoder in the script, so the sandbox has to be on to read them. The structure reader recovers this from the shape of the code alone."
     }
    ]
   }

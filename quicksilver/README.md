@@ -23,6 +23,8 @@ The page is laid out like a code editor: **Obfuscated source** above, **Deobfusc
 
 ### What it can recover, measured
 
+* **Structure no list of obfuscators knows** (`src/adaptive/`): after the family steps, every script is also read for what its code is made of, whoever wrote the tool. Loops that choose their next block by a state variable (an `if`/`elseif` chain, a binary-search tree or several `if`s in a row; the next state a number, a delta, a bit operation, a table lookup or `cond and A or B`) are rebuilt into ordinary `if`/`while`/`repeat`; tiny functions that only stand in for an operator or a constant are replaced by what they do; conditions that arithmetic settles (`x * x >= 0`, `(n * n + n) % 2 == 0`) are decided by proof; tables of constants read through computed keys are read; decoder functions are found by what they do (return text built by a loop from constants that are not themselves text) and, with the sandbox on, evaluated. A change is kept only if the result still parses, introduces no name the script did not use, and leaves less of what the strategy was called for; the page lists what it saw, what it did and what it left, with the reason for each. Measured on independent transformations of six programs, run on real Lua 5.1 (and 5.4 and LuaJIT for some): see `tests/adaptive-behaviour.test.mjs`. Those transformations were written by the same people as the engine, so this shows the shapes are handled, not that every obfuscator is. Code a person wrote (a readable helper, a settings table, a flag) is left alone. **Check the behaviour** (in the Details panel) runs the original and the result in the sandbox, after asking, and compares what each did.
+
 Numbers are measured on output of the real tools (Prometheus, Hercules, IronBrew 2, Zenfus, AzureVM, Clyde, the single-page obfuscator, Colisseum, Simple-Lua-Obfuscator) generated from programs written for this project, not on hand-written look-alikes. The full table is
 `docs/COMPATIBILITY.md` (generated); the same data is the **Compatibility** tab. In short:
 
@@ -89,6 +91,8 @@ node tools/build-compat.mjs           # data/compat.json and docs/COMPATIBILITY.
 node tools/build-samples.mjs          # data/samples/ from the corpus and the scorecard
 ```
 
+`tests/adaptive.test.mjs` holds what the structure reader must do, refuse and leave alone; `tests/adaptive-behaviour.test.mjs` obfuscates six programs with `tests/helpers/mutators.mjs` (flattening in three styles, string decoders, opaque predicates, proxies, junk, renamed locals, a wrapper; alone and together) and compares the recovered programs with the originals on real Lua; `tests/verify.test.mjs` covers the behaviour check.
+
 `QS_LUA_PYTHON` points at a Python with [`lupa`](https://pypi.org/project/lupa/); it provides real Lua 5.1, LuaJIT and Lua 5.4 so recovered scripts can be compared with the originals **by what they print**.
 Without it those tests are reported as skipped, not passed.
 
@@ -103,6 +107,7 @@ src/core/                      lexer, parser, printer, scopes, diff, fidelity
 src/passes/                    folding, simplification, dataflow, idioms, renaming, sandboxed decoder evaluation
 src/detect/                    obfuscator signatures and dialect detection
 src/recover/                   per-family recovery (Prometheus, Vmify, Hercules, IronBrew 2) and the pipeline
+src/adaptive/                  the structure reader: findings, strategies (dispatch loops, opaque predicates, call proxies, constant tables, decoders), the acceptance rules, the behaviour check
 src/decompile/                 Lua bytecode lifting, control-flow structuring
 src/sandbox/, src/trace/       a Lua interpreter written for this tool (with the Lua 5.4 features obfuscator output uses), and the behavioural trace
 src/origin/                    the style reading behind the origin check

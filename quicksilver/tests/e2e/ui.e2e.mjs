@@ -218,6 +218,45 @@ test('trace asks first, then lists what a Roblox-style script does', { skip }, a
   await ctx.close();
 });
 
+test('a script flattened by no known tool is rebuilt, and the page says what it saw, did and left, then checks the behaviour', { skip }, async () => {
+  const { page, ctx, problems } = await newPage();
+  await loadFile(page, path.join(root, 'data/samples/transformed__a05_simulation__flatten-chain.lua'));
+  await page.click('#act-analyze'); await idle(page);
+  assert.match(await page.textContent('#view-analysis'), /Flattened control flow/);
+  assert.match(await page.textContent('#view-analysis'), /Read from the shape of the code/);
+
+  await page.click('#act-recover'); await idle(page);
+  const inspector = await (async () => { if (!(await page.isVisible('#inspector'))) await page.click('#btn-inspector'); return page.textContent('#inspector'); })();
+  assert.match(inspector, /Structure read/);
+  assert.match(inspector, /Flattened control flow/);
+  assert.match(inspector, /resolved/);
+  const out = await page.textContent('#out-body');
+  assert.ok(!/while st__\d+ ~= 1 do/.test(out), 'the dispatch loops are gone from the output');
+  assert.match(out, /local function life/, 'the first function is back as ordinary loops');
+
+  // the behaviour check asks first, then runs both programs
+  await page.click('#inspector button:has-text("Run both and compare")');
+  await page.waitForSelector('.modal');
+  assert.match(await page.textContent('.modal'), /Run this script in the sandbox/);
+  await page.click('.modal button:has-text("Run in sandbox")');
+  await page.waitForFunction(() => /Same behaviour/.test(document.querySelector('#inspector').textContent), null, { timeout: 60_000 });
+  assert.deepEqual(problems, []);
+  await ctx.close();
+});
+
+test('the structure reader can be switched off in the settings', { skip }, async () => {
+  const { page, ctx } = await newPage();
+  await loadFile(page, path.join(root, 'data/samples/transformed__a05_simulation__flatten-chain.lua'));
+  await page.click('#btn-settings');
+  await page.waitForSelector('.modal');
+  await page.locator('.modal .field:has-text("Read the structure") label.switch').click();
+  await page.click('.modal button:has-text("Save")');
+  await page.click('#act-recover'); await idle(page);
+  const out = await page.textContent('#out-body');
+  assert.ok(/while st__\d+ ~= 1 do/.test(out), 'the flattened loops are still there when the structure reader is off');
+  await ctx.close();
+});
+
 test('cancel stops a long-running operation', { skip }, async () => {
   const { page, ctx } = await newPage();
   // a loop that would burn the whole instruction budget

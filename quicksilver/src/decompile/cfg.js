@@ -259,6 +259,9 @@ class Emitter {
     }
     let j = this.g.ipdom.get(cur);
     if (j === this.g.X || (loop && !loop.nodes.has(j))) j = null;
+    // an arm that goes straight back to the top of the loop is a `continue`: the other arm runs on to the top as well, and that is where they meet
+    // (looking forward from the loop header would find the whole body again, and a block of this very iteration as the "join")
+    if (j === null && loop && (t.t === loop.header || t.f === loop.header) && loop.nodes.has(loop.header)) j = loop.header;
     // when an arm returns early the post-dominator is the end of the function; the arms can still come together before it
     if (j === null) j = this.localJoin(t.t, t.f, loop);
     const inner = j === null ? stop : new Set([...stop, j]);

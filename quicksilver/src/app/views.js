@@ -87,6 +87,8 @@ export function analysisView(rep) {
     ['String literals', String(s.strings)],
     ['AST nodes', String(s.nodes)],
   ])));
+  const structure = structureSection(rep.structure, { onGoto: rep.onGoto });
+  if (structure) wrap.append(structure);
   if (rep.indicators.length) {
     wrap.append(section('Indicators', h('ul.list', rep.indicators.map((i) => h('li', [
       h('span.badge.' + ({ high: 'bad', medium: 'warn', info: 'info' }[i.severity] || ''), i.severity), ' ', i.text])))));
@@ -109,9 +111,118 @@ export function analysisView(rep) {
   return wrap;
 }
 
+// ---- structure: what the shape of the code says -----------------------------------------------------------------------------
+
+export const KIND_LABEL = {
+  dispatcher: 'Flattened control flow',
+  'opaque-predicate': 'Opaque predicates',
+  'call-proxy': 'Call proxies',
+  'constant-table': 'Constant tables',
+  'string-decoder': 'String decoders',
+  'dynamic-code': 'Code loaded at run time',
+  interpreter: 'Virtual machine',
+  payload: 'Encoded payload',
+};
+const kindLabel = (k) => KIND_LABEL[k] || k;
+const OUTCOME = { accepted: ['ok', 'kept'], rejected: ['bad', 'undone'], noop: ['', 'nothing to do'], failed: ['bad', 'failed'], skipped: ['', 'skipped'] };
+
+const lineLink = (line, onGoto) => (line && onGoto ? h('a', { href: '#', onclick: (e) => { e.preventDefault(); onGoto(line); } }, `line ${line}`) : line ? `line ${line}` : null);
+
+/** The Analyze tab: what the structure of the code shows, read without changing anything. */
+export function structureSection(st, { onGoto } = {}) {
+  if (!st) return null;
+  if (!st.findings.length) return section('Structure', note('ok', 'No disguised control flow, string decoders, call proxies or opaque conditions were found in the shape of the code.'));
+  const byKind = new Map();
+  for (const f of st.findings) { if (!byKind.has(f.kind)) byKind.set(f.kind, []); byKind.get(f.kind).push(f); }
+  return section('Structure', [
+    note('', 'Read from the shape of the code, not from any list of obfuscators. Nothing was run and nothing was changed.'),
+    ...[...byKind].map(([kind, list]) => h('div', { style: { marginTop: '8px' } }, [
+      h('b', `${kindLabel(kind)} `), h('span.faint.mono', `×${list.length}`),
+      h('ul.list', list.slice(0, 12).map((f) => h('li', [
+        f.label, ' ', lineLink(f.line, onGoto) ? h('span.faint', ['(', lineLink(f.line, onGoto), ')']) : null,
+        h('ul', { style: { margin: '2px 0 0', paddingLeft: '16px' } }, f.evidence.map((e) => h('li', { style: { border: 0, padding: '1px 0' } }, e))),
+        f.residual ? h('div.dim', { style: { marginTop: '2px' } }, f.residual) : null,
+      ]))),
+      list.length > 12 ? h('div.faint', `and ${list.length - 12} more`) : null,
+    ])),
+  ], h('span.faint.mono', `opacity ${st.score}`));
+}
+
+/** The inspector, after a recovery: what the adaptive engine saw, did and left, and the behaviour check. */
+export function adaptiveSummary(ad, { onGoto, onVerify, verify, canVerify } = {}) {
+  if (!ad || !ad.ran) return [];
+  const out = [];
+  const kept = ad.decisions.filter((d) => d.outcome === 'accepted' && !d.strategy.startsWith('cleanup.')).length;
+  if (!ad.hypotheses.length) {
+    out.push(section('Structure', [note('ok', 'No disguised control flow, string decoders, call proxies or opaque conditions were left for the structure reader to handle.')]));
+  } else {
+    out.push(section('Structure read', [
+      kv([
+        ['Disguise left', h('span', [`${ad.score.before} \u2192 ${ad.score.after}`, ' ', ad.score.after === 0 ? h('span.badge.ok', 'none') : h('span.badge.warn', 'some')])],
+        ['Strategies kept', `${kept} of ${new Set(ad.decisions.filter((d) => !d.strategy.startsWith('cleanup.')).map((d) => d.strategy)).size} tried`],
+        ['Time', fmtMs(ad.ms)],
+      ]),
+      h('table.steps', h('tbody', ad.kinds.map((k) => h('tr', [
+        h('td', kindLabel(k.kind)),
+        h('td', `${k.resolved} of ${k.found} resolved`),
+      ])))),
+      h('details', { style: { marginTop: '8px' } }, [
+        h('summary', 'What it saw'),
+        h('ul.list', ad.hypotheses.slice(0, 40).map((f) => h('li', [
+          f.label, ' ', lineLink(f.line, onGoto) ? h('span.faint', ['(', lineLink(f.line, onGoto), ')']) : null,
+          h('ul', { style: { margin: '2px 0 0', paddingLeft: '16px' } }, f.evidence.map((e) => h('li', { style: { border: 0, padding: '1px 0' } }, e))),
+        ]))),
+      ]),
+      h('details', [
+        h('summary', 'What it did'),
+        h('table.steps', h('tbody', ad.decisions.filter((d) => d.outcome !== 'noop').map((d) => h('tr', [
+          h('td', [d.title, d.note ? h('div.faint', d.note) : null]),
+          h('td', [h('span.badge' + (OUTCOME[d.outcome][0] ? '.' + OUTCOME[d.outcome][0] : ''), OUTCOME[d.outcome][1]), d.outcome === 'accepted' && d.changed ? h('span.faint', ` \u00d7${d.changed}`) : null]),
+        ])))),
+      ]),
+    ], h('span.faint.mono', 'adaptive')));
+  }
+  if (ad.residual.length) {
+    out.push(section('Left as it was', [
+      note('warn', 'The structure reader found these and could not take them apart. The output still contains them.'),
+      h('ul.list', ad.residual.slice(0, 30).map((r) => h('li', [
+        h('b', kindLabel(r.kind)), ' ', lineLink(r.line, onGoto) ? h('span.faint', ['(', lineLink(r.line, onGoto), ')']) : null,
+        h('div', r.label),
+        h('div.dim', r.reason),
+      ]))),
+    ], h('span.faint.mono', String(ad.residual.length))));
+  }
+  if (ad.blocked && ad.blocked.some((b) => b.why === 'sandbox')) {
+    out.push(section('Needs the sandbox', [note('info', 'Some of the disguise can only be removed by running the script\u2019s own decoder functions in the sandbox. Switch it on in Settings and recover again.')]));
+  }
+  if (canVerify) {
+    out.push(section('Check the behaviour', [
+      h('p.note', 'Runs the original and the recovered program in the sandbox and compares what each one does: calls, properties set, printed output, how it ends. Equal runs are evidence, not proof.'),
+      verify && verify.running ? h('p.note.info', 'Running both programs\u2026') : h('button.btn.small.outline', { type: 'button', onclick: onVerify }, verify && verify.result ? 'Check again' : 'Run both and compare\u2026'),
+      verify && verify.error ? h('p.note.bad', verify.error) : null,
+      verify && verify.result ? verifyResult(verify.result) : null,
+    ]));
+  }
+  return out;
+}
+
+function verifyResult(v) {
+  const kind = v.verdict === 'identical' ? 'ok' : v.verdict === 'different' ? 'bad' : 'warn';
+  return h('div', { style: { marginTop: '8px' } }, [
+    h('p.note.' + kind, [h('b', v.verdict === 'identical' ? 'Same behaviour. ' : v.verdict === 'different' ? 'Different behaviour. ' : 'Inconclusive. '), v.summary]),
+    v.difference ? kv([
+      ['First difference', v.difference.index >= 0 ? `event ${v.difference.index + 1}` : 'at the end'],
+      ['Original', h('span.mono', v.difference.original)],
+      ['Recovered', h('span.mono', v.difference.recovered)],
+    ]) : null,
+    ...v.notes.map((n) => h('p.note', n)),
+    h('p.faint', `Original: ${v.original.events} events, ${v.original.status}. Recovered: ${v.recovered.events} events, ${v.recovered.status}. ${fmtMs(v.ms)}.`),
+  ]);
+}
+
 // ---- inspector: what happened in the last run ------------------------------------------------------------------------------
 
-export function recoverySummary(r) {
+export function recoverySummary(r, helpers = {}) {
   const out = [];
   if (!r) return out;
   if (!r.ok && r.stage === 'parse') {
@@ -129,6 +240,7 @@ export function recoverySummary(r) {
     c ? h('ul.list', { style: { marginTop: '8px' } }, c.reasons.map((x) => h('li', [h('span.mono.faint', x.effect ? (x.effect > 0 ? `+${Math.round(x.effect * 100)}` : `${Math.round(x.effect * 100)}`).padStart(4) : '   ·'), '  ', x.text]))) : null,
     note('', 'Confidence is derived from what is still visible in the output. It is not a guarantee that the result equals the original program.'),
   ]));
+  out.push(...adaptiveSummary(r.adaptive, { ...helpers, canVerify: helpers.canVerify && r.output != null }));
   const steps = r.steps || [];
   out.push(section('Passes', h('table.steps', h('tbody', steps.map((s) => h('tr', [
     h('td', { class: `s-${s.status}` }, s.label, s.status === 'failed' ? h('div.dim', s.error) : (s.status === 'skipped' && typeof s.detail === 'string' ? h('div.faint', s.detail) : null)),

@@ -9,6 +9,7 @@ export const DEFAULTS = Object.freeze({
   foldCalls: 'obfuscation',
   stringStyle: 'normalize',
   maxRounds: 8,
+  adaptive: true,         // read the structure of what the family steps leave (src/adaptive/) and recover what it can
   sandbox: false,         // opt-in: evaluate string decoders in the interpreter sandbox
   sandboxFuel: 60_000_000,
   sandboxTimeMs: 10_000,
@@ -49,6 +50,7 @@ export function recoverOptions(s, { allowSandbox }) {
     foldCalls: s.foldCalls,
     stringStyle: s.stringStyle,
     maxRounds: s.maxRounds,
+    adaptive: s.adaptive,
     sandbox: { enabled: allowSandbox && s.sandbox, fuel: s.sandboxFuel, timeMs: s.sandboxTimeMs },
   };
 }

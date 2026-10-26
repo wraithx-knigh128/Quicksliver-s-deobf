@@ -9,6 +9,7 @@ import { analyze as analyzeScopes } from '../core/scope.js';
 import { forEachChild } from '../core/walk.js';
 import { detect } from '../detect/detect.js';
 import { printableRatio } from '../core/bytes.js';
+import { AdaptiveEngine } from '../adaptive/engine.js';
 
 const API_GROUPS = [
   { id: 'dynamic-code', label: 'Dynamic code', names: ['loadstring', 'load', 'dofile', 'loadfile', 'require', 'getfenv', 'setfenv', 'getrenv', 'getgenv', 'getsenv'] },
@@ -111,6 +112,17 @@ export function analyzeScript(source, options = {}) {
     indicators.push({ severity: 'info', id: `family-${f.id}`, text: `Looks like ${f.name} output (${Math.round(f.confidence * 100)}%).` });
   }
 
+  // what the structure of the code says about how it was disguised, read without changing anything
+  let structure = null;
+  try {
+    const seen = new AdaptiveEngine().observe(ast);
+    structure = {
+      score: seen.score,
+      parts: seen.parts,
+      findings: seen.findings.map((f) => ({ kind: f.kind, line: f.line, label: f.label, evidence: f.evidence, confidence: f.confidence, strategy: f.strategy, residual: f.residual || null })),
+    };
+  } catch { structure = null; }
+
   const topCalls = [...calls.entries()].sort((a, b) => b[1] - a[1]).slice(0, 25).map(([name, count]) => ({ name, count }));
   const lines = source.split('\n').length;
   return {
@@ -136,5 +148,6 @@ export function analyzeScript(source, options = {}) {
     functions: functions.slice(0, 100),
     calls: topCalls,
     indicators,
+    structure,
   };
 }

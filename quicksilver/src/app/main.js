@@ -443,7 +443,7 @@ function getInputBytes() {
 function clearResults() {
   S.version++;
   S.inspected = null;
-  S.detection = null; S.analysis = null; S.luast = null; S.trace = null; S.traceConsent = false; S.beautified = null; S.recovered = null; S.diff = null;
+  S.detection = null; S.analysis = null; S.luast = null; S.trace = null; S.traceConsent = false; S.beautified = null; S.recovered = null; S.verify = null; S.diff = null;
   S.dump = null; S.origin = null; S.originOnline = null; S.originSubject = 'auto';
   S.outputs = {}; S.show = null; S.output = null;
   S.notes = [];
@@ -693,6 +693,7 @@ async function runRecover({ quiet = false } = {}) {
   const r = await run('recover', { ...recoverOptions(settings, { allowSandbox }), format: { indent: indentString(settings), width: settings.width } }, 'Recovering', { limits: { timeoutMs: 180_000 } });
   if (!r || version !== S.version) return null;
   S.recovered = r;
+  S.verify = null;
   S.detection = r.detection || S.detection;
   S.notes = [];
   if (r.output != null) {
@@ -749,6 +750,25 @@ async function runTrace() {
   return r;
 }
 
+
+async function runVerify() {
+  if (!S.recovered || S.recovered.output == null || !inputPresent()) return null;
+  if (!(await confirmTrace())) return null;
+  const version = S.version;
+  S.verify = { running: true };
+  renderInspector();
+  let r = null;
+  try {
+    r = await run('verify', { recovered: S.recovered.output }, 'Comparing', { limits: { timeoutMs: 90_000 } });
+  } catch (e) {
+    if (version === S.version) { S.verify = { error: String(e.message || e) }; renderInspector(); }
+    return null;
+  }
+  if (version !== S.version) return null;
+  S.verify = r ? { result: r } : null;
+  renderInspector();
+  return r;
+}
 
 // ---- more tools: rename, dump, the obfuscator buttons, link, origin ----------------------------------------------------------------
 
@@ -1218,7 +1238,7 @@ function renderInspector() {
     ]))));
   }
   if (S.detection) parts.push(...detectionSummary(S.detection, compatById));
-  if (S.recovered) parts.push(...recoverySummary(S.recovered));
+  if (S.recovered) parts.push(...recoverySummary(S.recovered, { onGoto: (line) => selectLine(line), onVerify: () => runVerify(), verify: S.verify, canVerify: inputPresent() }));
   if (S.trace) parts.push(traceSection());
   if (S.dump) parts.push(dumpSection());
   replace(el.inspector, parts);
@@ -1326,6 +1346,9 @@ async function showSettings() {
     }
     draft.sandbox = sandboxBox.checked;
   });
+  const adaptiveBox = h('input', { type: 'checkbox', checked: draft.adaptive });
+  adaptiveBox.addEventListener('change', () => { draft.adaptive = adaptiveBox.checked; });
+  const adaptiveSwitch = h('label.switch', adaptiveBox, h('i'));
   const field = (label, control, hint) => h('div.field', h('span', label), control, hint ? h('span.hint', hint) : null);
   const r = await modal({
     title: 'Settings',
@@ -1341,6 +1364,7 @@ async function showSettings() {
         field('Constant folding', select('foldCalls', [['obfuscation', 'Obfuscator-typical calls'], ['all', 'All pure library calls']])),
         field('Literal style', select('stringStyle', [['normalize', 'Normalise strings and numbers'], ['preserve', 'Keep as written']])),
         field('Maximum rounds', number('maxRounds', 1, 20)),
+        field('Read the structure', adaptiveSwitch, 'On by default. After the known-obfuscator steps, looks at what the code is made of (flattened control flow, call proxies, opaque conditions, decoder functions) and undoes what it can prove.'),
         field('Compare against', select('compareAgainst', [['formatted', 'Re-formatted input'], ['raw', 'Input as opened']]), 'A re-formatted input lines up with the output even when the original is minified.'),
       ]),
       h('div', [
@@ -1466,7 +1490,7 @@ function renderDetection() {
 function renderAnalysis() {
   const v = views.analysis;
   if (!S.analysis) { replace(v, emptyState('Not run yet', 'Analyze reports APIs, URLs, structure and indicators from the syntax tree, without running anything.', inputPresent() ? { label: 'Analyze now', run: () => runAnalyze() } : null)); setCount('analysis', ''); return; }
-  replace(v, analysisView(S.analysis));
+  replace(v, analysisView({ ...S.analysis, onGoto: (line) => selectLine(line) }));
   setCount('analysis', S.analysis.ok ? String(S.analysis.indicators.length || '') : 'error');
 }
 

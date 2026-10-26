@@ -14,6 +14,7 @@ const OPS = {
   rename: api.renameScript,
   dump: api.dumpSource,
   origin: api.originCheck,
+  verify: api.verifySource,
   diff: (source, options) => api.diffSources(source, options.other),
 };
 
