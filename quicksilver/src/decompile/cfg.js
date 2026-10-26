@@ -312,25 +312,25 @@ class Emitter {
     return best;
   }
 
-  /** Can control get from `a` to `b`? */
+  /**
+   * Can control get from `a` to `b`? Only forward edges count: going round a loop that encloses the one being written would make every
+   * way out of an inner loop "reach" every other, and the exits of a nested loop could not be told apart.
+   */
   reaches(a, b) {
-    const seen = new Set([a]);
-    const stack = [a];
-    while (stack.length) {
-      const n = stack.pop();
-      if (n === b) return true;
-      for (const m of this.g.succ.get(n)) if (!seen.has(m)) { seen.add(m); stack.push(m); }
-    }
-    return false;
+    return this.reachable(a).has(b);
   }
 
-  /** Everything reachable from `a`, `a` included. */
+  /** Everything reachable from `a` without taking a back edge, `a` included. */
   reachable(a) {
     const seen = new Set([a]);
     const stack = [a];
     while (stack.length) {
       const n = stack.pop();
-      for (const m of this.g.succ.get(n)) if (!seen.has(m)) { seen.add(m); stack.push(m); }
+      for (const m of this.g.succ.get(n)) {
+        if (seen.has(m) || this.g.index.get(m) <= this.g.index.get(n)) continue;
+        seen.add(m);
+        stack.push(m);
+      }
     }
     return seen;
   }
@@ -352,7 +352,7 @@ class Emitter {
           const n = stack.pop();
           if (breakNodes.has(n) || n === exit) continue;
           breakNodes.add(n);
-          for (const m of this.g.succ.get(n)) stack.push(m);
+          for (const m of this.g.succ.get(n)) if (this.g.index.get(m) > this.g.index.get(n)) stack.push(m);
         }
       } else {
         // `return` inside the loop: ways out that never meet again. One of them stands for "the loop ended" and is written

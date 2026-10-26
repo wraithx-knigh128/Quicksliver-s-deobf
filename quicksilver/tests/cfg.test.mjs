@@ -147,3 +147,20 @@ test('early returns that share one short return block each write it out', () => 
     r: { stmts: [], term: { kind: 'return', values: [{ name: 'no' }] } },
   }, 'a'), 'A\nif not x then\n  B\n  if not y then\n    C\n    return\n  end\nend\nreturn no');
 });
+
+test('a loop inside another: its break and its normal exit are told apart although both lead back into the outer loop', () => {
+  // outer: O tests, H..D is the inner loop, whose exits are `X1 -> E1` (a break that does a little first) and E1; J closes the outer loop
+  const out = run({
+    o: blk('O', { kind: 'branch', cond: c('cO'), t: 'h', f: 'end' }),
+    h: blk('H', { kind: 'branch', cond: c('cH'), t: 'b', f: 'e1' }),
+    b: blk('B', { kind: 'branch', cond: c('cB'), t: 'x1', f: 'd' }),
+    d: blk('D', { kind: 'goto', to: 'h' }),
+    x1: blk('X1', { kind: 'goto', to: 'e1' }),
+    e1: blk('', { kind: 'goto', to: 'j' }),
+    j: blk('J', { kind: 'goto', to: 'o' }),
+    end: blk('END', { kind: 'exit' }),
+  }, 'o');
+  assert.equal(out.split('X1').length - 1, 1, out);
+  assert.equal(out.split('J').length - 1, 1, out);
+  assert.match(out, /break/);
+});
