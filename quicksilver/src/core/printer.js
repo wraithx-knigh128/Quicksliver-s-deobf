@@ -273,8 +273,9 @@ class Printer {
       }
       case 'Unary': {
         const op = e.op === 'not' ? 'not ' : e.op;
-        let inner = this.expr(e.arg, level, col + op.length);
-        if (this.prec(e.arg) < UNARY_PRIORITY) inner = '(' + inner + ')';
+        const wrapArg = this.prec(e.arg) < UNARY_PRIORITY;
+        let inner = this.expr(e.arg, level, col + op.length + (wrapArg ? 1 : 0));
+        if (wrapArg) inner = '(' + inner + ')';
         if (op === '-' && inner[0] === '-') return '- ' + inner; // never emit "--" (a comment)
         return op + inner;
       }
@@ -329,7 +330,9 @@ class Printer {
       const p = this.prec(node);
       // A unary operator on the right never needs parentheses: `a ^ -b`, `a - -b`.
       const wrap = isRightChild ? node.type !== 'Unary' && p <= r : p < l || (p === l && !leftAssoc);
-      const text = this.expr(node, level, col);
+      // the parenthesis a wrapped operand gets takes a column, as a parenthesis the author wrote would (a Paren node): the layout of
+      // print(ast) and of print(parse(print(ast))) must agree
+      const text = this.expr(node, level, wrap ? col + 1 : col);
       return wrap ? '(' + text + ')' : text;
     });
 
@@ -385,7 +388,8 @@ class Printer {
     if (!flat.includes('\n') && col + flat.length <= this.o.width) return flat;
 
     const pad = this.pad(level + 1);
-    const literal = (f) => f.kind === 'item' && ['Number', 'String', 'True', 'False', 'Nil'].includes(f.value.type);
+    // a folded -1 is a Number node here and a unary minus on a Number once the text is read again; both are literals
+    const literal = (f) => f.kind === 'item' && (['Number', 'String', 'True', 'False', 'Nil'].includes(f.value.type) || (f.value.type === 'Unary' && f.value.op === '-' && f.value.arg.type === 'Number'));
     if (e.fields.every(literal) && !items.some((x) => x.includes('\n'))) {
       // A long literal array is packed several elements per line.
       const lines = [];

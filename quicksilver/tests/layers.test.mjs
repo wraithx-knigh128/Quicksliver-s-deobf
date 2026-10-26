@@ -85,9 +85,11 @@ test('a literal payload is put in place of the call, wherever the call is', () =
   assert.match(text, /print\(y\)/);
 });
 
-test('a payload that returns a value or reads `...` is not inlined', () => {
-  assert.equal(run('loadstring("return 5")()').result.inlined, 0);
-  assert.equal(run('loadstring("print(...)")()').result.inlined, 0);
+test('a payload that returns a value or reads `...` is not spliced in: it becomes a function called with the same arguments', () => {
+  assert.equal(run('loadstring("return 5")()').text, '(function(...)\n  return 5\nend)()');
+  assert.equal(run('loadstring("print(...)")()').text, '(function(...)\n  print(...)\nend)()');
+  // a loader whose result is used keeps the call: only a statement or a final `return` can take the payload's place
+  assert.equal(run('local x = loadstring("return 5")()').result.inlined, 0);
   assert.equal(run('loadstring("print(1")()').result.inlined, 0, 'a payload that does not parse is left alone');
 });
 

@@ -15,7 +15,7 @@ The page is laid out like a code editor: **Obfuscated source** above, **Deobfusc
 |---|---|
 | Open File / From link / Load example | `.lua`, `.luau` or `.txt` only (anything else is refused by extension; compiled Lua chunks are reported as such rather than shown as text). From link fetches through this site's own function from a short allow-list (raw GitHub, gist, Pastebin, rentry, paste.ee, Discord attachments) and only reads. |
 | **Deobfuscate** (Ctrl+Enter) | Detects what protects the script and runs the recovery pipeline. |
-| Luraph · IronBrew · MoonVeil | Say plainly what is and is not possible for that family, then run the matching path (IronBrew 2: rebuild; Luraph and MoonVeil: sandbox dump). |
+| Luraph · IronBrew · MoonVeil | Say plainly what is and is not possible for that family, then run the matching path (IronBrew 2 and MoonVeil: rebuild the program from the VM's data; Luraph: sandbox dump). |
 | Detect · Beautify · Rename · Dump · AI check | Identify the obfuscator; re-indent only; give machine-made names readable ones; capture what a script loads when it runs in the sandbox; estimate whether code reads as AI-written or copied. |
 | Analyze · Trace · Compare · Export | Static report; behavioural trace in the sandbox; side-by-side diff of input and result; save the result, a JSON report or a zip bundle. |
 | Tabs | Deobfuscator · Compare · Detection · Analysis · AI check · Luast (syntax tree) · Examples · Obfuscators. |
@@ -23,7 +23,7 @@ The page is laid out like a code editor: **Obfuscated source** above, **Deobfusc
 
 ### What it can recover, measured
 
-Numbers are measured on output of the real tools (Prometheus, Hercules, IronBrew 2, Zenfus, Colisseum, Simple-Lua-Obfuscator) generated from programs written for this project, not on hand-written look-alikes. The full table is
+Numbers are measured on output of the real tools (Prometheus, Hercules, IronBrew 2, Zenfus, AzureVM, Clyde, the single-page obfuscator, Colisseum, Simple-Lua-Obfuscator) generated from programs written for this project, not on hand-written look-alikes. The full table is
 `docs/COMPATIBILITY.md` (generated); the same data is the **Compatibility** tab. In short:
 
 * **IronBrew 2**: the embedded chunk is read (not run), the handlers are identified by shape, the Lua 5.1 chunk is rebuilt and decompiled. Supported.
@@ -37,10 +37,15 @@ Numbers are measured on output of the real tools (Prometheus, Hercules, IronBrew
 * **Zenfus** (MIT; a generated Lua 5.4 bytecode VM) and **AztupBrew** (a fork of IronBrew 2, one public sample): detected and flagged as VMs that are not recovered statically; the opt-in trace reproduces what the program does
   (the sandbox runs Lua 5.4 bitwise operators, `goto`, `string.unpack` and integers for this). **Simple-Lua-Obfuscator** (base64 pieces handed to `load`): recovered with the sandbox on.
   Four more named candidates (Joker, Zero Lua, Strong FiveM, "NeuroForge") turned out to be READMEs and advertisements without code and are only recognised by name; one of them is documented as untrusted. See `docs/RESEARCH.md`.
+* **AzureVM** (MIT; a Prometheus-based Lua 5.1 bytecode VM), **Clyde** (MIT; Luau, TypeScript) and the **single-page obfuscator** (`index.html`, MIT): run in isolated runners and measured. The page obfuscator's `_D` strings and Clyde's rename and string/flow modes are recovered
+  (the Clyde string decoder with the sandbox on); the VM modes of AzureVM and Clyde are detected and flagged as not recovered. **Stealth-X** (hosted, no licence) is recognised from its public samples, which are read as text and not stored.
+* **MoonVeil 2.0.25** and **Kirus 1.5** (closed source; one real script each, supplied by a user and not stored here): a zstd + `EncodingService` wrapper around a MoonVeil script is opened without running anything, the script is read back to readable Lua with its constants decoded,
+  and the function MoonVeil compiled to its own VM is **rebuilt from the VM's data** (`src/recover/moonveil-vm/`): the layout of the data and the meaning of the interpreter's cells are read off the script's own interpreter, the encrypted part is opened by searching for the one small number its key depends on,
+  and every instruction is partially evaluated against the interpreter's handlers. Nothing is run; the report says the result was not compared with a run of the original. About ten seconds in the browser worker, with a progress bar. A MoonVeil build whose interpreter has another shape is reported, not guessed at. The Kirus program is not recovered.
 * **Loader-style packers** (a program encoded as ASCII codes, hex, binary, URL escapes, base64, XOR, reversed text, ... and handed to `loadstring`): literal and folded payloads are unwrapped without running anything; a payload computed by a
   decoder is read in the sandbox when the script is nothing but that loader. Measured on 66 packers I wrote for this project (labelled synthetic: they are not the output of any real tool).
-* **Luraph (v14 / v15 / v15.1), MoonSec V3, MoonVeil, PSU and the rest**: detected from banners and structure where that is possible. The original source of a Luraph or MoonVeil script **cannot** be
-  recovered statically and the tool does not pretend to; the sandbox dump and trace describe what one run does. No real output of any closed-source obfuscator was available, so nothing about them is tested
+* **Luraph (v14 / v15 / v15.1), MoonSec V3, PSU and the rest**: detected from banners and structure where that is possible. The original source of a Luraph script **cannot** be
+  recovered statically and the tool does not pretend to; the sandbox dump and trace describe what one run does. No real output of these closed-source obfuscators was available, so nothing about them is tested
   beyond detection signatures.
 * A trace or a dump describes one run. It is not the original source.
 

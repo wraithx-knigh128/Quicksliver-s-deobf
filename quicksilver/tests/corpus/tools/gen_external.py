@@ -2,10 +2,11 @@
 
   python -I gen_external.py --tool colisseum --root /path/to/colisseum --out ../obfuscated-local/colisseum --commit <git sha>
   python -I gen_external.py --tool zenfus    --root /path/to/Zenfus    --out ../obfuscated/zenfus --commit <git sha>
+  python -I gen_external.py --tool azurevm   --root /path/to/AzureVM   --out ../obfuscated/azurevm --commit <git sha>
   python -I gen_external.py --tool simple_lua --root /path/to/dir-with-tool.lua --out ../obfuscated-local/simple_lua --commit <git sha>
 
 Writes <out>/manifest.json in the format verify_fixtures.py reads (run it afterwards to fill in `behaviors`).
-Output is committed to the repository only for tools whose licence allows it (Zenfus, MIT); the rest go to the git-ignored obfuscated-local/.
+Output is committed to the repository only for tools whose licence allows it (Zenfus, AzureVM: MIT); the rest go to the git-ignored obfuscated-local/.
 """
 import argparse
 import hashlib
@@ -25,6 +26,11 @@ TOOLS = {
     "zenfus": {
         "name": "Zenfus", "source": "https://github.com/Zaenalos/Zenfus", "licence": "MIT", "driver": "drivers/zenfus.lua",
         "configs": [("default", {}, "lua54")],
+    },
+    "azurevm": {
+        "name": "AzureVM", "source": "https://github.com/LionHub-Pino/AzureVM", "licence": "MIT", "driver": "drivers/azurevm.lua",
+        # the tool builds Lua 5.1 bytecode with the host Lua, so it runs on 5.1
+        "configs": [(n, {"preset": n}, "lua51") for n in ("Fast", "Balanced", "Luraph", "Luraph14", "AzureGod15", "AzureGodUltra")],
     },
     "simple_lua": {
         "name": "Simple-Lua-Obfuscator", "source": "https://github.com/CloudHub111/Simple-Lua-Obfuscator", "licence": "none stated", "driver": "drivers/simple_lua.lua",

@@ -268,13 +268,6 @@ function evalWith(e, env, info) {
   }
 }
 
-function containsNode(root, targets) {
-  const set = new Set(targets);
-  let n = 0;
-  walk(root, (x) => { if (set.has(x)) n++; });
-  return n === set.size;
-}
-
 function levelHasBreak(stmts) {
   let found = false;
   const visit = (list) => {
@@ -292,13 +285,20 @@ function levelHasBreak(stmts) {
 function unrollOnce(chunk) {
   const info = analyze(chunk);
   let changed = 0;
+  // the locals that start from a constant are the only ones a loop can be unrolled over; find them once, not once per loop
+  const known = [];
+  for (const v of info.vars) {
+    if (v.kind !== 'local' || v.captured || !v.init || v.init.type === 'Paren') continue;
+    const c = constOf(v.init);
+    if (c !== NOT_CONST) known.push([v, c]);
+  }
 
   transform(chunk, {
     block(stmts) {
       let out = null;
       stmts.forEach((s, idx) => {
         if (s.type !== 'While') { if (out) out.push(s); return; }
-        const residual = tryUnroll(s, info);
+        const residual = known.length ? tryUnroll(s, info, known) : null;
         if (!residual) { if (out) out.push(s); return; }
         if (!out) out = stmts.slice(0, idx);
         changed++;
@@ -310,20 +310,22 @@ function unrollOnce(chunk) {
   return changed;
 }
 
-function tryUnroll(loop, info) {
+function tryUnroll(loop, info, known) {
   // Known values: constant-initialised locals declared before the loop. Those that the loop writes are
   // its "state"; read-only ones are plain constants and may be read by any statement.
   const env = new Map();
   const state = new Set();
-  for (const v of info.vars) {
-    if (v.kind !== 'local' || v.captured || !v.init) continue;
-    if (containsNode(loop, [v.decl])) continue;   // loop state is declared before the loop, not inside it
-    const c = constOf(v.init);
-    if (c === NOT_CONST || v.init.type === 'Paren') continue;
+  let inLoop = null; // every node of the loop, found by one walk the first time it is needed
+  const inside = (targets) => {
+    if (!inLoop) { inLoop = new Set(); walk(loop, (n) => { inLoop.add(n); }); }
+    return targets.every((t) => inLoop.has(t));
+  };
+  for (const [v, c] of known) {
+    if (inside([v.decl])) continue;   // loop state is declared before the loop, not inside it
     if (v.writes.length) {
-      if (!containsNode(loop, v.writes)) continue;
+      if (!inside(v.writes)) continue;
       // The loop's writes disappear when it is unwrapped, so nothing outside may still read the variable.
-      if (v.reads.length && !containsNode(loop, v.reads)) continue;
+      if (v.reads.length && !inside(v.reads)) continue;
       state.add(v);
     }
     env.set(v, c);
@@ -438,6 +440,17 @@ function inlineConstTables(chunk) {
 // ---- sink declarations -----------------------------------------------------------------------------
 
 /**
+ * Which statement of `list` holds each variable reference (Name / Id node). One walk per statement, so that asking "where is this
+ * variable used" costs a lookup instead of a walk over every later statement: obfuscated functions declare dozens of locals up
+ * front and have thousands of statements after them, and walking per variable was quadratic.
+ */
+function referenceIndex(list) {
+  const where = new Map();
+  list.forEach((s, j) => walk(s, (n) => { if (n.type === 'Name' || n.type === 'Id') where.set(n, j); }));
+  return where;
+}
+
+/**
  * `local a, b` ... `a = print` -> `local a = print` at the point of assignment.
  * Legal when nothing refers to the variable in between, and it turns obfuscators' "declare
  * everything up front, assign later" style back into ordinary initialised locals, which the
@@ -449,6 +462,7 @@ function sinkDeclarations(chunk) {
   transform(chunk, {
     block(stmts) {
       let out = null;
+      let where = null;
       const work = () => out || (out = stmts.slice());
       for (let i = 0; i < stmts.length; i++) {
         const decl = stmts[i];
@@ -459,12 +473,9 @@ function sinkDeclarations(chunk) {
           const v = info.varOf.get(id);
           if (!v || v.writes.length === 0) continue;
           const refs = new Set([...v.reads, ...v.writes]);
-          const firstUse = stmts.findIndex((s, j) => {
-            if (j <= i) return false;
-            let hit = false;
-            walk(s, (n) => { if (refs.has(n)) hit = true; });
-            return hit;
-          });
+          if (!where) where = referenceIndex(stmts);
+          let firstUse = -1;
+          for (const r of refs) { const j = where.get(r); if (j !== undefined && j > i && (firstUse < 0 || j < firstUse)) firstUse = j; }
           if (firstUse < 0) continue;
           const use = stmts[firstUse];
           if (use.type !== 'Assign' || use.targets.length !== 1 || use.values.length !== 1) continue;
@@ -512,6 +523,16 @@ function sinkIntoBlocks(chunk) {
   transform(chunk, {
     block(stmts) {
       let out = null;
+      let where = null;
+      const hostIndex = new Map(); // host statement -> Map(reference -> { body number, statement number in that body })
+      const indexHost = (host) => {
+        if (!hostIndex.has(host)) {
+          const m = new Map();
+          nestedBlocks(host).forEach((b, bi) => b.forEach((x, si) => walk(x, (n) => { if (n.type === 'Name' || n.type === 'Id') m.set(n, { bi, si }); })));
+          hostIndex.set(host, m);
+        }
+        return hostIndex.get(host);
+      };
       for (let i = 0; i < stmts.length; i++) {
         const decl = stmts[i];
         if (decl.type !== 'Local' || decl.attrib) continue;
@@ -521,18 +542,24 @@ function sinkIntoBlocks(chunk) {
           const v = info.varOf.get(id);
           if (!v || v.captured || v.writes.length === 0 || id.attrib) continue;
           const refs = new Set([...v.reads, ...v.writes]);
-          const users = [];
-          for (let j = i + 1; j < stmts.length; j++) if (containsAny(stmts[j], refs)) users.push(j);
-          if (users.length !== 1) continue;
-          const host = stmts[users[0]];
-          const bodies = nestedBlocks(host).filter((b) => b.some((x) => containsAny(x, refs)));
-          if (bodies.length !== 1) continue;
-          // everything that mentions the variable must be inside that one block, not in a loop condition or range
-          let inside = 0;
-          for (const r of refs) { let found = false; walk(bodies[0], (m) => { if (m === r) found = true; return !found; }); if (found) inside++; }
-          if (inside !== refs.size) continue;
-          const body = bodies[0];
-          const first = body.findIndex((x) => containsAny(x, refs));
+          if (!where) where = referenceIndex(stmts);
+          const users = new Set();
+          for (const r of refs) { const j = where.get(r); if (j !== undefined && j > i) users.add(j); }
+          if (users.size !== 1) continue;
+          const host = stmts[[...users][0]];
+          // everything that mentions the variable must be inside one nested block of the host, not in a loop condition or range
+          const idx = indexHost(host);
+          let bodyNo = -1;
+          let first = Infinity;
+          let inside = true;
+          for (const r of refs) {
+            const at = idx.get(r);
+            if (!at || (bodyNo >= 0 && at.bi !== bodyNo)) { inside = false; break; }
+            bodyNo = at.bi;
+            first = Math.min(first, at.si);
+          }
+          if (!inside || bodyNo < 0) continue;
+          const body = nestedBlocks(host)[bodyNo];
           const use = body[first];
           if (use.type !== 'Assign' || use.targets.length !== 1 || use.values.length !== 1 || !refs.has(use.targets[0]) || containsAny(use.values[0], refs)) continue;
           body[first] = { type: 'Local', ids: [id], values: [use.values[0]], comments: use.comments, trailing: use.trailing, line: use.line, blankBefore: use.blankBefore, computed: use.computed };

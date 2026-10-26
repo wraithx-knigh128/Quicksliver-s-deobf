@@ -4,3 +4,4 @@
 /license
 /node_modules
 *.log
+/local

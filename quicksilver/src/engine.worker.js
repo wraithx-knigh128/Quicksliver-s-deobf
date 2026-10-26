@@ -22,7 +22,9 @@ self.onmessage = (event) => {
   try {
     const fn = OPS[op];
     if (!fn) throw new Error(`unknown operation "${op}"`);
-    self.postMessage({ id, ok: true, result: fn(source, options) });
+    // long steps report how far they are; the interface shows it while the worker is busy
+    const opts = op === 'recover' ? { ...options, onProgress: (progress) => self.postMessage({ id, progress }) } : options;
+    self.postMessage({ id, ok: true, result: fn(source, opts) });
   } catch (e) {
     self.postMessage({ id, ok: false, error: String((e && e.stack) || e) });
   }

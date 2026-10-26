@@ -16,6 +16,7 @@ import { looksObfuscated, isShortName } from '../passes/rename.js';
 import { FAMILIES, TRAITS } from './families.js';
 import { detectDialect } from './dialect.js';
 import { isColisseumGuard } from '../recover/colisseum.js';
+import { moonveilShape } from '../recover/moonveil.js';
 
 // ---- facts -----------------------------------------------------------------------------------------
 
@@ -66,6 +67,8 @@ function collectFacts(ast, src) {
     nodeCount: 0,
     colisseumNames: 0,
     vmRunCalls: 0,
+    kirusEntries: 0,
+    z85Blob: 0,
     antiTamperBlocks: 0,
     splitHelpers: 0,
     localAliasBlock: 0,
@@ -76,6 +79,13 @@ function collectFacts(ast, src) {
     switch (n.type) {
       case 'Number': f.numbers.add(n.value); break;
       case 'String': f.strings.push(n.value); break;
+      case 'MethodCall': {
+        // setmetatable({ ... }, {}):name(bit32, string, table, math, type, error, pcall, getfenv or ..., setfenv or ..., tonumber): the entry of Kirus' VM
+        if (n.args.length === 10 && n.obj.type === 'Call' && n.obj.fn.type === 'Name' && n.obj.fn.name === 'setmetatable'
+          && ['bit32', 'string', 'table', 'math', 'type', 'error', 'pcall'].every((g, i) => n.args[i].type === 'Name' && n.args[i].name === g)
+          && n.args[7].type === 'Binary' && n.args[8].type === 'Binary' && n.args[9].type === 'Name' && n.args[9].name === 'tonumber') f.kirusEntries++;
+        break;
+      }
       case 'Call': {
         const p = calleePath(n.fn);
         if (p) f.calls.set(p, (f.calls.get(p) || 0) + 1);
@@ -149,6 +159,7 @@ function collectFacts(ast, src) {
     if (tamper) f.antiTamperBlocks++;
   });
 
+  f.z85Blob = f.strings.reduce((m, x) => (x.length > 5000 && /^[0-9A-Za-z!#$%&()*+\-;<=>?@^_`{|}~]+$/.test(x) ? Math.max(m, x.length) : m), 0);
   f.colisseumNames = f.names.filter((x) => /^coli_[jLl]{3,}$/.test(x) || /^coli_\w{4,}$/.test(x)).length;
 
   // textual statistics
@@ -198,8 +209,10 @@ const RULES = {
     rule('mention', 'banner', 0.4, (c) => /MoonSec/i.test(c.src) && 'mentions MoonSec'),
   ],
   moonveil: [
-    rule('banner', 'banner', 0.95, (c) => { const m = /MoonVeil Obfuscator v?([0-9][0-9.]*)/i.exec(c.src); return m ? { text: `MoonVeil banner (v${m[1]})`, version: m[1] } : false; }),
+    rule('banner', 'banner', 0.97, (c) => { const m = /(?:MoonVeil Obfuscator v?|generated using MoonVeil\s+v?)([0-9][0-9.]*)/i.exec(c.src); return m ? { text: `MoonVeil banner (${m[1]})`, version: m[1] } : false; }),
     rule('mention', 'banner', 0.5, (c) => /MoonVeil/i.test(c.src) && 'mentions MoonVeil'),
+    rule('table-script', 'structure', 0.9, (c) => c.ast && moonveilShape(c.ast) && 'every function lifted into one table, helpers named by a permutation list, called as ({...}):builder({ names }, entry, ...)'),
+    rule('vm-blob', 'structure', 0.5, (c) => c.facts && c.facts.z85Blob > 0 && ((c.ast && moonveilShape(c.ast)) || /MoonVeil/i.test(c.src)) && `an encoded program of ${c.facts.z85Blob} characters (RFC 1924 alphabet): a function compiled to MoonVeil's VM`, true),
   ],
   fuscator77: [
     rule('banner', 'banner', 0.95, (c) => { const m = /77fuscator\s+v?([0-9][0-9.]*)/i.exec(c.src); return m ? { text: `77fuscator banner (${m[1]})`, version: m[1] } : false; }),
@@ -216,7 +229,6 @@ const RULES = {
   psu: [rule('mention', 'banner', 0.45, (c) => /\bPSU\b\s*(?:Obfuscat|Protect|v\d)/i.test(c.src) && 'mentions PSU obfuscation')],
   ironveil: [rule('mention', 'banner', 0.5, (c) => /Iron\s?Veil/i.test(c.src) && 'mentions IronVeil')],
   goofyscator: [rule('mention', 'banner', 0.5, (c) => /Goofyscator/i.test(c.src) && 'mentions Goofyscator')],
-  clyde: [rule('mention', 'banner', 0.5, (c) => /Clyde\s*Protection/i.test(c.src) && 'mentions Clyde Protection')],
   xhider: [rule('mention', 'banner', 0.5, (c) => /X\s?Hider/i.test(c.src) && 'mentions XHider')],
   synapse_xen: [rule('mention', 'banner', 0.5, (c) => /Synapse\s*Xen/i.test(c.src) && 'mentions Synapse Xen')],
   colisseum: [
@@ -241,6 +253,35 @@ const RULES = {
   zerolua: [rule('mention', 'banner', 0.5, (c) => /zerolua\.pages\.dev|Zero\s*Lua\s*(?:Roblox\s*)?Obfuscator/i.test(c.src) && 'mentions Zero Lua')],
   fivem_strong: [rule('mention', 'banner', 0.5, (c) => /dsc\.gg\/revuex|Strong\s+FiveM\s+Lua\s+Obfuscator|fivem-strong-obfuscator/i.test(c.src) && 'mentions the Strong FiveM Lua Obfuscator')],
   neuroforge: [rule('mention', 'banner', 0.5, (c) => /NeuroForge/i.test(c.src) && 'mentions NeuroForge VM')],
+  kirus: [
+    rule('banner', 'banner', 0.97, (c) => { const m = /protected by Kirus obfuscator v?([0-9][0-9.]*)/i.exec(c.src); return m ? { text: `Kirus banner (v${m[1]})`, version: m[1] } : false; }),
+    rule('vm-entry', 'structure', 0.9, (c) => c.facts && c.facts.kirusEntries > 0 && 'VM entry call setmetatable({...}, {}):name(bit32, string, table, math, type, error, pcall, getfenv, setfenv, tonumber)', true),
+  ],
+  stealthx: [
+    rule('banner', 'banner', 0.97, (c) => { const m = /secured by StealthxProtect(?: Gen([0-9][0-9.]*))?/i.exec(c.src); return m ? { text: `Stealth-X header${m[1] ? ` (Gen${m[1]})` : ''}`, version: m[1] ? `Gen${m[1]}` : null } : false; }),
+    rule('mention', 'banner', 0.5, (c) => /getstealthx\.site|Stealth-?X\s+Obfuscator/i.test(c.src) && 'mentions Stealth-X'),
+    rule('payload', 'structure', 0.8, (c) => /"STX@\d+:/.test(c.src) && 'a program string tagged "STX@" (the VM presets)', true),
+    rule('handlers', 'structure', 0.55, (c) => (c.src.match(/\[(?:0x[0-9A-Fa-f]{6,8}|\d{8,10})\]=function\(\w+,\w+,\w+,\w+,\w+\)/g) || []).length >= 20 && 'a VM handler table keyed by 32-bit numbers, each handler taking five arguments', true),
+  ],
+  azurevm: [
+    rule('banner', 'banner', 0.95, (c) => { const m = /-- Generated by AzureVM(?: \(template mode (\d+)\))?/.exec(c.src); return m ? { text: `AzureVM header${m[1] ? ` (template mode ${m[1]})` : ''}`, version: m[1] || null } : false; }),
+    rule('watermark', 'banner', 0.95, (c) => /-- AzureXPino \| v[0-9.]+ \| Protected/.test(c.src) && 'AzureXPino watermark (the Prometheus-based presets of AzureVM)'),
+    rule('prelude', 'structure', 0.85, (c) => c.src.includes('string.byte,string.sub,string.char,string.gsub,string.rep,setmetatable,pcall,type,tostring,assert,loadstring,unpack or table.unpack') && 'the library locals its VM starts with (string.byte, string.sub, string.char, string.gsub, string.rep, setmetatable, pcall, type, tostring, assert, loadstring, unpack)', true),
+    rule('retry-wrapper', 'structure', 0.9, (c) => (c.src.match(/__az_retry_/g) || []).length >= 4 && 'SafeRetryWrapper locals (__az_retry_*)', true),
+    rule('payload', 'structure', 0.5, (c) => c.src.includes('[=[LPH') && c.src.includes('">I4"') && 'a base-85 payload tagged "LPH" read with string.unpack(">I4") (the tag is Luraph\u2019s; AzureVM\u2019s README says it is not Luraph)', true),
+  ],
+  simple_html: [
+    rule('decoder', 'structure', 0.95, (c) => /local function _D\(t\) local s="" for i=1,#t do local v=\(t\[i\]-\d+\) if v<0 then v=v\+256 end s=s\.\.string\.char\(v\) end return s end/.test(c.src) && 'the _D string decoder this page puts in front of the script: local function _D(t) ... (t[i]-KEY) ... string.char(v)'),
+    rule('calls', 'structure', 0.4, (c) => (c.src.match(/\(_D\(\{[\d,]+\}\)\)/g) || []).length >= 2 && 'strings written as (_D({codes}))'),
+  ],
+  clyde: [
+    rule('banner', 'banner', 0.92, (c) => /clydeprotection[a-z]*\.cloud|clyde-v3\.(?:fun|pro)/i.test(c.src) && 'Clyde header (ASCII-art title with its site and a build id)'),
+    // in the fixtures the header appears on the VM modes only (vm, vm-max); rename and string modes carry none
+    rule('vm-header', 'structure', 0.85, (c) => /clydeprotection[a-z]*\.cloud/i.test(c.src) && /\bbuild [0-9A-F]{8}\b/.test(c.src) && 'the header the VM modes put first (site name and build id): the program is inside a stack or register VM', true),
+    rule('char-escape', 'structure', 0.55, (c) => /local\s+\w+\s*=\s*\(\s*""\s*\)\s*\[\s*\(?\s*"\\0?99\\1?04\\0?97\\1?14"\s*\)?\s*\]/.test(c.src) && 'string.char fetched as ("")["\\99\\104\\97\\114"]'),
+    rule('xor-decoder', 'structure', 0.5, (c) => /string\.char\(bit32\.bxor\(\w+\[\w+\],\s*\w+\)\)/.test(c.src) && /\(\(1\s*\+\s*1\)\s*==\s*2\)\s*and/.test(c.src) && 'XOR string decoder with a cache and an always-true test: if (((1 + 1) == 2) and cache[key]) then'),
+    rule('mention', 'banner', 0.45, (c) => /Clyde\s*Protection/i.test(c.src) && 'mentions Clyde Protection'),
+  ],
   wearedevs: [rule('mention', 'banner', 0.5, (c) => /wearedevs\.net|WeAreDevs/i.test(c.src) && 'mentions WeAreDevs')],
 };
 
@@ -383,6 +424,7 @@ export function detect(source, knownAst = null) {
     if (facts.escapeDensity > 0.2) traits.add('escape-encoded-strings');
     if ((facts.calls.get('loadstring') || 0) + (facts.calls.get('load') || 0) > 0) traits.add('loadstring-layer');
     if (facts.dispatchers > 0) traits.add('state-machine');
+    if (/EncodingService/.test(source) && /DecompressBuffer/.test(source)) traits.add('compressed-payload');
     if (facts.rotateLoops > 0) traits.add('string-table');
     if (facts.opaqueConditions >= 3) traits.add('opaque-predicates');
     if (facts.junkLocals >= 3) traits.add('junk-code');

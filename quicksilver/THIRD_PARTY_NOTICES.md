@@ -88,6 +88,99 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
+### AzureVM
+
+* Copyright (c) 2020-2023 levno-710 (Prometheus Lua Obfuscator) and (c) 2026 Azure (Azure VM Engine), MIT License, `https://github.com/LionHub-Pino/AzureVM` (revision `0e01e7a`).
+  AzureVM states that it is built on Prometheus (see above); the attribution sentence for Prometheus applies to it as well.
+* `tests/corpus/obfuscated/azurevm/**` and the AzureVM entries of `data/samples/**` are output of the tool, generated in memory by `tests/corpus/tools/run_isolated.py` with the driver
+  `tests/corpus/tools/drivers/azurevm.lua` (original work; it calls the tool's own pipeline and modifies nothing). The output contains code written out by the tool's templates; the notice below applies to it.
+  No source file of AzureVM is copied into QuickSilver.
+
+```
+MIT License
+
+Copyright (c) 2020-2023 levno-710 (Prometheus Lua Obfuscator)
+Copyright (c) 2026 Azure (Azure VM Engine)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+### simple-lua-obfuscator (the single page)
+
+* Copyright (c) 2026 iamsopotatoe, MIT License, `https://github.com/iamsopotatoe-coder/simple-lua-obfuscator` (revision `bd4d44e`).
+* `tests/corpus/obfuscated/simple_html/**` and its entry of `data/samples/**` are output of the page's own JavaScript, run unchanged under Node with no network and one writable output folder
+  (`tests/corpus/tools/gen_html_obfuscator.mjs`, original work). No file of the project is copied into QuickSilver; the notice below applies to the output.
+
+```
+MIT License
+
+Copyright (c) 2026 iamsopotatoe
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+### Clyde
+
+* Copyright (c) 2025 Clyde, MIT License, `https://github.com/sfr-development/Lua-Obfuscator-Clyde-Protection` (revision `61f86b6`).
+* `tests/corpus/obfuscated/clyde/**` and the Clyde entries of `data/samples/**` are output of the TypeScript build, compiled with `tsc` and run under `node --permission` with read access to its folder and write access to one output folder
+  (`tests/corpus/tools/gen_clyde.mjs`, original work). The VM modes write a header that names the hosted service; it is kept unmodified. No source file of Clyde is copied into QuickSilver; the notice below applies to the output.
+
+```
+MIT License
+
+Copyright (c) 2025 Clyde
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
 ## Tools whose output is used locally and is not committed
 
 The licences below do not (Colisseum) or may not (the others) allow redistributing what the tools emit, so none of their output is in the repository. The tests that need it read
@@ -106,6 +199,17 @@ The licences below do not (Colisseum) or may not (the others) allow redistributi
 `0x3yte/JokerObfuscator`, `FakeModz/Zero-Lua-Roblox-Obfuscator`, `Revuexz/fivem-strong-obfuscator` and `GRUPOMORAESIMOVEIS/Lua-Polymorph-VM-Forge` hold no obfuscator code (see `docs/RESEARCH.md`, third research pass).
 Their README text was read; nothing from them is used except the product names, which the detector recognises as mentions. Nothing in `Lua-Polymorph-VM-Forge` was run or opened in a browser.
 
+## Scripts supplied by a user for analysis
+
+Two scripts were supplied by a user so that they could be analysed. They are not written by this project and are **not part of this repository or of the site**: they are kept in the git-ignored `tests/corpus/user-local/`, and the tests about
+them skip when they are absent. What QuickSilver took from them is knowledge of two closed-source obfuscators' output formats (a zstd wrapper, MoonVeil 2.0.25 and Kirus 1.5), written as recovery code and detection rules; none of their text is included.
+
+## Repositories that were read as text only (fourth research pass)
+
+`naells/Stealth-X-Obfuscator` (no licence; its five sample outputs were read as text and are not stored), `asstralnetwork/LennyObf` (AGPL-3.0, a Prometheus fork), `PY44N/Lua-Obfuscator` (no licence; archived, with prebuilt binaries that were not run),
+`fxip/luaobfus` (MIT; a Windows C++ project, not built) and `0x251/Prometheus-DeobfuscatorV2` (no licence; read for methodology). Only product names, a public header string and structural facts about output are used in QuickSilver (as detection signatures);
+no code or output of these is included.
+
 ## Tools that were only read for methodology
 
 * `Gork3m/IronBrew2-Deobfuscator` (GitHub; no licence file; marked unfinished): read to confirm how IronBrew 2 deobfuscation is generally approached. **No code from it is used.**
@@ -123,6 +227,6 @@ None of these is imported by the deployed site.
 
 ## Names and marks
 
-Luraph, MoonSec, MoonVeil, PSU, IronBrew, AztupBrew, Prometheus, Hercules, Colisseum, Zenfus, Roblox and other names are used only to identify the software they belong to. No affiliation or endorsement is implied.
-No obfuscator other than Prometheus, Hercules, IronBrew 2 and Zenfus produced any file in this repository, and no vendor material was copied. The further open-source obfuscators named in `docs/RESEARCH.md`
+Luraph, MoonSec, MoonVeil, Kirus, PSU, IronBrew, AztupBrew, Prometheus, Hercules, Colisseum, Zenfus, AzureVM, Clyde, Stealth-X, Roblox and other names are used only to identify the software they belong to. No affiliation or endorsement is implied.
+No obfuscator other than Prometheus, Hercules, IronBrew 2, Zenfus, AzureVM, the single-page obfuscator and Clyde produced any file in this repository, and no vendor material was copied. The further open-source obfuscators named in `docs/RESEARCH.md`
 (second research pass) were cloned and read only; one of them was started once and ended with an error before writing output. None of their code or output is included.

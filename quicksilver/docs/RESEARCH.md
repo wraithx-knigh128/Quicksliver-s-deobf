@@ -94,6 +94,7 @@ If a family is not described here, it is because nothing reliable could be found
 
 * Documentation repository: `https://git.openpunk.com/CPunch/MoonVeil-Docs`. Search snippets show macros `MV_VM` (virtualise a block), `MV_ENC_FUNC` (virtualise and encrypt a function, key evaluated at run time), `MV_CFF` (control-flow flattening) and `MV_OMIT` (exclude a block), and the advice to obfuscate only selected parts because virtualised code is slow **[docs, snippets]**.
 * The pages could not be fetched, so MV_VM and MV_CFF behaviour is not known beyond their names.
+* One real script (version 2.0.25, supplied by a user and not stored in this repository) was read in the fourth pass: a table of functions with a permutation bootstrap, base-85 + XOR strings, `bit32` constants, cell variables, and one function compiled to a private VM. See the fourth pass below.
 
 ### LuaObfuscator.com **[unverified]**
 
@@ -104,7 +105,7 @@ If a family is not described here, it is because nothing reliable could be found
 * Community threads mention "psu obfuscator"; one reply describes obfuscators of this kind in general as "compiling the script into bytecode, mixing it up, and running it through a Lua-in-Lua VM" **[third-party]**.
 * Document titles on a file-sharing site list "PSU Obfuscator 4.0" and "4.5.A" **[third-party]**. No macros, options or format were found.
 
-### Clyde Protection, XHider, Goofyscator, IronVeil, 77fuscator, Synapse Xen, WeAreDevs **[unverified]**
+### XHider, Goofyscator, IronVeil, 77fuscator, Synapse Xen, WeAreDevs **[unverified]**
 
 * No usable documentation or samples were found for any of these. They are registered so that a script naming them in a banner is reported accordingly, with the confidence capped at what a banner can justify.
   QuickSilver makes no recovery claim for them.
@@ -238,6 +239,70 @@ Every change below was prompted by a fixture, not by an assumption, and each has
 * No lifter for Zenfus, Colisseum `total`/`fortress` or AztupBrew. Each is a separate VM format and a project of its own; the fixtures show where the sizes lie.
 * No attempt to make the trace hide that it is a sandbox from a tamper guard. The guard is removed where it can be (static), reported where it cannot.
 * Nothing was fetched from the four README-only repositories' websites or Discord servers.
+
+## Fourth research pass: two supplied scripts, and more open-source obfuscators (October 2026)
+
+The request was to study two scripts a user supplied, to see how their obfuscation works and how it can be undone without running anything, to teach the engine what was learnt, and to find more open-source obfuscators so that scripts like these are easier to analyse.
+The two scripts are **not part of this repository or of the site** (they live in the git-ignored `tests/corpus/user-local/`; the tests about them skip when the files are absent). What is recorded here is the technique, not the scripts.
+
+### What the two scripts taught
+
+| Script | What it is | What can be recovered |
+|---|---|---|
+| a wrapper around a MoonVeil script (about 300 KB) | a remote loader inside `pcall`, a print, and a zstd + base64 payload opened with Roblox's `EncodingService:DecompressBuffer(..., Enum.CompressionAlgorithm.Zstd)` | the payload (about 500 KB) expands to a **MoonVeil 2.0.25** script, which is read back to readable Lua, and its VM-compiled program (55 functions, about 10,650 instructions, behind an encrypted stub) is rebuilt from the VM's data |
+| a Kirus script (about 640 KB) | one expression: **Kirus 1.5**, a bytecode VM with a custom base-85 container | detected and outlined (29 prototypes, entry 15, 60,433 bytes); see the notes below for how far the program inside was taken |
+
+Verified by measurement: the zstd frame, the MoonVeil banner and structure, the decoded constants, the container outline of Kirus, the identifier strings it builds from XOR pairs, and that the two files share no plain string beyond standard-library names.
+Established by the engine, statically: the layout of MoonVeil's VM data and the meaning of its interpreter's cells (read off the interpreter), the encrypted stub's key (a 32-byte value built from constants of the script plus the number 189112, found by search and confirmed because the plain text then parses to its last byte), and the program, rebuilt by partially evaluating the interpreter's handlers. Not established: that the rebuilt program behaves like the original (nothing was run); what the remote loader fetches (the host is denied by the environment's network policy and nothing was done to get around that); and who wrote either script.
+Nothing in the files shows copying or a false ownership claim, and absence of a visible signal is not a finding of originality. The AI / skid check on the Origin tab was not used as evidence.
+
+MoonVeil and Kirus are closed-source and hosted; no copy of either tool was available, so what is written about them comes from these two files only.
+
+### Open-source obfuscators read and run in this pass
+
+Each was cloned into its own directory with no checkout (files read with `git show`), its README, file list and licence read first, and then, where it was a pure-Lua or plain-JavaScript tool, run through an isolated runner. None was started through its own command line, installer or server.
+
+| Tool | Repository, revision | Licence | What it is | What was done |
+|---|---|---|---|---|
+| **AzureVM** | `LionHub-Pino/AzureVM` `0e01e7a` | MIT | Lua 5.1 bytecode VM obfuscator **built on Prometheus** (it says so); presets Fast, Balanced, Luraph, Luraph14, AzureGod15, AzureGodUltra **[source]** | run in the isolated Lua runner (`tests/corpus/tools/drivers/azurevm.lua`); 48 outputs committed; detection by header, library prelude, `__az_retry_` locals and `[=[LPH` payload; VM presets flagged as not recovered; Balanced partly recovered |
+| **simple-lua-obfuscator** (the page) | `iamsopotatoe-coder/simple-lua-obfuscator` `bd4d44e` | MIT | one `index.html`: comment stripping, regex renaming, strings as number lists for a `_D` decoder, numbers as sums, junk | the page's own JavaScript run unchanged under Node with no network and only the output folder writable (`gen_html_obfuscator.mjs`); 8 outputs committed; the `_D` strings are now computed statically |
+| **Clyde** | `sfr-development/Lua-Obfuscator-Clyde-Protection` `61f86b6` | MIT | Luau obfuscator in TypeScript: AST passes, stack VM, register VM, LZSS and cipher layers (`max`); the README warns of rebrands | compiled with `tsc` and run under `node --permission` with only the output folder writable (`gen_clyde.mjs`); 25 outputs committed; rename and string/flow modes recovered, VM modes flagged |
+| **Stealth-X** | `naells/Stealth-X-Obfuscator` `3771bca` | none | a README and five sample outputs of one 11-line program; the tool is a hosted web app | the samples read as text only, never run; a signature from the header, the `STX@` program string and the 32-bit handler table; nothing stored |
+| **LennyObf** | `asstralnetwork/LennyObf` `c764942` | AGPL-3.0 | a fork of Prometheus | read only; not run; Prometheus signatures already apply to its steps |
+| **PY44N/Lua-Obfuscator** | `PY44N/Lua-Obfuscator` `1ec634a` | none | archived; carries prebuilt IronBrew 2 binaries and a minifier | read only; binaries not run |
+| **luaobfus** | `fxip/luaobfus` `653ada0` | MIT | a Windows C++ project with a bundled `lua.dll` | read only; not built |
+| **Prometheus-DeobfuscatorV2** | `0x251/Prometheus-DeobfuscatorV2` `d06f1f5` | none | a Lua deobfuscator for Prometheus; its README says the repository was used to test an AI model on reverse-engineering help | read for methodology only; not run |
+
+Findings worth recording:
+
+* AzureVM's preset names contain "Luraph"; its README says they are historical compatibility names and that the project is not Luraph. Its payload is tagged `LPH`, the same three letters Luraph uses. That is a naming overlap, not evidence of shared code, and detection does not treat it as Luraph.
+* The Clyde README lists two sites for "Clyde V3" and warns of "known skids rebranding Clyde". The header seen in the fixtures names a third address. A script carrying that header may come from the hosted service rather than from the open-source build; nothing here says who made any particular script.
+* Before a signature existed, the Stealth-X VM presets were rated as plain minified code at 90% confidence. That was wrong; they are now named and flagged as not recoverable.
+* Stealth-X's VM and Kirus share the outer shape `return setmetatable({ ... }, {}):name(...)` and nothing inside. This is recorded as a reason not to treat that shape as a fingerprint.
+
+### How the isolated runners were set up
+
+`tests/corpus/tools/run_isolated.py` (Lua tools) was extended so `require` follows the tool's `package.path`. For JavaScript and TypeScript tools, `node --permission` was used with `--allow-fs-read` for the tool's folder and `--allow-fs-write` for one fresh output folder only; no network, child process or worker permission was given. Output of the three MIT tools is committed (`tests/corpus/obfuscated/{azurevm,simple_html,clyde}`, with manifests that record the revision, the seed and which runtimes behave like the original); anything under a licence that does not allow it stays in the git-ignored `tests/corpus/obfuscated-local/`. `verify_fixtures.py` runs each output on Lua 5.1, LuaJIT, 5.2 (Clyde needs `bit32`) and 5.4 and records which of them print what the original prints; `vm-max` of Clyde runs on none of them here and is labelled.
+
+### What changed in the engine, and why
+
+Each change was prompted by a file, and has a test (`tests/zstd.test.mjs`, `tests/uploads.test.mjs`, `tests/opensource2.test.mjs`).
+
+* **zstd decoder** (`src/core/zstd.js`, RFC 8878): frames, raw/RLE/compressed blocks, Huffman literals (one or four streams, FSE or direct weights, treeless), FSE sequences, repeat offsets, content checksum, an output cap. Compared with Node's own zstd on 11 kinds of data at four levels, multi-frame input and corrupted input.
+* **Loader unwrapping**: `EncodingService:DecompressBuffer(buffer.fromstring(base64.decode"..."), Enum.CompressionAlgorithm.Zstd)` inside `loadstring(buffer.tostring(...))(...)` is read statically and replaced by the payload (spliced, or wrapped in a function called with the same arguments when a local could capture a name). Another compression algorithm is reported, not guessed at. Detection runs again on the payload, so that the report names the obfuscator inside.
+* **MoonVeil 2.0.25** (`src/recover/moonveil.js`): base-85 text (RFC 1924 alphabet) plus XOR strings, `bit32` numbers, the permutation bootstrap of helper names, and cell variables read as fields. Detected by structure as well as by banner. A function compiled to its VM is rebuilt from the VM's data by `src/recover/moonveil-vm/` (see ARCHITECTURE.md); the confidence is medium and the report says the result was not compared with a run.
+* **Kirus 1.5**: detected from the banner and from the entry call; flagged as not recoverable.
+* **Single-page obfuscator**: the `_D` decoder is recognised only in the exact form the page writes and computed on the literal lists (`src/recover/simple_html.js`); static fidelity went from 49% to above 98% on the eight fixtures, with no sandbox.
+* **Performance**: `simplify` used a tree walk per statement and took 84 s on the 517 KB payload; reference indexes make it 17 times faster there and 3 times faster on the Kirus file with byte-identical output.
+* **Printer**: a synthesised parenthesis changed the column the next line was measured from, and a long array holding folded negative numbers was packed on the first print but not after being read back; both made "printing it again gives different text" and failed validation. Both are fixed and tested.
+* **Detection rules** for AzureVM, the page obfuscator, Clyde (header on VM modes, escaped `string.char`, XOR decoder), Stealth-X, MoonVeil and Kirus, each checked against every original and every output of the already supported tools for false positives (none).
+
+### What was not done, and why
+
+* No lifter for the Kirus VM, AzureVM, Clyde's VMs or Stealth-X's (MoonVeil's is done, for one script). Each is a separate format and a project of its own; the Obfuscators tab shows where the size of the remaining work lies.
+* The remote loader was not fetched and nothing was run: the task forbade executing untrusted payloads, and the loader's host is denied by the environment's network policy (the setting is *Network access* of the environment; the policy was not worked around).
+* No claim about copying or false ownership. The files give no evidence either way, and absence of a visible signal is not a finding of originality.
+* Hosted tools (Stealth-X, Clyde V3, MoonVeil, Kirus) were not used.
 
 ## Technique taxonomy and what each needs
 

@@ -25,7 +25,7 @@ for (const f of fs.readdirSync(path.join(corpus, 'originals')).filter((x) => x.e
 
 const results = [];
 // [name, folder]: the AGPL / unlicensed outputs are generated locally (tests/corpus/tools/gen_external.py) and measured when present
-const tools = [['prometheus', 'obfuscated/prometheus'], ['hercules', 'obfuscated/hercules'], ['ironbrew2', 'obfuscated/ironbrew2'], ['zenfus', 'obfuscated/zenfus'],
+const tools = [['prometheus', 'obfuscated/prometheus'], ['hercules', 'obfuscated/hercules'], ['ironbrew2', 'obfuscated/ironbrew2'], ['zenfus', 'obfuscated/zenfus'], ['azurevm', 'obfuscated/azurevm'], ['simple_html', 'obfuscated/simple_html'], ['clyde', 'obfuscated/clyde'],
   ['colisseum', 'obfuscated-local/colisseum'], ['simple_lua', 'obfuscated-local/simple_lua']]
   .filter(([, dir]) => fs.existsSync(path.join(corpus, dir, 'manifest.json')));
 for (const [tool, dir] of tools) {

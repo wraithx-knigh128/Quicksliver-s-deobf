@@ -157,6 +157,11 @@ io.popen = nil
 local loaded = {}
 local function find(name)
   local base = tostring(name):gsub("%.", "/")
+  -- the templates a tool puts in package.path, resolved against the virtual file set only
+  for template in tostring(package.path):gmatch("[^;]+") do
+    local p = norm((template:gsub("%?", (base:gsub("%%", "%%%%")))))
+    if files[p] ~= nil then return p end
+  end
   for _, p in ipairs({ base .. ".lua", base .. "/init.lua", base .. ".luau" }) do
     if files[p] ~= nil then return p end
   end

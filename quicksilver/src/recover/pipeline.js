@@ -22,6 +22,10 @@ import { booleanResults, orientComparisons, shortCircuits, tableConstructors, me
 import { removeAntiTamper, undoProxifyLocals } from './prometheus.js';
 import { removeHerculesAntiTamper } from './hercules.js';
 import { removeColisseumGuard } from './colisseum.js';
+import { decodePageStrings } from './simple_html.js';
+import { unflattenMoonVeil } from './moonveil-cff.js';
+import { liftMoonVeilVm, VmUnsupported } from './moonveil-vm/index.js';
+import { decodeMoonVeilConstants, simplifyCells, moonveilShape } from './moonveil.js';
 import { assessConfidence } from './confidence.js';
 import { recoverIronBrew, IronBrewError } from './ironbrew.js';
 import { unflattenVmify, envToGlobals, VmifyError } from './vmify.js';
@@ -33,6 +37,8 @@ export const DEFAULT_OPTIONS = Object.freeze({
   rename: 'smart',            // 'smart' | 'all' | 'off'
   foldCalls: 'obfuscation',   // 'obfuscation' | 'all'
   maxRounds: 8,
+  moonveilVm: true,           // read a MoonVeil VM program back out of its data (static; falls back to the general passes when the script does not fit)
+  onProgress: null,           // called with { phase, done?, total? } while long steps run
   stringStyle: 'normalize',
   format: { indent: '  ', width: 100 },
 });
@@ -139,12 +145,22 @@ export function recover(source, userOptions = {}) {
   if (!parsed.ok) {
     return { ok: false, stage: 'parse', error: parsed.error, output: null, steps: [], detection: detect(source), warnings: [] };
   }
-  const detection = detect(source, parsed.ast);
+  let detection = detect(source, parsed.ast);
   const run = new Run(parsed.ast, options);
+  // after a layer is unwrapped: add what the payload shows to what the wrapper showed
+  const refreshDetection = () => {
+    const inner = detect(print(run.ast), run.ast);
+    const merged = new Map(detection.families.map((f) => [f.id, f]));
+    for (const f of inner.families) if (!merged.has(f.id) || merged.get(f.id).confidence < f.confidence) merged.set(f.id, f);
+    const traits = new Map([...detection.traits, ...inner.traits].map((t) => [t.id, t]));
+    detection = { ...inner, families: [...merged.values()].sort((a, b) => b.confidence - a.confidence), traits: [...traits.values()], layers: (detection.layers || 0) + 1, wrapper: detection.wrapper || { families: detection.families.map((f) => f.id), traits: detection.traits.map((t) => t.id) } };
+  };
   let unusedAtStart = snapshotUnused(parsed.ast);
 
   let decompiled = false;
   let vmified = false;
+  let vmTried = false;
+  let vmLifted = false;
   if (detection.families.some((f) => f.id === 'ironbrew2' && f.confidence >= 0.5)) {
     // a rebuilt program has no author-written dead code to preserve
     if (run.step('ironbrew2', 'Rebuild the program from the IronBrew 2 VM data', rebuildIronBrew)) { unusedAtStart = new WeakSet(); decompiled = true; }
@@ -174,6 +190,9 @@ export function recover(source, userOptions = {}) {
       total += run.step('idioms.compare', 'Orient comparisons', (a) => orientComparisons(a), { quiet: true });
     }
     total += run.step('fold', 'Fold constant expressions', (a) => foldPass(a, { foldCalls: options.foldCalls }));
+    // the text it produces may make `"a" .. "b"` and similar foldable
+    const pageStrings = run.step('simple_html.strings', 'Read the _D string calls of the single-page obfuscator', (a) => decodePageStrings(a), { quiet: true });
+    if (pageStrings) total += pageStrings + run.step('fold.after', 'Fold constant expressions', (a) => foldPass(a, { foldCalls: options.foldCalls }), { quiet: true });
     // the loaded text of `loadstring(...)()` becomes the program; compiled Lua in it is decompiled, so the rebuilt-program clean-ups apply
     let layers = null;
     const nLayers = run.step('layers', 'Unwrap loadstring layers', (a) => { layers = unwrapLayers(a, { sandbox: options.sandbox }); return layers; }, { quiet: true });
@@ -181,6 +200,22 @@ export function recover(source, userOptions = {}) {
       total += nLayers;
       if (layers.bytecode) { unusedAtStart = new WeakSet(); decompiled = true; }
     }
+    // a payload that came out of a layer may be a different obfuscator's output: look again, so that the report names it
+    if (nLayers) refreshDetection();
+    total += run.step('moonveil.constants', 'Decode MoonVeil strings and numbers', (a) => decodeMoonVeilConstants(a), { quiet: true });
+    total += run.step('moonveil.cells', 'Read MoonVeil cell variables as fields', (a) => simplifyCells(a), { quiet: true });
+    // a script whose program is data for MoonVeil's interpreter is read back from that data: the result replaces the interpreter and needs no
+    // further clean-up (the generic passes would only spend their time on the interpreter that is being thrown away)
+    if (options.moonveilVm && !vmTried && moonveilShape(run.ast)) {
+      vmTried = true;
+      const lifted = run.step('moonveil.vm', 'Read the program out of MoonVeil\u2019s VM data and rebuild it', (a) => {
+        try { return liftMoonVeilVm(a, { onProgress: options.onProgress || undefined, stubLimit: options.stubLimit }); } catch (e) { if (e instanceof VmUnsupported) return { skipped: e.message }; throw e; }
+      }, { quiet: true });
+      if (lifted) { vmLifted = true; return total + lifted; }
+    }
+    // a rebuilt function has no author-written dead code to preserve, and the clean-ups for rebuilt programs apply to it
+    const nCff = run.step('moonveil.cff', 'Take MoonVeil\u2019s control-flow flattening apart', (a) => unflattenMoonVeil(a, { gotoFallback: true }), { quiet: true });
+    if (nCff) { total += nCff; unusedAtStart = new WeakSet(); decompiled = true; }
     total += run.step('simplify', 'Simplify control flow and remove dead code', (a) => simplifyPass(a, { unusedAtStart }));
     if (vmified) total += run.step('prometheus.env', 'Read globals from the environment table again', (a) => envToGlobals(a), { quiet: true });
     if (decompiled) total += run.step('regions', 'Evaluate closed constant computations', (a) => regionPass(a), { quiet: true });
@@ -198,12 +233,14 @@ export function recover(source, userOptions = {}) {
   };
 
   for (let round = 1; round <= options.maxRounds; round++) {
-    if (!generic()) break;
+    if (!generic() || vmLifted) break;
   }
+  if (vmLifted) decompiled = true;
   if (vmified) run.step('prometheus.environment', 'Declare the environment the script still reads', (a) => envToGlobals(a, true), { quiet: true });
-  run.step('varargs', 'Remove unused vararg parameters', (a) => removeUnusedVararg(a), { quiet: true });
-  if (options.rename !== 'off') run.step('rename', 'Give obfuscated locals readable names', (a) => renamePass(a, { mode: options.rename }), { quiet: true });
-  if (decompiled) run.step('idioms.functions', 'Use function and method declarations', (a) => functionForms(a), { quiet: true });
+  if (!vmLifted) run.step('varargs', 'Remove unused vararg parameters', (a) => removeUnusedVararg(a), { quiet: true });
+  // the rebuilt program is already named and laid out; the later passes would only rename what was named on purpose
+  if (options.rename !== 'off' && !vmLifted) run.step('rename', 'Give obfuscated locals readable names', (a) => renamePass(a, { mode: options.rename }), { quiet: true });
+  if (decompiled && !vmLifted) run.step('idioms.functions', 'Use function and method declarations', (a) => functionForms(a), { quiet: true });
 
   // ---- output and validation --------------------------------------------------------------------------------
   let output;

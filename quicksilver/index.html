@@ -91,7 +91,7 @@
       <span class="glabel">Obfuscator</span>
       <button class="btn chip" id="tool-luraph" type="button" title="Luraph v14 / v15: dumps what the script does in the sandbox (the virtual machine cannot be turned back into source)"><svg aria-hidden="true"><use href="#i-luraph"/></svg><span class="lbl">Luraph</span></button>
       <button class="btn chip" id="tool-ironbrew" type="button" title="IronBrew 2: rebuilds the original program from the virtual machine"><svg aria-hidden="true"><use href="#i-ironbrew"/></svg><span class="lbl">IronBrew</span></button>
-      <button class="btn chip" id="tool-moonveil" type="button" title="MoonVeil: identifies it and dumps what the script does in the sandbox"><svg aria-hidden="true"><use href="#i-moon"/></svg><span class="lbl">MoonVeil</span></button>
+      <button class="btn chip" id="tool-moonveil" type="button" title="MoonVeil: rebuilds the program from the VM's data without running anything; if this build cannot be read, offers the sandbox"><svg aria-hidden="true"><use href="#i-moon"/></svg><span class="lbl">MoonVeil</span></button>
     </div>
     <div class="tgroup" role="group" aria-label="Quick tools">
       <span class="glabel">Tools</span>
@@ -124,6 +124,7 @@
   </div>
 
   <footer class="statusbar">
+    <div class="progress" id="progress" hidden aria-hidden="true"><i id="progress-bar"></i></div>
     <span id="st-state">Ready</span>
     <span id="st-pos" class="faint"></span>
     <span class="grow"></span>

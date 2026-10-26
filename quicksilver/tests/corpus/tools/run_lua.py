@@ -22,7 +22,8 @@ import json
 import os
 import sys
 
-RUNTIMES = {"lua51": "lupa.lua51", "luajit": "lupa.luajit21", "lua54": "lupa.lua54", "lua54c": "lupa.lua54"}
+# lua52 is here for its bit32, which Luau scripts (Clyde's output, for one) expect and Lua 5.1 / LuaJIT / 5.4 do not have
+RUNTIMES = {"lua51": "lupa.lua51", "lua52": "lupa.lua52", "luajit": "lupa.luajit21", "lua54": "lupa.lua54", "lua54c": "lupa.lua54"}
 
 # "lua54c" = Lua 5.4 + the math.ldexp / math.frexp polyfills that Hercules' own CLI installs
 # (Lua 5.3+ dropped them unless built with LUA_COMPAT_MATHLIB). Some Hercules VM output needs them.

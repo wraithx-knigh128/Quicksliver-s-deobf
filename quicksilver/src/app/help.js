@@ -21,7 +21,7 @@ export function showHelp() {
       h('table.help-table', h('tbody', [
         row('IronBrew', 'IronBrew 2: the original program is rebuilt from the virtual machine. IronBrew 1 is not supported.'),
         row('Luraph', 'Luraph v14 / v15 turns a script into a private virtual machine and nobody can turn that back into the source automatically. This button runs the script in QuickSilver’s own sandbox (it asks first), captures the text the script builds and loads, and lists what it does. Heavy scripts can run out of budget and give a partial result.'),
-        row('MoonVeil', 'Identified and handled like Luraph: dumped in the sandbox, not rebuilt.'),
+        row('MoonVeil', 'Rebuilds the program from the virtual machine\u2019s own data (nothing is run), with a progress bar; it takes a few seconds. If this build cannot be read that way, it says why and offers the sandbox, which asks first.'),
       ])),
       h('h3', 'Tools'),
       h('table.help-table', h('tbody', [

@@ -11,6 +11,10 @@
 //      checked on the syntax tree first: the other statements may only reach standard libraries and local variables.
 //   3. The text is compiled Lua (Lua 5.1 or 5.4, as in Hercules' bytecode encoding): it is decompiled instead of parsed.
 //
+// Before those, one more literal form is read: Roblox's EncodingService wrapper that some packers put around a script,
+// `buffer.tostring(game:GetService("EncodingService"):DecompressBuffer(buffer.fromstring(base64.decode("...")), Enum.CompressionAlgorithm.Zstd))`.
+// A base64 literal and a zstd frame are data; the text they hold is computed here (src/core/zstd.js) without running the script.
+//
 // A script that does anything else around the loader is never replaced wholesale; the loaded text is still shown by Dump.
 
 import { walk, transform } from '../core/walk.js';
@@ -20,6 +24,8 @@ import { print } from '../core/printer.js';
 import { isBytecode, parseChunk } from '../sandbox/bytecode.js';
 import { decompile } from '../decompile/decompile.js';
 import { traceScript } from '../trace/trace.js';
+import { zstdDecompress } from '../core/zstd.js';
+import { makeConst } from './fold.js';
 
 const LOADERS = new Set(['load', 'loadstring']);
 /** Globals a decoder may use. Anything else (game, print, getfenv, HttpGet, ...) means the script does more than load. */
@@ -31,6 +37,59 @@ const DECODER_GLOBALS = new Set([
 /** Globals the Roblox / executor environments define: a loader that overwrites one is doing something, not just loading. */
 const ROBLOX_GLOBALS = new Set(['game', 'workspace', 'script', 'shared', 'plugin', 'Instance', 'Enum', 'Vector3', 'CFrame', 'Color3', 'UDim2', 'task', 'wait', 'spawn', 'delay', 'warn', 'tick', 'time', 'typeof', 'getgenv', 'getrenv', 'getfenv', 'setfenv', 'getrawmetatable', 'hookfunction', 'syn', 'http', 'request', 'writefile', 'readfile']);
 const unparen = (e) => (e && e.type === 'Paren' ? unparen(e.expr) : e);
+
+/** `a.b(...)` where a and b are plain names. */
+const isCallOf = (e, obj, keys) => !!e && e.type === 'Call' && e.fn.type === 'Index' && e.fn.obj.type === 'Name' && e.fn.obj.name === obj && e.fn.key.type === 'String' && keys.includes(e.fn.key.value);
+const BASE64_CALLS = [['base64', ['decode', 'Decode']], ['crypt', ['base64decode', 'base64_decode']]];
+
+function base64Bytes(text) {
+  const clean = text.replace(/[^A-Za-z0-9+/]/g, '');
+  const out = [];
+  let acc = 0; let bits = 0;
+  for (const ch of clean) {
+    acc = (acc << 6) | 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'.indexOf(ch);
+    bits += 6;
+    if (bits >= 8) { bits -= 8; out.push((acc >> bits) & 255); acc &= (1 << bits) - 1; }
+  }
+  return Uint8Array.from(out);
+}
+
+/**
+ * The text inside `buffer.tostring(game:GetService("EncodingService"):DecompressBuffer(buffer.fromstring(<base64 literal>), Enum.CompressionAlgorithm.Zstd))`,
+ * or null when the expression has another shape. Throws when it has this shape but the data cannot be read (another algorithm, a damaged frame).
+ */
+function compressedLiteral(e) {
+  const x = unparen(e);
+  if (!isCallOf(x, 'buffer', ['tostring']) || x.args.length !== 1) return null;
+  const d = unparen(x.args[0]);
+  if (!d || d.type !== 'MethodCall' || d.name !== 'DecompressBuffer' || d.args.length < 2) return null;
+  const svc = unparen(d.obj);
+  if (!svc || svc.type !== 'MethodCall' || svc.name !== 'GetService' || !svc.args[0] || svc.args[0].type !== 'String' || svc.args[0].value !== 'EncodingService') return null;
+  const alg = d.args[1];
+  if (!alg || alg.type !== 'Index' || alg.key.type !== 'String' || alg.obj.type !== 'Index' || alg.obj.key.value !== 'CompressionAlgorithm') return null;
+  const from = unparen(d.args[0]);
+  if (!isCallOf(from, 'buffer', ['fromstring']) || from.args.length !== 1) return null;
+  const inner = unparen(from.args[0]);
+  if (!inner || inner.type !== 'Call' || inner.args.length !== 1 || inner.args[0].type !== 'String') return null;
+  const decoder = inner.fn.type === 'Name' ? ['base64decode', 'base64_decode'].includes(inner.fn.name) : BASE64_CALLS.some(([o, k]) => isCallOf(inner, o, k));
+  if (!decoder) return null;
+  if (alg.key.value !== 'Zstd') throw new Error(`EncodingService payload with Enum.CompressionAlgorithm.${alg.key.value}: only Zstd is read`);
+  return latin1(zstdDecompress(base64Bytes(inner.args[0].value)));
+}
+
+function latin1(bytes) {
+  let out = '';
+  for (let i = 0; i < bytes.length; i += 8192) out += String.fromCharCode.apply(null, bytes.subarray(i, i + 8192));
+  return out;
+}
+
+/** Does the program read a global that has the name of one of these locals? (Spliced into the chunk, those reads would be captured.) */
+function hasGlobalNamed(ast, names) {
+  if (!names.size) return false;
+  const info = analyze(ast);
+  for (const g of info.globals.keys()) if (names.has(g)) return true;
+  return false;
+}
 
 /** Does `body` read the `...` of its own chunk? (A nested function's `...` is its own.) */
 function usesVararg(body) {
@@ -76,7 +135,7 @@ export function captureFirstLoad(source, opts = {}) {
 }
 
 export function unwrapLayers(chunk, ctx = {}) {
-  const result = { changed: 0, layers: 0, inlined: 0, replaced: 0, bytecode: 0, skipped: null, notes: [] };
+  const result = { changed: 0, layers: 0, inlined: 0, replaced: 0, bytecode: 0, compressed: 0, skipped: null, notes: [] };
   const info = analyze(chunk);
   const isGlobal = (n) => n && n.type === 'Name' && !!(info.varOf.get(n) && info.varOf.get(n).isGlobal);
 
@@ -96,20 +155,54 @@ export function unwrapLayers(chunk, ctx = {}) {
     return loaderRef(x.fn) && x.args.length >= 1 ? x : null;
   };
 
+  // ---- 0. a compressed literal (EncodingService) becomes the text it holds ---------------------------------------------------
+  transform(chunk, {
+    expr(e) {
+      let text;
+      try { text = compressedLiteral(e); } catch (err) { result.notes.push(String(err.message || err).split('\n')[0]); return undefined; }
+      if (text == null) return undefined;
+      result.compressed++;
+      return makeConst(text);
+    },
+  });
+
   // ---- 1. a literal payload, in place -------------------------------------------------------------------------------------
+  // `loadstring("...")()` becomes `do ... end`. When the call passes arguments or the payload returns values or reads `...`, the payload becomes the
+  // body of a function called with the same arguments: `loadstring("...")(...)` -> `(function(...) ... end)(...)`. As the last statement of the
+  // chunk, called with `...`, the payload simply takes the call's place.
+  const lastIndex = chunk.body.length - 1;
+  const topLocals = new Set();
+  for (const st of chunk.body) {
+    if (st.type === 'Local') st.ids.forEach((id) => topLocals.add(id.name));
+    else if (st.type === 'LocalFunction') topLocals.add(st.id.name);
+  }
+  const tail = chunk.body[lastIndex];
   transform(chunk, {
     block(stmts) {
       let touched = false;
       const out = [];
       for (const s of stmts) {
-        const L = s.type === 'CallStmt' && s.call.type === 'Call' && !s.call.args.length ? loadCall(s.call.fn) : null;
+        let outer = null; // the call whose callee is the load: loadstring("...")(args)
+        if (s.type === 'CallStmt' && s.call.type === 'Call') outer = s.call;
+        else if (s.type === 'Return' && s.values.length === 1 && s.values[0].type === 'Call') outer = s.values[0];
+        const L = outer ? loadCall(outer.fn) : null;
         const text = L && L.args[0].type === 'String' ? L.args[0].value : null;
         if (text == null) { out.push(s); continue; }
         let p;
         try { p = payloadAst(text); } catch (e) { result.notes.push(`a literal payload was not usable: ${String(e.message || e).split('\n')[0]}`); out.push(s); continue; }
-        const body = inlinable(p.ast.body);
-        if (!body) { result.notes.push('a literal payload returns values or reads `...`, so it was left in place'); out.push(s); continue; }
-        out.push({ type: 'Do', body });
+        const plain = s.type === 'CallStmt' && !outer.args.length ? inlinable(p.ast.body) : null;
+        if (plain) {
+          out.push({ type: 'Do', body: plain });
+        } else {
+          const passesVarargs = outer.args.length === 1 && outer.args[0].type === 'Vararg';
+          const sameScope = s === tail && s.type === 'Return' && passesVarargs && !hasGlobalNamed(p.ast, topLocals);
+          if (sameScope) out.push(...p.ast.body);
+          else {
+            const fn = { type: 'Func', params: [], vararg: true, isMethod: false, body: p.ast.body };
+            const call = { type: 'Call', fn: { type: 'Paren', expr: fn }, args: outer.args };
+            out.push(s.type === 'Return' ? { ...s, values: [call] } : { ...s, call });
+          }
+        }
         result.inlined++; result.layers++; if (p.bytecode) result.bytecode++;
         touched = true;
       }
@@ -144,7 +237,7 @@ export function unwrapLayers(chunk, ctx = {}) {
       }
     }
   }
-  result.changed = result.inlined + result.replaced;
+  result.changed = result.inlined + result.replaced + result.compressed;
   if (!result.changed && !result.skipped && result.notes.length) result.skipped = result.notes[0];
   return result;
 }

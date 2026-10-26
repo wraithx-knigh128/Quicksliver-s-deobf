@@ -1,0 +1,377 @@
+{
+  "tool": "Clyde (Luau obfuscator)",
+  "source": "https://github.com/sfr-development/Lua-Obfuscator-Clyde-Protection",
+  "licence": "MIT",
+  "sourceRevision": "61f86b6",
+  "seed": null,
+  "runner": "tests/corpus/tools/gen_clyde.mjs under node --permission (no network, no child processes), compiled with tsc",
+  "entries": [
+    {
+      "file": "s01_minify_basic__rename.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "rename",
+      "runtime": "luau",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 799,
+      "seconds": 0,
+      "behaviors": {
+        "lua52": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__strings-flow.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "strings-flow",
+      "runtime": "luau",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 1382,
+      "seconds": 0,
+      "behaviors": {
+        "lua52": "equivalent"
+      },
+      "behavior": "equivalent",
+      "behaviorError": "sample:8: attempt to index global 'bit32' (a nil value)"
+    },
+    {
+      "file": "s01_minify_basic__vm.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "vm",
+      "runtime": "luau",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 21755,
+      "seconds": 0,
+      "behaviors": {
+        "lua52": "equivalent"
+      },
+      "behavior": "equivalent",
+      "behaviorError": "sample:30: attempt to index local '_lI1j' (a nil value)"
+    },
+    {
+      "file": "s01_minify_basic__vm-max.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "vm-max",
+      "runtime": "luau",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 155301,
+      "seconds": 0,
+      "behaviors": {
+        "lua52": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:11: attempt to call a nil value"
+    },
+    {
+      "file": "s02_renamed_vars__rename.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "rename",
+      "runtime": "luau",
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 958,
+      "seconds": 0,
+      "behaviors": {
+        "lua52": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__strings-flow.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "strings-flow",
+      "runtime": "luau",
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 1555,
+      "seconds": 0,
+      "behaviors": {
+        "lua52": "equivalent"
+      },
+      "behavior": "equivalent",
+      "behaviorError": "sample:8: attempt to index global 'bit32' (a nil value)"
+    },
+    {
+      "file": "s02_renamed_vars__vm.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "vm",
+      "runtime": "luau",
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 22145,
+      "seconds": 0,
+      "behaviors": {
+        "lua52": "equivalent"
+      },
+      "behavior": "equivalent",
+      "behaviorError": "sample:24: attempt to index local '_Il1k' (a nil value)"
+    },
+    {
+      "file": "s03_encoded_strings__rename.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "rename",
+      "runtime": "luau",
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 693,
+      "seconds": 0,
+      "behaviors": {
+        "lua52": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__strings-flow.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "strings-flow",
+      "runtime": "luau",
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 1500,
+      "seconds": 0,
+      "behaviors": {
+        "lua52": "equivalent"
+      },
+      "behavior": "equivalent",
+      "behaviorError": "sample:8: attempt to index global 'bit32' (a nil value)"
+    },
+    {
+      "file": "s03_encoded_strings__vm.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "vm",
+      "runtime": "luau",
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 22450,
+      "seconds": 0,
+      "behaviors": {
+        "lua52": "equivalent"
+      },
+      "behavior": "equivalent",
+      "behaviorError": "sample:24: attempt to index local '_II1k' (a nil value)"
+    },
+    {
+      "file": "s04_control_flow__rename.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "rename",
+      "runtime": "luau",
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 1361,
+      "seconds": 0,
+      "behaviors": {
+        "lua52": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__strings-flow.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "strings-flow",
+      "runtime": "luau",
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 2376,
+      "seconds": 0,
+      "behaviors": {
+        "lua52": "equivalent"
+      },
+      "behavior": "equivalent",
+      "behaviorError": "sample:8: attempt to index global 'bit32' (a nil value)"
+    },
+    {
+      "file": "s04_control_flow__vm.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "vm",
+      "runtime": "luau",
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 22440,
+      "seconds": 0,
+      "behaviors": {
+        "lua52": "equivalent"
+      },
+      "behavior": "equivalent",
+      "behaviorError": "sample:25: attempt to index local '_I11i' (a nil value)"
+    },
+    {
+      "file": "s05_nested_functions__rename.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "rename",
+      "runtime": "luau",
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 1194,
+      "seconds": 0,
+      "behaviors": {
+        "lua52": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__strings-flow.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "strings-flow",
+      "runtime": "luau",
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 1514,
+      "seconds": 0,
+      "behaviors": {
+        "lua52": "equivalent"
+      },
+      "behavior": "equivalent",
+      "behaviorError": "sample:8: attempt to index global 'bit32' (a nil value)"
+    },
+    {
+      "file": "s05_nested_functions__vm.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "vm",
+      "runtime": "luau",
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 22953,
+      "seconds": 0,
+      "behaviors": {
+        "lua52": "equivalent"
+      },
+      "behavior": "equivalent",
+      "behaviorError": "sample:28: attempt to index local '_1O1j' (a nil value)"
+    },
+    {
+      "file": "s06_combined__rename.lua",
+      "sample": "s06_combined.lua",
+      "config": "rename",
+      "runtime": "luau",
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 1737,
+      "seconds": 0,
+      "behaviors": {
+        "lua52": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__strings-flow.lua",
+      "sample": "s06_combined.lua",
+      "config": "strings-flow",
+      "runtime": "luau",
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 2422,
+      "seconds": 0,
+      "behaviors": {
+        "lua52": "equivalent"
+      },
+      "behavior": "equivalent",
+      "behaviorError": "sample:8: attempt to index global 'bit32' (a nil value)"
+    },
+    {
+      "file": "s06_combined__vm.lua",
+      "sample": "s06_combined.lua",
+      "config": "vm",
+      "runtime": "luau",
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 25065,
+      "seconds": 0,
+      "behaviors": {
+        "lua52": "equivalent"
+      },
+      "behavior": "equivalent",
+      "behaviorError": "sample:27: attempt to index local '_O01j' (a nil value)"
+    },
+    {
+      "file": "s07_roblox_style__rename.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "rename",
+      "runtime": "luau",
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 728,
+      "seconds": 0,
+      "behaviors": {
+        "lua52": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__strings-flow.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "strings-flow",
+      "runtime": "luau",
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 1331,
+      "seconds": 0,
+      "behaviors": {
+        "lua52": "equivalent"
+      },
+      "behavior": "equivalent",
+      "behaviorError": "sample:8: attempt to index global 'bit32' (a nil value)"
+    },
+    {
+      "file": "s07_roblox_style__vm.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "vm",
+      "runtime": "luau",
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 21944,
+      "seconds": 0,
+      "behaviors": {
+        "lua52": "equivalent"
+      },
+      "behavior": "equivalent",
+      "behaviorError": "sample:25: attempt to index local '__I1i' (a nil value)"
+    },
+    {
+      "file": "s08_ironbrew_macros__rename.lua",
+      "sample": "s08_ironbrew_macros.lua",
+      "config": "rename",
+      "runtime": "luau",
+      "sampleSha256": "5d2ba22d895713dd1a955c8310b1e77d7a5961e854ea58fa77a1089a4041880f",
+      "status": "ok",
+      "bytes": 676,
+      "seconds": 0,
+      "behaviors": {
+        "lua52": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s08_ironbrew_macros__strings-flow.lua",
+      "sample": "s08_ironbrew_macros.lua",
+      "config": "strings-flow",
+      "runtime": "luau",
+      "sampleSha256": "5d2ba22d895713dd1a955c8310b1e77d7a5961e854ea58fa77a1089a4041880f",
+      "status": "ok",
+      "bytes": 1089,
+      "seconds": 0,
+      "behaviors": {
+        "lua52": "equivalent"
+      },
+      "behavior": "equivalent",
+      "behaviorError": "sample:8: attempt to index global 'bit32' (a nil value)"
+    },
+    {
+      "file": "s08_ironbrew_macros__vm.lua",
+      "sample": "s08_ironbrew_macros.lua",
+      "config": "vm",
+      "runtime": "luau",
+      "sampleSha256": "5d2ba22d895713dd1a955c8310b1e77d7a5961e854ea58fa77a1089a4041880f",
+      "status": "ok",
+      "bytes": 22164,
+      "seconds": 0,
+      "behaviors": {
+        "lua52": "equivalent"
+      },
+      "behavior": "equivalent",
+      "behaviorError": "sample:27: attempt to index local '___1j' (a nil value)"
+    }
+  ]
+}

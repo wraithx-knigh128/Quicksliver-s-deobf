@@ -34,6 +34,6 @@ the same name in the page (`<title>`, brand and About dialog already say "QuickS
 ## Before it goes public
 
 * Read `THIRD_PARTY_NOTICES.md`: Prometheus requires its attribution sentence (it is in the About dialog, the README and the notices).
-* The sample files are output of Prometheus, Hercules, IronBrew 2 and Zenfus plus constructed examples; their licences are in the notices. Output of Colisseum (AGPL-3.0) and of tools without a licence file is kept in the git-ignored `tests/corpus/obfuscated-local/`, and `/tests` is in `.vercelignore`, so it is not deployed.
+* The sample files are output of Prometheus, Hercules, IronBrew 2, Zenfus, AzureVM, the single-page obfuscator and Clyde plus constructed examples; their licences are in the notices. Output of Colisseum (AGPL-3.0) and of tools without a licence file is kept in the git-ignored `tests/corpus/obfuscated-local/`, and `/tests` is in `.vercelignore`, so it is not deployed.
 * The AI check is a style estimate, not proof; the page says so. Do not present its percentages as accusations about a person.
 * `index.html` carries `<meta name="robots" content="noindex, nofollow">` so a stray preview deployment is not indexed. Remove that line when the site is meant to be found. There is no `robots.txt`, no analytics and no third-party request.

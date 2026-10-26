@@ -125,3 +125,25 @@ test('a jump into the middle of a loop is refused', () => {
     z: blk('Z', { kind: 'exit' }),
   }, 'a'), CfgError);
 });
+
+test('a search loop with an early return, a continue and a short return block shared with the code after it', () => {
+  const out = run({
+    pre: blk('PRE', { kind: 'branch', cond: c('empty'), t: 'after', f: 'head' }),
+    head: blk('', { kind: 'branch', cond: c('isTool'), t: 'body', f: 'step' }),
+    body: blk('BODY', { kind: 'branch', cond: c('found'), t: 'hit', f: 'step' }),
+    step: blk('STEP', { kind: 'branch', cond: c('done'), t: 'after', f: 'head' }),
+    hit: { stmts: [], term: { kind: 'return', values: [{ name: 'yes' }] } },
+    after: blk('AFTER', { kind: 'return', values: null }),
+  }, 'pre');
+  // the early return leaves the loop and returns after it; the `continue` is the join before STEP; the short return block is written where it is reached
+  assert.equal(out, 'PRE\nif not empty then\n  while true do\n    if isTool then\n      BODY\n      if found then\n        break\n      end\n    end\n    STEP\n    if done then\n      AFTER\n      return\n    end\n  end\n  return yes\nend\nAFTER\nreturn');
+});
+
+test('early returns that share one short return block each write it out', () => {
+  assert.equal(run({
+    a: blk('A', { kind: 'branch', cond: c('x'), t: 'r', f: 'b' }),
+    b: blk('B', { kind: 'branch', cond: c('y'), t: 'r', f: 'c' }),
+    c: blk('C', { kind: 'return', values: null }),
+    r: { stmts: [], term: { kind: 'return', values: [{ name: 'no' }] } },
+  }, 'a'), 'A\nif not x then\n  B\n  if not y then\n    C\n    return\n  end\nend\nreturn no');
+});

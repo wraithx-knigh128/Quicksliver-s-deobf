@@ -559,6 +559,7 @@ function setBusy(label) {
     tick();
     ticker = setInterval(tick, 80);
   } else if (runStart) {
+    hideProgress();
     const took = performance.now() - runStart;
     runStart = 0;
     timings.unshift({ label: runLabel, ms: took });
@@ -571,6 +572,37 @@ function setBusy(label) {
   }
 }
 el.btn.cancel.addEventListener('click', () => engine.cancel());
+
+// ---- progress of long steps (the engine reports it while the worker is busy) ---------------------------------------------------------
+const progressBox = document.getElementById('progress');
+const progressBar = document.getElementById('progress-bar');
+/** [label, where the phase starts and ends on the bar] */
+const PHASES = {
+  profile: ['Reading how this script lays out its VM', 0, 0.08],
+  data: ['Decoding the program data', 0.08, 0.12],
+  handlers: ['Reading the interpreter\u2019s handlers', 0.12, 0.2],
+  stub: ['Opening the encrypted part', 0.2, 0.3],
+  lift: ['Rebuilding the program', 0.3, 1],
+};
+let progressAt = 0;
+function showProgress(e) {
+  if (!S.busy) return;
+  const phase = PHASES[e.phase];
+  if (!phase) return;
+  const [label, from, to] = phase;
+  const known = e.total > 0 && e.done !== undefined;
+  // the key search stops as soon as it finds the key, so its bar fills quickly and never means "that much is left"
+  const frac = known ? (e.phase === 'stub' ? 1 - Math.exp(-6 * e.done / e.total) : Math.min(1, e.done / e.total)) : 0;
+  progressBox.hidden = false;
+  progressBox.classList.toggle('indeterminate', !known && e.phase !== 'profile' && e.phase !== 'data');
+  // the bar only moves forward, whatever order the phases report in
+  progressAt = Math.max(progressAt, Math.round((from + (to - from) * frac) * 100));
+  progressBar.style.width = `${progressAt}%`;
+  const count = known && e.phase === 'lift' ? ` (${Math.round(frac * 100)}%)` : '';
+  el.stState.textContent = `${runLabel}: ${label}${count}\u2026`;
+}
+function hideProgress() { progressAt = 0; progressBox.hidden = true; progressBox.classList.remove('indeterminate'); progressBar.style.width = '0'; }
+engine.onprogress = showProgress;
 
 function setStatus(text, kind = '') { el.stState.textContent = text; el.stState.className = kind ? `state-${kind}` : ''; }
 
@@ -796,7 +828,7 @@ async function runVmTool(id, name) {
       h('p', { style: { margin: 0 } }, seen),
       h('p', id === 'luraph'
         ? 'Luraph v14 / v15 turns a script into a private virtual machine whose instructions are different in every script. QuickSilver cannot turn that back into the original source, and no tool can promise to.'
-        : 'MoonVeil compiles a script into a configurable virtual machine. QuickSilver can recognise it but cannot turn it back into the original source.'),
+        : 'MoonVeil compiles a script into a configurable virtual machine. QuickSilver could not read this one statically, so it cannot turn it back into the original source.'),
       h('p', 'What it can do is run the script in its sandbox and show you what comes out: the text the script builds and loads, and what it does (services, objects, URLs). Heavy scripts can run past the sandbox budget; then you get what was captured up to that point.'),
       h('p.note.warn', 'The script runs in QuickSilver’s own interpreter, never in the browser. Only run scripts you own or are authorised to analyse.'),
     ],
@@ -806,6 +838,28 @@ async function runVmTool(id, name) {
   S.traceConsent = true;
   const dump = await runDump({ name, consented: true });
   if (dump && !dump.candidates.length && dump.status !== 'syntax-error') await runTrace();
+}
+
+/** MoonVeil: rebuild the program from the VM's data (static); only when that cannot be done, offer the sandbox. */
+async function runMoonveilTool() {
+  if (!inputPresent()) { toast('Nothing to process. Paste a MoonVeil script or open a file first.'); switchTab('work'); editor.focus(); return; }
+  const d = await runDetect({ quiet: true });
+  if (!d) return;
+  const mv = d.detection.families.find((f) => f.id === 'moonveil' && f.confidence >= 0.5);
+  const other = d.detection.families.find((f) => f.id !== 'moonveil' && f.confidence >= 0.5);
+  const version = S.version;
+  const r = await runRecover();
+  if (!r || version !== S.version) return;
+  const vm = (r.steps || []).find((x) => x.id === 'moonveil.vm');
+  if (vm && vm.status === 'applied') {
+    S.notes.unshift({ kind: 'info', text: `MoonVeil: the program was rebuilt from the VM's data without running anything (${vm.detail.protos} functions, ${vm.detail.instructions} instructions).` });
+    renderAll();
+    return;
+  }
+  S.notes.unshift({ kind: 'warn', text: !mv && other ? `This does not look like MoonVeil: it matched ${other.name}. The general deobfuscator ran instead.` : vm && vm.status === 'skipped' ? `MoonVeil: the VM could not be read statically (${vm.detail}). The general deobfuscator ran instead.` : 'MoonVeil: no VM program was found in this script. The general deobfuscator ran instead.' });
+  renderAll();
+  // a VM that could not be read: running it in the sandbox is still possible, and asks first
+  if (mv && vm && vm.status === 'skipped') await runVmTool('moonveil', 'MoonVeil');
 }
 
 async function runIronBrewTool() {
@@ -1313,12 +1367,15 @@ async function showAbout() {
     body: [
       h('p', { style: { margin: 0 } }, `QuickSilver Deobfuscator v${ENGINE_VERSION}. Recovers readable Lua and Luau from obfuscated scripts. Everything runs in this page; nothing is uploaded, and scripts are not executed unless you use Trace or allow sandboxed evaluation.`),
       h('p.note.info', 'Based on Prometheus by Elias Oelschner, https://github.com/prometheus-lua/Prometheus'),
-      h('p', { style: { margin: 0 } }, 'QuickSilver contains no third-party code. Its recovery modules and test corpus were built by studying the following tools and their output:'),
+      h('p', { style: { margin: 0 } }, 'QuickSilver contains no third-party code. Its recovery modules and test corpus were built by studying the following tools and their output.'),
       h('ul', [
         credit('Prometheus', 'by Elias Oelschner (https://github.com/prometheus-lua/Prometheus): sample scripts in the test corpus are its output.', 'Prometheus licence, attribution required'),
         credit('Hercules', 'by zeusssz (https://github.com/zeusssz/hercules-obfuscator): sample scripts are its output.', 'Apache-2.0'),
         credit('IronBrew 2', 'by DefCon42 (https://github.com/Trollicus/ironbrew-2): its published format was read to write the IronBrew 2 module.', 'MIT'),
         credit('Zenfus', 'by Zaenalos (https://github.com/Zaenalos/Zenfus): sample scripts are its output.', 'MIT'),
+        credit('AzureVM', 'by LionHub-Pino (https://github.com/LionHub-Pino/AzureVM), built on Prometheus: sample scripts are its output.', 'MIT'),
+        credit('simple-lua-obfuscator', 'by iamsopotatoe (https://github.com/iamsopotatoe-coder/simple-lua-obfuscator): sample scripts are the output of its page.', 'MIT'),
+        credit('Clyde', 'by Clyde (https://github.com/sfr-development/Lua-Obfuscator-Clyde-Protection): sample scripts are its output.', 'MIT'),
         credit('Colisseum', 'by de-TourLLC (https://github.com/de-TourLLC/colisseum): studied to write the detection and the tamper-guard removal; its output is used only in local tests and is not distributed.', 'AGPL-3.0'),
       ]),
       h('p.faint', { style: { margin: 0 } }, 'Names, trademarks and products belong to their owners. Use QuickSilver only on scripts you own or are authorised to analyse. Research notes, licensing and third-party notices are in the docs folder of the source repository.'),
@@ -1496,7 +1553,7 @@ el.btn.origin.addEventListener('click', () => runOrigin());
 el.btn.link.addEventListener('click', () => openLinkDialog());
 el.btn.help.addEventListener('click', () => showHelp());
 el.btn.luraph.addEventListener('click', () => runVmTool('luraph', 'Luraph'));
-el.btn.moonveil.addEventListener('click', () => runVmTool('moonveil', 'MoonVeil'));
+el.btn.moonveil.addEventListener('click', () => runMoonveilTool());
 el.btn.ironbrew.addEventListener('click', () => runIronBrewTool());
 
 document.addEventListener('keydown', (e) => {
@@ -1533,6 +1590,9 @@ async function start() {
   } catch (e) {
     replace(views.compat, emptyState('Compatibility data unavailable', String(e.message || e)));
   }
+  // `?tab=<id>` opens a tab (for links to the Examples and Obfuscators tabs)
+  const tab = new URLSearchParams(location.search).get('tab');
+  if (tab && TABS.some((t) => t.id === tab)) switchTab(tab);
   // `?sample=<file>` opens a bundled sample (handy for links in bug reports)
   const q = new URLSearchParams(location.search).get('sample');
   if (q && /^[\w.-]+$/.test(q)) {

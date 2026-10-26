@@ -2,7 +2,7 @@
 //
 //   node tools/build-samples.mjs
 //
-// The obfuscated files are the real output of Prometheus, Hercules, IronBrew 2 and Zenfus (tests/corpus/obfuscated), generated
+// The obfuscated files are the real output of Prometheus, Hercules, IronBrew 2, Zenfus, AzureVM, the single-page obfuscator and Clyde (tests/corpus/obfuscated), generated
 // from the original programs in tests/corpus/originals; see the manifests there for seeds and revisions.
 
 import fs from 'node:fs';
@@ -89,6 +89,19 @@ const tools = [
     dir: 'zenfus', label: 'Zenfus (real tool output, VM; not recovered statically)', note: 'Zaenalos/Zenfus, MIT; run Trace to see what the script does',
     picks: [['default', 'default settings']],
     extra: [['s01_minify_basic', 'default', 'smallest program (behaves like its original)'], ['s03_encoded_strings', 'default', 'string program (behaves like its original)']],
+  },
+  {
+    // MIT licence. The VM presets are detected and flagged as not recovered; Balanced is Prometheus-style and partly recovered.
+    dir: 'azurevm', label: 'AzureVM (real tool output; the VM presets are not recovered)', note: 'LionHub-Pino/AzureVM, MIT',
+    picks: [['Balanced', 'Balanced preset'], ['Fast', 'Fast preset (VM)'], ['AzureGodUltra', 'AzureGodUltra preset (VM)']],
+  },
+  {
+    dir: 'simple_html', label: 'Simple Lua obfuscator page (real tool output)', note: 'iamsopotatoe-coder/simple-lua-obfuscator, MIT; its renaming breaks some programs',
+    picks: [['default', 'default settings']],
+  },
+  {
+    dir: 'clyde', label: 'Clyde (real tool output)', note: 'sfr-development/Lua-Obfuscator-Clyde-Protection, MIT',
+    picks: [['rename', 'rename'], ['strings-flow', 'strings and control flow'], ['vm', 'VM (not recovered)']],
   },
 ];
 for (const t of tools) {

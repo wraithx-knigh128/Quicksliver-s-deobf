@@ -73,7 +73,7 @@ async function loadFile(page, file) {
 
 test('page loads cleanly and lists every obfuscator', { skip }, async () => {
   const { page, ctx, problems } = await newPage();
-  assert.equal(await page.locator("#toollist li").count(), 24);
+  assert.equal(await page.locator("#toollist li").count(), 28);
   assert.equal(await page.textContent('#ver'), 'v1.0.0');
   for (const id of ['open', 'detect', 'beautify', 'analyze', 'recover', 'compare', 'export']) assert.ok(await page.isVisible(`#act-${id}`), `${id} button`);
   // strict CSP: no inline styles or scripts were needed to render
@@ -416,6 +416,23 @@ test('the tools bar names every tool in words, even on a narrow window', { skip 
     assert.ok(await page.isVisible(`#${id} .lbl`), `${id} shows its label`);
     assert.equal((await page.textContent(`#${id} .lbl`)).trim(), text);
   }
+  assert.deepEqual(problems, []);
+  await ctx.close();
+});
+
+test('the Examples tab groups the committed open-source tools, and ?tab= opens a tab directly', { skip }, async () => {
+  const ctx = await browser.newContext({ viewport: { width: 1400, height: 860 } });
+  const page = await ctx.newPage();
+  const problems = [];
+  page.on('console', (m) => { if (['error', 'warning'].includes(m.type())) problems.push(m.text()); });
+  page.on('pageerror', (e) => problems.push(e.message));
+  await page.goto(`${base}/index.html?tab=examples`);
+  await page.waitForSelector('.examples-table tbody tr.row-main');
+  assert.equal(await activeTab(page), 'tab-examples');
+  const groups = await page.locator('.examples-table tr.group').allTextContents();
+  for (const want of [/AzureVM/, /Clyde/, /Simple Lua obfuscator page/]) assert.ok(groups.some((g) => want.test(g)), `${want} among groups`);
+  assert.ok(!groups.some((g) => /Supplied/.test(g)), 'no user-supplied script is bundled');
+  assert.equal(await page.locator('#tab-reports').count(), 0, 'there is no Reports tab');
   assert.deepEqual(problems, []);
   await ctx.close();
 });

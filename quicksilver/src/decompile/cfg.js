@@ -39,6 +39,7 @@ const successors = (term) => (term.kind === 'goto' ? [term.to] : term.kind === '
 
 class Graph {
   constructor(blocks, entry) {
+    this.blocks = blocks;
     this.entry = entry;
     this.succ = new Map();
     this.pred = new Map();
@@ -110,12 +111,15 @@ class Graph {
     const link = (from, to) => { rsucc.get(from).push(to); rpred.get(to).push(from); };
     // reversed edges: for an edge a -> b we get b -> a; exits connect X -> n
     const exits = this.rpo.filter((n) => this.succ.get(n).length === 0);
-    for (const n of this.rpo) for (const s of this.succ.get(n)) link(s, n);
+    // a short block that only returns is written wherever control gets to it, so it does not join the paths that lead there: an early
+    // `return` inside a loop body must not hide where the rest of the body comes together
+    const transparent = (n) => { const b = this.blocks && this.blocks.get(n); return !!b && b.term.kind === 'return' && b.stmts.length <= 3; };
+    for (const n of this.rpo) for (const s of this.succ.get(n)) if (!transparent(s)) link(s, n);
     for (const n of exits) link(X, n);
     // blocks that cannot reach an exit (an endless loop) are attached to X as well
     const reach = new Set();
-    const queue = [...exits];
-    exits.forEach((n) => reach.add(n));
+    const queue = exits.filter((n) => !transparent(n));
+    queue.forEach((n) => reach.add(n));
     while (queue.length) {
       const n = queue.pop();
       for (const p of this.pred.get(n)) if (!reach.has(p)) { reach.add(p); queue.push(p); }
@@ -229,9 +233,11 @@ class Emitter {
         continue;
       }
       first = false;
-      if (this.emitted.has(cur)) throw new CfgError(`block ${String(cur)} would be emitted twice`);
-      this.emitted.add(cur);
       const blk = this.blocks.get(cur);
+      // a short block that ends the function can be written wherever control gets to it: several early returns share one
+      const copyable = blk.term.kind === 'return' && blk.stmts.length <= 3;
+      if (this.emitted.has(cur) && !copyable) throw new CfgError(`block ${String(cur)} would be emitted twice`);
+      this.emitted.add(cur);
       out.push(...blk.stmts);
       const t = blk.term;
       if (t.kind === 'goto') { cur = t.to; continue; }
@@ -253,6 +259,8 @@ class Emitter {
     }
     let j = this.g.ipdom.get(cur);
     if (j === this.g.X || (loop && !loop.nodes.has(j))) j = null;
+    // when an arm returns early the post-dominator is the end of the function; the arms can still come together before it
+    if (j === null) j = this.localJoin(t.t, t.f, loop);
     const inner = j === null ? stop : new Set([...stop, j]);
     const mk = (cond, body, orelse) => ({ type: 'If', clauses: [{ cond, body }], orelse });
     if (j !== null && t.t === j) {
@@ -273,6 +281,32 @@ class Emitter {
     if (!thenArm.length && elseArm.length) out.push(mk(this.h.negate(t.cond), elseArm, null));
     else out.push(mk(t.cond, thenArm, elseArm.length ? elseArm : null));
     return j;
+  }
+
+  /**
+   * The first block that both arms of a branch reach going forward (never along a back edge, never out of the loop being written).
+   * Arms that return meet nothing, which is what lets the other arm carry on after the `if`.
+   */
+  localJoin(a, b, loop) {
+    const forward = (start) => {
+      const seen = new Set([start]);
+      const stack = [start];
+      while (stack.length) {
+        const n = stack.pop();
+        for (const m of this.g.succ.get(n)) {
+          if (seen.has(m) || this.g.index.get(m) <= this.g.index.get(n)) continue;
+          if (loop && !loop.nodes.has(m)) continue;
+          seen.add(m);
+          stack.push(m);
+        }
+      }
+      return seen;
+    };
+    const ra = forward(a);
+    const rb = forward(b);
+    let best = null;
+    for (const n of ra) if (rb.has(n) && (best === null || this.g.index.get(n) < this.g.index.get(best))) best = n;
+    return best;
   }
 
   /** Can control get from `a` to `b`? */
@@ -325,7 +359,10 @@ class Emitter {
           && targets.every((t) => [...tails.get(t)].every((n) => !info.nodes.has(n)));
         if (!disjoint) throw new CfgError(`a loop with ${targets.length} unrelated exits`);
         const first = (t) => Math.min(...[...info.nodes].filter((n) => this.g.succ.get(n).includes(t)).map((n) => this.g.index.get(n)));
-        exit = [...targets].sort((x, y) => first(x) - first(y))[0];
+        // an early `return` is not "the loop ended": prefer the way out that carries on with the function
+        const returnsAtOnce = (t) => this.blocks.get(t).term.kind === 'return' && this.blocks.get(t).stmts.length <= 3;
+        const carryOn = targets.filter((t) => !returnsAtOnce(t));
+        exit = [...(carryOn.length ? carryOn : targets)].sort((x, y) => first(x) - first(y))[0];
         for (const t of targets) if (t !== exit) for (const n of tails.get(t)) breakNodes.add(n);
       }
     }

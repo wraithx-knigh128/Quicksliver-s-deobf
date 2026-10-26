@@ -11,6 +11,7 @@ export class Engine {
     this.seq = 0;
     this.pending = null;
     this.onbusy = () => {};
+    this.onprogress = () => {};
   }
 
   get busy() { return this.pending !== null; }
@@ -21,6 +22,7 @@ export class Engine {
     this.worker.onmessage = (e) => {
       const p = this.pending;
       if (!p || e.data.id !== p.id) return;
+      if (e.data.progress) { this.onprogress(e.data.progress, p.op); return; }
       this.finish();
       if (e.data.ok) p.resolve(e.data.result);
       else p.reject(new EngineError(e.data.error, 'engine'));

@@ -50,7 +50,7 @@ export function assessConfidence(before, output, ctx) {
   }
   // A VM the input showed and no pass rebuilt. Clean-up can rewrite the signature away (an inlined alias is gone) while the program is still
   // inside the VM, so the verdict cannot depend on the signature surviving.
-  const REBUILT_BY = { ironbrew2: ['ironbrew2'], hercules: ['layers'] };
+  const REBUILT_BY = { ironbrew2: ['ironbrew2'], hercules: ['layers'], moonveil: ['moonveil.vm'] };
   for (const f of before.families) {
     const hard = f.confidence >= 0.5 && f.evidence.find((e) => e.unrecoverable);
     if (!hard) continue;
@@ -75,6 +75,15 @@ export function assessConfidence(before, output, ctx) {
   if (evalStep && evalStep.status === 'skipped' && /not enabled/.test(String(evalStep.detail)) && needsDecoder) {
     note(-0.2, 'Sandboxed evaluation is off, so strings that need their decoder to run were not resolved.');
     hints.push('sandbox');
+  }
+  const lifted = steps.find((s) => s.id === 'moonveil.vm' && s.status === 'applied');
+  if (lifted) reasons.push({ effect: 0, text: `The program was rebuilt from the VM's own data without running anything: ${lifted.detail && lifted.detail.protos ? `${lifted.detail.protos} functions, ${lifted.detail.instructions} instructions` : 'every instruction'} read through the interpreter's handlers. It has not been compared with a run of the original.` });
+  if (lifted && lifted.detail && lifted.detail.validation) {
+    const v = lifted.detail.validation;
+    reasons.push({ effect: 0, text: `Checked without running it: ${v.constants.readable - v.constants.missing} of ${v.constants.readable} readable constants the instructions use are in the text, ${v.undeclared.length} register(s) read without being assigned, ${v.functions - v.unstructured} of ${v.functions} functions structured.` });
+    if (v.constants.missing) note(-0.1, `${v.constants.missing} readable constant(s) of the VM program do not appear in the output (for example ${JSON.stringify(v.constants.sample[0])}).`);
+    if (v.undeclared.length) note(-0.1, `Names that look like registers are read without being assigned: ${v.undeclared.slice(0, 4).join(', ')}.`);
+    if (v.unstructured) note(-0.05, `${v.unstructured} function(s) could not be structured and are written with labels and jumps.`);
   }
   if (!hadObfuscation) reasons.push({ effect: 0, text: 'No obfuscation was detected; the result is a cleaned and reformatted copy.' });
 

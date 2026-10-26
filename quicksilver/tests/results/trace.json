@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-10-25T09:06:38.388Z",
+ "generatedAt": "2026-10-25T11:35:15.127Z",
  "results": [
   {
    "tool": "prometheus",
@@ -20,7 +20,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 11,
+   "ms": 14,
    "detail": null
   },
   {
@@ -31,7 +31,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 63,
+   "ms": 64,
    "detail": null
   },
   {
@@ -42,7 +42,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 105,
+   "ms": 119,
    "detail": null
   },
   {
@@ -64,7 +64,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 4,
+   "ms": 6,
    "detail": null
   },
   {
@@ -75,7 +75,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 2,
+   "ms": 1,
    "detail": null
   },
   {
@@ -97,7 +97,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 8,
+   "ms": 11,
    "detail": null
   },
   {
@@ -119,7 +119,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 0,
+   "ms": 1,
    "detail": null
   },
   {
@@ -141,66 +141,66 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
+   "ms": 5,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "Minify",
+   "sample": "s02_renamed_vars",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 8,
+   "expected": 8,
+   "ms": 1,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "Weak",
+   "sample": "s02_renamed_vars",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 8,
+   "expected": 8,
+   "ms": 10,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "Medium",
+   "sample": "s02_renamed_vars",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 8,
+   "expected": 8,
+   "ms": 43,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "Strong",
+   "sample": "s02_renamed_vars",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 8,
+   "expected": 8,
+   "ms": 67,
+   "detail": null
+  },
+  {
+   "tool": "prometheus",
+   "config": "step-EncryptStrings",
+   "sample": "s02_renamed_vars",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 8,
+   "expected": 8,
    "ms": 4,
    "detail": null
   },
   {
    "tool": "prometheus",
-   "config": "Minify",
-   "sample": "s02_renamed_vars",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 8,
-   "expected": 8,
-   "ms": 1,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "Weak",
-   "sample": "s02_renamed_vars",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 8,
-   "expected": 8,
-   "ms": 7,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "Medium",
-   "sample": "s02_renamed_vars",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 8,
-   "expected": 8,
-   "ms": 59,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "Strong",
-   "sample": "s02_renamed_vars",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 8,
-   "expected": 8,
-   "ms": 38,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
-   "config": "step-EncryptStrings",
-   "sample": "s02_renamed_vars",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 8,
-   "expected": 8,
-   "ms": 2,
-   "detail": null
-  },
-  {
-   "tool": "prometheus",
    "config": "step-ConstantArray",
    "sample": "s02_renamed_vars",
    "toolBehavior": "equivalent",
@@ -229,7 +229,7 @@
    "outcome": "identical",
    "events": 8,
    "expected": 8,
-   "ms": 0,
+   "ms": 1,
    "detail": null
   },
   {
@@ -273,7 +273,7 @@
    "outcome": "identical",
    "events": 8,
    "expected": 8,
-   "ms": 3,
+   "ms": 4,
    "detail": null
   },
   {
@@ -284,7 +284,7 @@
    "outcome": "identical",
    "events": 8,
    "expected": 8,
-   "ms": 1,
+   "ms": 2,
    "detail": null
   },
   {
@@ -306,7 +306,7 @@
    "outcome": "differs",
    "events": 14,
    "expected": 14,
-   "ms": 6,
+   "ms": 7,
    "detail": "completed"
   },
   {
@@ -317,7 +317,7 @@
    "outcome": "differs",
    "events": 14,
    "expected": 14,
-   "ms": 19,
+   "ms": 24,
    "detail": "completed"
   },
   {
@@ -328,7 +328,7 @@
    "outcome": "differs",
    "events": 14,
    "expected": 14,
-   "ms": 39,
+   "ms": 44,
    "detail": "completed"
   },
   {
@@ -372,7 +372,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 1,
+   "ms": 0,
    "detail": null
   },
   {
@@ -394,7 +394,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 0,
+   "ms": 1,
    "detail": null
   },
   {
@@ -427,7 +427,7 @@
    "outcome": "differs",
    "events": 14,
    "expected": 14,
-   "ms": 2,
+   "ms": 1,
    "detail": "completed"
   },
   {
@@ -438,7 +438,7 @@
    "outcome": "identical",
    "events": 11,
    "expected": 11,
-   "ms": 0,
+   "ms": 1,
    "detail": null
   },
   {
@@ -460,7 +460,7 @@
    "outcome": "identical",
    "events": 11,
    "expected": 11,
-   "ms": 29,
+   "ms": 23,
    "detail": null
   },
   {
@@ -471,7 +471,7 @@
    "outcome": "identical",
    "events": 11,
    "expected": 11,
-   "ms": 119,
+   "ms": 117,
    "detail": null
   },
   {
@@ -504,7 +504,7 @@
    "outcome": "identical",
    "events": 11,
    "expected": 11,
-   "ms": 2,
+   "ms": 1,
    "detail": null
   },
   {
@@ -515,7 +515,7 @@
    "outcome": "identical",
    "events": 11,
    "expected": 11,
-   "ms": 1,
+   "ms": 0,
    "detail": null
   },
   {
@@ -548,7 +548,7 @@
    "outcome": "identical",
    "events": 11,
    "expected": 11,
-   "ms": 1,
+   "ms": 0,
    "detail": null
   },
   {
@@ -559,7 +559,7 @@
    "outcome": "identical",
    "events": 11,
    "expected": 11,
-   "ms": 3,
+   "ms": 4,
    "detail": null
   },
   {
@@ -581,7 +581,7 @@
    "outcome": "identical",
    "events": 6,
    "expected": 6,
-   "ms": 7,
+   "ms": 9,
    "detail": null
   },
   {
@@ -614,7 +614,7 @@
    "outcome": "identical",
    "events": 6,
    "expected": 6,
-   "ms": 64,
+   "ms": 70,
    "detail": null
   },
   {
@@ -669,7 +669,7 @@
    "outcome": "identical",
    "events": 6,
    "expected": 6,
-   "ms": 2,
+   "ms": 1,
    "detail": null
   },
   {
@@ -680,7 +680,7 @@
    "outcome": "identical",
    "events": 6,
    "expected": 6,
-   "ms": 0,
+   "ms": 1,
    "detail": null
   },
   {
@@ -702,7 +702,7 @@
    "outcome": "identical",
    "events": 6,
    "expected": 6,
-   "ms": 3,
+   "ms": 2,
    "detail": null
   },
   {
@@ -746,7 +746,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 31,
+   "ms": 29,
    "detail": null
   },
   {
@@ -757,7 +757,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 71,
+   "ms": 72,
    "detail": null
   },
   {
@@ -768,7 +768,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 3,
+   "ms": 4,
    "detail": null
   },
   {
@@ -779,7 +779,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 2,
+   "ms": 4,
    "detail": null
   },
   {
@@ -790,7 +790,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 1,
+   "ms": 2,
    "detail": null
   },
   {
@@ -823,7 +823,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 1,
+   "ms": 3,
    "detail": null
   },
   {
@@ -834,7 +834,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 4,
+   "ms": 2,
    "detail": null
   },
   {
@@ -856,7 +856,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 3,
+   "ms": 4,
    "detail": null
   },
   {
@@ -867,7 +867,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 1,
+   "ms": 2,
    "detail": null
   },
   {
@@ -878,7 +878,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 4,
+   "ms": 3,
    "detail": null
   },
   {
@@ -889,7 +889,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 24,
+   "ms": 28,
    "detail": null
   },
   {
@@ -900,7 +900,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 34,
+   "ms": 37,
    "detail": null
   },
   {
@@ -911,7 +911,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 1,
+   "ms": 2,
    "detail": null
   },
   {
@@ -944,7 +944,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 0,
+   "ms": 1,
    "detail": null
   },
   {
@@ -955,7 +955,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 1,
+   "ms": 0,
    "detail": null
   },
   {
@@ -1021,7 +1021,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 1,
+   "ms": 0,
    "detail": null
   },
   {
@@ -1032,7 +1032,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 3,
+   "ms": 4,
    "detail": null
   },
   {
@@ -1043,7 +1043,7 @@
    "outcome": "identical",
    "events": 5,
    "expected": 4,
-   "ms": 792,
+   "ms": 797,
    "detail": null
   },
   {
@@ -1054,7 +1054,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 25,
+   "ms": 23,
    "detail": null
   },
   {
@@ -1076,7 +1076,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 1,
+   "ms": 2,
    "detail": null
   },
   {
@@ -1087,7 +1087,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 1,
+   "ms": 0,
    "detail": null
   },
   {
@@ -1109,7 +1109,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 0,
+   "ms": 1,
    "detail": null
   },
   {
@@ -1120,7 +1120,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 1,
+   "ms": 0,
    "detail": null
   },
   {
@@ -1131,7 +1131,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 0,
+   "ms": 1,
    "detail": null
   },
   {
@@ -1142,7 +1142,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 1,
+   "ms": 0,
    "detail": null
   },
   {
@@ -1153,7 +1153,7 @@
    "outcome": "syntax-error",
    "events": 0,
    "expected": 4,
-   "ms": 0,
+   "ms": 1,
    "detail": "67:7: unfinished string"
   },
   {
@@ -1175,7 +1175,7 @@
    "outcome": "identical",
    "events": 5,
    "expected": 4,
-   "ms": 5,
+   "ms": 4,
    "detail": null
   },
   {
@@ -1208,7 +1208,7 @@
    "outcome": "identical",
    "events": 8,
    "expected": 8,
-   "ms": 2,
+   "ms": 1,
    "detail": null
   },
   {
@@ -1219,7 +1219,7 @@
    "outcome": "identical",
    "events": 8,
    "expected": 8,
-   "ms": 13,
+   "ms": 12,
    "detail": null
   },
   {
@@ -1230,7 +1230,7 @@
    "outcome": "error",
    "events": 0,
    "expected": 8,
-   "ms": 21,
+   "ms": 33,
    "detail": "trace:123: attempt to perform arithmetic on a nil value (local 'Val2')"
   },
   {
@@ -1241,7 +1241,7 @@
    "outcome": "identical",
    "events": 8,
    "expected": 8,
-   "ms": 1,
+   "ms": 2,
    "detail": null
   },
   {
@@ -1307,7 +1307,7 @@
    "outcome": "identical",
    "events": 8,
    "expected": 8,
-   "ms": 0,
+   "ms": 1,
    "detail": null
   },
   {
@@ -1318,7 +1318,7 @@
    "outcome": "identical",
    "events": 8,
    "expected": 8,
-   "ms": 1,
+   "ms": 0,
    "detail": null
   },
   {
@@ -1340,7 +1340,7 @@
    "outcome": "identical",
    "events": 8,
    "expected": 8,
-   "ms": 0,
+   "ms": 1,
    "detail": null
   },
   {
@@ -1351,7 +1351,7 @@
    "outcome": "identical",
    "events": 9,
    "expected": 8,
-   "ms": 5,
+   "ms": 11,
    "detail": null
   },
   {
@@ -1362,7 +1362,7 @@
    "outcome": "identical",
    "events": 8,
    "expected": 8,
-   "ms": 5,
+   "ms": 0,
    "detail": null
   },
   {
@@ -1373,7 +1373,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 0,
+   "ms": 1,
    "detail": null
   },
   {
@@ -1395,7 +1395,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 5,
+   "ms": 6,
    "detail": null
   },
   {
@@ -1406,7 +1406,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 13,
+   "ms": 18,
    "detail": null
   },
   {
@@ -1428,7 +1428,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 1,
+   "ms": 0,
    "detail": null
   },
   {
@@ -1439,7 +1439,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 1,
+   "ms": 2,
    "detail": null
   },
   {
@@ -1450,7 +1450,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 4,
+   "ms": 3,
    "detail": null
   },
   {
@@ -1472,7 +1472,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 0,
+   "ms": 1,
    "detail": null
   },
   {
@@ -1483,7 +1483,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 1,
+   "ms": 0,
    "detail": null
   },
   {
@@ -1494,7 +1494,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 0,
+   "ms": 1,
    "detail": null
   },
   {
@@ -1505,7 +1505,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 1,
+   "ms": 0,
    "detail": null
   },
   {
@@ -1516,7 +1516,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 0,
+   "ms": 1,
    "detail": null
   },
   {
@@ -1527,7 +1527,7 @@
    "outcome": "identical",
    "events": 15,
    "expected": 14,
-   "ms": 5,
+   "ms": 4,
    "detail": null
   },
   {
@@ -1538,7 +1538,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 0,
+   "ms": 1,
    "detail": null
   },
   {
@@ -1549,7 +1549,7 @@
    "outcome": "identical",
    "events": 11,
    "expected": 11,
-   "ms": 1,
+   "ms": 0,
    "detail": null
   },
   {
@@ -1571,7 +1571,7 @@
    "outcome": "identical",
    "events": 11,
    "expected": 11,
-   "ms": 10,
+   "ms": 11,
    "detail": null
   },
   {
@@ -1582,7 +1582,7 @@
    "outcome": "identical",
    "events": 11,
    "expected": 11,
-   "ms": 24,
+   "ms": 22,
    "detail": null
   },
   {
@@ -1637,7 +1637,7 @@
    "outcome": "identical",
    "events": 11,
    "expected": 11,
-   "ms": 1,
+   "ms": 0,
    "detail": null
   },
   {
@@ -1648,7 +1648,7 @@
    "outcome": "identical",
    "events": 11,
    "expected": 11,
-   "ms": 0,
+   "ms": 1,
    "detail": null
   },
   {
@@ -1703,7 +1703,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 11,
-   "ms": 5,
+   "ms": 6,
    "detail": null
   },
   {
@@ -1736,7 +1736,7 @@
    "outcome": "identical",
    "events": 6,
    "expected": 6,
-   "ms": 2,
+   "ms": 1,
    "detail": null
   },
   {
@@ -1769,7 +1769,7 @@
    "outcome": "identical",
    "events": 6,
    "expected": 6,
-   "ms": 27,
+   "ms": 23,
    "detail": null
   },
   {
@@ -1780,7 +1780,7 @@
    "outcome": "identical",
    "events": 6,
    "expected": 6,
-   "ms": 1,
+   "ms": 3,
    "detail": null
   },
   {
@@ -1835,7 +1835,7 @@
    "outcome": "identical",
    "events": 6,
    "expected": 6,
-   "ms": 0,
+   "ms": 1,
    "detail": null
   },
   {
@@ -1846,7 +1846,7 @@
    "outcome": "identical",
    "events": 6,
    "expected": 6,
-   "ms": 1,
+   "ms": 0,
    "detail": null
   },
   {
@@ -1890,7 +1890,7 @@
    "outcome": "identical",
    "events": 7,
    "expected": 6,
-   "ms": 8,
+   "ms": 7,
    "detail": null
   },
   {
@@ -1934,7 +1934,7 @@
    "outcome": "error",
    "events": 0,
    "expected": 4,
-   "ms": 4,
+   "ms": 3,
    "detail": "trace:2: attempt to index a nil value (global 'FLeORjwr')"
   },
   {
@@ -1945,7 +1945,7 @@
    "outcome": "error",
    "events": 0,
    "expected": 4,
-   "ms": 23,
+   "ms": 21,
    "detail": "trace:128: attempt to perform arithmetic on a nil value (local 'Val4')"
   },
   {
@@ -2044,7 +2044,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 1,
+   "ms": 4,
    "detail": null
   },
   {
@@ -2055,7 +2055,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 7,
+   "ms": 1,
    "detail": null
   },
   {
@@ -2099,7 +2099,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 2,
+   "ms": 1,
    "detail": null
   },
   {
@@ -2110,7 +2110,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 7,
+   "ms": 9,
    "detail": null
   },
   {
@@ -2121,7 +2121,7 @@
    "outcome": "identical",
    "events": 13,
    "expected": 12,
-   "ms": 812,
+   "ms": 650,
    "detail": null
   },
   {
@@ -2132,7 +2132,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 11,
+   "ms": 13,
    "detail": null
   },
   {
@@ -2143,7 +2143,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 2,
+   "ms": 1,
    "detail": null
   },
   {
@@ -2154,7 +2154,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 0,
+   "ms": 1,
    "detail": null
   },
   {
@@ -2187,7 +2187,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 1,
+   "ms": 0,
    "detail": null
   },
   {
@@ -2209,7 +2209,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 0,
+   "ms": 2,
    "detail": null
   },
   {
@@ -2220,7 +2220,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 1,
+   "ms": 0,
    "detail": null
   },
   {
@@ -2231,7 +2231,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 0,
+   "ms": 1,
    "detail": null
   },
   {
@@ -2242,7 +2242,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 0,
+   "ms": 1,
    "detail": null
   },
   {
@@ -2253,7 +2253,7 @@
    "outcome": "identical",
    "events": 13,
    "expected": 12,
-   "ms": 4,
+   "ms": 3,
    "detail": null
   },
   {
@@ -2264,7 +2264,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 3,
+   "ms": 1,
    "detail": null
   },
   {
@@ -2275,7 +2275,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 23,
+   "ms": 31,
    "detail": null
   },
   {
@@ -2286,7 +2286,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 15,
+   "ms": 16,
    "detail": null
   },
   {
@@ -2308,7 +2308,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 14,
+   "ms": 17,
    "detail": null
   },
   {
@@ -2319,7 +2319,7 @@
    "outcome": "differs",
    "events": 4,
    "expected": 4,
-   "ms": 14,
+   "ms": 17,
    "detail": "completed"
   },
   {
@@ -2330,7 +2330,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 80,
+   "ms": 116,
    "detail": null
   },
   {
@@ -2341,7 +2341,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 20,
+   "ms": 19,
    "detail": null
   },
   {
@@ -2352,7 +2352,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 15,
+   "ms": 19,
    "detail": null
   },
   {
@@ -2363,7 +2363,7 @@
    "outcome": "identical",
    "events": 8,
    "expected": 8,
-   "ms": 18,
+   "ms": 19,
    "detail": null
   },
   {
@@ -2374,7 +2374,7 @@
    "outcome": "identical",
    "events": 8,
    "expected": 8,
-   "ms": 14,
+   "ms": 15,
    "detail": null
   },
   {
@@ -2385,7 +2385,7 @@
    "outcome": "identical",
    "events": 8,
    "expected": 8,
-   "ms": 9,
+   "ms": 14,
    "detail": null
   },
   {
@@ -2396,7 +2396,7 @@
    "outcome": "identical",
    "events": 8,
    "expected": 8,
-   "ms": 15,
+   "ms": 16,
    "detail": null
   },
   {
@@ -2418,7 +2418,7 @@
    "outcome": "identical",
    "events": 8,
    "expected": 8,
-   "ms": 136,
+   "ms": 107,
    "detail": null
   },
   {
@@ -2429,7 +2429,7 @@
    "outcome": "identical",
    "events": 8,
    "expected": 8,
-   "ms": 63,
+   "ms": 20,
    "detail": null
   },
   {
@@ -2440,7 +2440,7 @@
    "outcome": "identical",
    "events": 8,
    "expected": 8,
-   "ms": 16,
+   "ms": 17,
    "detail": null
   },
   {
@@ -2451,7 +2451,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 21,
+   "ms": 16,
    "detail": null
   },
   {
@@ -2462,7 +2462,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 21,
+   "ms": 14,
    "detail": null
   },
   {
@@ -2473,12 +2473,56 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 19,
+   "ms": 14,
    "detail": null
   },
   {
    "tool": "ironbrew2",
    "config": "super",
+   "sample": "s03_encoded_strings",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 14,
+   "expected": 14,
+   "ms": 16,
+   "detail": null
+  },
+  {
+   "tool": "ironbrew2",
+   "config": "flow",
+   "sample": "s03_encoded_strings",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 14,
+   "expected": 14,
+   "ms": 13,
+   "detail": null
+  },
+  {
+   "tool": "ironbrew2",
+   "config": "strings",
+   "sample": "s03_encoded_strings",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 14,
+   "expected": 14,
+   "ms": 170,
+   "detail": null
+  },
+  {
+   "tool": "ironbrew2",
+   "config": "lineinfo",
+   "sample": "s03_encoded_strings",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 14,
+   "expected": 14,
+   "ms": 28,
+   "detail": null
+  },
+  {
+   "tool": "ironbrew2",
+   "config": "nocompress",
    "sample": "s03_encoded_strings",
    "toolBehavior": "equivalent",
    "outcome": "identical",
@@ -2489,57 +2533,13 @@
   },
   {
    "tool": "ironbrew2",
-   "config": "flow",
-   "sample": "s03_encoded_strings",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 14,
-   "expected": 14,
-   "ms": 17,
-   "detail": null
-  },
-  {
-   "tool": "ironbrew2",
-   "config": "strings",
-   "sample": "s03_encoded_strings",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 14,
-   "expected": 14,
-   "ms": 172,
-   "detail": null
-  },
-  {
-   "tool": "ironbrew2",
-   "config": "lineinfo",
-   "sample": "s03_encoded_strings",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 14,
-   "expected": 14,
-   "ms": 18,
-   "detail": null
-  },
-  {
-   "tool": "ironbrew2",
-   "config": "nocompress",
-   "sample": "s03_encoded_strings",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 14,
-   "expected": 14,
-   "ms": 15,
-   "detail": null
-  },
-  {
-   "tool": "ironbrew2",
    "config": "default",
    "sample": "s04_control_flow",
    "toolBehavior": "equivalent",
    "outcome": "identical",
    "events": 11,
    "expected": 11,
-   "ms": 19,
+   "ms": 28,
    "detail": null
   },
   {
@@ -2550,7 +2550,7 @@
    "outcome": "identical",
    "events": 11,
    "expected": 11,
-   "ms": 17,
+   "ms": 36,
    "detail": null
   },
   {
@@ -2561,7 +2561,7 @@
    "outcome": "identical",
    "events": 11,
    "expected": 11,
-   "ms": 18,
+   "ms": 22,
    "detail": null
   },
   {
@@ -2572,7 +2572,7 @@
    "outcome": "identical",
    "events": 11,
    "expected": 11,
-   "ms": 18,
+   "ms": 20,
    "detail": null
   },
   {
@@ -2583,7 +2583,7 @@
    "outcome": "limit",
    "events": 8,
    "expected": 11,
-   "ms": 8004,
+   "ms": 8002,
    "detail": "stopped (time limit)"
   },
   {
@@ -2594,7 +2594,7 @@
    "outcome": "identical",
    "events": 11,
    "expected": 11,
-   "ms": 246,
+   "ms": 207,
    "detail": null
   },
   {
@@ -2605,7 +2605,7 @@
    "outcome": "identical",
    "events": 11,
    "expected": 11,
-   "ms": 29,
+   "ms": 21,
    "detail": null
   },
   {
@@ -2616,12 +2616,67 @@
    "outcome": "identical",
    "events": 11,
    "expected": 11,
-   "ms": 17,
+   "ms": 15,
    "detail": null
   },
   {
    "tool": "ironbrew2",
    "config": "default",
+   "sample": "s05_nested_functions",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 6,
+   "expected": 6,
+   "ms": 21,
+   "detail": null
+  },
+  {
+   "tool": "ironbrew2",
+   "config": "plain",
+   "sample": "s05_nested_functions",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 6,
+   "expected": 6,
+   "ms": 16,
+   "detail": null
+  },
+  {
+   "tool": "ironbrew2",
+   "config": "mutate",
+   "sample": "s05_nested_functions",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 6,
+   "expected": 6,
+   "ms": 14,
+   "detail": null
+  },
+  {
+   "tool": "ironbrew2",
+   "config": "super",
+   "sample": "s05_nested_functions",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 6,
+   "expected": 6,
+   "ms": 17,
+   "detail": null
+  },
+  {
+   "tool": "ironbrew2",
+   "config": "flow",
+   "sample": "s05_nested_functions",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 6,
+   "expected": 6,
+   "ms": 16,
+   "detail": null
+  },
+  {
+   "tool": "ironbrew2",
+   "config": "strings",
    "sample": "s05_nested_functions",
    "toolBehavior": "equivalent",
    "outcome": "identical",
@@ -2632,73 +2687,7 @@
   },
   {
    "tool": "ironbrew2",
-   "config": "plain",
-   "sample": "s05_nested_functions",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 6,
-   "expected": 6,
-   "ms": 21,
-   "detail": null
-  },
-  {
-   "tool": "ironbrew2",
-   "config": "mutate",
-   "sample": "s05_nested_functions",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 6,
-   "expected": 6,
-   "ms": 20,
-   "detail": null
-  },
-  {
-   "tool": "ironbrew2",
-   "config": "super",
-   "sample": "s05_nested_functions",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 6,
-   "expected": 6,
-   "ms": 18,
-   "detail": null
-  },
-  {
-   "tool": "ironbrew2",
-   "config": "flow",
-   "sample": "s05_nested_functions",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 6,
-   "expected": 6,
-   "ms": 20,
-   "detail": null
-  },
-  {
-   "tool": "ironbrew2",
-   "config": "strings",
-   "sample": "s05_nested_functions",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 6,
-   "expected": 6,
-   "ms": 32,
-   "detail": null
-  },
-  {
-   "tool": "ironbrew2",
    "config": "lineinfo",
-   "sample": "s05_nested_functions",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 6,
-   "expected": 6,
-   "ms": 24,
-   "detail": null
-  },
-  {
-   "tool": "ironbrew2",
-   "config": "nocompress",
    "sample": "s05_nested_functions",
    "toolBehavior": "equivalent",
    "outcome": "identical",
@@ -2709,13 +2698,24 @@
   },
   {
    "tool": "ironbrew2",
+   "config": "nocompress",
+   "sample": "s05_nested_functions",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 6,
+   "expected": 6,
+   "ms": 19,
+   "detail": null
+  },
+  {
+   "tool": "ironbrew2",
    "config": "default",
    "sample": "s06_combined",
    "toolBehavior": "equivalent",
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 29,
+   "ms": 32,
    "detail": null
   },
   {
@@ -2726,23 +2726,12 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 18,
+   "ms": 25,
    "detail": null
   },
   {
    "tool": "ironbrew2",
    "config": "mutate",
-   "sample": "s06_combined",
-   "toolBehavior": "equivalent",
-   "outcome": "identical",
-   "events": 4,
-   "expected": 4,
-   "ms": 23,
-   "detail": null
-  },
-  {
-   "tool": "ironbrew2",
-   "config": "super",
    "sample": "s06_combined",
    "toolBehavior": "equivalent",
    "outcome": "identical",
@@ -2753,13 +2742,24 @@
   },
   {
    "tool": "ironbrew2",
+   "config": "super",
+   "sample": "s06_combined",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 4,
+   "expected": 4,
+   "ms": 31,
+   "detail": null
+  },
+  {
+   "tool": "ironbrew2",
    "config": "flow",
    "sample": "s06_combined",
    "toolBehavior": "errored",
    "outcome": "error",
    "events": 0,
    "expected": 4,
-   "ms": 21,
+   "ms": 32,
    "detail": "trace:37: attempt to perform arithmetic on a nil value"
   },
   {
@@ -2770,7 +2770,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 91,
+   "ms": 90,
    "detail": null
   },
   {
@@ -2781,7 +2781,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 39,
+   "ms": 35,
    "detail": null
   },
   {
@@ -2792,7 +2792,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 27,
+   "ms": 26,
    "detail": null
   },
   {
@@ -2803,7 +2803,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 12,
+   "ms": 14,
    "detail": null
   },
   {
@@ -2814,7 +2814,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 11,
+   "ms": 9,
    "detail": null
   },
   {
@@ -2825,7 +2825,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 8,
+   "ms": 10,
    "detail": null
   },
   {
@@ -2836,7 +2836,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 11,
+   "ms": 17,
    "detail": null
   },
   {
@@ -2847,7 +2847,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 11,
+   "ms": 14,
    "detail": null
   },
   {
@@ -2858,7 +2858,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 145,
+   "ms": 100,
    "detail": null
   },
   {
@@ -2869,7 +2869,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 23,
+   "ms": 18,
    "detail": null
   },
   {
@@ -2880,7 +2880,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 12,
+   "ms": 10,
    "detail": null
   },
   {
@@ -2891,7 +2891,7 @@
    "outcome": "identical",
    "events": 7,
    "expected": 7,
-   "ms": 35,
+   "ms": 37,
    "detail": null
   },
   {
@@ -2913,7 +2913,7 @@
    "outcome": "identical",
    "events": 7,
    "expected": 7,
-   "ms": 11,
+   "ms": 12,
    "detail": null
   },
   {
@@ -2924,7 +2924,7 @@
    "outcome": "identical",
    "events": 7,
    "expected": 7,
-   "ms": 14,
+   "ms": 13,
    "detail": null
   },
   {
@@ -2935,7 +2935,7 @@
    "outcome": "limit",
    "events": 1,
    "expected": 7,
-   "ms": 8001,
+   "ms": 8004,
    "detail": "stopped (time limit)"
   },
   {
@@ -2946,7 +2946,7 @@
    "outcome": "identical",
    "events": 7,
    "expected": 7,
-   "ms": 234,
+   "ms": 230,
    "detail": null
   },
   {
@@ -2957,7 +2957,7 @@
    "outcome": "identical",
    "events": 7,
    "expected": 7,
-   "ms": 51,
+   "ms": 47,
    "detail": null
   },
   {
@@ -2968,7 +2968,7 @@
    "outcome": "identical",
    "events": 7,
    "expected": 7,
-   "ms": 31,
+   "ms": 25,
    "detail": null
   },
   {
@@ -2979,7 +2979,7 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 10,
+   "ms": 14,
    "detail": null
   },
   {
@@ -3001,7 +3001,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 14,
-   "ms": 18,
+   "ms": 19,
    "detail": null
   },
   {
@@ -3012,7 +3012,7 @@
    "outcome": "identical",
    "events": 11,
    "expected": 11,
-   "ms": 11,
+   "ms": 15,
    "detail": null
   },
   {
@@ -3023,7 +3023,7 @@
    "outcome": "differs",
    "events": 6,
    "expected": 6,
-   "ms": 20,
+   "ms": 19,
    "detail": "completed"
   },
   {
@@ -3034,7 +3034,7 @@
    "outcome": "error",
    "events": 0,
    "expected": 4,
-   "ms": 16,
+   "ms": 21,
    "detail": "trace:568: attempt to call a nil value"
   },
   {
@@ -3045,7 +3045,7 @@
    "outcome": "differs",
    "events": 12,
    "expected": 12,
-   "ms": 6,
+   "ms": 13,
    "detail": "completed"
   },
   {
@@ -3056,7 +3056,898 @@
    "outcome": "identical",
    "events": 7,
    "expected": 7,
-   "ms": 10,
+   "ms": 11,
+   "detail": null
+  },
+  {
+   "tool": "azurevm",
+   "config": "Fast",
+   "sample": "s01_minify_basic",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 6,
+   "expected": 4,
+   "ms": 50,
+   "detail": null
+  },
+  {
+   "tool": "azurevm",
+   "config": "Balanced",
+   "sample": "s01_minify_basic",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 4,
+   "expected": 4,
+   "ms": 26,
+   "detail": null
+  },
+  {
+   "tool": "azurevm",
+   "config": "Luraph",
+   "sample": "s01_minify_basic",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 6,
+   "expected": 4,
+   "ms": 36,
+   "detail": null
+  },
+  {
+   "tool": "azurevm",
+   "config": "Luraph14",
+   "sample": "s01_minify_basic",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 6,
+   "expected": 4,
+   "ms": 123,
+   "detail": null
+  },
+  {
+   "tool": "azurevm",
+   "config": "AzureGod15",
+   "sample": "s01_minify_basic",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 6,
+   "expected": 4,
+   "ms": 85,
+   "detail": null
+  },
+  {
+   "tool": "azurevm",
+   "config": "AzureGodUltra",
+   "sample": "s01_minify_basic",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 6,
+   "expected": 4,
+   "ms": 135,
+   "detail": null
+  },
+  {
+   "tool": "azurevm",
+   "config": "Fast",
+   "sample": "s02_renamed_vars",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 10,
+   "expected": 8,
+   "ms": 13,
+   "detail": null
+  },
+  {
+   "tool": "azurevm",
+   "config": "Balanced",
+   "sample": "s02_renamed_vars",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 8,
+   "expected": 8,
+   "ms": 13,
+   "detail": null
+  },
+  {
+   "tool": "azurevm",
+   "config": "Luraph",
+   "sample": "s02_renamed_vars",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 10,
+   "expected": 8,
+   "ms": 15,
+   "detail": null
+  },
+  {
+   "tool": "azurevm",
+   "config": "Luraph14",
+   "sample": "s02_renamed_vars",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 10,
+   "expected": 8,
+   "ms": 106,
+   "detail": null
+  },
+  {
+   "tool": "azurevm",
+   "config": "AzureGod15",
+   "sample": "s02_renamed_vars",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 10,
+   "expected": 8,
+   "ms": 74,
+   "detail": null
+  },
+  {
+   "tool": "azurevm",
+   "config": "AzureGodUltra",
+   "sample": "s02_renamed_vars",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 10,
+   "expected": 8,
+   "ms": 101,
+   "detail": null
+  },
+  {
+   "tool": "azurevm",
+   "config": "Fast",
+   "sample": "s03_encoded_strings",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 16,
+   "expected": 14,
+   "ms": 12,
+   "detail": null
+  },
+  {
+   "tool": "azurevm",
+   "config": "Balanced",
+   "sample": "s03_encoded_strings",
+   "toolBehavior": "diverged",
+   "outcome": "differs",
+   "events": 14,
+   "expected": 14,
+   "ms": 11,
+   "detail": "completed"
+  },
+  {
+   "tool": "azurevm",
+   "config": "Luraph",
+   "sample": "s03_encoded_strings",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 16,
+   "expected": 14,
+   "ms": 11,
+   "detail": null
+  },
+  {
+   "tool": "azurevm",
+   "config": "Luraph14",
+   "sample": "s03_encoded_strings",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 16,
+   "expected": 14,
+   "ms": 97,
+   "detail": null
+  },
+  {
+   "tool": "azurevm",
+   "config": "AzureGod15",
+   "sample": "s03_encoded_strings",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 16,
+   "expected": 14,
+   "ms": 95,
+   "detail": null
+  },
+  {
+   "tool": "azurevm",
+   "config": "AzureGodUltra",
+   "sample": "s03_encoded_strings",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 16,
+   "expected": 14,
+   "ms": 128,
+   "detail": null
+  },
+  {
+   "tool": "azurevm",
+   "config": "Fast",
+   "sample": "s04_control_flow",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 13,
+   "expected": 11,
+   "ms": 25,
+   "detail": null
+  },
+  {
+   "tool": "azurevm",
+   "config": "Balanced",
+   "sample": "s04_control_flow",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 11,
+   "expected": 11,
+   "ms": 15,
+   "detail": null
+  },
+  {
+   "tool": "azurevm",
+   "config": "Luraph",
+   "sample": "s04_control_flow",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 13,
+   "expected": 11,
+   "ms": 25,
+   "detail": null
+  },
+  {
+   "tool": "azurevm",
+   "config": "Luraph14",
+   "sample": "s04_control_flow",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 13,
+   "expected": 11,
+   "ms": 88,
+   "detail": null
+  },
+  {
+   "tool": "azurevm",
+   "config": "AzureGod15",
+   "sample": "s04_control_flow",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 13,
+   "expected": 11,
+   "ms": 90,
+   "detail": null
+  },
+  {
+   "tool": "azurevm",
+   "config": "AzureGodUltra",
+   "sample": "s04_control_flow",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 13,
+   "expected": 11,
+   "ms": 193,
+   "detail": null
+  },
+  {
+   "tool": "azurevm",
+   "config": "Fast",
+   "sample": "s05_nested_functions",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 8,
+   "expected": 6,
+   "ms": 28,
+   "detail": null
+  },
+  {
+   "tool": "azurevm",
+   "config": "Balanced",
+   "sample": "s05_nested_functions",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 6,
+   "expected": 6,
+   "ms": 9,
+   "detail": null
+  },
+  {
+   "tool": "azurevm",
+   "config": "Luraph",
+   "sample": "s05_nested_functions",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 8,
+   "expected": 6,
+   "ms": 28,
+   "detail": null
+  },
+  {
+   "tool": "azurevm",
+   "config": "Luraph14",
+   "sample": "s05_nested_functions",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 8,
+   "expected": 6,
+   "ms": 63,
+   "detail": null
+  },
+  {
+   "tool": "azurevm",
+   "config": "AzureGod15",
+   "sample": "s05_nested_functions",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 8,
+   "expected": 6,
+   "ms": 79,
+   "detail": null
+  },
+  {
+   "tool": "azurevm",
+   "config": "AzureGodUltra",
+   "sample": "s05_nested_functions",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 8,
+   "expected": 6,
+   "ms": 140,
+   "detail": null
+  },
+  {
+   "tool": "azurevm",
+   "config": "Fast",
+   "sample": "s06_combined",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 6,
+   "expected": 4,
+   "ms": 33,
+   "detail": null
+  },
+  {
+   "tool": "azurevm",
+   "config": "Balanced",
+   "sample": "s06_combined",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 4,
+   "expected": 4,
+   "ms": 20,
+   "detail": null
+  },
+  {
+   "tool": "azurevm",
+   "config": "Luraph",
+   "sample": "s06_combined",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 6,
+   "expected": 4,
+   "ms": 39,
+   "detail": null
+  },
+  {
+   "tool": "azurevm",
+   "config": "Luraph14",
+   "sample": "s06_combined",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 6,
+   "expected": 4,
+   "ms": 159,
+   "detail": null
+  },
+  {
+   "tool": "azurevm",
+   "config": "AzureGod15",
+   "sample": "s06_combined",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 6,
+   "expected": 4,
+   "ms": 162,
+   "detail": null
+  },
+  {
+   "tool": "azurevm",
+   "config": "AzureGodUltra",
+   "sample": "s06_combined",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 6,
+   "expected": 4,
+   "ms": 179,
+   "detail": null
+  },
+  {
+   "tool": "azurevm",
+   "config": "Fast",
+   "sample": "s07_roblox_style",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 14,
+   "expected": 12,
+   "ms": 11,
+   "detail": null
+  },
+  {
+   "tool": "azurevm",
+   "config": "Balanced",
+   "sample": "s07_roblox_style",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 12,
+   "expected": 12,
+   "ms": 12,
+   "detail": null
+  },
+  {
+   "tool": "azurevm",
+   "config": "Luraph",
+   "sample": "s07_roblox_style",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 14,
+   "expected": 12,
+   "ms": 17,
+   "detail": null
+  },
+  {
+   "tool": "azurevm",
+   "config": "Luraph14",
+   "sample": "s07_roblox_style",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 14,
+   "expected": 12,
+   "ms": 136,
+   "detail": null
+  },
+  {
+   "tool": "azurevm",
+   "config": "AzureGod15",
+   "sample": "s07_roblox_style",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 14,
+   "expected": 12,
+   "ms": 112,
+   "detail": null
+  },
+  {
+   "tool": "azurevm",
+   "config": "AzureGodUltra",
+   "sample": "s07_roblox_style",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 14,
+   "expected": 12,
+   "ms": 122,
+   "detail": null
+  },
+  {
+   "tool": "azurevm",
+   "config": "Fast",
+   "sample": "s08_ironbrew_macros",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 9,
+   "expected": 7,
+   "ms": 17,
+   "detail": null
+  },
+  {
+   "tool": "azurevm",
+   "config": "Balanced",
+   "sample": "s08_ironbrew_macros",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 7,
+   "expected": 7,
+   "ms": 9,
+   "detail": null
+  },
+  {
+   "tool": "azurevm",
+   "config": "Luraph",
+   "sample": "s08_ironbrew_macros",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 9,
+   "expected": 7,
+   "ms": 19,
+   "detail": null
+  },
+  {
+   "tool": "azurevm",
+   "config": "Luraph14",
+   "sample": "s08_ironbrew_macros",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 9,
+   "expected": 7,
+   "ms": 52,
+   "detail": null
+  },
+  {
+   "tool": "azurevm",
+   "config": "AzureGod15",
+   "sample": "s08_ironbrew_macros",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 9,
+   "expected": 7,
+   "ms": 55,
+   "detail": null
+  },
+  {
+   "tool": "azurevm",
+   "config": "AzureGodUltra",
+   "sample": "s08_ironbrew_macros",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 9,
+   "expected": 7,
+   "ms": 91,
+   "detail": null
+  },
+  {
+   "tool": "simple_html",
+   "config": "default",
+   "sample": "s01_minify_basic",
+   "toolBehavior": "diverged",
+   "outcome": "differs",
+   "events": 4,
+   "expected": 4,
+   "ms": 1,
+   "detail": "completed"
+  },
+  {
+   "tool": "simple_html",
+   "config": "default",
+   "sample": "s02_renamed_vars",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 8,
+   "expected": 8,
+   "ms": 2,
+   "detail": null
+  },
+  {
+   "tool": "simple_html",
+   "config": "default",
+   "sample": "s03_encoded_strings",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 14,
+   "expected": 14,
+   "ms": 2,
+   "detail": null
+  },
+  {
+   "tool": "simple_html",
+   "config": "default",
+   "sample": "s04_control_flow",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 11,
+   "expected": 11,
+   "ms": 2,
+   "detail": null
+  },
+  {
+   "tool": "simple_html",
+   "config": "default",
+   "sample": "s05_nested_functions",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 6,
+   "expected": 6,
+   "ms": 1,
+   "detail": null
+  },
+  {
+   "tool": "simple_html",
+   "config": "default",
+   "sample": "s06_combined",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 4,
+   "expected": 4,
+   "ms": 2,
+   "detail": null
+  },
+  {
+   "tool": "simple_html",
+   "config": "default",
+   "sample": "s07_roblox_style",
+   "toolBehavior": "errored",
+   "outcome": "differs",
+   "events": 12,
+   "expected": 12,
+   "ms": 2,
+   "detail": "completed"
+  },
+  {
+   "tool": "simple_html",
+   "config": "default",
+   "sample": "s08_ironbrew_macros",
+   "toolBehavior": "diverged",
+   "outcome": "differs",
+   "events": 7,
+   "expected": 7,
+   "ms": 1,
+   "detail": "completed"
+  },
+  {
+   "tool": "clyde",
+   "config": "rename",
+   "sample": "s01_minify_basic",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 4,
+   "expected": 4,
+   "ms": 1,
+   "detail": null
+  },
+  {
+   "tool": "clyde",
+   "config": "strings-flow",
+   "sample": "s01_minify_basic",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 4,
+   "expected": 4,
+   "ms": 4,
+   "detail": null
+  },
+  {
+   "tool": "clyde",
+   "config": "vm",
+   "sample": "s01_minify_basic",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 15,
+   "expected": 4,
+   "ms": 27,
+   "detail": null
+  },
+  {
+   "tool": "clyde",
+   "config": "vm-max",
+   "sample": "s01_minify_basic",
+   "toolBehavior": "errored",
+   "outcome": "error",
+   "events": 2,
+   "expected": 4,
+   "ms": 316,
+   "detail": "trace:6: attempt to call a nil value (global '_0_lav')"
+  },
+  {
+   "tool": "clyde",
+   "config": "rename",
+   "sample": "s02_renamed_vars",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 8,
+   "expected": 8,
+   "ms": 1,
+   "detail": null
+  },
+  {
+   "tool": "clyde",
+   "config": "strings-flow",
+   "sample": "s02_renamed_vars",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 8,
+   "expected": 8,
+   "ms": 2,
+   "detail": null
+  },
+  {
+   "tool": "clyde",
+   "config": "vm",
+   "sample": "s02_renamed_vars",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 18,
+   "expected": 8,
+   "ms": 31,
+   "detail": null
+  },
+  {
+   "tool": "clyde",
+   "config": "rename",
+   "sample": "s03_encoded_strings",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 14,
+   "expected": 14,
+   "ms": 2,
+   "detail": null
+  },
+  {
+   "tool": "clyde",
+   "config": "strings-flow",
+   "sample": "s03_encoded_strings",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 14,
+   "expected": 14,
+   "ms": 4,
+   "detail": null
+  },
+  {
+   "tool": "clyde",
+   "config": "vm",
+   "sample": "s03_encoded_strings",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 24,
+   "expected": 14,
+   "ms": 27,
+   "detail": null
+  },
+  {
+   "tool": "clyde",
+   "config": "rename",
+   "sample": "s04_control_flow",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 11,
+   "expected": 11,
+   "ms": 2,
+   "detail": null
+  },
+  {
+   "tool": "clyde",
+   "config": "strings-flow",
+   "sample": "s04_control_flow",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 11,
+   "expected": 11,
+   "ms": 2,
+   "detail": null
+  },
+  {
+   "tool": "clyde",
+   "config": "vm",
+   "sample": "s04_control_flow",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 21,
+   "expected": 11,
+   "ms": 24,
+   "detail": null
+  },
+  {
+   "tool": "clyde",
+   "config": "rename",
+   "sample": "s05_nested_functions",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 6,
+   "expected": 6,
+   "ms": 0,
+   "detail": null
+  },
+  {
+   "tool": "clyde",
+   "config": "strings-flow",
+   "sample": "s05_nested_functions",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 6,
+   "expected": 6,
+   "ms": 1,
+   "detail": null
+  },
+  {
+   "tool": "clyde",
+   "config": "vm",
+   "sample": "s05_nested_functions",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 16,
+   "expected": 6,
+   "ms": 28,
+   "detail": null
+  },
+  {
+   "tool": "clyde",
+   "config": "rename",
+   "sample": "s06_combined",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 4,
+   "expected": 4,
+   "ms": 1,
+   "detail": null
+  },
+  {
+   "tool": "clyde",
+   "config": "strings-flow",
+   "sample": "s06_combined",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 4,
+   "expected": 4,
+   "ms": 2,
+   "detail": null
+  },
+  {
+   "tool": "clyde",
+   "config": "vm",
+   "sample": "s06_combined",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 14,
+   "expected": 4,
+   "ms": 21,
+   "detail": null
+  },
+  {
+   "tool": "clyde",
+   "config": "rename",
+   "sample": "s07_roblox_style",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 12,
+   "expected": 12,
+   "ms": 0,
+   "detail": null
+  },
+  {
+   "tool": "clyde",
+   "config": "strings-flow",
+   "sample": "s07_roblox_style",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 12,
+   "expected": 12,
+   "ms": 1,
+   "detail": null
+  },
+  {
+   "tool": "clyde",
+   "config": "vm",
+   "sample": "s07_roblox_style",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 22,
+   "expected": 12,
+   "ms": 15,
+   "detail": null
+  },
+  {
+   "tool": "clyde",
+   "config": "rename",
+   "sample": "s08_ironbrew_macros",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 7,
+   "expected": 7,
+   "ms": 1,
+   "detail": null
+  },
+  {
+   "tool": "clyde",
+   "config": "strings-flow",
+   "sample": "s08_ironbrew_macros",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 7,
+   "expected": 7,
+   "ms": 0,
+   "detail": null
+  },
+  {
+   "tool": "clyde",
+   "config": "vm",
+   "sample": "s08_ironbrew_macros",
+   "toolBehavior": "equivalent",
+   "outcome": "identical",
+   "events": 18,
+   "expected": 7,
+   "ms": 15,
    "detail": null
   },
   {
@@ -3078,7 +3969,7 @@
    "outcome": "error",
    "events": 0,
    "expected": 4,
-   "ms": 7,
+   "ms": 5,
    "detail": "á´á´ÊÉªÑÑá´á´á´ ï¸± Oh Noes!, An error ocurred: 0x6B0C"
   },
   {
@@ -3089,7 +3980,7 @@
    "outcome": "error",
    "events": 0,
    "expected": 4,
-   "ms": 3,
+   "ms": 8,
    "detail": "á´á´ÊÉªÑÑá´á´á´ ï¸± Oh Noes!, An error ocurred: 0x6B0C"
   },
   {
@@ -3100,7 +3991,7 @@
    "outcome": "error",
    "events": 0,
    "expected": 4,
-   "ms": 4,
+   "ms": 6,
    "detail": "á´á´ÊÉªÑÑá´á´á´ ï¸± Oh Noes!, An error ocurred: 0x6B0C"
   },
   {
@@ -3111,7 +4002,7 @@
    "outcome": "error",
    "events": 0,
    "expected": 4,
-   "ms": 4111,
+   "ms": 4330,
    "detail": "á´á´ÊÉªÑÑá´á´á´ ï¸± Oh Noes!, An error ocurred: 0x6B0C"
   },
   {
@@ -3122,7 +4013,7 @@
    "outcome": "error",
    "events": 0,
    "expected": 4,
-   "ms": 1462,
+   "ms": 1558,
    "detail": "á´á´ÊÉªÑÑá´á´á´ ï¸± Oh Noes!, An error ocurred: 0x5C08"
   },
   {
@@ -3133,7 +4024,7 @@
    "outcome": "identical",
    "events": 8,
    "expected": 8,
-   "ms": 2,
+   "ms": 1,
    "detail": null
   },
   {
@@ -3144,7 +4035,7 @@
    "outcome": "error",
    "events": 0,
    "expected": 8,
-   "ms": 4,
+   "ms": 5,
    "detail": "á´á´ÊÉªÑÑá´á´á´ ï¸± Oh Noes!, An error ocurred: 0x6B0C"
   },
   {
@@ -3155,7 +4046,7 @@
    "outcome": "error",
    "events": 0,
    "expected": 8,
-   "ms": 8,
+   "ms": 4,
    "detail": "á´á´ÊÉªÑÑá´á´á´ ï¸± Oh Noes!, An error ocurred: 0x6B0C"
   },
   {
@@ -3166,7 +4057,7 @@
    "outcome": "error",
    "events": 0,
    "expected": 8,
-   "ms": 6,
+   "ms": 8,
    "detail": "á´á´ÊÉªÑÑá´á´á´ ï¸± Oh Noes!, An error ocurred: 0x6B0C"
   },
   {
@@ -3177,7 +4068,7 @@
    "outcome": "error",
    "events": 0,
    "expected": 8,
-   "ms": 4232,
+   "ms": 4337,
    "detail": "á´á´ÊÉªÑÑá´á´á´ ï¸± Oh Noes!, An error ocurred: 0x6B0C"
   },
   {
@@ -3188,7 +4079,7 @@
    "outcome": "error",
    "events": 0,
    "expected": 8,
-   "ms": 1509,
+   "ms": 1765,
    "detail": "á´á´ÊÉªÑÑá´á´á´ ï¸± Oh Noes!, An error ocurred: 0x5C08"
   },
   {
@@ -3221,7 +4112,7 @@
    "outcome": "error",
    "events": 0,
    "expected": 14,
-   "ms": 4,
+   "ms": 6,
    "detail": "á´á´ÊÉªÑÑá´á´á´ ï¸± Oh Noes!, An error ocurred: 0x6B0C"
   },
   {
@@ -3232,7 +4123,7 @@
    "outcome": "error",
    "events": 0,
    "expected": 14,
-   "ms": 8,
+   "ms": 5,
    "detail": "á´á´ÊÉªÑÑá´á´á´ ï¸± Oh Noes!, An error ocurred: 0x6B0C"
   },
   {
@@ -3243,7 +4134,7 @@
    "outcome": "error",
    "events": 0,
    "expected": 14,
-   "ms": 3833,
+   "ms": 4212,
    "detail": "á´á´ÊÉªÑÑá´á´á´ ï¸± Oh Noes!, An error ocurred: 0x6B0C"
   },
   {
@@ -3254,7 +4145,7 @@
    "outcome": "error",
    "events": 0,
    "expected": 14,
-   "ms": 1589,
+   "ms": 1388,
    "detail": "á´á´ÊÉªÑÑá´á´á´ ï¸± Oh Noes!, An error ocurred: 0x5C08"
   },
   {
@@ -3276,7 +4167,7 @@
    "outcome": "error",
    "events": 0,
    "expected": 11,
-   "ms": 7,
+   "ms": 4,
    "detail": "á´á´ÊÉªÑÑá´á´á´ ï¸± Oh Noes!, An error ocurred: 0x6B0C"
   },
   {
@@ -3298,7 +4189,7 @@
    "outcome": "error",
    "events": 0,
    "expected": 11,
-   "ms": 39,
+   "ms": 7,
    "detail": "á´á´ÊÉªÑÑá´á´á´ ï¸± Oh Noes!, An error ocurred: 0x6B0C"
   },
   {
@@ -3309,7 +4200,7 @@
    "outcome": "error",
    "events": 0,
    "expected": 11,
-   "ms": 4084,
+   "ms": 4130,
    "detail": "á´á´ÊÉªÑÑá´á´á´ ï¸± Oh Noes!, An error ocurred: 0x6B0C"
   },
   {
@@ -3320,7 +4211,7 @@
    "outcome": "error",
    "events": 0,
    "expected": 11,
-   "ms": 1420,
+   "ms": 1507,
    "detail": "á´á´ÊÉªÑÑá´á´á´ ï¸± Oh Noes!, An error ocurred: 0x5C08"
   },
   {
@@ -3342,7 +4233,7 @@
    "outcome": "error",
    "events": 0,
    "expected": 6,
-   "ms": 5,
+   "ms": 4,
    "detail": "á´á´ÊÉªÑÑá´á´á´ ï¸± Oh Noes!, An error ocurred: 0x6B0C"
   },
   {
@@ -3364,7 +4255,7 @@
    "outcome": "error",
    "events": 0,
    "expected": 6,
-   "ms": 5,
+   "ms": 9,
    "detail": "á´á´ÊÉªÑÑá´á´á´ ï¸± Oh Noes!, An error ocurred: 0x6B0C"
   },
   {
@@ -3375,7 +4266,7 @@
    "outcome": "error",
    "events": 0,
    "expected": 6,
-   "ms": 4629,
+   "ms": 4390,
    "detail": "á´á´ÊÉªÑÑá´á´á´ ï¸± Oh Noes!, An error ocurred: 0x6B0C"
   },
   {
@@ -3386,7 +4277,7 @@
    "outcome": "error",
    "events": 0,
    "expected": 6,
-   "ms": 1611,
+   "ms": 1728,
    "detail": "á´á´ÊÉªÑÑá´á´á´ ï¸± Oh Noes!, An error ocurred: 0x5C08"
   },
   {
@@ -3397,12 +4288,23 @@
    "outcome": "identical",
    "events": 4,
    "expected": 4,
-   "ms": 2,
+   "ms": 1,
    "detail": null
   },
   {
    "tool": "colisseum",
    "config": "medium",
+   "sample": "s06_combined",
+   "toolBehavior": "equivalent",
+   "outcome": "error",
+   "events": 0,
+   "expected": 4,
+   "ms": 4,
+   "detail": "á´á´ÊÉªÑÑá´á´á´ ï¸± Oh Noes!, An error ocurred: 0x6B0C"
+  },
+  {
+   "tool": "colisseum",
+   "config": "hard",
    "sample": "s06_combined",
    "toolBehavior": "equivalent",
    "outcome": "error",
@@ -3413,7 +4315,7 @@
   },
   {
    "tool": "colisseum",
-   "config": "hard",
+   "config": "full",
    "sample": "s06_combined",
    "toolBehavior": "equivalent",
    "outcome": "error",
@@ -3424,24 +4326,13 @@
   },
   {
    "tool": "colisseum",
-   "config": "full",
-   "sample": "s06_combined",
-   "toolBehavior": "equivalent",
-   "outcome": "error",
-   "events": 0,
-   "expected": 4,
-   "ms": 8,
-   "detail": "á´á´ÊÉªÑÑá´á´á´ ï¸± Oh Noes!, An error ocurred: 0x6B0C"
-  },
-  {
-   "tool": "colisseum",
    "config": "total",
    "sample": "s06_combined",
    "toolBehavior": "equivalent",
    "outcome": "error",
    "events": 0,
    "expected": 4,
-   "ms": 4699,
+   "ms": 4767,
    "detail": "á´á´ÊÉªÑÑá´á´á´ ï¸± Oh Noes!, An error ocurred: 0x6B0C"
   },
   {
@@ -3452,7 +4343,7 @@
    "outcome": "error",
    "events": 0,
    "expected": 4,
-   "ms": 1585,
+   "ms": 1821,
    "detail": "á´á´ÊÉªÑÑá´á´á´ ï¸± Oh Noes!, An error ocurred: 0x5C08"
   },
   {
@@ -3463,7 +4354,7 @@
    "outcome": "identical",
    "events": 12,
    "expected": 12,
-   "ms": 1,
+   "ms": 2,
    "detail": null
   },
   {
@@ -3474,7 +4365,7 @@
    "outcome": "error",
    "events": 0,
    "expected": 12,
-   "ms": 3,
+   "ms": 5,
    "detail": "á´á´ÊÉªÑÑá´á´á´ ï¸± Oh Noes!, An error ocurred: 0x6B0C"
   },
   {
@@ -3485,7 +4376,7 @@
    "outcome": "error",
    "events": 0,
    "expected": 12,
-   "ms": 4,
+   "ms": 6,
    "detail": "á´á´ÊÉªÑÑá´á´á´ ï¸± Oh Noes!, An error ocurred: 0x6B0C"
   },
   {
@@ -3496,7 +4387,7 @@
    "outcome": "error",
    "events": 0,
    "expected": 12,
-   "ms": 3,
+   "ms": 11,
    "detail": "á´á´ÊÉªÑÑá´á´á´ ï¸± Oh Noes!, An error ocurred: 0x6B0C"
   },
   {
@@ -3507,7 +4398,7 @@
    "outcome": "error",
    "events": 0,
    "expected": 12,
-   "ms": 4271,
+   "ms": 4208,
    "detail": "á´á´ÊÉªÑÑá´á´á´ ï¸± Oh Noes!, An error ocurred: 0x6B0C"
   },
   {
@@ -3518,7 +4409,7 @@
    "outcome": "error",
    "events": 0,
    "expected": 12,
-   "ms": 1515,
+   "ms": 1674,
    "detail": "á´á´ÊÉªÑÑá´á´á´ ï¸± Oh Noes!, An error ocurred: 0x5C08"
   },
   {
@@ -3529,7 +4420,7 @@
    "outcome": "identical",
    "events": 7,
    "expected": 7,
-   "ms": 0,
+   "ms": 1,
    "detail": null
   },
   {
@@ -3540,7 +4431,7 @@
    "outcome": "error",
    "events": 0,
    "expected": 7,
-   "ms": 3,
+   "ms": 8,
    "detail": "á´á´ÊÉªÑÑá´á´á´ ï¸± Oh Noes!, An error ocurred: 0x6B0C"
   },
   {
@@ -3551,7 +4442,7 @@
    "outcome": "error",
    "events": 0,
    "expected": 7,
-   "ms": 3,
+   "ms": 4,
    "detail": "á´á´ÊÉªÑÑá´á´á´ ï¸± Oh Noes!, An error ocurred: 0x6B0C"
   },
   {
@@ -3562,7 +4453,7 @@
    "outcome": "error",
    "events": 0,
    "expected": 7,
-   "ms": 7,
+   "ms": 5,
    "detail": "á´á´ÊÉªÑÑá´á´á´ ï¸± Oh Noes!, An error ocurred: 0x6B0C"
   },
   {
@@ -3573,7 +4464,7 @@
    "outcome": "error",
    "events": 0,
    "expected": 7,
-   "ms": 3655,
+   "ms": 4661,
    "detail": "á´á´ÊÉªÑÑá´á´á´ ï¸± Oh Noes!, An error ocurred: 0x6B0C"
   },
   {
@@ -3584,7 +4475,7 @@
    "outcome": "error",
    "events": 0,
    "expected": 7,
-   "ms": 1335,
+   "ms": 1388,
    "detail": "á´á´ÊÉªÑÑá´á´á´ ï¸± Oh Noes!, An error ocurred: 0x5C08"
   },
   {
@@ -3595,7 +4486,7 @@
    "outcome": "identical",
    "events": 6,
    "expected": 4,
-   "ms": 29,
+   "ms": 37,
    "detail": null
   },
   {
@@ -3606,7 +4497,7 @@
    "outcome": "identical",
    "events": 10,
    "expected": 8,
-   "ms": 41,
+   "ms": 46,
    "detail": null
   },
   {
@@ -3617,7 +4508,7 @@
    "outcome": "identical",
    "events": 16,
    "expected": 14,
-   "ms": 36,
+   "ms": 32,
    "detail": null
   },
   {
@@ -3628,7 +4519,7 @@
    "outcome": "identical",
    "events": 13,
    "expected": 11,
-   "ms": 70,
+   "ms": 49,
    "detail": null
   },
   {
@@ -3639,7 +4530,7 @@
    "outcome": "identical",
    "events": 8,
    "expected": 6,
-   "ms": 67,
+   "ms": 46,
    "detail": null
   },
   {
@@ -3650,7 +4541,7 @@
    "outcome": "identical",
    "events": 6,
    "expected": 4,
-   "ms": 98,
+   "ms": 67,
    "detail": null
   },
   {
@@ -3661,7 +4552,7 @@
    "outcome": "identical",
    "events": 14,
    "expected": 12,
-   "ms": 41,
+   "ms": 37,
    "detail": null
   },
   {
@@ -3672,7 +4563,7 @@
    "outcome": "identical",
    "events": 9,
    "expected": 7,
-   "ms": 23,
+   "ms": 39,
    "detail": null
   }
  ]
