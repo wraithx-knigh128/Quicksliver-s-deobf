@@ -21,6 +21,7 @@ import { regionPass } from '../passes/regions.js';
 import { booleanResults, orientComparisons, shortCircuits, tableConstructors, methodCalls, bareNils, functionForms, multiResults, numericLoops, loopForms, unsetLocals } from '../passes/idioms.js';
 import { removeAntiTamper, undoProxifyLocals } from './prometheus.js';
 import { propagateStable } from '../passes/stable.js';
+import { buildReport, annotate, stripReport } from './annotate.js';
 import { removeHerculesAntiTamper } from './hercules.js';
 import { removeColisseumGuard } from './colisseum.js';
 import { decodePageStrings } from './simple_html.js';
@@ -41,6 +42,8 @@ export const DEFAULT_OPTIONS = Object.freeze({
   maxRounds: 8,
   adaptive: true,             // after the family steps and the generic rounds: read the structure of what is left and recover what can be recovered (src/adaptive/)
   adaptiveBudgetMs: 12000,
+  // put a short report in front of the output when the recovery is not complete (what was done, what is left); off keeps the code alone
+  annotate: true,
   moonveilVm: true,           // read a MoonVeil VM program back out of its data (static; falls back to the general passes when the script does not fit)
   reuseInstructions: true,    // lift an instruction once per kind and reuse it (false lifts every one: slower, same result)
   onProgress: null,           // called with { phase, done?, total? } while long steps run
@@ -146,6 +149,7 @@ export function tryParse(source) {
 export function recover(source, userOptions = {}) {
   const options = { ...DEFAULT_OPTIONS, ...userOptions, sandbox: { ...DEFAULT_OPTIONS.sandbox, ...(userOptions.sandbox || {}) }, format: { ...DEFAULT_OPTIONS.format, ...(userOptions.format || {}) } };
   const t0 = now();
+  source = stripReport(source);      // a result of ours that is recovered again: its report is replaced, not repeated
   const parsed = tryParse(source);
   if (!parsed.ok) {
     return { ok: false, stage: 'parse', error: parsed.error, output: null, steps: [], detection: detect(source), warnings: [] };
@@ -277,11 +281,13 @@ export function recover(source, userOptions = {}) {
   if (!validation.ok) run.warnings.push(validation.message);
   const steps = [...run.steps.values()];
   const confidence = assessConfidence(detection, output, { steps, validation, ast: run.ast, adaptive });
+  const report = buildReport({ detection, steps, confidence, adaptive });
 
   return {
     adaptive,
+    report,
     ok: validation.ok,
-    output,
+    output: options.annotate ? annotate(output, report) : output,
     steps,
     detection,
     validation,
