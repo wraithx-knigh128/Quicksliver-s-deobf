@@ -20,6 +20,7 @@ import { dataflowPass } from '../passes/dataflow.js';
 import { regionPass } from '../passes/regions.js';
 import { booleanResults, orientComparisons, shortCircuits, tableConstructors, methodCalls, bareNils, functionForms, multiResults, numericLoops, loopForms, unsetLocals } from '../passes/idioms.js';
 import { removeAntiTamper, undoProxifyLocals } from './prometheus.js';
+import { propagateStable } from '../passes/stable.js';
 import { removeHerculesAntiTamper } from './hercules.js';
 import { removeColisseumGuard } from './colisseum.js';
 import { decodePageStrings } from './simple_html.js';
@@ -228,6 +229,8 @@ export function recover(source, userOptions = {}) {
     if (decompiled) total += run.step('idioms.whiles', 'Move loop exit tests into the loop header', (a) => loopForms(a), { quiet: true });
     total += run.step('tidy', 'Tidy flipped tests', (a) => tidyIfs(a), { quiet: true });
     total += run.step('prometheus.proxify', 'Undo Prometheus ProxifyLocals', (a) => undoProxifyLocals(a), { quiet: true });
+    // a rebuilt machine reaches its decoder through copies made at the top of each function; the decoder is only seen once they are gone
+    total += run.step('stable', 'Read copies of values that never change as the values', (a) => propagateStable(a), { quiet: true });
     if (options.sandbox.enabled) {
       total += run.step('evaluate', 'Evaluate string decoders (sandbox)', (a) => evaluatePass(a, { sandbox: options.sandbox }));
     } else {

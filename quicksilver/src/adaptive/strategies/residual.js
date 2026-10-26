@@ -3,6 +3,7 @@
 
 import { walk } from '../../core/walk.js';
 import { strip, lineOf } from '../util.js';
+import { isFetch } from './classic.js';
 
 /** A loop that fetches an instruction from a table by a counter and selects on its opcode: a virtual machine inside the script. */
 function interpreters(ast, an) {
@@ -94,6 +95,35 @@ export const payload = {
         confidence: 0.6,
         weight: 2,
         residual: 'An encoded blob is carried in the script. If a decoder for it exists in the script it can be evaluated in the sandbox; otherwise it is left as it is.',
+      });
+    });
+    return out;
+  },
+};
+
+/**
+ * `loadstring(game:HttpGet(url))()`: the program runs code that is fetched when it runs. That is what the script does, not a disguise on it,
+ * so it adds nothing to the opacity score; it is listed because the code it loads is not in this file and nothing here can read it.
+ */
+export const remote = {
+  id: 'remote.loader',
+  title: 'Recognise code that is fetched at run time',
+  order: 92,
+  observeOnly: true,
+  observe(ast) {
+    const out = [];
+    walk(ast, (n) => {
+      if (n.type !== 'Call' || strip(n.fn).type !== 'Name' || !['loadstring', 'load'].includes(strip(n.fn).name) || !n.args[0] || !isFetch(n.args[0])) return;
+      let url = null;
+      walk(n.args[0], (m) => { if (!url && m.type === 'String' && /^https?:\/\//.test(m.value)) url = m.value; });
+      out.push({
+        kind: 'remote-loader',
+        line: lineOf(n),
+        label: url ? `the script loads and runs code fetched from ${url}${url.length < 60 ? '' : '…'}` : 'the script loads and runs code fetched over the network',
+        evidence: ['loadstring is given the result of a network request'],
+        confidence: 0.95,
+        weight: 0,
+        residual: 'The code this loads is fetched when the script runs; it is not in this file.',
       });
     });
     return out;

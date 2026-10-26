@@ -8,6 +8,7 @@ import { walk } from '../../core/walk.js';
 import { foldPass } from '../../passes/fold.js';
 import { simplifyPass } from '../../passes/simplify.js';
 import { dataflowPass } from '../../passes/dataflow.js';
+import { propagateStable } from '../../passes/stable.js';
 import { evaluatePass } from '../../passes/evaluate.js';
 import { unwrapLayers } from '../../passes/layers.js';
 import { unwrapWrapper, tidyIfs } from '../../passes/structure.js';
@@ -19,6 +20,20 @@ import { strip, lineOf, sizeOf } from '../util.js';
 
 // ---- loadstring layers --------------------------------------------------------------------------------------------------------
 
+const FETCH_METHODS = new Set(['HttpGet', 'HttpGetAsync', 'HttpPost', 'HttpPostAsync', 'GetAsync', 'RequestAsync']);
+const FETCH_FUNCTIONS = new Set(['request', 'http_request', 'httpget', 'HttpGet']);
+
+/** Is the expression a call that fetches something over the network (`game:HttpGet(url)`, `request({...}).Body`, `http.request(url)`)? */
+export function isFetch(e) {
+  e = strip(e);
+  if (e.type === 'Index') return isFetch(e.obj);
+  if (e.type === 'MethodCall') return FETCH_METHODS.has(e.name);
+  if (e.type !== 'Call') return false;
+  const f = strip(e.fn);
+  if (f.type === 'Name') return FETCH_FUNCTIONS.has(f.name);
+  return f.type === 'Index' && f.key.type === 'String' && FETCH_FUNCTIONS.has(f.key.value);
+}
+
 export const layers = {
   id: 'layers.unwrap',
   title: 'Open loadstring layers',
@@ -29,6 +44,7 @@ export const layers = {
       if (n.type !== 'Call' || n.fn.type !== 'Name' || (n.fn.name !== 'loadstring' && n.fn.name !== 'load')) return;
       const v = an.info.varOf.get(n.fn);
       if (!v || !v.isGlobal || v.writes.length) return;
+      if (n.args[0] && isFetch(n.args[0])) return;      // code fetched from the network is not hidden in this file: see remote.loader
       const literal = n.args[0] && strip(n.args[0]).type === 'String';
       out.push({
         kind: 'dynamic-code',
@@ -180,6 +196,7 @@ export const cleanups = [
   cleanup('cleanup.wrapper', 'Unwrap an outer wrapper function', 6, (a) => unwrapWrapper(a)),
   cleanup('cleanup.fold', 'Fold constant expressions', 10, (a, ctx) => foldPass(a, { foldCalls: ctx.options.foldCalls || 'obfuscation' })),
   cleanup('cleanup.simplify', 'Remove dead code', 60, (a, ctx) => simplifyPass(a, { unusedAtStart: ctx.rebuilt ? new WeakSet() : ctx.unusedAtStart })),
+  cleanup('cleanup.stable', 'Read copies of values that never change as the values', 61, (a) => propagateStable(a)),
   cleanup('cleanup.dataflow', 'Remove dead stores, copies and temporaries', 62, (a) => dataflowPass(a), { rebuilt: true }),
   cleanup('cleanup.idioms', 'Write loops and tests the way they are usually written', 64, (a) => {
     let changed = 0;
