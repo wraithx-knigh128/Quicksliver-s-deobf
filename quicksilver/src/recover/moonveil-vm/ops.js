@@ -8,6 +8,7 @@
 
 import { optimizeCfg, liveness } from '../cfg-opt.js';
 import { makeEval, LTable, Unknown } from './static-eval.js';
+import { walk } from '../../core/walk.js';
 
 const strip = (e) => { while (e && e.type === 'Paren') e = e.expr; return e; };
 const u32 = (x) => x >>> 0;
@@ -98,15 +99,25 @@ export function createOps(profile) {
     table_move: (src, a, b, t, dst) => { for (let k = a; k <= b; k++) dst.set(t + (k - a), src.get(k)); return [dst]; },
   };
   const HELPER = { pack: (...a) => [{ pk: a }], unpack: (p) => p.pk };
-  const writes = new Map();
-  /** does the handler for this op write into the code array? (a property of the op, not of the instruction) */
-  function writesCode(op) {
-    if (writes.has(op)) return writes.get(op);
-    let hit = false;
-    for (const b of opGraph(op).blocks.values()) for (const st of b.stmts) if (st.type === 'Assign') for (const t of st.targets) if (t.type === 'Index' && strip(t.obj).type === 'Name' && strip(t.obj).name === roles.code) hit = true;
-    writes.set(op, hit);
-    return hit;
+  const touches = new Map();
+  /** how the handler for an op uses the code array: writes into it, reads from it (properties of the op, not of the instruction) */
+  function codeUse(op) {
+    if (touches.has(op)) return touches.get(op);
+    const use = { writes: false, reads: false };
+    const isCode = (n) => n.type === 'Index' && strip(n.obj).type === 'Name' && strip(n.obj).name === roles.code;
+    const scan = (node) => walk(node, (n) => { if (isCode(n)) use.reads = true; });
+    for (const b of opGraph(op).blocks.values()) {
+      for (const st of b.stmts) {
+        if (st.type === 'Assign') for (const t of st.targets) { if (isCode(t)) use.writes = true; else scan(t); }
+        if (st.type === 'Assign') st.values.forEach(scan); else scan(st);
+      }
+      if (b.term.kind === 'branch') scan(b.term.cond);
+      else if (b.term.kind === 'return' && b.term.values) scan(b.term.values);
+    }
+    touches.set(op, use);
+    return use;
   }
+  const writesCode = (op) => codeUse(op).writes;
 
   const ev = makeEval({
     resolveIndex(e, env, k, evaluate) {
@@ -122,39 +133,49 @@ export function createOps(profile) {
 
   /** Apply the handlers that rewrite the program to a prototype, in place; returns how many ran. */
   function staticOps(proto) {
-    const code = new LTable();
+    const log = [];
+    const code = new LTable(log);
+    code.changes = new Set();
     const rows = [];
     proto.code.forEach((ins, i) => {
-      const t = new LTable();
+      const t = new LTable(log);
+      t.index = i;
       t.set(head.opField, ins.op);
       for (const [k, v] of Object.entries(ins)) if (/^\d+$/.test(k)) t.set(Number(k), v && typeof v === 'object' ? v.v : v);
       code.set(i + 1, t);
       rows.push(t);
     });
+    // a handler changes a few rows: those are found from what the tables report, not by looking at every row after every instruction
+    const settle = () => { for (const t of log) t.dirty = false; log.length = 0; code.changes.clear(); };
+    settle();
     let applied = 0;
-    const log = [];
+    const note = [];
     for (let pc = 1; pc <= proto.code.length; pc++) {
       const ins = proto.code[pc - 1];
       if (!writesCode(ins.op)) continue;
       // the handler runs against the real row and the real code array: no need to fix the instruction's fields into it first
       const og = opGraph(ins.op);
       const env = new Map([[roles.code, code], [roles.pc, pc], [roles.row, rows[pc - 1]]]);
-      for (const row of rows) row.dirty = false;
-      try { ev.exec(og.blocks, og.entry, env); } catch (e) { if (e instanceof Unknown) { log.push(`pc ${pc} op ${ins.op}: ${e.message}`); continue; } throw e; }
+      try { ev.exec(og.blocks, og.entry, env); } catch (e) { if (e instanceof Unknown) { note.push(`pc ${pc} op ${ins.op}: ${e.message}`); settle(); continue; } throw e; }
       applied++;
-      // sync back from the model
-      proto.code.forEach((x, i) => {
+      const touched = new Set();
+      for (const k of code.changes) touched.add(k - 1);
+      for (const t of log) if (t.index !== undefined) touched.add(t.index);
+      for (const i of touched) {
+        const x = proto.code[i];
+        if (!x) continue;
         const t = code.get(i + 1);
         // a row the handler replaced as a whole (an instruction that turns itself into a no-op) is a new object
-        if (t === rows[i] && !t.dirty) return;
-        rows[i] = t;
+        if (t === rows[i] && !t.dirty) continue;
+        if (t !== rows[i]) { t.index = i; t.log = log; rows[i] = t; }
         const op = t.get(head.opField);
         if (op !== x.op) { x.op = op; x.patched = true; }
         for (const k of Object.keys(x)) if (/^\d+$/.test(k)) { const v = t.get(Number(k)); const cur = x[k] && typeof x[k] === 'object' ? x[k].v : x[k]; if (v !== cur) { if (x[k] && typeof x[k] === 'object') x[k] = { ...x[k], v }; else x[k] = v; x.decrypted = true; } }
-      });
+      }
+      settle();
     }
-    return { applied, log };
+    return { applied, log: note };
   }
 
-  return { opGraph, specialise, staticOps, exitLive };
+  return { opGraph, specialise, staticOps, exitLive, codeUse };
 }

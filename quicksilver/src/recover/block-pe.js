@@ -258,11 +258,12 @@ export function prepare(blocks, options = {}) {
   const loopOf = loops(blocks);
   const widened = new Set();
   return {
-    evaluate(entry, initial) {
+    /** `wide`: the loops already given up on; the caller may keep one set for evaluations that have something in common (the default is shared by all). */
+    evaluate(entry, initial, wide = widened) {
       for (let attempt = 0; attempt < 8; attempt++) {
-        const r = run(blocks, entry, initial, { live, loopOf, widened, limit, maxBlocks, model });
+        const r = run(blocks, entry, initial, { live, loopOf, widened: wide, limit, maxBlocks, model });
         if (!r.overflow) return r;
-        widened.add(r.overflow);
+        wide.add(r.overflow);
       }
       throw new Error('partial evaluation did not settle');
     },

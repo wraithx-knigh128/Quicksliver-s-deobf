@@ -428,6 +428,7 @@ export function unflattenMoonVeil(chunk, options = {}) {
   let functions = 0;
   const notUnderstood = [];
   for (const f of funcs) {
+    if (options.skip && options.skip(f)) continue;
     const saved = f.body;
     try {
       const n = unflattenFunction(f, ctx);

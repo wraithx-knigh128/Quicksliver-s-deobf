@@ -120,6 +120,29 @@ test('no key among the candidates: nothing is returned, and the search stops whe
   assert.ok(searchStubKey(far, [{ bytes: base, mask: 1, size: 1, of: 1 }], { constants: CONSTANTS, profile, limit: 1 << 20 }));
 });
 
+test('a best guess that is wrong costs time, not the key: the other combinations are searched after it', () => {
+  const right = Uint8Array.from({ length: 32 }, (_, i) => (i * 13 + 5) & 255);
+  const wrong = Uint8Array.from({ length: 32 }, (_, i) => (i * 7 + 1) & 255);
+  const stub = makeStub(right, 700);
+  const bases = [
+    { bytes: wrong, mask: 1, size: 1, of: 2, score: 2, likely: true, best: true },
+    { bytes: right, mask: 2, size: 1, of: 2, score: 1, likely: true, best: false },
+  ];
+  const found = searchStubKey(stub, bases, { constants: CONSTANTS, profile, limit: 5000 });
+  assert.ok(found);
+  assert.equal(found.mask, 2);
+  assert.equal(found.offset, 700);
+});
+
+test('evidence about how the constants are used puts the likeliest combination first', () => {
+  const constants = ['a', 'b', 'c', 'd'].map((c) => c.repeat(32));
+  const roles = new Map([[constants[0], 'operand'], [constants[1], 'operand'], [constants[2], 'operand'], [constants[3], 'other']]);
+  const ordered = combinations(constants, 10, roles);
+  assert.equal(ordered[0].mask, 0b0111);
+  assert.equal(ordered[0].best, true);
+  assert.equal(ordered.filter((c) => c.likely).length, 5);
+});
+
 test('combinations list the ways to combine the constants, those that use most of them first', () => {
   const constants = ['a', 'b', 'c', 'd'].map((c) => c.repeat(32));
   const all = combinations(constants);
@@ -169,6 +192,17 @@ test('a MoonVeil VM program is read back from its data (runs only when a protect
     assert.ok(!/\bCHILDREN\b|\bVARARGS\b|\bPACKN\b|\bvm_[a-z0-9_]+\(/.test(r.output), `${file}: no interpreter symbol is left in the output`);
   }
   assert.ok(lifted > 0 || privateScripts.length > 0);
+});
+
+test('lifting each instruction once per kind gives the same program as lifting every one (runs only when a protected script is present)', { skip: privateScripts.length ? false : 'no private script in tests/corpus/user-local' }, () => {
+  for (const file of privateScripts) {
+    const source = fs.readFileSync(path.join(privateDir, file)).toString('latin1');
+    const fast = recover(source, { sandbox: { enabled: false } });
+    const step = fast.steps.find((s) => s.id === 'moonveil.vm');
+    if (!step || step.status !== 'applied') continue;
+    const slow = recover(source, { sandbox: { enabled: false }, reuseInstructions: false });
+    assert.equal(slow.output, fast.output, `${file}: reusing a lifted instruction changed the result`);
+  }
 });
 
 test('the same protected script is rebuilt on the stack of a page worker (runs only when a protected script is present)', { skip: privateScripts.length ? false : 'no private script in tests/corpus/user-local' }, async () => {

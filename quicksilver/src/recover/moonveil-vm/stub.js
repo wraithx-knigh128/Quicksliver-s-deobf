@@ -107,16 +107,31 @@ function plausibleStart(plain) {
 const asString = (bytes) => { let s = ''; for (let i = 0; i < bytes.length; i += 4096) s += String.fromCharCode.apply(null, bytes.subarray(i, Math.min(bytes.length, i + 4096))); return s; };
 const asBytes = (s) => { const b = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) b[i] = s.charCodeAt(i) & 255; return b; };
 
-/** Combinations of the constants: every non-empty subset XORed together, the ones that use most of the constants first. */
-export function combinations(constants, max = 10) {
+/**
+ * Combinations of the constants: every non-empty subset XORed together, the likeliest first. Without more to go on, the ones that use most of the
+ * constants are likeliest. `roles` says how the program uses a constant: one that is an argument of a call (read byte by byte and combined) is an
+ * operand; one that is only assigned to a variable (a value put in place of another when a check fails) is not, and a subset is better the more
+ * operands it has and the fewer of the others.
+ */
+export function combinations(constants, max = 10, roles = new Map()) {
   const list = constants.slice(0, max);
+  const operand = list.map((c) => roles.get(c) === 'operand');
+  const known = operand.some(Boolean);
   const out = [];
   for (let mask = 1; mask < (1 << list.length); mask++) {
     const bytes = new Uint8Array(32);
-    for (let i = 0; i < list.length; i++) if (mask & (1 << i)) for (let k = 0; k < 32; k++) bytes[k] ^= list[i].charCodeAt(k);
-    out.push({ mask, bytes, size: popcount(mask), of: list.length });
+    let score = 0;
+    for (let i = 0; i < list.length; i++) {
+      const inside = (mask & (1 << i)) !== 0;
+      if (inside) for (let k = 0; k < 32; k++) bytes[k] ^= list[i].charCodeAt(k);
+      score += known ? (inside === operand[i] ? 1 : 0) : (inside ? 1 : 0);
+    }
+    out.push({ mask, bytes, size: popcount(mask), of: list.length, score });
   }
-  return out.sort((p, q) => q.size - p.size || p.mask - q.mask);
+  out.sort((p, q) => q.score - p.score || q.size - p.size || p.mask - q.mask);
+  // the single best guess is searched on its own first; a guess backed by evidence is right far more often than not
+  out.forEach((c, i) => { c.likely = i < 5; c.best = known && i === 0; });
+  return out;
 }
 const popcount = (n) => { let c = 0; for (; n; n &= n - 1) c++; return c; };
 
@@ -141,11 +156,14 @@ export function searchStubKey(stub, bases, { constants, profile, limit = 1 << 21
   const msg = new Uint8Array(32);
   const prepared = bases.map((base) => ({ base, lo: (base.bytes[0] | (base.bytes[1] << 8) | (base.bytes[2] << 16) | (base.bytes[3] << 24)) >>> 0, rest: Array.from({ length: 8 }, (_, i) => beWord(base.bytes, i)) }));
 
-  /** the group of bases tried first (almost every constant used), then the rest */
-  const groups = [prepared.filter((x) => x.base.size >= x.base.of - 1), prepared.filter((x) => x.base.size < x.base.of - 1)].filter((g) => g.length);
+  /** the best guess alone, then the likeliest few, then the rest; each group over its own range of numbers */
+  const groups = [
+    { bases: prepared.filter((x) => x.base.best), range: Math.min(limit, 1 << 19) },
+    { bases: prepared.filter((x) => x.base.likely && !x.base.best), range: limit },
+    { bases: prepared.filter((x) => !x.base.likely), range: Math.min(limit, 1 << 18) },
+  ].filter((g) => g.bases.length);
   let total = 0;
-  for (const [gi, group] of groups.entries()) {
-    const range = gi === 0 ? limit : Math.min(limit, 1 << 18);
+  for (const [gi, { bases: group, range }] of groups.entries()) {
     for (let p = 0; p < range; p++) {
       if ((p & 0x3fff) === 0) {
         if (onProgress) onProgress(p, range, gi);

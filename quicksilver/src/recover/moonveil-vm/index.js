@@ -67,6 +67,10 @@ function replaceRoot(chunk, call, body) {
   if (!done) throw new VmUnsupported('the statement that holds the program could not be found again');
 }
 
+const sizeOf = (node) => { let n = 0; walk(node, () => { n++; }); return n; };
+const largestFunction = (map) => { let best = null; let size = 0; for (const f of map.values()) { if (!f || f.type !== 'Func') continue; const n = sizeOf(f); if (n > size) { size = n; best = f; } } return best; };
+const functionsIn = (outer) => { const out = new Set(); if (outer) walk(outer, (n) => { if (n.type === 'Func') out.add(n); }); return out; };
+
 const protosOf = (root) => { const out = []; (function w(p) { if (p.stub) return; out.push(p); p.children.forEach(w); })(root); return out; };
 const stubsOf = (root) => { const out = []; (function w(p) { if (p.stub) { out.push(p); return; } p.children.forEach(w); })(root); return out; };
 
@@ -84,11 +88,15 @@ export function liftMoonVeilVm(chunk, options = {}) {
   if (!preMap) throw new VmUnsupported('this is not a table of functions in the shape MoonVeil produces');
 
   phase('profile');
+  // a copy of the functions with their control flow rebuilt is what the layout is read from. The interpreter is the largest of them and is read
+  // from the original (as a graph), so it is left flattened in the copy: rebuilding it there would only be thrown away
   const after = clone(chunk);
-  unflattenMoonVeil(after, { gotoFallback: true });
   const postRoot = findRoot(after);
   const postMap = postRoot && nameMapAfter(preRoot, postRoot, preMap);
   if (!postMap) throw new VmUnsupported('the functions could not be matched up after their control flow was rebuilt');
+  const interpreter = largestFunction(postMap);
+  const inside = functionsIn(interpreter);
+  unflattenMoonVeil(after, { gotoFallback: true, skip: (f) => inside.has(f) });
   const profile = deriveProfile({ map: preMap }, { map: postMap });
 
   phase('data');
@@ -103,7 +111,7 @@ export function liftMoonVeilVm(chunk, options = {}) {
   const assemblerFor = (root, { onProto, onStep } = {}) => {
     const registers = protosOf(root).reduce((m, p) => Math.max(m, p.maxreg || 0), 0) + 66;
     const key = `${registers}:${onStep ? 1 : 0}`;
-    if (!lifters.has(key)) lifters.set(key, createLifter(profile, ops, { registers, onStep }));
+    if (!lifters.has(key)) lifters.set(key, createLifter(profile, ops, { registers, onStep, reuse: options.reuseInstructions !== false }));
     return createAssembler(profile, lifters.get(key), natives, { onProto });
   };
 
@@ -117,12 +125,18 @@ export function liftMoonVeilVm(chunk, options = {}) {
     // function is lifted (with its constants decrypted) and the 32-byte strings read from the result
     const outer = assemblerFor(blob.root);
     const constants = new Set();
+    const roles = new Map();
     for (const p of protosOf(blob.root)) {
       if (p.consts.filter((c) => typeof c === 'string' && c.length === 32).length < 2) continue;
       ops.staticOps(p);
-      walk(outer.liftBody(p).body, (n) => { if (n.type === 'String' && n.value.length === 32) constants.add(n.value); });
+      walk(outer.liftBody(p).body, (n, parent) => {
+        if (n.type !== 'String' || n.value.length !== 32) return;
+        constants.add(n.value);
+        if (parent && parent.type === 'Call') roles.set(n.value, 'operand');
+        else if (!roles.has(n.value)) roles.set(n.value, 'other');
+      });
     }
-    const bases = combinations([...constants]);
+    const bases = combinations([...constants], 10, roles);
     const found = bases.length ? searchStubKey(stubs[0], bases, {
       constants: profile.crypto.chachaConstants,
       profile,
@@ -132,7 +146,7 @@ export function liftMoonVeilVm(chunk, options = {}) {
     }) : null;
     if (!found) throw new VmUnsupported('the encrypted part of the program could not be opened: its key was not found among the ways the file can produce it');
     program = found.root;
-    stubInfo = { offset: found.offset, combination: found.mask, bytes: found.bytes.length };
+    stubInfo = { offset: found.offset, combination: found.mask, trials: found.trials, bytes: found.bytes.length };
   }
 
   phase('lift');

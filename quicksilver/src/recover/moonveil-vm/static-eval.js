@@ -1,7 +1,20 @@
 // A small evaluator for residual handler code: assignments, arithmetic, strings, tables, loops through block graphs, whitelisted builtins.
 // It only ever touches values handed to it (a model of the prototype's code array and its constants).
 export class Unknown extends Error {}
-export class LTable { constructor() { this.h = new Map(); this.dirty = false; } get(k) { return this.h.has(k) ? this.h.get(k) : null; } set(k, v) { this.dirty = true; if (v === null) this.h.delete(k); else this.h.set(k, v); } len() { let n = 0; while (this.h.has(n + 1)) n++; return n; } }
+/**
+ * A table of the evaluator's model. `log`, when given, is a list the table adds itself to the first time it is changed, so that a caller can find
+ * what a piece of code changed without looking at every table; `changes` (a Set) collects the keys that were set.
+ */
+export class LTable {
+  constructor(log = null) { this.h = new Map(); this.dirty = false; this.log = log; }
+  get(k) { return this.h.has(k) ? this.h.get(k) : null; }
+  set(k, v) {
+    if (!this.dirty) { this.dirty = true; if (this.log) this.log.push(this); }
+    if (this.changes) this.changes.add(k);
+    if (v === null) this.h.delete(k); else this.h.set(k, v);
+  }
+  len() { let n = 0; while (this.h.has(n + 1)) n++; return n; }
+}
 const strip = (e) => { while (e && e.type === 'Paren') e = e.expr; return e; };
 const truthy = (v) => v !== null && v !== false && v !== undefined;
 const toNum = (v) => { if (typeof v === 'number') return v; throw new Unknown('arith on ' + typeof v); };

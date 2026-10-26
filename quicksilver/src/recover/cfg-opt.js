@@ -144,19 +144,33 @@ const namesInUncached = (node) => {
   return out;
 };
 
+// Names a statement (or expression) refers to from inside nested functions, and the variables a closure is made over (`ref(r)` in the lifter's
+// output: such a variable can be changed from inside the closure at any time). Worked out once per node, like what a node reads.
+const NONE = Object.freeze([]);
+const escapesCache = new WeakMap();
+function escapesOf(node) {
+  if (!node || typeof node !== 'object') return NONE;
+  const hit = escapesCache.get(node);
+  if (hit) return hit;
+  let out = null;
+  walk(node, (n) => {
+    if (n.type === 'Func') { for (const x of namesIn(n.body)) (out || (out = [])).push(x); return false; }
+    if (n.type === 'Call' && n.fn.type === 'Name' && (n.fn.name === 'ref' || n.fn.name === 'upref')) for (const a of n.args) if (a.type === 'Name') (out || (out = [])).push(a.name);
+    return undefined;
+  });
+  const result = out || NONE;
+  escapesCache.set(node, result);
+  return result;
+}
+
 /** Names an expression or statement list refers to from inside nested functions. */
 function escapingNames(blocks) {
   const out = new Set();
-  const scan = (node) => walk(node, (n) => {
-    if (n.type === 'Func') { for (const x of namesIn(n.body)) out.add(x); return false; }
-    // a variable a closure is made over (`ref(r)` in the lifter's output) can be changed from inside it at any time
-    if (n.type === 'Call' && n.fn.type === 'Name' && (n.fn.name === 'ref' || n.fn.name === 'upref')) for (const a of n.args) if (a.type === 'Name') out.add(a.name);
-    return undefined;
-  });
+  const add = (list) => { for (let i = 0; i < list.length; i++) out.add(list[i]); };
   for (const b of blocks.values()) {
-    scan(b.stmts);
-    if (b.term.kind === 'branch') scan(b.term.cond);
-    if (b.term.kind === 'return' && b.term.values) scan(b.term.values);
+    for (const st of b.stmts) add(escapesOf(st));
+    if (b.term.kind === 'branch') add(escapesOf(b.term.cond));
+    if (b.term.kind === 'return' && b.term.values) for (const v of b.term.values) add(escapesOf(v));
   }
   return out;
 }
@@ -175,20 +189,29 @@ const hasCall = (e) => {
   return found;
 };
 
-/** Replace names that hold known literals by those literals, in reads only. */
+/** Replace names that hold known literals by those literals, in reads only. A node nothing was replaced in is returned as it is, so what is known about it stays valid. */
 function substituteReads(node, env, escaping) {
   const sub = (n, isTarget = false) => {
     if (!n || typeof n !== 'object') return n;
-    if (Array.isArray(n)) return n.map((x) => sub(x));
+    if (Array.isArray(n)) {
+      let out = null;
+      for (let i = 0; i < n.length; i++) {
+        const y = sub(n[i]);
+        if (y !== n[i] && !out) out = n.slice();
+        if (out) out[i] = y;
+      }
+      return out || n;
+    }
     if (n.type === 'Func') return n;
     if (n.type === 'Name') return !isTarget && env.has(n.name) && !escaping.has(n.name) ? lit(env.get(n.name)) : n;
-    const copy = { ...n };
-    for (const k of Object.keys(copy)) {
-      const v = copy[k];
+    let copy = null;
+    for (const k of Object.keys(n)) {
+      const v = n[k];
       if (!v || typeof v !== 'object' || k === 'line' || k === 'pos') continue;
-      copy[k] = sub(v);
+      const y = sub(v);
+      if (y !== v) { if (!copy) copy = { ...n }; copy[k] = y; }
     }
-    return copy;
+    return copy || n;
   };
   return sub(node);
 }
@@ -253,8 +276,10 @@ function fold(blocks, entry, inEnv, escaping) {
     for (const st of b.stmts) {
       let s = st;
       if (st.type === 'Assign') {
-        s = { ...st, values: st.values.map((v) => { const sv = substituteReads(v, env, escaping); const c = evalConst(sv, env); return c ? lit(c) : sv; }) };
-        s.targets = st.targets.map((t) => (t.type === 'Index' ? substituteReads(t, env, escaping) : t));
+        let same = true;
+        const values = st.values.map((v) => { const sv = substituteReads(v, env, escaping); const c = evalConst(sv, env); const r = c ? (isLit(v) && sameLit(v, c) ? v : lit(c)) : sv; if (r !== v) same = false; return r; });
+        const targets = st.targets.map((t) => { const r = t.type === 'Index' ? substituteReads(t, env, escaping) : t; if (r !== t) same = false; return r; });
+        if (!same) s = { ...st, values, targets };
       } else if (st.type === 'CallStmt') s = substituteReads(st, env, escaping);
       applyStatement(st, env, escaping);
       stmts.push(s);
@@ -366,42 +391,103 @@ function skipEmpty(blocks, entry) {
   return e;
 }
 
-const NO_NAMES = new Set();
-/** The names a statement reads. An assignment reads its values and whatever its indexed targets are made of; its plain targets are not reads. */
-function forEachUse(st, fn) {
-  if (st.type === 'Assign') {
-    for (const v of st.values) for (const n of namesIn(v)) fn(n);
-    for (const t of st.targets) if (t.type === 'Index') for (const n of namesIn(t)) fn(n);
-  } else for (const n of namesIn(st)) fn(n);
+// ---- liveness ---------------------------------------------------------------------------------------------------------------------------------
+
+// Names are interned to small numbers for the whole run, so that a set of names is a row of bits and a statement's reads and writes are worked out once.
+const INTERN = new Map();
+const INTERNED = [];
+let idsCache = new WeakMap();
+let summaries = new WeakMap();
+let exitBitsCache = new WeakMap();
+const idOf = (name) => {
+  let id = INTERN.get(name);
+  if (id === undefined) {
+    // a long-lived worker sees many scripts; start again rather than grow without end
+    if (INTERNED.length > 400000) { INTERN.clear(); INTERNED.length = 0; summaries = new WeakMap(); idsCache = new WeakMap(); exitBitsCache = new WeakMap(); }
+    id = INTERNED.length;
+    INTERN.set(name, id);
+    INTERNED.push(name);
+  }
+  return id;
+};
+const EMPTY_IDS = new Int32Array(0);
+/** The ids of the names a node reads. */
+function idsIn(node) {
+  if (!node || typeof node !== 'object') return EMPTY_IDS;
+  let hit = idsCache.get(node);
+  if (hit) return hit;
+  const names = namesIn(node);
+  hit = new Int32Array(names.size);
+  let i = 0;
+  for (const n of names) hit[i++] = idOf(n);
+  idsCache.set(node, hit);
+  return hit;
 }
-const termNames = (t, exitLive) => (t.kind === 'branch' ? namesIn(t.cond) : t.kind === 'return' && t.values ? namesIn(t.values) : t.kind === 'exit' && exitLive ? exitLive : NO_NAMES);
+/** What a statement reads and which names it assigns. An assignment reads its values and whatever its indexed targets are made of; its plain targets are not reads. */
+function summaryOf(st) {
+  let hit = summaries.get(st);
+  if (hit) return hit;
+  let uses;
+  let defs = EMPTY_IDS;
+  if (st.type === 'Assign') {
+    const parts = [];
+    for (const v of st.values) parts.push(idsIn(v));
+    const d = [];
+    for (const t of st.targets) { if (t.type === 'Index') parts.push(idsIn(t)); else if (t.type === 'Name') d.push(idOf(t.name)); }
+    uses = parts.length === 1 ? parts[0] : Int32Array.from(parts.flatMap((p) => [...p]));
+    if (d.length) defs = Int32Array.from(d);
+  } else uses = idsIn(st);
+  hit = { uses, defs };
+  summaries.set(st, hit);
+  return hit;
+}
+/** A set of names as the ids it holds, as a set of ids (to ask whether one is in it) and as a list. */
+function exitIds(exitLive) {
+  let hit = exitBitsCache.get(exitLive);
+  if (!hit) { const list = Int32Array.from([...exitLive].map(idOf)); hit = { list, set: new Set(list) }; exitBitsCache.set(exitLive, hit); }
+  return hit;
+}
+const termIds = (t, exitLive) => (t.kind === 'branch' ? idsIn(t.cond) : t.kind === 'return' && t.values ? idsIn(t.values) : t.kind === 'exit' && exitLive ? exitIds(exitLive).list : EMPTY_IDS);
 const successorsOf = (t) => (t.kind === 'goto' ? [t.to] : t.kind === 'branch' ? [t.t, t.f] : []);
 
 /**
  * Backward liveness with the names as bit positions: what each block needs from before it. A block's own effect is summarised once (what it reads
- * before writing, what it writes), then the sets are propagated from the blocks that follow until nothing changes.
+ * before writing, what it writes), then the sets are propagated from the blocks that follow until nothing changes. Only the names the graph mentions
+ * get a bit (a name no block reads or writes cannot change what is live), so the rows are as wide as the graph is, not as the whole program's names.
  */
 function solveLiveness(blocks, exitLive) {
-  const ids = new Map();
-  const idOf = (n) => { let i = ids.get(n); if (i === undefined) { i = ids.size; ids.set(n, i); } return i; };
-  const summary = new Map();
+  const sums = new Map();
+  const local = new Map();   // global id -> bit
+  const bitNames = [];
+  const bitOf = (id) => { let b = local.get(id); if (b === undefined) { b = bitNames.length; local.set(id, b); bitNames.push(id); } return b; };
   for (const [k, b] of blocks) {
-    const gen = new Set();
-    const kill = new Set();
-    for (const n of termNames(b.term, exitLive)) gen.add(idOf(n));
-    for (let i = b.stmts.length - 1; i >= 0; i--) {
-      const st = b.stmts[i];
-      if (st.type === 'Assign') for (const t of st.targets) if (t.type === 'Name') { const id = idOf(t.name); gen.delete(id); kill.add(id); }
-      forEachUse(st, (n) => gen.add(idOf(n)));
-    }
-    summary.set(k, { gen, kill });
+    const stmts = b.stmts.map(summaryOf);
+    const term = b.term.kind === 'exit' ? EMPTY_IDS : termIds(b.term, exitLive);
+    for (const { uses, defs } of stmts) { for (let i = 0; i < uses.length; i++) bitOf(uses[i]); for (let i = 0; i < defs.length; i++) bitOf(defs[i]); }
+    for (let i = 0; i < term.length; i++) bitOf(term[i]);
+    sums.set(k, { stmts, term, exit: b.term.kind === 'exit' && exitLive });
   }
-  const words = Math.max(1, (ids.size + 31) >>> 5);
-  const bits = (set) => { const out = new Uint32Array(words); for (const i of set) out[i >>> 5] |= 1 << (i & 31); return out; };
+  // what an exit needs: the names it is told are live, as far as the graph mentions them
+  let exitBits = EMPTY_IDS;
+  if (exitLive) { const wanted = exitIds(exitLive).set; const keep = []; for (const id of local.keys()) if (wanted.has(id)) keep.push(id); exitBits = Int32Array.from(keep); }
+  const words = Math.max(1, (bitNames.length + 31) >>> 5);
   const gen = new Map();
   const kill = new Map();
   const liveIn = new Map();
-  for (const [k, { gen: g, kill: x }] of summary) { gen.set(k, bits(g)); kill.set(k, bits(x)); liveIn.set(k, new Uint32Array(words)); }
+  for (const [k, { stmts, term, exit }] of sums) {
+    const g = new Uint32Array(words);
+    const x = new Uint32Array(words);
+    for (let i = 0; i < term.length; i++) { const bit = local.get(term[i]); g[bit >>> 5] |= 1 << (bit & 31); }
+    if (exit) for (let i = 0; i < exitBits.length; i++) { const bit = local.get(exitBits[i]); g[bit >>> 5] |= 1 << (bit & 31); }
+    for (let i = stmts.length - 1; i >= 0; i--) {
+      const { uses, defs } = stmts[i];
+      for (let j = 0; j < defs.length; j++) { const bit = local.get(defs[j]); g[bit >>> 5] &= ~(1 << (bit & 31)); x[bit >>> 5] |= 1 << (bit & 31); }
+      for (let j = 0; j < uses.length; j++) { const bit = local.get(uses[j]); g[bit >>> 5] |= 1 << (bit & 31); }
+    }
+    gen.set(k, g);
+    kill.set(k, x);
+    liveIn.set(k, new Uint32Array(words));
+  }
   const pred = predecessors(blocks);
   const queue = [...blocks.keys()].reverse();
   const queued = new Set(queue);
@@ -422,22 +508,21 @@ function solveLiveness(blocks, exitLive) {
     }
     if (changed) for (const q of pred.get(k)) if (!queued.has(q)) { queued.add(q); queue.push(q); }
   }
-  return { ids, words, liveIn, gen };
+  return { words, liveIn, local, bitNames, exitBits };
 }
 
-const bitHas = (bits, id) => (bits[id >>> 5] >>> (id & 31)) & 1;
-
 function eliminateDead(blocks, entry, escaping, exitLive) {
-  const { ids, words, liveIn } = solveLiveness(blocks, exitLive);
+  const { words, liveIn, local, exitBits } = solveLiveness(blocks, exitLive);
   let removed = 0;
   for (const [n, b] of blocks) {
     // what is needed after the block, then walked backwards through it
     const cur = new Uint32Array(words);
     for (const m of successorsOf(b.term)) { const li = liveIn.get(m); if (li) for (let w = 0; w < words; w++) cur[w] |= li[w]; }
-    const live = (name) => { const id = ids.get(name); return id !== undefined && bitHas(cur, id) === 1; };
-    const add = (name) => { const id = ids.get(name); if (id !== undefined) cur[id >>> 5] |= 1 << (id & 31); };
-    const drop = (name) => { const id = ids.get(name); if (id !== undefined) cur[id >>> 5] &= ~(1 << (id & 31)); };
-    for (const x of termNames(b.term, exitLive)) add(x);
+    const set = (id) => { const bit = local.get(id); if (bit !== undefined) cur[bit >>> 5] |= 1 << (bit & 31); };
+    const live = (name) => { const id = INTERN.get(name); const bit = id === undefined ? undefined : local.get(id); return bit !== undefined && ((cur[bit >>> 5] >>> (bit & 31)) & 1) === 1; };
+    const addIds = (ids) => { for (let i = 0; i < ids.length; i++) set(ids[i]); };
+    const drop = (name) => { const id = INTERN.get(name); const bit = id === undefined ? undefined : local.get(id); if (bit !== undefined) cur[bit >>> 5] &= ~(1 << (bit & 31)); };
+    if (b.term.kind === 'exit') { if (exitLive) addIds(exitBits); } else addIds(termIds(b.term, exitLive));
     const kept = [];
     for (let i = b.stmts.length - 1; i >= 0; i--) {
       const st = b.stmts[i];
@@ -464,7 +549,7 @@ function eliminateDead(blocks, entry, escaping, exitLive) {
         s = keepT.length === st.targets.length ? st : { ...st, targets: keepT, values: keepV };
         for (const t of keepT) if (t.type === 'Name') drop(t.name);
       }
-      forEachUse(s, add);
+      addIds(summaryOf(s).uses);
       kept.push(s);
     }
     b.stmts = kept.reverse();
@@ -506,14 +591,23 @@ function optimizeRounds(blocks, entry, options = {}) {
 
 /** Names live on entry to every block (for a graph whose `exit` blocks need nothing). */
 export function liveness(blocks, exitLive) {
-  const { ids, liveIn } = solveLiveness(blocks, exitLive);
-  const names = [...ids.keys()];
+  const { liveIn, bitNames, local } = solveLiveness(blocks, exitLive);
+  // names the exits need that no block mentions are never killed: they are live in every block that can reach an exit
+  const unmentioned = exitLive ? [...exitLive].filter((n) => !INTERN.has(n) || !local.has(INTERN.get(n))) : [];
+  let reachesExit = null;
+  if (unmentioned.length) {
+    const pred = predecessors(blocks);
+    reachesExit = new Set();
+    const stack = [...blocks].filter(([, b]) => b.term.kind === 'exit').map(([k]) => k);
+    while (stack.length) { const k = stack.pop(); if (reachesExit.has(k)) continue; reachesExit.add(k); for (const q of pred.get(k)) stack.push(q); }
+  }
   const out = new Map();
   for (const [k, bits] of liveIn) {
     const set = new Set();
+    if (reachesExit && reachesExit.has(k)) for (const n of unmentioned) set.add(n);
     for (let w = 0; w < bits.length; w++) {
       let x = bits[w];
-      while (x) { const low = x & -x; set.add(names[(w << 5) + (31 - Math.clz32(low))]); x ^= low; }
+      while (x) { const low = x & -x; set.add(INTERNED[bitNames[(w << 5) + (31 - Math.clz32(low))]]); x ^= low; }
     }
     out.set(k, set);
   }

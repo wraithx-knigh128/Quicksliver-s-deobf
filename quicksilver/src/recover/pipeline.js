@@ -38,6 +38,7 @@ export const DEFAULT_OPTIONS = Object.freeze({
   foldCalls: 'obfuscation',   // 'obfuscation' | 'all'
   maxRounds: 8,
   moonveilVm: true,           // read a MoonVeil VM program back out of its data (static; falls back to the general passes when the script does not fit)
+  reuseInstructions: true,    // lift an instruction once per kind and reuse it (false lifts every one: slower, same result)
   onProgress: null,           // called with { phase, done?, total? } while long steps run
   stringStyle: 'normalize',
   format: { indent: '  ', width: 100 },
@@ -209,7 +210,7 @@ export function recover(source, userOptions = {}) {
     if (options.moonveilVm && !vmTried && moonveilShape(run.ast)) {
       vmTried = true;
       const lifted = run.step('moonveil.vm', 'Read the program out of MoonVeil\u2019s VM data and rebuild it', (a) => {
-        try { return liftMoonVeilVm(a, { onProgress: options.onProgress || undefined, stubLimit: options.stubLimit }); } catch (e) { if (e instanceof VmUnsupported) return { skipped: e.message }; throw e; }
+        try { return liftMoonVeilVm(a, { onProgress: options.onProgress || undefined, stubLimit: options.stubLimit, reuseInstructions: options.reuseInstructions }); } catch (e) { if (e instanceof VmUnsupported) return { skipped: e.message }; throw e; }
       }, { quiet: true });
       if (lifted) { vmLifted = true; return total + lifted; }
     }
