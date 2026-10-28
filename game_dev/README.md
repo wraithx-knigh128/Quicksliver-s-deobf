@@ -121,9 +121,9 @@ take-over, clicks the game already consumed are ignored, and touch players teach
 
 ```lua
 -- Wraith's TSB Lab (WindUI)
-@@LAB_LOADER@@
+loadstring(game:HttpGet("https://raw.githubusercontent.com/wraithx-knigh128/Quicksliver-s-deobf/33dc2ecd9a334cba03259182b5508e9ac3d80ec0/dist/tsb_lab.min.txt"))()
 -- Animation Hub (auto block, combos, Tech Lab tab)
-@@HUB_LOADER@@
+loadstring(game:HttpGet("https://raw.githubusercontent.com/wraithx-knigh128/Quicksliver-s-deobf/33dc2ecd9a334cba03259182b5508e9ac3d80ec0/dist/tsb_hub_executor.min.txt"))()
 ```
 
 ## Tech Lab
