@@ -166,9 +166,9 @@ and mutation checks (`tools/mutate_tsb.py`: 19 deliberately broken copies of the
 Checks for the Tech Lab (from `game_dev/`): `python3 tests/run_tests.py` (maths / data / options), `LUAU=/path/to/luau python3 tests/run_tsb.py lab` (the simulated arena),
 `sh tools/gen_tsb_types.sh` (regenerates `tests/prop_types_tsb.lua` after using new Roblox members), `python3 tools/mutate_tsb.py` (mutation check), `python3 tests/check_docs.py` (every tech is in this README).
 
-Short loader (no pasting a 77 KB file):
+Short loader (no pasting a 250 KB file):
 ```lua
-loadstring(game:HttpGet("https://raw.githubusercontent.com/wraithx-knigh128/Quicksliver-s-deobf/715b666948a9aab6ab57f8b181b6dfd3cbb87b70/dist/tsb_hub_executor.min.txt"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/wraithx-knigh128/Quicksliver-s-deobf/c6a752acfdfc991426ecb786f21b8ab14ba23848/dist/tsb_hub_executor.min.txt"))()
 ```
 
 Nothing is saved automatically (that includes your own menu picture: Save config keeps it). The Config tab has Save config / Reload / Delete; the only file is `animation_hub_config.json`, loaded when
