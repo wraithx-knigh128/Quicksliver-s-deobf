@@ -1960,6 +1960,50 @@ do
     check(#rl.myWrites == 0, "M1 start: Kyoto never moves me")
 end
 
+-- 17. TECH LAB (tech_lab.lua inside the hub): the tab exists, everything starts off, only Save config remembers anything
+do
+    local tl = run({executor = "full", body = PNG, settings = {}})
+    for _, e in ipairs(tl.errors) do failures[#failures + 1] = "tech lab scenario: " .. e end
+    check(tl.textOf("^Tech Lab master switch"), "tech lab: the master switch row must exist")
+    check(tl.findButton("Panic - cancel every running tech") ~= nil, "tech lab: a Panic button must exist")
+    check(tl.textOf("^Supa Tech") and tl.textOf("^Hook Dash") and tl.textOf("^Loop Dash") and tl.textOf("^Kiba / Kitty Tech") and tl.textOf("^Auto Counter"),
+        "tech lab: every tech gets its own section")
+    local first = tl.save()
+    check(first and (first.techlab == nil or next(first.techlab.enabled or {}) == nil), "tech lab: everything starts switched off")
+    local on = tl.toggleRowHit("On"); if on then tl.tap(on) end                  -- the first section is Supa Tech
+    check(tl.textOf("changes that are NOT saved"), "tech lab: switching a tech on is an unsaved change")
+    local before = #tl.writes
+    tl.frames(5)
+    check(#tl.writes == before, "tech lab: nothing is written by itself")
+    local enc = tl.save()
+    check(enc and enc.techlab and enc.techlab.enabled and enc.techlab.enabled.supa == true, "tech lab: Save config keeps the switch")
+    local panic = tl.findButton("Panic - cancel every running tech"); if panic then tl.tap(panic) end
+    local copy = tl.findButton("Copy the Tech Lab log (for a bug report)"); if copy then tl.tap(copy) end
+
+    -- a saved config comes back (cleaned), and the techs react to keys / clicks / animations without throwing, even with dummy characters
+    local saved = {techlab = {enabled = {supa = true, hook = true, m1reset = true, noendlag = true, catch = true, counter = true, sidem1 = true, ghost = true},
+        opts = {supa = {delay = 100, radius = "junk", unknown = 1}, hook = {side = "Left"}}, master = true, input = "Remote", triggers = {supa = {"12345", "bad id"}}}}
+    local t2 = run({executor = "full", body = PNG, settings = saved})
+    for _, e in ipairs(t2.errors) do failures[#failures + 1] = "tech lab restore scenario: " .. e end
+    local enc2 = t2.save()
+    local lab = enc2 and enc2.techlab
+    check(lab and lab.enabled.supa and lab.enabled.hook and not lab.enabled.ghost, "tech lab: the saved switches come back; unknown techs are dropped")
+    check(lab and lab.opts.supa and lab.opts.supa.delay == 100 and lab.opts.supa.radius == nil and lab.opts.supa.unknown == nil, "tech lab: options are cleaned on the way in")
+    check(lab and lab.opts.hook and lab.opts.hook.side == "Left", "tech lab: a choice comes back")
+    check(lab and lab.input == "Remote" and lab.triggers and lab.triggers.supa and #lab.triggers.supa == 1 and lab.triggers.supa[1] == "12345", "tech lab: input mode and valid learned triggers come back, bad ids do not")
+    local K = t2.env.Enum.KeyCode
+    for _, key in ipairs({K.V, K.C, K.R, K.Q, K.T}) do t2.fireKey(key) end
+    t2.fireInput(t2.env.Enum.UserInputType.MouseButton1)
+    t2.fireInput(t2.env.Enum.UserInputType.Touch)
+    t2.playAnimation("rbxassetid://10503381238", false)
+    t2.playAnimation("rbxassetid://10479335397", false)
+    t2.frames(2)
+    for _, e in ipairs(t2.errors) do failures[#failures + 1] = "tech lab input scenario: " .. e end
+    pcall(t2.genv.__AnimationHubCleanup)                                           -- closing the hub removes the Tech Lab too
+    t2.fireKey(K.V); t2.playAnimation("rbxassetid://10503381238", false); t2.frames(1)
+    for _, e in ipairs(t2.errors) do failures[#failures + 1] = "tech lab after cleanup: " .. e end
+end
+
 do   -- anything that went wrong at any time in any scenario (taps, frames, drags, ...) fails the run
     local seen = {}
     for _, list in ipairs(ALL_ERRORS) do
@@ -1974,4 +2018,4 @@ if #failures > 0 then
     finish(1)
     return
 end
-print("smoke test passed (33 scenarios)")
+print("smoke test passed (34 scenarios)")

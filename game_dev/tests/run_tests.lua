@@ -25,6 +25,9 @@ local BP = ex:require("block_predict.lua")
 local BI = ex:require("block_info.lua")
 local KP = ex:require("kyoto_plan.lua")
 local BSense = ex:require("block_sense.lua")
+local TM = ex:require("tech_math.lua")
+local TD = ex:require("tech_data.lua")
+local TO = ex:require("tech_options.lua")
 Engine.loadData(Data)
 
 local function feedAll(p, tokens, t0, dt)
@@ -831,6 +834,181 @@ test("assist: start with M1 - what you do yourself and what the script plays", f
     eq(Assist.m1Ready(0, 0, 1, 3, 0.35), false); eq(Assist.m1Ready(1, 10, 10.2, 3, 0.35), false, "still within the settle time")
     eq(Assist.m1Ready(1, 10, 10.35, 3, 0.35), true, "you stopped M1ing"); eq(Assist.m1Ready(3, 10, 10.0, 3, 0.35), true, "cap reached: go at once")
     eq(Assist.m1Ready(2, 10, 10.1, 2, 0.35), true); eq(Assist.m1Ready(nil, 1, 2, 3, 0.35), false); eq(Assist.m1Ready(1, "x", 2, 3, 0.35), false)
+end)
+
+local function near(a, b, eps, msg) if math.abs(a - b) > (eps or 1e-6) then error((msg or "") .. " expected " .. tostring(b) .. " got " .. tostring(a), 2) end end
+
+test("tech math: nearest respects the radius, ignores junk and returns the distance", function()
+    local list = {{x = 10, y = 0, z = 0}, {x = 3, y = 0, z = 4}, {x = 0, y = 0, z = 50}, "junk", {x = "a", y = 0, z = 0}}
+    local best, d = TM.nearest({x = 0, y = 0, z = 0}, list, 20)
+    eq(best, list[2]); near(d, 5)
+    eq(TM.nearest({x = 0, y = 0, z = 0}, list, 2), nil); eq(TM.nearest(nil, list), nil); eq(TM.nearest({x = 0, y = 0, z = 0}, nil), nil)
+end)
+
+test("tech math: hook dash passes the target on the chosen side and overshoots by reach", function()
+    local me, tgt = {x = 0, y = 5, z = 0}, {x = 0, y = 3, z = -20}           -- I look down -Z at a target 20 studs ahead: right is +X
+    local r = TM.hookPoint(me, tgt, {x = 0, y = 0, z = 0}, {x = 0, y = 0, z = 1}, {range = 2, prediction = 0, reach = 6.5, side = "Right"})
+    eq(r.side, "Right"); assert(r.point.x > 2 and r.point.z < -20, "past the target, on the right"); eq(r.point.y, 5, "stays at my height")
+    near(r.pass.x, 2, 1e-6); near(r.pass.z, -20, 1e-6)
+    local l = TM.hookPoint(me, tgt, {x = 0, y = 0, z = 0}, {x = 0, y = 0, z = 1}, {range = 2, prediction = 0, reach = 6.5, side = "Left"})
+    eq(l.side, "Left"); assert(l.point.x < -2, "past the target, on the left")
+    near(l.point.x, -r.point.x, 1e-6, "mirror images")
+end)
+
+test("tech math: hook dash 'Behind' picks the side that ends up behind them, prediction leads a runner", function()
+    local me, tgt = {x = 0, y = 0, z = 0}, {x = 0, y = 0, z = -20}
+    -- he looks to the right (+X): his back is to the left
+    local r = TM.hookPoint(me, tgt, {x = 0, y = 0, z = 0}, {x = 1, y = 0, z = 0}, {range = 3, prediction = 0, reach = 5, side = "Behind"})
+    eq(r.side, "Left", "his back is on the left")
+    local r2 = TM.hookPoint(me, tgt, {x = 0, y = 0, z = 0}, {x = -1, y = 0, z = 0}, {range = 3, prediction = 0, reach = 5, side = "Behind"})
+    eq(r2.side, "Right", "he looks left: his back is on the right")
+    -- facing me or away (no side preference): the closer end wins, and a runner is led
+    local run = TM.hookPoint(me, tgt, {x = 10, y = 0, z = 0}, {x = 0, y = 0, z = 1}, {range = 2, prediction = 0.5, reach = 0, side = "Closest"})
+    near(run.pass.x - 2 == 5 and 0 or run.pass.x, run.pass.x, 1e-6)
+    assert(run.pass.x > 3 and run.pass.x < 8, "led by 10 studs/s * 0.5 s: " .. run.pass.x)
+    -- me on top of the target: no NaN
+    local top = TM.hookPoint({x = 1, y = 0, z = 1}, {x = 1, y = 0, z = 1}, nil, nil, {})
+    assert(top.point.x == top.point.x and top.point.z == top.point.z, "no NaN when standing on the target")
+end)
+
+test("tech math: hookPoint with a frozen direction does not swing round while I pass the target", function()
+    local tgt, vel, look = {x = 6, y = 3, z = -20}, {x = 0, y = 0, z = 0}, {x = 0, y = 0, z = 1}
+    local start = {x = 0, y = 3, z = 0}
+    local first = TM.hookPoint(start, tgt, vel, look, {range = 2, reach = 6.5, side = "Right"})
+    local frozen = TM.hookPoint({x = 7.7, y = 3, z = -19.5}, tgt, vel, look, {range = 2, reach = 6.5, side = "Right", dir = first.dir})
+    near(frozen.point.x, first.point.x, 0.8, "from beside the target the end point is where it was (the leg is only slightly re-aimed)")
+    assert(frozen.point.z < tgt.z - 5, "and still beyond the target")
+    local still = TM.hookPoint(start, tgt, vel, look, {range = 2, reach = 6.5, side = "Right", dir = first.dir})
+    local moved = TM.hookPoint(start, {x = 6, y = 3, z = -30}, vel, look, {range = 2, reach = 6.5, side = "Right", dir = first.dir})
+    near(moved.point.z, still.point.z - 10, 1e-9, "the point follows the target")
+    near(moved.point.x, still.point.x, 1e-9, "and keeps the same sideways offset")
+    near(TM.len(TM.flat(first.dir)), 1, 1e-9, "dir is a unit vector")
+end)
+
+test("tech math: steer covers the way in the duration and is capped", function()
+    local v = TM.steer({x = 0, y = 5, z = 0}, {x = 10, y = 99, z = 0}, 0.5, 300)
+    near(v.x, 20); near(v.y, 0, 1e-9, "flat"); near(v.z, 0)
+    local capped = TM.steer({x = 0, y = 0, z = 0}, {x = 300, y = 0, z = 400}, 0.1, 100)
+    near(TM.len(capped), 100, 1e-6); near(capped.x / capped.z, 0.75, 1e-6, "direction kept")
+    near(TM.len(TM.steer({x = 0, y = 0, z = 0}, {x = 1, y = 0, z = 0}, 0, 50)), 50, 1e-6, "zero duration is clamped, not infinite")
+end)
+
+test("tech math: supa lands under them looking at them (lock 100), then behind them", function()
+    local me, tgt = {x = 0, y = 3, z = 0}, {x = 0, y = 3, z = -20}
+    local s = TM.supaPoints(me, tgt, {under = 3, behind = true, behindOffset = 5, lock = 100, jitter = 6, random = function() return 0.9 end})
+    near(s.under.y, 0); near(s.under.x, 0); near(s.under.z, -20)
+    near(s.look.x, tgt.x, 1e-9); near(s.look.z, tgt.z, 1e-9)
+    near(s.behind.z, -25, 1e-6, "no look vector: 5 studs on the far side of him, as seen from where I came")
+    eq(s.behind.y, 3)
+    local facingMe = TM.supaPoints(me, tgt, {behind = true, behindOffset = 5, targetLook = {x = 0, y = 0, z = 1}})
+    near(facingMe.behind.z, -25, 1e-6, "he faces me (+Z): his back is further away")
+    local facingAway = TM.supaPoints(me, tgt, {behind = true, behindOffset = 5, targetLook = {x = 0, y = 0, z = -1}})
+    near(facingAway.behind.z, -15, 1e-6, "he faces away: his back is towards me")
+    local sideways = TM.supaPoints(me, tgt, {behind = true, behindOffset = 4, targetLook = {x = 1, y = 0.5, z = 0}})
+    near(sideways.behind.x, -4, 1e-6, "the look vector is flattened: behind a man looking +X is -X")
+    local loose = TM.supaPoints(me, tgt, {lock = 0, jitter = 6, behind = false, random = function() return 0.9 end})
+    eq(loose.behind, nil)
+    near(TM.dist(loose.look, tgt), 6, 1e-6, "lock 0 looks at a point `jitter` studs from them")
+end)
+
+test("tech math: orbit pose goes once round the centre at about the radius, and the look point is the next step", function()
+    local c = {x = 10, y = 0, z = 5}
+    local minR, maxR = 1e9, 0
+    local first = TM.orbitPose(c, 0, 0, {radius = 6, height = 4})
+    local halfway = TM.orbitPose(c, 0, 0.5, {radius = 6, height = 4})
+    assert(halfway.x < c.x and first.x > c.x, "half way round is on the opposite side")
+    for i = 0, 100 do
+        local p = TM.orbitPose(c, 0, i / 100, {radius = 6, height = 4, steps = 100})
+        local r = math.sqrt((p.x - c.x) ^ 2 + (p.z - c.z) ^ 2)
+        minR, maxR = math.min(minR, r), math.max(maxR, r)
+        eq(p.y, 4)
+    end
+    assert(minR > 5.4 and maxR < 6.6, "stays near the radius: " .. minR .. ".." .. maxR)
+    local p, nxt = TM.orbitPose(c, 0, 0.25, {radius = 6, steps = 100, height = 4})
+    assert(TM.dist(p, nxt) > 0.05 and TM.dist(p, nxt) < 1.5, "the look point is a little further round")
+end)
+
+test("tech math: height above the ground is capped and never zero", function()
+    eq(TM.heightAbove(0, 4, 10), 4); eq(TM.heightAbove(0, 30, 10), 10); eq(TM.heightAbove(0, 0.2, 10), 2); eq(TM.heightAbove(5, 3, 10), 2)
+end)
+
+test("tech math: smooth alpha follows the slider, 1000 = instant, bad input is safe", function()
+    eq(TM.smoothAlpha(1000, 1 / 60), 1); eq(TM.smoothAlpha(5000, 1 / 60), 1)
+    assert(TM.smoothAlpha(100, 1 / 60) < TM.smoothAlpha(600, 1 / 60), "a bigger slider follows faster")
+    near(TM.smoothAlpha(300, 1 / 60), 1 - math.exp(-0.02 * 300 / 60), 1e-9)
+    assert(TM.smoothAlpha("x", 1 / 60) > 0 and TM.smoothAlpha(-5, 1 / 60) > 0, "garbage falls back to a default / the minimum")
+end)
+
+test("tech math: yaw and the short way round", function()
+    near(TM.yawTo({x = 0, y = 0, z = 0}, {x = 0, y = 0, z = -5}), 0); near(TM.yawTo({x = 0, y = 0, z = 0}, {x = -5, y = 0, z = 0}), math.pi / 2)
+    near(TM.yawTo({x = 0, y = 0, z = 0}, {x = 5, y = 0, z = 0}), -math.pi / 2); eq(TM.yawTo({x = 1, y = 0, z = 1}, {x = 1, y = 9, z = 1}), nil)
+    near(TM.lerpAngle(3.0, -3.0, 0.5), 3.0 + ((-3.0 - 3.0 + math.pi) % (2 * math.pi) - math.pi) * 0.5, 1e-9)
+    assert(math.abs(TM.lerpAngle(3.0, -3.0, 0.5)) > 3, "goes through pi, not through 0")
+    near(TM.lerpAngle(0, 1, 0), 0); near(TM.lerpAngle(0, 1, 1), 1); near(TM.lerpAngle(0, 1, 5), 1, 1e-9, "t is clamped")
+end)
+
+test("tech math: the front box catches what is ahead, within range, width and height", function()
+    local me, look = {x = 0, y = 0, z = 0}, {x = 0, y = 0, z = -1}
+    local box = {range = 13, halfWidth = 2, halfHeight = 2}
+    eq(TM.inFrontBox(me, look, {x = 0, y = 0, z = -10}, nil, box), true)
+    eq(TM.inFrontBox(me, look, {x = 0, y = 0, z = -14}, nil, box), false, "too far")
+    eq(TM.inFrontBox(me, look, {x = 3, y = 0, z = -5}, nil, box), false, "too wide")
+    eq(TM.inFrontBox(me, look, {x = 0, y = 0, z = 5}, nil, box), false, "behind me")
+    eq(TM.inFrontBox(me, look, {x = 0, y = 5, z = -5}, nil, box), false, "too high")
+    eq(TM.inFrontBox(me, look, {x = 3.5, y = 0, z = -5}, {x = -4, y = 0, z = 0}, {range = 13, halfWidth = 2, halfHeight = 2, lead = 0.5}), true, "led towards the middle")
+    eq(TM.inFrontBox(me, look, nil, nil, box), false); eq(TM.inFrontBox({x = 0, y = 0, z = 0}, {x = 0, y = 0, z = 0}, {x = 0, y = 0, z = -5}, nil, box), true, "a zero look vector falls back to -Z")
+end)
+
+test("tech math: flip angle, ping wait, dash clock", function()
+    near(TM.flipAngle(50, true), math.rad(45)); near(TM.flipAngle(50, false), -math.rad(45)); near(TM.flipAngle(500, true), math.rad(90)); near(TM.flipAngle(-3, true), 0)
+    near(TM.pingWait(60), 0.078, 1e-9); near(TM.pingWait(1000), 0.22, 1e-9, "capped"); near(TM.pingWait(10), 0.03, 1e-9, "floor"); near(TM.pingWait(nil), 0.078, 1e-9)
+    local c = TM.dashClock({forward = 4.8, side = 2})
+    eq(c:ready("forward", 10), true); c:seen("forward", 10)
+    near(c:left("forward", 12), 2.8, 1e-9); eq(c:ready("forward", 12), false); eq(c:ready("side", 12), true, "the side dash has its own clock")
+    eq(c:ready("forward", 14.8), true); c:seen("bogus", 1); eq(c:left("bogus", 1), 0); c:reset(); eq(c:ready("forward", 11), true)
+end)
+
+test("tech data: ids, dash kinds, remote arguments and tool names", function()
+    eq(TD.idOf("rbxassetid://10503381238"), "10503381238"); eq(TD.idOf("http://www.roblox.com/asset/?id=77"), "77"); eq(TD.idOf(5), nil); eq(TD.idOf("none"), nil)
+    local up = TD.set(TD.ANIM.uppercut)
+    eq(up["10503381238"], true); eq(up["13379003796"], true); eq(up["1"], nil)
+    eq(TD.dashKind("10479335397"), "forward"); eq(TD.dashKind("10480793962"), "side"); eq(TD.dashKind("10480796021"), "side"); eq(TD.dashKind("1"), nil)
+    local K = setmetatable({}, {__index = function(_, k) return "KeyCode." .. k end})
+    local d = TD.dashArgs(K, "W")
+    eq(d.Dash, "KeyCode.W"); eq(d.Key, "KeyCode.Q"); eq(d.Goal, "KeyPress")
+    eq(TD.clickArgs(true).Goal, "LeftClick"); eq(TD.clickArgs(false).Goal, "LeftClickRelease"); eq(TD.clickArgs(true).Mobile, true)
+    eq(TD.blockArgs(K, true).Goal, "KeyPress"); eq(TD.blockArgs(K, false).Goal, "KeyRelease"); eq(TD.blockArgs(K, true).Key, "KeyCode.F")
+    local tool = {}
+    eq(TD.moveArgs(tool).Tool, tool); eq(TD.moveArgs(tool).Goal, "Console Move")
+    eq(TD.toolMatches("Prey's Peril", "PREYS PERIL"), true); eq(TD.toolMatches("Prey's Peril", "Split Second Counter"), false); eq(TD.toolMatches("", ""), false)
+    local seen = {}
+    for name, list in pairs(TD.ANIM) do
+        for _, id in ipairs(list) do assert(id:match("^%d+$"), name .. " has a non-numeric id: " .. tostring(id)) end
+        seen[name] = #list
+    end
+    assert(seen.m1 == 35 and seen.slam == 9 and seen.counterM1 == 4, "the id lists have the sizes of the original script")
+end)
+
+test("tech options: defaults, clean clamps / snaps / checks types, diff keeps the config small", function()
+    local defs = {
+        {key = "delay", kind = "number", min = 0, max = 500, step = 5, default = 250},
+        {key = "speed", kind = "number", min = 0.5, max = 2.5, step = 0.1, default = 1},
+        {key = "behind", kind = "bool", default = true},
+        {key = "side", kind = "choice", choices = {"Closest", "Left", "Right"}, default = "Closest"},
+        {key = "move", kind = "string", default = ""},
+    }
+    local d = TO.defaults(defs)
+    eq(d.delay, 250); eq(d.behind, true); eq(d.side, "Closest"); eq(d.move, "")
+    local c = TO.clean(defs, {delay = 9999, speed = 1.234, behind = "yes", side = "Up", move = "Prey's Peril", extra = 1})
+    eq(c.delay, 500, "clamped"); near(c.speed, 1.2, 1e-9); eq(c.behind, true, "not a bool: the default"); eq(c.side, "Closest"); eq(c.move, "Prey's Peril"); eq(c.extra, nil)
+    local n = TO.clean(defs, {delay = 0 / 0, speed = "fast", behind = false, side = "Left", move = string.rep("x", 80)})
+    eq(n.delay, 250); eq(n.speed, 1); eq(n.behind, false); eq(n.side, "Left"); eq(n.move, "")
+    local k = TO.clean(defs, {delay = 123})
+    eq(k.delay, 125, "snapped to the step")
+    eq(TO.isDefault(defs, d), true); eq(TO.isDefault(defs, {delay = 100}), false); eq(TO.isDefault(defs, nil), true)
+    local diff = TO.diff(defs, {delay = 100, speed = 1, behind = true})
+    eq(diff.delay, 100); eq(diff.speed, nil); eq(diff.behind, nil)
+    eq(next(TO.clean(nil, {a = 1})), nil)
 end)
 
 test("sandboxed script runs, records key events and virtual time", function()

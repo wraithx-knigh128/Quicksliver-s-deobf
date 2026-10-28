@@ -112,6 +112,60 @@ tech's own M1 count - the script plays the rest, casting the tech's first move i
 take-over, clicks the game already consumed are ignored, and touch players teach their M1 animations once with *Teach my M1*. Switch it off to go back to
 "cast the first move yourself". Options: wait after your last M1 (0.15-0.8 s), most M1s to wait for (1-4); saved with *Save config*.
 
+## Tech Lab (new tab in the Animation Hub)
+
+The Tech Lab is a rewrite of the techs in **your own Dovi's Hub script** (the file you uploaded), not a copy of it. That script had the same skeleton pasted again and again
+(see an animation, wait, do something, hope nothing is left behind). Here the skeleton exists once (`tech_lab.lua`) and every tech is only its sequence:
+
+```
+trigger  ->  checks (master switch, enabled, cooldown, dash ready, a macro playing, another moving tech running)  ->  sequence(ctx)  ->  cleanup, whatever happened
+```
+
+What that engine gives every tech (the original had none of it):
+
+- **Cancellable waits**: every wait stops the moment you die, respawn, switch the tech off, press **Panic**, or the master switch goes off. Nothing waits on `Tween.Completed` (a cancelled tween never completes).
+- **Guaranteed cleanup**: every constraint / body mover / attachment / highlight / camera hold a tech creates is removed when it ends - also when it errors half way (a test makes a tech throw and checks nothing is left on your character).
+  `AutoRotate` is always given back.
+- **Dash cooldown awareness**: a tech that starts with a forward / side dash does not start while that dash is on cooldown (the Tech Lab tab shows both cooldowns). Switch it off with *Wait for the dash cooldown*.
+- **One moving tech at a time**: two techs that move your character would fight over the root part, so a second one is skipped and the status says who is running.
+- **Remote first, keys as the fallback**: dashes / M1 / moves go through the game's `Communicate` remote like in your script; *Inputs* = Auto (remote, keys when it is missing) / Remote / Keys.
+- **Camera aim that survives Roblox's camera script** (held with a render step after it), body turns smoothed by a yaw filter instead of snapping, hook dash steered with a fixed line of approach (re-deriving it every frame swung round the target).
+- **Learn trigger**: the animation ids are the ones from your script and TSB is patched often. If a tech stops reacting, press *Learn trigger* inside it and play the move once - the id is remembered (with *Save config*).
+- Per-tech **status line**, run / abort / error counters, *Copy the Tech Lab log* for a bug report, options clamped to their range, **nothing saved unless you press Save config**.
+
+| Tech | Starts | What it does |
+|---|---|---|
+| Supa Tech | after your uppercut | Dash in on them: after your uppercut it dashes, snaps under them, finishes behind their back and dashes again. |
+| Hook Dash | V = pick a target, C = go (phone: double tap them, then *Run now*) | A side dash that passes the target on its side and overshoots, then throws an M1 and holds your camera on them. |
+| Loop Dash | after your uppercut | A loop round the target while dashing, then you settle above them. |
+| Loop Dash 2 | after your uppercut | Jump, dash, then lock your body on the target (also for oreo tech). Pauses while someone is blocking. |
+| Lethal Dash | after Lethal Whirlwind Stream | Jump, dash and lock on to the target once the move is over. |
+| Kiba / Kitty Tech | after your uppercut | Dash and hang on the target head-down (Kiba), or circle them (Kitty Tech, idea by ItzSoph). |
+| Twisted | after the M1 string's last move | A small step back, then a dash at them ("Instant" also turns you to face them). |
+| Auto Kyoto | after Flowing Water | Casts Lethal Whirlwind Stream for you, then hops sideways (hotbar 1 / 2 around the hop). |
+| Lethal Dunk | after Lethal Whirlwind Stream | Lifts you above them a moment later. |
+| Auto Hunter Surf | when the surf starts | Carries you forward on the surf. |
+| Auto Counter | when somebody dashes / M1s at you | Casts Prey's Peril / Split Second Counter when a close player who faces you starts a dash or an M1. |
+| Dash Flip | after your forward dash | Pitches you while you dash. |
+| M1 Catch | while somebody is in front of you | Holds M1 for you when somebody steps into the box in front of you. |
+| Mouse Dash | after your forward dash | Turns you toward your cursor for a moment so the dash goes where you point. |
+| Side M1 (hitbox abuse) | when you click | Swings your body to the side for a moment when you M1, then back (PC). |
+| No End Lag | Q right after a side dash | The forward dash goes out at once. |
+| M1 Slide | after a side dash | Throws an M1 for you right after every side dash. |
+| True Down Slam | when your down slam starts | Lifts you when your down slam starts with somebody close. |
+| M1 Reset | key (R) / button | Side step, turn and dash - resets your M1 chain. |
+| Emote Dash | key (T) / button | Turns and throws you sideways in an arc. |
+
+Auto block stays the hub's own (Auto Tech tab): it learns timing and predicts rushes, which your script's version did not. Credits: Kitty Tech idea by ItzSoph (credited in your script too).
+
+**Honest status:** none of this has been run in Strongest Battlegrounds. The animation ids, move names and the `Communicate` remote layout come from reading your script, and TSB changes often.
+What *is* tested: the pure maths (`tech_math.lua`, 13 unit tests), the option sanitising, and the whole engine in a simulated arena (`tests/tsb_sim.lua` - characters in `Workspace.Live`, a dummy, the remote,
+animation events, velocity constraints, strict Roblox member checking from the API dump): every tech's sequence, cancel / death / respawn / panic, cleanup, cooldowns, config round trips,
+and mutation checks (`tools/mutate_tsb.py`: 19 deliberately broken copies of the engine; 18 are caught, the 19th is a second safety net that behaves the same as an earlier one). A passing test means "the code does what it says in a world like the one your script describes".
+
+Checks for the Tech Lab (from `game_dev/`): `python3 tests/run_tests.py` (maths / data / options), `LUAU=/path/to/luau python3 tests/run_tsb.py lab` (the simulated arena),
+`sh tools/gen_tsb_types.sh` (regenerates `tests/prop_types_tsb.lua` after using new Roblox members), `python3 tools/mutate_tsb.py` (mutation check), `python3 tests/check_docs.py` (every tech is in this README).
+
 Short loader (no pasting a 77 KB file):
 ```lua
 loadstring(game:HttpGet("https://raw.githubusercontent.com/wraithx-knigh128/Quicksliver-s-deobf/715b666948a9aab6ab57f8b181b6dfd3cbb87b70/dist/tsb_hub_executor.min.txt"))()

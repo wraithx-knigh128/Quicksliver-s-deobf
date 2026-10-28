@@ -917,7 +917,7 @@ local function __run()
         end
 
         -- collapsible section with cards (like the reference UI)
-        function tab:Section(title)
+        function tab:Section(title, collapsed)
             local holder = new("Frame", {
                 Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y,
                 BackgroundTransparency = 1, Parent = page,
@@ -938,20 +938,21 @@ local function __run()
             local arrow = new("TextLabel", {
                 Text = "v", Font = Enum.Font.GothamBold, TextSize = 14, TextColor3 = Theme.Accent,
                 BackgroundTransparency = 1, Position = UDim2.new(1, -30, 0, 0), Size = UDim2.fromOffset(24, 30),
-                Rotation = 180, Parent = head,
+                Rotation = collapsed and 0 or 180, Parent = head,
             })
             local body = new("Frame", {
                 Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y,
                 BackgroundTransparency = 1, LayoutOrder = 1, Parent = holder,
             }, {new("UIListLayout", {Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder})})
-            local open = true
+            local open = not collapsed
+            body.Visible = open
             head.MouseButton1Click:Connect(function()
                 open = not open
                 body.Visible = open
                 tween(arrow, {Rotation = open and 180 or 0}, 0.25, Enum.EasingStyle.Back)
             end)
 
-            local sec = {}
+            local sec = {Body = body}
             -- cb = what "Run" does. extra (optional) = {
             --   conf = "high|medium|low|custom",
             --   options = function(drawer) ... end                  fills an options drawer that opens with "Opt"
@@ -1324,6 +1325,7 @@ local function __run()
         dirty = true
         refreshConfigStatus()
     end
+    local techLab                                     -- the Tech Lab engine (tech_lab.lua), when it was bundled in
     -- everything the hub remembers, as plain data (used by Save config and by the menu rebuild)
     local function buildSnapshot()
         local combos = {}
@@ -1353,6 +1355,7 @@ local function __run()
             behind = {count = Behind.count, gap = Behind.gap, settle = Behind.settle, m1 = Behind.m1},
             kyoto = {m1 = Kyoto.m1, wait = Kyoto.wait, whirl = Kyoto.whirl, twisted = Kyoto.twisted, side = Kyoto.side},
             picture = Picture.source,
+            techlab = techLab and techLab:export() or nil,
             start = {m1 = Start.m1, settle = Start.settle, most = Start.most, anims = Start.anims},
             sideAuto = {dir = SideAuto.dir, delay = SideAuto.delay, cooldown = SideAuto.cooldown, anims = SideAuto.anims}}
     end
@@ -2460,13 +2463,14 @@ local function __run()
     sideHeader("TOOLS")
     local Timing_ = createTab("Timing", "T")
     local TechLib = Data and createTab("Techs", "?")
+    local LabTab = (TechLab and TechMath and TechData and TechOptions) and createTab("Tech Lab", "L")
     local Tech   = createTab("Auto Tech", "*")
     local Tele   = createTab("Teleports", "@")
     local Effects = createTab("Effects Preset", "~")
     local ConfigTab = createTab("Config", "=")
 
     -- Main
-    Main_:Banner("Animation Hub", "Auto block  |  Garou Kyoto assist  |  Dash behind the closest player  |  your own picture (Effects tab)", "TSB")
+    Main_:Banner("Animation Hub", "Auto block  |  Tech Lab (Supa, Hook, Loop, Kiba ...)  |  Garou Kyoto assist  |  Dash behind the closest player  |  your own picture (Effects tab)", "TSB")
     -- how techs start (applies to every tech, combo card and tech switch)
     Main_:Toggle("Start techs with my M1 (off = start them by casting their first move)", Start.m1, function(v)
         if Start.m1 ~= v then Start.m1 = v; markDirty() end
@@ -2782,6 +2786,114 @@ local function __run()
         end
     end
 
+    -- Tech Lab (game_dev/tech_lab.lua): dash techs, combos, defence and helpers, each a small sequence on one engine. The tab is generated from the tech
+    -- definitions, so a new tech needs no UI code. Everything starts OFF; options and switches are only remembered by Save config.
+    if LabTab then
+    do
+        local statusLabels, techLogs = {}, {}
+        local function statusText(tech) return "Starts: " .. tech.when .. "   |   " .. tech.status end
+        local lab = TechLab.new({
+            Players = Players, RunService = RunService, UserInputService = UserInputService, Workspace = workspace, LocalPlayer = LocalPlayer, VirtualInput = VirtualInput,
+            TechMath = TechMath, TechData = TechData, TechOptions = TechOptions,
+            connect = connect, safe = safe, clock = os.clock,
+            pingMs = function() return currentPing() end,
+            busy = function() return macroRunning end,
+            log = function(msg)                                   -- errors inside a tech: kept for "Copy the log", never thrown at the game
+                techLogs[#techLogs + 1] = string.format("%.1f  %s", os.clock(), tostring(msg))
+                if #techLogs > 40 then table.remove(techLogs, 1) end
+            end,
+            toast = function(msg) toast(msg) end,
+            onStatus = function(tech) local l = statusLabels[tech.id]; if l then l.Text = statusText(tech) end end,
+        })
+        techLab = lab
+        if type(Saved.techlab) == "table" then lab:import(Saved.techlab) end
+        onCleanup[#onCleanup + 1] = function() lab:destroy() end
+
+        LabTab:Label("The techs from your own script, rebuilt as small sequences on one engine (cancellable, with cleanup, dash-cooldown aware). Everything is OFF until you switch it on, and nothing is remembered unless you press Save config. They were written from your script and tested only in a simulated arena, never in the real game: if a tech does not react, its trigger animation id has probably changed - use Learn trigger inside the tech.")
+        LabTab:Toggle("Tech Lab master switch", lab.master, function(on)
+            if lab.master ~= on then lab:setMaster(on); markDirty() end
+        end, nil, "Off = every tech stops and ignores its trigger")
+        LabTab:Dropdown("Inputs", {"Auto", "Remote", "Keys"}, lab.input, function(v)
+            if lab.input ~= v then lab:setInput(v); markDirty() end
+        end)
+        LabTab:Toggle("Wait for the dash cooldown", lab.dashGuard, function(on)
+            if lab.dashGuard ~= on then lab.dashGuard = on; markDirty() end
+        end, nil, "A tech that starts with a dash does not start while that dash is on cooldown")
+        LabTab:Toggle("Let go of block before an M1", lab.releaseBlock, function(on)
+            if lab.releaseBlock ~= on then lab.releaseBlock = on; markDirty() end
+        end)
+        local cooldownLabel = LabTab:Label("")
+        LabTab:Button("Panic - cancel every running tech", function()
+            lab:cancelAll("cancelled: panic")
+            toast("Tech Lab: everything cancelled")
+        end)
+        LabTab:Button("Copy the Tech Lab log (for a bug report)", function()
+            local text = #techLogs > 0 and table.concat(techLogs, "\n") or "no errors logged"
+            if setclipboard and pcall(setclipboard, text) then toast("Log copied") else toast(#techLogs > 0 and ("Last error: " .. techLogs[#techLogs]:sub(1, 120)) or "No errors logged") end
+        end)
+        do   -- the two dash cooldowns, a few times a second
+            local last, acc = "", 0
+            connect(RunService.Heartbeat, function(dt)
+                acc = acc + dt
+                if acc < 0.25 then return end
+                acc = 0
+                local f, sd = lab:dashLeft("forward"), lab:dashLeft("side")
+                local text = string.format("Forward dash: %s   |   Side dash: %s", f > 0 and string.format("%.1f s", f) or "ready", sd > 0 and string.format("%.1f s", sd) or "ready")
+                if text ~= last then last = text; cooldownLabel.Text = text end
+            end)
+        end
+
+        for _, group in ipairs(TechLab.GROUPS) do
+            LabTab:Label(group:upper())
+            for _, tech in ipairs(lab.order) do
+                if tech.group == group then
+                    local id = tech.id
+                    local sec = LabTab:Section(tech.title, true)
+                    sec:Toggle("On", tech.enabled, function(on)
+                        if lab.techs[id].enabled ~= on then lab:setEnabled(id, on); markDirty() end
+                    end)
+                    sec:Label(tech.desc)
+                    statusLabels[id] = sec:Label(statusText(tech))
+                    local controls = {}
+                    if tech.manual then
+                        LabTab:Button("Run now", function() lab:fire(id, {manual = true}) end, sec.Body)
+                    end
+                    for _, d in ipairs(tech.defs) do
+                        local key, api = d.key, nil
+                        local function put(v)
+                            if lab.techs[id].opt[key] ~= v then lab:setOption(id, key, v); markDirty() end
+                        end
+                        if d.kind == "number" then api = sec:Slider(d.label, d.min, d.max, tech.opt[key], d.step, put)
+                        elseif d.kind == "bool" then api = sec:Toggle(d.label, tech.opt[key], put, d.tip)
+                        elseif d.kind == "choice" then api = sec:Dropdown(d.label, d.choices, tech.opt[key], put)
+                        else api = LabTab:Input(d.label, "", tech.opt[key], function(text) put((text:gsub("^%s+", ""):gsub("%s+$", ""))) end, sec.Body) end
+                        controls[#controls + 1] = {def = d, api = api}
+                    end
+                    if not (tech.observer or tech.poll or tech.manual or tech.mouse or tech.key) then
+                        LabTab:Button("Learn trigger: play the move that should start it, once", function()
+                            lab:learnTrigger(id, function() markDirty() end)
+                            toast("Now play the move that should start " .. tech.title)
+                        end, sec.Body)
+                        LabTab:Button("Forget the triggers I taught it", function()
+                            lab:forgetTriggers(id)
+                            markDirty()
+                            toast("Learned triggers for " .. tech.title .. " forgotten")
+                        end, sec.Body)
+                    end
+                    LabTab:Button("Reset this tech's options", function()
+                        for _, c in ipairs(controls) do
+                            lab:setOption(id, c.def.key, c.def.default)
+                            c.api:Set(c.def.default)
+                        end
+                        markDirty()
+                        toast(tech.title .. ": options reset")
+                    end, sec.Body)
+                end
+            end
+        end
+    end
+    end
+
     -- Auto Tech
     local blockToggle
     Tech:Label("Recovers automatically when you get knocked down.")
@@ -2881,6 +2993,7 @@ local function __run()
 
     -- Credit
     Credit:Label("Animation Hub UI")
+    Credit:Label("Tech Lab: the tech ideas (Supa, Hook Dash, Loop Dash, Kyoto, Lethal Dash, M1 Reset, Twisted, Kiba / Kitty Tech - Kitty Tech idea by ItzSoph, ...) come from your own Dovi's Hub script; the code is a rewrite, not a copy.")
     Credit:Label("Settings are NOT saved automatically - use the Config tab (Save config) when you want to keep them.")
     Credit:Label("Toggle menu: RightShift, or the floating bar: Menu = show/hide, Tech = Auto Tech on/off, Pins = show/hide pinned buttons, Lock = freeze bar and pinned buttons, - = shrink to a dot.")
     Credit:Label("Background: random SFW image from waifu.pics / nekos.best (fan art, not copyright-free).")
