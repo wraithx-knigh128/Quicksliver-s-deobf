@@ -5,6 +5,8 @@
                              {key = "behind", label = "Teleport behind", kind = "bool", default = true},
                              {key = "side", label = "Side", kind = "choice", choices = {"Closest", "Left", "Right"}, default = "Closest"}}
 
+      Kinds: number (min / max / step), bool, choice (choices), string, key (a KeyCode name; choices = the keys a plain dropdown offers)
+      TechOptions.valid(def, value)     is this value acceptable for the option (numbers are clamped, so any number is)
       TechOptions.defaults(defs)        {key = default}
       TechOptions.clean(defs, saved)    a complete valid table: numbers clamped (and snapped to step), bools / choices checked, anything unknown dropped
       TechOptions.isDefault(defs, o)    nothing differs from the defaults (used to keep the config file small)
@@ -23,6 +25,9 @@ local function cleanOne(def, v)
     elseif kind == "choice" then
         for _, c in ipairs(def.choices or {}) do if v == c then return v end end
         return def.default
+    elseif kind == "key" then                                       -- a Roblox KeyCode name: "R", "Four", "LeftShift", "F5" (the engine looks it up safely)
+        if type(v) == "string" and #v <= 16 and v:match("^%a[%w]*$") then return #v == 1 and v:upper() or v end
+        return def.default
     elseif kind == "string" then
         if type(v) == "string" and #v <= 60 and not v:find("%c") then return v end
         return def.default or ""
@@ -37,6 +42,18 @@ local function cleanOne(def, v)
         v = tonumber(string.format("%.6g", v))
     end
     return v
+end
+
+function M.valid(def, v)
+    local kind = def.kind or "number"
+    if kind == "bool" then return type(v) == "boolean" end
+    if kind == "choice" then
+        for _, c in ipairs(def.choices or {}) do if v == c then return true end end
+        return false
+    end
+    if kind == "string" then return type(v) == "string" and #v <= 60 and not v:find("%c") end
+    if kind == "key" then return type(v) == "string" and #v <= 16 and v:match("^%a[%w]*$") ~= nil end
+    return isnum(v)
 end
 
 function M.defaults(defs)

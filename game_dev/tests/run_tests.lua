@@ -871,6 +871,64 @@ test("tech math: hook dash 'Behind' picks the side that ends up behind them, pre
     assert(top.point.x == top.point.x and top.point.z == top.point.z, "no NaN when standing on the target")
 end)
 
+test("tech math: latency lead, tuned numbers scale with ping, waits shift by the animation lag", function()
+    near(TM.leadSeconds(100, 80, 1), 0.13, 1e-9, "(50 + 80) ms")
+    near(TM.leadSeconds(100, 80, 0), 0, 1e-9, "strength 0 = no lead")
+    near(TM.leadSeconds(1e9, 80, 1), 0.6, 1e-9, "capped")
+    near(TM.leadSeconds(0 / 0, 80, 1), 0.11, 1e-9, "NaN ping falls back to 60 ms")
+    near(TM.scaleByPing(0.3, 60, 80, 1, 60), 0.3, 1e-9, "at the tuning ping nothing changes")
+    local hi = TM.scaleByPing(0.3, 220, 80, 1, 60)
+    assert(hi > 0.3, "a worse ping lengthens it: " .. hi)
+    near(hi, 0.3 * 0.19 / 0.11, 1e-9, "by the ratio of the leads")
+    local lo = TM.scaleByPing(0.3, 10, 80, 1, 60)
+    assert(lo < 0.3 and lo > 0.2, "a better ping shortens it: " .. lo)
+    near(TM.scaleByPing(0.3, 220, 80, 0, 60), 0.3, 1e-9, "strength 0 leaves it alone")
+    near(TM.scaleByPing(0.3, 220, 80, 0.5, 60), 0.3 * (1 + (0.19 / 0.11 - 1) * 0.5), 1e-9, "strength 0.5 goes half way")
+    near(TM.shiftWait(0.32, 0.1, 1), 0.22, 1e-9, "starts a tenth of a second earlier")
+    near(TM.shiftWait(0.32, 0.5, 1), 0.32 * 0.4, 1e-9, "never cut by more than 60 %")
+    near(TM.shiftWait(0.32, 0.1, 0), 0.32, 1e-9, "strength 0 = off")
+    near(TM.shiftWait(0.32, -1, 1), 0.32, 1e-9, "a negative lag is ignored")
+    near(TM.shiftWait(0, 0.1, 1), 0, 1e-9, "a zero wait stays zero")
+    local p = TM.predict({x = 1, y = 2, z = 3}, {x = 10, y = 0, z = -10}, 0.1)
+    near(p.x, 2, 1e-9); near(p.z, 2, 1e-9); near(p.y, 2, 1e-9)
+    eq(TM.predict(nil, {x = 1, y = 1, z = 1}, 1), nil)
+end)
+
+test("tech math: the lag learner pairs my sends with my animations and takes the median", function()
+    local L = TM.lagLearner()
+    eq(L:value(), nil, "nothing measured yet")
+    eq(L:seen("dash", 5), nil, "an animation without a send is ignored")
+    L:sent("dash", 10); near(L:seen("dash", 10.12), 0.12, 1e-9)
+    L:sent("dash", 20); near(L:seen("dash", 20.14), 0.14, 1e-9)
+    eq(L:value(), nil, "three samples are needed")
+    L:sent("dash", 30); near(L:seen("dash", 30.5), 0.5, 1e-9)           -- an outlier
+    near(L:value(), 0.14, 1e-9, "the median ignores the outlier")
+    L:sent("dash", 40); eq(L:seen("dash", 42), nil, "an animation 2 s later is not an answer to the send")
+    L:sent("dash", 50); L:sent("dash", 50.4); near(L:seen("dash", 50.5), 0.1, 1e-9, "the newest send wins (a send the server ignored must not stretch the number)")
+    near(L:seen("dash", 50.6), 0.6, 1e-9, "the older send is still waiting for its animation")
+    eq(L:seen("dash", 50.7), nil, "...and one animation answers one send only")
+    L:sent("side", 60); eq(L:seen("dash", 60.1), nil, "kinds are separate")
+    for i = 1, 20 do L:sent("dash", 100 + i); L:seen("dash", 100 + i + 0.3) end
+    near(L:value(), 0.3, 1e-9, "only the last 9 count")
+    eq(L:count(), 9)
+    L:reset(); eq(L:value(), nil); eq(L:count(), 0)
+    local e = TM.lagLearner({need = 1}); e:sent("a", 0); e:seen("a", 0.2)
+    near(e:value(), 0.2, 1e-9, "need = 1")
+    eq(L:sent("dash", 0 / 0), nil, "garbage times are ignored")
+end)
+
+test("tech math: the dash clock starts the cooldown when the server got the dash", function()
+    local c = TM.dashClock({forward = 4.8, side = 2})
+    c:seen("forward", 100, 0.2)
+    near(c:left("forward", 100), 4.6, 1e-9, "the animation came 0.2 s after the send: 0.2 s of the cooldown are already gone")
+    c:seen("side", 100, 0, 0.05)
+    near(c:left("side", 100), 2.05, 1e-9, "a safety margin is added")
+    c:seen("side", 100, 5, 9)
+    near(c:left("side", 100), 2 - 1 + 0.5, 1e-9, "lag is capped at 1 s, margin at 0.5 s")
+    c:seen("forward", 100)
+    near(c:left("forward", 100), 4.8, 1e-9, "old calls without lag still work")
+end)
+
 test("tech math: hookPoint with a frozen direction does not swing round while I pass the target", function()
     local tgt, vel, look = {x = 6, y = 3, z = -20}, {x = 0, y = 0, z = 0}, {x = 0, y = 0, z = 1}
     local start = {x = 0, y = 3, z = 0}
@@ -987,6 +1045,34 @@ test("tech data: ids, dash kinds, remote arguments and tool names", function()
         seen[name] = #list
     end
     assert(seen.m1 == 35 and seen.slam == 9 and seen.counterM1 == 4, "the id lists have the sizes of the original script")
+end)
+
+test("tech options: valid() says whether a value is acceptable (numbers are clamped, so any number is)", function()
+    local num = {key = "n", kind = "number", min = 0, max = 10, step = 1, default = 5}
+    eq(TO.valid(num, 99), true); eq(TO.valid(num, "x"), false); eq(TO.valid(num, 0 / 0), false); eq(TO.valid(num, math.huge), false)
+    local bool = {key = "b", kind = "bool", default = true}
+    eq(TO.valid(bool, false), true); eq(TO.valid(bool, "false"), false); eq(TO.valid(bool, nil), false)
+    local choice = {key = "c", kind = "choice", choices = {"A", "B"}, default = "A"}
+    eq(TO.valid(choice, "B"), true); eq(TO.valid(choice, "C"), false)
+    local str = {key = "s", kind = "string", default = ""}
+    eq(TO.valid(str, "hello"), true); eq(TO.valid(str, "line\nbreak"), false); eq(TO.valid(str, 5), false); eq(TO.valid(str, string.rep("x", 61)), false)
+    local key = {key = "k", kind = "key", default = "R"}
+    eq(TO.valid(key, "Four"), true); eq(TO.valid(key, "not a key!"), false); eq(TO.valid(key, "5"), false)
+end)
+
+test("tech options: key names are validated and single letters upper-cased", function()
+    local defs = {{key = "key", kind = "key", default = "R", choices = {"R", "T"}}}
+    eq(TO.clean(defs, {key = "z"}).key, "Z")
+    eq(TO.clean(defs, {key = "Four"}).key, "Four")
+    eq(TO.clean(defs, {key = "LeftShift"}).key, "LeftShift")
+    eq(TO.clean(defs, {key = "F5"}).key, "F5")
+    eq(TO.clean(defs, {key = "5"}).key, "R", "a digit is no key name")
+    eq(TO.clean(defs, {key = "bad name"}).key, "R")
+    eq(TO.clean(defs, {key = "x;y"}).key, "R")
+    eq(TO.clean(defs, {key = string.rep("a", 40)}).key, "R")
+    eq(TO.clean(defs, {key = 5}).key, "R")
+    eq(TO.clean(defs, {}).key, "R")
+    eq(TO.diff(defs, {key = "T"}).key, "T")
 end)
 
 test("tech options: defaults, clean clamps / snaps / checks types, diff keeps the config small", function()

@@ -1128,12 +1128,17 @@ function M.pingWait(ms, mult, lo, hi)
 end
 
 -- Dash cooldowns: a forward / back dash and a side dash have their own. cfg = {forward = 4.8, side = 2.0}
+-- The server starts the cooldown when it GETS my dash, and my animation arrives `lag` seconds after I sent it (0 when the client plays it at once, about a
+-- ping when the server plays it), so the cooldown began `lag` seconds before I saw the animation. margin = extra safety (jitter) added to the cooldown.
 function M.dashClock(cfg)
     cfg = cfg or {}
     local self = {readyAt = {}}
     local cd = {forward = cfg.forward or 4.8, side = cfg.side or 2.0}
-    function self:seen(kind, now)
-        if cd[kind] and num(now) then self.readyAt[kind] = now + cd[kind] end
+    function self:seen(kind, now, lag, margin)
+        if cd[kind] and num(now) then
+            local l = M.clamp(num(lag) and lag or 0, 0, 1)
+            self.readyAt[kind] = now - l + cd[kind] + M.clamp(num(margin) and margin or 0, 0, 0.5)
+        end
     end
     function self:left(kind, now)
         local r = self.readyAt[kind]
@@ -1142,6 +1147,86 @@ function M.dashClock(cfg)
     end
     function self:ready(kind, now) return self:left(kind, now) <= 0 end
     function self:reset() self.readyAt = {} end
+    return self
+end
+
+-- ---------------------------------------------------------------------------------------------------------------- latency
+-- What I see of another player is old: his state left the server about ping / 2 ago, and Roblox draws other characters a little in the past on top of that
+-- (interpMs, about 80-100 ms). A command I send reaches the server another ping / 2 later, so for an action that depends on where HE is, he has moved by
+-- about (ping / 2 + interp) since the frame I looked at (my own movement is sent too, which is why this is a half ping and not a whole one).
+function M.leadSeconds(pingMs, interpMs, strength)
+    local p = M.clamp(num(pingMs) and pingMs or 60, 0, 1500)
+    local i = M.clamp(num(interpMs) and interpMs or 80, 0, 400)
+    local k = M.clamp(num(strength) and strength or 1, 0, 2)
+    return M.clamp((p / 2 + i) / 1000 * k, 0, 0.6)
+end
+
+-- A number somebody tuned by hand at `refPingMs` (their own connection), scaled so it keeps working at the current ping:
+-- the lead is (ping / 2 + interp), so the number grows and shrinks with it. strength 0 = leave it alone, 1 = fully scaled.
+function M.scaleByPing(base, pingMs, interpMs, strength, refPingMs)
+    if not num(base) then return base end
+    local ref = M.leadSeconds(refPingMs or 60, interpMs, 1)
+    if ref <= 1e-6 then return base end
+    local now = M.leadSeconds(pingMs, interpMs, 1)
+    local k = M.clamp(num(strength) and strength or 1, 0, 2)
+    return base * M.clamp(1 + (now / ref - 1) * k, 0.3, 3)
+end
+
+-- A wait that starts at one of MY animations. If that animation reaches me `lag` seconds after I pressed the button (the server plays it and sends it back), the
+-- action that was meant to happen `base` seconds after the press has to start `lag` earlier than `base` after the animation. Never shortened by more than
+-- maxCut of the wait (default 60 %), never below 0; strength scales the shift (0 = off).
+function M.shiftWait(base, lagSec, strength, o)
+    if not num(base) then return base end
+    o = o or {}
+    local shift = M.clamp(num(lagSec) and lagSec or 0, 0, 1) * M.clamp(num(strength) and strength or 1, 0, 2)
+    shift = min(shift, base * (o.maxCut or 0.6))
+    return max(0, base - shift)
+end
+
+function M.predict(pos, vel, seconds)
+    if not (M.valid(pos) and M.valid(vel)) then return pos end
+    return add(pos, scale(vel, num(seconds) and seconds or 0))
+end
+
+-- How late do my own animations arrive after my input? Every time I send a dash (the lab sends it, or I press Q myself) :sent("dash", t); when a dash
+-- animation shows up :seen("dash", t) pairs it with the newest unmatched send of that kind in the last `window` seconds (default 1.0) and records the gap.
+-- value() = the median of the last `cap` gaps (default 9), nil until there are `need` (default 3). Pairs that are too slow or negative are ignored.
+function M.lagLearner(o)
+    o = o or {}
+    local self = {pending = {}, gaps = {}}
+    local window, cap, need = o.window or 1.0, o.cap or 9, o.need or 3
+    function self:sent(kind, t)
+        if not num(t) then return end
+        local list = self.pending[kind]
+        if not list then list = {}; self.pending[kind] = list end
+        list[#list + 1] = t
+        while #list > 4 do table.remove(list, 1) end
+    end
+    function self:seen(kind, t)
+        local list = self.pending[kind]
+        if not (list and num(t)) then return nil end
+        for i = #list, 1, -1 do
+            local gap = t - list[i]
+            if gap >= 0 and gap <= window then
+                for j = #list, i, -1 do table.remove(list, j) end      -- this send and everything after it is used up
+                self.gaps[#self.gaps + 1] = gap
+                while #self.gaps > cap do table.remove(self.gaps, 1) end
+                return gap
+            end
+        end
+        return nil
+    end
+    function self:count() return #self.gaps end
+    function self:value()
+        local n = #self.gaps
+        if n < need then return nil end
+        local sorted = {}
+        for i, g in ipairs(self.gaps) do sorted[i] = g end
+        table.sort(sorted)
+        if n % 2 == 1 then return sorted[(n + 1) / 2] end
+        return (sorted[n / 2] + sorted[n / 2 + 1]) / 2
+    end
+    function self:reset() self.pending, self.gaps = {}, {} end
     return self
 end
 
@@ -1166,6 +1251,7 @@ M.ANIM = {
     surf            = {"12309835105"},                          -- Hunter's surf
     counterDash     = {"10479335397", "13380255751", "134775406437626"},     -- dashes Auto Counter answers
     counterM1       = {"10469493270", "10469630950", "10469639222", "10469643643"},   -- M1 swings Auto Counter answers
+    counterMove     = {"12351854556", "15311685628", "78521642007560"},     -- the animations of the counter moves (Counter ESP; your script listed three more that are no valid ids)
     slam            = {"10469639222", "13532604085", "13295919399", "13378751717", "14001963401", "15240176873", "16515448089", "17889471098", "104895379416342"},
     m1 = {"10469493270", "10469630950", "10469639222", "10469643643", "13532562418", "13532600125", "13532604085", "13294471966", "13491635433", "13296577783",
           "13295919399", "13295936866", "13370310513", "13390230973", "13378751717", "13378708199", "14004222985", "13997092940", "14001963401", "14136436157",
@@ -1177,7 +1263,16 @@ M.TOOLS = {
     lethal = {"Lethal Whirlwind Stream"},
     counters = {"Prey's Peril", "Split Second Counter"},
     grasp = {"Hunter's Grasp", "Hunterzzzzz's Grasp"},
+    shove = {"Shove"},
 }
+
+-- hotbar slots 1-4 are the four moves (Enum.KeyCode names)
+M.HOTBAR = {"One", "Two", "Three", "Four"}
+
+-- named highlight colours for the Awareness techs (0-255)
+M.COLORS = {Red = {255, 60, 60}, Orange = {255, 150, 40}, Yellow = {255, 220, 60}, Green = {80, 220, 120}, Cyan = {60, 220, 255}, Blue = {70, 130, 255},
+            Purple = {170, 100, 255}, White = {240, 240, 240}}
+M.COLOR_NAMES = {"Red", "Orange", "Yellow", "Green", "Cyan", "Blue", "Purple", "White"}
 
 -- dash cooldowns in seconds (from the script: forward 4.8; the side dash figure is the community number and unverified)
 M.DASH_COOLDOWN = {forward = 4.8, side = 2.0}
@@ -1226,6 +1321,9 @@ local function cleanOne(def, v)
     elseif kind == "choice" then
         for _, c in ipairs(def.choices or {}) do if v == c then return v end end
         return def.default
+    elseif kind == "key" then                                       -- a Roblox KeyCode name: "R", "Four", "LeftShift", "F5" (the engine looks it up safely)
+        if type(v) == "string" and #v <= 16 and v:match("^%a[%w]*$") then return #v == 1 and v:upper() or v end
+        return def.default
     elseif kind == "string" then
         if type(v) == "string" and #v <= 60 and not v:find("%c") then return v end
         return def.default or ""
@@ -1240,6 +1338,18 @@ local function cleanOne(def, v)
         v = tonumber(string.format("%.6g", v))
     end
     return v
+end
+
+function M.valid(def, v)
+    local kind = def.kind or "number"
+    if kind == "bool" then return type(v) == "boolean" end
+    if kind == "choice" then
+        for _, c in ipairs(def.choices or {}) do if v == c then return true end end
+        return false
+    end
+    if kind == "string" then return type(v) == "string" and #v <= 60 and not v:find("%c") end
+    if kind == "key" then return type(v) == "string" and #v <= 16 and v:match("^%a[%w]*$") ~= nil end
+    return isnum(v)
 end
 
 function M.defaults(defs)
@@ -1288,9 +1398,11 @@ local atan2 = math.atan2 or math.atan
 local function N(key, label, min, max, step, default, tip) return {key = key, label = label, kind = "number", min = min, max = max, step = step, default = default, tip = tip} end
 local function B(key, label, default, tip) return {key = key, label = label, kind = "bool", default = default, tip = tip} end
 local function C(key, label, choices, default, tip) return {key = key, label = label, kind = "choice", choices = choices, default = default, tip = tip} end
+local KEYS = {"V", "C", "X", "Z", "B", "G", "H", "J", "K", "L", "R", "T"}          -- what a plain dropdown offers; the WindUI hub lets you bind any key
+local function K(key, label, default, tip) return {key = key, label = label, kind = "key", default = default, tip = tip, choices = KEYS} end
 local function S(key, label, default, tip) return {key = key, label = label, kind = "string", default = default, tip = tip} end
 
-local KEYS = {"V", "C", "X", "Z", "B", "G", "H", "J", "K", "L", "R", "T"}
+local TD_COLORS = {"Red", "Orange", "Yellow", "Green", "Cyan", "Blue", "Purple", "White"}      -- = TechData.COLOR_NAMES (a test keeps them equal)
 
 ----------------------------------------------------------------------------------------------------------------- the tech catalogue (definitions only)
 -- group, title, desc, when = text shown as "starts: ...", needsDash = "forward" | "side" | nil, ids = trigger animation list name in TechData.ANIM (or nil)
@@ -1308,7 +1420,7 @@ local DEFS = {
              C("side", "Pass them on", {"Closest", "Behind them", "Left", "Right"}, "Closest"), C("face", "Body while dashing", {"Side-on", "Face target"}, "Side-on"),
              N("smooth", "Turn smoothness", 0.05, 1, 0.05, 0.4), B("m1After", "M1 at the end", true), N("aimAfter", "Aim lock after (s)", 0, 1, 0.05, 0.5),
              N("maxY", "Ignore above height (0 = off)", 0, 1000, 1, 442), B("highlight", "Highlight the target", true), N("cooldown", "Cooldown (s)", 0, 5, 0.1, 1),
-             C("selectKey", "Select key", KEYS, "V"), C("goKey", "Go key", KEYS, "C")}},
+             K("selectKey", "Select key", "V"), K("goKey", "Go key", "C")}},
     {id = "loop", group = "Dash techs", title = "Loop Dash", needsDash = "forward", ids = "uppercut", when = "after your uppercut",
      desc = "A loop round the target while dashing, then you settle above them.",
      opts = {N("delay", "Delay (ms)", 0, 500, 5, 160), N("radius", "Loop radius (studs)", 2, 10, 0.5, 6), N("targetRadius", "Target within (studs)", 5, 40, 1, 15),
@@ -1344,7 +1456,7 @@ local DEFS = {
     {id = "surf", group = "Combos", title = "Auto Hunter Surf", ids = "surf", when = "when the surf starts",
      desc = "Carries you forward on the surf.",
      opts = {N("wait", "Wait (s)", 0, 2, 0.05, 0.6), N("distance", "Distance (studs)", 0, 120, 5, 50), N("time", "Time (s)", 0.2, 2, 0.02, 0.78), N("cooldown", "Cooldown (s)", 0, 8, 0.1, 2)}},
-    {id = "counter", group = "Defence", title = "Auto Counter", observer = true, when = "when somebody dashes / M1s at you",
+    {id = "counter", group = "Defence", title = "Auto Counter", observer = true, watches = true, when = "when somebody dashes / M1s at you",
      desc = "Casts your counter (Prey's Peril / Split Second Counter) when a close player starts a dash or an M1 at you.",
      opts = {N("distance", "Counter distance (studs)", 5, 30, 1, 13), B("facing", "Only when they face me", true), B("answerDashes", "Answer dashes", true), B("answerM1", "Answer M1s", true),
              N("dashDelay", "Delay after a dash (ms)", 0, 300, 5, 0), S("moveName", "Move to cast (empty = automatic)", ""), N("cooldown", "Cooldown (s)", 0, 3, 0.1, 0.6)}},
@@ -1373,20 +1485,75 @@ local DEFS = {
     {id = "m1reset", group = "Actions", title = "M1 Reset", manual = true, key = "R", when = "key / button",
      desc = "Side step, turn and dash - resets your M1 chain.",
      opts = {N("distance", "Step (studs)", 0, 60, 0.5, 25.5), N("duration", "Step time (s)", 0.1, 0.6, 0.01, 0.22), N("rotation", "Turn (deg)", 0, 180, 5, 65),
-             C("dashAfter", "Dash after", {"W", "A", "S", "D", "None"}, "W"), N("cooldown", "Cooldown (s)", 0, 3, 0.1, 0.2), C("key", "Key", KEYS, "R")}},
+             C("dashAfter", "Dash after", {"W", "A", "S", "D", "None"}, "W"), N("cooldown", "Cooldown (s)", 0, 3, 0.1, 0.2), K("key", "Key", "R")}},
     {id = "emotedash", group = "Actions", title = "Emote Dash", manual = true, key = "T", when = "key / button",
      desc = "Turns and throws you sideways in an arc.",
      opts = {N("rotation", "Turn (deg)", 0, 180, 5, 90), N("distance", "Distance", 0, 80, 1, 38), N("height", "Height", 0, 30, 1, 8), N("power", "Power", 20, 200, 5, 95),
-             N("duration", "Duration (s)", 0.1, 0.6, 0.01, 0.27), N("cooldown", "Cooldown (s)", 0, 3, 0.1, 0.2), C("key", "Key", KEYS, "T")}},
+             N("duration", "Duration (s)", 0.1, 0.6, 0.01, 0.27), N("cooldown", "Cooldown (s)", 0, 3, 0.1, 0.2), K("key", "Key", "T")}},
+
+    -- ------------------------------------------------------------------------------------- added from the wiki descriptions (community-sourced, steps and windows unverified)
+    {id = "backdash", group = "Actions", title = "Backdash Cancel", manual = true, needsDash = "forward", key = "B", when = "key (B) / button",
+     desc = "Back dash, then a move right away: the move cancels the back dash. 'Aerial' jumps first so the back dash carries further. The window is short - tune the delay.",
+     opts = {N("delay", "Delay before the move (ms)", 0, 400, 5, 90), B("aerial", "Aerial: jump first", false), N("aerialDelay", "Delay after the jump (ms)", 0, 300, 5, 120),
+             N("jumpPower", "Jump height", 10, 100, 1, 52), C("slot", "Move (hotbar slot)", {"1", "2", "3", "4"}, "1"), S("moveName", "Move by name (empty = the slot)", ""),
+             N("cooldown", "Cooldown (s)", 0, 5, 0.1, 0.8), K("key", "Key", "B")}},
+    {id = "microdash", group = "Actions", title = "Micro Dash", manual = true, needsDash = "side", key = "X", when = "key (X) / button",
+     desc = "Side dash, then a move at once (an M1 does not cancel the dash, a move does).",
+     opts = {C("side", "Side", {"Toward target", "Left", "Right"}, "Toward target"), N("delay", "Delay before the move (ms)", 0, 400, 5, 60), C("slot", "Move (hotbar slot)", {"1", "2", "3", "4"}, "1"),
+             S("moveName", "Move by name (empty = the slot)", ""), N("cooldown", "Cooldown (s)", 0, 5, 0.1, 0.8), K("key", "Key", "X")}},
+    {id = "shovedash", group = "Actions", title = "Shove Dash", manual = true, needsDash = "forward", key = "Z", when = "key (Z) / button",
+     desc = "Shove, an instant M1, a step back and a forward dash (the M1 after the shove should be your 1st-3rd).",
+     opts = {S("moveName", "Shove move name", "Shove"), N("m1Delay", "M1 after the shove (ms)", 0, 400, 5, 40), N("stepBack", "Step back (studs)", 0, 10, 0.5, 3), N("dashDelay", "Dash after the M1 (ms)", 0, 500, 5, 120),
+             N("cooldown", "Cooldown (s)", 0, 5, 0.1, 1.2), K("key", "Key", "Z")}},
+    {id = "uppercutcatch", group = "Combos", title = "Uppercut Catch", ids = "uppercut", when = "after your uppercut",
+     desc = "After the uppercut: forward dash and an M1 at the right moment - or, if he falls close to you, just walk into him (hold W) and M1.",
+     opts = {N("delay", "Delay after the uppercut (ms)", 0, 900, 5, 450), N("radius", "Target within (studs)", 5, 80, 1, 40), N("holdRange", "Walk instead of dash within (studs)", 0, 20, 0.5, 6),
+             N("holdTime", "Walk for (ms)", 50, 800, 10, 300), N("m1Delay", "M1 after the dash / walk (ms)", 0, 500, 5, 120), N("cooldown", "Cooldown (s)", 0, 5, 0.1, 1)}},
+    {id = "uppercutgrasp", group = "Combos", title = "Uppercut Grasp", ids = "uppercut", when = "after your uppercut",
+     desc = "3 M1s, jump, mini uppercut - then Hunter's Grasp is cast for you.",
+     opts = {N("delay", "Delay after the uppercut (s)", 0, 2, 0.05, 0.3), N("count", "Casts", 1, 5, 1, 1), N("gap", "Gap between casts (ms)", 50, 600, 10, 150), S("moveName", "Move by name (empty = Hunter's Grasp)", ""),
+             N("cooldown", "Cooldown (s)", 0, 5, 0.1, 1)}},
+    {id = "lethalgrasp", group = "Combos", title = "Lethal Grasp", ids = "lethalWhirlwind", when = "after Lethal Whirlwind Stream",
+     desc = "Right after Lethal Whirlwind Stream: Hunter's Grasp.",
+     opts = {N("delay", "Delay after Lethal Whirlwind Stream (s)", 0, 3, 0.05, 0.9), N("count", "Casts", 1, 5, 1, 1), N("gap", "Gap between casts (ms)", 50, 600, 10, 150), S("moveName", "Move by name (empty = Hunter's Grasp)", ""),
+             N("cooldown", "Cooldown (s)", 0, 5, 0.1, 1)}},
+    {id = "flowinggrasp", group = "Combos", title = "Flowing Grasp", ids = "flowingWater", when = "after Flowing Water",
+     desc = "After Flowing Water ends, Hunter's Grasp is cast (spammed a few times). Turn on shift lock yourself.",
+     opts = {N("delay", "Delay after Flowing Water (s)", 0, 3, 0.05, 1.4), N("count", "Casts", 1, 5, 1, 3), N("gap", "Gap between casts (ms)", 50, 600, 10, 150), S("moveName", "Move by name (empty = Hunter's Grasp)", ""),
+             N("cooldown", "Cooldown (s)", 0, 5, 0.1, 2)}},
+    {id = "fastdash", group = "Helpers", title = "Fast Dash", ids = "sideDash", when = "when you side dash",
+     desc = "Throws you along the side dash with a burst and cuts the dash animation short. Not compatible with most other techs (only one moving tech runs at a time).",
+     opts = {N("hop", "Hop (studs)", 0, 12, 0.5, 5), N("speed", "Burst speed (studs/s)", 20, 300, 5, 250), N("time", "Burst time (s)", 0.05, 0.5, 0.01, 0.25), N("stopAt", "Cut the animation at (s)", 0.05, 0.6, 0.01, 0.22),
+             N("cooldown", "Cooldown (s)", 0, 3, 0.1, 0)}},
+    {id = "dashclip", group = "Helpers", title = "DashClip", ids = "anyDash", when = "when you dash",
+     desc = "Noclip for a moment while you dash (your own character only).",
+     opts = {N("duration", "Noclip for (s)", 0.05, 1, 0.01, 0.35), N("cooldown", "Cooldown (s)", 0, 3, 0.1, 0)}},
+    {id = "counteresp", group = "Awareness", title = "Counter ESP", observer = true, watches = true, when = "when a player uses a counter",
+     desc = "Highlights a player for a few seconds when he starts a counter move, so you know not to hit him.",
+     opts = {C("color", "Colour", TD_COLORS, "Cyan"), N("seconds", "Highlight for (s)", 1, 10, 0.5, 3)}},
+    {id = "deathcounter", group = "Awareness", title = "Death Counter ESP", observer = true, watches = true, when = "when a player gets a Death Counter",
+     desc = "Highlights a player while a Death Counter is on him (it is a child called 'Death Counter' in his character).",
+     opts = {C("color", "Colour", TD_COLORS, "Red"), N("seconds", "Highlight for (s)", 1, 30, 1, 12)}},
+    {id = "blockwarn", group = "Awareness", title = "Unblockable Warning", observer = true, watches = true, when = "when a player winds up the unblockable down slam",
+     desc = "A red arrow above a player while he telegraphs the unblockable down slam: dodge it, do not block it.",
+     opts = {N("seconds", "Longest time (s)", 0.5, 5, 0.5, 3)}},
+    {id = "blockesp", group = "Awareness", title = "Block ESP", observer = true, watches = true, when = "while a player blocks",
+     desc = "Highlights a player for as long as he is blocking.",
+     opts = {C("color", "Colour", TD_COLORS, "Yellow"), N("seconds", "Longest time (s)", 1, 15, 1, 6)}},
 }
 M.DEFS = DEFS
 
-local GROUPS = {"Dash techs", "Combos", "Defence", "Helpers", "Actions"}
+local GROUPS = {"Dash techs", "Combos", "Defence", "Helpers", "Actions", "Awareness"}
 M.GROUPS = GROUPS
+
+-- techs that wait on one of my own animations or aim at another player: they get an "Adjust for ping" switch (the latency model below)
+local PING_AWARE = {supa = true, hook = true, loop = true, loop2 = true, lethal = true, kiba = true, twisted = true, kyoto = true, dunk = true, surf = true, flip = true,
+                    catch = true, noendlag = true, uppercutcatch = true, uppercutgrasp = true, lethalgrasp = true, flowinggrasp = true}
 
 -- techs that move or turn my character: only one of them runs at a time (two of them at once would fight over the root part)
 local MOVES = {supa = true, hook = true, loop = true, loop2 = true, lethal = true, kiba = true, twisted = true, kyoto = true, dunk = true, surf = true, flip = true,
-               mousedash = true, sidem1 = true, downslam = true, m1reset = true, emotedash = true}
+               mousedash = true, sidem1 = true, downslam = true, m1reset = true, emotedash = true, backdash = true, microdash = true, shovedash = true, uppercutcatch = true,
+               fastdash = true}
 
 ----------------------------------------------------------------------------------------------------------------- the engine
 function M.new(env)
@@ -1398,7 +1565,10 @@ function M.new(env)
     local log = env.log or function() end
 
     local lab = {techs = {}, order = {}, byId = {}, alive = true, master = true, input = "Auto", dashGuard = true, releaseBlock = true,
-                 dashClock = TM.dashClock(TD.DASH_COOLDOWN), hook = {}, conns = {}, lastOwn = {}}
+                 dashClock = TM.dashClock(TD.DASH_COOLDOWN), hook = {}, conns = {}, lastOwn = {},
+                 -- the latency model: strength scales every ping correction (0 = off), manual = a ping I typed (0 = measure it), interp = how far in the past Roblox draws
+                 -- other players, learn = measure how late my own animations arrive, ref = the ping the default numbers were tuned at
+                 net = {strength = 1, manual = 0, interp = 80, learn = true, ref = 60}, lagger = TM.lagLearner()}
     local charConns = {}
     local watched = setmetatable({}, {__mode = "k"})              -- enemy model -> its connections
     local animCache = {}
@@ -1419,8 +1589,11 @@ function M.new(env)
 
     -------------------------------------------------------------------------------------------------------- techs from the catalogue
     for _, d in ipairs(DEFS) do
+        if PING_AWARE[d.id] then
+            d.opts[#d.opts + 1] = B("ping", "Adjust for ping", true, "Waits that start at one of my animations start earlier by the lag I measured, and aim at other players is led by their latency.")
+        end
         local tech = {id = d.id, group = d.group, title = d.title, desc = d.desc, when = d.when, defs = d.opts, needsDash = d.needsDash, manual = d.manual, template = d.template,
-                      observer = d.observer, poll = d.poll, mouse = d.mouse, key = d.key, idList = d.ids, moves = MOVES[d.id] == true, enabled = false, token = 0, running = false, cooldownUntil = 0,
+                      observer = d.observer, watches = d.watches, poll = d.poll, mouse = d.mouse, key = d.key, idList = d.ids, moves = MOVES[d.id] == true, enabled = false, token = 0, running = false, cooldownUntil = 0,
                       status = "off", stats = {runs = 0, aborts = 0, errors = 0}, extra = {}, ids = {}}
         tech.opt = TO.defaults(d.opts)
         lab.techs[d.id] = tech
@@ -1430,9 +1603,10 @@ function M.new(env)
 
     local function rebuildIds(tech)
         local set = {}
-        if tech.idList == "sideDash" then
+        if tech.idList == "sideDash" or tech.idList == "anyDash" then
             for _, id in ipairs(TD.ANIM.sideRight) do set[id] = true end
             for _, id in ipairs(TD.ANIM.sideLeft) do set[id] = true end
+            if tech.idList == "anyDash" then for _, id in ipairs(TD.ANIM.forwardDash) do set[id] = true end end
         elseif tech.idList then
             for _, id in ipairs(TD.ANIM[tech.idList] or {}) do set[tostring(id)] = true end
         end
@@ -1446,6 +1620,35 @@ function M.new(env)
         if env.onStatus then pcall(env.onStatus, tech) end
     end
     lab.setStatus = setStatus
+
+    -------------------------------------------------------------------------------------------------------- latency
+    function lab:pingMs()
+        if lab.net.manual > 0 then return lab.net.manual end
+        local p = env.pingMs and safe(env.pingMs)
+        return type(p) == "number" and p == p and p >= 0 and p or nil
+    end
+    function lab:jitterMs()
+        local j = env.jitterMs and safe(env.jitterMs)
+        return type(j) == "number" and j == j and j >= 0 and j or 0
+    end
+    -- seconds my own animations arrive after my input (0 until it was measured, or when learning is off)
+    function lab:lag()
+        if not lab.net.learn then return 0 end
+        return lab.lagger:value() or 0
+    end
+    function lab:lead() return TM.leadSeconds(lab:pingMs(), lab.net.interp, lab.net.strength) end
+    function lab:netInfo()
+        return {ping = lab:pingMs(), jitter = lab:jitterMs(), lag = lab.lagger:value(), samples = lab.lagger:count(), lead = lab:lead(), strength = lab.net.strength}
+    end
+    local NET_RANGE = {strength = {0, 2}, manual = {0, 1000}, interp = {0, 250}, ref = {10, 300}}
+    function lab:setNet(key, value)
+        if key == "learn" then
+            if type(value) == "boolean" then lab.net.learn = value end
+        elseif NET_RANGE[key] and type(value) == "number" and value == value then
+            lab.net[key] = math.max(NET_RANGE[key][1], math.min(NET_RANGE[key][2], value))
+        end
+    end
+    local function pingOn(tech) return tech.opt.ping ~= false end
 
     -------------------------------------------------------------------------------------------------------- the character and the people around me
     local function myParts()
@@ -1528,6 +1731,7 @@ function M.new(env)
     end
     -- dir = "W" | "A" | "S" | "D" (the dash goes that way, relative to the camera, like holding the key)
     function lab:dash(dir)
+        lab.lagger:sent("dash", clock())                              -- (so the animation that answers it tells me how late my animations arrive)
         if lab.input ~= "Keys" and lab:fireRemote(TD.dashArgs(Enum.KeyCode, dir)) then return true end
         if lab.input == "Remote" then return false end
         keyEvent(true, dir)
@@ -1625,6 +1829,21 @@ function M.new(env)
             for _, e in ipairs(lab:enemies(radius)) do if playingAny(e.model, blockSet) then return e end end
         end
         function c.dashReady(kind) return lab.dashClock:ready(kind, clock()) end
+
+        -- latency: a wait that starts at one of MY animations starts earlier by the lag measured for them; another player is where he will be by the time my
+        -- command reaches the server (his velocity times the lead); a number tuned at the reference ping scales with the ping. All off with "Adjust for ping".
+        function c.shift(sec)
+            if not (info.anim and pingOn(tech)) then return sec end
+            return TM.shiftWait(sec, lab:lag(), lab.net.strength)
+        end
+        function c.lead() return pingOn(tech) and lab:lead() or 0 end
+        function c.predicted(entry)
+            return TM.predict(vec(entry.root.Position), vec(entry.root.AssemblyLinearVelocity), c.lead())
+        end
+        function c.scaled(base)
+            if not pingOn(tech) then return base end
+            return TM.scaleByPing(base, lab:pingMs(), lab.net.interp, lab.net.strength, lab.net.ref)
+        end
 
         function c.stopAnims()
             local animator = hum:FindFirstChildOfClass("Animator")
@@ -1726,6 +1945,35 @@ function M.new(env)
                 end)
             end)
             if not ok then bound = false end
+        end
+        -- hold a key down for `seconds` (released when the tech ends whatever happens)
+        function c.holdKey(name, seconds)
+            if not keyEvent(true, name) then return false end
+            local released = false
+            local function release() if not released then released = true; keyEvent(false, name) end end
+            cleanups[#cleanups + 1] = release
+            task.delay(seconds, release)
+            return true
+        end
+        -- my own character does not collide for the rest of the run (Humanoids switch collisions back on every frame, so it is re-applied each Stepped)
+        function c.noclip()
+            local parts = {}
+            for _, part in ipairs(char:GetDescendants()) do
+                if part:IsA("BasePart") and part.CanCollide then parts[#parts + 1] = part end
+            end
+            local function apply() for _, part in ipairs(parts) do if part.Parent then part.CanCollide = false end end end
+            apply()
+            cleanups[#cleanups + 1] = function() for _, part in ipairs(parts) do if part.Parent then part.CanCollide = true end end end
+            local conn = listen(RunService.Stepped, apply)
+            if conn then cleanups[#cleanups + 1] = function() conn:Disconnect() end end
+        end
+        -- like push, but sideways only (gravity and jumps keep working)
+        function c.pushFlat(v)
+            local bv = c.instance(Instance.new("BodyVelocity"))
+            bv.MaxForce = Vector3.new(1e5, 0, 1e5)
+            bv.Velocity = Vector3.new(v.x, 0, v.z)
+            bv.Parent = root
+            return {stop = function() if bv.Parent then bv:Destroy() end end}
         end
         function c.floorY(pos)
             local params = RaycastParams.new()
@@ -1841,8 +2089,10 @@ function M.new(env)
         local now = clock()
         local kind = TD.dashKind(id)
         if kind then
-            lab.dashClock:seen(kind, now)
-            lab.lastOwn[kind] = now
+            lab.lagger:seen("dash", now)
+            local lag = lab:lag()
+            lab.dashClock:seen(kind, now, lag, lab:jitterMs() / 1000)
+            lab.lastOwn[kind] = now - lag                            -- when I SENT it (the animation comes later)
         end
         lab.lastOwn.id, lab.lastOwn.t = id, now
         if learnedTrigger(id, track) then return end
@@ -1851,12 +2101,94 @@ function M.new(env)
         end
     end
 
-    -- somebody else's animation: Auto Counter answers dashes and M1s aimed at me
+    -------------------------------------------------------------------------------------------------------- marks: highlights and arrows on other players
+    lab.marks = {}
+    local function colorOf(name)
+        local c = TD.COLORS[name] or TD.COLORS.Cyan
+        return Color3.fromRGB(c[1], c[2], c[3])
+    end
+    local function killMark(kind, model)
+        local list = lab.marks[kind]
+        local mark = list and list[model]
+        if mark then
+            list[model] = nil
+            pcall(function() if mark.Parent then mark:Destroy() end end)
+        end
+    end
+    -- a highlight on `model` (kind = which tech owns it), gone after `seconds` or when the tech is switched off
+    function lab:mark(model, kind, colorName, seconds)
+        killMark(kind, model)
+        local light = Instance.new("Highlight")
+        light.Name = "TechLabMark"
+        light.Adornee = model
+        light.FillColor = colorOf(colorName)
+        light.OutlineColor = colorOf(colorName)
+        light.FillTransparency = 0.5
+        light.OutlineTransparency = 0
+        light.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+        light.Parent = Workspace
+        lab.marks[kind] = lab.marks[kind] or {}
+        lab.marks[kind][model] = light
+        if seconds then
+            task.delay(seconds, function() if lab.marks[kind] and lab.marks[kind][model] == light then killMark(kind, model) end end)
+        end
+        return light
+    end
+    -- a red arrow above `model` for as long as `track` plays (or `seconds`)
+    function lab:arrow(model, kind, track, seconds)
+        killMark(kind, model)
+        local part = model:FindFirstChild("HumanoidRootPart")
+        if not part then return nil end
+        local gui = Instance.new("BillboardGui")
+        gui.Name = "TechLabArrow"
+        gui.Adornee = part
+        gui.Size = UDim2.new(4, 0, 2, 0)
+        gui.StudsOffset = Vector3.new(0, 5, 0)
+        gui.AlwaysOnTop = true
+        local text = Instance.new("TextLabel")
+        text.Size = UDim2.new(1, 0, 1, 0)
+        text.BackgroundTransparency = 1
+        text.Text = "VV"
+        text.Font = Enum.Font.GothamBold
+        text.TextScaled = true
+        text.TextColor3 = Color3.fromRGB(255, 0, 0)
+        text.Parent = gui
+        gui.Parent = part
+        lab.marks[kind] = lab.marks[kind] or {}
+        lab.marks[kind][model] = gui
+        if track then listen(track.Stopped, function() if lab.marks[kind] and lab.marks[kind][model] == gui then killMark(kind, model) end end) end
+        task.delay(seconds or 3, function() if lab.marks[kind] and lab.marks[kind][model] == gui then killMark(kind, model) end end)
+        return gui
+    end
+    function lab:clearMarks(kind)
+        for k, list in pairs(lab.marks) do
+            if kind == nil or k == kind then
+                for model in pairs(list) do killMark(k, model) end
+            end
+        end
+    end
+    local function markStat(tech, text)
+        tech.stats.runs = tech.stats.runs + 1
+        setStatus(tech, string.format("%s (%d)", text, tech.stats.runs))
+    end
+
+    -------------------------------------------------------------------------------------------------------- somebody else's animations
+    -- every enabled tech that watches other players gets (model, track, id); it decides for itself
     local function onEnemyAnim(model, track)
-        local tech = lab.techs.counter
-        if not (tech and tech.enabled and lab.master) then return end
+        if not lab.master then return end
         local id = TD.idOf(safe(function() return track.Animation.AnimationId end))
         if not id then return end
+        for _, tech in ipairs(lab.order) do
+            if tech.enabled and tech.onEnemy then
+                local ok, err = pcall(tech.onEnemy, model, track, id)
+                if not ok then tech.stats.errors = tech.stats.errors + 1; log("[" .. tech.id .. "] " .. tostring(err)) end
+            end
+        end
+    end
+
+    -- Auto Counter answers dashes and M1s aimed at me
+    lab.techs.counter.onEnemy = function(model, track, id)
+        local tech = lab.techs.counter
         local o = tech.opt
         local isDash = o.answerDashes and tech.dashSet[id]
         local isM1 = o.answerM1 and tech.m1Set[id]
@@ -1874,15 +2206,60 @@ function M.new(env)
         lab:fire(tech, {anim = id, enemy = model.Name})
     end
 
+    local function notMe(model) local char = LocalPlayer.Character; return model ~= char end
+    lab.techs.counteresp.onEnemy = function(model, track, id)
+        local tech = lab.techs.counteresp
+        if notMe(model) and tech.counterSet[id] then
+            lab:mark(model, "counteresp", tech.opt.color, tech.opt.seconds)
+            markStat(tech, "counter: " .. model.Name)
+        end
+    end
+    lab.techs.blockwarn.onEnemy = function(model, track, id)
+        local tech = lab.techs.blockwarn
+        if notMe(model) and tech.warnSet[id] then
+            lab:arrow(model, "blockwarn", track, tech.opt.seconds)
+            markStat(tech, "warning: " .. model.Name)
+        end
+    end
+    lab.techs.blockesp.onEnemy = function(model, track, id)
+        local tech = lab.techs.blockesp
+        if notMe(model) and blockSet[id] then
+            lab:mark(model, "blockesp", tech.opt.color, tech.opt.seconds)
+            listen(track.Stopped, function() killMark("blockesp", model) end)
+            markStat(tech, "blocking: " .. model.Name)
+        end
+    end
+    lab.techs.deathcounter.onEnemy = function() end                   -- (it watches the character, not an animation: see watchEnemy)
+    do
+        lab.techs.counteresp.counterSet = TD.set(TD.ANIM.counterMove)
+        lab.techs.blockwarn.warnSet = TD.set(TD.ANIM.downslamWarning)
+    end
+
+    local function deathCounterOn(model)
+        local tech = lab.techs.deathcounter
+        if tech.enabled and lab.master and notMe(model) then
+            lab:mark(model, "deathcounter", tech.opt.color, tech.opt.seconds)
+            markStat(tech, "death counter: " .. model.Name)
+        end
+    end
+
     local function watchEnemy(model)
         if watched[model] or not model:IsA("Model") then return end
         local hum = model:FindFirstChildOfClass("Humanoid") or model:WaitForChild("Humanoid", 3)
         local animator = hum and (hum:FindFirstChildOfClass("Animator") or hum:WaitForChild("Animator", 3))
         if not animator then return end
-        watched[model] = listen(animator.AnimationPlayed, function(track) onEnemyAnim(model, track) end)
+        watched[model] = {
+            listen(animator.AnimationPlayed, function(track) onEnemyAnim(model, track) end),
+            listen(model.ChildAdded, function(child) if child.Name == "Death Counter" then deathCounterOn(model) end end),
+        }
+        if model:FindFirstChild("Death Counter") then deathCounterOn(model) end
+    end
+    local function unwatch(model)
+        for _, conn in pairs(watched[model] or {}) do pcall(function() conn:Disconnect() end) end
+        watched[model] = nil
     end
     local function unwatchEnemies()
-        for model, conn in pairs(watched) do pcall(function() conn:Disconnect() end); watched[model] = nil end
+        for model in pairs(watched) do unwatch(model) end
     end
     local function startEnemyWatch()
         if lab.liveConns then return end
@@ -1891,9 +2268,7 @@ function M.new(env)
         if not live then return end
         for _, m in ipairs(live:GetChildren()) do task.spawn(watchEnemy, m) end
         lab.liveConns[#lab.liveConns + 1] = listen(live.ChildAdded, function(m) task.spawn(watchEnemy, m) end)
-        lab.liveConns[#lab.liveConns + 1] = listen(live.ChildRemoved, function(m)
-            if watched[m] then pcall(function() watched[m]:Disconnect() end); watched[m] = nil end
-        end)
+        lab.liveConns[#lab.liveConns + 1] = listen(live.ChildRemoved, function(m) unwatch(m) end)
     end
     local function stopEnemyWatch()
         for _, c in ipairs(lab.liveConns or {}) do pcall(function() c:Disconnect() end) end
@@ -1914,7 +2289,11 @@ function M.new(env)
     end
 
     -------------------------------------------------------------------------------------------------------- mouse / key / poll triggers and the hook dash selection
-    local function keyOf(tech, optName) return Enum.KeyCode[tech.opt[optName] or tech.opt.key or ""] end
+    -- Enum.KeyCode["Nope"] throws, a name typed into a config must not be able to break the input handler
+    local function keyCode(name)
+        local ok, code = pcall(function() return Enum.KeyCode[name] end)
+        return ok and code or nil
+    end
 
     local function hookClear()
         local h = lab.hook
@@ -1992,21 +2371,21 @@ function M.new(env)
         end
         if ut ~= Enum.UserInputType.Keyboard then return end
         local code = input.KeyCode
+        if code == Enum.KeyCode.Q then lab.lagger:sent("dash", now) end
         local hook = lab.techs.hook
         if hook.enabled then
-            if code == Enum.KeyCode[hook.opt.selectKey] then
+            if code == keyCode(hook.opt.selectKey) then
                 local mouse = safe(function() return LocalPlayer:GetMouse() end)
                 local p = mouse and safe(function() return mouse.Hit.Position end)
                 if p then lab:hookSelectNear(p) end
                 return
-            elseif code == Enum.KeyCode[hook.opt.goKey] then
+            elseif code == keyCode(hook.opt.goKey) then
                 if lab.hook.target then lab:fire(hook, {manual = true}) else setStatus(hook, "no target selected (press the select key near them)") end
                 return
             end
         end
-        for _, id in ipairs({"m1reset", "emotedash"}) do
-            local tech = lab.techs[id]
-            if tech.enabled and code == Enum.KeyCode[tech.opt.key] then lab:fire(tech, {manual = true}) end
+        for _, tech in ipairs(lab.order) do
+            if tech.manual and tech.opt.key and tech.enabled and code == keyCode(tech.opt.key) then lab:fire(tech, {manual = true}) end
         end
         local nel = lab.techs.noendlag
         if nel.enabled and code == Enum.KeyCode.Q and lab.lastOwn.side and now - lab.lastOwn.side <= nel.opt.window then
@@ -2030,10 +2409,11 @@ function M.new(env)
         if not root then return end
         local o = tech.opt
         local me, look = vec(root.Position), vec(root.CFrame.LookVector)
+        local extraLead = pingOn(tech) and lab:lead() or 0                 -- he is already in the box by the time I see him walk into it
         local inside = false
         for _, e in ipairs(lab:enemies(o.range + 6)) do
             local v = vec(e.root.AssemblyLinearVelocity)
-            if TM.inFrontBox(me, look, vec(e.root.Position), v, {range = o.range, halfWidth = o.halfWidth, halfHeight = 3, lead = o.lead / 100}) then inside = true; break end
+            if TM.inFrontBox(me, look, vec(e.root.Position), v, {range = o.range, halfWidth = o.halfWidth, halfHeight = 3, lead = o.lead / 100 + extraLead}) then inside = true; break end
         end
         if inside and not catching and not (env.busy and env.busy()) then
             catching = true
@@ -2054,17 +2434,17 @@ function M.new(env)
 
     lab.techs.supa.run = function(ctx)
         local o = ctx.opt
-        if not ctx.wait(o.delay / 1000) then return end
+        if not ctx.wait(ctx.shift(o.delay / 1000)) then return end
         local entry = ctx.target(o.radius)
         if not entry then return ctx.abort("no target within " .. o.radius .. " studs") end
         ctx.commit()
         ctx.dash("W")
         if not ctx.wait(0.02) then return end
-        local me, tp = vec(ctx.root.Position), vec(entry.root.Position)
+        local me, tp = vec(ctx.root.Position), ctx.predicted(entry)
         local pts = TM.supaPoints(me, tp, {under = o.under, lock = o.lock, jitter = o.jitter, behind = false})
         if not ctx.moveTo(pts.under, 0.2 / o.speed, pts.look, "quad_out") then return end
         if o.behind and entry.root.Parent then
-            local now = vec(entry.root.Position)
+            local now = ctx.predicted(entry)
             -- the finishing spot is worked out from where I STARTED (standing under them there is no direction left to work from)
             local end2 = TM.supaPoints(me, now, {behind = true, behindOffset = o.behindOffset, targetLook = vec(entry.root.CFrame.LookVector)})
             if not ctx.moveTo(end2.behind, 0.1, now, "quad_out") then return end
@@ -2083,7 +2463,7 @@ function M.new(env)
         local sideMode = ({["Behind them"] = "Behind", Closest = "Closest", Left = "Left", Right = "Right"})[o.side] or "Closest"
         local function plan(side, dir)
             return TM.hookPoint(vec(ctx.root.Position), vec(entry.root.Position), vec(entry.root.AssemblyLinearVelocity), vec(entry.root.CFrame.LookVector),
-                {range = o.range, prediction = o.prediction, reach = o.reach, side = side or sideMode, dir = dir})
+                {range = o.range, prediction = ctx.scaled(o.prediction), reach = o.reach, side = side or sideMode, dir = dir})
         end
         local first = plan()
         local toEnd = TM.sub(first.point, vec(ctx.root.Position))
@@ -2127,7 +2507,7 @@ function M.new(env)
 
     lab.techs.loop.run = function(ctx)
         local o = ctx.opt
-        if not ctx.wait(o.delay / 1000 + 0.065) then return end
+        if not ctx.wait(ctx.shift(o.delay / 1000) + 0.065) then return end
         if ctx.info.track and ctx.info.track.IsPlaying == false and not ctx.info.manual then return ctx.abort("uppercut cancelled") end
         local entry = ctx.target(o.targetRadius)
         if not entry then return ctx.abort("no target within " .. o.targetRadius .. " studs") end
@@ -2135,18 +2515,19 @@ function M.new(env)
         local me = vec(ctx.root.Position)
         local h = TM.heightAbove(ctx.floorY(me), me.y, o.maxHeight)
         ctx.dash("W")
-        local startAngle = atan2(me.z - entry.root.Position.Z, me.x - entry.root.Position.X)
+        local c0 = ctx.predicted(entry)
+        local startAngle = atan2(me.z - c0.z, me.x - c0.x)
         local seed = math.random() * 1000
         local lastDash = clock() - o.dashEvery / 1000
         local ok = ctx.frames(o.orbitTime, function(a)
-            local tp = vec(entry.root.Position)
+            local tp = ctx.predicted(entry)
             local y = ctx.floorY(tp) + math.min(h, o.maxHeight)
             local pos, nxt = TM.orbitPose(tp, startAngle, a, {radius = o.radius, steps = 100, seed = seed, height = y})
             ctx.root.CFrame = CFrame.lookAt(V3(pos), V3(nxt))
             if clock() - lastDash >= o.dashEvery / 1000 then lastDash = clock(); lab:dash("W") end
         end)
         if not ok then return end
-        local tp = vec(entry.root.Position)
+        local tp = ctx.predicted(entry)
         local hover = TM.v3(tp.x, ctx.floorY(tp) + math.min(h, o.maxHeight), tp.z)
         if not ctx.moveTo(hover, o.settle / 1000, TM.add(tp, TM.v3(0, 0.1, 0)), "quad_out") then return end
         local bp = ctx.instance(Instance.new("BodyPosition"))
@@ -2165,7 +2546,7 @@ function M.new(env)
 
     local function jumpLock(ctx)
         local o = ctx.opt
-        if not ctx.wait(o.detect) then return end
+        if not ctx.wait(ctx.shift(o.detect)) then return end
         if o.pauseOnBlock and ctx.enemyBlocking(o.radius) then return ctx.abort("paused: somebody is blocking") end
         ctx.commit()
         ctx.lockRotation()
@@ -2173,7 +2554,7 @@ function M.new(env)
         ctx.dash("W")
         if not ctx.wait(o.flick) then return end
         local entry = ctx.target(o.radius)
-        if entry then ctx.faceLoop(function() return entry.root.Parent and vec(entry.root.Position) or nil end, o.lock, o.smooth) end
+        if entry then ctx.faceLoop(function() return entry.root.Parent and ctx.predicted(entry) or nil end, o.lock, o.smooth) end
         ctx.wait(math.max(o.lock, 1.2))
     end
     lab.techs.loop2.run = jumpLock
@@ -2181,12 +2562,12 @@ function M.new(env)
 
     lab.techs.kiba.run = function(ctx)
         local o = ctx.opt
-        if not ctx.wait(o.delay / 1000) then return end
+        if not ctx.wait(ctx.shift(o.delay / 1000)) then return end
         local entry = ctx.target(o.radius)
         if not entry then return ctx.abort("no target within " .. o.radius .. " studs") end
         ctx.commit()
         if o.mode == "Orbit (Kitty)" and o.pingWait then
-            if not ctx.wait(TM.pingWait(env.pingMs and env.pingMs() or 60, 1.3, 0.03, 0.22)) then return end
+            if not ctx.wait(TM.pingWait(lab:pingMs() or 60, 1.3, 0.03, 0.22)) then return end
         end
         ctx.dash("W")
         -- a part that follows the target (hanging on it / circling it), and the root is held to it by constraints that are always removed
@@ -2204,14 +2585,15 @@ function M.new(env)
         ctx.frames(o.hold, function(a)
             if not entry.root.Parent then return end
             local t = entry.root
+            local ahead = V3(TM.sub(ctx.predicted(entry), vec(t.Position)))      -- how far ahead of the picture he already is
             if o.mode == "Orbit (Kitty)" then
                 local lap = (a * o.hold) / o.spin
-                local center = t.Position + Vector3.new(0, o.orbitHeight, 0)
+                local center = t.Position + ahead + Vector3.new(0, o.orbitHeight, 0)
                 local ang = 2 * math.pi * lap
                 local pos = center + Vector3.new(math.cos(ang) * o.orbitRadius, 0, math.sin(ang) * o.orbitRadius)
-                follow.CFrame = CFrame.lookAt(pos, t.Position)
+                follow.CFrame = CFrame.lookAt(pos, t.Position + ahead)
             else
-                follow.CFrame = t.CFrame * CFrame.Angles(math.rad(o.pitch), 0, 0)
+                follow.CFrame = (t.CFrame + ahead) * CFrame.Angles(math.rad(o.pitch), 0, 0)
             end
             if not snapped then snapped = true; ctx.root.CFrame = follow.CFrame end
         end)
@@ -2219,7 +2601,7 @@ function M.new(env)
 
     lab.techs.twisted.run = function(ctx)
         local o = ctx.opt
-        if not ctx.wait(o.wait / 1000) then return end
+        if not ctx.wait(ctx.shift(o.wait / 1000)) then return end
         ctx.commit()
         ctx.root.CFrame = ctx.root.CFrame * CFrame.new(0, 0, o.stepBack)
         ctx.dash(o.dashKey)
@@ -2227,7 +2609,7 @@ function M.new(env)
             local entry = ctx.target(30)
             if entry then
                 ctx.lockRotation()
-                ctx.faceLoop(function() return entry.root.Parent and vec(entry.root.Position) or nil end, 0.3, 1000)
+                ctx.faceLoop(function() return entry.root.Parent and ctx.predicted(entry) or nil end, 0.3, 1000)
                 ctx.wait(0.3)
             end
         end
@@ -2235,8 +2617,7 @@ function M.new(env)
 
     lab.techs.kyoto.run = function(ctx)
         local o = ctx.opt
-        if not ctx.wait(o.wait) then return end
-        if not ctx.wait(o.startDelay / 1000) then return end
+        if not ctx.wait(ctx.shift(o.wait) + o.startDelay / 1000) then return end
         ctx.commit()
         local names = o.moveName ~= "" and {o.moveName} or TD.TOOLS.lethal
         local ok, why = ctx.useMove(names)
@@ -2256,14 +2637,14 @@ function M.new(env)
 
     lab.techs.dunk.run = function(ctx)
         local o = ctx.opt
-        if not ctx.wait(o.wait) then return end
+        if not ctx.wait(ctx.shift(o.wait)) then return end
         ctx.commit()
         ctx.root.CFrame = ctx.root.CFrame + Vector3.new(0, o.height, 0)
     end
 
     lab.techs.surf.run = function(ctx)
         local o = ctx.opt
-        if not ctx.wait(o.wait) then return end
+        if not ctx.wait(ctx.shift(o.wait)) then return end
         ctx.commit()
         local look = TM.unit(TM.flat(vec(ctx.root.CFrame.LookVector)), TM.v3(0, 0, -1))
         local dest = TM.add(vec(ctx.root.Position), TM.scale(look, o.distance))
@@ -2282,7 +2663,7 @@ function M.new(env)
 
     lab.techs.flip.run = function(ctx)
         local o = ctx.opt
-        if not ctx.wait(o.delay / 1000) then return end
+        if not ctx.wait(ctx.shift(o.delay / 1000)) then return end
         ctx.commit()
         local keepVel = ctx.root.AssemblyLinearVelocity
         ctx.lockRotation()
@@ -2389,6 +2770,111 @@ function M.new(env)
         ctx.wait(o.duration)
     end
 
+    -- cast a move for the new combo techs: by name (Console Move remote), or by hotbar slot
+    local function castMove(ctx, o, defaultNames)
+        local names = (o.moveName and o.moveName ~= "") and {o.moveName} or defaultNames
+        if names then return ctx.useMove(names) end
+        return ctx.key(TD.HOTBAR[tonumber(o.slot) or 1] or "One")
+    end
+
+    lab.techs.backdash.run = function(ctx)
+        local o = ctx.opt
+        ctx.commit()
+        if o.aerial then
+            ctx.jump(o.jumpPower)
+            if not ctx.wait(o.aerialDelay / 1000) then return end
+        end
+        ctx.dash("S")
+        if not ctx.wait(o.delay / 1000) then return end
+        local ok, why = castMove(ctx, o)
+        if not ok then ctx.say("cast failed: " .. tostring(why)) end
+    end
+
+    lab.techs.microdash.run = function(ctx)
+        local o = ctx.opt
+        local key = (o.side == "Left" and "A") or (o.side == "Right" and "D") or nil
+        if not key then
+            local entry = ctx.target(60)
+            key = entry and sideKeyFor(TM.sub(vec(entry.root.Position), vec(ctx.root.Position))) or "D"
+        end
+        ctx.commit()
+        ctx.dash(key)
+        if not ctx.wait(o.delay / 1000) then return end
+        local ok, why = castMove(ctx, o)
+        if not ok then ctx.say("cast failed: " .. tostring(why)) end
+    end
+
+    lab.techs.shovedash.run = function(ctx)
+        local o = ctx.opt
+        local names = {o.moveName ~= "" and o.moveName or TD.TOOLS.shove[1]}
+        if not lab:findTool(names) then return ctx.abort("you do not have " .. names[1]) end
+        ctx.commit()
+        ctx.useMove(names)
+        if not ctx.wait(o.m1Delay / 1000) then return end
+        ctx.m1()
+        if not ctx.wait(o.dashDelay / 1000) then return end
+        ctx.root.CFrame = ctx.root.CFrame * CFrame.new(0, 0, o.stepBack)
+        ctx.dash("W")
+    end
+
+    lab.techs.uppercutcatch.run = function(ctx)
+        local o = ctx.opt
+        if not ctx.wait(ctx.shift(o.delay / 1000)) then return end
+        local entry = ctx.target(o.radius)
+        if not entry then return ctx.abort("no target within " .. o.radius .. " studs") end
+        local close = TM.flatDist(vec(ctx.root.Position), ctx.predicted(entry)) <= o.holdRange
+        if not close and not ctx.dashReady("forward") then return ctx.abort("the forward dash is on cooldown") end
+        ctx.commit()
+        if close then ctx.holdKey("W", o.holdTime / 1000) else ctx.dash("W") end
+        if not ctx.wait(o.m1Delay / 1000) then return end
+        ctx.m1()
+        if close then ctx.wait(math.max(0, o.holdTime - o.m1Delay) / 1000) end     -- keep walking for the whole time: a finished run lets go of W
+    end
+
+    local function graspRun(ctx)
+        local o = ctx.opt
+        if not ctx.wait(ctx.shift(o.delay)) then return end
+        local names = o.moveName ~= "" and {o.moveName} or TD.TOOLS.grasp
+        if not lab:findTool(names) then return ctx.abort("you do not have " .. names[1]) end
+        ctx.commit()
+        for i = 1, o.count do
+            local ok, why = ctx.useMove(names)
+            if not ok then ctx.say("cast failed: " .. tostring(why)); break end
+            if i < o.count and not ctx.wait(o.gap / 1000) then return end
+        end
+    end
+    lab.techs.uppercutgrasp.run = graspRun
+    lab.techs.lethalgrasp.run = graspRun
+    lab.techs.flowinggrasp.run = graspRun
+
+    lab.techs.fastdash.run = function(ctx)
+        local o = ctx.opt
+        local sign = (ctx.info.anim and lab.techs.fastdash.leftSet[ctx.info.anim]) and -1 or 1
+        ctx.commit()
+        local right = TM.unit(TM.flat(vec(ctx.root.CFrame.RightVector)), TM.v3(1, 0, 0))
+        local dir = TM.scale(right, sign)
+        ctx.root.CFrame = ctx.root.CFrame + V3(TM.scale(dir, o.hop))
+        local burst = ctx.pushFlat(TM.scale(dir, o.speed))
+        local track = ctx.info.track
+        if track then
+            task.delay(o.stopAt, function()
+                if ctx.alive() and safe(function() return track.IsPlaying end) then pcall(function() track:Stop() end) end
+            end)
+        end
+        if not ctx.wait(o.time) then return end
+        burst.stop()
+    end
+
+    lab.techs.dashclip.run = function(ctx)
+        ctx.commit()
+        ctx.noclip()
+        ctx.wait(ctx.opt.duration)
+    end
+
+    do   -- animation sets of the new techs
+        lab.techs.fastdash.leftSet = TD.set(TD.ANIM.sideLeft)
+    end
+
     do   -- Auto Counter's animation sets (built once, they depend on the data only)
         local c = lab.techs.counter
         c.dashSet, c.m1Set = TD.set(TD.ANIM.counterDash), TD.set(TD.ANIM.counterM1)
@@ -2396,8 +2882,12 @@ function M.new(env)
 
     -------------------------------------------------------------------------------------------------------- switching, config, lifecycle
     local function refreshHooks()
-        local needEnemies = lab.techs.counter.enabled and lab.master
+        local needEnemies = false
+        for _, tech in ipairs(lab.order) do
+            if tech.watches and tech.enabled and lab.master then needEnemies = true end
+        end
         if needEnemies then startEnemyWatch() else stopEnemyWatch() end
+        if not lab.master then lab:clearMarks() end
     end
     function lab:setEnabled(id, on)
         local tech = lab.byId[id]
@@ -2405,7 +2895,11 @@ function M.new(env)
         tech.enabled = on == true
         if not tech.enabled then lab:cancel(id, "off") else setStatus(tech, tech.manual and (tech.key and ("ready (" .. tech.key .. ")") or "ready") or "armed") end
         if id == "hook" and not tech.enabled then hookClear() end
+        if tech.watches and not tech.enabled then lab:clearMarks(id) end
         refreshHooks()
+        if id == "deathcounter" and tech.enabled then
+            for model in pairs(watched) do if model:FindFirstChild("Death Counter") then deathCounterOn(model) end end     -- one that is already on somebody
+        end
     end
     function lab:setMaster(on)
         lab.master = on == true
@@ -2414,15 +2908,22 @@ function M.new(env)
     end
     function lab:setOption(id, key, value)
         local tech = lab.byId[id]
-        if not tech then return end
-        local test = TO.clean(tech.defs, {[key] = value})
-        tech.opt[key] = test[key]
+        if not tech then return false end
+        for _, d in ipairs(tech.defs) do
+            if d.key == key then
+                if not TO.valid(d, value) then return false end                  -- a value that makes no sense changes nothing
+                tech.opt[key] = TO.clean(tech.defs, {[key] = value})[key]
+                return true
+            end
+        end
+        return false
     end
     function lab:setInput(mode) if mode == "Auto" or mode == "Remote" or mode == "Keys" then lab.input = mode end end
     function lab:dashLeft(kind) return lab.dashClock:left(kind, clock()) end
 
     function lab:export()
-        local out = {enabled = {}, opts = {}, triggers = {}, input = lab.input, dashGuard = lab.dashGuard, releaseBlock = lab.releaseBlock, master = lab.master}
+        local out = {enabled = {}, opts = {}, triggers = {}, input = lab.input, dashGuard = lab.dashGuard, releaseBlock = lab.releaseBlock, master = lab.master,
+                     net = {strength = lab.net.strength, manual = lab.net.manual, interp = lab.net.interp, learn = lab.net.learn, ref = lab.net.ref}}
         for _, tech in ipairs(lab.order) do
             if tech.enabled then out.enabled[tech.id] = true end
             local diff = TO.diff(tech.defs, tech.opt)
@@ -2439,6 +2940,9 @@ function M.new(env)
         if type(saved.dashGuard) == "boolean" then lab.dashGuard = saved.dashGuard end
         if type(saved.releaseBlock) == "boolean" then lab.releaseBlock = saved.releaseBlock end
         if type(saved.master) == "boolean" then lab.master = saved.master end
+        if type(saved.net) == "table" then
+            for _, key in ipairs({"strength", "manual", "interp", "ref", "learn"}) do lab:setNet(key, saved.net[key]) end
+        end
         for _, tech in ipairs(lab.order) do
             tech.opt = TO.clean(tech.defs, type(saved.opts) == "table" and saved.opts[tech.id] or nil)
             local ids = type(saved.triggers) == "table" and saved.triggers[tech.id]
@@ -2458,6 +2962,7 @@ function M.new(env)
         lab:cancelAll("off")
         hookClear()
         stopEnemyWatch()
+        lab:clearMarks()
         for _, c in ipairs(lab.conns) do pcall(function() c:Disconnect() end) end
         for _, c in ipairs(charConns) do pcall(function() c:Disconnect() end) end
         lab.conns, charConns = {}, {}
@@ -5741,6 +6246,7 @@ local function __run()
             TechMath = TechMath, TechData = TechData, TechOptions = TechOptions,
             connect = connect, safe = safe, clock = os.clock,
             pingMs = function() return currentPing() end,
+            jitterMs = function() return PingState.model and PingState.model:jitter() or 0 end,
             busy = function() return macroRunning end,
             log = function(msg)                                   -- errors inside a tech: kept for "Copy the log", never thrown at the game
                 techLogs[#techLogs + 1] = string.format("%.1f  %s", os.clock(), tostring(msg))
@@ -5767,6 +6273,18 @@ local function __run()
             if lab.releaseBlock ~= on then lab.releaseBlock = on; markDirty() end
         end)
         local cooldownLabel = LabTab:Label("")
+        LabTab:Slider("Ping compensation (0 = off, 1 = full)", 0, 2, lab.net.strength, 0.05, function(v)
+            if lab.net.strength ~= v then lab:setNet("strength", v); markDirty() end
+        end)
+        LabTab:Slider("Typed ping in ms (0 = measure it)", 0, 600, lab.net.manual, 5, function(v)
+            if lab.net.manual ~= v then lab:setNet("manual", v); markDirty() end
+        end)
+        LabTab:Slider("Roblox's drawing delay for other players (ms)", 0, 250, lab.net.interp, 5, function(v)
+            if lab.net.interp ~= v then lab:setNet("interp", v); markDirty() end
+        end)
+        LabTab:Toggle("Measure how late my own animations arrive", lab.net.learn, function(on)
+            if lab.net.learn ~= on then lab:setNet("learn", on); markDirty() end
+        end, nil, "Every dash I send and the animation that answers it: the gap is used to start waits earlier and to date the dash cooldown")
         LabTab:Button("Panic - cancel every running tech", function()
             lab:cancelAll("cancelled: panic")
             toast("Tech Lab: everything cancelled")
@@ -5783,6 +6301,9 @@ local function __run()
                 acc = 0
                 local f, sd = lab:dashLeft("forward"), lab:dashLeft("side")
                 local text = string.format("Forward dash: %s   |   Side dash: %s", f > 0 and string.format("%.1f s", f) or "ready", sd > 0 and string.format("%.1f s", sd) or "ready")
+                local n = lab:netInfo()
+                text = text .. "\n" .. string.format("Ping %s ms (jitter %.0f)   |   my animations arrive %s after my input   |   other players are led by %.0f ms",
+                    n.ping and string.format("%.0f", n.ping) or "?", n.jitter, n.lag and string.format("%.0f ms", n.lag * 1000) or string.format("? (%d of 3 samples)", n.samples), n.lead * 1000)
                 if text ~= last then last = text; cooldownLabel.Text = text end
             end)
         end
@@ -5810,6 +6331,10 @@ local function __run()
                         if d.kind == "number" then api = sec:Slider(d.label, d.min, d.max, tech.opt[key], d.step, put)
                         elseif d.kind == "bool" then api = sec:Toggle(d.label, tech.opt[key], put, d.tip)
                         elseif d.kind == "choice" then api = sec:Dropdown(d.label, d.choices, tech.opt[key], put)
+                        elseif d.kind == "key" then
+                            local keys = {table.unpack(d.choices)}
+                            if not table.find(keys, tech.opt[key]) then keys[#keys + 1] = tech.opt[key] end           -- a key bound in the WindUI hub
+                            api = sec:Dropdown(d.label, keys, tech.opt[key], put)
                         else api = LabTab:Input(d.label, "", tech.opt[key], function(text) put((text:gsub("^%s+", ""):gsub("%s+$", ""))) end, sec.Body) end
                         controls[#controls + 1] = {def = d, api = api}
                     end

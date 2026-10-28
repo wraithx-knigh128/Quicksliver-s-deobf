@@ -29,6 +29,7 @@ M.ANIM = {
     surf            = {"12309835105"},                          -- Hunter's surf
     counterDash     = {"10479335397", "13380255751", "134775406437626"},     -- dashes Auto Counter answers
     counterM1       = {"10469493270", "10469630950", "10469639222", "10469643643"},   -- M1 swings Auto Counter answers
+    counterMove     = {"12351854556", "15311685628", "78521642007560"},     -- the animations of the counter moves (Counter ESP; your script listed three more that are no valid ids)
     slam            = {"10469639222", "13532604085", "13295919399", "13378751717", "14001963401", "15240176873", "16515448089", "17889471098", "104895379416342"},
     m1 = {"10469493270", "10469630950", "10469639222", "10469643643", "13532562418", "13532600125", "13532604085", "13294471966", "13491635433", "13296577783",
           "13295919399", "13295936866", "13370310513", "13390230973", "13378751717", "13378708199", "14004222985", "13997092940", "14001963401", "14136436157",
@@ -40,7 +41,16 @@ M.TOOLS = {
     lethal = {"Lethal Whirlwind Stream"},
     counters = {"Prey's Peril", "Split Second Counter"},
     grasp = {"Hunter's Grasp", "Hunterzzzzz's Grasp"},
+    shove = {"Shove"},
 }
+
+-- hotbar slots 1-4 are the four moves (Enum.KeyCode names)
+M.HOTBAR = {"One", "Two", "Three", "Four"}
+
+-- named highlight colours for the Awareness techs (0-255)
+M.COLORS = {Red = {255, 60, 60}, Orange = {255, 150, 40}, Yellow = {255, 220, 60}, Green = {80, 220, 120}, Cyan = {60, 220, 255}, Blue = {70, 130, 255},
+            Purple = {170, 100, 255}, White = {240, 240, 240}}
+M.COLOR_NAMES = {"Red", "Orange", "Yellow", "Green", "Cyan", "Blue", "Purple", "White"}
 
 -- dash cooldowns in seconds (from the script: forward 4.8; the side dash figure is the community number and unverified)
 M.DASH_COOLDOWN = {forward = 4.8, side = 2.0}

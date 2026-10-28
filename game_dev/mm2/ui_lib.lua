@@ -1024,6 +1024,30 @@ function UILib.new(cfg)
             return el
         end
 
+        -- a text box on the right of the row (the WindUI menu has one too); Callback(text) runs when the box loses focus with a new text
+        function tab:Input(o)
+            local row = newRow(o.Title, o.Desc, 150, {})
+            local box = mk("TextBox", {Name = "Box", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -12, 0.5, 0), Size = UDim2.fromOffset(136, 26), Text = o.Default or "",
+                PlaceholderText = o.Placeholder or "", ClearTextOnFocus = false, Font = Enum.Font.Gotham, TextSize = 12, BorderSizePixel = 0, TextTruncate = Enum.TextTruncate.AtEnd}, row)
+            bind(box, "BackgroundColor3", "rowHover"); bind(box, "TextColor3", "text"); bind(box, "PlaceholderColor3", "sub"); corner(box, 7); stroke(box)
+            local el = {Value = o.Default or "", Title = o.Title}
+            function el:Set(v, silent)
+                v = tostring(v or "")
+                el.Value = v
+                box.Text = v
+                if not silent and o.Callback then fire(o.Callback, v) end
+            end
+            connect(box.FocusLost, function()
+                local v = box.Text
+                if v ~= el.Value then
+                    el.Value = v
+                    if o.Callback then fire(o.Callback, v) end
+                end
+            end)
+            addElement(el, o.Flag)
+            return el
+        end
+
         function tab:Keybind(o)
             local row, _, rowSkin = newRow(o.Title, o.Desc, 100, {})
             local btn = mk("TextButton", {Name = "Key", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -12, 0.5, 0), Size = UDim2.fromOffset(84, 26), Text = "",

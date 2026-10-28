@@ -1,7 +1,8 @@
 """Mutation check of the Tech Lab tests (from game_dev/):  LUAU=/path/to/luau python3 tools/mutate_tsb.py
 Each entry breaks tech_lab.lua in ONE deliberate way (cleanup skipped, a guard removed, a restore forgotten ...) and runs tests/run_tsb.py on the broken copy:
 a test suite that cannot fail proves nothing, so every mutant must make it fail.
-Known equivalent mutant: "camera hold never unbound" - the render step also unbinds itself the next frame when the run is cancelled, so the suite cannot tell the two apart."""
+Known equivalent mutants: "camera hold never unbound" - the render step also unbinds itself the next frame when the run is cancelled, so the suite cannot tell the two
+apart; "new: existing death counter missed" - two code paths find a Death Counter that was there first, and they only differ when WaitForChild yields (real Roblox, not the fake world)."""
 import os, subprocess, sys, tempfile
 src = open("tech_lab.lua", encoding="utf-8").read()
 MUTANTS = {
@@ -23,9 +24,28 @@ MUTANTS = {
  "side m1 not restored": ("if ctx.root.Parent then ctx.root.CFrame = ctx.root.CFrame * CFrame.Angles(0, -ang, 0) end", ""),
  "rotation not restored": ("conn:Disconnect(); if hum.Parent then hum.AutoRotate = prev end", "conn:Disconnect()"),
  "camera hold never unbound": ("c.onFinish(unbind)\n", ""),
+ "ping: no shift": ("return TM.shiftWait(sec, lab:lag(), lab.net.strength)", "return sec"),
+ "ping: no lead": ("function c.lead() return pingOn(tech) and lab:lead() or 0 end", "function c.lead() return 0 end"),
+ "ping: hook not scaled": ("prediction = ctx.scaled(o.prediction)", "prediction = o.prediction"),
+ "ping: learner not fed": ("            lab.lagger:seen(\"dash\", now)\n", ""),
+ "ping: dash clock ignores lag": ("lab.dashClock:seen(kind, now, lag, lab:jitterMs() / 1000)", "lab.dashClock:seen(kind, now)"),
+ "ping: window from the animation": ("lab.lastOwn[kind] = now - lag", "lab.lastOwn[kind] = now"),
+ "ping: per-tech switch ignored": ("local function pingOn(tech) return tech.opt.ping ~= false end", "local function pingOn(tech) return true end"),
+ "new: walk released early": ("        if close then ctx.wait(math.max(0, o.holdTime - o.m1Delay) / 1000) end", ""),
+ "new: noclip never restored": ("            cleanups[#cleanups + 1] = function() for _, part in ipairs(parts) do if part.Parent then part.CanCollide = true end end end", ""),
+ "new: noclip not re-applied": ("local conn = listen(RunService.Stepped, apply)", "local conn = nil"),
+ "new: master off keeps marks": ("        if not lab.master then lab:clearMarks() end", ""),
+ "new: existing death counter missed": ("        if model:FindFirstChild(\"Death Counter\") then deathCounterOn(model) end\n    end\n    local function unwatch", "    end\n    local function unwatch"),
+ "new: own counter marked": ("        if notMe(model) and tech.counterSet[id] then", "        if tech.counterSet[id] then"),
+ "new: grasp spam gap ignored": ("            if i < o.count and not ctx.wait(o.gap / 1000) then return end", ""),
+ "new: fast dash keeps animation": ("if ctx.alive() and safe(function() return track.IsPlaying end) then pcall(function() track:Stop() end) end", ""),
+ "new: shove without tool check": ("        if not lab:findTool(names) then return ctx.abort(\"you do not have \" .. names[1]) end\n        ctx.commit()\n        ctx.useMove(names)", "        ctx.commit()\n        ctx.useMove(names)"),
+ "new: catch ignores dash cooldown": ("if not close and not ctx.dashReady(\"forward\") then return ctx.abort(\"the forward dash is on cooldown\") end", ""),
+ "new: marks outlive destroy": ("        stopEnemyWatch()\n        lab:clearMarks()", "        stopEnemyWatch()"),
  "moving techs overlap": ("                if other ~= tech and other.moves and other.running then", "                if false then"),
 }
-EQUIVALENT = {"camera hold never unbound"}
+# the camera hold also unbinds itself the next frame; the Death Counter check at watch time is also done by setEnabled's loop in a world where WaitForChild never yields
+EQUIVALENT = {"camera hold never unbound", "new: existing death counter missed"}
 bad = 0
 with tempfile.TemporaryDirectory() as tmp:
     for name, (a, b) in MUTANTS.items():

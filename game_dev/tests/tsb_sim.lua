@@ -22,9 +22,10 @@ local DASH_KIND = {W = "forward", S = "forward", A = "side", D = "side"}
 
 function S.new(opts)
     opts = opts or {}
-    local W = World.new({ping = opts.ping or 60})
+    local W = World.new({ping = opts.ping or 60, gethui = opts.gethui})
     W:installJson()
-    local self = setmetatable({W = W, log = {}, statuses = {}, ignored = {}, dashReadyAt = {}, enemyVel = {}, mouseHit = nil, rayHit = nil, serverDashMoves = false}, S)
+    local self = setmetatable({W = W, log = {}, statuses = {}, ignored = {}, dashReadyAt = {}, enemyVel = {}, truth = {}, mouseHit = nil, rayHit = nil, serverDashMoves = false,
+                               animMode = opts.animMode or "predicted", jitter = opts.jitter or 0, interp = 0.08}, S)
     local env = W.env
     local E = env.Enum
 
@@ -58,6 +59,14 @@ function S.new(opts)
 
     ---------------------------------------------------------------------------------------------------- the services and the arena
     W.virtualInput = W.game:GetService("VirtualInputManager")
+    env.listfiles = function(dir)                                  -- the executor's file list: every file written under `dir`
+        local out = {}
+        for path in pairs(W.files) do
+            if path:sub(1, #dir + 1) == dir .. "/" then out[#out + 1] = path end
+        end
+        table.sort(out)
+        return out
+    end
     local live = W:make("Folder", "Live", {}, W.workspace)
     self.live = live
     self.floor = W:make("Part", "Baseplate", {CFrame = env.CFrame.new(0, -0.5, 0), Size = env.Vector3.new(2000, 1, 2000), Anchored = true}, W.workspace)
@@ -142,7 +151,9 @@ function S.new(opts)
     end
     local function stopTrack(track)
         local td = rawget(track, "__d")
+        local wasPlaying = td.props.IsPlaying
         td.props.IsPlaying = false
+        if wasPlaying then W.fire(W.signalOf(track, "Stopped")) end
         local animator = td.animator
         if animator then
             local list = rawget(animator, "__d").tracks or {}
@@ -186,6 +197,19 @@ function S.new(opts)
     W.M.Stop = function(track) stopTrack(track) end
     W.M.AdjustSpeed = function() end
 
+    -- key events sent through the virtual input, with their time
+    self.keys = {}
+    local origKey = W.M.SendKeyEvent
+    W.M.SendKeyEvent = function(vim, pressed, key, ...)
+        self.keys[#self.keys + 1] = {name = key.Name, down = pressed, t = W.now}
+        return origKey(vim, pressed, key, ...)
+    end
+    function self:keyTimes(name, down)
+        local out = {}
+        for _, k in ipairs(self.keys) do if k.name == name and k.down == (down ~= false) then out[#out + 1] = k.t end end
+        return out
+    end
+
     ---------------------------------------------------------------------------------------------------- the mouse, rays, raycasts
     W.M.GetMouse = function() return {Hit = self.mouseHit or env.CFrame.new(0, 0, -50)} end
     W.M.ScreenPointToRay = function(cam, x, y)
@@ -207,14 +231,16 @@ function S.new(opts)
         local rec = {goal = a.Goal, dash = argName(a.Dash), key = argName(a.Key), mobile = a.Mobile, t = W.now,
                      tool = a.Tool and a.Tool.Name or nil, pos = self.meRoot and {self.meRoot.Position.X, self.meRoot.Position.Y, self.meRoot.Position.Z}}
         self.log[#self.log + 1] = rec
+        rec.arrive = W.now + W.pingMs / 2000
         if a.Goal == "KeyPress" and rec.key == "Q" and rec.dash then
             local kind = DASH_KIND[rec.dash]
-            if W.now < (self.dashReadyAt[kind] or 0) then
+            if rec.arrive < (self.dashReadyAt[kind] or 0) then
                 self.ignored[#self.ignored + 1] = rec
                 return
             end
-            self.dashReadyAt[kind] = W.now + (kind == "forward" and 4.8 or 2.0)
-            self:anim(self.meChar, DASH_ANIM[rec.dash], 0.3)
+            self.dashReadyAt[kind] = rec.arrive + (kind == "forward" and 4.8 or 2.0)
+            local lag = self:ownAnimLag()
+            if lag > 0 then env.task.delay(lag, function() self:anim(self.meChar, DASH_ANIM[rec.dash], 0.3) end) else self:anim(self.meChar, DASH_ANIM[rec.dash], 0.3) end
             if self.serverDashMoves then
                 local root = self.meRoot
                 local look = root.CFrame.LookVector
@@ -237,6 +263,11 @@ function S.new(opts)
 
     ---------------------------------------------------------------------------------------------------- physics: velocity constraints move parts; enemies keep their velocity
     W.preStep = function(dt)
+        if self.humanoidCollides ~= false and self.meChar then              -- the Humanoid switches collisions back on every frame (a noclip has to be re-applied)
+            for _, part in ipairs(W.M.GetDescendants(self.meChar)) do
+                if part:IsA("BasePart") and not part.CanCollide then rawget(part, "__d").props.CanCollide = true end
+            end
+        end
         for _, inst in ipairs(W.M.GetDescendants(W.workspace)) do
             local cls = inst.ClassName
             if cls == "LinearVelocity" or cls == "BodyVelocity" then
@@ -249,7 +280,16 @@ function S.new(opts)
         end
         for model, v in pairs(self.enemyVel) do
             local root = self:root(model)
-            if root then rawget(root, "__d").props.CFrame = root.CFrame + env.Vector3.new(v[1] * dt, v[2] * dt, v[3] * dt) end
+            local t = self.truth[model]
+            if root and t then                                               -- real position moves on; the client shows it a moment late
+                t[1], t[2], t[3] = t[1] + v[1] * dt, t[2] + v[2] * dt, t[3] + v[3] * dt
+                local d = self:displayDelay()
+                local rd = rawget(root, "__d")
+                rd.props.CFrame = env.CFrame.new(t[1] - v[1] * d, t[2] - v[2] * d, t[3] - v[3] * d)
+                rd.props.AssemblyLinearVelocity = env.Vector3.new(v[1], v[2], v[3])
+            elseif root then
+                rawget(root, "__d").props.CFrame = root.CFrame + env.Vector3.new(v[1] * dt, v[2] * dt, v[3] * dt)
+            end
         end
         for i = #(self.pushes or {}), 1, -1 do
             local p = self.pushes[i]
@@ -275,6 +315,7 @@ function S.new(opts)
             safe = function(fn, ...) local ok, r = pcall(fn, ...); if ok then return r end end,
             clock = function() return W.now end,
             pingMs = function() return W.pingMs end,
+            jitterMs = function() return self.jitter end,
             busy = function() return self.busy end,
             log = function(msg) self.logged = self.logged or {}; self.logged[#self.logged + 1] = msg end,
             toast = function(msg) self.toasts[#self.toasts + 1] = msg end,
@@ -286,6 +327,27 @@ function S.new(opts)
     end
 
     function self:run(seconds) W:run(seconds) end
+
+    -- The network (ping = W.pingMs, a round trip). A command I send reaches the server ping / 2 later. My own animations are either played by my client at once
+    -- ("predicted") or by the server and sent back ("server": they show up a whole ping after my input). Other players are drawn (ping / 2 + interp) in the past.
+    function self:ownAnimLag() return self.animMode == "server" and W.pingMs / 1000 or 0 end
+    function self:displayDelay() return (W.pingMs / 2) / 1000 + self.interp end
+    -- the player presses a button whose animation `id` the server plays; returns the time of the press and the time the SERVER got it
+    function self:press(id, seconds)
+        local t0 = W.now
+        self.serverTime = self.serverTime or {}
+        self.serverTime[id] = t0 + W.pingMs / 2000
+        local lag = self:ownAnimLag()
+        if lag > 0 then env.task.delay(lag, function() self:anim(self.meChar, id, seconds) end) else self:anim(self.meChar, id, seconds) end
+        return t0, self.serverTime[id]
+    end
+    -- somebody walks at constant velocity v ({x,y,z}); the world moves him for real, what the client shows is old by displayDelay()
+    function self:walk(model, v)
+        local p = self:pos(model)
+        self.truth[model] = {p[1], p[2], p[3]}
+        self.enemyVel[model] = v
+    end
+    function self:truePos(model) local t = self.truth[model]; return t and {t[1], t[2], t[3]} or self:pos(model) end
     -- how many handlers of a fake signal are still connected
     function self:connected(signal)
         local n = 0
@@ -297,7 +359,7 @@ function S.new(opts)
         local out = {}
         local bad = {LinearVelocity = true, BodyVelocity = true, BodyGyro = true, BodyPosition = true, AlignPosition = true, AlignOrientation = true, Attachment = true}
         for _, inst in ipairs(W.M.GetDescendants(W.workspace)) do
-            if bad[inst.ClassName] or inst.Name == "TechLabFollow" or inst.Name == "TechLabHook" then out[#out + 1] = inst.ClassName .. ":" .. inst.Name end
+            if bad[inst.ClassName] or inst.Name == "TechLabFollow" or inst.Name == "TechLabHook" or inst.Name == "TechLabMark" or inst.Name == "TechLabArrow" then out[#out + 1] = inst.ClassName .. ":" .. inst.Name end
         end
         return out
     end

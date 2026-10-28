@@ -2797,6 +2797,7 @@ local function __run()
             TechMath = TechMath, TechData = TechData, TechOptions = TechOptions,
             connect = connect, safe = safe, clock = os.clock,
             pingMs = function() return currentPing() end,
+            jitterMs = function() return PingState.model and PingState.model:jitter() or 0 end,
             busy = function() return macroRunning end,
             log = function(msg)                                   -- errors inside a tech: kept for "Copy the log", never thrown at the game
                 techLogs[#techLogs + 1] = string.format("%.1f  %s", os.clock(), tostring(msg))
@@ -2823,6 +2824,18 @@ local function __run()
             if lab.releaseBlock ~= on then lab.releaseBlock = on; markDirty() end
         end)
         local cooldownLabel = LabTab:Label("")
+        LabTab:Slider("Ping compensation (0 = off, 1 = full)", 0, 2, lab.net.strength, 0.05, function(v)
+            if lab.net.strength ~= v then lab:setNet("strength", v); markDirty() end
+        end)
+        LabTab:Slider("Typed ping in ms (0 = measure it)", 0, 600, lab.net.manual, 5, function(v)
+            if lab.net.manual ~= v then lab:setNet("manual", v); markDirty() end
+        end)
+        LabTab:Slider("Roblox's drawing delay for other players (ms)", 0, 250, lab.net.interp, 5, function(v)
+            if lab.net.interp ~= v then lab:setNet("interp", v); markDirty() end
+        end)
+        LabTab:Toggle("Measure how late my own animations arrive", lab.net.learn, function(on)
+            if lab.net.learn ~= on then lab:setNet("learn", on); markDirty() end
+        end, nil, "Every dash I send and the animation that answers it: the gap is used to start waits earlier and to date the dash cooldown")
         LabTab:Button("Panic - cancel every running tech", function()
             lab:cancelAll("cancelled: panic")
             toast("Tech Lab: everything cancelled")
@@ -2839,6 +2852,9 @@ local function __run()
                 acc = 0
                 local f, sd = lab:dashLeft("forward"), lab:dashLeft("side")
                 local text = string.format("Forward dash: %s   |   Side dash: %s", f > 0 and string.format("%.1f s", f) or "ready", sd > 0 and string.format("%.1f s", sd) or "ready")
+                local n = lab:netInfo()
+                text = text .. "\n" .. string.format("Ping %s ms (jitter %.0f)   |   my animations arrive %s after my input   |   other players are led by %.0f ms",
+                    n.ping and string.format("%.0f", n.ping) or "?", n.jitter, n.lag and string.format("%.0f ms", n.lag * 1000) or string.format("? (%d of 3 samples)", n.samples), n.lead * 1000)
                 if text ~= last then last = text; cooldownLabel.Text = text end
             end)
         end
@@ -2866,6 +2882,10 @@ local function __run()
                         if d.kind == "number" then api = sec:Slider(d.label, d.min, d.max, tech.opt[key], d.step, put)
                         elseif d.kind == "bool" then api = sec:Toggle(d.label, tech.opt[key], put, d.tip)
                         elseif d.kind == "choice" then api = sec:Dropdown(d.label, d.choices, tech.opt[key], put)
+                        elseif d.kind == "key" then
+                            local keys = {table.unpack(d.choices)}
+                            if not table.find(keys, tech.opt[key]) then keys[#keys + 1] = tech.opt[key] end           -- a key bound in the WindUI hub
+                            api = sec:Dropdown(d.label, keys, tech.opt[key], put)
                         else api = LabTab:Input(d.label, "", tech.opt[key], function(text) put((text:gsub("^%s+", ""):gsub("%s+$", ""))) end, sec.Body) end
                         controls[#controls + 1] = {def = d, api = api}
                     end

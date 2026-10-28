@@ -30,6 +30,17 @@ local function clean(sim, name)
     check(#sim:leftovers() == 0, name .. ": instances left behind: " .. table.concat(sim:leftovers(), ","))
 end
 local function dashes(sim, dir) return sim:count({goal = "KeyPress", key = "Q", dash = dir}) end
+local function learnLag(sim, lab, n)                              -- send a few dashes so the lab can see how late my animations arrive
+    for _ = 1, n or 3 do
+        sim.dashReadyAt = {}
+        lab:dash("W")
+        sim:run(0.5)
+    end
+    lab.dashClock:reset()
+    sim.dashReadyAt = {}
+    sim:clearLog()
+end
+
 
 ------------------------------------------------------------------------------------------------ the catalogue
 section("catalogue")
@@ -43,7 +54,7 @@ do
         ids[d.id] = true
         check(groups[d.group], d.id .. ": group " .. tostring(d.group) .. " is not listed")
         check(type(d.title) == "string" and #d.title > 0 and type(d.desc) == "string" and #d.desc > 10 and type(d.when) == "string", d.id .. ": needs title, desc, when")
-        check(lab.byId[d.id] and (type(lab.byId[d.id].run) == "function" or d.poll), d.id .. ": has no sequence")
+        check(lab.byId[d.id] and (type(lab.byId[d.id].run) == "function" or d.poll or d.watches), d.id .. ": has no sequence")
         local keys = {}
         for _, od in ipairs(d.opts) do
             check(not keys[od.key], d.id .. ": duplicate option " .. od.key)
@@ -61,7 +72,7 @@ do
         end
         if d.manual and d.id ~= "hook" then check(keys.key, d.id .. ": manual tech without a key option") end
     end
-    check(#Lab.DEFS == 20, "20 techs expected, got " .. #Lab.DEFS)
+    check(#Lab.DEFS == 33, "33 techs expected, got " .. #Lab.DEFS)
     check(TM and sim.TD, "modules loaded")
     clean(sim, "catalogue")
 end
@@ -711,6 +722,434 @@ do
     for _, i in ipairs(sim.W.M.GetDescendants(sim.W.workspace)) do if i.ClassName == "Highlight" then lights = lights + 1 end end
     check(lights == 0, "the highlight is removed")
     clean(sim, "destroy")
+end
+
+------------------------------------------------------------------------------------------------ techs from the wiki descriptions
+section("new techs")
+local GRASP, SHOVE = "Hunter's Grasp", "Shove"
+local function firstLog(sim, filter)
+    for _, r in ipairs(sim.log) do
+        local ok = true
+        for k, v in pairs(filter) do if r[k] ~= v then ok = false; break end end
+        if ok then return r end
+    end
+end
+do   -- Backdash Cancel
+    local sim, lab = arena()
+    lab:setEnabled("backdash", true)
+    sim.W:keyDown("B")
+    sim:run(0.5)
+    local dash = firstLog(sim, {goal = "KeyPress", dash = "S"})
+    local keyT = sim:keyTimes("One")[1]
+    check(dash ~= nil, "B sends a back dash")
+    check(keyT and dash and near(keyT - dash.t, 0.09, 0.03), "...and hotbar slot 1 about 90 ms later (" .. tostring(keyT and dash and keyT - dash.t) .. ")")
+    check(lab.techs.backdash.status:find("done"), "status: " .. lab.techs.backdash.status)
+    -- aerial: the jump comes first
+    sim.dashReadyAt = {}
+    lab.dashClock:reset()
+    lab.techs.backdash.cooldownUntil = 0
+    lab:setOption("backdash", "aerial", true)
+    lab:setOption("backdash", "slot", "3")
+    local before = #sim.log
+    sim.W:keyDown("B")
+    sim:run(0.05)
+    check(sim.meRoot.AssemblyLinearVelocity.Y > 40, "aerial: the jump is set before the dash")
+    sim:run(0.5)
+    check(#sim:keyTimes("Three") == 1, "slot 3 is used when chosen")
+    -- by name: the Console Move remote, not a key
+    lab:setOption("backdash", "aerial", false)
+    lab:setOption("backdash", "moveName", "Lethal Whirlwind Stream")
+    sim:give(sim.mePlayer, "Lethal Whirlwind Stream")
+    sim.dashReadyAt = {}; lab.dashClock:reset(); lab.techs.backdash.cooldownUntil = 0
+    sim.W:keyDown("B")
+    sim:run(0.5)
+    check(sim:count({goal = "Console Move", tool = "Lethal Whirlwind Stream"}) == 1, "a move named in the options is cast through the remote")
+    -- the forward dash is on cooldown: refused, and says so
+    sim.dashReadyAt = {}
+    sim:anim(sim.meChar, FORWARD, 0.3)
+    sim:run(0.4)
+    lab.techs.backdash.cooldownUntil = 0
+    local n = sim:count({goal = "KeyPress", dash = "S"})
+    sim.W:keyDown("B")
+    sim:run(0.3)
+    check(sim:count({goal = "KeyPress", dash = "S"}) == n and lab.techs.backdash.status:find("cooldown"), "on cooldown: " .. lab.techs.backdash.status)
+    clean(sim, "backdash")
+end
+do   -- Micro Dash
+    local sim, lab = arena({rival = false})
+    sim:addEnemy("Left", {-10, 3, -5})
+    lab:setEnabled("microdash", true)
+    sim.W:keyDown("X")
+    sim:run(0.4)
+    check(dashes(sim, "A") == 1 and dashes(sim, "D") == 0, "a target on the left: side dash to the left")
+    local dash = firstLog(sim, {goal = "KeyPress", dash = "A"})
+    local keyT = sim:keyTimes("One")[1]
+    check(keyT and near(keyT - dash.t, 0.06, 0.03), "the move follows 60 ms later")
+    lab:setOption("microdash", "side", "Right")
+    sim.dashReadyAt = {}; lab.dashClock:reset(); lab.techs.microdash.cooldownUntil = 0
+    sim.W:keyDown("X")
+    sim:run(0.4)
+    check(dashes(sim, "D") == 1, "Right means D")
+    clean(sim, "microdash")
+end
+do   -- Shove Dash
+    local sim, lab = arena()
+    lab:setEnabled("shovedash", true)
+    sim.W:keyDown("Z")
+    sim:run(0.3)
+    check(lab.techs.shovedash.status:find("do not have Shove") and sim:count({goal = "Console Move"}) == 0, "no Shove in the backpack: " .. lab.techs.shovedash.status)
+    sim:give(sim.mePlayer, SHOVE)
+    local z0 = sim:pos(sim.meChar)[3]
+    sim.W:keyDown("Z")
+    sim:run(0.5)
+    local cast, m1 = firstLog(sim, {goal = "Console Move", tool = SHOVE}), firstLog(sim, {goal = "LeftClick"})
+    local dash = firstLog(sim, {goal = "KeyPress", dash = "W"})
+    check(cast and m1 and dash and near(m1.t - cast.t, 0.04, 0.03) and near(dash.t - m1.t, 0.12, 0.03), "Shove, then the M1 40 ms later, then the dash 120 ms after that")
+    check(near(sim:pos(sim.meChar)[3], z0 + 3, 0.2), "with a step back first: " .. sim:pos(sim.meChar)[3])
+    clean(sim, "shove dash")
+end
+do   -- Uppercut Catch
+    local sim, lab = arena({rivalPos = {0, 3, -14}})
+    lab:setEnabled("uppercutcatch", true)
+    sim:anim(sim.meChar, UPPERCUT, 0.5)
+    sim:run(0.45)
+    check(dashes(sim, "W") == 0, "waits 450 ms")
+    sim:run(0.3)
+    check(dashes(sim, "W") == 1 and sim:count({goal = "LeftClick"}) == 1, "far away: forward dash, then the M1")
+    local d, m = firstLog(sim, {goal = "KeyPress", dash = "W"}), firstLog(sim, {goal = "LeftClick"})
+    check(d and m and near(m.t - d.t, 0.12, 0.03), "M1 120 ms after the dash")
+    -- close: walk into him instead
+    local sim2, lab2 = arena({rivalPos = {0, 3, -4}})
+    lab2:setEnabled("uppercutcatch", true)
+    sim2:anim(sim2.meChar, UPPERCUT, 0.5)
+    sim2:run(0.9)
+    check(dashes(sim2, "W") == 0 and #sim2:keyTimes("W") == 1 and #sim2:keyTimes("W", false) == 1, "close: W is held and let go, no dash is wasted")
+    local down, up = sim2:keyTimes("W")[1], sim2:keyTimes("W", false)[1]
+    check(near(up - down, 0.3, 0.03), "for 300 ms")
+    check(sim2:count({goal = "LeftClick"}) == 1, "and he is punched")
+    -- far with the dash on cooldown: nothing is sent
+    local sim3, lab3 = arena({rivalPos = {0, 3, -14}})
+    lab3:setEnabled("uppercutcatch", true)
+    sim3:anim(sim3.meChar, FORWARD, 0.3)
+    sim3:run(0.4)
+    sim3:anim(sim3.meChar, UPPERCUT, 0.5)
+    sim3:run(0.9)
+    check(sim3:count({goal = "LeftClick"}) == 0 and lab3.techs.uppercutcatch.status:find("cooldown"), "far and no dash: " .. lab3.techs.uppercutcatch.status)
+    clean(sim, "uppercut catch"); clean(sim2, "uppercut catch close"); clean(sim3, "uppercut catch cooldown")
+end
+do   -- the Hunter's Grasp follow-ups
+    local sim, lab = arena()
+    lab:setEnabled("lethalgrasp", true)
+    sim:anim(sim.meChar, LETHAL_ANIM, 0.5)
+    sim:run(1.2)
+    check(sim:count({goal = "Console Move"}) == 0 and lab.techs.lethalgrasp.status:find("do not have"), "no Grasp: " .. lab.techs.lethalgrasp.status)
+    sim:give(sim.mePlayer, GRASP)
+    lab.techs.lethalgrasp.cooldownUntil = 0
+    sim:anim(sim.meChar, LETHAL_ANIM, 0.5)
+    sim:run(0.8)
+    check(sim:count({goal = "Console Move"}) == 0, "waits 0.9 s after Lethal Whirlwind Stream")
+    sim:run(0.2)
+    check(sim:count({goal = "Console Move", tool = GRASP}) == 1, "then casts Hunter's Grasp once")
+    lab:setEnabled("flowinggrasp", true)
+    sim:anim(sim.meChar, FLOWING, 0.5)
+    sim:run(1.35)
+    check(sim:count({goal = "Console Move"}) == 1, "Flowing Grasp waits 1.4 s")
+    sim:run(0.6)
+    check(sim:count({goal = "Console Move", tool = GRASP}) == 4, "and spams three casts: " .. sim:count({goal = "Console Move", tool = GRASP}))
+    local times = {}
+    for _, r in ipairs(sim.log) do if r.goal == "Console Move" then times[#times + 1] = r.t end end
+    check(#times == 4 and near(times[3] - times[2], 0.15, 0.03) and near(times[4] - times[3], 0.15, 0.03), "150 ms apart")
+    lab:setEnabled("uppercutgrasp", true)
+    sim:anim(sim.meChar, UPPERCUT, 0.5)
+    sim:run(0.6)
+    check(sim:count({goal = "Console Move", tool = GRASP}) == 5, "Uppercut Grasp casts after the uppercut")
+    clean(sim, "grasp")
+    -- the delay is started a ping early when my animations arrive a ping late
+    local sim2, lab2 = arena({ping = 160, animMode = "server"})
+    learnLag(sim2, lab2, 3)
+    sim2:give(sim2.mePlayer, GRASP)
+    lab2:setEnabled("uppercutgrasp", true)
+    local _, S0 = sim2:press(UPPERCUT, 0.5)
+    sim2:run(1)
+    local cast = firstLog(sim2, {goal = "Console Move", tool = GRASP})
+    check(cast and near(cast.arrive - S0, 0.3, 0.03), "ping-aware like the others (" .. tostring(cast and cast.arrive - S0) .. ")")
+end
+do   -- Fast Dash
+    local sim, lab = arena()
+    lab:setEnabled("fastdash", true)
+    local x0 = sim:pos(sim.meChar)[1]
+    local track = sim:anim(sim.meChar, SIDE_R, 1)
+    sim:run(0.1)
+    check(near(sim:pos(sim.meChar)[1] - x0, 5, 1.5) or sim:pos(sim.meChar)[1] - x0 > 5, "the hop: " .. (sim:pos(sim.meChar)[1] - x0))
+    check(track.IsPlaying == true, "(the animation is still playing at 0.1 s)")
+    sim:run(0.2)
+    check(track.IsPlaying == false, "the animation is cut at 0.22 s")
+    sim:run(0.3)
+    check(near(sim:pos(sim.meChar)[1] - x0, 5 + 250 * 0.25, 6), "a side dash to the right travels hop + burst: " .. (sim:pos(sim.meChar)[1] - x0))
+    check(#sim:leftovers() == 0, "the burst is removed")
+    local xl = sim:pos(sim.meChar)[1]
+    sim:anim(sim.meChar, SIDE_L, 1)
+    sim:run(0.7)
+    check(sim:pos(sim.meChar)[1] < xl - 40, "a dash to the left goes left")
+    clean(sim, "fast dash")
+end
+do   -- DashClip
+    local sim, lab = arena()
+    lab:setEnabled("dashclip", true)
+    local part = sim.W.M.FindFirstChild(sim.meChar, "Head")
+    check(part.CanCollide == true, "(collides to begin with)")
+    sim:anim(sim.meChar, FORWARD, 0.3)
+    sim:run(0.2)
+    check(part.CanCollide == false, "no collision while dashing")
+    sim:run(0.4)
+    check(part.CanCollide == true, "and collision is back afterwards")
+    -- where nothing but the tech switches collisions back on (so the restore itself is visible)
+    sim.humanoidCollides = false
+    lab.techs.dashclip.cooldownUntil = 0
+    sim:anim(sim.meChar, SIDE_L, 0.3)
+    sim:run(0.1)
+    check(part.CanCollide == false, "(still off during the run)")
+    sim:run(0.5)
+    check(part.CanCollide == true, "the tech itself gives collision back when it ends")
+    lab.techs.dashclip.cooldownUntil = 0
+    sim:anim(sim.meChar, SIDE_L, 0.3)
+    sim:run(0.1)
+    lab:cancelAll("panic")
+    sim:run(0.05)
+    check(part.CanCollide == true, "a cancel gives it back at once")
+    clean(sim, "dashclip")
+end
+do   -- Awareness
+    local function lights(sim, adornee)
+        local n, found = 0, nil
+        for _, i in ipairs(sim.W.M.GetDescendants(sim.W.workspace)) do
+            if i.ClassName == "Highlight" and i.Name == "TechLabMark" and (adornee == nil or i.Adornee == adornee) then n = n + 1; found = i end
+        end
+        return n, found
+    end
+    local sim, lab = arena()
+    lab:setEnabled("counteresp", true)
+    sim:anim(sim.rival, "12351854556", 0.5)
+    sim:run(0.1)
+    local n, light = lights(sim, sim.rival)
+    check(n == 1 and light.FillColor.B > 0.9 and light.FillColor.R < 0.5, "a counter move highlights him in cyan")
+    sim:run(3.2)
+    check(lights(sim) == 0, "and the highlight goes after 3 s")
+    sim:anim(sim.meChar, "12351854556", 0.5)
+    sim:run(0.1)
+    check(lights(sim) == 0, "my own counter is not marked")
+    lab:setOption("counteresp", "color", "Red")
+    sim:anim(sim.rival, "15311685628", 0.5)
+    sim:run(0.1)
+    local _, red = lights(sim, sim.rival)
+    check(red and red.FillColor.R > 0.9 and red.FillColor.B < 0.5, "the colour is an option")
+    lab:setEnabled("counteresp", false)
+    check(lights(sim) == 0, "switching it off removes the highlight")
+    lab:setEnabled("blockesp", true)
+    sim:anim(sim.rival, BLOCK, 1.5)
+    sim:run(0.1)
+    check(lights(sim, sim.rival) == 1, "Block ESP marks a blocking player")
+    sim:run(1.6)
+    check(lights(sim) == 0, "and lets go when the block animation stops")
+    -- a player who joins later is watched too
+    local _, late = sim:addEnemy("Late", {5, 3, -5})
+    sim:run(0.1)
+    sim:anim(late, BLOCK, 1.5)
+    sim:run(0.1)
+    check(lights(sim, late) == 1, "players who arrive later are watched too")
+    lab:setMaster(false)
+    check(lights(sim) == 0, "the master switch clears every mark")
+    lab:setMaster(true)
+    -- the unblockable warning
+    lab:setEnabled("blockwarn", true)
+    sim:anim(sim.rival, "10470389827", 1)
+    sim:run(0.1)
+    local arrow
+    for _, i in ipairs(sim.W.M.GetDescendants(sim.rival)) do if i.Name == "TechLabArrow" then arrow = i end end
+    check(arrow ~= nil and arrow.AlwaysOnTop == true, "an arrow above the wind-up")
+    sim:run(1)
+    local still
+    for _, i in ipairs(sim.W.M.GetDescendants(sim.rival)) do if i.Name == "TechLabArrow" then still = i end end
+    check(still == nil, "...gone when the wind-up ends")
+    -- Death Counter
+    lab:setEnabled("deathcounter", true)
+    sim.W:make("Folder", "Death Counter", {}, sim.rival)
+    sim:run(0.1)
+    check(lights(sim, sim.rival) == 1, "a Death Counter in his character highlights him")
+    sim:run(12.3)
+    check(lights(sim) == 0, "for 12 s")
+    local _, other = sim:addEnemy("Already", {8, 3, -8})
+    sim.W:make("Folder", "Death Counter", {}, other)
+    sim:run(0.1)
+    lab:setEnabled("deathcounter", false)
+    lab:setEnabled("deathcounter", true)
+    sim:run(0.1)
+    check(lights(sim, other) == 1, "one that was already there when the tech is switched on is found too")
+    lab:destroy()
+    check(lights(sim) == 0, "destroy removes every mark")
+    clean(sim, "awareness")
+end
+do   -- the colour names in the tech definitions are the ones the data module knows
+    local sim, lab = arena()
+    local TD = sim.TD
+    for _, id in ipairs({"counteresp", "deathcounter", "blockesp"}) do
+        for _, d in ipairs(lab.techs[id].defs) do
+            if d.key == "color" then
+                check(#d.choices == #TD.COLOR_NAMES, id .. ": the same number of colours")
+                for i, name in ipairs(d.choices) do check(TD.COLOR_NAMES[i] == name and TD.COLORS[name] ~= nil, id .. ": colour " .. name .. " is known") end
+            end
+        end
+    end
+end
+
+------------------------------------------------------------------------------------------------ ping
+section("ping")
+do   -- the lag of my own animations is measured, not guessed
+    local sim, lab = arena({ping = 160, animMode = "server"})
+    check(lab:netInfo().lag == nil and lab:lag() == 0, "nothing measured yet: no correction")
+    learnLag(sim, lab, 2)
+    check(lab:netInfo().lag == nil, "two samples are not enough")
+    learnLag(sim, lab, 1)
+    local info = lab:netInfo()
+    check(info.lag and near(info.lag, 0.16, 0.02) and info.samples == 3, "a server-played animation arrives one ping after my input: " .. tostring(info.lag))
+    check(near(info.ping, 160, 1e-9) and near(info.lead, 0.16, 0.001), "the lead is half a ping plus the interpolation delay: " .. info.lead)
+    clean(sim, "lag learn")
+end
+do
+    local sim, lab = arena({ping = 160, animMode = "predicted"})
+    learnLag(sim, lab, 3)
+    check(lab:netInfo().lag ~= nil and near(lab:netInfo().lag, 0, 0.02), "an animation my client plays at once has no lag: " .. tostring(lab:netInfo().lag))
+    lab:setNet("learn", false)
+    check(lab:lag() == 0, "learning off: the lag is not used")
+    clean(sim, "lag predicted")
+end
+do   -- Supa's first dash reaches the server at the same moment in the server's own timeline, whatever the ping
+    local function firstDashAfterUppercut(setup)
+        local sim, lab = arena({ping = 160, animMode = "server"})
+        learnLag(sim, lab, 3)
+        lab:setEnabled("supa", true)
+        if setup then setup(lab) end
+        local _, S0 = sim:press(UPPERCUT, 0.5)
+        sim:run(1.2)
+        for _, r in ipairs(sim.log) do
+            if r.goal == "KeyPress" and r.key == "Q" and r.dash == "W" then return r.arrive - S0, sim, lab end
+        end
+        return nil, sim, lab
+    end
+    local compensated, sim1 = firstDashAfterUppercut()
+    check(compensated and near(compensated, 0.32, 0.03), "ping 160, server-played animations: the dash reaches the server 320 ms after the uppercut did (" .. tostring(compensated) .. ")")
+    clean(sim1, "supa ping")
+    local plain = firstDashAfterUppercut(function(lab) lab:setNet("strength", 0) end)
+    check(plain and near(plain, 0.48, 0.03), "without the correction it is a whole ping late (" .. tostring(plain) .. ")")
+    local off = firstDashAfterUppercut(function(lab) lab.techs.supa.opt.ping = false end)
+    check(off and near(off, 0.48, 0.03), "the per-tech switch turns it off (" .. tostring(off) .. ")")
+    local half = firstDashAfterUppercut(function(lab) lab:setNet("strength", 0.5) end)
+    check(half and near(half, 0.40, 0.03), "strength 0.5 corrects half of it (" .. tostring(half) .. ")")
+    -- when the animation is played at once there is nothing to correct
+    local sim2, lab2 = arena({ping = 160, animMode = "predicted"})
+    learnLag(sim2, lab2, 3)
+    lab2:setEnabled("supa", true)
+    local _, S2 = sim2:press(UPPERCUT, 0.5)
+    sim2:run(1.2)
+    local arrive
+    for _, r in ipairs(sim2.log) do if r.goal == "KeyPress" and r.key == "Q" then arrive = r.arrive; break end end
+    check(arrive and near(arrive - S2, 0.32, 0.03), "client-played animations: the delay is used as it is (" .. tostring(arrive and arrive - S2) .. ")")
+end
+do   -- the dash cooldown began when the server got the dash, a ping before I saw the animation
+    local sim, lab = arena({ping = 200, animMode = "server"})
+    learnLag(sim, lab, 3)
+    lab:dash("W")
+    sim:run(0.215)
+    check(near(lab:dashLeft("forward"), 4.8 - 0.2 - 0.015, 0.03), "the clock does not wait for the part of the cooldown that already passed: " .. lab:dashLeft("forward"))
+    local sim2, lab2 = arena({ping = 200, animMode = "server", jitter = 50})
+    learnLag(sim2, lab2, 3)
+    lab2:dash("W")
+    sim2:run(0.215)
+    check(near(lab2:dashLeft("forward"), 4.8 - 0.2 - 0.015 + 0.05, 0.03), "and a jittery connection gets a safety margin: " .. lab2:dashLeft("forward"))
+    clean(sim, "dash clock lag")
+end
+do   -- No End Lag's window is counted from when I sent the side dash
+    local function qAfterSideDash(secondsAfterSend)
+        local sim, lab = arena({ping = 200, animMode = "server"})
+        learnLag(sim, lab, 3)
+        lab:setEnabled("noendlag", true)
+        lab:dash("D")
+        sim:run(secondsAfterSend)
+        sim.W:keyDown("Q")
+        sim:run(0.2)
+        return sim:count({goal = "KeyPress", key = "Q", dash = "W"})
+    end
+    check(qAfterSideDash(0.8) == 1, "Q 0.8 s after I sent the side dash is inside the 0.85 s window")
+    check(qAfterSideDash(0.95) == 0, "0.95 s after sending it is outside (counted from the animation it would still look like 0.75 s)")
+end
+do   -- a moving target: the hook dash leads him by more when the ping is higher
+    local function hookEnd(pingMs, strength)
+        local sim, lab = arena({ping = pingMs, rival = false})
+        local _, rival = sim:addEnemy("Walker", {6, 3, -20}, {look = {0, 3, 0}})
+        sim:walk(rival, {8, 0, 0})
+        if strength then lab:setNet("strength", strength) end
+        lab:setEnabled("hook", true)
+        sim:run(0.3)
+        lab:hookSelectNear(sim.W.env.Vector3.new(6, 3, -20))
+        local before = sim:pos(sim.meChar)
+        lab:fire("hook", {manual = true})
+        sim:run(1.2)
+        local after = sim:pos(sim.meChar)
+        lab:hookClear()
+        return after[1], sim
+    end
+    local x60 = hookEnd(60)
+    local x220, simB = hookEnd(220)
+    check(x220 - x60 > 1.0, "at ping 220 the dash ends further ahead of a man walking right than at ping 60 (" .. string.format("%.2f vs %.2f", x220, x60) .. ")")
+    local f60 = hookEnd(60, 0)
+    local f220 = hookEnd(220, 0)
+    check(f220 - f60 < 0.3, "with the correction off it does not (" .. string.format("%.2f vs %.2f", f220, f60) .. ")")
+    clean(simB, "hook ping")
+end
+do   -- aim lock leads a moving target by what the network costs
+    local function facing(pingMs, strength)
+        local sim, lab = arena({ping = pingMs, rival = false})
+        local _, rival = sim:addEnemy("Runner", {-15, 3, -10}, {look = {0, 3, 0}})
+        sim:walk(rival, {12, 0, 0})
+        lab:setOption("lethal", "smooth", 1000)
+        if strength then lab:setNet("strength", strength) end
+        lab:setEnabled("lethal", true)
+        sim:anim(sim.meChar, LETHAL_ANIM, 0.5)
+        sim:run(1.95)                                                    -- 1.6 s delay + 0.1 s flick: the lock is on
+        local look = sim.meRoot.CFrame.LookVector
+        local me, shown = sim:pos(sim.meChar), sim:pos(rival)
+        local function angleTo(p)
+            local dx, dz = p[1] - me[1], p[3] - me[3]
+            local m = math.sqrt(dx * dx + dz * dz)
+            local c = (look.X * dx + look.Z * dz) / m
+            return math.deg(math.acos(math.max(-1, math.min(1, c))))
+        end
+        local lead = (pingMs / 2 / 1000 + 0.08) * (strength or 1)
+        return angleTo(shown), angleTo({shown[1] + 12 * lead, shown[2], shown[3]}), sim
+    end
+    local toShown, toPredicted, simA = facing(200)
+    check(toPredicted < 1.0 and toShown > 3.0, "at ping 200 the body points at where the runner IS, not where the picture shows him (" .. string.format("%.1f deg off the prediction, %.1f off the picture", toPredicted, toShown) .. ")")
+    local plainShown = facing(200, 0)
+    check(plainShown < 1.0, "with the correction off it points at the picture (" .. string.format("%.1f", plainShown) .. ")")
+    clean(simA, "aim lead")
+end
+do   -- settings: clamped, a typed ping wins over the measured one, saved and restored
+    local sim, lab = arena({ping = 60})
+    lab:setNet("manual", 300)
+    check(lab:netInfo().ping == 300 and near(lab:lead(), 0.23, 1e-6), "a typed ping replaces the measured one: " .. tostring(lab:netInfo().ping))
+    lab:setNet("manual", -5); check(lab.net.manual == 0, "negative is clamped")
+    lab:setNet("strength", 99); check(lab.net.strength == 2, "strength is clamped to 2")
+    lab:setNet("interp", "x"); check(lab.net.interp == 80, "garbage is ignored")
+    lab:setNet("learn", "yes"); check(lab.net.learn == true, "learn is a boolean")
+    lab:setNet("bogus", 1)
+    lab:setNet("manual", 120); lab:setNet("strength", 0.5); lab:setNet("learn", false)
+    local saved = lab:export()
+    check(saved.net.manual == 120 and saved.net.strength == 0.5 and saved.net.learn == false, "exported")
+    local sim2, lab2 = arena()
+    lab2:import({net = {manual = 999999, strength = -3, learn = false, interp = 10, ref = 5, junk = 1}})
+    check(lab2.net.manual == 1000 and lab2.net.strength == 0 and lab2.net.learn == false and lab2.net.interp == 10 and lab2.net.ref == 10, "imported values are cleaned")
+    lab2:import({net = "garbage"})
+    clean(sim, "net settings")
 end
 
 ------------------------------------------------------------------------------------------------ done

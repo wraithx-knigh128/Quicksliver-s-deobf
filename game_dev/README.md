@@ -112,10 +112,24 @@ tech's own M1 count - the script plays the rest, casting the tech's first move i
 take-over, clicks the game already consumed are ignored, and touch players teach their M1 animations once with *Teach my M1*. Switch it off to go back to
 "cast the first move yourself". Options: wait after your last M1 (0.15-0.8 s), most M1s to wait for (1-4); saved with *Save config*.
 
-## Tech Lab (new tab in the Animation Hub)
+## Two scripts, one engine
 
-The Tech Lab is a rewrite of the techs in **your own Dovi's Hub script** (the file you uploaded), not a copy of it. That script had the same skeleton pasted again and again
-(see an animation, wait, do something, hope nothing is left behind). Here the skeleton exists once (`tech_lab.lua`) and every tech is only its sequence:
+| Script | What it is | Loader |
+|---|---|---|
+| **Wraith's TSB Lab** (`dist/tsb_lab.min.txt`, WindUI) | The Tech Lab alone, on the WindUI window library, laid out like the tech hub it was rewritten from: one tab per tech family, an Overview, a Settings tab with a config manager, on-screen buttons for phones. Own theme and icons. | below |
+| **Animation Hub** (`dist/tsb_hub_executor.min.txt`) | The older hub (auto block, combo cards, Kyoto assist, assist / pins ...) - it has a *Tech Lab* tab generated from the same engine. | below |
+
+```lua
+-- Wraith's TSB Lab (WindUI)
+@@LAB_LOADER@@
+-- Animation Hub (auto block, combos, Tech Lab tab)
+@@HUB_LOADER@@
+```
+
+## Tech Lab
+
+The Tech Lab is a rewrite of the techs in **your own Dovi's Hub script** (the file you uploaded), not a copy of it, plus techs from community descriptions (below). That script had the same skeleton
+pasted again and again (see an animation, wait, do something, hope nothing is left behind). Here the skeleton exists once (`tech_lab.lua`) and every tech is only its sequence:
 
 ```
 trigger  ->  checks (master switch, enabled, cooldown, dash ready, a macro playing, another moving tech running)  ->  sequence(ctx)  ->  cleanup, whatever happened
@@ -124,52 +138,100 @@ trigger  ->  checks (master switch, enabled, cooldown, dash ready, a macro playi
 What that engine gives every tech (the original had none of it):
 
 - **Cancellable waits**: every wait stops the moment you die, respawn, switch the tech off, press **Panic**, or the master switch goes off. Nothing waits on `Tween.Completed` (a cancelled tween never completes).
-- **Guaranteed cleanup**: every constraint / body mover / attachment / highlight / camera hold a tech creates is removed when it ends - also when it errors half way (a test makes a tech throw and checks nothing is left on your character).
+- **Guaranteed cleanup**: every constraint / body mover / attachment / highlight / noclip / key hold / camera hold a tech creates is removed when it ends - also when it errors half way (a test makes a tech throw and checks nothing is left on your character).
   `AutoRotate` is always given back.
-- **Dash cooldown awareness**: a tech that starts with a forward / side dash does not start while that dash is on cooldown (the Tech Lab tab shows both cooldowns). Switch it off with *Wait for the dash cooldown*.
+- **Dash cooldown awareness**: a tech that starts with a forward / side dash does not start while that dash is on cooldown. Switch it off with *Wait for the dash cooldown*.
 - **One moving tech at a time**: two techs that move your character would fight over the root part, so a second one is skipped and the status says who is running.
 - **Remote first, keys as the fallback**: dashes / M1 / moves go through the game's `Communicate` remote like in your script; *Inputs* = Auto (remote, keys when it is missing) / Remote / Keys.
 - **Camera aim that survives Roblox's camera script** (held with a render step after it), body turns smoothed by a yaw filter instead of snapping, hook dash steered with a fixed line of approach (re-deriving it every frame swung round the target).
 - **Learn trigger**: the animation ids are the ones from your script and TSB is patched often. If a tech stops reacting, press *Learn trigger* inside it and play the move once - the id is remembered (with *Save config*).
-- Per-tech **status line**, run / abort / error counters, *Copy the Tech Lab log* for a bug report, options clamped to their range, **nothing saved unless you press Save config**.
+- Per-tech **status line**, run / abort / error counters, a log you can copy for a bug report, options clamped to their range, **nothing saved unless you press Save config**.
 
-| Tech | Starts | What it does |
-|---|---|---|
-| Supa Tech | after your uppercut | Dash in on them: after your uppercut it dashes, snaps under them, finishes behind their back and dashes again. |
-| Hook Dash | V = pick a target, C = go (phone: double tap them, then *Run now*) | A side dash that passes the target on its side and overshoots, then throws an M1 and holds your camera on them. |
-| Loop Dash | after your uppercut | A loop round the target while dashing, then you settle above them. |
-| Loop Dash 2 | after your uppercut | Jump, dash, then lock your body on the target (also for oreo tech). Pauses while someone is blocking. |
-| Lethal Dash | after Lethal Whirlwind Stream | Jump, dash and lock on to the target once the move is over. |
-| Kiba / Kitty Tech | after your uppercut | Dash and hang on the target head-down (Kiba), or circle them (Kitty Tech, idea by ItzSoph). |
-| Twisted | after the M1 string's last move | A small step back, then a dash at them ("Instant" also turns you to face them). |
-| Auto Kyoto | after Flowing Water | Casts Lethal Whirlwind Stream for you, then hops sideways (hotbar 1 / 2 around the hop). |
-| Lethal Dunk | after Lethal Whirlwind Stream | Lifts you above them a moment later. |
-| Auto Hunter Surf | when the surf starts | Carries you forward on the surf. |
-| Auto Counter | when somebody dashes / M1s at you | Casts Prey's Peril / Split Second Counter when a close player who faces you starts a dash or an M1. |
-| Dash Flip | after your forward dash | Pitches you while you dash. |
-| M1 Catch | while somebody is in front of you | Holds M1 for you when somebody steps into the box in front of you. |
-| Mouse Dash | after your forward dash | Turns you toward your cursor for a moment so the dash goes where you point. |
-| Side M1 (hitbox abuse) | when you click | Swings your body to the side for a moment when you M1, then back (PC). |
-| No End Lag | Q right after a side dash | The forward dash goes out at once. |
-| M1 Slide | after a side dash | Throws an M1 for you right after every side dash. |
-| True Down Slam | when your down slam starts | Lifts you when your down slam starts with somebody close. |
-| M1 Reset | key (R) / button | Side step, turn and dash - resets your M1 chain. |
-| Emote Dash | key (T) / button | Turns and throws you sideways in an arc. |
+### Ping
 
-Auto block stays the hub's own (Auto Tech tab): it learns timing and predicts rushes, which your script's version did not. Credits: Kitty Tech idea by ItzSoph (credited in your script too).
+Roblox gives a client its own round-trip time and nothing else, so the Tech Lab uses it where it can actually help (`tech_math.lua`, unit-tested; the engine is tested in the arena at several pings):
+
+- **A wait counted from my own input needs no correction**: a command I send reaches the server half a ping later, and so did my earlier commands. *But* many of your animations are played by the server and sent back, so they show up a whole ping after your input,
+  and a wait that starts at such an animation starts a ping late. The lab **measures that itself**: every dash it sends (or you press) and the dash animation that answers it, median of the last 9. Waits that start at one of your animations (Supa's 320 ms, Kyoto's 1.5 s,
+  Uppercut Catch ...) then start earlier by exactly that gap (never cut by more than 60 %). If your client plays the animation at once the gap is about 0 and nothing changes.
+- **Other players are seen late**: half a ping plus Roblox's drawing delay (default 80 ms). Aim locks (Loop Dash 2, Lethal Dash, Twisted instant), the Loop Dash / Kiba followers, Supa's landing spots and M1 Catch aim at where they *will* be (velocity x that lead).
+- **Numbers tuned by hand scale with your ping**: Hook Dash's prediction (0.3 s) is the value at a 60 ms ping and grows / shrinks with the lead at yours (*The ping my default numbers were tuned at* is adjustable).
+- **The dash cooldown starts when the server got the dash**: the clock dates it from the animation time minus the measured gap, plus a margin of your jitter.
+- Settings: strength (0 = off, 1 = full, up to 2), a typed ping instead of the measured one, the drawing delay, the tuned-at ping, learning on / off, and an *Adjust for ping* switch per tech. The Overview shows ping, jitter, the measured gap and the lead live.
+- What it can **not** do: read another player's ping, change what the server decides about a hit, or fix a connection with big jitter (it only widens the dash-cooldown margin).
+
+### The techs
+
+| Tech | Group | Starts | What it does |
+|---|---|---|---|
+| Supa Tech | Dash techs | after your uppercut | Dash in on them: after your uppercut it dashes, snaps under them, finishes behind them and dashes again. |
+| Hook Dash | Dash techs | V = pick a target, C = go (phone: double tap them, then the button) | A side dash that passes the target on its side and overshoots, then throws an M1 and holds your camera on them. Pick the target with V (the player nearest your cursor), go with C. |
+| Loop Dash | Dash techs | after your uppercut | A loop round the target while dashing, then you settle above them. |
+| Loop Dash 2 | Dash techs | after your uppercut | Better loop dash (also for oreo tech): jump, dash, then lock your body on the target. Pauses while someone is blocking. |
+| Lethal Dash | Dash techs | after Lethal Whirlwind Stream | Lethal water into a dash: jump, dash and lock on to the target once the move is over. |
+| Kiba / Kitty Tech | Dash techs | after your uppercut | After the uppercut: dash and hang on the target head-down (Kiba), or circle them (Kitty Tech, idea by ItzSoph). |
+| Twisted (4 M1 into a dash) | Dash techs | after the M1 string's last move | A small step back, then a dash at them. 'Instant' also turns you to face them during the dash. |
+| Auto Kyoto | Combos | after Flowing Water | Flowing water into lethal: casts Lethal Whirlwind Stream for you, then hops sideways. |
+| Lethal Dunk | Combos | after Lethal Whirlwind Stream | Lifts you above them a moment after Lethal Whirlwind Stream. |
+| Auto Hunter Surf | Combos | when the surf starts | Carries you forward on the surf. |
+| Uppercut Catch | Combos | after your uppercut | After the uppercut: forward dash and an M1 at the right moment - or, if he falls close to you, just walk into him (hold W) and M1. |
+| Uppercut Grasp | Combos | after your uppercut | 3 M1s, jump, mini uppercut - then Hunter's Grasp is cast for you. |
+| Lethal Grasp | Combos | after Lethal Whirlwind Stream | Right after Lethal Whirlwind Stream: Hunter's Grasp. |
+| Flowing Grasp | Combos | after Flowing Water | After Flowing Water ends, Hunter's Grasp is cast (spammed a few times). Turn on shift lock yourself. |
+| Auto Counter | Defence | when somebody dashes / M1s at you | Casts your counter (Prey's Peril / Split Second Counter) when a close player starts a dash or an M1 at you. |
+| Dash Flip | Helpers | after your forward dash | Pitches you up a little while you dash (the tech helper's flip). |
+| M1 Catch | Helpers | while somebody is in front of you | Holds M1 for you when somebody steps into the box in front of you. |
+| Mouse Dash | Helpers | after your forward dash | Turns you toward your cursor for a moment after a forward dash, so the dash goes where you point. |
+| Side M1 (hitbox abuse) | Helpers | when you click | Swings your body to the side for a moment when you M1, then back. PC only. |
+| No End Lag | Helpers | Q right after a side dash | Press Q within a moment of a side dash and the forward dash goes out at once. |
+| M1 Slide | Helpers | after a side dash | Throws an M1 for you right after every side dash. |
+| True Down Slam | Helpers | when your down slam starts | Lifts you when your down slam starts with somebody close, so it lands as the aerial one. |
+| Fast Dash | Helpers | when you side dash | Throws you along the side dash with a burst and cuts the dash animation short. Not compatible with most other techs (only one moving tech runs at a time). |
+| DashClip | Helpers | when you dash | Noclip for a moment while you dash (your own character only). |
+| M1 Reset | Actions | key / button | Side step, turn and dash - resets your M1 chain. |
+| Emote Dash | Actions | key / button | Turns and throws you sideways in an arc. |
+| Backdash Cancel | Actions | key (B) / button | Back dash, then a move right away: the move cancels the back dash. 'Aerial' jumps first so the back dash carries further. The window is short - tune the delay. |
+| Micro Dash | Actions | key (X) / button | Side dash, then a move at once (an M1 does not cancel the dash, a move does). |
+| Shove Dash | Actions | key (Z) / button | Shove, an instant M1, a step back and a forward dash (the M1 after the shove should be your 1st-3rd). |
+| Counter ESP | Awareness | when a player uses a counter | Highlights a player for a few seconds when he starts a counter move, so you know not to hit him. |
+| Death Counter ESP | Awareness | when a player gets a Death Counter | Highlights a player while a Death Counter is on him (it is a child called 'Death Counter' in his character). |
+| Unblockable Warning | Awareness | when a player winds up the unblockable down slam | A red arrow above a player while he telegraphs the unblockable down slam: dodge it, do not block it. |
+| Block ESP | Awareness | while a player blocks | Highlights a player for as long as he is blocking. |
+
+Auto block stays the Animation Hub's own (Auto Tech tab): it learns timing and predicts rushes, which your script's version did not. Credits: Kitty Tech idea by ItzSoph (credited in your script too).
+
+**Where the newer techs come from.** Fast Dash, DashClip, Counter ESP, Death Counter ESP and the unblockable-down-slam arrow (your "Block Indicator") are in your script. Backdash Cancel (+ aerial), Micro Dash, Shove Dash, Uppercut Catch,
+Uppercut Grasp, Lethal Grasp and Flowing Grasp come from community descriptions of TSB techs that I found by searching: the
+[techniques page of the TSB fan wiki](https://the-strongest-battlegrounds-rblx.fandom.com/wiki/Techniques), [Item Level Gaming's all-character tech guide](https://itemlevel.net/the-strongest-battlegrounds-all-character-techs-guide/) and
+[bloxodes' technique list](https://bloxodes.com/wiki/the-strongest-battlegrounds/techniques). **I could not open those pages from my session** (their hosts are not reachable from it), so I only had the search summaries: the sequences are the ones those
+summaries describe (e.g. "backdash, then immediately use a move", "side dash, then immediately a move - an M1 does not cancel it", "after an uppercut: forward dash and click M1 at the right moment, or hold W if he falls close"), and
+the **default delays are my guesses** - the real windows are short and patch-dependent, so tune them in the tech's tab. The community sources disagree on details and are partly promotional; none of it is verified.
+
+**Not ported from your script, on purpose:** No Stun, No Slow, No Fatigue, No Dash Cooldown, Speed / Jump boosts, Respawn at Death, the avatar changer, Counter Toxic, shaders, map teleports and the player-ESP boxes. They are not techs: several tamper with game state instead of
+automating inputs (and I cannot test what they do to the server), the rest are unrelated to the techs. Say so if you want any of them.
 
 **Honest status:** none of this has been run in Strongest Battlegrounds. The animation ids, move names and the `Communicate` remote layout come from reading your script, and TSB changes often.
-What *is* tested: the pure maths (`tech_math.lua`, 13 unit tests), the option sanitising, and the whole engine in a simulated arena (`tests/tsb_sim.lua` - characters in `Workspace.Live`, a dummy, the remote,
-animation events, velocity constraints, strict Roblox member checking from the API dump): every tech's sequence, cancel / death / respawn / panic, cleanup, cooldowns, config round trips,
-and mutation checks (`tools/mutate_tsb.py`: 19 deliberately broken copies of the engine; 18 are caught, the 19th is a second safety net that behaves the same as an earlier one). A passing test means "the code does what it says in a world like the one your script describes".
+What *is* tested: the pure maths (`tech_math.lua`, unit tests), the option sanitising, the whole engine in a simulated arena (`tests/tsb_sim.lua` - characters in `Workspace.Live`, a dummy, the remote, animation events, velocity constraints,
+a network with a ping and server-played animations, other players drawn in the past, strict Roblox member checking from the API dump): every tech's sequence, cancel / death / respawn / panic, cleanup, cooldowns, the ping model, config round trips,
+and mutation checks (`tools/mutate_tsb.py`: 37 deliberately broken copies of the engine, 35 make the tests fail and 2 are equivalent - explained in the tool; `tools/mutate_tsb_hub.py`: 14 broken copies of the WindUI hub, all 14 are caught). The WindUI hub is also played on the **real WindUI library** inside the same arena
+(`tests/tsb_hub_tests.lua`): real clicks on its toggles, sliders, key binds and on-screen buttons drive the techs, nothing is written until Save config, a saved config comes back, unloading removes everything, and the small built-in menu takes over when WindUI cannot start.
+A passing test means "the code does what it says in a world like the one your script describes"; it cannot show how the window *looks* (no renderer for WindUI's images) or that an executor allows what WindUI needs.
 
-Checks for the Tech Lab (from `game_dev/`): `python3 tests/run_tests.py` (maths / data / options), `LUAU=/path/to/luau python3 tests/run_tsb.py lab` (the simulated arena),
-`sh tools/gen_tsb_types.sh` (regenerates `tests/prop_types_tsb.lua` after using new Roblox members), `python3 tools/mutate_tsb.py` (mutation check), `python3 tests/check_docs.py` (every tech is in this README).
+Checks for the Tech Lab (from `game_dev/`): `python3 tests/run_tests.py` (maths / data / options), `LUAU=/path/to/luau python3 tests/run_tsb.py lab` (the engine in the arena), `... run_tsb.py hub` (the WindUI hub on the real WindUI),
+`sh tools/gen_tsb_types.sh` (regenerates the strict API tables after using new Roblox members), `python3 tools/mutate_tsb.py` / `tools/mutate_tsb_hub.py` (mutation checks), `python3 tests/check_docs.py` (every tech is in this README).
+Build: `python3 game_dev/tsb/build_tsb_lab.py` (WindUI hub) and `python3 game_dev/build_executor.py` (Animation Hub).
 
-Short loader (no pasting a 250 KB file):
-```lua
-loadstring(game:HttpGet("https://raw.githubusercontent.com/wraithx-knigh128/Quicksliver-s-deobf/c6a752acfdfc991426ecb786f21b8ab14ba23848/dist/tsb_hub_executor.min.txt"))()
-```
+### Wraith's TSB Lab (WindUI)
+
+- **Layout** (like the tech hub it was rewritten from): *Overview* (master switch, Panic, input mode, live dash cooldowns and ping), then one tab per family - Supa, Hook Dash, Loop Dash, Kiba / Kitty, Kyoto Combo, Lethal Dash, Twisted, M1 Reset, Cancels,
+  Auto Counter, Tech Helper, Awareness - and *Settings* (menu key, theme, size, transparency, the ping model, on-screen buttons, config manager, log, unload). Every tech has its switch, a status line, all its options (sliders, switches, dropdowns, any-key key binds, text boxes), *Learn trigger* and *Reset*.
+  The tabs are generated from the tech definitions, so a new tech needs no UI code.
+- **Own look**: its own title / icons / accent, ten WindUI themes (default "Sky"), a transparent window; the on-screen buttons keep the grey flowing-water outline.
+- **On-screen buttons for phones**: PANIC (on by default), HOOK, M1 RESET, EMOTE DASH, BACKDASH, MICRO and SHOVE (switched on inside each tech). Draggable, lockable, with a cooldown bar and the tech's status. Hook Dash on a phone: double tap a player to select him, then tap HOOK.
+- **Config manager**: named configs in the `TSBLab` folder (`TSBLab/<name>.json`, names are cleaned so they cannot leave the folder), *Save / Load / Delete*, a list of what is there, and *Auto load* - decided when you press Save, written to `TSBLab/index.json` together with the config.
+  Nothing is written before you press Save. Invalid values in a file (a wrong theme, a nonsense key, a huge scale) fall back to the defaults or are clamped; a broken file never stops the hub.
+- **Fallback**: if WindUI cannot start (an executor that blocks its file / web calls) the small built-in menu opens with the same tabs and the techs work the same.
+- WindUI is the MIT-licensed [Footagesus/WindUI](https://github.com/Footagesus/WindUI), embedded unchanged apart from three small patches (no icon downloads), the same way the Murder Mystery 2 hub embeds it; its icons are the built-in Lucide subset (MIT).
 
 Nothing is saved automatically (that includes your own menu picture: Save config keeps it). The Config tab has Save config / Reload / Delete; the only file is `animation_hub_config.json`, loaded when
 the hub starts (an old `animation_hub_settings.json` from earlier versions is ignored).

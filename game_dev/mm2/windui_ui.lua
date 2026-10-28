@@ -2,7 +2,8 @@
   notifications are the real WindUI (Footagesus/WindUI, MIT - see mm2/vendor). The floating Perfect Shoot / Throw buttons and their water-wave skin stay ours:
   they come from a headless ui_lib core (UILib.new{Headless = true}), so they live in their own ScreenGui and survive the menu being closed.
     local win = Adapter.new(WindUILib, UILib, {Title = ..., Subtitle = ..., Group = ..., Parent = gui, GuiName = ..., Theme = "Dark", WaveMode = "High", ToggleKey = Enum.KeyCode.RightShift,
-                                                  OnError = fn, Folder = "WraithsHub", Background = "https://.../clip.mp4", BackgroundDim = 0.45})
+                                                  OnError = fn, Folder = "WraithsHub", Background = "https://.../clip.mp4", BackgroundDim = 0.45,
+                                                  WindowIcon = "swords", OpenColors = {"#9aa0b4", "#e84a8a"}, Mono = true})
     win:Tab(name, iconKind) / tab:Section / Label / Toggle / Slider / Dropdown / Keybind / Button / Input   (same fields as ui_lib.lua), win:Notify, win:Floating, ...
   Window background: a video (.mp4 / .webm) or picture link is downloaded once, kept in the executor's workspace folder and shown the way WindUI shows its own
   `Background` option (a VideoFrame / ImageLabel inside the window's background), with a dim layer on top so the menu text stays readable. ]]
@@ -10,6 +11,18 @@ local Adapter = {}
 
 Adapter.ThemeNames = {"Dark", "Crimson", "Violet", "Sky", "Emerald", "Amber", "Midnight", "Rose", "Monokai Pro", "Cotton Candy"}
 local OLD_THEMES = {Ocean = "Sky", Gold = "Amber"}                       -- names the classic menu used
+
+-- A hub can add themes of its own (hex strings, WindUI's theme fields: Accent, Dialog, Outline, Text, Placeholder, Background, Button, Icon, Toggle, Slider, Checkbox,
+-- Primary, ElementBackground ...; numbers such as ElementBackgroundTransparency pass through). Call before Adapter.new; the names join Adapter.ThemeNames.
+Adapter.ExtraThemes = {}
+function Adapter.addThemes(list)
+    for _, t in ipairs(list) do
+        local known = false
+        for _, n in ipairs(Adapter.ThemeNames) do if n == t.Name then known = true end end
+        if not known then Adapter.ThemeNames[#Adapter.ThemeNames + 1] = t.Name end
+        Adapter.ExtraThemes[t.Name] = t
+    end
+end
 
 local ICONS = {grid = "layout-grid", eye = "eye", crosshair = "crosshair", bolt = "zap", user = "user", gear = "settings", terminal = "terminal", dots = "ellipsis",
     knife = "sword", pistol = "crosshair", spark = "sparkles", search = "search"}
@@ -82,14 +95,20 @@ local function build(win, WindUI, UILib, cfg)
     end
     glass(themeName)
 
+    for name, t in pairs(Adapter.ExtraThemes) do
+        local built = {}
+        for k, v in pairs(t) do built[k] = (type(v) == "string" and k ~= "Name") and Color3.fromHex(v) or v end
+        pcall(function() WindUI:AddTheme(built) end)
+    end
+    glass(themeName)
     local Window = WindUI:CreateWindow{
-        Title = cfg.Title or "Hub", Author = cfg.Subtitle, Folder = cfg.Folder or "WraithsHub", Icon = "swords", NewElements = true, Theme = themeName,
+        Title = cfg.Title or "Hub", Author = cfg.Subtitle, Folder = cfg.Folder or "WraithsHub", Icon = cfg.WindowIcon or "swords", NewElements = true, Theme = themeName,
         Size = size, MinSize = Vector2.new(380, 230), SideBarWidth = vp.X < 900 and 124 or 150, HideSearchBar = true,
         Transparent = true, HidePanelBackground = true, ElementsRadius = 14, Radius = 16, ToggleKey = cfg.ToggleKey,
         Topbar = {Height = 38, ButtonsType = "Mac"},
         User = {Enabled = false},
         OpenButton = {Title = cfg.Title or "Hub", CornerRadius = UDim.new(1, 0), StrokeThickness = 2, Enabled = true, Draggable = true, OnlyMobile = false, Scale = 0.7,
-            Color = ColorSequence.new(Color3.fromHex("#9aa0b4"), Color3.fromHex("#e84a8a"))},
+            Color = ColorSequence.new(Color3.fromHex((cfg.OpenColors or {})[1] or "#9aa0b4"), Color3.fromHex((cfg.OpenColors or {})[2] or "#e84a8a"))},
     }
     win.Window, win.WindUI = Window, WindUI
     if cfg.Parent and WindUI.SetParent then pcall(function() WindUI:SetParent(cfg.Parent) end) end
@@ -159,7 +178,7 @@ local function build(win, WindUI, UILib, cfg)
     end
 
     function win:Tab(name, iconKind)
-        local ui = Window:Tab{Title = name, Icon = ICONS[iconKind or "dots"] or "circle"}
+        local ui = Window:Tab{Title = name, Icon = ICONS[iconKind or "dots"] or iconKind or "circle"}        -- (a name that is not one of ours is passed on as a Lucide icon name)
         local tab = {name = name, ui = ui}
         win.Tabs[#win.Tabs + 1] = tab
 

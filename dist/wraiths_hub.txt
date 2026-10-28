@@ -1276,6 +1276,30 @@ function UILib.new(cfg)
             return el
         end
 
+        -- a text box on the right of the row (the WindUI menu has one too); Callback(text) runs when the box loses focus with a new text
+        function tab:Input(o)
+            local row = newRow(o.Title, o.Desc, 150, {})
+            local box = mk("TextBox", {Name = "Box", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -12, 0.5, 0), Size = UDim2.fromOffset(136, 26), Text = o.Default or "",
+                PlaceholderText = o.Placeholder or "", ClearTextOnFocus = false, Font = Enum.Font.Gotham, TextSize = 12, BorderSizePixel = 0, TextTruncate = Enum.TextTruncate.AtEnd}, row)
+            bind(box, "BackgroundColor3", "rowHover"); bind(box, "TextColor3", "text"); bind(box, "PlaceholderColor3", "sub"); corner(box, 7); stroke(box)
+            local el = {Value = o.Default or "", Title = o.Title}
+            function el:Set(v, silent)
+                v = tostring(v or "")
+                el.Value = v
+                box.Text = v
+                if not silent and o.Callback then fire(o.Callback, v) end
+            end
+            connect(box.FocusLost, function()
+                local v = box.Text
+                if v ~= el.Value then
+                    el.Value = v
+                    if o.Callback then fire(o.Callback, v) end
+                end
+            end)
+            addElement(el, o.Flag)
+            return el
+        end
+
         function tab:Keybind(o)
             local row, _, rowSkin = newRow(o.Title, o.Desc, 100, {})
             local btn = mk("TextButton", {Name = "Key", AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -12, 0.5, 0), Size = UDim2.fromOffset(84, 26), Text = "",
@@ -1483,6 +1507,18 @@ local Adapter = {}
 Adapter.ThemeNames = {"Dark", "Crimson", "Violet", "Sky", "Emerald", "Amber", "Midnight", "Rose", "Monokai Pro", "Cotton Candy"}
 local OLD_THEMES = {Ocean = "Sky", Gold = "Amber"}                       -- names the classic menu used
 
+-- A hub can add themes of its own (hex strings, WindUI's theme fields: Accent, Dialog, Outline, Text, Placeholder, Background, Button, Icon, Toggle, Slider, Checkbox,
+-- Primary, ElementBackground ...; numbers such as ElementBackgroundTransparency pass through). Call before Adapter.new; the names join Adapter.ThemeNames.
+Adapter.ExtraThemes = {}
+function Adapter.addThemes(list)
+    for _, t in ipairs(list) do
+        local known = false
+        for _, n in ipairs(Adapter.ThemeNames) do if n == t.Name then known = true end end
+        if not known then Adapter.ThemeNames[#Adapter.ThemeNames + 1] = t.Name end
+        Adapter.ExtraThemes[t.Name] = t
+    end
+end
+
 local ICONS = {grid = "layout-grid", eye = "eye", crosshair = "crosshair", bolt = "zap", user = "user", gear = "settings", terminal = "terminal", dots = "ellipsis",
     knife = "sword", pistol = "crosshair", spark = "sparkles", search = "search"}
 local TAB_COLORS = {grid = "#7775F2", eye = "#10C550", crosshair = "#EF4F1D", bolt = "#257AF7", user = "#ECA201", gear = "#83889E", terminal = "#83889E"}
@@ -1554,14 +1590,20 @@ local function build(win, WindUI, UILib, cfg)
     end
     glass(themeName)
 
+    for name, t in pairs(Adapter.ExtraThemes) do
+        local built = {}
+        for k, v in pairs(t) do built[k] = (type(v) == "string" and k ~= "Name") and Color3.fromHex(v) or v end
+        pcall(function() WindUI:AddTheme(built) end)
+    end
+    glass(themeName)
     local Window = WindUI:CreateWindow{
-        Title = cfg.Title or "Hub", Author = cfg.Subtitle, Folder = cfg.Folder or "WraithsHub", Icon = "swords", NewElements = true, Theme = themeName,
+        Title = cfg.Title or "Hub", Author = cfg.Subtitle, Folder = cfg.Folder or "WraithsHub", Icon = cfg.WindowIcon or "swords", NewElements = true, Theme = themeName,
         Size = size, MinSize = Vector2.new(380, 230), SideBarWidth = vp.X < 900 and 124 or 150, HideSearchBar = true,
         Transparent = true, HidePanelBackground = true, ElementsRadius = 14, Radius = 16, ToggleKey = cfg.ToggleKey,
         Topbar = {Height = 38, ButtonsType = "Mac"},
         User = {Enabled = false},
         OpenButton = {Title = cfg.Title or "Hub", CornerRadius = UDim.new(1, 0), StrokeThickness = 2, Enabled = true, Draggable = true, OnlyMobile = false, Scale = 0.7,
-            Color = ColorSequence.new(Color3.fromHex("#9aa0b4"), Color3.fromHex("#e84a8a"))},
+            Color = ColorSequence.new(Color3.fromHex((cfg.OpenColors or {})[1] or "#9aa0b4"), Color3.fromHex((cfg.OpenColors or {})[2] or "#e84a8a"))},
     }
     win.Window, win.WindUI = Window, WindUI
     if cfg.Parent and WindUI.SetParent then pcall(function() WindUI:SetParent(cfg.Parent) end) end
@@ -1631,7 +1673,7 @@ local function build(win, WindUI, UILib, cfg)
     end
 
     function win:Tab(name, iconKind)
-        local ui = Window:Tab{Title = name, Icon = ICONS[iconKind or "dots"] or "circle"}
+        local ui = Window:Tab{Title = name, Icon = ICONS[iconKind or "dots"] or iconKind or "circle"}        -- (a name that is not one of ours is passed on as a Lucide icon name)
         local tab = {name = name, ui = ui}
         win.Tabs[#win.Tabs + 1] = tab
 
