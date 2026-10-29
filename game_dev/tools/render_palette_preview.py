@@ -22,7 +22,7 @@ def tile(th, glass, title, W=520, H=300):
             px[x, y] = mix(mix(th["WinA"], th["WinB"], t), th["Back"], 1 - glass)
     d = ImageDraw.Draw(im, "RGBA")
     d.rounded_rectangle((2, 2, W - 3, H - 3), 18, outline=th["Gold"] + (220,), width=2)
-    d.text((16, 12), "Animation Hub", fill=(255, 255, 255), font=F(15, True)); d.text((190, 16), title, fill=th["Gold"], font=F(11))
+    d.text((16, 12), "Wraith Hub v1.5", fill=(255, 255, 255), font=F(15, True)); d.text((190, 16), title, fill=th["Gold"], font=F(11))
     d.rounded_rectangle((10, 44, 120, H - 14), 12, fill=th["Panel"] + (150,))
     for i, t in enumerate(["Main", "Auto Tech", "Garou", "Config"]):
         act = i == 1

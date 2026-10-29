@@ -1,5 +1,5 @@
 --[[
-    Animation Hub - The Strongest Battlegrounds
+    Wraith Hub v1.5 - The Strongest Battlegrounds
     Smooth sidebar UI + Auto Tech
 
     Setup:
@@ -35,8 +35,8 @@ local function notify(title, text, duration)
         game:GetService("StarterGui"):SetCore("SendNotification", {Title = title, Text = text, Duration = duration or 4})
     end)
 end
-print("[Animation Hub] starting")
-notify("Animation Hub", "Loading...", 3)
+print("[Wraith Hub v1.5] starting")
+notify("Wraith Hub v1.5", "Loading...", 3)
 
 if not game:IsLoaded() then game.Loaded:Wait() end
 
@@ -426,7 +426,7 @@ local function __run()
     local pingPill                                   -- small live ping readout, filled in by the ping block
     local TopBar = new("Frame", {Size = UDim2.new(1, 0, 0, 56), BackgroundTransparency = 1, Parent = Main})
     local Title = new("TextLabel", {
-        Text = "Animation Hub", Font = Enum.Font.GothamBold, TextSize = 17, TextColor3 = Theme.White,
+        Text = "Wraith Hub v1.5", Font = Enum.Font.GothamBold, TextSize = 17, TextColor3 = Theme.White,
         TextXAlignment = Enum.TextXAlignment.Left, BackgroundTransparency = 1,
         Position = UDim2.fromOffset(20, 9), Size = UDim2.new(1, -230, 0, 22), Parent = TopBar,
     })
@@ -1627,7 +1627,7 @@ local function __run()
                 runningName = nil
                 if renderPins then renderPins() end
             end
-            if not ok then warn("[Animation Hub] macro failed: " .. tostring(err)) end
+            if not ok then warn("[Wraith Hub v1.5] macro failed: " .. tostring(err)) end
         end)
     end
 
@@ -2470,7 +2470,7 @@ local function __run()
     local ConfigTab = createTab("Config", "=")
 
     -- Main
-    Main_:Banner("Animation Hub", "Auto block  |  Tech Lab (Supa, Hook, Loop, Kiba ...)  |  Garou Kyoto assist  |  Dash behind the closest player  |  your own picture (Effects tab)", "TSB")
+    Main_:Banner("Wraith Hub v1.5", "Auto block  |  Tech Lab (Supa, Hook, Loop, Kiba ...)  |  Garou Kyoto assist  |  Dash behind the closest player  |  your own picture (Effects tab)", "TSB")
     -- how techs start (applies to every tech, combo card and tech switch)
     Main_:Toggle("Start techs with my M1 (off = start them by casting their first move)", Start.m1, function(v)
         if Start.m1 ~= v then Start.m1 = v; markDirty() end
@@ -3027,7 +3027,7 @@ local function __run()
     end
 
     -- Credit
-    Credit:Label("Animation Hub UI")
+    Credit:Label("Wraith Hub v1.5 UI")
     Credit:Label("Tech Lab: the tech ideas (Supa, Hook Dash, Loop Dash, Kyoto, Lethal Dash, M1 Reset, Twisted, Kiba / Kitty Tech - Kitty Tech idea by ItzSoph, ...) come from your own Dovi's Hub script; the code is a rewrite, not a copy.")
     Credit:Label("Settings are NOT saved automatically - use the Config tab (Save config) when you want to keep them.")
     Credit:Label("Toggle menu: RightShift, or the floating bar: Menu = show/hide, Tech = Auto Tech on/off, Pins = show/hide pinned buttons, Lock = freeze bar and pinned buttons, - = shrink to a dot.")
@@ -3045,8 +3045,8 @@ local function __run()
             task.wait(0.4)
             local ok, err = pcall(__run)
             if not ok then
-                warn("[Animation Hub] rebuild failed: " .. tostring(err))
-                notify("Animation Hub error", tostring(err):sub(1, 180), 15)
+                warn("[Wraith Hub v1.5] rebuild failed: " .. tostring(err))
+                notify("Wraith Hub v1.5 error", tostring(err):sub(1, 180), 15)
             end
         end)
     end
@@ -3308,8 +3308,8 @@ local function __run()
     refreshConfigStatus()
     Main_:Select()
     setMenu(true)                      -- fade + scale the window in
-    notify("Animation Hub", "Ready - the floating bar is at the top of your screen (Menu / Tech / Pins / Lock). RightShift also toggles the menu.", 7)
-    print("[Animation Hub] ready, UI parent: " .. tostring(Gui.Parent and Gui.Parent.Name))
+    notify("Wraith Hub v1.5", "Ready - the floating bar is at the top of your screen (Menu / Tech / Pins / Lock). RightShift also toggles the menu.", 7)
+    print("[Wraith Hub v1.5] ready, UI parent: " .. tostring(Gui.Parent and Gui.Parent.Name))
 
     -- soft game check: warn (never block) if this is not The Strongest Battlegrounds
     task.spawn(function()
@@ -3319,7 +3319,7 @@ local function __run()
         if ok and info and not info:lower():find("strongest battlegrounds") then
             pcall(function()
                 game:GetService("StarterGui"):SetCore("SendNotification", {
-                    Title = "Animation Hub", Text = "This place is '" .. info .. "', not TSB. Auto Tech is tuned for TSB.", Duration = 6,
+                    Title = "Wraith Hub v1.5", Text = "This place is '" .. info .. "', not TSB. Auto Tech is tuned for TSB.", Duration = 6,
                 })
             end)
         end
@@ -3330,10 +3330,10 @@ end
 -- run guarded so a failure shows a message instead of silently doing nothing (common on mobile executors)
 local ok, err = pcall(__run)
 if not ok then
-    warn("[Animation Hub] failed to start: " .. tostring(err))
+    warn("[Wraith Hub v1.5] failed to start: " .. tostring(err))
     pcall(function()
         game:GetService("StarterGui"):SetCore("SendNotification", {
-            Title = "Animation Hub error", Text = tostring(err):sub(1, 180), Duration = 15,
+            Title = "Wraith Hub v1.5 error", Text = tostring(err):sub(1, 180), Duration = 15,
         })
     end)
 end

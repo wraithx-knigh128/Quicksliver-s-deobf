@@ -103,7 +103,7 @@ Checks (from `game_dev/`; `logic` needs `pip install lupa`, the rest need real L
 - `python3 tests/run_mm2.py preview [script]`               lays the UI out like Roblox does (`tests/mm2_layout.lua`: UDim sizing, UIListLayout, UIPadding, AutomaticSize, wrapped text),
   reports layout problems (text that does not fit, default "Label" text, visible borders ...) and writes JSON; `python3 tools/render_preview.py scene.json out.png` paints it.
 
-# Animation Hub (The Strongest Battlegrounds)
+# Wraith Hub v1.5 - classic menu (The Strongest Battlegrounds)
 
 Single-file executor script: `dist/tsb_hub_executor.min.txt` (built by `python3 game_dev/build_executor.py`).
 
@@ -117,12 +117,12 @@ take-over, clicks the game already consumed are ignored, and touch players teach
 | Script | What it is | Loader |
 |---|---|---|
 | **Wraith Hub v1.5** (`dist/tsb_lab.min.txt`, WindUI) | The Tech Lab alone, on the WindUI window library, built the way the tech hub it was rewritten from uses WindUI (welcome card, version tag, top bar buttons, player card, search, a card opening every tab, changelog, theme search, fonts), in white-water colours with an animated white water background. One tab per tech family, an Overview, a Settings tab with a config manager, on-screen buttons for phones. | below |
-| **Animation Hub** (`dist/tsb_hub_executor.min.txt`) | The older hub (auto block, combo cards, Kyoto assist, assist / pins ...) - it has a *Tech Lab* tab generated from the same engine. | below |
+| **Wraith Hub v1.5 - classic menu** (`dist/tsb_hub_executor.min.txt`) | The older hub (auto block, combo cards, Kyoto assist, assist / pins ...) - it has a *Tech Lab* tab generated from the same engine. | below |
 
 ```lua
 -- Wraith Hub v1.5 (WindUI)
 loadstring(game:HttpGet("https://raw.githubusercontent.com/wraithx-knigh128/Quicksliver-s-deobf/56a8e15004c3c0096cd282c3475b64b8366ccd0a/dist/tsb_lab.min.txt"))()
--- Animation Hub (auto block, combos, Tech Lab tab)
+-- Wraith Hub v1.5 classic menu (auto block, combos, Tech Lab tab)
 loadstring(game:HttpGet("https://raw.githubusercontent.com/wraithx-knigh128/Quicksliver-s-deobf/56a8e15004c3c0096cd282c3475b64b8366ccd0a/dist/tsb_hub_executor.min.txt"))()
 ```
 
@@ -162,7 +162,7 @@ Roblox gives a client its own round-trip time and nothing else, so the Tech Lab 
 
 ### v1.5: targeting, safety, chains, buffer, hit check
 
-All of it lives in the engine, so both scripts get it (Overview in Wraith Hub, the Tech Lab tab in the Animation Hub), and all of it is saved with *Save config*:
+All of it lives in the engine, so both scripts get it (Overview in Wraith Hub, the Tech Lab tab in the classic menu), and all of it is saved with *Save config*:
 
 - **Who the techs go for**: *Nearest* (as before), *Crosshair* (nearest to the middle of the screen), *Lowest health*, or *Hook target first* (the player you picked with V, else the nearest). *Skip players who are blocking* goes for the next one instead.
 - **Safe moves** (on): every tech that moves or teleports you casts a ray first and stops a little in front of a wall or ceiling, and never puts you under the floor (it finds the floor from just above the spot, so a roof does not count as the floor). Hook Dash stops at a wall in its path and says so.
@@ -209,7 +209,7 @@ All of it lives in the engine, so both scripts get it (Overview in Wraith Hub, t
 | Unblockable Warning | Awareness | when a player winds up the unblockable down slam | A red arrow above a player while he telegraphs the unblockable down slam: dodge it, do not block it. |
 | Block ESP | Awareness | while a player blocks | Highlights a player for as long as he is blocking. |
 
-Auto block stays the Animation Hub's own (Auto Tech tab): it learns timing and predicts rushes, which your script's version did not. Credits: Kitty Tech idea by ItzSoph (credited in your script too).
+Auto block stays the classic menu's own (Auto Tech tab): it learns timing and predicts rushes, which your script's version did not. Credits: Kitty Tech idea by ItzSoph (credited in your script too).
 
 **Where the newer techs come from.** Fast Dash, DashClip, Counter ESP, Death Counter ESP and the unblockable-down-slam arrow (your "Block Indicator") are in your script. Backdash Cancel (+ aerial), Micro Dash, Shove Dash, Uppercut Catch,
 Uppercut Grasp, Lethal Grasp and Flowing Grasp come from community descriptions of TSB techs that I found by searching: the
@@ -231,7 +231,7 @@ A passing test means "the code does what it says in a world like the one your sc
 
 Checks for the Tech Lab (from `game_dev/`): `python3 tests/run_tests.py` (maths / data / options), `LUAU=/path/to/luau python3 tests/run_tsb.py lab` (the engine in the arena), `... run_tsb.py hub` (the WindUI hub on the real WindUI),
 `sh tools/gen_tsb_types.sh` (regenerates the strict API tables after using new Roblox members), `python3 tools/mutate_tsb.py` / `tools/mutate_tsb_hub.py` (mutation checks), `python3 tests/check_docs.py` (every tech is in this README).
-Build: `python3 game_dev/tsb/build_tsb_lab.py` (WindUI hub) and `python3 game_dev/build_executor.py` (Animation Hub).
+Build: `python3 game_dev/tsb/build_tsb_lab.py` (WindUI hub) and `python3 game_dev/build_executor.py` (Wraith Hub v1.5 classic menu).
 
 ### Wraith Hub v1.5 (WindUI)
 
