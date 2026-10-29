@@ -127,7 +127,7 @@ Only the **menu** changed. Auto block, the combo cards (Run / On screen / Assist
 - **The old menu is the fallback**: if WindUI cannot start (an executor that blocks its file / web calls) or half-builds, the previous menu opens exactly as it was, and `getgenv().AH_LEGACY_UI = true` before running the loader keeps it on purpose.
 - **Size**: the script now carries WindUI (about 670 KB minified instead of 290 KB). The file names and loader links are unchanged.
 - **Tested** (`tests/classic_wind_tests.lua`: 66 checks of the menu layer against a stub; `tests/classic_tests.lua`: 224 checks of the whole hub on the real WindUI in the strict simulated world - boot and structure, controls, the Tech Lab, combo cards with pins and
-  option drawers, teleports, the floating bar, the look, config save / load / junk / reload / delete, Panic, the built-in menu both ways, unloading - and the old 34-scenario smoke test, which now covers the built-in menu). Mutation checks (`tools/mutate_classic_wind.py`, `tools/mutate_classic.py`) are in the repo.
+  option drawers, teleports, the floating bar, the look, config save / load / junk / reload / delete, Panic, the built-in menu both ways, unloading - and the old 34-scenario smoke test, which now covers the built-in menu). Mutation checks: `tools/mutate_classic_wind.py` breaks the menu layer in 27 ways and all 27 are caught; `tools/mutate_classic.py` breaks the built hub in 26 ways, 25 are caught and 1 cannot change anything anyone can see (explained in the tool).
   **Not tested**: how it looks on a screen (there is no renderer for WindUI's images), how fast ~700 WindUI controls build on a phone, or anything in the real game.
 
 ## Two scripts, one engine
@@ -139,9 +139,9 @@ Only the **menu** changed. Auto block, the combo cards (Run / On screen / Assist
 
 ```lua
 -- Wraith Hub v1.5 (WindUI)
-loadstring(game:HttpGet("https://raw.githubusercontent.com/wraithx-knigh128/Quicksliver-s-deobf/56a8e15004c3c0096cd282c3475b64b8366ccd0a/dist/tsb_lab.min.txt"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/wraithx-knigh128/Quicksliver-s-deobf/fbaf3b9520a157c4adc03d30b10480c41e9e2519/dist/tsb_lab.min.txt"))()
 -- Wraith Hub v1.5 classic menu (auto block, combos, Tech Lab tab)
-loadstring(game:HttpGet("https://raw.githubusercontent.com/wraithx-knigh128/Quicksliver-s-deobf/57d94023f25b72d6cda0d11dd8d1eecc015584f1/dist/tsb_hub_executor.min.txt"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/wraithx-knigh128/Quicksliver-s-deobf/fbaf3b9520a157c4adc03d30b10480c41e9e2519/dist/tsb_hub_executor.min.txt"))()
 ```
 
 ## Tech Lab
