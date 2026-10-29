@@ -112,6 +112,24 @@ tech's own M1 count - the script plays the rest, casting the tech's first move i
 take-over, clicks the game already consumed are ignored, and touch players teach their M1 animations once with *Teach my M1*. Switch it off to go back to
 "cast the first move yourself". Options: wait after your last M1 (0.15-0.8 s), most M1s to wait for (1-4); saved with *Save config*.
 
+### The classic menu in the Wraith Hub v1.5 look (WindUI, white water)
+
+Only the **menu** changed. Auto block, the combo cards (Run / On screen / Assist / Opt), pinned buttons, Auto Tech, timing, the tech library, the Tech Lab, teleports, the predictor and Save config are the same code as before; the menu calls they make
+(`tab:Toggle`, `tab:Slider`, `sec:Button` ...) are now answered by WindUI (`game_dev/classic_wind.lua`) instead of the hand-built window.
+
+- **What you see**: the window of the other Wraith Hub v1.5 - welcome card, v1.5 tag, a live **ping tag** next to the title, **Panic / Water / Changelog** buttons in the top bar, search, your player card, the sidebar groups MENU / CHARACTERS / TOOLS, the animated
+  **white water** background and the Wraith White / Wraith Pearl themes (plus WindUI's own). Panic stops the combo that is playing and every Tech Lab tech.
+- **Combo cards** are folding cards: Run, *On screen*, *Assist* and *Show options* (that drawer is built when you first open it, so hundreds of sliders are not made up front).
+- **Effects Preset became Look**: theme (searchable), font, menu size, window transparency, the white water (on/off, brightness, speed), and your own picture or video link with a darken slider - all kept by *Save config* (a new `wind` entry; old config files still load).
+  The random anime pictures are not used in this menu (they would cover the water); the built-in menu still has them.
+- **Still on screen**: the floating bar (Menu / Tech / Block / Pins / Lock), the pinned buttons and the BLOCK button, in the white-water colours. The bar's *Pins N* count now follows when you pin something.
+- **Built a little at a time**: the ~700 controls are made a few per frame (the tab on screen first), so opening the hub does not freeze a phone. The window is usable at once; the other tabs fill in behind it.
+- **The old menu is the fallback**: if WindUI cannot start (an executor that blocks its file / web calls) or half-builds, the previous menu opens exactly as it was, and `getgenv().AH_LEGACY_UI = true` before running the loader keeps it on purpose.
+- **Size**: the script now carries WindUI (about 670 KB minified instead of 290 KB). The file names and loader links are unchanged.
+- **Tested** (`tests/classic_wind_tests.lua`: 66 checks of the menu layer against a stub; `tests/classic_tests.lua`: the whole hub on the real WindUI in the strict simulated world - boot and structure, controls, the Tech Lab, combo cards with pins and
+  option drawers, teleports, the floating bar, the look, config save / load / junk / reload / delete, Panic, the built-in menu both ways, unloading - and the old 34-scenario smoke test, which now covers the built-in menu). Mutation checks (`tools/mutate_classic_wind.py`, `tools/mutate_classic.py`) are in the repo.
+  **Not tested**: how it looks on a screen (there is no renderer for WindUI's images), how fast ~700 WindUI controls build on a phone, or anything in the real game.
+
 ## Two scripts, one engine
 
 | Script | What it is | Loader |
@@ -229,7 +247,7 @@ and mutation checks (`tools/mutate_tsb.py`: 52 deliberately broken copies of the
 nothing is written until Save config, a saved config comes back (v1.5 settings included), unloading removes everything (every listener still connected afterwards is traced to the line that made it: none of ours is left), and the small built-in menu takes over when WindUI cannot start.
 A passing test means "the code does what it says in a world like the one your script describes"; it cannot show how the window *looks* (no renderer for WindUI's images) or that an executor allows what WindUI needs.
 
-Checks for the Tech Lab (from `game_dev/`): `python3 tests/run_tests.py` (maths / data / options), `LUAU=/path/to/luau python3 tests/run_tsb.py lab` (the engine in the arena), `... run_tsb.py hub` (the WindUI hub on the real WindUI),
+Checks for the Tech Lab (from `game_dev/`): `python3 tests/run_tests.py` (maths / data / options), `LUAU=/path/to/luau python3 tests/run_tsb.py lab` (the engine in the arena), `... run_tsb.py hub` (the WindUI hub on the real WindUI), `... run_tsb.py classic` (the old hub's WindUI menu; `CLASSIC_SECTIONS=controls,look` runs only those sections) and `... run_tsb.py shim` (its menu layer against a stub),
 `sh tools/gen_tsb_types.sh` (regenerates the strict API tables after using new Roblox members), `python3 tools/mutate_tsb.py` / `tools/mutate_tsb_hub.py` (mutation checks), `python3 tests/check_docs.py` (every tech is in this README).
 Build: `python3 game_dev/tsb/build_tsb_lab.py` (WindUI hub) and `python3 game_dev/build_executor.py` (Wraith Hub v1.5 classic menu).
 

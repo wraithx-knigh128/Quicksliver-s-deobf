@@ -496,6 +496,7 @@ function World.new(opts)
         setParent(s, self)
         return s
     end
+    METHODS.IsLoaded = function() return true end                       -- (a running game has finished loading)
     METHODS.BindToRenderStep = function(self, name, prio, fn) W.renderSteps[name] = {prio = prio, fn = fn} end
     METHODS.UnbindFromRenderStep = function(self, name) W.renderSteps[name] = nil end
     METHODS.GetMouseLocation = function() return W.mouse or Vector2_new(640, 360) end

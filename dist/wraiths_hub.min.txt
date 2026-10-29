@@ -1364,6 +1364,23 @@ if not known then Adapter.ThemeNames[#Adapter.ThemeNames + 1] = t.Name end
 Adapter.ExtraThemes[t.Name] = t
 end
 end
+Adapter.WraithThemes = {
+{Name = "Wraith White", Accent = "#10141b", Dialog = "#121822", Outline = "#f2f6fb", Text = "#f5f8fc", Placeholder = "#9aa6b5", Background = "#0b0f15", Button = "#3a4656", Icon = "#e6edf6",
+Toggle = "#e9f1fb", Slider = "#dfe9f5", Checkbox = "#e9f1fb", Primary = "#f2f7ff", SliderIcon = "#c9d4e2", PanelBackground = "#ffffff", PanelBackgroundTransparency = 0.95,
+LabelBackground = "#000000", LabelBackgroundTransparency = 0.8, ElementBackground = "#1a212c", ElementBackgroundTransparency = 0},
+{Name = "Wraith Pearl", Accent = "#e8edf4", Dialog = "#f1f4f8", Outline = "#ffffff", Text = "#101826", Placeholder = "#5b6778", Background = "#e9eef5", Button = "#c3ccd8", Icon = "#3b4a5e",
+Toggle = "#5b7fa6", Slider = "#5b7fa6", Checkbox = "#5b7fa6", Primary = "#4a6f99", SliderIcon = "#5b6778", PanelBackground = "#ffffff", PanelBackgroundTransparency = 0.6,
+LabelBackground = "#ffffff", LabelBackgroundTransparency = 0.5, ElementBackground = "#ffffff", ElementBackgroundTransparency = 0},
+}
+function Adapter.waterTint(theme) return theme == "Wraith Pearl" and Color3.fromRGB(110, 130, 158) or Color3.fromRGB(255, 255, 255) end
+Adapter.Fonts = {Default = "rbxassetid://12187365364", Gotham = "Gotham", Code = "Code", Fredoka = "FredokaOne", Arcade = "Arcade"}
+Adapter.FontNames = {"Default", "Gotham", "Code", "Fredoka", "Arcade"}
+function Adapter.fontFamily(name)
+local f = Adapter.Fonts[name]
+if not f or f:find("^rbxassetid://") then return f end
+local ok, family = pcall(function() return Font.fromEnum(Enum.Font[f]).Family end)
+return ok and family or nil
+end
 local ICONS = {grid = "layout-grid", eye = "eye", crosshair = "crosshair", bolt = "zap", user = "user", gear = "settings", terminal = "terminal", dots = "ellipsis",
 knife = "sword", pistol = "crosshair", spark = "sparkles", search = "search"}
 local TAB_COLORS = {grid = "#7775F2", eye = "#10C550", crosshair = "#EF4F1D", bolt = "#257AF7", user = "#ECA201", gear = "#83889E", terminal = "#83889E"}
@@ -1459,9 +1476,18 @@ dot.Parent = right
 connect(dot.MouseButton1Click, function() Window:Close() end)
 end)
 end
-if type(cfg.Tag) == "table" then
-pcall(function() Window:Tag{Title = cfg.Tag.Title or "", Color = Color3.fromHex(cfg.Tag.Color or "#ffffff")} end)
+function win:Tag(o)
+o = o or {}
+local ok, tagObj = pcall(function() return Window:Tag{Title = o.Title or "", Color = Color3.fromHex(o.Color or "#ffffff")} end)
+local handle = {}
+function handle:Set(title, color)
+if not (ok and tagObj) then return end
+if title ~= nil then pcall(function() tagObj:SetTitle(tostring(title)) end) end
+if color then pcall(function() tagObj:SetColor(Color3.fromHex(color)) end) end
 end
+return handle
+end
+if type(cfg.Tag) == "table" then win:Tag(cfg.Tag) end
 for i, b in ipairs(type(cfg.TopbarButtons) == "table" and cfg.TopbarButtons or {}) do
 pcall(function() Window:CreateTopbarButton(b.Name or ("Button" .. i), b.Icon or "circle", function() safe("topbar " .. tostring(b.Name), b.Callback) end, 900 + i) end)
 end
@@ -1503,25 +1529,40 @@ g.Transparency = FADE
 g.Parent = host
 end)
 end
-function win:Tab(name, iconKind)
-local ui = Window:Tab{Title = name, Icon = ICONS[iconKind or "dots"] or iconKind or "circle"}
-local tab = {name = name, ui = ui}
-win.Tabs[#win.Tabs + 1] = tab
-function tab:Section(title)
+local function unregister(el)
+for i = #win.Elements, 1, -1 do if win.Elements[i] == el then table.remove(win.Elements, i) end end
+if el.Flag and win.Flags[el.Flag] == el then win.Flags[el.Flag] = nil end
+end
+local attach
+function attach(host, ui, page)
+host.items = {}
+local function keep(el)
+host.items[#host.items + 1] = el
+if el.Ui == nil then return el end
+function el:SetVisible(v) pcall(function() el.Ui.ElementFrame.Visible = v ~= false end) end
+function el:Destroy()
+pcall(function() el.Ui:Destroy() end)
+unregister(el)
+end
+return el
+end
+local function addEl(el, flag) return keep(addElement(el, flag)) end
+function host:Section(title)
 return ui:Section{Title = title, TextSize = 18}
 end
-function tab:Label(text)
+function host:Label(text)
 local el = {Value = tostring(text or "")}
 local p = ui:Section{Title = el.Value ~= "" and el.Value or " ", TextSize = 14, TextTransparency = 0.25, FontWeight = Enum.FontWeight.Medium}
+el.Ui = p
 function el:Set(v)
 v = tostring(v)
 if v == el.Value then return end
 el.Value = v
 pcall(function() p:SetTitle(v ~= "" and v or " ") end)
 end
-return el
+return keep(el)
 end
-function tab:Paragraph(o)
+function host:Paragraph(o)
 local el = {Title = o.Title, Value = o.Desc or ""}
 local p = ui:Paragraph{Title = o.Title or "", Desc = o.Desc, Image = o.Image, ImageSize = o.ImageSize or 20, Color = o.Color}
 function el:Set(v)
@@ -1532,22 +1573,24 @@ pcall(function() p:SetDesc(v) end)
 end
 el.Ui = p
 decorate(p, ui)
-return addElement(el)
+return addEl(el)
 end
-function tab:Button(o)
+function host:Button(o)
 local el = {Value = nil, Title = o.Title, Click = function() fire(o.Callback) end}
 el.Ui = ui:Button{Title = o.Title or "Button", Desc = o.Desc, Icon = "mouse-pointer-click", Callback = function() fire(o.Callback) end}
 decorate(el.Ui, ui)
 function el:Set() end
+if o.Outline ~= false then
 local okSkin, skinErr = pcall(function()
-local host = el.Ui.ElementFrame
-local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 14); c.Parent = host
-el.Outline = win:Outline(host, {Thickness = 1.5, Glow = false, Page = ui.ContainerFrame})
+local frame = el.Ui.ElementFrame
+local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, 14); c.Parent = frame
+el.Outline = win:Outline(frame, {Thickness = 1.5, Glow = false, Page = page})
 end)
 if not okSkin then onError("button outline", skinErr) end
-return addElement(el)
 end
-function tab:Toggle(o)
+return addEl(el)
+end
+function host:Toggle(o)
 local el = {Value = o.Default == true}
 local p = ui:Toggle{Title = o.Title or "Toggle", Desc = o.Desc, Value = el.Value, Callback = function(v)
 if v == el.Value then return end
@@ -1563,11 +1606,11 @@ if not silent and (changed or o.FireSame) then fire(o.Callback, v) end
 end
 el.Title, el.Ui = o.Title, p
 decorate(p, ui)
-addElement(el, o.Flag)
+addEl(el, o.Flag)
 if el.Value and o.Callback and not o.NoInitialCallback then fire(o.Callback, true) end
 return el
 end
-function tab:Slider(o)
+function host:Slider(o)
 local min, max, step = o.Min or 0, o.Max or 100, o.Step or 1
 local decimals = step < 1 and (step < 0.1 and 2 or 1) or 0
 local function snap(v)
@@ -1595,10 +1638,9 @@ if not silent and changed then fire(o.Callback, v) end
 end
 el.Title, el.Ui = o.Title, p
 decorate(p, ui)
-addElement(el, o.Flag)
-return el
+return addEl(el, o.Flag)
 end
-function tab:Dropdown(o)
+function host:Dropdown(o)
 local el = {Value = o.Default, Values = o.Values or {}}
 if el.Value == nil then el.Value = el.Values[1] end
 local p
@@ -1621,9 +1663,9 @@ pcall(function() p:Refresh(values) end)
 end
 el.Title, el.Ui = o.Title, p
 decorate(p, ui)
-return addElement(el, o.Flag)
+return addEl(el, o.Flag)
 end
-function tab:Input(o)
+function host:Input(o)
 local el = {Value = o.Default or ""}
 local p = ui:Input{Title = o.Title or "Input", Desc = o.Desc, Value = el.Value, Placeholder = o.Placeholder or "", Type = "Input", Callback = function(v)
 v = tostring(v or "")
@@ -1640,9 +1682,9 @@ if not silent and changed then fire(o.Callback, v) end
 end
 el.Title, el.Ui = o.Title, p
 decorate(p, ui)
-return addElement(el, o.Flag)
+return addEl(el, o.Flag)
 end
-function tab:Keybind(o)
+function host:Keybind(o)
 local el = {Value = o.Default or "None", Down = false}
 local p = ui:Keybind{Title = o.Title or "Keybind", Desc = o.Desc, Value = el.Value ~= "None" and el.Value or "F", Callback = function() end}
 local label
@@ -1673,8 +1715,41 @@ if input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode.Name == 
 end)
 el.Title, el.Ui = o.Title, p
 decorate(p, ui)
-return addElement(el, o.Flag)
+return addEl(el, o.Flag)
 end
+function host:Group(o)
+o = o or {}
+local sec = ui:Section{Title = o.Title or " ", Desc = o.Desc, Box = o.Box == true, BoxBorder = o.Box == true, Opened = o.Opened == true,
+TextSize = o.TextSize or 17, DescTextSize = o.DescTextSize or 13}
+local group = {Title = o.Title, Ui = sec}
+attach(group, sec, page)
+function group:Open() pcall(function() sec:Open() end) end
+function group:Close() pcall(function() sec:Close() end) end
+function group:IsOpen() return sec.Opened == true end
+function group:SetTitle(v) pcall(function() sec:SetTitle(v ~= "" and v or " ") end) end
+function group:SetDesc(v) pcall(function() sec:SetDesc(v) end) end
+function group:Clear()
+for i = #group.items, 1, -1 do
+local it = group.items[i]
+if it.Clear then it:Clear() end
+if it.Destroy then it:Destroy() end
+group.items[i] = nil
+end
+end
+keep(group)
+return group
+end
+end
+function win:SideSection(title, opened)
+local ui = Window:Section{Title = title, Opened = opened ~= false}
+return {title = title, ui = ui}
+end
+function win:Tab(name, iconKind, side)
+local parent = side and side.ui or Window
+local ui = parent:Tab{Title = name, Icon = ICONS[iconKind or "dots"] or iconKind or "circle"}
+local tab = {name = name, ui = ui}
+win.Tabs[#win.Tabs + 1] = tab
+attach(tab, ui, ui.ContainerFrame)
 return tab
 end
 function win:Notify(o)

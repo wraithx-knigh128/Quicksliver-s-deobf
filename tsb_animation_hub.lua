@@ -3,10 +3,13 @@
     Smooth sidebar UI + Auto Tech
 
     Setup:
-      * Background: a random SFW anime image is fetched from waifu.pics / nekos.best.
+      * The menu is WindUI in the Wraith Hub v1.5 white-water look (game_dev/classic_wind.lua answers this file's menu calls).
+        If WindUI cannot start, the built-in menu below opens instead; getgenv().AH_LEGACY_UI = true forces it.
+      * Background of the BUILT-IN menu: a random SFW anime image is fetched from waifu.pics / nekos.best.
         NOTE: those are community fan-art images, NOT copyright-free. For art you may
         legally redistribute, set BACKGROUND_URL to your own / CC0 image.
-      * Needs request + writefile + getcustomasset for the image; everything else works without them.
+        (The WindUI menu has the white water instead, and an optional picture / video link of your own in the Look tab.)
+      * Needs request + writefile + getcustomasset for any picture; everything else works without them.
 
     Auto Tech: when you get knocked down / ragdolled it waits a short delay and
     presses the dash key in the chosen direction so you recover instantly.
@@ -44,10 +47,8 @@ local function __run()
     ---------------------------------------------------------------- services
     local Players           = game:GetService("Players")
     local RunService        = game:GetService("RunService")
-    local TweenService      = game:GetService("TweenService")
     local UserInputService  = game:GetService("UserInputService")
     local VirtualInput      = game:GetService("VirtualInputManager")
-    local CoreGui           = game:GetService("CoreGui")
 
     local LocalPlayer = Players.LocalPlayer
 
@@ -59,16 +60,16 @@ local function __run()
 
     local function guiParent()
         if GUI_PARENT == "playergui" then return LocalPlayer:WaitForChild("PlayerGui") end
-        if GUI_PARENT == "coregui" then return CoreGui end
+        if GUI_PARENT == "coregui" then return game:GetService("CoreGui") end
         local p = safe(function() return gethui() end)
         if p then return p end
-        p = safe(function() return CoreGui end)
+        p = safe(function() return game:GetService("CoreGui") end)
         if p and safe(function() return #p:GetChildren() end) then return p end
         return LocalPlayer:WaitForChild("PlayerGui")   -- always allowed, works on any executor
     end
 
     local function tween(obj, props, t, style, dir)
-        local tw = TweenService:Create(obj, TweenInfo.new(t or 0.25, style or Enum.EasingStyle.Quint, dir or Enum.EasingDirection.Out), props)
+        local tw = game:GetService("TweenService"):Create(obj, TweenInfo.new(t or 0.25, style or Enum.EasingStyle.Quint, dir or Enum.EasingDirection.Out), props)
         tw:Play()
         return tw
     end
@@ -187,18 +188,21 @@ local function __run()
         local data = safe(function() return game:GetService("HttpService"):JSONDecode(raw) end)
         return type(data) == "table" and data or {}
     end
-    local function loadSaved()
-        local carried, fromFile = genv[SESSION_KEY], genv[SESSION_KEY .. "FromFile"]
-        genv[SESSION_KEY], genv[SESSION_KEY .. "FromFile"] = nil, nil
-        if type(carried) == "table" then return carried, fromFile and "file" or "carried over" end
-        local data = readConfigFile()
-        return data, next(data) ~= nil and "file" or "none"
-    end
     local function num(v, lo, hi, default)
         if type(v) ~= "number" or v ~= v then return default end
         return math.min(math.max(v, lo), hi)
     end
-    local Saved, SavedFrom = loadSaved()
+    local Saved, SavedFrom
+    do
+        local function loadSaved()
+            local carried, fromFile = genv[SESSION_KEY], genv[SESSION_KEY .. "FromFile"]
+            genv[SESSION_KEY], genv[SESSION_KEY .. "FromFile"] = nil, nil
+            if type(carried) == "table" then return carried, fromFile and "file" or "carried over" end
+            local data = readConfigFile()
+            return data, next(data) ~= nil and "file" or "none"
+        end
+    Saved, SavedFrom = loadSaved()
+    end
     -- your own menu picture (link / workspace file / image id); "" = random anime pictures. Part of the config.
     local Picture = {source = type(Saved.picture) == "string" and #Saved.picture <= 300 and not Saved.picture:find("%c") and Saved.picture or ""}
 
@@ -282,8 +286,10 @@ local function __run()
     ---------------------------------------------------------------- cleanup old
     -- re-running the script must not leave the old copy's listeners (Auto Tech, predictor...) alive
     if type(genv.__AnimationHubCleanup) == "function" then pcall(genv.__AnimationHubCleanup) end
-    local old = guiParent():FindFirstChild("AnimationHubTSB")
-    if old then old:Destroy() end
+    do
+        local old = guiParent():FindFirstChild("AnimationHubTSB")
+        if old then old:Destroy() end
+    end
 
     ---------------------------------------------------------------- window
     local Gui = new("ScreenGui", {
@@ -317,6 +323,66 @@ local function __run()
         local vp = cam and cam.ViewportSize
         if vp and type(vp.X) == "number" and type(vp.Y) == "number" and vp.X > 0 and vp.Y > 0 then return vp.X, vp.Y end
     end
+    ---------------------------------------------------------------- the menu: WindUI in the white-water look, or the built-in menu further down
+    -- getgenv().AH_LEGACY_UI = true keeps the built-in menu. It is also what you get when WindUI cannot start (an executor that blocks its file / web calls).
+    -- ClassicWind / WindAdapter / UILib / WindUILoader are bundled in by game_dev/build_executor.py; the unbundled file only has the built-in menu.
+    local Backend
+    local windActions = {}                              -- filled in where the tabs are built (the top bar buttons call them)
+    local WindPrefs = {theme = "Wraith White", font = "Default", scale = 0.9, alpha = 0.45, water = true, waterStrength = 0.7, waterSpeed = 1, bgDim = 0.35, popup = true}
+    windActions.lines = {
+        "New look: the Wraith Hub v1.5 window (WindUI) with the white water background, the Wraith White / Pearl themes, search, your player card and a card at the top of every tab.",
+        "Same hub inside: Auto block, combo cards (On screen / Assist / Opt), pins, Auto Tech, timing, Tech Lab, teleports and Config are unchanged.",
+        "Tech Lab: who the techs go for, safe moves, the knocked-down guard, chains, the input buffer and a hit check.",
+        "The floating bar, the pinned buttons and the BLOCK button are still on screen, in the new colours.",
+        "Look tab: theme (searchable), font, size, transparency, the white water (also the top bar button), your own picture or video.",
+    }
+    if ClassicWind and WindAdapter and UILib and WindUILoader and genv.AH_LEGACY_UI ~= true then
+        local backendProblem
+        WindAdapter.addThemes(WindAdapter.WraithThemes)
+        local w = type(Saved.wind) == "table" and Saved.wind or {}
+        for _, name in ipairs(WindAdapter.ThemeNames) do if name == w.theme then WindPrefs.theme = name end end
+        if WindAdapter.Fonts[w.font] then WindPrefs.font = w.font end
+        WindPrefs.scale = num(w.scale, 0.55, 1.2, WindPrefs.scale)
+        WindPrefs.alpha = num(w.alpha, 0, 0.9, WindPrefs.alpha)
+        WindPrefs.waterStrength = num(w.waterStrength, 0, 1, WindPrefs.waterStrength)
+        WindPrefs.waterSpeed = num(w.waterSpeed, 0, 3, WindPrefs.waterSpeed)
+        WindPrefs.bgDim = num(w.bgDim, 0, 0.9, WindPrefs.bgDim)
+        if type(w.water) == "boolean" then WindPrefs.water = w.water end
+        if type(w.popup) == "boolean" then WindPrefs.popup = w.popup end
+        local okLib, WindUI = xpcall(WindUILoader, debug.traceback)
+        if okLib and type(WindUI) == "table" and WindUI.CreateWindow then
+            local vw0 = viewport()
+            local ok, res = xpcall(function()
+                return ClassicWind.new{
+                    Adapter = WindAdapter, WindUI = WindUI, UILib = UILib,
+                    onError = function(where, err) warn("[Wraith Hub v1.5] " .. tostring(where) .. ": " .. tostring(err)) end,
+                    perFrame = tonumber(genv.AH_MENU_PER_FRAME),        -- (the tests set this: most controls built per frame; normally a time budget decides)
+                    cfg = {Title = "Wraith Hub v1.5", Subtitle = "The Strongest Battlegrounds", Folder = "AnimationHub", Parent = guiParent(), GuiName = "AnimationHubTSB_Wind",
+                        Theme = WindPrefs.theme, WaveMode = "High", ToggleKey = Enum.KeyCode.RightShift, WindowAlpha = WindPrefs.alpha, Scale = WindPrefs.scale, Mono = false,
+                        WindowIcon = "sparkles", OpenColors = {"#ffffff", "#9aa7b8"}, SearchBar = true, UserCard = true, SideBarWidth = (vw0 and vw0 >= 900) and 200 or 130,
+                        Size = {660, 520}, TopbarStyle = "Default", Tag = {Title = "v1.5", Color = "#e8eef7"},
+                        TopbarButtons = {
+                            {Name = "Panic", Icon = "zap", Callback = function() if windActions.panic then windActions.panic() end end},
+                            {Name = "Water", Icon = "sparkles", Callback = function() if windActions.toggleWater then windActions.toggleWater() end end},
+                            {Name = "Changelog", Icon = "info", Callback = function() if windActions.changelog then windActions.changelog() end end},
+                        },
+                        Water = {Enabled = WindPrefs.water, Strength = WindPrefs.waterStrength, Speed = WindPrefs.waterSpeed, Tint = WindAdapter.waterTint(WindPrefs.theme)},
+                        Background = Picture.source ~= "" and Picture.source or nil, BackgroundDim = WindPrefs.bgDim,
+                        OnBackground = function(okBg, msg) if not okBg and windActions.say then windActions.say("Background not loaded: " .. tostring(msg)) end end,
+                        OnError = function(where, err) warn("[Wraith Hub v1.5] " .. tostring(where) .. ": " .. tostring(err)) end},
+                }
+            end, debug.traceback)
+            if ok then Backend = res else backendProblem = res end
+        else
+            backendProblem = WindUI
+        end
+        if backendProblem then warn("[Wraith Hub v1.5] WindUI did not start, using the built-in menu: " .. tostring(backendProblem):sub(1, 300)) end
+    end
+    if Backend then
+        genv.__AnimationHubUI = Backend                  -- (the tests look at the menu through this)
+        onCleanup[#onCleanup + 1] = function() Backend.destroy(); if genv.__AnimationHubUI == Backend then genv.__AnimationHubUI = nil end end
+    end
+
     local WIN_W, WIN_H = 600, 390
     do
         local vw, vh = viewport()
@@ -341,14 +407,17 @@ local function __run()
         return math.max(0.5, math.min(uiScale, (vw - 8) / WIN_W, (vh - 8) / WIN_H))
     end
     local MainScale = new("UIScale", {Scale = 0.92 * fitScale(), Parent = Main})
-    local MainStroke = stroke(Theme.White, 1.6, 0.15)
-    MainStroke.Parent = Main
-    local BorderGrad = new("UIGradient", {      -- gold -> accent -> accent2 rim that slowly rotates
-        Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, Theme.Gold), ColorSequenceKeypoint.new(0.5, Theme.Accent), ColorSequenceKeypoint.new(1, Theme.Accent2),
-        }),
-        Rotation = 45, Parent = MainStroke,
-    })
+    local BorderGrad
+    do
+        local MainStroke = stroke(Theme.White, 1.6, 0.15)
+        MainStroke.Parent = Main
+        BorderGrad = new("UIGradient", {      -- gold -> accent -> accent2 rim that slowly rotates
+            Color = ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Theme.Gold), ColorSequenceKeypoint.new(0.5, Theme.Accent), ColorSequenceKeypoint.new(1, Theme.Accent2),
+            }),
+            Rotation = 45, Parent = MainStroke,
+        })
+    end
 
     -- background: tinted gradient, optional image, and a dark veil so text stays readable
     new("UIGradient", {
@@ -392,7 +461,7 @@ local function __run()
             if asset and mine == bgGen and alive then setPicture(asset) end
         end)
     end
-    refreshBackground()
+    if not Backend then refreshBackground() end
 
     local toast
     do
@@ -449,18 +518,6 @@ local function __run()
         BackgroundTransparency = 0.9, BorderSizePixel = 0, Parent = TopBar,
     })
 
-    local function topButton(text, xOff, hoverColor, cb)
-        local b = new("TextButton", {
-            Text = text, Font = Enum.Font.GothamBold, TextSize = 16, TextColor3 = Theme.Text,
-            BackgroundColor3 = Theme.Item, BackgroundTransparency = 0.4, AutoButtonColor = false,
-            Size = UDim2.fromOffset(32, 32), Position = UDim2.new(1, xOff, 0, 12), Parent = TopBar,
-        }, {corner(16)})
-        b.MouseEnter:Connect(function() tween(b, {BackgroundColor3 = hoverColor, BackgroundTransparency = 0.1}, 0.15) end)
-        b.MouseLeave:Connect(function() tween(b, {BackgroundColor3 = Theme.Item, BackgroundTransparency = 0.4}, 0.2) end)
-        b.MouseButton1Click:Connect(cb)
-        return b
-    end
-
     -- show / hide the menu with a fade + scale (RightShift on PC, the floating bar on touch devices)
     local menuOpen, menuTok = true, 0
     local renderFab   -- assigned by the floating bar further down
@@ -485,6 +542,17 @@ local function __run()
     local function toggleMenu() setMenu(not menuOpen) end
 
     do
+    local function topButton(text, xOff, hoverColor, cb)
+        local b = new("TextButton", {
+            Text = text, Font = Enum.Font.GothamBold, TextSize = 16, TextColor3 = Theme.Text,
+            BackgroundColor3 = Theme.Item, BackgroundTransparency = 0.4, AutoButtonColor = false,
+            Size = UDim2.fromOffset(32, 32), Position = UDim2.new(1, xOff, 0, 12), Parent = TopBar,
+        }, {corner(16)})
+        b.MouseEnter:Connect(function() tween(b, {BackgroundColor3 = hoverColor, BackgroundTransparency = 0.1}, 0.15) end)
+        b.MouseLeave:Connect(function() tween(b, {BackgroundColor3 = Theme.Item, BackgroundTransparency = 0.4}, 0.2) end)
+        b.MouseButton1Click:Connect(cb)
+        return b
+    end
     local minimized = false
     local fullSize = UDim2.fromOffset(WIN_W, WIN_H)
     topButton("-", -84, Theme.Hover, function()
@@ -529,7 +597,7 @@ local function __run()
     end
 
     connect(UserInputService.InputBegan, function(i, gp)
-        if not gp and i.KeyCode == Enum.KeyCode.RightShift then toggleMenu() end
+        if not gp and not Backend and i.KeyCode == Enum.KeyCode.RightShift then toggleMenu() end
     end)
 
     ---------------------------------------------------------------- sidebar / pages
@@ -1114,11 +1182,31 @@ local function __run()
         return tab
     end
 
+    if Backend then
+        -- the menu is WindUI's: the built-in window above stays hidden (the floating bar, pins and BLOCK button live in its ScreenGui) and the hub's menu calls go to WindUI
+        Main.Visible = false
+        menuOpen = Backend.isOpen()
+        createTab, sideHeader, toast = Backend.createTab, Backend.sideHeader, Backend.toast
+        pingPill = Backend.pingPill("-- ms", "#9be8c4")
+        setMenu = function(v)
+            v = v and true or false
+            if Backend.isOpen() ~= v then Backend.setMenu(v) end
+            menuOpen = v
+            if renderFab then renderFab() end
+        end
+        toggleMenu = function() setMenu(not Backend.isOpen()) end
+        -- the on-screen buttons take the white-water palette
+        for key, c in pairs({Back = {20, 26, 36}, Panel = {32, 40, 54}, Item = {46, 56, 74}, Hover = {70, 84, 108}, Accent = {238, 244, 252}, Accent2 = {168, 183, 205}, Gold = {255, 255, 255}}) do
+            Theme[key] = rgb(c)
+        end
+        Theme.Ink, Theme.Text, Theme.SubText, Theme.Good = Color3.fromRGB(16, 22, 32), Color3.fromRGB(245, 248, 252), Color3.fromRGB(178, 190, 206), Color3.fromRGB(130, 232, 190)
+    end
+
     -- ambient shine: the border rotates slowly, and every ~6 s a shimmer runs over the title
     do
         local shimmerAcc = 0
         connect(RunService.Heartbeat, function(dt)
-            if not menuOpen then return end
+            if not menuOpen or Backend then return end
             BorderGrad.Rotation = (BorderGrad.Rotation + dt * 24) % 360
             shimmerAcc = shimmerAcc + dt
             if shimmerAcc >= 6 then
@@ -1346,6 +1434,7 @@ local function __run()
         end
         return {version = 2, timing = Timing, speed = macroSpeed, auto = Auto, combos = combos, pins = pinData,
             ui = {theme = pendingTheme, scale = uiScale, glass = glass, bright = bright},
+            wind = WindPrefs,
             block = {range = Block.range, aim = Block.aim, delay = Block.delay, grace = Block.grace, maxHold = Block.maxHold, usePing = Block.usePing,
                 style = Block.style, pierceMode = Block.pierceMode, learn = Block.learn, useLearned = Block.useLearned, chain = Block.chain, floater = Block.floater,
                 chainGrace = Block.chainGrace, rush = Block.rush, verify = Block.verify, sense = Sense and Sense:export() or nil},
@@ -1428,6 +1517,10 @@ local function __run()
                 else
                     pingLabel.Text = "Ping: unknown - set Manual ping below"
                 end
+            end
+            if Backend then
+                local open = Backend.isOpen()
+                if open ~= menuOpen then menuOpen = open; if renderFab then renderFab() end end
             end
             if pingPill then
                 local shown = currentPing()
@@ -2365,6 +2458,7 @@ local function __run()
                 for i, n in ipairs(pinOrder) do if n == name then table.remove(pinOrder, i) break end end
                 if ready then toast(shortLabel(name) .. " removed from screen") end
                 markDirty()
+                if renderFab then renderFab() end               -- (the bar counts the pins)
             end
             return
         end
@@ -2420,6 +2514,7 @@ local function __run()
             toast(shortLabel(name) .. ((o and o.pinMode == "run") and " pinned - tap it to run" or " pinned - tap it to arm Assist"))
         end
         markDirty()
+        if renderFab then renderFab() end                       -- (the bar counts the pins)
     end
 
     do   -- one pair of global listeners moves / releases whichever pinned button is being dragged
@@ -2448,15 +2543,14 @@ local function __run()
     sideHeader("MENU")
     local Main_  = createTab("Main", "#")
     local Credit = createTab("Credit", "+")
-    local CharList = {
-        {"The Strongest Hero", "Saitama"}, {"Hero Hunter", "Garou"}, {"Hero Hunter (Monster form)", "Garou Monster"}, {"Destructive Cyborg", "Genos"},
-        {"Deadly Ninja", "Sonic"}, {"Brutal Demon", "Metal Bat"}, {"Wild Psychic", "Tatsumaki"},
-        {"Blade Master", "Atomic Samurai"}, {"Tech Prodigy", "Tech Prodigy"},
-    }
     local CharTabs = {}
     if Data then
         sideHeader("CHARACTERS")
-        for _, ch in ipairs(CharList) do
+        for _, ch in ipairs({
+            {"The Strongest Hero", "Saitama"}, {"Hero Hunter", "Garou"}, {"Hero Hunter (Monster form)", "Garou Monster"}, {"Destructive Cyborg", "Genos"},
+            {"Deadly Ninja", "Sonic"}, {"Brutal Demon", "Metal Bat"}, {"Wild Psychic", "Tatsumaki"},
+            {"Blade Master", "Atomic Samurai"}, {"Tech Prodigy", "Tech Prodigy"},
+        }) do
             CharTabs[#CharTabs + 1] = {tab = createTab(ch[2], ch[2]:sub(1, 1)), full = ch[1], short = ch[2]}
         end
     end
@@ -2466,11 +2560,11 @@ local function __run()
     local LabTab = (TechLab and TechMath and TechData and TechOptions) and createTab("Tech Lab", "L")
     local Tech   = createTab("Auto Tech", "*")
     local Tele   = createTab("Teleports", "@")
-    local Effects = createTab("Effects Preset", "~")
+    local Effects = createTab(Backend and "Look" or "Effects Preset", "~")
     local ConfigTab = createTab("Config", "=")
 
     -- Main
-    Main_:Banner("Wraith Hub v1.5", "Auto block  |  Tech Lab (Supa, Hook, Loop, Kiba ...)  |  Garou Kyoto assist  |  Dash behind the closest player  |  your own picture (Effects tab)", "TSB")
+    Main_:Banner("Wraith Hub v1.5", "Auto block  |  Tech Lab (Supa, Hook, Loop, Kiba ...)  |  Garou Kyoto assist  |  Dash behind the closest player  |  " .. (Backend and "your own picture or video (Look tab)" or "your own picture (Effects tab)"), "TSB")
     -- how techs start (applies to every tech, combo card and tech switch)
     Main_:Toggle("Start techs with my M1 (off = start them by casting their first move)", Start.m1, function(v)
         if Start.m1 ~= v then Start.m1 = v; markDirty() end
@@ -2586,16 +2680,12 @@ local function __run()
                     if o.trigAnim ~= "" then o.trigAnim = ""; markDirty(); refreshTrig(); toast("Trigger forgotten") end
                 end, parent)
                 refreshTrig()
-                local reset = new("TextButton", {
-                    Text = "Reset this combo", Font = Enum.Font.GothamMedium, TextSize = 13, TextColor3 = Theme.Text,
-                    BackgroundColor3 = Theme.Panel, AutoButtonColor = false, Size = UDim2.new(1, 0, 0, 34), Parent = parent,
-                }, {corner(8)})
-                reset.MouseButton1Click:Connect(function()
+                tab:Button("Reset this combo", function()
                     for key, sl in pairs(sliders) do sl:Set(ComboOptions.DEFAULTS[key]) end
                     for key, dd in pairs(pickers) do dd:Set(ComboOptions.DEFAULTS[key]) end
                     if o.trigAnim ~= "" then o.trigAnim = ""; markDirty() end
                     refreshTrig()
-                end)
+                end, parent)
             end
             ArmHandles[name] = get(key, title):Button((name:gsub("_", " ")), describe(c.steps, fullName), function()
                 runMacro(c.steps, fullName, name)
@@ -3031,11 +3121,13 @@ local function __run()
     Credit:Label("Tech Lab: the tech ideas (Supa, Hook Dash, Loop Dash, Kyoto, Lethal Dash, M1 Reset, Twisted, Kiba / Kitty Tech - Kitty Tech idea by ItzSoph, ...) come from your own Dovi's Hub script; the code is a rewrite, not a copy.")
     Credit:Label("Settings are NOT saved automatically - use the Config tab (Save config) when you want to keep them.")
     Credit:Label("Toggle menu: RightShift, or the floating bar: Menu = show/hide, Tech = Auto Tech on/off, Pins = show/hide pinned buttons, Lock = freeze bar and pinned buttons, - = shrink to a dot.")
-    Credit:Label("Background: random SFW image from waifu.pics / nekos.best (fan art, not copyright-free).")
+    if Backend then
+        Credit:Label("The menu is WindUI by Footagesus (MIT licence), with the white water background made in this script. Icons: Lucide (MIT).")
+    else
+        Credit:Label("Background: random SFW image from waifu.pics / nekos.best (fan art, not copyright-free).")
+    end
 
-    -- Effects Preset: look + menu adjustments
-    Effects:Label("Menu look")
-    Effects:Dropdown("Theme", ThemeNames, themeName, function(v) pendingTheme = v end)
+    -- Effects Preset / Look: the look of the menu
     -- throw the menu away and build it again from `data` (a snapshot / config table); `data` is used once
     local function restartWith(data, fromFile)
         if genv.AH_DISABLE_REBUILD then toast("Rebuild is disabled") return end
@@ -3050,52 +3142,109 @@ local function __run()
             end
         end)
     end
-    Effects:Button("Apply theme (rebuilds the menu)", function() restartWith(buildSnapshot()) end)    -- keeps everything you have set in this session
-    Effects:Slider("Menu size", 0.7, 1.25, uiScale, 0.05, function(v)
-        if uiScale ~= v then
-            uiScale = v
-            if menuOpen then MainScale.Scale = fitScale() end
+    if Backend then
+        local win = Backend.win
+        Effects:Label("The look of this menu. Nothing here is saved until you press Save config (Config tab).")
+        Effects:Dropdown("Theme", WindAdapter.ThemeNames, WindPrefs.theme, function(v)
+            if WindPrefs.theme ~= v then WindPrefs.theme = v; win:SetTheme(v); win:SetWater{Tint = WindAdapter.waterTint(v)}; markDirty() end
+        end)
+        Effects:Dropdown("Font", WindAdapter.FontNames, WindPrefs.font, function(v)
+            if WindPrefs.font ~= v then
+                WindPrefs.font = v
+                local family = WindAdapter.fontFamily(v)
+                if family then win:SetFont(family) end
+                markDirty()
+            end
+        end)
+        Effects:Slider("Menu size", 0.55, 1.2, WindPrefs.scale, 0.05, function(v)
+            if WindPrefs.scale ~= v then WindPrefs.scale = v; win:SetScale(v); markDirty() end
+        end)
+        Effects:Slider("Window transparency", 0, 0.9, WindPrefs.alpha, 0.05, function(v)
+            if WindPrefs.alpha ~= v then WindPrefs.alpha = v; win:SetBackgroundTransparency(v); markDirty() end
+        end)
+        Effects:Toggle("Welcome card at start", WindPrefs.popup, function(on)
+            if WindPrefs.popup ~= on then WindPrefs.popup = on; markDirty() end
+        end)
+        local waterSec = Effects:Section("White water")
+        local waterToggle = waterSec:Toggle("White water", WindPrefs.water, function(on)
+            if WindPrefs.water ~= on then WindPrefs.water = on; win:SetWater{Enabled = on}; markDirty() end
+        end, "Animated white water behind the menu (also the water button in the top bar)")
+        windActions.toggleWater = function()
+            waterToggle:Set(not waterToggle:Get())
+            toast(WindPrefs.water and "White water on" or "White water off")
+        end
+        waterSec:Slider("Water brightness", 0, 1, WindPrefs.waterStrength, 0.05, function(v)
+            if WindPrefs.waterStrength ~= v then WindPrefs.waterStrength = v; win:SetWater{Strength = v}; markDirty() end
+        end)
+        waterSec:Slider("Wave speed", 0, 3, WindPrefs.waterSpeed, 0.05, function(v)
+            if WindPrefs.waterSpeed ~= v then WindPrefs.waterSpeed = v; win:SetWater{Speed = v}; markDirty() end
+        end)
+        local pictureSec = Effects:Section("Your own picture or video", true)
+        pictureSec:Label("Optional, under the water: a direct link to a .png / .jpg / .webm (or rbxassetid://). A video needs an executor that can save files, and WindUI itself says video backgrounds may not work everywhere. It is kept if you Save config.")
+        Effects:Input("Picture or video link", "empty = none", Picture.source, function(text)
+            text = (tostring(text or ""):gsub("^%s+", ""):gsub("%s+$", ""))
+            if #text > 300 or text:find("%c") then toast("That link is not usable") return end
+            if Picture.source == text then return end
+            Picture.source = text
             markDirty()
-        end
-    end)
-    Effects:Slider("Glass (higher = clearer picture)", 0.4, 0.95, glass, 0.01, function(v)
-        if glass ~= v then glass = v; Veil.BackgroundTransparency = v; markDirty() end
-    end)
-    Effects:Slider("Brightness (press Apply theme)", 0.8, 1.2, bright, 0.05, function(v)
-        if bright ~= v then bright = v; markDirty() end
-    end)
-    Effects:Label("Background image")
-    Effects:Slider("Image opacity", 0.1, 1, 1 - BACKGROUND_TRANSPARENCY, 0.05, function(v)
-        Background.ImageTransparency = 1 - v
-    end)
-    Effects:Dropdown("Random picture from", {"waifu.pics", "waifu.pics / neko", "waifu.pics / shinobu", "waifu.pics / megumin", "nekos.best",
-        "nekos.best / neko", "nekos.best / kitsune", "nekos.best / husbando"}, BACKGROUND_SOURCE, function(v) BACKGROUND_SOURCE = v end)
-    Effects:Button("New random picture", function() Picture.source = ""; refreshBackground(BACKGROUND_SOURCE) end)
-    Effects:Label("YOUR OWN PICTURE: type a direct link to a PNG / JPG (the link must end in the picture itself), or the name of a PNG / JPG you put in your executor's workspace folder, or a Roblox image id. It becomes the window background and the banner, and is kept if you Save config.")
-    pictureNote = Effects:Label(pictureStatus or (Picture.source ~= "" and ("Your picture: " .. Picture.source) or "Random anime pictures are on."))
-    local pictureBox = Effects:Input("Picture link, file name or image id", "https://... .png   |   my_picture.png   |   123456789", Picture.source, function() end)
-    Effects:Button("Use this picture", function()
-        local text = (pictureBox:Get():gsub("^%s+", ""):gsub("%s+$", ""))
-        local asset, why = loadCustom(text)
-        if not asset then
-            noteAboutPicture("Not changed: " .. tostring(why))
-            toast("That picture did not load")
-            return
-        end
-        Picture.source = text
-        markDirty()
-        setPicture(asset)
-        noteAboutPicture("Your picture is on.")
-        toast("Picture changed")
-    end)
-    Effects:Button("Back to random anime pictures", function()
-        Picture.source = ""
-        pictureBox:Set("")
-        markDirty()
-        noteAboutPicture("Random anime pictures are on.")
-        refreshBackground(BACKGROUND_SOURCE)
-    end)
-    Effects:Label("Images come from public waifu APIs (SFW endpoints). They are community fan art, so the artists keep the copyright - use your own CC0 image via BACKGROUND_URL if you need that.")
+            win:SetBackground(text, function(ok, msg)
+                if text ~= "" then toast(ok and ("A " .. tostring(msg) .. " is behind the menu") or ("Background not loaded: " .. tostring(msg))) end
+            end)
+        end, pictureSec.Body)
+        pictureSec:Slider("Darken the picture / video", 0, 0.9, WindPrefs.bgDim, 0.05, function(v)
+            if WindPrefs.bgDim ~= v then WindPrefs.bgDim = v; win:SetBackgroundDim(v); markDirty() end
+        end)
+    else
+        Effects:Label("Menu look")
+        Effects:Dropdown("Theme", ThemeNames, themeName, function(v) pendingTheme = v end)
+        Effects:Button("Apply theme (rebuilds the menu)", function() restartWith(buildSnapshot()) end)    -- keeps everything you have set in this session
+        Effects:Slider("Menu size", 0.7, 1.25, uiScale, 0.05, function(v)
+            if uiScale ~= v then
+                uiScale = v
+                if menuOpen then MainScale.Scale = fitScale() end
+                markDirty()
+            end
+        end)
+        Effects:Slider("Glass (higher = clearer picture)", 0.4, 0.95, glass, 0.01, function(v)
+            if glass ~= v then glass = v; Veil.BackgroundTransparency = v; markDirty() end
+        end)
+        Effects:Slider("Brightness (press Apply theme)", 0.8, 1.2, bright, 0.05, function(v)
+            if bright ~= v then bright = v; markDirty() end
+        end)
+        Effects:Label("Background image")
+        Effects:Slider("Image opacity", 0.1, 1, 1 - BACKGROUND_TRANSPARENCY, 0.05, function(v)
+            Background.ImageTransparency = 1 - v
+        end)
+        Effects:Dropdown("Random picture from", {"waifu.pics", "waifu.pics / neko", "waifu.pics / shinobu", "waifu.pics / megumin", "nekos.best",
+            "nekos.best / neko", "nekos.best / kitsune", "nekos.best / husbando"}, BACKGROUND_SOURCE, function(v) BACKGROUND_SOURCE = v end)
+        Effects:Button("New random picture", function() Picture.source = ""; refreshBackground(BACKGROUND_SOURCE) end)
+        Effects:Label("YOUR OWN PICTURE: type a direct link to a PNG / JPG (the link must end in the picture itself), or the name of a PNG / JPG you put in your executor's workspace folder, or a Roblox image id. It becomes the window background and the banner, and is kept if you Save config.")
+        pictureNote = Effects:Label(pictureStatus or (Picture.source ~= "" and ("Your picture: " .. Picture.source) or "Random anime pictures are on."))
+        local pictureBox = Effects:Input("Picture link, file name or image id", "https://... .png   |   my_picture.png   |   123456789", Picture.source, function() end)
+        Effects:Button("Use this picture", function()
+            local text = (pictureBox:Get():gsub("^%s+", ""):gsub("%s+$", ""))
+            local asset, why = loadCustom(text)
+            if not asset then
+                noteAboutPicture("Not changed: " .. tostring(why))
+                toast("That picture did not load")
+                return
+            end
+            Picture.source = text
+            markDirty()
+            setPicture(asset)
+            noteAboutPicture("Your picture is on.")
+            toast("Picture changed")
+        end)
+        Effects:Button("Back to random anime pictures", function()
+            Picture.source = ""
+            pictureBox:Set("")
+            markDirty()
+            noteAboutPicture("Random anime pictures are on.")
+            refreshBackground(BACKGROUND_SOURCE)
+        end)
+        Effects:Label("Images come from public waifu APIs (SFW endpoints). They are community fan art, so the artists keep the copyright - use your own CC0 image via BACKGROUND_URL if you need that.")
+
+    end
 
     -- Config: the ONLY way anything is remembered between runs
     ConfigTab:Label("NOTHING is saved automatically. Pinned buttons, armed combos, timings, Auto block settings, learned punch timings, the floater and bar positions and the theme all start fresh every time you run the script - unless you press Save config. A saved config is loaded the next time the hub starts.")
@@ -3267,7 +3416,7 @@ local function __run()
         end)
         minBtn = barButton("-", 276, 24, function() fabState.minimized = true; markDirty(); renderFab() end)
         dot = new("TextButton", {
-            Text = "AH", Font = Enum.Font.GothamBold, TextSize = 12, TextColor3 = Theme.Ink,
+            Text = "WH", Font = Enum.Font.GothamBold, TextSize = 12, TextColor3 = Theme.Ink,
             BackgroundColor3 = Theme.White, AutoButtonColor = false, Visible = false,
             Size = UDim2.fromOffset(DOT - 8, DOT - 8), Position = UDim2.fromOffset(4, 4), ZIndex = 11, Parent = fab,
         }, {corner(15), accentGradient(nil, 0)})
@@ -3303,12 +3452,31 @@ local function __run()
         tween(fabScale, {Scale = 1}, 0.55, Enum.EasingStyle.Back)       -- pops in so you notice it
     end
 
+    if Backend then
+        windActions.say = toast
+        windActions.panic = function()                  -- the top bar's Panic: stop the combo that is playing and every Tech Lab tech
+            if stopMacro then stopMacro() end
+            if techLab then techLab:cancelAll("cancelled: panic") end
+            toast("Panic: everything stopped")
+        end
+        windActions.changelog = function()
+            local lines = {}
+            for i, line in ipairs(windActions.lines) do lines[i] = "- " .. line end
+            Backend.win:Dialog{Title = "What is new in v1.5", Content = table.concat(lines, "\n"), Buttons = {{Title = "Close", Variant = "Primary"}}}
+        end
+    end
+
     ready = true                       -- from here on, changing something marks the config as "not saved" (nothing is written)
     dirty = SavedFrom == "carried over"   -- carried-over settings live in memory only
     refreshConfigStatus()
     Main_:Select()
     setMenu(true)                      -- fade + scale the window in
     notify("Wraith Hub v1.5", "Ready - the floating bar is at the top of your screen (Menu / Tech / Pins / Lock). RightShift also toggles the menu.", 7)
+    if Backend and WindPrefs.popup then
+        Backend.win:Popup{Title = '<font color="#ffffff">Wraith</font> <font color="#dfe7f1">Hub</font> <font color="#aab6c6">v1.5</font>', Icon = "sparkles",
+            Content = "White water edition for The Strongest Battlegrounds. Everything you had is still here: Auto block, combo cards, pins, Auto Tech, the Tech Lab. Nothing is saved until you press Save config. Nothing was tested in the real game.",
+            Buttons = {{Title = "What is new", Variant = "Secondary", Callback = windActions.changelog}, {Title = "Start", Variant = "Primary"}}}
+    end
     print("[Wraith Hub v1.5] ready, UI parent: " .. tostring(Gui.Parent and Gui.Parent.Name))
 
     -- soft game check: warn (never block) if this is not The Strongest Battlegrounds

@@ -1,11 +1,13 @@
 """Tech Lab checks (from game_dev/):
   python3 tests/run_tsb.py lab     the Tech Lab played in a simulated Strongest Battlegrounds arena (tests/tsb_sim.lua) -> tests/tsb_lab_tests.lua
-  python3 tests/run_tsb.py hub     Wraith's TSB Lab (dist/tsb_lab.lua, on the REAL WindUI) played in the same arena -> tests/tsb_hub_tests.lua
+  python3 tests/run_tsb.py hub     Wraith Hub v1.5 (dist/tsb_lab.lua, on the REAL WindUI) played in the same arena -> tests/tsb_hub_tests.lua
+  python3 tests/run_tsb.py shim    classic_wind.lua (the old hub's menu calls on WindUI) against a stub of the adapter -> tests/classic_wind_tests.lua
+  python3 tests/run_tsb.py classic the old hub, Wraith Hub v1.5 classic (dist/tsb_hub_executor.lua, its menu on the REAL WindUI) in the same arena -> tests/classic_tests.lua
 Needs real Luau (the fake Roblox world is shared with the MM2 tests): set LUAU=/path/to/luau, or put `luau` on PATH.
 Regenerate the strict API tables after using new Roblox members:  sh tools/gen_tsb_types.sh"""
 import os, re, shutil, subprocess, sys, tempfile
 mode = sys.argv[1] if len(sys.argv) > 1 else "lab"
-if mode not in ("lab", "hub"):
+if mode not in ("lab", "hub", "classic", "shim"):
     sys.exit(__doc__)
 read = lambda p: open(p, encoding="utf-8").read()
 luau = os.environ.get("LUAU") or shutil.which("luau") or ("/tmp/claude-0/luau_bin/luau" if os.path.exists("/tmp/claude-0/luau_bin/luau") else None)
@@ -20,8 +22,23 @@ if mode == "lab":
     # TSB_LAB=/path/to/mutant.lua swaps the engine for a deliberately broken copy (mutation checks: every test must be able to fail)
     prelude = "TECH_SOURCES = {%s}\nPROP_TYPES_SOURCE = %s\n" % (sources, long_string(read("tests/prop_types_tsb.lua")))
     test = os.environ.get("TSB_TESTS", "tests/tsb_lab_tests.lua")
+elif mode == "shim":
+    prelude = "SHIM_SOURCE = %s\n" % long_string(read(os.environ.get("CLASSIC_SHIM", "classic_wind.lua")))      # CLASSIC_SHIM=/path/to/mutant.lua : a deliberately broken copy (tools/mutate_classic_wind.py)
+    test = "tests/classic_wind_tests.lua"
+elif mode == "classic":
+    import json
+    script = os.environ.get("CLASSIC_HUB", "../dist/tsb_hub_executor.lua")
+    srcs = ["../tsb_animation_hub.lua", "build_executor.py", "classic_wind.lua", "mm2/ui_lib.lua", "mm2/windui_ui.lua", "mm2/vendor/windui.lua", "mm2/vendor/patch_windui.py",
+            "tech_lab.lua", "tech_math.lua", "tech_data.lua", "tech_options.lua", "ping_model.lua", "tsb_data.lua", "combo_engine.lua", "combo_options.lua", "assist.lua", "drag_tracker.lua"]
+    if script == "../dist/tsb_hub_executor.lua" and (not os.path.exists(script) or max(os.path.getmtime(x) for x in srcs) > os.path.getmtime(script)):
+        subprocess.run([sys.executable, "build_executor.py"], check=True, stdout=subprocess.DEVNULL)
+    prelude = ("TECH_SOURCES = {%s}\nSCRIPT_SOURCE = %s\nPROP_TYPES_SOURCE = %s\nLUCIDE_IDS = {%s}\n"
+               % (sources, long_string(read(script)), long_string(read("tests/prop_types_classic.lua")),
+                  ",".join('["%s"]="%s"' % kv for kv in json.load(open("mm2/vendor/lucide_subset.json")).items())))
+    prelude += "TSB_SECTIONS = %r\n" % os.environ.get("CLASSIC_SECTIONS", "")        # e.g. CLASSIC_SECTIONS=controls,look : only those sections of the test
+    test = os.environ.get("TSB_TESTS", "tests/classic_tests.lua")
 else:
-    import json, subprocess
+    import json
     script = os.environ.get("TSB_HUB", "../dist/tsb_lab.lua")
     srcs = ["tsb/lab_hub.lua", "tsb/build_tsb_lab.py", "tech_lab.lua", "tech_math.lua", "tech_data.lua", "tech_options.lua", "ping_model.lua", "mm2/ui_lib.lua", "mm2/windui_ui.lua",
             "mm2/vendor/windui.lua", "mm2/vendor/patch_windui.py"]
@@ -31,7 +48,7 @@ else:
                % (sources, long_string(read(script)), long_string(read("tests/prop_types_tsb_hub.lua")),
                   ",".join('["%s"]="%s"' % kv for kv in json.load(open("mm2/vendor/lucide_subset.json")).items())))
     test = os.environ.get("TSB_TESTS", "tests/tsb_hub_tests.lua")
-src = prelude + read("tests/mm2_env.lua") + "\n" + read("tests/tsb_sim.lua") + "\n" + read(test)
+src = prelude + (read("tests/mm2_env.lua") + "\n" + read("tests/tsb_sim.lua") + "\n" if mode != "shim" else "") + read(test)
 if luau:
     with tempfile.NamedTemporaryFile("w", suffix=".lua", delete=False, encoding="utf-8") as f:
         f.write(src); path = f.name

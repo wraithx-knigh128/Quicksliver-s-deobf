@@ -134,9 +134,10 @@ do
     el(sim, "waterSpeed"):Set(2)
     check(H.Win:GetWater().Speed == 2, "the wave speed")
     -- the changelog and the Panic button in the top bar
+    check(not hasText(sim, "WindUI", "Knocked guard:"), "(the changelog is not showing yet)")
     sim.W:click(topbar(sim, "Changelog"))
     sim:run(0.3)
-    check(hasText(sim, "WindUI", "What is new in v1.5") and hasText(sim, "WindUI", "Input buffer"), "the Changelog button opens the changelog")
+    check(hasText(sim, "WindUI", "Knocked guard:") and hasText(sim, "WindUI", "Hit check:"), "the Changelog button opens the changelog")
     -- the font
     el(sim, "font"):Set("Gotham")
     check(H.S.font == "Gotham" and sim.W:find(function(i) return i.ClassName == "TextLabel" and tostring(i.FontFace.Family):find("Gotham", 1, true) end) ~= nil, "the font can be switched")

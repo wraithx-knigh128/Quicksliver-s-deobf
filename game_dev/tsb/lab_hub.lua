@@ -79,13 +79,8 @@ local function __run()
     ------------------------------------------------------------------------------------------ menu settings + config files
     local function clampNum(v, lo, hi, default) if type(v) == "number" and v == v then return math.max(lo, math.min(hi, v)) end return default end
     -- the Lab's own colours (the standard WindUI themes stay available too)
+    WindAdapter.addThemes(WindAdapter.WraithThemes)
     WindAdapter.addThemes({
-        {Name = "Wraith White", Accent = "#10141b", Dialog = "#121822", Outline = "#f2f6fb", Text = "#f5f8fc", Placeholder = "#9aa6b5", Background = "#0b0f15", Button = "#3a4656", Icon = "#e6edf6",
-         Toggle = "#e9f1fb", Slider = "#dfe9f5", Checkbox = "#e9f1fb", Primary = "#f2f7ff", SliderIcon = "#c9d4e2", PanelBackground = "#ffffff", PanelBackgroundTransparency = 0.95,
-         LabelBackground = "#000000", LabelBackgroundTransparency = 0.8, ElementBackground = "#1a212c", ElementBackgroundTransparency = 0},
-        {Name = "Wraith Pearl", Accent = "#e8edf4", Dialog = "#f1f4f8", Outline = "#ffffff", Text = "#101826", Placeholder = "#5b6778", Background = "#e9eef5", Button = "#c3ccd8", Icon = "#3b4a5e",
-         Toggle = "#5b7fa6", Slider = "#5b7fa6", Checkbox = "#5b7fa6", Primary = "#4a6f99", SliderIcon = "#5b6778", PanelBackground = "#ffffff", PanelBackgroundTransparency = 0.6,
-         LabelBackground = "#ffffff", LabelBackgroundTransparency = 0.5, ElementBackground = "#ffffff", ElementBackgroundTransparency = 0},
         {Name = "Frost", Accent = "#0f1c24", Dialog = "#101c24", Outline = "#bfefff", Text = "#eaf8ff", Placeholder = "#7fa3b3", Background = "#0b1218", Button = "#2c4a5a", Icon = "#8fd8f0",
          Toggle = "#36d1ff", Slider = "#36d1ff", Checkbox = "#36d1ff", Primary = "#36d1ff", SliderIcon = "#8fd8f0", PanelBackground = "#bfefff", PanelBackgroundTransparency = 0.95,
          LabelBackground = "#000000", LabelBackgroundTransparency = 0.8, ElementBackground = "#17262f", ElementBackgroundTransparency = 0},
@@ -97,16 +92,7 @@ local function __run()
          LabelBackground = "#000000", LabelBackgroundTransparency = 0.8, ElementBackground = "#16291f", ElementBackgroundTransparency = 0},
     })
     local THEMES = WindAdapter.ThemeNames
-    -- the water is white on the dark themes and slate on the light one (white on white would not show)
-    local function waterTint(theme) return theme == "Wraith Pearl" and Color3.fromRGB(110, 130, 158) or Color3.fromRGB(255, 255, 255) end
-    local FONTS = {Default = "rbxassetid://12187365364", Gotham = "Gotham", Code = "Code", Fredoka = "FredokaOne", Arcade = "Arcade"}
-    local FONT_NAMES = {"Default", "Gotham", "Code", "Fredoka", "Arcade"}
-    local function fontFamily(name)
-        local f = FONTS[name]
-        if not f or f:find("^rbxassetid://") then return f end
-        local ok, family = pcall(function() return Font.fromEnum(Enum.Font[f]).Family end)
-        return ok and family or nil
-    end
+    local waterTint, FONTS, FONT_NAMES, fontFamily = WindAdapter.waterTint, WindAdapter.Fonts, WindAdapter.FontNames, WindAdapter.fontFamily
     local FLOAT_DEFS = {   -- the on-screen buttons: id, label, icon, accent, the tech it runs (nil = Panic)
         {id = "panic", title = "PANIC", icon = "close", accent = {236, 64, 72}},
         {id = "hook", title = "HOOK", icon = "crosshair", accent = {120, 200, 255}, tech = "hook"},

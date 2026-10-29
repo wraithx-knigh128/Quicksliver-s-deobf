@@ -5,9 +5,18 @@
 -- Runs on Lua 5.x (via lupa) and on real Luau (the language Roblox uses): SCRIPT_SOURCE is set by the Luau wrapper.
 local SCRIPT = SCRIPT_PATH or "../dist/tsb_hub_executor.lua"
 
+-- Lua 5.x cannot parse the WindUI library (Luau syntax), and this test covers the built-in menu, which does not need it: cut the library out of the bundle
+local function withoutWindUI(src)
+    local a = src:find("-- WindUI by Footagesus", 1, true)
+    local b = a and src:find("\nif not game:IsLoaded()", a, true)
+    if a and b then return src:sub(1, a - 1) .. "local WindUILoader = nil\n" .. src:sub(b + 1) end
+    return src
+end
 local function readScript()
-    if SCRIPT_SOURCE then return SCRIPT_SOURCE end
-    local f = assert(io.open(SCRIPT, "r")); local s = f:read("a"); f:close(); return s
+    local s = SCRIPT_SOURCE
+    if not s then local f = assert(io.open(SCRIPT, "r")); s = f:read("a"); f:close() end
+    if not (loadstring and setfenv) then s = withoutWindUI(s) end
+    return s
 end
 
 local function compile(src, chunk, env)
@@ -167,7 +176,8 @@ local function run(scenario)
     local errors, instances, writes, assets = {}, {}, {}, {}
     ctx.errors = errors
     ALL_ERRORS[#ALL_ERRORS + 1] = errors
-    local genvStore = {AH_DISABLE_REBUILD = not scenario.allowRebuild}   -- clicking every button must not rebuild the menu mid-test
+    -- (this world is too simple for WindUI: it checks the built-in menu, which is also the fallback when WindUI cannot start; the WindUI menu is tested in tests/classic_tests.lua)
+    local genvStore = {AH_DISABLE_REBUILD = not scenario.allowRebuild, AH_LEGACY_UI = true}   -- clicking every button must not rebuild the menu mid-test
     if scenario.moveStart and not scenario.settings then genvStore.__AnimationHubSession = {start = {m1 = false}} end   -- techs start by casting their first move
     local env = setmetatable({}, {__index = _G})
 
