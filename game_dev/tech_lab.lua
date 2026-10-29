@@ -182,6 +182,12 @@ M.GROUPS = GROUPS
 local PING_AWARE = {supa = true, hook = true, loop = true, loop2 = true, lethal = true, kiba = true, twisted = true, kyoto = true, dunk = true, surf = true, flip = true,
                     catch = true, noendlag = true, uppercutcatch = true, uppercutgrasp = true, lethalgrasp = true, flowinggrasp = true}
 
+-- what a tech can hand over to when it finished (a "chain"): the manual techs and a plain M1
+local NEXT_IDS = {M1 = "m1", ["Backdash Cancel"] = "backdash", ["Micro Dash"] = "microdash", ["Shove Dash"] = "shovedash", ["M1 Reset"] = "m1reset", ["Emote Dash"] = "emotedash",
+                  ["Uppercut Catch"] = "uppercutcatch"}
+local NEXT_CHOICES = {"None", "M1", "Backdash Cancel", "Micro Dash", "Shove Dash", "M1 Reset", "Emote Dash", "Uppercut Catch"}
+M.NEXT_CHOICES = NEXT_CHOICES
+
 -- techs that move or turn my character: only one of them runs at a time (two of them at once would fight over the root part)
 local MOVES = {supa = true, hook = true, loop = true, loop2 = true, lethal = true, kiba = true, twisted = true, kyoto = true, dunk = true, surf = true, flip = true,
                mousedash = true, sidem1 = true, downslam = true, m1reset = true, emotedash = true, backdash = true, microdash = true, shovedash = true, uppercutcatch = true,
@@ -200,7 +206,10 @@ function M.new(env)
                  dashClock = TM.dashClock(TD.DASH_COOLDOWN), hook = {}, conns = {}, lastOwn = {},
                  -- the latency model: strength scales every ping correction (0 = off), manual = a ping I typed (0 = measure it), interp = how far in the past Roblox draws
                  -- other players, learn = measure how late my own animations arrive, ref = the ping the default numbers were tuned at
-                 net = {strength = 1, manual = 0, interp = 80, learn = true, ref = 60}, lagger = TM.lagLearner()}
+                 net = {strength = 1, manual = 0, interp = 80, learn = true, ref = 60}, lagger = TM.lagLearner(),
+                 -- who the techs go for, stop teleports at walls / the floor, no techs while knocked down, how long a key press waits for a running tech (ms),
+                 -- how long after a tech the target's health is watched for a hit (s)
+                 targetMode = "Nearest", skipBlocking = false, safeMoves = true, guardKnocked = true, bufferMs = 250, hitWindow = 0.8}
     local charConns = {}
     local watched = setmetatable({}, {__mode = "k"})              -- enemy model -> its connections
     local animCache = {}
@@ -221,7 +230,13 @@ function M.new(env)
 
     -------------------------------------------------------------------------------------------------------- techs from the catalogue
     for _, d in ipairs(DEFS) do
-        if PING_AWARE[d.id] then
+        local has = {}
+        for _, od in ipairs(d.opts) do has[od.key] = true end
+        if not (d.watches and d.id ~= "counter") and not d.poll and not has.next then
+            d.opts[#d.opts + 1] = C("next", "Then run (a chain)", NEXT_CHOICES, "None", "When this tech finished without aborting, the chosen one runs next")
+            d.opts[#d.opts + 1] = N("nextDelay", "...after (ms)", 0, 1500, 10, 0)
+        end
+        if PING_AWARE[d.id] and not has.ping then
             d.opts[#d.opts + 1] = B("ping", "Adjust for ping", true, "Waits that start at one of my animations start earlier by the lag I measured, and aim at other players is led by their latency.")
         end
         local tech = {id = d.id, group = d.group, title = d.title, desc = d.desc, when = d.when, defs = d.opts, needsDash = d.needsDash, manual = d.manual, template = d.template,
@@ -248,7 +263,8 @@ function M.new(env)
     for _, tech in ipairs(lab.order) do rebuildIds(tech) end
 
     local function setStatus(tech, text)
-        tech.status = text
+        tech.baseStatus = text
+        tech.status = text .. (tech.hitText and ("   |   " .. tech.hitText) or "")
         if env.onStatus then pcall(env.onStatus, tech) end
     end
     lab.setStatus = setStatus
@@ -324,6 +340,46 @@ function M.new(env)
     function lab:nearestEnemy(radius)
         local list = lab:enemies(radius)
         return list[1]
+    end
+    local function isBlocking(model)
+        local hum = model:FindFirstChildOfClass("Humanoid")
+        local animator = hum and hum:FindFirstChildOfClass("Animator")
+        local tracks = animator and safe(function() return animator:GetPlayingAnimationTracks() end) or {}
+        for _, tr in ipairs(tracks) do
+            local id = TD.idOf(safe(function() return tr.Animation.AnimationId end))
+            if id and blockSet[id] then return true end
+        end
+        return false
+    end
+    -- the target a tech goes for, by the chosen mode (and without blockers when that is asked for)
+    function lab:pickTarget(radius)
+        local list = {}
+        for _, e in ipairs(lab:enemies(radius)) do
+            if not (lab.skipBlocking and isBlocking(e.model)) then
+                e.health = e.hum.Health
+                list[#list + 1] = e
+            end
+        end
+        local cam = Workspace.CurrentCamera
+        local o = {}
+        if cam then o.camPos, o.camLook = vec(cam.CFrame.Position), vec(cam.CFrame.LookVector) end
+        local hooked = lab.hook.target
+        if hooked then for _, e in ipairs(list) do if e.model == hooked.model then o.preferred = e end end end
+        return TM.pickTarget(list, lab.targetMode, o)
+    end
+    function lab:setTargetMode(mode) for _, m in ipairs(TM.TARGET_MODES) do if m == mode then lab.targetMode = mode end end end
+
+    -- am I knocked down / ragdolled / stunned? (states, and the attributes / values games commonly use for it)
+    local KNOCKED_STATES = {Ragdoll = true, FallingDown = true, PlatformStanding = true}
+    function lab:knocked()
+        local char, hum = myParts()
+        if not char then return false end
+        local state = safe(function() return hum:GetState() end)
+        if state and KNOCKED_STATES[state.Name] then return true end
+        for _, name in ipairs({"Ragdolled", "Ragdoll", "Stunned"}) do
+            if safe(function() return char:GetAttribute(name) end) == true then return true end
+        end
+        return char:FindFirstChild("Ragdolled") ~= nil
     end
 
     local function tracksOf(model)
@@ -428,7 +484,7 @@ function M.new(env)
         function c.commit()                                           -- from here the run counts: the cooldown starts and the stats go up
             if not c.committed then c.committed = true; tech.stats.runs = tech.stats.runs + 1 end
         end
-        function c.abort(text) c.result = text; tech.stats.aborts = tech.stats.aborts + 1 end
+        function c.abort(text) c.result = text; c.aborted = true; tech.stats.aborts = tech.stats.aborts + 1 end
         function c.say(text) c.result = text end
 
         function c.wait(sec)
@@ -452,7 +508,15 @@ function M.new(env)
             end
         end
 
-        function c.target(radius) return lab:nearestEnemy(radius) end
+        -- the first target a run picks is its focus: its health is watched after the run to see whether the tech landed
+        function c.setFocus(entry)
+            if entry and not c.focus then c.focus = entry; c.focusHealth = entry.hum.Health end
+        end
+        function c.target(radius)
+            local e = lab:pickTarget(radius)
+            c.setFocus(e)
+            return e
+        end
         function c.dash(dir) return lab:dash(dir) end
         function c.m1(hold) return lab:m1(hold) end
         function c.key(name) return lab:tapKey(name) end
@@ -518,7 +582,7 @@ function M.new(env)
         -- slide the root to `point` ({x,y,z}) in `seconds`, looking at `lookAt` ({x,y,z}) when given; false when cancelled
         function c.moveTo(point, seconds, lookAt, ease)
             local start = root.Position
-            local goal = V3(point)
+            local goal = V3(c.safePoint and c.safePoint(point) or point)
             local look = lookAt and V3(lookAt) or nil
             if seconds <= 0.03 then place(goal, look); return alive() end
             return c.frames(seconds, function(a)
@@ -599,6 +663,12 @@ function M.new(env)
             local conn = listen(RunService.Stepped, apply)
             if conn then cleanups[#cleanups + 1] = function() conn:Disconnect() end end
         end
+        -- jump to `point` at once, keeping my rotation (stopped short of walls, never under the floor)
+        function c.teleport(point, o)
+            local p = c.safePoint(point, o)
+            root.CFrame = CFrame.new(V3(p)) * (root.CFrame - root.CFrame.Position)
+            return p
+        end
         -- like push, but sideways only (gravity and jumps keep working)
         function c.pushFlat(v)
             local bv = c.instance(Instance.new("BodyVelocity"))
@@ -607,12 +677,36 @@ function M.new(env)
             bv.Parent = root
             return {stop = function() if bv.Parent then bv:Destroy() end end}
         end
-        function c.floorY(pos)
+        -- rays see the map only: not me, not the other characters (a ray from above a player would otherwise call his head the floor)
+        local function mapParams()
             local params = RaycastParams.new()
             params.FilterType = Enum.RaycastFilterType.Exclude
-            params.FilterDescendantsInstances = {char}
-            local hit = Workspace:Raycast(Vector3.new(pos.x, pos.y + 80, pos.z), Vector3.new(0, -300, 0), params)
+            local list = {char}
+            local live = Workspace:FindFirstChild("Live")
+            if live then list[#list + 1] = live end
+            params.FilterDescendantsInstances = list
+            return params
+        end
+        c.mapParams = mapParams
+        function c.floorY(pos)
+            local params = mapParams()
+            local hit = Workspace:Raycast(Vector3.new(pos.x, pos.y + 3, pos.z), Vector3.new(0, -300, 0), params)      -- the surface right under the point
+            if not hit then hit = Workspace:Raycast(Vector3.new(pos.x, pos.y + 80, pos.z), Vector3.new(0, -300, 0), params) end   -- (the point is under the map)
             return hit and hit.Position.Y or pos.y
+        end
+        -- where a teleport / slide to `p` may really end: `margin` studs before a wall on the way, and (floor ~= false) not below the floor
+        function c.safePoint(p, o)
+            o = o or {}
+            if not lab.safeMoves then return p end
+            local from = root.Position
+            local out = p
+            local dir = V3(p) - from
+            if dir.Magnitude > 0.05 then
+                local hit = Workspace:Raycast(from, dir, mapParams())
+                if hit then out = TM.stopShort(vec(from), p, vec(hit.Position), o.margin or 2) end
+            end
+            if o.floor ~= false then out = TM.aboveFloor(out, c.floorY(out), o.minAbove or 2.5) end
+            return out
         end
         function c.jump(power)
             pcall(function()
@@ -627,6 +721,20 @@ function M.new(env)
     end
 
     -------------------------------------------------------------------------------------------------------- running a tech
+    -- the hit check: did the focus lose health during the run (or within hitWindow after it)?
+    local function checkHit(tech, focus, before)
+        task.delay(lab.hitWindow, function()
+            if not lab.alive or not focus or type(before) ~= "number" then return end
+            local now = focus.hum.Health
+            local landed = type(now) == "number" and (now < before - 0.5 or not focus.model.Parent)
+            tech.stats.checked = (tech.stats.checked or 0) + 1
+            if landed then tech.stats.hits = (tech.stats.hits or 0) + 1 end
+            tech.lastHit = landed
+            tech.hitText = string.format("hits %d/%d", tech.stats.hits or 0, tech.stats.checked)
+            setStatus(tech, tech.baseStatus or "")
+        end)
+    end
+
     function lab:fire(id, info)
         local tech = type(id) == "table" and id or lab.byId[id]
         if not tech then return false, "unknown tech" end
@@ -634,17 +742,36 @@ function M.new(env)
         info.manual = info.manual or tech.manual or nil           -- a key / button press (the keys and the UI call lab:fire with manual = true)
         if not lab.alive then return false, "off" end
         if not info.manual and not (lab.master and tech.enabled) then return false, "off" end
-        if tech.running then return false, "running" end
+        local now = clock()
+        -- a key press while another tech is still going waits a moment for it instead of being lost (an input buffer)
+        local function buffer(why)
+            if info.manual and not info.fromBuffer and lab.bufferMs > 0 then
+                lab.buffered = {tech = tech, info = info, expires = now + lab.bufferMs / 1000}
+                setStatus(tech, "queued: " .. why)
+                return false, "queued"
+            end
+            return nil
+        end
+        if tech.running then
+            local q, why = buffer("it is still running")
+            if q ~= nil then return q, why end
+            return false, "running"
+        end
         if tech.moves then
             for _, other in ipairs(lab.order) do
                 if other ~= tech and other.moves and other.running then
+                    local q, why = buffer("after " .. other.title)
+                    if q ~= nil then return q, why end
                     if info.manual then setStatus(tech, "not now: " .. other.title .. " is running") end
                     return false, "exclusive"
                 end
             end
         end
         if not info.manual and env.busy and env.busy() then return false, "busy" end
-        local now = clock()
+        if lab.guardKnocked and lab:knocked() then
+            setStatus(tech, "not while you are knocked down")
+            return false, "knocked"
+        end
         if now < tech.cooldownUntil and not info.force then return false, "cooldown" end
         if tech.needsDash and lab.dashGuard and not lab.dashClock:ready(tech.needsDash, now) and not info.force then
             setStatus(tech, string.format("waiting: the %s dash is on cooldown (%.1f s)", tech.needsDash, lab.dashClock:left(tech.needsDash, now)))
@@ -673,7 +800,30 @@ function M.new(env)
             else
                 setStatus(tech, "ready")
             end
-            if ok and ctx.committed then tech.cooldownUntil = clock() + (tech.opt.cooldown or 0) end
+            if ok and ctx.committed then
+                tech.cooldownUntil = clock() + (tech.opt.cooldown or 0)
+                if ctx.focus then checkHit(tech, ctx.focus, ctx.focusHealth) end
+                -- a chain: the follow-up starts once this one is over (at most three links, so two techs cannot call each other for ever)
+                local nxt = tech.opt.next
+                if not ctx.aborted and nxt and nxt ~= "None" and NEXT_IDS[nxt] and (info.depth or 0) < 3 then
+                    task.delay((tech.opt.nextDelay or 0) / 1000, function()
+                        if not lab.alive then return end
+                        if NEXT_IDS[nxt] == "m1" then lab:m1() return end
+                        lab:fire(NEXT_IDS[nxt], {manual = true, depth = (info.depth or 0) + 1, chainedFrom = tech.id})
+                    end)
+                end
+            end
+            -- a key press that was waiting for this tech goes now
+            local b = lab.buffered
+            if b and tech.moves then
+                lab.buffered = nil
+                if clock() <= b.expires then
+                    b.info.fromBuffer = true
+                    lab:fire(b.tech, b.info)
+                else
+                    setStatus(b.tech, "ready")
+                end
+            end
         end)
         return true
     end
@@ -686,6 +836,9 @@ function M.new(env)
         if why then setStatus(tech, why) end
     end
     function lab:cancelAll(why)
+        local b = lab.buffered
+        lab.buffered = nil
+        if b then setStatus(b.tech, why or "cancelled") end
         for _, tech in ipairs(lab.order) do
             if tech.running then lab:cancel(tech.id, why or "cancelled") end
         end
@@ -835,7 +988,7 @@ function M.new(env)
             if TM.dot(TM.unit(TM.flat(vec(eroot.CFrame.LookVector))), to) < -0.2 then return end
         end
         tech.pending = {isDash = isDash, name = model.Name}
-        lab:fire(tech, {anim = id, enemy = model.Name})
+        lab:fire(tech, {anim = id, enemy = model.Name, focus = validEnemy(model, char)})
     end
 
     local function notMe(model) local char = LocalPlayer.Character; return model ~= char end
@@ -1091,6 +1244,7 @@ function M.new(env)
         if o.maxY > 0 and (ctx.root.Position.Y > o.maxY or entry.root.Position.Y > o.maxY + 6) then return ctx.abort("too high up for a hook dash") end
         local dist = (entry.root.Position - ctx.root.Position).Magnitude
         if dist > o.maxDist then return ctx.abort(string.format("too far (%.0f > %.0f studs)", dist, o.maxDist)) end
+        ctx.setFocus(entry)
         ctx.commit()
         local sideMode = ({["Behind them"] = "Behind", Closest = "Closest", Left = "Left", Right = "Right"})[o.side] or "Closest"
         local function plan(side, dir)
@@ -1110,6 +1264,7 @@ function M.new(env)
         local lv = ctx.push({x = 0, y = 0, z = 0})
         local fixedSide = first.side
         local t0 = clock()
+        local blocked = false
         local conn
         conn = RunService.Heartbeat:Connect(function()
             if not ctx.alive() then conn:Disconnect(); return end
@@ -1117,6 +1272,11 @@ function M.new(env)
             -- the velocity that arrives exactly when the dash time is up (a fixed time constant would only ever cover 63 % of the way)
             local left = math.max(o.duration - (clock() - t0), 1 / 60)
             local v = TM.steer(vec(ctx.root.Position), p.point, left, 300)
+            if lab.safeMoves and not blocked then                     -- a wall in the way: stop there instead of dashing into (or through) it
+                local step = V3(v) * (1 / 20)
+                if step.Magnitude > 0.05 and Workspace:Raycast(ctx.root.Position, step + step.Unit * 1.5, ctx.mapParams()) then blocked = true end
+            end
+            if blocked then v = TM.v3(0, 0, 0) end
             lv.set(v)
             local want = TM.yawTo(vec(ctx.root.Position), vec(entry.root.Position))
             if want then
@@ -1133,6 +1293,7 @@ function M.new(env)
         if not ctx.wait(o.duration) then return end
         lv.stop()
         conn:Disconnect()
+        if blocked then ctx.say("stopped at a wall") end
         if o.aimAfter > 0 then ctx.aimCamera(function() return vec(entry.root.Position) end, o.aimAfter) end
         ctx.wait(o.aimAfter)
     end
@@ -1235,7 +1396,7 @@ function M.new(env)
         local o = ctx.opt
         if not ctx.wait(ctx.shift(o.wait / 1000)) then return end
         ctx.commit()
-        ctx.root.CFrame = ctx.root.CFrame * CFrame.new(0, 0, o.stepBack)
+        ctx.teleport(vec((ctx.root.CFrame * CFrame.new(0, 0, o.stepBack)).Position))
         ctx.dash(o.dashKey)
         if o.instant then
             local entry = ctx.target(30)
@@ -1271,7 +1432,7 @@ function M.new(env)
         local o = ctx.opt
         if not ctx.wait(ctx.shift(o.wait)) then return end
         ctx.commit()
-        ctx.root.CFrame = ctx.root.CFrame + Vector3.new(0, o.height, 0)
+        ctx.teleport(TM.add(vec(ctx.root.Position), TM.v3(0, o.height, 0)), {floor = false})        -- (a ceiling stops the lift)
     end
 
     lab.techs.surf.run = function(ctx)
@@ -1285,6 +1446,7 @@ function M.new(env)
 
     lab.techs.counter.run = function(ctx)
         local o = ctx.opt
+        ctx.setFocus(ctx.info.focus)
         local p = lab.techs.counter.pending or {}
         ctx.commit()
         if p.isDash and o.dashDelay > 0 then if not ctx.wait(o.dashDelay / 1000) then return end end
@@ -1445,7 +1607,7 @@ function M.new(env)
         if not ctx.wait(o.m1Delay / 1000) then return end
         ctx.m1()
         if not ctx.wait(o.dashDelay / 1000) then return end
-        ctx.root.CFrame = ctx.root.CFrame * CFrame.new(0, 0, o.stepBack)
+        ctx.teleport(vec((ctx.root.CFrame * CFrame.new(0, 0, o.stepBack)).Position))
         ctx.dash("W")
     end
 
@@ -1485,7 +1647,7 @@ function M.new(env)
         ctx.commit()
         local right = TM.unit(TM.flat(vec(ctx.root.CFrame.RightVector)), TM.v3(1, 0, 0))
         local dir = TM.scale(right, sign)
-        ctx.root.CFrame = ctx.root.CFrame + V3(TM.scale(dir, o.hop))
+        ctx.teleport(TM.add(vec(ctx.root.Position), TM.scale(dir, o.hop)))
         local burst = ctx.pushFlat(TM.scale(dir, o.speed))
         local track = ctx.info.track
         if track then
@@ -1555,7 +1717,8 @@ function M.new(env)
 
     function lab:export()
         local out = {enabled = {}, opts = {}, triggers = {}, input = lab.input, dashGuard = lab.dashGuard, releaseBlock = lab.releaseBlock, master = lab.master,
-                     net = {strength = lab.net.strength, manual = lab.net.manual, interp = lab.net.interp, learn = lab.net.learn, ref = lab.net.ref}}
+                     net = {strength = lab.net.strength, manual = lab.net.manual, interp = lab.net.interp, learn = lab.net.learn, ref = lab.net.ref},
+                     targetMode = lab.targetMode, skipBlocking = lab.skipBlocking, safeMoves = lab.safeMoves, guardKnocked = lab.guardKnocked, bufferMs = lab.bufferMs}
         for _, tech in ipairs(lab.order) do
             if tech.enabled then out.enabled[tech.id] = true end
             local diff = TO.diff(tech.defs, tech.opt)
@@ -1575,6 +1738,11 @@ function M.new(env)
         if type(saved.net) == "table" then
             for _, key in ipairs({"strength", "manual", "interp", "ref", "learn"}) do lab:setNet(key, saved.net[key]) end
         end
+        if type(saved.targetMode) == "string" then lab:setTargetMode(saved.targetMode) end
+        for _, key in ipairs({"skipBlocking", "safeMoves", "guardKnocked"}) do
+            if type(saved[key]) == "boolean" then lab[key] = saved[key] end
+        end
+        if type(saved.bufferMs) == "number" and saved.bufferMs == saved.bufferMs then lab.bufferMs = math.max(0, math.min(1000, saved.bufferMs)) end
         for _, tech in ipairs(lab.order) do
             tech.opt = TO.clean(tech.defs, type(saved.opts) == "table" and saved.opts[tech.id] or nil)
             local ids = type(saved.triggers) == "table" and saved.triggers[tech.id]

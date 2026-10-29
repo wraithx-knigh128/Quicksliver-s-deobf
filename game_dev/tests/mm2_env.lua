@@ -260,8 +260,8 @@ function World.new(opts)
     local function newSignal(label)
         local sig = {handlers = {}, label = label}
         local mt = {__type = "RBXScriptSignal"}
-        local function connect(_, fn)
-            local h = {fn = fn, on = true}
+        local function connect(_, fn, orig)
+            local h = {fn = fn, orig = orig or fn, on = true}                -- (orig: the caller's own function, also for Once)
             sig.handlers[#sig.handlers + 1] = h
             local conn = setmetatable({Connected = true}, {__type = "RBXScriptConnection", __index = {
                 Disconnect = function(c) h.on = false; c.Connected = false end}})
@@ -270,7 +270,7 @@ function World.new(opts)
         sig.Connect = connect
         sig.Once = function(_, fn)
             local conn
-            conn = connect(_, function(...) conn:Disconnect(); return fn(...) end)
+            conn = connect(_, function(...) conn:Disconnect(); return fn(...) end, fn)
             return conn
         end
         sig.Wait = function() error("Signal:Wait is not supported by the test world", 2) end

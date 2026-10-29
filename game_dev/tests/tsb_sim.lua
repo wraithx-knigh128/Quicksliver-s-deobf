@@ -210,15 +210,54 @@ function S.new(opts)
         return out
     end
 
+    -- my Humanoid state (sim.meState = "Ragdoll" ...) and attributes
+    W.M.GetState = function(hum)
+        if self.meHum and hum == self.meHum and self.meState then return env.Enum.HumanoidStateType[self.meState] end
+        return env.Enum.HumanoidStateType.Running
+    end
+    W.M.GetAttribute = function(inst, name) return rawget(inst, "__d").attrs[name] end
+    W.M.SetAttribute = function(inst, name, v) rawget(inst, "__d").attrs[name] = v end
+
     ---------------------------------------------------------------------------------------------------- the mouse, rays, raycasts
     W.M.GetMouse = function() return {Hit = self.mouseHit or env.CFrame.new(0, 0, -50)} end
     W.M.ScreenPointToRay = function(cam, x, y)
         local cf = cam.CFrame
         return {Origin = cf.Position, Direction = self.rayDir or cf.LookVector}
     end
+    -- walls are boxes {min = {x,y,z}, max = {x,y,z}}; a ray stops at the nearest one it enters, else at the floor (y = 0) when it points down
+    self.walls = {}
+    function self:addWall(mn, mx)
+        local part = W:make("Part", "Wall" .. (#self.walls + 1), {CFrame = env.CFrame.new((mn[1] + mx[1]) / 2, (mn[2] + mx[2]) / 2, (mn[3] + mx[3]) / 2), Anchored = true}, W.workspace)
+        self.walls[#self.walls + 1] = {min = mn, max = mx, part = part}
+        return part
+    end
+    local function rayBox(o, d, box)
+        local tmin, tmax = 0, 1
+        local O, D = {o.X, o.Y, o.Z}, {d.X, d.Y, d.Z}
+        for i = 1, 3 do
+            if math.abs(D[i]) < 1e-9 then
+                if O[i] < box.min[i] or O[i] > box.max[i] then return nil end
+            else
+                local t1, t2 = (box.min[i] - O[i]) / D[i], (box.max[i] - O[i]) / D[i]
+                if t1 > t2 then t1, t2 = t2, t1 end
+                tmin, tmax = math.max(tmin, t1), math.min(tmax, t2)
+                if tmin > tmax then return nil end
+            end
+        end
+        return tmin
+    end
     W.raycast = function(origin, dir)
         if self.rayHit then return {Position = self:root(self.rayHit).Position, Instance = self:root(self.rayHit)} end
-        if dir.Y < 0 then return {Position = env.Vector3.new(origin.X, 0, origin.Z), Instance = self.floor} end
+        local best, bestPart
+        for _, box in ipairs(self.walls) do
+            local tt = rayBox(origin, dir, box)
+            if tt and (not best or tt < best) then best, bestPart = tt, box.part end
+        end
+        if best then return {Position = origin + dir * best, Instance = bestPart} end
+        if dir.Y < 0 then
+            local tFloor = -origin.Y / dir.Y
+            if tFloor >= 0 and tFloor <= 1 then return {Position = env.Vector3.new(origin.X + dir.X * tFloor, 0, origin.Z + dir.Z * tFloor), Instance = self.floor} end
+        end
         return nil
     end
 
@@ -232,6 +271,20 @@ function S.new(opts)
                      tool = a.Tool and a.Tool.Name or nil, pos = self.meRoot and {self.meRoot.Position.X, self.meRoot.Position.Y, self.meRoot.Position.Z}}
         self.log[#self.log + 1] = rec
         rec.arrive = W.now + W.pingMs / 2000
+        if a.Goal == "LeftClick" and self.meRoot and self.m1Damage ~= false then
+            local me = self.meRoot.Position
+            for _, model in ipairs(W.M.GetChildren(self.live)) do
+                if model ~= self.meChar then
+                    local r = W.M.FindFirstChild(model, "HumanoidRootPart")
+                    local hum = W.M.FindFirstChildOfClass(model, "Humanoid")
+                    if r and hum and (r.Position - me).Magnitude <= (self.m1Range or 7) then
+                        local hd = rawget(hum, "__d")
+                        hd.props.Health = math.max(0, (hd.props.Health or 100) - 5)
+                        self.hits = (self.hits or 0) + 1
+                    end
+                end
+            end
+        end
         if a.Goal == "KeyPress" and rec.key == "Q" and rec.dash then
             local kind = DASH_KIND[rec.dash]
             if rec.arrive < (self.dashReadyAt[kind] or 0) then

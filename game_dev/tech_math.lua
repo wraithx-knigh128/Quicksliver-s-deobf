@@ -19,6 +19,9 @@
       TechMath.shiftWait(base, lagSec, strength, o)         a wait anchored on one of MY animations that arrives `lag` late: start the action earlier by that much
       TechMath.predict(pos, vel, seconds)                   pos + vel * seconds
       TechMath.lagLearner(o)                                measures how late my own animations arrive after my input ( :sent(kind, t)  :seen(kind, t)  :value()  :count() )
+      TechMath.pickTarget(list, mode, o)                    who a tech goes for: "Nearest" | "Crosshair" | "Lowest health" | "Hook target first"
+      TechMath.stopShort(from, to, hit, margin)             a move that would run into a wall ends `margin` studs before it
+      TechMath.aboveFloor(p, floorY, minAbove)              ...and never below the floor
 ]]
 
 local M = {}
@@ -303,6 +306,47 @@ function M.lagLearner(o)
     end
     function self:reset() self.pending, self.gaps = {}, {} end
     return self
+end
+
+-- ---------------------------------------------------------------------------------------------------------------- targets and safe moves
+-- list: entries with x, y, z, dist (from me) and health. o = {camPos, camLook (unit), preferred = an entry of the list}
+M.TARGET_MODES = {"Nearest", "Crosshair", "Lowest health", "Hook target first"}
+function M.pickTarget(list, mode, o)
+    o = o or {}
+    if type(list) ~= "table" or #list == 0 then return nil end
+    local best, bestKey
+    local function consider(e, key)
+        if bestKey == nil or key < bestKey - 1e-9 or (math.abs(key - bestKey) <= 1e-9 and e.dist < best.dist) then best, bestKey = e, key end
+    end
+    if mode == "Hook target first" and o.preferred then
+        for _, e in ipairs(list) do if e == o.preferred then return e end end
+    end
+    for _, e in ipairs(list) do
+        if mode == "Crosshair" and M.valid(o.camPos) and M.valid(o.camLook) then
+            local d = unit(sub(e, o.camPos))
+            consider(e, 1 - dot(d, unit(o.camLook)))                   -- 0 = straight ahead of the camera
+        elseif mode == "Lowest health" and num(e.health) then
+            consider(e, e.health)
+        else
+            consider(e, num(e.dist) and e.dist or math.huge)
+        end
+    end
+    return best
+end
+
+-- the point `margin` studs before `hit` on the way from `from` to `to` (never behind `from`); `to` itself when there is no hit
+function M.stopShort(from, to, hit, margin)
+    if not M.valid(hit) then return to end
+    local d = sub(hit, from)
+    local l = len(d)
+    if l < 1e-6 then return v3(from.x, from.y, from.z) end
+    local keep = max(0, l - (margin or 2))
+    return add(from, scale(d, keep / l))
+end
+
+function M.aboveFloor(p, floorY, minAbove)
+    if not (M.valid(p) and num(floorY)) then return p end
+    return v3(p.x, max(p.y, floorY + (minAbove or 2.5)), p.z)
 end
 
 return M

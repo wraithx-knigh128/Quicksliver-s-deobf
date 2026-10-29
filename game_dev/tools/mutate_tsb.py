@@ -10,7 +10,7 @@ MUTANTS = {
  "dash guard off": ("if tech.needsDash and lab.dashGuard and not lab.dashClock:ready", "if false and not lab.dashClock:ready"),
  "cancel does nothing": ("tech.token == token and char.Parent ~= nil and healthy(hum)", "char.Parent ~= nil and healthy(hum)"),
  "own tracks count": ("        if ownTracks[track] then return end\n", ""),
- "no cooldown": ("if ok and ctx.committed then tech.cooldownUntil = clock() + (tech.opt.cooldown or 0) end", ""),
+ "no cooldown": ("                tech.cooldownUntil = clock() + (tech.opt.cooldown or 0)\n", ""),
  "hook fixed time constant": ("local left = math.max(o.duration - (clock() - t0), 1 / 60)", "local left = o.duration"),
  "busy ignored": ("if not info.manual and env.busy and env.busy() then return false, \"busy\" end", ""),
  "master ignored": ("if not info.manual and not (lab.master and tech.enabled) then return false, \"off\" end", "if not info.manual and not tech.enabled then return false, \"off\" end"),
@@ -42,13 +42,30 @@ MUTANTS = {
  "new: shove without tool check": ("        if not lab:findTool(names) then return ctx.abort(\"you do not have \" .. names[1]) end\n        ctx.commit()\n        ctx.useMove(names)", "        ctx.commit()\n        ctx.useMove(names)"),
  "new: catch ignores dash cooldown": ("if not close and not ctx.dashReady(\"forward\") then return ctx.abort(\"the forward dash is on cooldown\") end", ""),
  "new: marks outlive destroy": ("        stopEnemyWatch()\n        lab:clearMarks()", "        stopEnemyWatch()"),
+ "r3: safe moves ignored": ("            if not lab.safeMoves then return p end", "            if true then return p end"),
+ "r3: no floor clamp": ("            if o.floor ~= false then out = TM.aboveFloor(out, c.floorY(out), o.minAbove or 2.5) end", ""),
+ "r3: floor read from far above": ("local hit = Workspace:Raycast(Vector3.new(pos.x, pos.y + 3, pos.z), Vector3.new(0, -300, 0), params)", "local hit = Workspace:Raycast(Vector3.new(pos.x, pos.y + 80, pos.z), Vector3.new(0, -300, 0), params)"),
+ "r3: hook ignores walls": ("            if blocked then v = TM.v3(0, 0, 0) end", ""),
+ "r3: knocked guard missing": ("        if lab.guardKnocked and lab:knocked() then", "        if false then"),
+ "r3: no chains": ("if not ctx.aborted and nxt and nxt ~= \"None\" and NEXT_IDS[nxt] and (info.depth or 0) < 3 then", "if false then"),
+ "r3: endless chains": ("and NEXT_IDS[nxt] and (info.depth or 0) < 3 then", "and NEXT_IDS[nxt] and (info.depth or 0) < 30 then"),
+ "r3: aborted runs chain": ("if not ctx.aborted and nxt and nxt ~= \"None\"", "if nxt and nxt ~= \"None\""),
+ "r3: no input buffer": ("            if info.manual and not info.fromBuffer and lab.bufferMs > 0 then", "            if false then"),
+ "r3: buffer never expires": ("                if clock() <= b.expires then", "                if true then"),
+ "r3: panic keeps the buffer": ("        local b = lab.buffered\n        lab.buffered = nil\n        if b then", "        local b = lab.buffered\n        if b then"),
+ "r3: target mode ignored": ("        return TM.pickTarget(list, lab.targetMode, o)", "        return list[1]"),
+ "r3: blockers not skipped": ("            if not (lab.skipBlocking and isBlocking(e.model)) then", "            if true then"),
+ "r3: no hit check": ("                if ctx.focus then checkHit(tech, ctx.focus, ctx.focusHealth) end", ""),
+ "r3: counter has no focus": ("        ctx.setFocus(ctx.info.focus)", ""),
  "moving techs overlap": ("                if other ~= tech and other.moves and other.running then", "                if false then"),
 }
 # the camera hold also unbinds itself the next frame; the Death Counter check at watch time is also done by setEnabled's loop in a world where WaitForChild never yields
 EQUIVALENT = {"camera hold never unbound", "new: existing death counter missed"}
 bad = 0
 with tempfile.TemporaryDirectory() as tmp:
+    only = os.environ.get("ONLY")                                     # ONLY="part of a name" runs just the matching mutants
     for name, (a, b) in MUTANTS.items():
+        if only and only not in name: continue
         if a not in src:
             print("NOT APPLICABLE (the engine changed):", name); bad += 1; continue
         path = os.path.join(tmp, "mutant.lua")

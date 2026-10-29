@@ -842,6 +842,8 @@ function UILib.new(cfg)
             return row
         end
 
+        function tab:Paragraph(o) return tab:Label(((o.Title and o.Title ~= "") and (o.Title .. ": ") or "") .. (o.Desc or "")) end
+
         function tab:Label(text)
             local row = mk("Frame", {Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BorderSizePixel = 0, LayoutOrder = nextOrder()}, page)
             bind(row, "BackgroundColor3", "row"); corner(row, 10); stroke(row)
@@ -1101,6 +1103,14 @@ function UILib.new(cfg)
     mk("UIListLayout", {Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder, VerticalAlignment = Enum.VerticalAlignment.Top,
         HorizontalAlignment = Enum.HorizontalAlignment.Left}, toasts)
     local toastCount, liveToasts = 0, {}
+    -- what the WindUI window offers on top (the classic menu answers them simply, so a hub can call them on either)
+    local function plain(t) return (tostring(t or ""):gsub("<[^>]+>", "")) end
+    function win:Popup(o) win:Notify{Title = plain(o.Title), Content = plain(o.Content), Type = "info", Duration = 6} end
+    function win:Dialog(o) win:Notify{Title = plain(o.Title), Content = plain(o.Content), Type = "info", Duration = 8} end
+    function win:SetWater() end
+    function win:GetWater() return {Enabled = false, Strength = 0, Speed = 0, Layers = 0} end
+    function win:SetFont() return false end
+
     function win:Notify(o)
         if not win.Alive then return end
         toastCount = toastCount + 1

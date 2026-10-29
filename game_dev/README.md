@@ -116,11 +116,11 @@ take-over, clicks the game already consumed are ignored, and touch players teach
 
 | Script | What it is | Loader |
 |---|---|---|
-| **Wraith's TSB Lab** (`dist/tsb_lab.min.txt`, WindUI) | The Tech Lab alone, on the WindUI window library, laid out like the tech hub it was rewritten from: one tab per tech family, an Overview, a Settings tab with a config manager, on-screen buttons for phones. Own theme and icons. | below |
+| **Wraith Hub v1.5** (`dist/tsb_lab.min.txt`, WindUI) | The Tech Lab alone, on the WindUI window library, built the way the tech hub it was rewritten from uses WindUI (welcome card, version tag, top bar buttons, player card, search, a card opening every tab, changelog, theme search, fonts), in white-water colours with an animated white water background. One tab per tech family, an Overview, a Settings tab with a config manager, on-screen buttons for phones. | below |
 | **Animation Hub** (`dist/tsb_hub_executor.min.txt`) | The older hub (auto block, combo cards, Kyoto assist, assist / pins ...) - it has a *Tech Lab* tab generated from the same engine. | below |
 
 ```lua
--- Wraith's TSB Lab (WindUI)
+-- Wraith Hub v1.5 (WindUI)
 loadstring(game:HttpGet("https://raw.githubusercontent.com/wraithx-knigh128/Quicksliver-s-deobf/33dc2ecd9a334cba03259182b5508e9ac3d80ec0/dist/tsb_lab.min.txt"))()
 -- Animation Hub (auto block, combos, Tech Lab tab)
 loadstring(game:HttpGet("https://raw.githubusercontent.com/wraithx-knigh128/Quicksliver-s-deobf/33dc2ecd9a334cba03259182b5508e9ac3d80ec0/dist/tsb_hub_executor.min.txt"))()
@@ -159,6 +159,17 @@ Roblox gives a client its own round-trip time and nothing else, so the Tech Lab 
 - **The dash cooldown starts when the server got the dash**: the clock dates it from the animation time minus the measured gap, plus a margin of your jitter.
 - Settings: strength (0 = off, 1 = full, up to 2), a typed ping instead of the measured one, the drawing delay, the tuned-at ping, learning on / off, and an *Adjust for ping* switch per tech. The Overview shows ping, jitter, the measured gap and the lead live.
 - What it can **not** do: read another player's ping, change what the server decides about a hit, or fix a connection with big jitter (it only widens the dash-cooldown margin).
+
+### v1.5: targeting, safety, chains, buffer, hit check
+
+All of it lives in the engine, so both scripts get it (Overview in Wraith Hub, the Tech Lab tab in the Animation Hub), and all of it is saved with *Save config*:
+
+- **Who the techs go for**: *Nearest* (as before), *Crosshair* (nearest to the middle of the screen), *Lowest health*, or *Hook target first* (the player you picked with V, else the nearest). *Skip players who are blocking* goes for the next one instead.
+- **Safe moves** (on): every tech that moves or teleports you casts a ray first and stops a little in front of a wall or ceiling, and never puts you under the floor (it finds the floor from just above the spot, so a roof does not count as the floor). Hook Dash stops at a wall in its path and says so.
+- **Not while I am knocked down** (on): no tech starts while your humanoid is ragdolled / falling down / platform-standing, or the character carries a ragdoll / stun marker.
+- **Chains**: *Then run* (any of M1, Backdash Cancel, Micro Dash, Shove Dash, M1 Reset, Emote Dash, Uppercut Catch) and *...after (ms)* on every tech: when it finishes, the next one starts. At most three links, so two techs cannot call each other for ever; a run that gave up half way (no target, no counter move) does not chain.
+- **Input buffer** (250 ms): a key pressed while a moving tech is still running waits for it and goes right after; one pressed earlier than that is dropped, and Panic drops it too.
+- **Hit check**: a tech that went for someone watches that player's health for 0.8 s afterwards; the status shows *hits x/y* and the Overview lists the hit rate of every tech that was checked. It is only a hint: the health can also drop because of someone else.
 
 ### The techs
 
@@ -213,25 +224,50 @@ automating inputs (and I cannot test what they do to the server), the rest are u
 **Honest status:** none of this has been run in Strongest Battlegrounds. The animation ids, move names and the `Communicate` remote layout come from reading your script, and TSB changes often.
 What *is* tested: the pure maths (`tech_math.lua`, unit tests), the option sanitising, the whole engine in a simulated arena (`tests/tsb_sim.lua` - characters in `Workspace.Live`, a dummy, the remote, animation events, velocity constraints,
 a network with a ping and server-played animations, other players drawn in the past, strict Roblox member checking from the API dump): every tech's sequence, cancel / death / respawn / panic, cleanup, cooldowns, the ping model, config round trips,
-and mutation checks (`tools/mutate_tsb.py`: 37 deliberately broken copies of the engine, 35 make the tests fail and 2 are equivalent - explained in the tool; `tools/mutate_tsb_hub.py`: 14 broken copies of the WindUI hub, all 14 are caught). The WindUI hub is also played on the **real WindUI library** inside the same arena
-(`tests/tsb_hub_tests.lua`): real clicks on its toggles, sliders, key binds and on-screen buttons drive the techs, nothing is written until Save config, a saved config comes back, unloading removes everything, and the small built-in menu takes over when WindUI cannot start.
+and mutation checks (`tools/mutate_tsb.py`: 52 deliberately broken copies of the engine, 50 make the tests fail and 2 are equivalent - explained in the tool; `tools/mutate_tsb_hub.py`: 28 broken copies of the WindUI hub, 14 of them aimed at the v1.5 additions). The WindUI hub is also played on the **real WindUI library** inside the same arena
+(`tests/tsb_hub_tests.lua`): real clicks on its toggles, sliders, key binds, top bar buttons and on-screen buttons drive the techs, the white water layers exist, move, stand still while the window is closed and follow the theme, the welcome card / changelog / player card / search bar / tab cards are there,
+nothing is written until Save config, a saved config comes back (v1.5 settings included), unloading removes everything (every listener still connected afterwards is traced to the line that made it: none of ours is left), and the small built-in menu takes over when WindUI cannot start.
 A passing test means "the code does what it says in a world like the one your script describes"; it cannot show how the window *looks* (no renderer for WindUI's images) or that an executor allows what WindUI needs.
 
 Checks for the Tech Lab (from `game_dev/`): `python3 tests/run_tests.py` (maths / data / options), `LUAU=/path/to/luau python3 tests/run_tsb.py lab` (the engine in the arena), `... run_tsb.py hub` (the WindUI hub on the real WindUI),
 `sh tools/gen_tsb_types.sh` (regenerates the strict API tables after using new Roblox members), `python3 tools/mutate_tsb.py` / `tools/mutate_tsb_hub.py` (mutation checks), `python3 tests/check_docs.py` (every tech is in this README).
 Build: `python3 game_dev/tsb/build_tsb_lab.py` (WindUI hub) and `python3 game_dev/build_executor.py` (Animation Hub).
 
-### Wraith's TSB Lab (WindUI)
+### Wraith Hub v1.5 (WindUI)
 
-- **Layout** (like the tech hub it was rewritten from): *Overview* (master switch, Panic, input mode, live dash cooldowns and ping), then one tab per family - Supa, Hook Dash, Loop Dash, Kiba / Kitty, Kyoto Combo, Lethal Dash, Twisted, M1 Reset, Cancels,
-  Auto Counter, Tech Helper, Awareness - and *Settings* (menu key, theme, size, transparency, the ping model, on-screen buttons, config manager, log, unload). Every tech has its switch, a status line, all its options (sliders, switches, dropdowns, any-key key binds, text boxes), *Learn trigger* and *Reset*.
-  The tabs are generated from the tech definitions, so a new tech needs no UI code.
-- **Own look**: its own title / icons / accent, ten WindUI themes (default "Sky"), a transparent window; the on-screen buttons keep the grey flowing-water outline.
+- **The WindUI structure of the hub it was rewritten from**, rebuilt with this hub's own text and code: a **welcome card** when it starts (a white-to-silver title, *What is new* / *Start*; switch it off in Settings), a **v1.5 tag** next to the title,
+  **icon buttons in the top bar** (Panic, Water on / off, Changelog), **your player card** at the bottom of the side bar, the **search bar**, a **card opening every tab** (it lists that tab's techs and when each one starts), a **changelog dialog**,
+  a **theme list with search**, a **font choice** (Default, Gotham, Code, Fredoka, Arcade) and the menu key.
+- **White water colours**: the default theme *Wraith White* (white switches / sliders / outline on a dark slate window, see-through cards), *Wraith Pearl* (a light one), plus Frost / Ember / Mint and WindUI's own themes.
+- **Animated white water background**, made in the script (nothing is downloaded, so nothing can fail to load): four full-size layers, each a white fill whose `UIGradient` only lets thin bright bands through - the crests of a sharpened sine
+  (`(0.5 + 0.5 sin x) ^ k`), at most 20 keypoints as Roblox allows. Every layer drifts (`Offset`) and sways (`Rotation`) at its own speed, so the bands cross and part like light on moving water; the fourth, fast and sharp layer gives the glints.
+  It only animates while the window is open, at most 30 times a second, and only touches two properties per layer per frame (no new instances, no tweens piling up). Settings: on / off (also the top bar button), brightness, wave speed;
+  on the light theme it turns slate (white on white would not show).
+- **Your own picture or video under the water** (optional): a direct .png / .jpg / .webm link or `rbxassetid://`, with a darkening slider. Same mechanism as WindUI's own `Background` option (see the research below).
+- **Layout**: *Overview* (master switch, Panic, input mode, **targeting and safety** - who the techs go for, skip blockers, safe moves, the knocked-down guard, the input buffer - and a live panel with dash cooldowns, ping and **hit rates**),
+  then one tab per family - Supa, Hook Dash, Loop Dash, Kiba / Kitty, Kyoto Combo, Lethal Dash, Twisted, M1 Reset, Cancels, Auto Counter, Tech Helper, Awareness - and *Settings* (menu, background, ping model, on-screen buttons, config manager, changelog, log, unload).
+  Every tech has its switch, a status line, all its options (sliders, switches, dropdowns, any-key key binds, text boxes; *Then run* / *...after* for chains), *Learn trigger* and *Reset*. The tabs are generated from the tech definitions, so a new tech needs no UI code.
 - **On-screen buttons for phones**: PANIC (on by default), HOOK, M1 RESET, EMOTE DASH, BACKDASH, MICRO and SHOVE (switched on inside each tech). Draggable, lockable, with a cooldown bar and the tech's status. Hook Dash on a phone: double tap a player to select him, then tap HOOK.
-- **Config manager**: named configs in the `TSBLab` folder (`TSBLab/<name>.json`, names are cleaned so they cannot leave the folder), *Save / Load / Delete*, a list of what is there, and *Auto load* - decided when you press Save, written to `TSBLab/index.json` together with the config.
-  Nothing is written before you press Save. Invalid values in a file (a wrong theme, a nonsense key, a huge scale) fall back to the defaults or are clamped; a broken file never stops the hub.
-- **Fallback**: if WindUI cannot start (an executor that blocks its file / web calls) the small built-in menu opens with the same tabs and the techs work the same.
-- WindUI is the MIT-licensed [Footagesus/WindUI](https://github.com/Footagesus/WindUI), embedded unchanged apart from three small patches (no icon downloads), the same way the Murder Mystery 2 hub embeds it; its icons are the built-in Lucide subset (MIT).
+- **Config manager**: named configs in the `TSBLab` folder (kept from the earlier versions so old configs still load; names are cleaned so they cannot leave the folder), *Save / Load / Delete*, a list of what is there, and *Auto load* - decided when you press Save, written to `TSBLab/index.json`.
+  A config also holds the v1.5 settings (water, background, font, welcome card, targeting). Nothing is written before you press Save. Invalid values in a file fall back to the defaults or are clamped; a broken file never stops the hub.
+- **Fallback**: if WindUI cannot start (an executor that blocks its file / web calls) the small built-in menu opens with the same tabs and the techs work the same (no water there: it is part of the WindUI window).
+- WindUI is the MIT-licensed [Footagesus/WindUI](https://github.com/Footagesus/WindUI) (v1.6.65, byte-identical to the current 1.6.66 release file), embedded unchanged apart from three small patches (no icon downloads); its icons are the built-in Lucide subset (MIT).
+
+#### Animated WindUI backgrounds: what the research found
+
+- **WindUI itself** takes `Background = "rbxassetid://..."` / an http image link / `"video:<link>"` in `CreateWindow`, plus `BackgroundImageTransparency`, and `Window:SetBackgroundImage`. A `video:` link is downloaded, saved with `writefile` and played through
+  `getcustomasset` in a `VideoFrame`; WindUI's own source warns that video backgrounds "may not work". That is the only "animated background" WindUI has: it does not animate anything by itself.
+- **Mods and look-alikes**: WindUI-Mod's README shows the same `video:` .webm background (with `BackgroundImageTransparency`) and nothing animated beyond it; a Material-Design-3 Roblox UI added video backgrounds the same way and refuses GIFs
+  with a clear message (Roblox cannot play a GIF; only its first frame would show).
+- **VideoFrame limits**: Roblox caps video at 1280x720, uploads take only .mp4 / .mov, and a local file has to go through `getcustomasset` (not every executor has it, and the .webm has to be downloaded each session). Free stock wave clips exist (Mixkit, Pixabay), but every one is a download that can fail.
+- **The DevForum way** to animate a UI background without media is a `UIGradient` whose `Offset` / `Rotation` are moved every frame - cheap, works everywhere, nothing to load. The white water here is that idea pushed further: several layers, crests made by a
+  sharpened sine, each layer at its own speed and angle, only while the window is open.
+- So v1.5 uses the self-made water by default, and keeps WindUI's picture / video mechanism as an *option* for anyone who wants a clip under it.
+- Sources: [Footagesus/WindUI](https://github.com/Footagesus/WindUI) and its [releases](https://github.com/Footagesus/WindUI/releases); [WindUI docs on Context7](https://context7.com/footagesus/windui); [SLK-GAMING-MOD/WindUI-Mod](https://github.com/SLK-GAMING-MOD/WindUI-Mod);
+  [Material-Design-3-Roblox-lua-ui PR #12](https://github.com/engnyg/Material-Design-3-Roblox-lua-ui/pull/12); DevForum: [VideoFrames are capped at 1280x720](https://devforum.roblox.com/t/roblox-videoframes-are-capped-at-1280x720/3901780),
+  [local video files for VideoFrames](https://devforum.roblox.com/t/using-local-video-files-for-videoframes/808249), [4 UIGradient animations](https://devforum.roblox.com/t/4-uigradient-animations-including-rainbow/557922),
+  [UIGradient animation](https://devforum.roblox.com/t/uigradient-animation/2637300); [Roblox wiki: Video](https://roblox.fandom.com/wiki/Video); stock clips: [Mixkit waves](https://mixkit.co/free-stock-video/waves/), [Pixabay waves](https://pixabay.com/videos/search/waves/).
+  Not reachable from where this was built (so not read): the WindUI docs site (footagesus-windui.mintlify.app, footagesus.github.io), create.roblox.com, and the Mixkit / Pixabay pages themselves.
 
 Nothing is saved automatically (that includes your own menu picture: Save config keeps it). The Config tab has Save config / Reload / Delete; the only file is `animation_hub_config.json`, loaded when
 the hub starts (an old `animation_hub_settings.json` from earlier versions is ignored).

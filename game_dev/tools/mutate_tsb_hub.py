@@ -18,10 +18,28 @@ MUTANTS = {
  "float buttons start visible": ("S.floats[d.id] = {x = -1, y = -1, visible = d.id == \"panic\"}", "S.floats[d.id] = {x = -1, y = -1, visible = true}"),
  "fallback missing": ("        local theme = \"Ocean\"\n        cfg.Theme = theme\n        return UILib.new(cfg)", "        error('no fallback')"),
  "techs start on": ("    if savedTech then lab:import(savedTech) end", "    if savedTech then lab:import(savedTech) end\n    lab:setEnabled('supa', true)"),
+ # v1.5: the white water, the WindUI structure, the targeting controls
+ "water never animates": ("    connect(game:GetService(\"RunService\").Heartbeat, function(dt) safe(\"water\", stepWater, dt) end)", ""),
+ "water listener not tracked": ("    connect(game:GetService(\"RunService\").Heartbeat, function(dt) safe(\"water\", stepWater, dt) end)",
+                                "    game:GetService(\"RunService\").Heartbeat:Connect(function(dt) safe(\"water\", stepWater, dt) end)"),
+ "water animates while closed": ("if not water.On or #water.Layers == 0 or Window.Closed then return end", "if not water.On or #water.Layers == 0 then return end"),
+ "water button does nothing": ("Callback = function() if toggleWater then toggleWater() end end}", "Callback = function() end}"),
+ "water setting does not follow": ("        if waterToggle then waterToggle:Set(S.water, true) end\n", ""),
+ "theme does not retint the water": ("Win:SetTheme(v); Win:SetWater{Tint = waterTint(v)}; markDirty()", "Win:SetTheme(v); markDirty()"),
+ "water strength not clamped": ("S.waterStrength = clampNum(saved.waterStrength, 0, 1, S.waterStrength)", "S.waterStrength = saved.waterStrength or S.waterStrength"),
+ "bad background link accepted": ("if type(saved.bgUrl) == \"string\" and #saved.bgUrl <= 300 and not saved.bgUrl:find(\"%c\") then", "if type(saved.bgUrl) == \"string\" then"),
+ "welcome card ignores the setting": ("    if S.popup then\n        Win:Popup{", "    if true then\n        Win:Popup{"),
+ "save forgets the water": ("                water = S.water, waterStrength = S.waterStrength,", "                waterStrength = S.waterStrength,"),
+ "changelog button does nothing": ("Callback = function() if showChangelog then showChangelog() end end}", "Callback = function() end}"),
+ "no tab cards": ("        tab:Paragraph{Title = t[1], Desc = table.concat(lines, \"\\n\"), Image = tabIcon(t[2], nil)}\n", ""),
+ "targeting not wired": ("if lab.targetMode ~= v then lab:setTargetMode(v); markDirty() end", "markDirty()"),
+ "load forgets the lab-wide controls": ("                elseif not id and LAB_FLAGS[flag] then el:Set(lab[flag], true) end", "                end"),
 }
 bad = 0
 with tempfile.TemporaryDirectory() as tmp:
+    only = os.environ.get("ONLY")                                     # ONLY="part of a name" runs just the matching mutants
     for name, (a, b) in MUTANTS.items():
+        if only and only not in name: continue
         if src.count(a) != 1:
             print("NOT APPLICABLE (the hub changed):", name, src.count(a)); bad += 1; continue
         path = os.path.join(tmp, "mutant.lua")

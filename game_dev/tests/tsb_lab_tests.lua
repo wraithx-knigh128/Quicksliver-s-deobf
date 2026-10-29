@@ -216,6 +216,7 @@ end
 
 do   -- techs that move me never run at the same time
     local sim, lab = arena()
+    lab.bufferMs = 0                                                  -- (no input buffer here: the refusal itself is what is tested)
     lab:setEnabled("supa", true)
     lab:setEnabled("loop", true)
     lab:setEnabled("m1reset", true)
@@ -231,6 +232,50 @@ do   -- techs that move me never run at the same time
     sim:run(0.6)
     check(lab.techs.m1reset.stats.runs == 1, "afterwards it works")
     clean(sim, "exclusive")
+end
+do   -- the input buffer: a key pressed just before the running tech ends goes right after it; one pressed long before is dropped
+    local sim, lab = arena()
+    lab:setEnabled("supa", true)
+    lab:setEnabled("m1reset", true)
+    check(lab.bufferMs == 250, "a 250 ms buffer by default")
+    sim:anim(sim.meChar, UPPERCUT, 0.5)
+    local endsAt
+    sim:run(0.5)                                                      -- Supa is in its last moves (it ends at about 0.65 s)
+    check(lab.techs.supa.running, "(Supa is running)")
+    sim.W:keyDown("R")
+    check(lab.techs.m1reset.status:find("queued"), "the press is queued: " .. lab.techs.m1reset.status)
+    for _ = 1, 60 do
+        sim:run(1 / 60)
+        if not lab.techs.supa.running and not endsAt then endsAt = sim.W.now end
+        if lab.techs.m1reset.stats.runs > 0 then break end
+    end
+    check(lab.techs.m1reset.stats.runs == 1, "M1 Reset runs as soon as Supa is over")
+    -- pressed long before the end: the buffer runs out and the press is dropped
+    local sim2, lab2 = arena()
+    lab2:setEnabled("kyoto", true)
+    lab2:setEnabled("m1reset", true)
+    sim2:give(sim2.mePlayer, "Lethal Whirlwind Stream")
+    sim2:anim(sim2.meChar, "12273188754", 0.5)
+    sim2:run(1.6)
+    check(lab2.techs.kyoto.running, "(Kyoto is running)")
+    sim2.W:keyDown("R")
+    sim2:run(1.5)
+    check(lab2.techs.m1reset.stats.runs == 0 and lab2.techs.m1reset.status == "ready", "a press 0.25 s+ before the end is dropped: " .. lab2.techs.m1reset.status)
+    -- Panic clears the buffer
+    local sim3, lab3 = arena()
+    lab3:setEnabled("supa", true); lab3:setEnabled("m1reset", true)
+    sim3:anim(sim3.meChar, UPPERCUT, 0.5)
+    sim3:run(0.4)
+    lab3.bufferMs = 1500                                              -- (a long buffer, so only Panic can drop the press)
+    sim3.W:keyDown("R")
+    check(lab3.techs.m1reset.status:find("queued"), "(queued)")
+    lab3:cancelAll("panic")
+    lab3:fire("microdash", {manual = true, force = true})            -- another moving tech ends right after: it must not let the old press go
+    sim3:run(1)
+    check(lab3.techs.microdash.stats.runs == 1, "(the micro dash ran)")
+    check(lab3.techs.m1reset.stats.runs == 0, "Panic also clears a queued press")
+    check(not lab3.techs.m1reset.status:find("queued"), "and its status says so: " .. lab3.techs.m1reset.status)
+    clean(sim, "buffer"); clean(sim2, "buffer 2"); clean(sim3, "buffer 3")
 end
 
 ------------------------------------------------------------------------------------------------ Hook Dash
@@ -1000,6 +1045,215 @@ do   -- the colour names in the tech definitions are the ones the data module kn
             end
         end
     end
+end
+
+------------------------------------------------------------------------------------------------ round 3: targets, safe moves, knocked guard, chains, hit check
+section("round 3")
+do   -- who a tech goes for
+    local sim, lab = arena({rival = false})
+    local _, near_ = sim:addEnemy("Near", {8, 3, 0})                   -- to my right, closest
+    local _, ahead = sim:addEnemy("Ahead", {0, 3, -14})               -- straight in front of the camera
+    local _, weak = sim:addEnemy("Weak", {-10, 3, -6})
+    rawget(sim.W.M.FindFirstChildOfClass(weak, "Humanoid"), "__d").props.Health = 20
+    sim.W:setCamera({0, 5, 6}, {0, 3, -14})
+    local function pick() local e = lab:pickTarget(40); return e and e.name end
+    check(pick() == "Near", "Nearest by default: " .. tostring(pick()))
+    lab:setTargetMode("Crosshair")
+    check(pick() == "Ahead", "Crosshair: the one the camera looks at: " .. tostring(pick()))
+    lab:setTargetMode("Lowest health")
+    check(pick() == "Weak", "Lowest health: " .. tostring(pick()))
+    lab:setTargetMode("Hook target first")
+    lab:setEnabled("hook", true)
+    lab:hookSelectNear(sim.W.env.Vector3.new(-10, 3, -6))
+    check(pick() == "Weak", "Hook target first: the selected one: " .. tostring(pick()))
+    lab:hookClear()
+    check(pick() == "Near", "...and the nearest without one")
+    lab:setTargetMode("Nonsense")
+    check(lab.targetMode == "Hook target first", "an unknown mode is ignored")
+    lab:setTargetMode("Nearest")
+    lab.skipBlocking = true
+    sim:anim(near_, BLOCK, 3)
+    check(pick() == "Weak", "skip blockers: the blocking one is passed over for the next nearest: " .. tostring(pick()))
+    -- Supa goes for the crosshair target
+    lab.skipBlocking = false
+    lab:setTargetMode("Crosshair")
+    lab:setEnabled("supa", true)
+    sim:anim(sim.meChar, UPPERCUT, 0.5)
+    sim:run(1)
+    local p = sim:pos(sim.meChar)
+    check(math.abs(p[1]) < 2 and near(p[3], -9, 1), "Supa went for the target in the crosshair (and ended behind his back): " .. fmt(p))
+    clean(sim, "targets")
+end
+do   -- moves stop at walls and never go under the floor
+    local sim, lab = arena({rival = false})
+    sim:addWall({8, 0, -3}, {10, 20, 3})                               -- a wall 8 studs to my right
+    lab:setEnabled("m1reset", true)
+    sim.W:keyDown("R")
+    sim:run(0.6)
+    local p = sim:pos(sim.meChar)
+    check(p[1] < 8 and near(p[1], 6, 0.6), "M1 Reset's 25-stud step stops 2 studs before the wall: " .. fmt(p))
+    lab.safeMoves = false
+    sim:place(sim.meChar, {0, 3, 0})
+    lab.techs.m1reset.cooldownUntil = 0
+    sim.dashReadyAt = {}; lab.dashClock:reset()
+    sim.W:keyDown("R")
+    sim:run(0.6)
+    check(sim:pos(sim.meChar)[1] > 20, "(with safe moves off it walks through: " .. sim:pos(sim.meChar)[1] .. ")")
+    clean(sim, "walls")
+    -- indoors: a roof over the step must not be taken for the floor
+    local sim2, lab2 = arena({rival = false})
+    sim2:addWall({-40, 20, -40}, {40, 22, 40})
+    lab2:setEnabled("m1reset", true)
+    sim2.W:keyDown("R")
+    sim2:run(0.6)
+    check(near(sim2:pos(sim2.meChar)[2], 3, 0.2), "under a roof the step stays on the floor: y = " .. sim2:pos(sim2.meChar)[2])
+    clean(sim2, "roof")
+end
+do   -- Supa on a target standing on the ground: "under him" would be inside the floor
+    local sim, lab = arena({rivalPos = {0, 3, -12}})
+    lab:setEnabled("supa", true)
+    lab:setOption("supa", "behind", false)
+    local lowest = 99
+    sim:anim(sim.meChar, UPPERCUT, 0.5)
+    for _ = 1, 60 do sim:run(1 / 60); lowest = math.min(lowest, sim:pos(sim.meChar)[2]) end
+    check(lowest >= 2.49, "never below the floor (lowest y " .. string.format("%.2f", lowest) .. ")")
+    clean(sim, "floor")
+end
+do   -- a wall between me and the rival: the hook dash stops at it
+    local sim, lab = arena({rivalPos = {6, 3, -20}})
+    sim:addWall({-20, 0, -12}, {20, 20, -10})
+    lab:setEnabled("hook", true)
+    sim.mouseHit = sim.W.env.CFrame.new(5, 3, -19)
+    sim.W:keyDown("V")
+    sim.W:keyDown("C")
+    sim:run(1.2)
+    local p = sim:pos(sim.meChar)
+    check(p[3] > -10, "the hook dash did not go through the wall: " .. fmt(p))
+    check(lab.techs.hook.status:find("wall"), "and says why: " .. lab.techs.hook.status)
+    lab:hookClear()
+    clean(sim, "hook wall")
+end
+do   -- a ceiling stops Lethal Dunk's lift
+    local sim, lab = arena()
+    sim:addWall({-10, 30, -10}, {10, 32, 10})
+    lab:setEnabled("dunk", true)
+    sim:anim(sim.meChar, LETHAL_ANIM, 0.5)
+    sim:run(1.2)
+    local y = sim:pos(sim.meChar)[2]
+    check(y < 30 and near(y, 28, 0.5), "the lift stops under the ceiling: " .. y)
+    clean(sim, "ceiling")
+end
+do   -- no techs while I am knocked down
+    local sim, lab = arena()
+    lab:setEnabled("supa", true)
+    lab:setEnabled("m1reset", true)
+    sim.meState = "Ragdoll"
+    sim:anim(sim.meChar, UPPERCUT, 0.5)
+    sim:run(0.8)
+    check(dashes(sim, "W") == 0 and lab.techs.supa.status:find("knocked"), "ragdolled: Supa does not start: " .. lab.techs.supa.status)
+    sim.W:keyDown("R")
+    sim:run(0.3)
+    check(lab.techs.m1reset.stats.runs == 0, "...and neither does a key press")
+    sim.meState = nil
+    sim.W.M.SetAttribute(sim.meChar, "Stunned", true)
+    sim.W:keyDown("R")
+    sim:run(0.3)
+    check(lab.techs.m1reset.stats.runs == 0, "a Stunned attribute counts too")
+    sim.W.M.SetAttribute(sim.meChar, "Stunned", false)
+    lab.guardKnocked = false
+    sim.meState = "Ragdoll"
+    sim.W:keyDown("R")
+    sim:run(0.5)
+    check(lab.techs.m1reset.stats.runs == 1, "with the guard off it runs anyway")
+    clean(sim, "knocked")
+end
+do   -- chains
+    local sim, lab = arena()
+    lab:setEnabled("supa", true)
+    lab:setOption("supa", "next", "M1")
+    lab:setOption("supa", "nextDelay", 100)
+    sim:anim(sim.meChar, UPPERCUT, 0.5)
+    sim:run(1.2)
+    check(sim:count({goal = "LeftClick"}) == 1, "Supa -> M1: an M1 follows the tech")
+    -- a manual chain: M1 Reset -> Micro Dash (a side dash: M1 Reset's own dash was a forward one)
+    lab:setEnabled("m1reset", true)
+    lab:setOption("m1reset", "next", "Micro Dash")
+    sim.dashReadyAt = {}; lab.dashClock:reset()
+    sim.W:keyDown("R")
+    sim:run(1)
+    check(lab.techs.microdash.stats.runs == 1, "M1 Reset -> Micro Dash runs the second tech (even though it is not switched on)")
+    -- ...and a chain respects the dash cooldowns: Backdash Cancel needs the forward / back dash M1 Reset just used
+    lab:setOption("m1reset", "next", "Backdash Cancel")
+    lab.techs.m1reset.cooldownUntil = 0
+    sim:run(5)
+    sim.dashReadyAt = {}; lab.dashClock:reset()
+    sim.W:keyDown("R")
+    sim:run(1)
+    check(lab.techs.backdash.stats.runs == 0 and lab.techs.backdash.status:find("cooldown"), "a chained tech waits for its dash like any other: " .. lab.techs.backdash.status)
+    -- a tech chained to itself stops after three links
+    local sim2, lab2 = arena()
+    lab2:setEnabled("emotedash", true)
+    lab2:setOption("emotedash", "next", "Emote Dash")
+    lab2:setOption("emotedash", "cooldown", 0)
+    sim2.W:keyDown("T")
+    sim2:run(4)
+    check(lab2.techs.emotedash.stats.runs == 4, "a self-chain runs 1 + 3 times and stops: " .. lab2.techs.emotedash.stats.runs)
+    -- an aborted run does not chain
+    local sim3, lab3 = arena({rival = false})
+    lab3:setEnabled("supa", true)
+    lab3:setOption("supa", "next", "M1")
+    sim3:anim(sim3.meChar, UPPERCUT, 0.5)
+    sim3:run(1.2)
+    check(sim3:count({goal = "LeftClick"}) == 0, "no target, no run: nothing is chained")
+    -- a run that started (committed) and then gave up does not chain either: Auto Counter without a counter move
+    local sim4, lab4 = arena({rival = false})
+    lab4:setEnabled("counter", true)
+    lab4:setOption("counter", "next", "M1")
+    lab4:fire("counter", {manual = true})
+    sim4:run(1)
+    check(lab4.techs.counter.stats.runs == 1 and lab4.techs.counter.stats.aborts == 1, "(it started and gave up: " .. lab4.techs.counter.status .. ")")
+    check(sim4:count({goal = "LeftClick"}) == 0, "a run that gave up half way is not chained")
+    clean(sim, "chains"); clean(sim2, "self chain"); clean(sim3, "abort chain"); clean(sim4, "abort chain 2")
+end
+do   -- the hit check
+    local sim, lab = arena({rivalPos = {6, 3, -20}})
+    lab:setEnabled("hook", true)
+    sim.mouseHit = sim.W.env.CFrame.new(5, 3, -19)
+    sim.W:keyDown("V")
+    sim.W:keyDown("C")
+    sim:run(1.6)
+    check(sim.hits == 1, "(the server saw the hook dash's M1 land: " .. tostring(sim.hits) .. ")")
+    check(lab.techs.hook.stats.hits == 1 and lab.techs.hook.stats.checked == 1, "the hit is counted")
+    check(lab.techs.hook.status:find("hits 1/1"), "and shown: " .. lab.techs.hook.status)
+    lab:hookClear()
+    -- Supa does not hurt by itself in the arena: a miss is counted
+    local sim2, lab2 = arena()
+    lab2:setEnabled("supa", true)
+    sim2:anim(sim2.meChar, UPPERCUT, 0.5)
+    sim2:run(2)
+    check(lab2.techs.supa.stats.checked == 1 and (lab2.techs.supa.stats.hits or 0) == 0 and lab2.techs.supa.status:find("hits 0/1"), "no health lost: a miss: " .. lab2.techs.supa.status)
+    -- the attacker is the focus of Auto Counter
+    local sim3, lab3 = arena({rival = false})
+    lab3:setEnabled("counter", true)
+    sim3:give(sim3.mePlayer, "Prey's Peril")
+    local _, att = sim3:addEnemy("Dasher", {0, 3, -9}, {look = {0, 3, 0}})
+    sim3:run(0.2)
+    sim3:anim(att, FORWARD, 0.3)
+    sim3:run(0.2)
+    rawget(sim3.W.M.FindFirstChildOfClass(att, "Humanoid"), "__d").props.Health = 70       -- the counter hurt him
+    sim3:run(1)
+    check(lab3.techs.counter.stats.hits == 1, "a counter that hurt the attacker counts as a hit")
+    clean(sim, "hit check"); clean(sim2, "miss"); clean(sim3, "counter hit")
+end
+do   -- the round-3 settings are saved and come back clean
+    local sim, lab = arena()
+    lab:setTargetMode("Lowest health"); lab.skipBlocking = true; lab.safeMoves = false; lab.guardKnocked = false; lab.bufferMs = 400
+    local saved = lab:export()
+    local sim2, lab2 = arena()
+    lab2:import(saved)
+    check(lab2.targetMode == "Lowest health" and lab2.skipBlocking and not lab2.safeMoves and not lab2.guardKnocked and lab2.bufferMs == 400, "exported and imported")
+    lab2:import({targetMode = "x", skipBlocking = "yes", bufferMs = 1e9})
+    check(lab2.targetMode == "Lowest health" and lab2.skipBlocking == true and lab2.bufferMs == 1000, "junk is ignored or clamped")
 end
 
 ------------------------------------------------------------------------------------------------ ping

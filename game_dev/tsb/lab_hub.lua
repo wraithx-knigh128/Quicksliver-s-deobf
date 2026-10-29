@@ -1,5 +1,8 @@
---[[ Wraith's TSB Lab (The Strongest Battlegrounds): the Tech Lab (tech_lab.lua) on the WindUI window library, laid out like the tech hub it was rewritten from:
-  one tab per tech family, an Overview with the master switch / Panic / live cooldowns and ping, a Settings tab with the menu options, the ping model and a config manager.
+--[[ Wraith Hub v1.5 (The Strongest Battlegrounds): the Tech Lab (tech_lab.lua) on the WindUI window library, built the way the tech hub it was rewritten from uses
+  WindUI - a welcome popup, a version tag, icon buttons in the top bar, the player card, the search bar, a paragraph opening every tab, a changelog dialog, a theme list
+  with search and a font choice - in white-water colours with an animated white water background (self-made, nothing downloaded).
+  One tab per tech family, an Overview with the master switch / Panic / targeting / live cooldowns, ping and hit rates, a Settings tab with the menu options, the
+  background, the ping model and a config manager.
   The tabs are generated from the tech definitions in tech_lab.lua, so a new tech needs no UI code.
   Source file: build it into one script with `python3 game_dev/tsb/build_tsb_lab.py` (it fills in the PingModel / Tech* / UILib / WindUI modules below).
   Nothing in it has been run in the real game - see the README. Nothing is saved unless you press Save config. ]]
@@ -77,6 +80,12 @@ local function __run()
     local function clampNum(v, lo, hi, default) if type(v) == "number" and v == v then return math.max(lo, math.min(hi, v)) end return default end
     -- the Lab's own colours (the standard WindUI themes stay available too)
     WindAdapter.addThemes({
+        {Name = "Wraith White", Accent = "#10141b", Dialog = "#121822", Outline = "#f2f6fb", Text = "#f5f8fc", Placeholder = "#9aa6b5", Background = "#0b0f15", Button = "#3a4656", Icon = "#e6edf6",
+         Toggle = "#e9f1fb", Slider = "#dfe9f5", Checkbox = "#e9f1fb", Primary = "#f2f7ff", SliderIcon = "#c9d4e2", PanelBackground = "#ffffff", PanelBackgroundTransparency = 0.95,
+         LabelBackground = "#000000", LabelBackgroundTransparency = 0.8, ElementBackground = "#1a212c", ElementBackgroundTransparency = 0},
+        {Name = "Wraith Pearl", Accent = "#e8edf4", Dialog = "#f1f4f8", Outline = "#ffffff", Text = "#101826", Placeholder = "#5b6778", Background = "#e9eef5", Button = "#c3ccd8", Icon = "#3b4a5e",
+         Toggle = "#5b7fa6", Slider = "#5b7fa6", Checkbox = "#5b7fa6", Primary = "#4a6f99", SliderIcon = "#5b6778", PanelBackground = "#ffffff", PanelBackgroundTransparency = 0.6,
+         LabelBackground = "#ffffff", LabelBackgroundTransparency = 0.5, ElementBackground = "#ffffff", ElementBackgroundTransparency = 0},
         {Name = "Frost", Accent = "#0f1c24", Dialog = "#101c24", Outline = "#bfefff", Text = "#eaf8ff", Placeholder = "#7fa3b3", Background = "#0b1218", Button = "#2c4a5a", Icon = "#8fd8f0",
          Toggle = "#36d1ff", Slider = "#36d1ff", Checkbox = "#36d1ff", Primary = "#36d1ff", SliderIcon = "#8fd8f0", PanelBackground = "#bfefff", PanelBackgroundTransparency = 0.95,
          LabelBackground = "#000000", LabelBackgroundTransparency = 0.8, ElementBackground = "#17262f", ElementBackgroundTransparency = 0},
@@ -88,6 +97,16 @@ local function __run()
          LabelBackground = "#000000", LabelBackgroundTransparency = 0.8, ElementBackground = "#16291f", ElementBackgroundTransparency = 0},
     })
     local THEMES = WindAdapter.ThemeNames
+    -- the water is white on the dark themes and slate on the light one (white on white would not show)
+    local function waterTint(theme) return theme == "Wraith Pearl" and Color3.fromRGB(110, 130, 158) or Color3.fromRGB(255, 255, 255) end
+    local FONTS = {Default = "rbxassetid://12187365364", Gotham = "Gotham", Code = "Code", Fredoka = "FredokaOne", Arcade = "Arcade"}
+    local FONT_NAMES = {"Default", "Gotham", "Code", "Fredoka", "Arcade"}
+    local function fontFamily(name)
+        local f = FONTS[name]
+        if not f or f:find("^rbxassetid://") then return f end
+        local ok, family = pcall(function() return Font.fromEnum(Enum.Font[f]).Family end)
+        return ok and family or nil
+    end
     local FLOAT_DEFS = {   -- the on-screen buttons: id, label, icon, accent, the tech it runs (nil = Panic)
         {id = "panic", title = "PANIC", icon = "close", accent = {236, 64, 72}},
         {id = "hook", title = "HOOK", icon = "crosshair", accent = {120, 200, 255}, tech = "hook"},
@@ -97,7 +116,8 @@ local function __run()
         {id = "microdash", title = "MICRO", icon = "spark", accent = {255, 140, 200}, tech = "microdash"},
         {id = "shovedash", title = "SHOVE", icon = "knife", accent = {255, 160, 90}, tech = "shovedash"},
     }
-    local DEFAULT_UI = {theme = "Frost", uiKey = "RightShift", uiScale = 0.9, uiAlpha = 0.45, waves = "High", btnSize = 76, btnLock = false, autoLoad = false, configName = "default"}
+    local DEFAULT_UI = {theme = "Wraith White", uiKey = "RightShift", uiScale = 0.9, uiAlpha = 0.45, waves = "High", btnSize = 76, btnLock = false, autoLoad = false, configName = "default",
+        water = true, waterStrength = 0.7, waterSpeed = 1, bgUrl = "", bgDim = 0.35, font = "Default", popup = true}
     local S = {}
     for k, v in pairs(DEFAULT_UI) do S[k] = v end
     S.floats = {}
@@ -146,6 +166,12 @@ local function __run()
         if saved.waves == "High" or saved.waves == "Low" or saved.waves == "Off" then S.waves = saved.waves end
         S.btnSize = clampNum(saved.btnSize, 56, 120, S.btnSize)
         if type(saved.btnLock) == "boolean" then S.btnLock = saved.btnLock end
+        for _, key in ipairs({"water", "popup"}) do if type(saved[key]) == "boolean" then S[key] = saved[key] end end
+        S.waterStrength = clampNum(saved.waterStrength, 0, 1, S.waterStrength)
+        S.waterSpeed = clampNum(saved.waterSpeed, 0, 3, S.waterSpeed)
+        S.bgDim = clampNum(saved.bgDim, 0, 0.9, S.bgDim)
+        if type(saved.bgUrl) == "string" and #saved.bgUrl <= 300 and not saved.bgUrl:find("%c") then S.bgUrl = saved.bgUrl end
+        if type(saved.font) == "string" and FONTS[saved.font] then S.font = saved.font end
     end
     local function mergeFloats(saved)
         if type(saved) ~= "table" then return end
@@ -238,7 +264,8 @@ local function __run()
             if live then x, y = live:GetPos() end
             floats[id] = {x = x, y = y, visible = f.visible}
         end
-        return {version = 1, ui = {theme = S.theme, uiKey = S.uiKey, uiScale = S.uiScale, uiAlpha = S.uiAlpha, waves = S.waves, btnSize = S.btnSize, btnLock = S.btnLock},
+        return {version = 2, ui = {theme = S.theme, uiKey = S.uiKey, uiScale = S.uiScale, uiAlpha = S.uiAlpha, waves = S.waves, btnSize = S.btnSize, btnLock = S.btnLock,
+                water = S.water, waterStrength = S.waterStrength, waterSpeed = S.waterSpeed, bgUrl = S.bgUrl, bgDim = S.bgDim, font = S.font, popup = S.popup},
             floats = floats, techlab = lab:export()}
     end
     local function saveConfig(name)
@@ -288,9 +315,36 @@ local function __run()
         cfg.Theme = theme
         return UILib.new(cfg)
     end
-    Win = makeWindow{Title = "Wraith's TSB Lab", Subtitle = "The Strongest Battlegrounds", Group = "Wraith's TSB Lab", Parent = PARENT, GuiName = "WraithsTSBLab", Folder = "TSBLab",
+    local wide = (function() local cam = workspace.CurrentCamera; return cam and cam.ViewportSize.X >= 900 end)()
+    local showChangelog, toggleWater                                   -- (the top bar buttons are wired before the things they call exist)
+    Win = makeWindow{Title = "Wraith Hub v1.5", Subtitle = "The Strongest Battlegrounds", Group = "Wraith Hub", Parent = PARENT, GuiName = "WraithHub", Folder = "TSBLab",
         WaveMode = S.waves, ToggleKey = keyCodeFor(S.uiKey), OnError = report, WindowAlpha = S.uiAlpha, Scale = S.uiScale, Mono = false,
-        WindowIcon = "sword", OpenColors = {"#7ad7ff", "#9b7bff"}}
+        WindowIcon = "sparkles", OpenColors = {"#ffffff", "#9aa7b8"},
+        SearchBar = true, UserCard = true, SideBarWidth = wide and 200 or 130, Size = {660, 520}, TopbarStyle = "Default", Tag = {Title = "v1.5", Color = "#e8eef7"},
+        TopbarButtons = {
+            {Name = "Panic", Icon = "zap", Callback = function() lab:cancelAll("cancelled: panic"); notify("Panic", "Every running tech was cancelled", "good", 2) end},
+            {Name = "Water", Icon = "sparkles", Callback = function() if toggleWater then toggleWater() end end},
+            {Name = "Changelog", Icon = "info", Callback = function() if showChangelog then showChangelog() end end},
+        },
+        Water = {Enabled = S.water, Strength = S.waterStrength, Speed = S.waterSpeed, Tint = waterTint(S.theme)},
+        Background = S.bgUrl ~= "" and S.bgUrl or nil, BackgroundDim = S.bgDim,
+        OnBackground = function(ok, msg) if not ok then notify("Background not loaded", tostring(msg), "warn", 8) end end}
+    do local fam = fontFamily(S.font); if fam and S.font ~= "Default" then Win:SetFont(fam) end end
+    local CHANGELOG = {
+        "White water look: the Wraith White theme (and Wraith Pearl, a light one) with an animated white water background - made in the script, nothing is downloaded.",
+        "The WindUI layout of the hub it was rewritten from: welcome card, v1.5 tag, Panic / water / changelog buttons in the top bar, your player card, search, a card opening every tab, theme search, fonts.",
+        "Targeting: Nearest, Crosshair, Lowest health or Hook target first, and an option to skip players who are blocking.",
+        "Safe moves: a tech that moves you stops in front of a wall and never under the floor.",
+        "Knocked guard: no tech starts while you are ragdolled or stunned.",
+        "Chains: any tech can start another one (or an M1) when it is done, up to three links.",
+        "Input buffer: a key pressed just before the running tech ends goes right after it.",
+        "Hit check: each tech shows how often its target lost health afterwards (hits x/y).",
+    }
+    showChangelog = function()
+        local lines = {}
+        for i, l in ipairs(CHANGELOG) do lines[i] = "- " .. l end
+        Win:Dialog{Title = "What is new in v1.5", Content = table.concat(lines, "\n"), Buttons = {{Title = "Close", Variant = "Primary"}}}
+    end
     S.theme = Win:GetTheme()
     Hub.Win = Win
     Hub.Lab = lab
@@ -342,7 +396,7 @@ local function __run()
         end
     end
     local function paced(tab)
-        for _, name in ipairs({"Section", "Label", "Toggle", "Slider", "Dropdown", "Keybind", "Button", "Input"}) do
+        for _, name in ipairs({"Section", "Label", "Toggle", "Slider", "Dropdown", "Keybind", "Button", "Input", "Paragraph"}) do
             local f = tab[name]
             if f then tab[name] = function(self, ...) local r = f(self, ...); pace(); return r end end
         end
@@ -352,8 +406,9 @@ local function __run()
 
     ------------------------------------------------------------------------------------------ Overview
     local overview = paced(Win:Tab("Overview", tabIcon("layout-dashboard", "grid")))
+    overview:Paragraph{Title = "Wraith Hub v1.5", Image = tabIcon("sparkles", nil),
+        Desc = "The techs from your own Dovi's Hub script, rebuilt as small sequences on one engine: every wait stops when you die, respawn, press Panic or switch the tech off, everything a tech creates is removed again, a tech that starts with a dash waits for that dash's cooldown, and only one moving tech runs at a time. Everything starts OFF. Nothing was run in the real game - if a tech does not react, its trigger animation id has probably changed: use 'Learn trigger' inside the tech."}
     overview:Section("Tech Lab")
-    overview:Label("The techs from your own Dovi's Hub script, rebuilt as small sequences on one engine: every wait stops when you die, respawn, press Panic or switch the tech off, everything a tech creates is removed again, a tech that starts with a dash waits for that dash's cooldown, and only one moving tech runs at a time. Everything starts OFF. Nothing was run in the real game - if a tech does not react, its trigger animation id has probably changed: use 'Learn trigger' inside the tech.")
     overview:Toggle{Title = "Tech Lab master switch", Desc = "Off = every tech stops and ignores its trigger", Default = lab.master, Flag = "master", NoInitialCallback = true, Callback = guard("master", function(on)
         if lab.master ~= on then lab:setMaster(on); markDirty() end
     end)}
@@ -368,9 +423,21 @@ local function __run()
         Callback = guard("dashGuard", function(on) if lab.dashGuard ~= on then lab.dashGuard = on; markDirty() end end)}
     overview:Toggle{Title = "Let go of block before an M1", Default = lab.releaseBlock, Flag = "releaseBlock", NoInitialCallback = true,
         Callback = guard("releaseBlock", function(on) if lab.releaseBlock ~= on then lab.releaseBlock = on; markDirty() end end)}
+    overview:Section("Targeting and safety")
+    overview:Dropdown{Title = "Who the techs go for", Desc = "Crosshair = nearest to the middle of the screen; Hook target first = the player you picked with V", Values = TechMath.TARGET_MODES, Default = lab.targetMode,
+        Flag = "targetMode", Callback = guard("targetMode", function(v) if lab.targetMode ~= v then lab:setTargetMode(v); markDirty() end end)}
+    overview:Toggle{Title = "Skip players who are blocking", Desc = "Go for the next player instead", Default = lab.skipBlocking, Flag = "skipBlocking", NoInitialCallback = true,
+        Callback = guard("skipBlocking", function(on) if lab.skipBlocking ~= on then lab.skipBlocking = on; markDirty() end end)}
+    overview:Toggle{Title = "Safe moves", Desc = "A tech that moves you stops in front of a wall and never goes under the floor", Default = lab.safeMoves, Flag = "safeMoves", NoInitialCallback = true,
+        Callback = guard("safeMoves", function(on) if lab.safeMoves ~= on then lab.safeMoves = on; markDirty() end end)}
+    overview:Toggle{Title = "Not while I am knocked down", Desc = "No tech starts while you are ragdolled or stunned", Default = lab.guardKnocked, Flag = "guardKnocked", NoInitialCallback = true,
+        Callback = guard("guardKnocked", function(on) if lab.guardKnocked ~= on then lab.guardKnocked = on; markDirty() end end)}
+    overview:Slider{Title = "Input buffer (ms, 0 = off)", Desc = "A key pressed this long before the running tech ends goes right after it", Min = 0, Max = 1000, Step = 10, Default = lab.bufferMs, Flag = "bufferMs",
+        Callback = guard("bufferMs", function(v) if lab.bufferMs ~= v then lab.bufferMs = v; markDirty() end end)}
     overview:Section("Live")
     local cooldownLabel = overview:Label("")
     local pingLabel = overview:Label("")
+    local hitsLabel = overview:Label("Hits: nothing checked yet")
 
     ------------------------------------------------------------------------------------------ one tab per tech family
     local TABS = {
@@ -451,23 +518,70 @@ local function __run()
     end
     for _, t in ipairs(TABS) do
         local tab = paced(Win:Tab(t[1], tabIcon(t[2], t[3])))
+        local lines = {}
+        for _, id in ipairs(t[4]) do lines[#lines + 1] = lab.techs[id].title .. " - " .. lab.techs[id].when end
+        tab:Paragraph{Title = t[1], Desc = table.concat(lines, "\n"), Image = tabIcon(t[2], nil)}
         for _, id in ipairs(t[4]) do buildTech(tab, id) end
     end
 
     ------------------------------------------------------------------------------------------ Settings
     local settings = paced(Win:Tab("Settings", tabIcon("settings", "gear")))
+    settings:Paragraph{Title = "Settings", Desc = "The menu, the white water background, the ping model, the on-screen buttons and your configs. Nothing here is saved until you press Save config.", Image = tabIcon("settings", nil)}
     settings:Section("Menu")
     settings:Keybind{Title = "Menu key", Desc = "Shows / hides this window", Default = S.uiKey, Flag = "uiKey", Changed = guard("menu key", function(v)
         if S.uiKey ~= v then S.uiKey = v; Win.ToggleKey = keyCodeFor(v); markDirty() end
     end)}
-    settings:Dropdown{Title = "Theme", Values = THEMES, Default = S.theme, Flag = "theme", Callback = guard("theme", function(v)
-        if S.theme ~= v then S.theme = v; Win:SetTheme(v); markDirty() end
+    settings:Dropdown{Title = "Theme", Desc = "Wraith White is the v1.5 look", Values = THEMES, Default = S.theme, Flag = "theme", Search = true, MenuWidth = 220, Callback = guard("theme", function(v)
+        if S.theme ~= v then S.theme = v; Win:SetTheme(v); Win:SetWater{Tint = waterTint(v)}; markDirty() end
+    end)}
+    settings:Dropdown{Title = "Font", Values = FONT_NAMES, Default = S.font, Flag = "font", Callback = guard("font", function(v)
+        if S.font ~= v and FONTS[v] then
+            S.font = v
+            local fam = fontFamily(v)
+            if fam then Win:SetFont(fam) end
+            markDirty()
+        end
+    end)}
+    settings:Toggle{Title = "Welcome card at start", Default = S.popup, Flag = "popup", NoInitialCallback = true, Callback = guard("popup", function(on)
+        if S.popup ~= on then S.popup = on; markDirty() end
     end)}
     settings:Slider{Title = "Menu size", Min = 0.55, Max = 1.2, Step = 0.05, Default = S.uiScale, Flag = "uiScale", Callback = guard("uiScale", function(v)
         if S.uiScale ~= v then S.uiScale = v; if Win.SetScale then Win:SetScale(v) end; markDirty() end
     end)}
     settings:Slider{Title = "Window transparency", Min = 0, Max = 0.9, Step = 0.05, Default = S.uiAlpha, Flag = "uiAlpha", Callback = guard("uiAlpha", function(v)
         if S.uiAlpha ~= v then S.uiAlpha = v; if Win.SetBackgroundTransparency then Win:SetBackgroundTransparency(v) end; markDirty() end
+    end)}
+    settings:Section("Background")
+    local waterToggle = settings:Toggle{Title = "White water", Desc = "Animated white water behind the menu (also the water button in the top bar)", Default = S.water, Flag = "water", NoInitialCallback = true,
+        Callback = guard("water", function(on) if S.water ~= on then S.water = on; Win:SetWater{Enabled = on}; markDirty() end end)}
+    toggleWater = function()
+        S.water = not S.water
+        Win:SetWater{Enabled = S.water}
+        if waterToggle then waterToggle:Set(S.water, true) end
+        markDirty()
+        notify("White water", S.water and "On" or "Off", "info", 2)
+    end
+    settings:Slider{Title = "Water brightness", Min = 0, Max = 1, Step = 0.05, Default = S.waterStrength, Flag = "waterStrength", Callback = guard("waterStrength", function(v)
+        if S.waterStrength ~= v then S.waterStrength = v; Win:SetWater{Strength = v}; markDirty() end
+    end)}
+    settings:Slider{Title = "Wave speed", Min = 0, Max = 3, Step = 0.05, Default = S.waterSpeed, Flag = "waterSpeed", Callback = guard("waterSpeed", function(v)
+        if S.waterSpeed ~= v then S.waterSpeed = v; Win:SetWater{Speed = v}; markDirty() end
+    end)}
+    settings:Label("Your own picture or video under the water (optional): a direct link to a .png / .jpg / .webm, or rbxassetid://. A video needs an executor that can save files; WindUI itself says video backgrounds may not work everywhere.")
+    settings:Input{Title = "Picture / video link", Default = S.bgUrl, Placeholder = "empty = none", Flag = "bgUrl", Callback = guard("bgUrl", function(text)
+        text = tostring(text or ""):gsub("^%s+", ""):gsub("%s+$", "")
+        if #text > 300 or text:find("%c") then notify("Background", "That link is not usable", "warn", 4) return end
+        if S.bgUrl == text then return end
+        S.bgUrl = text
+        markDirty()
+        if not Win.SetBackground then notify("Background", "The built-in menu has no background picture", "warn", 4) return end
+        Win:SetBackground(text, function(ok, msg)
+            if text == "" then return end
+            notify(ok and "Background set" or "Background not loaded", ok and ("A " .. tostring(msg) .. " is behind the menu") or tostring(msg), ok and "good" or "warn", 5)
+        end)
+    end)}
+    settings:Slider{Title = "Darken the picture / video", Min = 0, Max = 0.9, Step = 0.05, Default = S.bgDim, Flag = "bgDim", Callback = guard("bgDim", function(v)
+        if S.bgDim ~= v then S.bgDim = v; if Win.SetBackgroundDim then Win:SetBackgroundDim(v) end; markDirty() end
     end)}
     settings:Section("Ping")
     settings:Label("What the Tech Lab does with your ping: waits that start at one of your own animations start earlier by how late those animations arrive after your input (measured from your own dashes), another player is led by half your ping plus Roblox's drawing delay, and a number tuned at 60 ms scales with your ping.")
@@ -518,6 +632,7 @@ local function __run()
         notify(ok and "Config saved" or "Not saved", ok and ("'" .. S.configName .. "' will be available next time") or tostring(why), ok and "good" or "bad", 4)
         if ok then refreshConfigList() end
     end)}
+    local LAB_FLAGS = {master = true, input = true, dashGuard = true, releaseBlock = true, targetMode = true, skipBlocking = true, safeMoves = true, guardKnocked = true, bufferMs = true}
     settings:Button{Title = "Load config (rebuilds nothing - applies live)", Callback = guard("load", function()
         local data = decodeFile(pathOf(S.configName))
         if not data then notify("Not loaded", "There is no saved config called " .. S.configName, "warn", 4) return end
@@ -533,13 +648,19 @@ local function __run()
                 if tech and key == "on" then el:Set(tech.enabled, true)
                 elseif tech and tech.opt[key] ~= nil then el:Set(tech.opt[key], true)
                 elseif id == "net" and lab.net[key] ~= nil then el:Set(lab.net[key], true)
-                elseif id == "float" and S.floats[key] then el:Set(S.floats[key].visible, true) end
+                elseif id == "float" and S.floats[key] then el:Set(S.floats[key].visible, true)
+                elseif not id and S[flag] ~= nil and type(S[flag]) ~= "table" then el:Set(S[flag], true)
+                elseif not id and LAB_FLAGS[flag] then el:Set(lab[flag], true) end
             end
         end
         for id, f in pairs(Floats) do f:SetVisible(S.floats[id].visible) end
         Win:SetTheme(S.theme)
         if Win.SetScale then Win:SetScale(S.uiScale) end
         if Win.SetBackgroundTransparency then Win:SetBackgroundTransparency(S.uiAlpha) end
+        Win:SetWater{Enabled = S.water, Strength = S.waterStrength, Speed = S.waterSpeed, Tint = waterTint(S.theme)}
+        do local fam = fontFamily(S.font); if fam then Win:SetFont(fam) end end
+        if Win.SetBackgroundDim then Win:SetBackgroundDim(S.bgDim) end
+        if Win.SetBackground then Win:SetBackground(S.bgUrl) end
         refreshConfigStatus()
         notify("Config loaded", "'" .. S.configName .. "' is applied", "good", 3)
     end)}
@@ -550,6 +671,7 @@ local function __run()
     end)}
     settings:Button{Title = "Refresh the list", Callback = guard("refresh", refreshConfigList)}
     settings:Section("Help")
+    settings:Button{Title = "What is new in v1.5", Callback = guard("changelog", function() showChangelog() end)}
     settings:Button{Title = "Copy the log (for a bug report)", Callback = guard("copy log", function()
         local text = #LOG > 0 and table.concat(LOG, "\n") or "no errors logged"
         if Cap.clipboard and pcall(setclipboard, text) then notify("Log copied", #LOG .. " lines", "good", 2) else notify("Log", LOG[#LOG] or "empty", "info", 6) end
@@ -570,10 +692,16 @@ local function __run()
             local text = string.format("Forward dash: %s   |   Side dash: %s\nPing %s ms (jitter %.0f)   |   my animations arrive %s after my input   |   other players are led by %.0f ms",
                 f > 0 and string.format("%.1f s", f) or "ready", sd > 0 and string.format("%.1f s", sd) or "ready", n.ping and string.format("%.0f", n.ping) or "?", n.jitter,
                 n.lag and string.format("%.0f ms", n.lag * 1000) or string.format("not measured yet (%d of 3 samples)", n.samples), n.lead * 1000)
+            local hits = {}
+            for _, tech in ipairs(lab.order) do
+                local st = tech.stats
+                if (st.checked or 0) > 0 then hits[#hits + 1] = string.format("%s %d/%d", tech.title, st.hits or 0, st.checked) end
+            end
+            text = text .. "\n" .. (#hits > 0 and ("Hits: " .. table.concat(hits, ", ")) or "Hits: nothing checked yet")
             if text ~= last then
                 last = text
-                local a, b = text:match("^(.-)\n(.*)$")
-                cooldownLabel:Set(a); pingLabel:Set(b)
+                local a, b, c = text:match("^(.-)\n(.-)\n(.*)$")
+                cooldownLabel:Set(a); pingLabel:Set(b); hitsLabel:Set(c)
             end
         end))
     end
@@ -581,13 +709,18 @@ local function __run()
     refreshConfigStatus()
     Win:SelectTab("Overview")
     ready = true
-    notify("Wraith's TSB Lab loaded", "33 techs, all off. Nothing was run in the real game: use Learn trigger if one does not react.", "good", 5)
+    notify("Wraith Hub v1.5 loaded", #lab.order .. " techs, all off. Nothing was run in the real game: use Learn trigger if one does not react.", "good", 5)
+    if S.popup then
+        Win:Popup{Title = '<font color="#ffffff">Wraith</font> <font color="#dfe7f1">Hub</font> <font color="#aab6c6">v1.5</font>', Icon = tabIcon("sparkles", nil),
+            Content = "White water edition for The Strongest Battlegrounds. Every tech starts off; nothing is saved until you press Save config. Nothing was tested in the real game.",
+            Buttons = {{Title = "What is new", Variant = "Secondary", Callback = showChangelog}, {Title = "Start", Variant = "Primary"}}}
+    end
 end
 
 local ok, err = xpcall(__run, function(e) return debug.traceback(tostring(e), 2) end)
 if not ok and not tostring(err):find("__unloaded__", 1, true) then
-    warn("[Wraith's TSB Lab] failed to start: " .. tostring(err))
+    warn("[Wraith Hub v1.5] failed to start: " .. tostring(err))
     pcall(function()
-        game:GetService("StarterGui"):SetCore("SendNotification", {Title = "Wraith's TSB Lab failed to start", Text = tostring(err):sub(1, 180), Duration = 20})
+        game:GetService("StarterGui"):SetCore("SendNotification", {Title = "Wraith Hub v1.5 failed to start", Text = tostring(err):sub(1, 180), Duration = 20})
     end)
 end

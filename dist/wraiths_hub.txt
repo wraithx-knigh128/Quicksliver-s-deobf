@@ -1094,6 +1094,8 @@ function UILib.new(cfg)
             return row
         end
 
+        function tab:Paragraph(o) return tab:Label(((o.Title and o.Title ~= "") and (o.Title .. ": ") or "") .. (o.Desc or "")) end
+
         function tab:Label(text)
             local row = mk("Frame", {Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BorderSizePixel = 0, LayoutOrder = nextOrder()}, page)
             bind(row, "BackgroundColor3", "row"); corner(row, 10); stroke(row)
@@ -1353,6 +1355,14 @@ function UILib.new(cfg)
     mk("UIListLayout", {Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder, VerticalAlignment = Enum.VerticalAlignment.Top,
         HorizontalAlignment = Enum.HorizontalAlignment.Left}, toasts)
     local toastCount, liveToasts = 0, {}
+    -- what the WindUI window offers on top (the classic menu answers them simply, so a hub can call them on either)
+    local function plain(t) return (tostring(t or ""):gsub("<[^>]+>", "")) end
+    function win:Popup(o) win:Notify{Title = plain(o.Title), Content = plain(o.Content), Type = "info", Duration = 6} end
+    function win:Dialog(o) win:Notify{Title = plain(o.Title), Content = plain(o.Content), Type = "info", Duration = 8} end
+    function win:SetWater() end
+    function win:GetWater() return {Enabled = false, Strength = 0, Speed = 0, Layers = 0} end
+    function win:SetFont() return false end
+
     function win:Notify(o)
         if not win.Alive then return end
         toastCount = toastCount + 1
@@ -1577,6 +1587,7 @@ local function build(win, WindUI, UILib, cfg)
     local themeName = Adapter.themeFor(cfg.Theme)
     local vp = viewport()
     local size = UDim2.fromOffset(clamp(math.floor(vp.X * 0.6), 440, 560), clamp(vp.Y - 70, 250, 380))      -- WindUI scales the window down by itself if it does not fit
+    if type(cfg.Size) == "table" then size = UDim2.fromOffset(clamp(cfg.Size[1], 380, math.max(380, vp.X - 40)), clamp(cfg.Size[2], 250, math.max(250, vp.Y - 60))) end
     win.Tickers = win.Tickers or {}
     local glassTouched = {}
 
@@ -1598,10 +1609,10 @@ local function build(win, WindUI, UILib, cfg)
     glass(themeName)
     local Window = WindUI:CreateWindow{
         Title = cfg.Title or "Hub", Author = cfg.Subtitle, Folder = cfg.Folder or "WraithsHub", Icon = cfg.WindowIcon or "swords", NewElements = true, Theme = themeName,
-        Size = size, MinSize = Vector2.new(380, 230), SideBarWidth = vp.X < 900 and 124 or 150, HideSearchBar = true,
+        Size = size, MinSize = Vector2.new(380, 230), SideBarWidth = cfg.SideBarWidth or (vp.X < 900 and 124 or 150), HideSearchBar = not cfg.SearchBar,
         Transparent = true, HidePanelBackground = true, ElementsRadius = 14, Radius = 16, ToggleKey = cfg.ToggleKey,
-        Topbar = {Height = 38, ButtonsType = "Mac"},
-        User = {Enabled = false},
+        Topbar = {Height = 38, ButtonsType = cfg.TopbarStyle or "Mac"},
+        User = {Enabled = cfg.UserCard == true, Anonymous = false},
         OpenButton = {Title = cfg.Title or "Hub", CornerRadius = UDim.new(1, 0), StrokeThickness = 2, Enabled = true, Draggable = true, OnlyMobile = false, Scale = 0.7,
             Color = ColorSequence.new(Color3.fromHex((cfg.OpenColors or {})[1] or "#9aa0b4"), Color3.fromHex((cfg.OpenColors or {})[2] or "#e84a8a"))},
     }
@@ -1612,22 +1623,32 @@ local function build(win, WindUI, UILib, cfg)
     -- are hidden and replaced with one small dot of our own that calls Window:Close() (the *method*, not the topbar button): that hides the window and
     -- leaves WindUI's own open button on screen to bring it back, exactly like tapping the pill in the Classic menu or pressing the toggle key.
     pcall(function() Window:DisableTopbarButtons{"Close", "Minimize", "Fullscreen"} end)
-    pcall(function()
-        local right = Window.UIElements.Main.Main.Topbar.Right
-        local dot = Instance.new("TextButton")
-        dot.Name = "WraithClose"
-        dot.Text = ""
-        dot.AutoButtonColor = false
-        dot.BackgroundColor3 = Color3.fromHex("#F4695F")
-        dot.BorderSizePixel = 0
-        dot.Size = UDim2.fromOffset(14, 14)
-        dot.LayoutOrder = 999
-        local corner = Instance.new("UICorner")
-        corner.CornerRadius = UDim.new(1, 0)
-        corner.Parent = dot
-        dot.Parent = right
-        connect(dot.MouseButton1Click, function() Window:Close() end)
-    end)
+    if cfg.TopbarStyle == "Default" then                                  -- icon buttons: our own "x" that HIDES the window (WindUI's would destroy it)
+        pcall(function() Window:CreateTopbarButton("WraithClose", "x", function() Window:Close() end, 999) end)
+    else
+        pcall(function()
+            local right = Window.UIElements.Main.Main.Topbar.Right
+            local dot = Instance.new("TextButton")
+            dot.Name = "WraithClose"
+            dot.Text = ""
+            dot.AutoButtonColor = false
+            dot.BackgroundColor3 = Color3.fromHex("#F4695F")
+            dot.BorderSizePixel = 0
+            dot.Size = UDim2.fromOffset(14, 14)
+            dot.LayoutOrder = 999
+            local corner = Instance.new("UICorner")
+            corner.CornerRadius = UDim.new(1, 0)
+            corner.Parent = dot
+            dot.Parent = right
+            connect(dot.MouseButton1Click, function() Window:Close() end)
+        end)
+    end
+    if type(cfg.Tag) == "table" then
+        pcall(function() Window:Tag{Title = cfg.Tag.Title or "", Color = Color3.fromHex(cfg.Tag.Color or "#ffffff")} end)
+    end
+    for i, b in ipairs(type(cfg.TopbarButtons) == "table" and cfg.TopbarButtons or {}) do
+        pcall(function() Window:CreateTopbarButton(b.Name or ("Button" .. i), b.Icon or "circle", function() safe("topbar " .. tostring(b.Name), b.Callback) end, 900 + i) end)
+    end
     pcall(function() Window:SetUIScale(clamp(cfg.Scale or 0.9, 0.55, 1.2)) end)
     if cfg.Mono ~= false then                                                -- the reference menu uses a monospace face
         pcall(function()
@@ -1691,6 +1712,21 @@ local function build(win, WindUI, UILib, cfg)
                 pcall(function() p:SetTitle(v ~= "" and v or " ") end)
             end
             return el
+        end
+
+        -- a card with a title, a body text and an icon on the left (the way the reference hub opens each tab)
+        function tab:Paragraph(o)
+            local el = {Title = o.Title, Value = o.Desc or ""}
+            local p = ui:Paragraph{Title = o.Title or "", Desc = o.Desc, Image = o.Image, ImageSize = o.ImageSize or 20, Color = o.Color}
+            function el:Set(v)
+                v = tostring(v or "")
+                if v == el.Value then return end
+                el.Value = v
+                pcall(function() p:SetDesc(v) end)
+            end
+            el.Ui = p
+            decorate(p, ui)
+            return addElement(el)
         end
 
         function tab:Button(o)
@@ -1765,7 +1801,8 @@ local function build(win, WindUI, UILib, cfg)
             local el = {Value = o.Default, Values = o.Values or {}}
             if el.Value == nil then el.Value = el.Values[1] end
             local p
-            p = ui:Dropdown{Title = o.Title or "Dropdown", Desc = o.Desc, Values = el.Values, Value = el.Value, AllowNone = false, Callback = function(v)
+            p = ui:Dropdown{Title = o.Title or "Dropdown", Desc = o.Desc, Values = el.Values, Value = el.Value, AllowNone = false,
+                SearchBarEnabled = o.Search == true, MenuWidth = o.MenuWidth, Callback = function(v)
                 if type(v) == "table" then v = v.Title end
                 if v == nil or v == el.Value then return end
                 el.Value = v
@@ -1858,6 +1895,22 @@ local function build(win, WindUI, UILib, cfg)
         pcall(function() WindUI:SetTheme(name) end)
     end
     function win:GetTheme() return themeName end
+    local function buttonsOf(list, default)
+        local out = {}
+        for _, b in ipairs(list or {{Title = default}}) do
+            out[#out + 1] = {Title = b.Title or "OK", Icon = b.Icon, Variant = b.Variant or "Primary", Callback = function() if b.Callback then safe("dialog button", b.Callback) end end}
+        end
+        return out
+    end
+    -- a centred card over the game (welcome message); Buttons = {{Title, Icon, Variant, Callback}}
+    function win:Popup(o)
+        safe("popup", function() WindUI:Popup{Title = o.Title or "", Icon = o.Icon, Content = o.Content, Buttons = buttonsOf(o.Buttons, "OK")} end)
+    end
+    -- a dialog inside the window (a changelog, a question)
+    function win:Dialog(o)
+        safe("dialog", function() Window:Dialog{Title = o.Title or "", Content = o.Content, Buttons = buttonsOf(o.Buttons, "Close")} end)
+    end
+    function win:SetFont(family) return pcall(function() WindUI:SetFont(family) end) end
     function win:SetAvatar() end                                           -- WindUI shows the player's own avatar and name (User option)
     function win:SelectTab(name)                                              -- WindUI shows no tab until one is selected, so the hub selects the first one
         for i, t in ipairs(win.Tabs) do
@@ -1963,6 +2016,78 @@ local function build(win, WindUI, UILib, cfg)
         end
     end
     refreshBackdrop()
+
+    ---------------------------------------------------------------------------------------------- animated white water behind the content
+    -- Self-made: no download, no asset id, nothing that can fail to load. A few full-size layers, each a white fill whose UIGradient only lets thin bright
+    -- bands through (the crests of a sharpened sine); every layer drifts and sways at its own pace, so the bands cross and part like light on moving water.
+    -- It only animates while the window is open, at most `Fps` times a second, and it sits under the controls (and over a video / picture, if one is set).
+    local WATER_LAYERS = {
+        {rot = 18, periods = 2.2, speed = 0.55, amp = 0.32, phase = 0.0, sharp = 2.6, alpha = 0.80},
+        {rot = -24, periods = 3.1, speed = 0.85, amp = 0.26, phase = 2.2, sharp = 3.2, alpha = 0.84},
+        {rot = 82, periods = 1.7, speed = 0.35, amp = 0.36, phase = 4.1, sharp = 2.2, alpha = 0.88},
+        {rot = 8, periods = 5.0, speed = 1.40, amp = 0.18, phase = 1.3, sharp = 7.0, alpha = 0.70},     -- (the glints on the crests)
+    }
+    local water = {On = false, Strength = 0.7, Speed = 1, Tint = Color3.fromRGB(255, 255, 255), Layers = {}, Fps = 30, T = 0, Acc = 0}
+    win.Water = water
+    local function waterSequences(L)
+        local lo = water.Tint:Lerp(Color3.fromRGB(140, 152, 170), 0.45)                     -- the trough tone: silver
+        local cols, alphas = {}, {}
+        for i = 0, 19 do
+            local t = i / 19
+            local s = (0.5 + 0.5 * math.sin(2 * math.pi * L.periods * t + L.phase)) ^ L.sharp
+            cols[#cols + 1] = ColorSequenceKeypoint.new(t, lo:Lerp(water.Tint, s))
+            alphas[#alphas + 1] = NumberSequenceKeypoint.new(t, 1 - (1 - L.alpha) * s * water.Strength)
+        end
+        return ColorSequence.new(cols), NumberSequence.new(alphas)
+    end
+    local function buildWater()
+        for _, l in ipairs(water.Layers) do pcall(function() l.frame:Destroy() end) end
+        water.Layers = {}
+        if not (water.On and bgLayer) then return end
+        for i, L in ipairs(WATER_LAYERS) do
+            local f = Instance.new("Frame")
+            f.Name = "WraithWater" .. i
+            f.Size = UDim2.new(1, 0, 1, 0)
+            f.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            f.BackgroundTransparency = 0
+            f.BorderSizePixel = 0
+            f.Active = false
+            f.ZIndex = 10 + i
+            rounded(f)
+            local g = Instance.new("UIGradient")
+            g.Rotation = L.rot
+            g.Color, g.Transparency = waterSequences(L)
+            g.Parent = f
+            f.Parent = bgLayer
+            water.Layers[i] = {frame = f, grad = g, def = L}
+        end
+    end
+    local function stepWater(dt)
+        if not water.On or #water.Layers == 0 or Window.Closed then return end
+        water.Acc = water.Acc + dt
+        if water.Acc < 1 / water.Fps then return end
+        water.T = water.T + water.Acc * water.Speed
+        water.Acc = 0
+        local t = water.T
+        for _, l in ipairs(water.Layers) do
+            local L = l.def
+            l.grad.Offset = Vector2.new(L.amp * math.sin(t * L.speed + L.phase), L.amp * 0.45 * math.cos(t * L.speed * 0.8 + L.phase))
+            l.grad.Rotation = L.rot + 7 * math.sin(t * L.speed * 0.5 + L.phase)
+        end
+    end
+    connect(game:GetService("RunService").Heartbeat, function(dt) safe("water", stepWater, dt) end)
+    -- o = {Enabled = bool, Strength = 0..1, Speed = 0..3, Tint = Color3}; anything left out keeps its value
+    function win:SetWater(o)
+        o = o or {}
+        local rebuild = false
+        if o.Enabled ~= nil and (o.Enabled == true) ~= water.On then water.On = o.Enabled == true; rebuild = true end
+        if type(o.Strength) == "number" and o.Strength == o.Strength then water.Strength = clamp(o.Strength, 0, 1); rebuild = true end
+        if type(o.Speed) == "number" and o.Speed == o.Speed then water.Speed = clamp(o.Speed, 0, 3) end
+        if typeof(o.Tint) == "Color3" then water.Tint = o.Tint; rebuild = true end
+        if rebuild then buildWater() end
+    end
+    function win:GetWater() return {Enabled = water.On, Strength = water.Strength, Speed = water.Speed, Layers = #water.Layers} end
+    if type(cfg.Water) == "table" then win:SetWater(cfg.Water) end
 
     local function clearMedia()
         if backdrop.media then pcall(function() backdrop.media:Destroy() end); backdrop.media = nil end

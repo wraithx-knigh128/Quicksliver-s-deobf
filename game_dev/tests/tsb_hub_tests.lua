@@ -1,4 +1,4 @@
--- Wraith's TSB Lab (dist/tsb_lab.lua) on the REAL WindUI library, played in the simulated Strongest Battlegrounds arena of tests/tsb_sim.lua. Needs real Luau.
+-- Wraith Hub v1.5 (dist/tsb_lab.lua) on the REAL WindUI library, played in the simulated Strongest Battlegrounds arena of tests/tsb_sim.lua. Needs real Luau.
 -- What this proves: the library builds the whole menu without touching a member the Roblox API does not have; the controls drive the Tech Lab (a click on a toggle
 -- switches a tech on and the next uppercut makes it dash); nothing is written to disk until Save config; a saved config comes back; the on-screen buttons work;
 -- unloading removes everything. What it cannot prove: how it LOOKS (no renderer for WindUI's 9-slice images), that any executor allows what WindUI needs, or that any
@@ -58,6 +58,19 @@ local function click(sim, e)                                          -- a real 
     sim.W:press(hit, 10, 10, "MouseButton1"); sim.W:release(10, 10, "MouseButton1")
     sim:run(0.3)
 end
+-- a WindUI top bar button by its name (the icon buttons this hub adds: Panic, Water, Changelog)
+local function topbar(sim, name)
+    for _, b in pairs(hub(sim).Win.Window.TopBarButtons) do
+        if b.Name == name then
+            for _, d in ipairs(sim.W.M.GetDescendants(b.Object)) do if d.ClassName == "ImageButton" then return d end end
+        end
+    end
+    error("no top bar button " .. name, 2)
+end
+local function waterGrad(sim, i)
+    local layer = sim.W:find(function(x) return x.Name == "WraithWater" .. i end)
+    return layer and sim.W.M.FindFirstChildOfClass(layer, "UIGradient"), layer
+end
 local function wroteTSB(sim) for path in pairs(sim.W.files) do if path:find("^TSBLab/") then return true end end return false end
 local function dashes(sim, dir) return sim:count({goal = "KeyPress", key = "Q", dash = dir}) end
 
@@ -69,14 +82,73 @@ do
     local H = hub(sim)
     check(H ~= nil and H.Win and H.Win.Backend == "WindUI", "the WindUI backend is in use")
     check(H and H.Lab ~= nil, "the Tech Lab engine is running")
-    for _, n in ipairs({"WindUI", "WindUI/Notifications", "WindUI/Dropdowns", "WindUI/Tooltips", "WraithsTSBLab_Buttons"}) do
+    for _, n in ipairs({"WindUI", "WindUI/Notifications", "WindUI/Dropdowns", "WindUI/Tooltips", "WraithHub_Buttons"}) do
         local n2 = 0
         for _, g in ipairs(sim.W.M.GetChildren(sim.W.coreGui)) do if g.Name == n then n2 = n2 + 1 end end
         check(n2 == 1, "exactly one ScreenGui " .. n .. " (" .. n2 .. ")")
     end
-    check(hasText(sim, "WindUI", "Wraith's TSB Lab"), "the window title")
+    check(hasText(sim, "WindUI", "Wraith Hub v1.5"), "the window title")
     check(hasText(sim, "WindUI", "The Strongest Battlegrounds"), "the window subtitle names the game")
-    check(hasText(sim, "WindUI/Notifications", "Wraith's TSB Lab loaded"), "welcome toast")
+    check(hasText(sim, "WindUI/Notifications", "Wraith Hub v1.5 loaded"), "welcome toast")
+    -- the WindUI structure of the hub it was rewritten from: welcome card, version tag, top bar buttons, player card, search, a card opening every tab
+    check(hasText(sim, "WindUI", "White water edition"), "the welcome card is shown")
+    check(hasText(sim, "WindUI", "v1.5"), "the version tag")
+    for _, n in ipairs({"Panic", "Water", "Changelog"}) do check(pcall(topbar, sim, n), "a " .. n .. " button in the top bar") end
+    check(sim.W:find(function(i) return i.Name == "DisplayName" and i.Text == sim.mePlayer.DisplayName end) ~= nil, "the player card shows my name")
+    check(sim.W:find(function(i) return i.ClassName == "TextBox" and i.PlaceholderText == "Search..." end) ~= nil, "the search bar")
+    check(hasText(sim, "WindUI", "Supa Tech - after your uppercut") and hasText(sim, "WindUI", "Hook Dash - V = pick a target"), "every tab opens with a card listing its techs")
+    check(hasText(sim, "WindUI", "Nothing here is saved until you press Save config"), "...Settings too")
+    -- the animated white water
+    local w = H.Win:GetWater()
+    check(w.Enabled and w.Layers == 4, "the white water is on with 4 layers")
+    local g1, layer1 = waterGrad(sim, 1)
+    check(g1 ~= nil and layer1.BackgroundColor3.R == 1 and layer1.BackgroundColor3.G == 1, "(white layers with a gradient)")
+    check(#g1.Transparency.Keypoints <= 20 and #g1.Color.Keypoints <= 20, "(no more than the 20 keypoints Roblox allows)")
+    local lowest = 1
+    for _, kp in ipairs(g1.Transparency.Keypoints) do lowest = math.min(lowest, kp.Value) end
+    check(lowest > 0.7 and lowest < 0.95, "the crests are see-through, the troughs invisible: " .. lowest)
+    local o1, r1 = g1.Offset.X, g1.Rotation
+    sim:run(0.5)
+    check(g1.Offset.X ~= o1 and g1.Rotation ~= r1, "the water moves")
+    pcall(function() H.Win.Window:Close() end)
+    sim:run(0.2)
+    local o2 = g1.Offset.X
+    sim:run(0.5)
+    check(g1.Offset.X == o2, "...and stands still while the window is closed")
+    pcall(function() H.Win.Window:Open() end)
+    sim:run(0.5)
+    check(g1.Offset.X ~= o2, "...and moves again when it is open")
+    sim.W:click(topbar(sim, "Water"))
+    sim:run(0.2)
+    check(H.Win:GetWater().Layers == 0 and waterGrad(sim, 1) == nil and H.S.water == false and el(sim, "water").Value == false, "the Water button switches it off (and the setting follows)")
+    sim.W:click(topbar(sim, "Water"))
+    sim:run(0.2)
+    check(H.Win:GetWater().Layers == 4 and H.S.water == true, "...and on again")
+    el(sim, "waterStrength"):Set(0)
+    check(H.Win:GetWater().Strength == 0, "brightness 0: the water is gone")
+    local g0 = waterGrad(sim, 1)
+    local all = true
+    for _, kp in ipairs(g0.Transparency.Keypoints) do if kp.Value < 0.999 then all = false end end
+    check(all, "(fully see-through)")
+    el(sim, "waterStrength"):Set(0.7)
+    el(sim, "waterSpeed"):Set(2)
+    check(H.Win:GetWater().Speed == 2, "the wave speed")
+    -- the changelog and the Panic button in the top bar
+    sim.W:click(topbar(sim, "Changelog"))
+    sim:run(0.3)
+    check(hasText(sim, "WindUI", "What is new in v1.5") and hasText(sim, "WindUI", "Input buffer"), "the Changelog button opens the changelog")
+    -- the font
+    el(sim, "font"):Set("Gotham")
+    check(H.S.font == "Gotham" and sim.W:find(function(i) return i.ClassName == "TextLabel" and tostring(i.FontFace.Family):find("Gotham", 1, true) end) ~= nil, "the font can be switched")
+    el(sim, "font"):Set("Default")
+    -- the targeting controls in the Overview
+    el(sim, "targetMode"):Set("Lowest health")
+    el(sim, "skipBlocking"):Set(true)
+    el(sim, "safeMoves"):Set(false)
+    el(sim, "guardKnocked"):Set(false)
+    el(sim, "bufferMs"):Set(400)
+    check(H.Lab.targetMode == "Lowest health" and H.Lab.skipBlocking and not H.Lab.safeMoves and not H.Lab.guardKnocked and H.Lab.bufferMs == 400, "the targeting / safety controls drive the engine")
+    el(sim, "targetMode"):Set("Nearest"); el(sim, "skipBlocking"):Set(false); el(sim, "safeMoves"):Set(true); el(sim, "guardKnocked"):Set(true); el(sim, "bufferMs"):Set(250)
     -- one tab per tech family, laid out like the tech hub it came from
     local names = {}
     for _, t in ipairs(H.Win.Tabs) do names[#names + 1] = t.name end
@@ -96,12 +168,17 @@ do
     local function hasImage(id) return sim.W:find(function(i) return i.ClassName == "ImageLabel" and i.Image == id end) ~= nil end
     check(hasImage(LUCIDE_IDS["sword"]) and hasImage(LUCIDE_IDS["wrench"]) and hasImage(LUCIDE_IDS["settings"]), "the tab icons come from the built-in Lucide set")
     check(#(sim.W.httpLog or {}) == 0, "starting the menu fetches nothing from the web")
-    check(H.Win:GetTheme() == "Frost" and H.Win.WindUI.Themes.Frost ~= nil and H.Win.WindUI.Themes.Ember ~= nil and H.Win.WindUI.Themes.Mint ~= nil, "its own colours are registered and Frost is the default")
-    check(H.Win.WindUI.Themes.Frost.Toggle.B > 0.9 and H.Win.WindUI.Themes.Frost.ElementBackgroundTransparency >= 0.4, "(a cyan accent, frosted cards)")
+    local T = H.Win.WindUI.Themes
+    check(H.Win:GetTheme() == "Wraith White" and T["Wraith White"] ~= nil and T["Wraith Pearl"] ~= nil and T.Frost ~= nil and T.Ember ~= nil and T.Mint ~= nil, "its own colours are registered and Wraith White is the default")
+    local ww = T["Wraith White"]
+    check(ww.Toggle.R > 0.9 and ww.Toggle.G > 0.9 and ww.Toggle.B > 0.9 and ww.Background.R < 0.1 and ww.ElementBackgroundTransparency >= 0.4, "(white accents on a dark slate window, see-through cards)")
     check(el(sim, "theme").Values[1] ~= nil and #el(sim, "theme").Values >= 13, "the theme list holds WindUI's themes and ours")
     el(sim, "theme"):Set("Ember")
     check(H.Win:GetTheme() == "Ember" and H.S.theme == "Ember", "a theme can be switched")
-    el(sim, "theme"):Set("Frost")
+    el(sim, "theme"):Set("Wraith Pearl")
+    check(H.Win.Water.Tint.R < 0.6, "on the light theme the water turns slate (white on white would not show)")
+    el(sim, "theme"):Set("Wraith White")
+    check(H.Win.Water.Tint.R == 1, "...and white again on the dark one")
     check(H.Win.Main.Visible == true, "the window is open")
     check(H.Win.Tabs[1].ui.Selected == true, "the Overview tab is selected")
     -- everything is off until the user switches it on
@@ -196,6 +273,11 @@ do
     el(sim, "m1reset.key"):Set("Y")
     H.Lab:learnTrigger("supa"); sim:anim(sim.meChar, "424242", 0.3)
     el(sim, "theme"):Set("Violet")
+    el(sim, "water"):Set(false)
+    el(sim, "waterSpeed"):Set(1.5)
+    el(sim, "popup"):Set(false)
+    el(sim, "targetMode"):Set("Crosshair")
+    el(sim, "bufferMs"):Set(500)
     sim:run(10)
     check(not wroteTSB(sim), "ten seconds and many changes later: still nothing written")
     check(hasText(sim, "WindUI", "NOT saved"), "the warning is on")
@@ -207,6 +289,7 @@ do
         "the file holds the switches and options")
     check(data.techlab.triggers.supa[1] == "424242", "...and the learned trigger")
     check(data.ui.theme == "Violet", "...and the menu theme")
+    check(data.ui.water == false and data.ui.waterSpeed == 1.5 and data.ui.popup == false and data.techlab.targetMode == "Crosshair" and data.techlab.bufferMs == 500, "...and the v1.5 settings")
     check(sim.W.jsonDecode(sim.W.files["TSBLab/index.json"]).autoload == false, "Auto load was off when it was saved")
     check(not hasText(sim, "WindUI", "NOT saved") and hasText(sim, "WindUI", "'default' is loaded"), "the status line is clean after saving")
     check(hasText(sim, "WindUI/Notifications", "Config saved"), "a toast says so")
@@ -222,6 +305,8 @@ do
     check(el(sim2, "supa.on").Value == true and el(sim2, "supa.delay").Value == 150 and el(sim2, "hook.side").Value == "Right" and el(sim2, "m1reset.key").Value == "Y",
         "...and the controls follow")
     check(hub(sim2).Win:GetTheme() == "Violet", "...and the theme")
+    check(hub(sim2).Win:GetWater().Enabled == false and el(sim2, "water").Value == false and el(sim2, "waterSpeed").Value == 1.5, "...the water")
+    check(hub(sim2).Lab.targetMode == "Crosshair" and el(sim2, "targetMode").Value == "Crosshair" and el(sim2, "bufferMs").Value == 500, "...and the targeting")
     -- Auto load on when saving: the next start loads it
     el(sim2, "autoLoad"):Set(true)
     button(sim2, "Save config").Click()
@@ -232,6 +317,7 @@ do
     local L3 = hub(sim3).Lab
     check(L3.techs.supa.enabled and L3.techs.supa.opt.delay == 150 and el(sim3, "supa.on").Value == true, "the next start loads it by itself")
     check(hasText(sim3, "WindUI", "'default' is loaded"), "...and says so")
+    check(not hasText(sim3, "WindUI", "White water edition") and hub(sim3).Win:GetWater().Layers == 0, "the saved choices hold: no welcome card, no water")
     sim3:anim(sim3.meChar, UPPERCUT, 0.5)
     sim3:run(1)
     check(dashes(sim3, "W") >= 1, "the loaded Supa works")
@@ -249,12 +335,13 @@ do   -- broken files never stop the hub
     local sim = game({files = {["TSBLab/index.json"] = "{not json", ["TSBLab/default.json"] = "[[["}})
     boot(sim)
     check(hub(sim) ~= nil and hub(sim).Lab.techs.supa.enabled == false, "a broken index: clean start")
-    local junk = '{"ui":{"theme":"Nope","uiScale":99,"uiKey":"bad key!","waves":"Maybe","btnSize":-5},"floats":{"panic":{"x":"a","y":7,"visible":"yes"},"ghost":{"x":1}},'
+    local junk = '{"ui":{"theme":"Nope","uiScale":99,"uiKey":"bad key!","waves":"Maybe","btnSize":-5,"water":"yes","waterStrength":7,"waterSpeed":-1,"font":"Comic","bgUrl":"' .. string.rep("x", 400) .. '","bgDim":5},"floats":{"panic":{"x":"a","y":7,"visible":"yes"},"ghost":{"x":1}},'
         .. '"techlab":{"enabled":{"ghost":true,"supa":"yes"},"opts":{"supa":{"delay":-5,"radius":"x"}},"net":{"manual":1e9},"triggers":{"supa":["12","bad"]}}}'
     local sim2 = game({files = {["TSBLab/index.json"] = '{"autoload":true,"name":"junk"}', ["TSBLab/junk.json"] = junk}})
     boot(sim2)
     local H = hub(sim2)
-    check(H ~= nil and H.S.theme == "Frost" and H.S.uiScale == 1.2 and H.S.uiKey == "RightShift" and H.S.waves == "High" and H.S.btnSize == 56, "invalid menu values fall back or are clamped: "
+    check(H ~= nil and H.S.water == true and H.S.waterStrength == 1 and H.S.waterSpeed == 0 and H.S.font == "Default" and H.S.bgUrl == "" and H.S.bgDim == 0.9, "invalid background values fall back or are clamped: " .. (H and string.format("%s %s %s %s %q %s", tostring(H.S.water), tostring(H.S.waterStrength), tostring(H.S.waterSpeed), tostring(H.S.font), tostring(H.S.bgUrl), tostring(H.S.bgDim)) or ""))
+    check(H ~= nil and H.S.theme == "Wraith White" and H.S.uiScale == 1.2 and H.S.uiKey == "RightShift" and H.S.waves == "High" and H.S.btnSize == 56, "invalid menu values fall back or are clamped: "
         .. tostring(H and H.S.theme) .. " " .. tostring(H and H.S.uiScale))
     check(H and H.Lab.techs.supa.enabled == false and H.Lab.techs.supa.opt.delay == 0 and H.Lab.net.manual == 1000 and H.Lab.techs.supa.ids["12"] and not H.Lab.techs.supa.ids["bad"], "invalid tech values are cleaned")
     clean(sim, "broken config"); clean(sim2, "junk config")
@@ -353,7 +440,7 @@ do
     local H2 = hub(sim)
     local counts = {}
     for _, g in ipairs(sim.W.M.GetChildren(sim.W.coreGui)) do counts[g.Name] = (counts[g.Name] or 0) + 1 end
-    check(counts["WindUI"] == 1 and counts["WraithsTSBLab_Buttons"] == 1, "...with exactly one window")
+    check(counts["WindUI"] == 1 and counts["WraithHub_Buttons"] == 1, "...with exactly one window")
     el(sim, "counteresp.on"):Set(true)
     sim:anim(sim.rival, "12351854556", 6)                              -- somebody counters: he is highlighted
     sim:run(0.2)
@@ -368,8 +455,26 @@ do
     check(dashes(sim, "W") == 0, "...and every tech: an uppercut no longer dashes")
     check(H2.Alive == false, "the session says it is over")
     -- WindUI keeps a few input listeners of its own after its window is destroyed (library behaviour; they act on destroyed instances only): ours are all gone
-    local left = sim:connected(sim.W.signalOf(sim.W.uis, "InputBegan")) + sim:connected(sim.W.signalOf(sim.W.uis, "InputChanged")) + sim:connected(sim.W.signalOf(sim.W.uis, "InputEnded"))
-    check(left <= 40, "after unloading (twice) only the library's own listeners remain (" .. left .. ")")
+    -- so every handler still connected is sorted by where its function was written: inside the WindUI source in the bundle (the library's), or anywhere else (ours)
+    local first, last, n = nil, nil, 0
+    for line in (SCRIPT_SOURCE .. "\n"):gmatch("(.-)\n") do
+        n = n + 1
+        if line:find("^local WindUILoader = function%(%)") then first = n elseif line:find("^local function __run%(%)") then last = n end
+    end
+    local ours, theirs = {}, 0
+    local rs = sim.W.runService
+    for _, pair in ipairs({{sim.W.uis, "InputBegan"}, {sim.W.uis, "InputChanged"}, {sim.W.uis, "InputEnded"}, {rs, "Heartbeat"}, {rs, "RenderStepped"}, {rs, "Stepped"}}) do
+        for _, h in ipairs(sim.W.signalOf(pair[1], pair[2]).handlers) do
+            if h.on then
+                local src, line = debug.info(h.orig, "sl")
+                if src == "wraiths_hub" and line >= first and line < last then theirs = theirs + 1
+                elseif src == "wraiths_hub" then ours[#ours + 1] = pair[2] .. "@" .. line end
+            end
+        end
+    end
+    check(first and last and first < last, "(the WindUI part of the bundle was found)")
+    check(#ours == 0, "after unloading (twice) none of our listeners remain: " .. table.concat(ours, ","))
+    check(theirs <= 120, "(WindUI's own leftovers stay bounded: " .. theirs .. ")")
     check(sim:connected(sim.W.signalOf(sim.W.runService, "Heartbeat")) == 0 and sim:connected(sim.W.signalOf(sim.mePlayer, "CharacterAdded")) == 0, "no Heartbeat / CharacterAdded listener of ours is left")
     clean(sim, "unload")
 end
@@ -380,7 +485,7 @@ do   -- WindUI cannot start: the small built-in menu takes over and the techs st
     local H = hub(sim)
     check(H and H.Win and H.Win.Backend ~= "WindUI", "the classic menu is used when WindUI fails")
     check(H and #H.Win.Tabs == 14, "...with the same tabs: " .. tostring(H and #H.Win.Tabs))
-    check(hasText(sim, "WraithsTSBLab", "Overview"), "the classic window shows them")
+    check(hasText(sim, "WraithHub", "Overview"), "the classic window shows them")
     el(sim, "supa.on"):Set(true)
     sim:anim(sim.meChar, UPPERCUT, 0.5)
     sim:run(1)

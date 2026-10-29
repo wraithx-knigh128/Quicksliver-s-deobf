@@ -2823,6 +2823,21 @@ local function __run()
         LabTab:Toggle("Let go of block before an M1", lab.releaseBlock, function(on)
             if lab.releaseBlock ~= on then lab.releaseBlock = on; markDirty() end
         end)
+        LabTab:Dropdown("Who the techs go for", TechMath.TARGET_MODES, lab.targetMode, function(v)
+            if lab.targetMode ~= v then lab:setTargetMode(v); markDirty() end
+        end)
+        LabTab:Toggle("Skip players who are blocking", lab.skipBlocking, function(on)
+            if lab.skipBlocking ~= on then lab.skipBlocking = on; markDirty() end
+        end)
+        LabTab:Toggle("Safe moves", lab.safeMoves, function(on)
+            if lab.safeMoves ~= on then lab.safeMoves = on; markDirty() end
+        end, nil, "A tech that moves you stops in front of a wall and never goes under the floor")
+        LabTab:Toggle("Not while I am knocked down", lab.guardKnocked, function(on)
+            if lab.guardKnocked ~= on then lab.guardKnocked = on; markDirty() end
+        end, nil, "No tech starts while you are ragdolled or stunned")
+        LabTab:Slider("Input buffer (ms, 0 = off)", 0, 1000, lab.bufferMs, 10, function(v)
+            if lab.bufferMs ~= v then lab.bufferMs = v; markDirty() end
+        end)
         local cooldownLabel = LabTab:Label("")
         LabTab:Slider("Ping compensation (0 = off, 1 = full)", 0, 2, lab.net.strength, 0.05, function(v)
             if lab.net.strength ~= v then lab:setNet("strength", v); markDirty() end

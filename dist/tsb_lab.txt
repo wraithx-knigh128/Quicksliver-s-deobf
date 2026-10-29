@@ -1,5 +1,8 @@
---[[ Wraith's TSB Lab (The Strongest Battlegrounds): the Tech Lab (tech_lab.lua) on the WindUI window library, laid out like the tech hub it was rewritten from:
-  one tab per tech family, an Overview with the master switch / Panic / live cooldowns and ping, a Settings tab with the menu options, the ping model and a config manager.
+--[[ Wraith Hub v1.5 (The Strongest Battlegrounds): the Tech Lab (tech_lab.lua) on the WindUI window library, built the way the tech hub it was rewritten from uses
+  WindUI - a welcome popup, a version tag, icon buttons in the top bar, the player card, the search bar, a paragraph opening every tab, a changelog dialog, a theme list
+  with search and a font choice - in white-water colours with an animated white water background (self-made, nothing downloaded).
+  One tab per tech family, an Overview with the master switch / Panic / targeting / live cooldowns, ping and hit rates, a Settings tab with the menu options, the
+  background, the ping model and a config manager.
   The tabs are generated from the tech definitions in tech_lab.lua, so a new tech needs no UI code.
   Source file: build it into one script with `python3 game_dev/tsb/build_tsb_lab.py` (it fills in the PingModel / Tech* / UILib / WindUI modules below).
   Nothing in it has been run in the real game - see the README. Nothing is saved unless you press Save config. ]]
@@ -345,6 +348,47 @@ function M.lagLearner(o)
     return self
 end
 
+-- ---------------------------------------------------------------------------------------------------------------- targets and safe moves
+-- list: entries with x, y, z, dist (from me) and health. o = {camPos, camLook (unit), preferred = an entry of the list}
+M.TARGET_MODES = {"Nearest", "Crosshair", "Lowest health", "Hook target first"}
+function M.pickTarget(list, mode, o)
+    o = o or {}
+    if type(list) ~= "table" or #list == 0 then return nil end
+    local best, bestKey
+    local function consider(e, key)
+        if bestKey == nil or key < bestKey - 1e-9 or (math.abs(key - bestKey) <= 1e-9 and e.dist < best.dist) then best, bestKey = e, key end
+    end
+    if mode == "Hook target first" and o.preferred then
+        for _, e in ipairs(list) do if e == o.preferred then return e end end
+    end
+    for _, e in ipairs(list) do
+        if mode == "Crosshair" and M.valid(o.camPos) and M.valid(o.camLook) then
+            local d = unit(sub(e, o.camPos))
+            consider(e, 1 - dot(d, unit(o.camLook)))                   -- 0 = straight ahead of the camera
+        elseif mode == "Lowest health" and num(e.health) then
+            consider(e, e.health)
+        else
+            consider(e, num(e.dist) and e.dist or math.huge)
+        end
+    end
+    return best
+end
+
+-- the point `margin` studs before `hit` on the way from `from` to `to` (never behind `from`); `to` itself when there is no hit
+function M.stopShort(from, to, hit, margin)
+    if not M.valid(hit) then return to end
+    local d = sub(hit, from)
+    local l = len(d)
+    if l < 1e-6 then return v3(from.x, from.y, from.z) end
+    local keep = max(0, l - (margin or 2))
+    return add(from, scale(d, keep / l))
+end
+
+function M.aboveFloor(p, floorY, minAbove)
+    if not (M.valid(p) and num(floorY)) then return p end
+    return v3(p.x, max(p.y, floorY + (minAbove or 2.5)), p.z)
+end
+
 return M
 
 end)()
@@ -665,6 +709,12 @@ M.GROUPS = GROUPS
 local PING_AWARE = {supa = true, hook = true, loop = true, loop2 = true, lethal = true, kiba = true, twisted = true, kyoto = true, dunk = true, surf = true, flip = true,
                     catch = true, noendlag = true, uppercutcatch = true, uppercutgrasp = true, lethalgrasp = true, flowinggrasp = true}
 
+-- what a tech can hand over to when it finished (a "chain"): the manual techs and a plain M1
+local NEXT_IDS = {M1 = "m1", ["Backdash Cancel"] = "backdash", ["Micro Dash"] = "microdash", ["Shove Dash"] = "shovedash", ["M1 Reset"] = "m1reset", ["Emote Dash"] = "emotedash",
+                  ["Uppercut Catch"] = "uppercutcatch"}
+local NEXT_CHOICES = {"None", "M1", "Backdash Cancel", "Micro Dash", "Shove Dash", "M1 Reset", "Emote Dash", "Uppercut Catch"}
+M.NEXT_CHOICES = NEXT_CHOICES
+
 -- techs that move or turn my character: only one of them runs at a time (two of them at once would fight over the root part)
 local MOVES = {supa = true, hook = true, loop = true, loop2 = true, lethal = true, kiba = true, twisted = true, kyoto = true, dunk = true, surf = true, flip = true,
                mousedash = true, sidem1 = true, downslam = true, m1reset = true, emotedash = true, backdash = true, microdash = true, shovedash = true, uppercutcatch = true,
@@ -683,7 +733,10 @@ function M.new(env)
                  dashClock = TM.dashClock(TD.DASH_COOLDOWN), hook = {}, conns = {}, lastOwn = {},
                  -- the latency model: strength scales every ping correction (0 = off), manual = a ping I typed (0 = measure it), interp = how far in the past Roblox draws
                  -- other players, learn = measure how late my own animations arrive, ref = the ping the default numbers were tuned at
-                 net = {strength = 1, manual = 0, interp = 80, learn = true, ref = 60}, lagger = TM.lagLearner()}
+                 net = {strength = 1, manual = 0, interp = 80, learn = true, ref = 60}, lagger = TM.lagLearner(),
+                 -- who the techs go for, stop teleports at walls / the floor, no techs while knocked down, how long a key press waits for a running tech (ms),
+                 -- how long after a tech the target's health is watched for a hit (s)
+                 targetMode = "Nearest", skipBlocking = false, safeMoves = true, guardKnocked = true, bufferMs = 250, hitWindow = 0.8}
     local charConns = {}
     local watched = setmetatable({}, {__mode = "k"})              -- enemy model -> its connections
     local animCache = {}
@@ -704,7 +757,13 @@ function M.new(env)
 
     -------------------------------------------------------------------------------------------------------- techs from the catalogue
     for _, d in ipairs(DEFS) do
-        if PING_AWARE[d.id] then
+        local has = {}
+        for _, od in ipairs(d.opts) do has[od.key] = true end
+        if not (d.watches and d.id ~= "counter") and not d.poll and not has.next then
+            d.opts[#d.opts + 1] = C("next", "Then run (a chain)", NEXT_CHOICES, "None", "When this tech finished without aborting, the chosen one runs next")
+            d.opts[#d.opts + 1] = N("nextDelay", "...after (ms)", 0, 1500, 10, 0)
+        end
+        if PING_AWARE[d.id] and not has.ping then
             d.opts[#d.opts + 1] = B("ping", "Adjust for ping", true, "Waits that start at one of my animations start earlier by the lag I measured, and aim at other players is led by their latency.")
         end
         local tech = {id = d.id, group = d.group, title = d.title, desc = d.desc, when = d.when, defs = d.opts, needsDash = d.needsDash, manual = d.manual, template = d.template,
@@ -731,7 +790,8 @@ function M.new(env)
     for _, tech in ipairs(lab.order) do rebuildIds(tech) end
 
     local function setStatus(tech, text)
-        tech.status = text
+        tech.baseStatus = text
+        tech.status = text .. (tech.hitText and ("   |   " .. tech.hitText) or "")
         if env.onStatus then pcall(env.onStatus, tech) end
     end
     lab.setStatus = setStatus
@@ -807,6 +867,46 @@ function M.new(env)
     function lab:nearestEnemy(radius)
         local list = lab:enemies(radius)
         return list[1]
+    end
+    local function isBlocking(model)
+        local hum = model:FindFirstChildOfClass("Humanoid")
+        local animator = hum and hum:FindFirstChildOfClass("Animator")
+        local tracks = animator and safe(function() return animator:GetPlayingAnimationTracks() end) or {}
+        for _, tr in ipairs(tracks) do
+            local id = TD.idOf(safe(function() return tr.Animation.AnimationId end))
+            if id and blockSet[id] then return true end
+        end
+        return false
+    end
+    -- the target a tech goes for, by the chosen mode (and without blockers when that is asked for)
+    function lab:pickTarget(radius)
+        local list = {}
+        for _, e in ipairs(lab:enemies(radius)) do
+            if not (lab.skipBlocking and isBlocking(e.model)) then
+                e.health = e.hum.Health
+                list[#list + 1] = e
+            end
+        end
+        local cam = Workspace.CurrentCamera
+        local o = {}
+        if cam then o.camPos, o.camLook = vec(cam.CFrame.Position), vec(cam.CFrame.LookVector) end
+        local hooked = lab.hook.target
+        if hooked then for _, e in ipairs(list) do if e.model == hooked.model then o.preferred = e end end end
+        return TM.pickTarget(list, lab.targetMode, o)
+    end
+    function lab:setTargetMode(mode) for _, m in ipairs(TM.TARGET_MODES) do if m == mode then lab.targetMode = mode end end end
+
+    -- am I knocked down / ragdolled / stunned? (states, and the attributes / values games commonly use for it)
+    local KNOCKED_STATES = {Ragdoll = true, FallingDown = true, PlatformStanding = true}
+    function lab:knocked()
+        local char, hum = myParts()
+        if not char then return false end
+        local state = safe(function() return hum:GetState() end)
+        if state and KNOCKED_STATES[state.Name] then return true end
+        for _, name in ipairs({"Ragdolled", "Ragdoll", "Stunned"}) do
+            if safe(function() return char:GetAttribute(name) end) == true then return true end
+        end
+        return char:FindFirstChild("Ragdolled") ~= nil
     end
 
     local function tracksOf(model)
@@ -911,7 +1011,7 @@ function M.new(env)
         function c.commit()                                           -- from here the run counts: the cooldown starts and the stats go up
             if not c.committed then c.committed = true; tech.stats.runs = tech.stats.runs + 1 end
         end
-        function c.abort(text) c.result = text; tech.stats.aborts = tech.stats.aborts + 1 end
+        function c.abort(text) c.result = text; c.aborted = true; tech.stats.aborts = tech.stats.aborts + 1 end
         function c.say(text) c.result = text end
 
         function c.wait(sec)
@@ -935,7 +1035,15 @@ function M.new(env)
             end
         end
 
-        function c.target(radius) return lab:nearestEnemy(radius) end
+        -- the first target a run picks is its focus: its health is watched after the run to see whether the tech landed
+        function c.setFocus(entry)
+            if entry and not c.focus then c.focus = entry; c.focusHealth = entry.hum.Health end
+        end
+        function c.target(radius)
+            local e = lab:pickTarget(radius)
+            c.setFocus(e)
+            return e
+        end
         function c.dash(dir) return lab:dash(dir) end
         function c.m1(hold) return lab:m1(hold) end
         function c.key(name) return lab:tapKey(name) end
@@ -1001,7 +1109,7 @@ function M.new(env)
         -- slide the root to `point` ({x,y,z}) in `seconds`, looking at `lookAt` ({x,y,z}) when given; false when cancelled
         function c.moveTo(point, seconds, lookAt, ease)
             local start = root.Position
-            local goal = V3(point)
+            local goal = V3(c.safePoint and c.safePoint(point) or point)
             local look = lookAt and V3(lookAt) or nil
             if seconds <= 0.03 then place(goal, look); return alive() end
             return c.frames(seconds, function(a)
@@ -1082,6 +1190,12 @@ function M.new(env)
             local conn = listen(RunService.Stepped, apply)
             if conn then cleanups[#cleanups + 1] = function() conn:Disconnect() end end
         end
+        -- jump to `point` at once, keeping my rotation (stopped short of walls, never under the floor)
+        function c.teleport(point, o)
+            local p = c.safePoint(point, o)
+            root.CFrame = CFrame.new(V3(p)) * (root.CFrame - root.CFrame.Position)
+            return p
+        end
         -- like push, but sideways only (gravity and jumps keep working)
         function c.pushFlat(v)
             local bv = c.instance(Instance.new("BodyVelocity"))
@@ -1090,12 +1204,36 @@ function M.new(env)
             bv.Parent = root
             return {stop = function() if bv.Parent then bv:Destroy() end end}
         end
-        function c.floorY(pos)
+        -- rays see the map only: not me, not the other characters (a ray from above a player would otherwise call his head the floor)
+        local function mapParams()
             local params = RaycastParams.new()
             params.FilterType = Enum.RaycastFilterType.Exclude
-            params.FilterDescendantsInstances = {char}
-            local hit = Workspace:Raycast(Vector3.new(pos.x, pos.y + 80, pos.z), Vector3.new(0, -300, 0), params)
+            local list = {char}
+            local live = Workspace:FindFirstChild("Live")
+            if live then list[#list + 1] = live end
+            params.FilterDescendantsInstances = list
+            return params
+        end
+        c.mapParams = mapParams
+        function c.floorY(pos)
+            local params = mapParams()
+            local hit = Workspace:Raycast(Vector3.new(pos.x, pos.y + 3, pos.z), Vector3.new(0, -300, 0), params)      -- the surface right under the point
+            if not hit then hit = Workspace:Raycast(Vector3.new(pos.x, pos.y + 80, pos.z), Vector3.new(0, -300, 0), params) end   -- (the point is under the map)
             return hit and hit.Position.Y or pos.y
+        end
+        -- where a teleport / slide to `p` may really end: `margin` studs before a wall on the way, and (floor ~= false) not below the floor
+        function c.safePoint(p, o)
+            o = o or {}
+            if not lab.safeMoves then return p end
+            local from = root.Position
+            local out = p
+            local dir = V3(p) - from
+            if dir.Magnitude > 0.05 then
+                local hit = Workspace:Raycast(from, dir, mapParams())
+                if hit then out = TM.stopShort(vec(from), p, vec(hit.Position), o.margin or 2) end
+            end
+            if o.floor ~= false then out = TM.aboveFloor(out, c.floorY(out), o.minAbove or 2.5) end
+            return out
         end
         function c.jump(power)
             pcall(function()
@@ -1110,6 +1248,20 @@ function M.new(env)
     end
 
     -------------------------------------------------------------------------------------------------------- running a tech
+    -- the hit check: did the focus lose health during the run (or within hitWindow after it)?
+    local function checkHit(tech, focus, before)
+        task.delay(lab.hitWindow, function()
+            if not lab.alive or not focus or type(before) ~= "number" then return end
+            local now = focus.hum.Health
+            local landed = type(now) == "number" and (now < before - 0.5 or not focus.model.Parent)
+            tech.stats.checked = (tech.stats.checked or 0) + 1
+            if landed then tech.stats.hits = (tech.stats.hits or 0) + 1 end
+            tech.lastHit = landed
+            tech.hitText = string.format("hits %d/%d", tech.stats.hits or 0, tech.stats.checked)
+            setStatus(tech, tech.baseStatus or "")
+        end)
+    end
+
     function lab:fire(id, info)
         local tech = type(id) == "table" and id or lab.byId[id]
         if not tech then return false, "unknown tech" end
@@ -1117,17 +1269,36 @@ function M.new(env)
         info.manual = info.manual or tech.manual or nil           -- a key / button press (the keys and the UI call lab:fire with manual = true)
         if not lab.alive then return false, "off" end
         if not info.manual and not (lab.master and tech.enabled) then return false, "off" end
-        if tech.running then return false, "running" end
+        local now = clock()
+        -- a key press while another tech is still going waits a moment for it instead of being lost (an input buffer)
+        local function buffer(why)
+            if info.manual and not info.fromBuffer and lab.bufferMs > 0 then
+                lab.buffered = {tech = tech, info = info, expires = now + lab.bufferMs / 1000}
+                setStatus(tech, "queued: " .. why)
+                return false, "queued"
+            end
+            return nil
+        end
+        if tech.running then
+            local q, why = buffer("it is still running")
+            if q ~= nil then return q, why end
+            return false, "running"
+        end
         if tech.moves then
             for _, other in ipairs(lab.order) do
                 if other ~= tech and other.moves and other.running then
+                    local q, why = buffer("after " .. other.title)
+                    if q ~= nil then return q, why end
                     if info.manual then setStatus(tech, "not now: " .. other.title .. " is running") end
                     return false, "exclusive"
                 end
             end
         end
         if not info.manual and env.busy and env.busy() then return false, "busy" end
-        local now = clock()
+        if lab.guardKnocked and lab:knocked() then
+            setStatus(tech, "not while you are knocked down")
+            return false, "knocked"
+        end
         if now < tech.cooldownUntil and not info.force then return false, "cooldown" end
         if tech.needsDash and lab.dashGuard and not lab.dashClock:ready(tech.needsDash, now) and not info.force then
             setStatus(tech, string.format("waiting: the %s dash is on cooldown (%.1f s)", tech.needsDash, lab.dashClock:left(tech.needsDash, now)))
@@ -1156,7 +1327,30 @@ function M.new(env)
             else
                 setStatus(tech, "ready")
             end
-            if ok and ctx.committed then tech.cooldownUntil = clock() + (tech.opt.cooldown or 0) end
+            if ok and ctx.committed then
+                tech.cooldownUntil = clock() + (tech.opt.cooldown or 0)
+                if ctx.focus then checkHit(tech, ctx.focus, ctx.focusHealth) end
+                -- a chain: the follow-up starts once this one is over (at most three links, so two techs cannot call each other for ever)
+                local nxt = tech.opt.next
+                if not ctx.aborted and nxt and nxt ~= "None" and NEXT_IDS[nxt] and (info.depth or 0) < 3 then
+                    task.delay((tech.opt.nextDelay or 0) / 1000, function()
+                        if not lab.alive then return end
+                        if NEXT_IDS[nxt] == "m1" then lab:m1() return end
+                        lab:fire(NEXT_IDS[nxt], {manual = true, depth = (info.depth or 0) + 1, chainedFrom = tech.id})
+                    end)
+                end
+            end
+            -- a key press that was waiting for this tech goes now
+            local b = lab.buffered
+            if b and tech.moves then
+                lab.buffered = nil
+                if clock() <= b.expires then
+                    b.info.fromBuffer = true
+                    lab:fire(b.tech, b.info)
+                else
+                    setStatus(b.tech, "ready")
+                end
+            end
         end)
         return true
     end
@@ -1169,6 +1363,9 @@ function M.new(env)
         if why then setStatus(tech, why) end
     end
     function lab:cancelAll(why)
+        local b = lab.buffered
+        lab.buffered = nil
+        if b then setStatus(b.tech, why or "cancelled") end
         for _, tech in ipairs(lab.order) do
             if tech.running then lab:cancel(tech.id, why or "cancelled") end
         end
@@ -1318,7 +1515,7 @@ function M.new(env)
             if TM.dot(TM.unit(TM.flat(vec(eroot.CFrame.LookVector))), to) < -0.2 then return end
         end
         tech.pending = {isDash = isDash, name = model.Name}
-        lab:fire(tech, {anim = id, enemy = model.Name})
+        lab:fire(tech, {anim = id, enemy = model.Name, focus = validEnemy(model, char)})
     end
 
     local function notMe(model) local char = LocalPlayer.Character; return model ~= char end
@@ -1574,6 +1771,7 @@ function M.new(env)
         if o.maxY > 0 and (ctx.root.Position.Y > o.maxY or entry.root.Position.Y > o.maxY + 6) then return ctx.abort("too high up for a hook dash") end
         local dist = (entry.root.Position - ctx.root.Position).Magnitude
         if dist > o.maxDist then return ctx.abort(string.format("too far (%.0f > %.0f studs)", dist, o.maxDist)) end
+        ctx.setFocus(entry)
         ctx.commit()
         local sideMode = ({["Behind them"] = "Behind", Closest = "Closest", Left = "Left", Right = "Right"})[o.side] or "Closest"
         local function plan(side, dir)
@@ -1593,6 +1791,7 @@ function M.new(env)
         local lv = ctx.push({x = 0, y = 0, z = 0})
         local fixedSide = first.side
         local t0 = clock()
+        local blocked = false
         local conn
         conn = RunService.Heartbeat:Connect(function()
             if not ctx.alive() then conn:Disconnect(); return end
@@ -1600,6 +1799,11 @@ function M.new(env)
             -- the velocity that arrives exactly when the dash time is up (a fixed time constant would only ever cover 63 % of the way)
             local left = math.max(o.duration - (clock() - t0), 1 / 60)
             local v = TM.steer(vec(ctx.root.Position), p.point, left, 300)
+            if lab.safeMoves and not blocked then                     -- a wall in the way: stop there instead of dashing into (or through) it
+                local step = V3(v) * (1 / 20)
+                if step.Magnitude > 0.05 and Workspace:Raycast(ctx.root.Position, step + step.Unit * 1.5, ctx.mapParams()) then blocked = true end
+            end
+            if blocked then v = TM.v3(0, 0, 0) end
             lv.set(v)
             local want = TM.yawTo(vec(ctx.root.Position), vec(entry.root.Position))
             if want then
@@ -1616,6 +1820,7 @@ function M.new(env)
         if not ctx.wait(o.duration) then return end
         lv.stop()
         conn:Disconnect()
+        if blocked then ctx.say("stopped at a wall") end
         if o.aimAfter > 0 then ctx.aimCamera(function() return vec(entry.root.Position) end, o.aimAfter) end
         ctx.wait(o.aimAfter)
     end
@@ -1718,7 +1923,7 @@ function M.new(env)
         local o = ctx.opt
         if not ctx.wait(ctx.shift(o.wait / 1000)) then return end
         ctx.commit()
-        ctx.root.CFrame = ctx.root.CFrame * CFrame.new(0, 0, o.stepBack)
+        ctx.teleport(vec((ctx.root.CFrame * CFrame.new(0, 0, o.stepBack)).Position))
         ctx.dash(o.dashKey)
         if o.instant then
             local entry = ctx.target(30)
@@ -1754,7 +1959,7 @@ function M.new(env)
         local o = ctx.opt
         if not ctx.wait(ctx.shift(o.wait)) then return end
         ctx.commit()
-        ctx.root.CFrame = ctx.root.CFrame + Vector3.new(0, o.height, 0)
+        ctx.teleport(TM.add(vec(ctx.root.Position), TM.v3(0, o.height, 0)), {floor = false})        -- (a ceiling stops the lift)
     end
 
     lab.techs.surf.run = function(ctx)
@@ -1768,6 +1973,7 @@ function M.new(env)
 
     lab.techs.counter.run = function(ctx)
         local o = ctx.opt
+        ctx.setFocus(ctx.info.focus)
         local p = lab.techs.counter.pending or {}
         ctx.commit()
         if p.isDash and o.dashDelay > 0 then if not ctx.wait(o.dashDelay / 1000) then return end end
@@ -1928,7 +2134,7 @@ function M.new(env)
         if not ctx.wait(o.m1Delay / 1000) then return end
         ctx.m1()
         if not ctx.wait(o.dashDelay / 1000) then return end
-        ctx.root.CFrame = ctx.root.CFrame * CFrame.new(0, 0, o.stepBack)
+        ctx.teleport(vec((ctx.root.CFrame * CFrame.new(0, 0, o.stepBack)).Position))
         ctx.dash("W")
     end
 
@@ -1968,7 +2174,7 @@ function M.new(env)
         ctx.commit()
         local right = TM.unit(TM.flat(vec(ctx.root.CFrame.RightVector)), TM.v3(1, 0, 0))
         local dir = TM.scale(right, sign)
-        ctx.root.CFrame = ctx.root.CFrame + V3(TM.scale(dir, o.hop))
+        ctx.teleport(TM.add(vec(ctx.root.Position), TM.scale(dir, o.hop)))
         local burst = ctx.pushFlat(TM.scale(dir, o.speed))
         local track = ctx.info.track
         if track then
@@ -2038,7 +2244,8 @@ function M.new(env)
 
     function lab:export()
         local out = {enabled = {}, opts = {}, triggers = {}, input = lab.input, dashGuard = lab.dashGuard, releaseBlock = lab.releaseBlock, master = lab.master,
-                     net = {strength = lab.net.strength, manual = lab.net.manual, interp = lab.net.interp, learn = lab.net.learn, ref = lab.net.ref}}
+                     net = {strength = lab.net.strength, manual = lab.net.manual, interp = lab.net.interp, learn = lab.net.learn, ref = lab.net.ref},
+                     targetMode = lab.targetMode, skipBlocking = lab.skipBlocking, safeMoves = lab.safeMoves, guardKnocked = lab.guardKnocked, bufferMs = lab.bufferMs}
         for _, tech in ipairs(lab.order) do
             if tech.enabled then out.enabled[tech.id] = true end
             local diff = TO.diff(tech.defs, tech.opt)
@@ -2058,6 +2265,11 @@ function M.new(env)
         if type(saved.net) == "table" then
             for _, key in ipairs({"strength", "manual", "interp", "ref", "learn"}) do lab:setNet(key, saved.net[key]) end
         end
+        if type(saved.targetMode) == "string" then lab:setTargetMode(saved.targetMode) end
+        for _, key in ipairs({"skipBlocking", "safeMoves", "guardKnocked"}) do
+            if type(saved[key]) == "boolean" then lab[key] = saved[key] end
+        end
+        if type(saved.bufferMs) == "number" and saved.bufferMs == saved.bufferMs then lab.bufferMs = math.max(0, math.min(1000, saved.bufferMs)) end
         for _, tech in ipairs(lab.order) do
             tech.opt = TO.clean(tech.defs, type(saved.opts) == "table" and saved.opts[tech.id] or nil)
             local ids = type(saved.triggers) == "table" and saved.triggers[tech.id]
@@ -2924,6 +3136,8 @@ function UILib.new(cfg)
             return row
         end
 
+        function tab:Paragraph(o) return tab:Label(((o.Title and o.Title ~= "") and (o.Title .. ": ") or "") .. (o.Desc or "")) end
+
         function tab:Label(text)
             local row = mk("Frame", {Size = UDim2.new(1, 0, 0, 0), AutomaticSize = Enum.AutomaticSize.Y, BorderSizePixel = 0, LayoutOrder = nextOrder()}, page)
             bind(row, "BackgroundColor3", "row"); corner(row, 10); stroke(row)
@@ -3183,6 +3397,14 @@ function UILib.new(cfg)
     mk("UIListLayout", {Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder, VerticalAlignment = Enum.VerticalAlignment.Top,
         HorizontalAlignment = Enum.HorizontalAlignment.Left}, toasts)
     local toastCount, liveToasts = 0, {}
+    -- what the WindUI window offers on top (the classic menu answers them simply, so a hub can call them on either)
+    local function plain(t) return (tostring(t or ""):gsub("<[^>]+>", "")) end
+    function win:Popup(o) win:Notify{Title = plain(o.Title), Content = plain(o.Content), Type = "info", Duration = 6} end
+    function win:Dialog(o) win:Notify{Title = plain(o.Title), Content = plain(o.Content), Type = "info", Duration = 8} end
+    function win:SetWater() end
+    function win:GetWater() return {Enabled = false, Strength = 0, Speed = 0, Layers = 0} end
+    function win:SetFont() return false end
+
     function win:Notify(o)
         if not win.Alive then return end
         toastCount = toastCount + 1
@@ -3407,6 +3629,7 @@ local function build(win, WindUI, UILib, cfg)
     local themeName = Adapter.themeFor(cfg.Theme)
     local vp = viewport()
     local size = UDim2.fromOffset(clamp(math.floor(vp.X * 0.6), 440, 560), clamp(vp.Y - 70, 250, 380))      -- WindUI scales the window down by itself if it does not fit
+    if type(cfg.Size) == "table" then size = UDim2.fromOffset(clamp(cfg.Size[1], 380, math.max(380, vp.X - 40)), clamp(cfg.Size[2], 250, math.max(250, vp.Y - 60))) end
     win.Tickers = win.Tickers or {}
     local glassTouched = {}
 
@@ -3428,10 +3651,10 @@ local function build(win, WindUI, UILib, cfg)
     glass(themeName)
     local Window = WindUI:CreateWindow{
         Title = cfg.Title or "Hub", Author = cfg.Subtitle, Folder = cfg.Folder or "WraithsHub", Icon = cfg.WindowIcon or "swords", NewElements = true, Theme = themeName,
-        Size = size, MinSize = Vector2.new(380, 230), SideBarWidth = vp.X < 900 and 124 or 150, HideSearchBar = true,
+        Size = size, MinSize = Vector2.new(380, 230), SideBarWidth = cfg.SideBarWidth or (vp.X < 900 and 124 or 150), HideSearchBar = not cfg.SearchBar,
         Transparent = true, HidePanelBackground = true, ElementsRadius = 14, Radius = 16, ToggleKey = cfg.ToggleKey,
-        Topbar = {Height = 38, ButtonsType = "Mac"},
-        User = {Enabled = false},
+        Topbar = {Height = 38, ButtonsType = cfg.TopbarStyle or "Mac"},
+        User = {Enabled = cfg.UserCard == true, Anonymous = false},
         OpenButton = {Title = cfg.Title or "Hub", CornerRadius = UDim.new(1, 0), StrokeThickness = 2, Enabled = true, Draggable = true, OnlyMobile = false, Scale = 0.7,
             Color = ColorSequence.new(Color3.fromHex((cfg.OpenColors or {})[1] or "#9aa0b4"), Color3.fromHex((cfg.OpenColors or {})[2] or "#e84a8a"))},
     }
@@ -3442,22 +3665,32 @@ local function build(win, WindUI, UILib, cfg)
     -- are hidden and replaced with one small dot of our own that calls Window:Close() (the *method*, not the topbar button): that hides the window and
     -- leaves WindUI's own open button on screen to bring it back, exactly like tapping the pill in the Classic menu or pressing the toggle key.
     pcall(function() Window:DisableTopbarButtons{"Close", "Minimize", "Fullscreen"} end)
-    pcall(function()
-        local right = Window.UIElements.Main.Main.Topbar.Right
-        local dot = Instance.new("TextButton")
-        dot.Name = "WraithClose"
-        dot.Text = ""
-        dot.AutoButtonColor = false
-        dot.BackgroundColor3 = Color3.fromHex("#F4695F")
-        dot.BorderSizePixel = 0
-        dot.Size = UDim2.fromOffset(14, 14)
-        dot.LayoutOrder = 999
-        local corner = Instance.new("UICorner")
-        corner.CornerRadius = UDim.new(1, 0)
-        corner.Parent = dot
-        dot.Parent = right
-        connect(dot.MouseButton1Click, function() Window:Close() end)
-    end)
+    if cfg.TopbarStyle == "Default" then                                  -- icon buttons: our own "x" that HIDES the window (WindUI's would destroy it)
+        pcall(function() Window:CreateTopbarButton("WraithClose", "x", function() Window:Close() end, 999) end)
+    else
+        pcall(function()
+            local right = Window.UIElements.Main.Main.Topbar.Right
+            local dot = Instance.new("TextButton")
+            dot.Name = "WraithClose"
+            dot.Text = ""
+            dot.AutoButtonColor = false
+            dot.BackgroundColor3 = Color3.fromHex("#F4695F")
+            dot.BorderSizePixel = 0
+            dot.Size = UDim2.fromOffset(14, 14)
+            dot.LayoutOrder = 999
+            local corner = Instance.new("UICorner")
+            corner.CornerRadius = UDim.new(1, 0)
+            corner.Parent = dot
+            dot.Parent = right
+            connect(dot.MouseButton1Click, function() Window:Close() end)
+        end)
+    end
+    if type(cfg.Tag) == "table" then
+        pcall(function() Window:Tag{Title = cfg.Tag.Title or "", Color = Color3.fromHex(cfg.Tag.Color or "#ffffff")} end)
+    end
+    for i, b in ipairs(type(cfg.TopbarButtons) == "table" and cfg.TopbarButtons or {}) do
+        pcall(function() Window:CreateTopbarButton(b.Name or ("Button" .. i), b.Icon or "circle", function() safe("topbar " .. tostring(b.Name), b.Callback) end, 900 + i) end)
+    end
     pcall(function() Window:SetUIScale(clamp(cfg.Scale or 0.9, 0.55, 1.2)) end)
     if cfg.Mono ~= false then                                                -- the reference menu uses a monospace face
         pcall(function()
@@ -3521,6 +3754,21 @@ local function build(win, WindUI, UILib, cfg)
                 pcall(function() p:SetTitle(v ~= "" and v or " ") end)
             end
             return el
+        end
+
+        -- a card with a title, a body text and an icon on the left (the way the reference hub opens each tab)
+        function tab:Paragraph(o)
+            local el = {Title = o.Title, Value = o.Desc or ""}
+            local p = ui:Paragraph{Title = o.Title or "", Desc = o.Desc, Image = o.Image, ImageSize = o.ImageSize or 20, Color = o.Color}
+            function el:Set(v)
+                v = tostring(v or "")
+                if v == el.Value then return end
+                el.Value = v
+                pcall(function() p:SetDesc(v) end)
+            end
+            el.Ui = p
+            decorate(p, ui)
+            return addElement(el)
         end
 
         function tab:Button(o)
@@ -3595,7 +3843,8 @@ local function build(win, WindUI, UILib, cfg)
             local el = {Value = o.Default, Values = o.Values or {}}
             if el.Value == nil then el.Value = el.Values[1] end
             local p
-            p = ui:Dropdown{Title = o.Title or "Dropdown", Desc = o.Desc, Values = el.Values, Value = el.Value, AllowNone = false, Callback = function(v)
+            p = ui:Dropdown{Title = o.Title or "Dropdown", Desc = o.Desc, Values = el.Values, Value = el.Value, AllowNone = false,
+                SearchBarEnabled = o.Search == true, MenuWidth = o.MenuWidth, Callback = function(v)
                 if type(v) == "table" then v = v.Title end
                 if v == nil or v == el.Value then return end
                 el.Value = v
@@ -3688,6 +3937,22 @@ local function build(win, WindUI, UILib, cfg)
         pcall(function() WindUI:SetTheme(name) end)
     end
     function win:GetTheme() return themeName end
+    local function buttonsOf(list, default)
+        local out = {}
+        for _, b in ipairs(list or {{Title = default}}) do
+            out[#out + 1] = {Title = b.Title or "OK", Icon = b.Icon, Variant = b.Variant or "Primary", Callback = function() if b.Callback then safe("dialog button", b.Callback) end end}
+        end
+        return out
+    end
+    -- a centred card over the game (welcome message); Buttons = {{Title, Icon, Variant, Callback}}
+    function win:Popup(o)
+        safe("popup", function() WindUI:Popup{Title = o.Title or "", Icon = o.Icon, Content = o.Content, Buttons = buttonsOf(o.Buttons, "OK")} end)
+    end
+    -- a dialog inside the window (a changelog, a question)
+    function win:Dialog(o)
+        safe("dialog", function() Window:Dialog{Title = o.Title or "", Content = o.Content, Buttons = buttonsOf(o.Buttons, "Close")} end)
+    end
+    function win:SetFont(family) return pcall(function() WindUI:SetFont(family) end) end
     function win:SetAvatar() end                                           -- WindUI shows the player's own avatar and name (User option)
     function win:SelectTab(name)                                              -- WindUI shows no tab until one is selected, so the hub selects the first one
         for i, t in ipairs(win.Tabs) do
@@ -3793,6 +4058,78 @@ local function build(win, WindUI, UILib, cfg)
         end
     end
     refreshBackdrop()
+
+    ---------------------------------------------------------------------------------------------- animated white water behind the content
+    -- Self-made: no download, no asset id, nothing that can fail to load. A few full-size layers, each a white fill whose UIGradient only lets thin bright
+    -- bands through (the crests of a sharpened sine); every layer drifts and sways at its own pace, so the bands cross and part like light on moving water.
+    -- It only animates while the window is open, at most `Fps` times a second, and it sits under the controls (and over a video / picture, if one is set).
+    local WATER_LAYERS = {
+        {rot = 18, periods = 2.2, speed = 0.55, amp = 0.32, phase = 0.0, sharp = 2.6, alpha = 0.80},
+        {rot = -24, periods = 3.1, speed = 0.85, amp = 0.26, phase = 2.2, sharp = 3.2, alpha = 0.84},
+        {rot = 82, periods = 1.7, speed = 0.35, amp = 0.36, phase = 4.1, sharp = 2.2, alpha = 0.88},
+        {rot = 8, periods = 5.0, speed = 1.40, amp = 0.18, phase = 1.3, sharp = 7.0, alpha = 0.70},     -- (the glints on the crests)
+    }
+    local water = {On = false, Strength = 0.7, Speed = 1, Tint = Color3.fromRGB(255, 255, 255), Layers = {}, Fps = 30, T = 0, Acc = 0}
+    win.Water = water
+    local function waterSequences(L)
+        local lo = water.Tint:Lerp(Color3.fromRGB(140, 152, 170), 0.45)                     -- the trough tone: silver
+        local cols, alphas = {}, {}
+        for i = 0, 19 do
+            local t = i / 19
+            local s = (0.5 + 0.5 * math.sin(2 * math.pi * L.periods * t + L.phase)) ^ L.sharp
+            cols[#cols + 1] = ColorSequenceKeypoint.new(t, lo:Lerp(water.Tint, s))
+            alphas[#alphas + 1] = NumberSequenceKeypoint.new(t, 1 - (1 - L.alpha) * s * water.Strength)
+        end
+        return ColorSequence.new(cols), NumberSequence.new(alphas)
+    end
+    local function buildWater()
+        for _, l in ipairs(water.Layers) do pcall(function() l.frame:Destroy() end) end
+        water.Layers = {}
+        if not (water.On and bgLayer) then return end
+        for i, L in ipairs(WATER_LAYERS) do
+            local f = Instance.new("Frame")
+            f.Name = "WraithWater" .. i
+            f.Size = UDim2.new(1, 0, 1, 0)
+            f.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            f.BackgroundTransparency = 0
+            f.BorderSizePixel = 0
+            f.Active = false
+            f.ZIndex = 10 + i
+            rounded(f)
+            local g = Instance.new("UIGradient")
+            g.Rotation = L.rot
+            g.Color, g.Transparency = waterSequences(L)
+            g.Parent = f
+            f.Parent = bgLayer
+            water.Layers[i] = {frame = f, grad = g, def = L}
+        end
+    end
+    local function stepWater(dt)
+        if not water.On or #water.Layers == 0 or Window.Closed then return end
+        water.Acc = water.Acc + dt
+        if water.Acc < 1 / water.Fps then return end
+        water.T = water.T + water.Acc * water.Speed
+        water.Acc = 0
+        local t = water.T
+        for _, l in ipairs(water.Layers) do
+            local L = l.def
+            l.grad.Offset = Vector2.new(L.amp * math.sin(t * L.speed + L.phase), L.amp * 0.45 * math.cos(t * L.speed * 0.8 + L.phase))
+            l.grad.Rotation = L.rot + 7 * math.sin(t * L.speed * 0.5 + L.phase)
+        end
+    end
+    connect(game:GetService("RunService").Heartbeat, function(dt) safe("water", stepWater, dt) end)
+    -- o = {Enabled = bool, Strength = 0..1, Speed = 0..3, Tint = Color3}; anything left out keeps its value
+    function win:SetWater(o)
+        o = o or {}
+        local rebuild = false
+        if o.Enabled ~= nil and (o.Enabled == true) ~= water.On then water.On = o.Enabled == true; rebuild = true end
+        if type(o.Strength) == "number" and o.Strength == o.Strength then water.Strength = clamp(o.Strength, 0, 1); rebuild = true end
+        if type(o.Speed) == "number" and o.Speed == o.Speed then water.Speed = clamp(o.Speed, 0, 3) end
+        if typeof(o.Tint) == "Color3" then water.Tint = o.Tint; rebuild = true end
+        if rebuild then buildWater() end
+    end
+    function win:GetWater() return {Enabled = water.On, Strength = water.Strength, Speed = water.Speed, Layers = #water.Layers} end
+    if type(cfg.Water) == "table" then win:SetWater(cfg.Water) end
 
     local function clearMedia()
         if backdrop.media then pcall(function() backdrop.media:Destroy() end); backdrop.media = nil end
@@ -19606,6 +19943,12 @@ local function __run()
     local function clampNum(v, lo, hi, default) if type(v) == "number" and v == v then return math.max(lo, math.min(hi, v)) end return default end
     -- the Lab's own colours (the standard WindUI themes stay available too)
     WindAdapter.addThemes({
+        {Name = "Wraith White", Accent = "#10141b", Dialog = "#121822", Outline = "#f2f6fb", Text = "#f5f8fc", Placeholder = "#9aa6b5", Background = "#0b0f15", Button = "#3a4656", Icon = "#e6edf6",
+         Toggle = "#e9f1fb", Slider = "#dfe9f5", Checkbox = "#e9f1fb", Primary = "#f2f7ff", SliderIcon = "#c9d4e2", PanelBackground = "#ffffff", PanelBackgroundTransparency = 0.95,
+         LabelBackground = "#000000", LabelBackgroundTransparency = 0.8, ElementBackground = "#1a212c", ElementBackgroundTransparency = 0},
+        {Name = "Wraith Pearl", Accent = "#e8edf4", Dialog = "#f1f4f8", Outline = "#ffffff", Text = "#101826", Placeholder = "#5b6778", Background = "#e9eef5", Button = "#c3ccd8", Icon = "#3b4a5e",
+         Toggle = "#5b7fa6", Slider = "#5b7fa6", Checkbox = "#5b7fa6", Primary = "#4a6f99", SliderIcon = "#5b6778", PanelBackground = "#ffffff", PanelBackgroundTransparency = 0.6,
+         LabelBackground = "#ffffff", LabelBackgroundTransparency = 0.5, ElementBackground = "#ffffff", ElementBackgroundTransparency = 0},
         {Name = "Frost", Accent = "#0f1c24", Dialog = "#101c24", Outline = "#bfefff", Text = "#eaf8ff", Placeholder = "#7fa3b3", Background = "#0b1218", Button = "#2c4a5a", Icon = "#8fd8f0",
          Toggle = "#36d1ff", Slider = "#36d1ff", Checkbox = "#36d1ff", Primary = "#36d1ff", SliderIcon = "#8fd8f0", PanelBackground = "#bfefff", PanelBackgroundTransparency = 0.95,
          LabelBackground = "#000000", LabelBackgroundTransparency = 0.8, ElementBackground = "#17262f", ElementBackgroundTransparency = 0},
@@ -19617,6 +19960,16 @@ local function __run()
          LabelBackground = "#000000", LabelBackgroundTransparency = 0.8, ElementBackground = "#16291f", ElementBackgroundTransparency = 0},
     })
     local THEMES = WindAdapter.ThemeNames
+    -- the water is white on the dark themes and slate on the light one (white on white would not show)
+    local function waterTint(theme) return theme == "Wraith Pearl" and Color3.fromRGB(110, 130, 158) or Color3.fromRGB(255, 255, 255) end
+    local FONTS = {Default = "rbxassetid://12187365364", Gotham = "Gotham", Code = "Code", Fredoka = "FredokaOne", Arcade = "Arcade"}
+    local FONT_NAMES = {"Default", "Gotham", "Code", "Fredoka", "Arcade"}
+    local function fontFamily(name)
+        local f = FONTS[name]
+        if not f or f:find("^rbxassetid://") then return f end
+        local ok, family = pcall(function() return Font.fromEnum(Enum.Font[f]).Family end)
+        return ok and family or nil
+    end
     local FLOAT_DEFS = {   -- the on-screen buttons: id, label, icon, accent, the tech it runs (nil = Panic)
         {id = "panic", title = "PANIC", icon = "close", accent = {236, 64, 72}},
         {id = "hook", title = "HOOK", icon = "crosshair", accent = {120, 200, 255}, tech = "hook"},
@@ -19626,7 +19979,8 @@ local function __run()
         {id = "microdash", title = "MICRO", icon = "spark", accent = {255, 140, 200}, tech = "microdash"},
         {id = "shovedash", title = "SHOVE", icon = "knife", accent = {255, 160, 90}, tech = "shovedash"},
     }
-    local DEFAULT_UI = {theme = "Frost", uiKey = "RightShift", uiScale = 0.9, uiAlpha = 0.45, waves = "High", btnSize = 76, btnLock = false, autoLoad = false, configName = "default"}
+    local DEFAULT_UI = {theme = "Wraith White", uiKey = "RightShift", uiScale = 0.9, uiAlpha = 0.45, waves = "High", btnSize = 76, btnLock = false, autoLoad = false, configName = "default",
+        water = true, waterStrength = 0.7, waterSpeed = 1, bgUrl = "", bgDim = 0.35, font = "Default", popup = true}
     local S = {}
     for k, v in pairs(DEFAULT_UI) do S[k] = v end
     S.floats = {}
@@ -19675,6 +20029,12 @@ local function __run()
         if saved.waves == "High" or saved.waves == "Low" or saved.waves == "Off" then S.waves = saved.waves end
         S.btnSize = clampNum(saved.btnSize, 56, 120, S.btnSize)
         if type(saved.btnLock) == "boolean" then S.btnLock = saved.btnLock end
+        for _, key in ipairs({"water", "popup"}) do if type(saved[key]) == "boolean" then S[key] = saved[key] end end
+        S.waterStrength = clampNum(saved.waterStrength, 0, 1, S.waterStrength)
+        S.waterSpeed = clampNum(saved.waterSpeed, 0, 3, S.waterSpeed)
+        S.bgDim = clampNum(saved.bgDim, 0, 0.9, S.bgDim)
+        if type(saved.bgUrl) == "string" and #saved.bgUrl <= 300 and not saved.bgUrl:find("%c") then S.bgUrl = saved.bgUrl end
+        if type(saved.font) == "string" and FONTS[saved.font] then S.font = saved.font end
     end
     local function mergeFloats(saved)
         if type(saved) ~= "table" then return end
@@ -19767,7 +20127,8 @@ local function __run()
             if live then x, y = live:GetPos() end
             floats[id] = {x = x, y = y, visible = f.visible}
         end
-        return {version = 1, ui = {theme = S.theme, uiKey = S.uiKey, uiScale = S.uiScale, uiAlpha = S.uiAlpha, waves = S.waves, btnSize = S.btnSize, btnLock = S.btnLock},
+        return {version = 2, ui = {theme = S.theme, uiKey = S.uiKey, uiScale = S.uiScale, uiAlpha = S.uiAlpha, waves = S.waves, btnSize = S.btnSize, btnLock = S.btnLock,
+                water = S.water, waterStrength = S.waterStrength, waterSpeed = S.waterSpeed, bgUrl = S.bgUrl, bgDim = S.bgDim, font = S.font, popup = S.popup},
             floats = floats, techlab = lab:export()}
     end
     local function saveConfig(name)
@@ -19817,9 +20178,36 @@ local function __run()
         cfg.Theme = theme
         return UILib.new(cfg)
     end
-    Win = makeWindow{Title = "Wraith's TSB Lab", Subtitle = "The Strongest Battlegrounds", Group = "Wraith's TSB Lab", Parent = PARENT, GuiName = "WraithsTSBLab", Folder = "TSBLab",
+    local wide = (function() local cam = workspace.CurrentCamera; return cam and cam.ViewportSize.X >= 900 end)()
+    local showChangelog, toggleWater                                   -- (the top bar buttons are wired before the things they call exist)
+    Win = makeWindow{Title = "Wraith Hub v1.5", Subtitle = "The Strongest Battlegrounds", Group = "Wraith Hub", Parent = PARENT, GuiName = "WraithHub", Folder = "TSBLab",
         WaveMode = S.waves, ToggleKey = keyCodeFor(S.uiKey), OnError = report, WindowAlpha = S.uiAlpha, Scale = S.uiScale, Mono = false,
-        WindowIcon = "sword", OpenColors = {"#7ad7ff", "#9b7bff"}}
+        WindowIcon = "sparkles", OpenColors = {"#ffffff", "#9aa7b8"},
+        SearchBar = true, UserCard = true, SideBarWidth = wide and 200 or 130, Size = {660, 520}, TopbarStyle = "Default", Tag = {Title = "v1.5", Color = "#e8eef7"},
+        TopbarButtons = {
+            {Name = "Panic", Icon = "zap", Callback = function() lab:cancelAll("cancelled: panic"); notify("Panic", "Every running tech was cancelled", "good", 2) end},
+            {Name = "Water", Icon = "sparkles", Callback = function() if toggleWater then toggleWater() end end},
+            {Name = "Changelog", Icon = "info", Callback = function() if showChangelog then showChangelog() end end},
+        },
+        Water = {Enabled = S.water, Strength = S.waterStrength, Speed = S.waterSpeed, Tint = waterTint(S.theme)},
+        Background = S.bgUrl ~= "" and S.bgUrl or nil, BackgroundDim = S.bgDim,
+        OnBackground = function(ok, msg) if not ok then notify("Background not loaded", tostring(msg), "warn", 8) end end}
+    do local fam = fontFamily(S.font); if fam and S.font ~= "Default" then Win:SetFont(fam) end end
+    local CHANGELOG = {
+        "White water look: the Wraith White theme (and Wraith Pearl, a light one) with an animated white water background - made in the script, nothing is downloaded.",
+        "The WindUI layout of the hub it was rewritten from: welcome card, v1.5 tag, Panic / water / changelog buttons in the top bar, your player card, search, a card opening every tab, theme search, fonts.",
+        "Targeting: Nearest, Crosshair, Lowest health or Hook target first, and an option to skip players who are blocking.",
+        "Safe moves: a tech that moves you stops in front of a wall and never under the floor.",
+        "Knocked guard: no tech starts while you are ragdolled or stunned.",
+        "Chains: any tech can start another one (or an M1) when it is done, up to three links.",
+        "Input buffer: a key pressed just before the running tech ends goes right after it.",
+        "Hit check: each tech shows how often its target lost health afterwards (hits x/y).",
+    }
+    showChangelog = function()
+        local lines = {}
+        for i, l in ipairs(CHANGELOG) do lines[i] = "- " .. l end
+        Win:Dialog{Title = "What is new in v1.5", Content = table.concat(lines, "\n"), Buttons = {{Title = "Close", Variant = "Primary"}}}
+    end
     S.theme = Win:GetTheme()
     Hub.Win = Win
     Hub.Lab = lab
@@ -19871,7 +20259,7 @@ local function __run()
         end
     end
     local function paced(tab)
-        for _, name in ipairs({"Section", "Label", "Toggle", "Slider", "Dropdown", "Keybind", "Button", "Input"}) do
+        for _, name in ipairs({"Section", "Label", "Toggle", "Slider", "Dropdown", "Keybind", "Button", "Input", "Paragraph"}) do
             local f = tab[name]
             if f then tab[name] = function(self, ...) local r = f(self, ...); pace(); return r end end
         end
@@ -19881,8 +20269,9 @@ local function __run()
 
     ------------------------------------------------------------------------------------------ Overview
     local overview = paced(Win:Tab("Overview", tabIcon("layout-dashboard", "grid")))
+    overview:Paragraph{Title = "Wraith Hub v1.5", Image = tabIcon("sparkles", nil),
+        Desc = "The techs from your own Dovi's Hub script, rebuilt as small sequences on one engine: every wait stops when you die, respawn, press Panic or switch the tech off, everything a tech creates is removed again, a tech that starts with a dash waits for that dash's cooldown, and only one moving tech runs at a time. Everything starts OFF. Nothing was run in the real game - if a tech does not react, its trigger animation id has probably changed: use 'Learn trigger' inside the tech."}
     overview:Section("Tech Lab")
-    overview:Label("The techs from your own Dovi's Hub script, rebuilt as small sequences on one engine: every wait stops when you die, respawn, press Panic or switch the tech off, everything a tech creates is removed again, a tech that starts with a dash waits for that dash's cooldown, and only one moving tech runs at a time. Everything starts OFF. Nothing was run in the real game - if a tech does not react, its trigger animation id has probably changed: use 'Learn trigger' inside the tech.")
     overview:Toggle{Title = "Tech Lab master switch", Desc = "Off = every tech stops and ignores its trigger", Default = lab.master, Flag = "master", NoInitialCallback = true, Callback = guard("master", function(on)
         if lab.master ~= on then lab:setMaster(on); markDirty() end
     end)}
@@ -19897,9 +20286,21 @@ local function __run()
         Callback = guard("dashGuard", function(on) if lab.dashGuard ~= on then lab.dashGuard = on; markDirty() end end)}
     overview:Toggle{Title = "Let go of block before an M1", Default = lab.releaseBlock, Flag = "releaseBlock", NoInitialCallback = true,
         Callback = guard("releaseBlock", function(on) if lab.releaseBlock ~= on then lab.releaseBlock = on; markDirty() end end)}
+    overview:Section("Targeting and safety")
+    overview:Dropdown{Title = "Who the techs go for", Desc = "Crosshair = nearest to the middle of the screen; Hook target first = the player you picked with V", Values = TechMath.TARGET_MODES, Default = lab.targetMode,
+        Flag = "targetMode", Callback = guard("targetMode", function(v) if lab.targetMode ~= v then lab:setTargetMode(v); markDirty() end end)}
+    overview:Toggle{Title = "Skip players who are blocking", Desc = "Go for the next player instead", Default = lab.skipBlocking, Flag = "skipBlocking", NoInitialCallback = true,
+        Callback = guard("skipBlocking", function(on) if lab.skipBlocking ~= on then lab.skipBlocking = on; markDirty() end end)}
+    overview:Toggle{Title = "Safe moves", Desc = "A tech that moves you stops in front of a wall and never goes under the floor", Default = lab.safeMoves, Flag = "safeMoves", NoInitialCallback = true,
+        Callback = guard("safeMoves", function(on) if lab.safeMoves ~= on then lab.safeMoves = on; markDirty() end end)}
+    overview:Toggle{Title = "Not while I am knocked down", Desc = "No tech starts while you are ragdolled or stunned", Default = lab.guardKnocked, Flag = "guardKnocked", NoInitialCallback = true,
+        Callback = guard("guardKnocked", function(on) if lab.guardKnocked ~= on then lab.guardKnocked = on; markDirty() end end)}
+    overview:Slider{Title = "Input buffer (ms, 0 = off)", Desc = "A key pressed this long before the running tech ends goes right after it", Min = 0, Max = 1000, Step = 10, Default = lab.bufferMs, Flag = "bufferMs",
+        Callback = guard("bufferMs", function(v) if lab.bufferMs ~= v then lab.bufferMs = v; markDirty() end end)}
     overview:Section("Live")
     local cooldownLabel = overview:Label("")
     local pingLabel = overview:Label("")
+    local hitsLabel = overview:Label("Hits: nothing checked yet")
 
     ------------------------------------------------------------------------------------------ one tab per tech family
     local TABS = {
@@ -19980,23 +20381,70 @@ local function __run()
     end
     for _, t in ipairs(TABS) do
         local tab = paced(Win:Tab(t[1], tabIcon(t[2], t[3])))
+        local lines = {}
+        for _, id in ipairs(t[4]) do lines[#lines + 1] = lab.techs[id].title .. " - " .. lab.techs[id].when end
+        tab:Paragraph{Title = t[1], Desc = table.concat(lines, "\n"), Image = tabIcon(t[2], nil)}
         for _, id in ipairs(t[4]) do buildTech(tab, id) end
     end
 
     ------------------------------------------------------------------------------------------ Settings
     local settings = paced(Win:Tab("Settings", tabIcon("settings", "gear")))
+    settings:Paragraph{Title = "Settings", Desc = "The menu, the white water background, the ping model, the on-screen buttons and your configs. Nothing here is saved until you press Save config.", Image = tabIcon("settings", nil)}
     settings:Section("Menu")
     settings:Keybind{Title = "Menu key", Desc = "Shows / hides this window", Default = S.uiKey, Flag = "uiKey", Changed = guard("menu key", function(v)
         if S.uiKey ~= v then S.uiKey = v; Win.ToggleKey = keyCodeFor(v); markDirty() end
     end)}
-    settings:Dropdown{Title = "Theme", Values = THEMES, Default = S.theme, Flag = "theme", Callback = guard("theme", function(v)
-        if S.theme ~= v then S.theme = v; Win:SetTheme(v); markDirty() end
+    settings:Dropdown{Title = "Theme", Desc = "Wraith White is the v1.5 look", Values = THEMES, Default = S.theme, Flag = "theme", Search = true, MenuWidth = 220, Callback = guard("theme", function(v)
+        if S.theme ~= v then S.theme = v; Win:SetTheme(v); Win:SetWater{Tint = waterTint(v)}; markDirty() end
+    end)}
+    settings:Dropdown{Title = "Font", Values = FONT_NAMES, Default = S.font, Flag = "font", Callback = guard("font", function(v)
+        if S.font ~= v and FONTS[v] then
+            S.font = v
+            local fam = fontFamily(v)
+            if fam then Win:SetFont(fam) end
+            markDirty()
+        end
+    end)}
+    settings:Toggle{Title = "Welcome card at start", Default = S.popup, Flag = "popup", NoInitialCallback = true, Callback = guard("popup", function(on)
+        if S.popup ~= on then S.popup = on; markDirty() end
     end)}
     settings:Slider{Title = "Menu size", Min = 0.55, Max = 1.2, Step = 0.05, Default = S.uiScale, Flag = "uiScale", Callback = guard("uiScale", function(v)
         if S.uiScale ~= v then S.uiScale = v; if Win.SetScale then Win:SetScale(v) end; markDirty() end
     end)}
     settings:Slider{Title = "Window transparency", Min = 0, Max = 0.9, Step = 0.05, Default = S.uiAlpha, Flag = "uiAlpha", Callback = guard("uiAlpha", function(v)
         if S.uiAlpha ~= v then S.uiAlpha = v; if Win.SetBackgroundTransparency then Win:SetBackgroundTransparency(v) end; markDirty() end
+    end)}
+    settings:Section("Background")
+    local waterToggle = settings:Toggle{Title = "White water", Desc = "Animated white water behind the menu (also the water button in the top bar)", Default = S.water, Flag = "water", NoInitialCallback = true,
+        Callback = guard("water", function(on) if S.water ~= on then S.water = on; Win:SetWater{Enabled = on}; markDirty() end end)}
+    toggleWater = function()
+        S.water = not S.water
+        Win:SetWater{Enabled = S.water}
+        if waterToggle then waterToggle:Set(S.water, true) end
+        markDirty()
+        notify("White water", S.water and "On" or "Off", "info", 2)
+    end
+    settings:Slider{Title = "Water brightness", Min = 0, Max = 1, Step = 0.05, Default = S.waterStrength, Flag = "waterStrength", Callback = guard("waterStrength", function(v)
+        if S.waterStrength ~= v then S.waterStrength = v; Win:SetWater{Strength = v}; markDirty() end
+    end)}
+    settings:Slider{Title = "Wave speed", Min = 0, Max = 3, Step = 0.05, Default = S.waterSpeed, Flag = "waterSpeed", Callback = guard("waterSpeed", function(v)
+        if S.waterSpeed ~= v then S.waterSpeed = v; Win:SetWater{Speed = v}; markDirty() end
+    end)}
+    settings:Label("Your own picture or video under the water (optional): a direct link to a .png / .jpg / .webm, or rbxassetid://. A video needs an executor that can save files; WindUI itself says video backgrounds may not work everywhere.")
+    settings:Input{Title = "Picture / video link", Default = S.bgUrl, Placeholder = "empty = none", Flag = "bgUrl", Callback = guard("bgUrl", function(text)
+        text = tostring(text or ""):gsub("^%s+", ""):gsub("%s+$", "")
+        if #text > 300 or text:find("%c") then notify("Background", "That link is not usable", "warn", 4) return end
+        if S.bgUrl == text then return end
+        S.bgUrl = text
+        markDirty()
+        if not Win.SetBackground then notify("Background", "The built-in menu has no background picture", "warn", 4) return end
+        Win:SetBackground(text, function(ok, msg)
+            if text == "" then return end
+            notify(ok and "Background set" or "Background not loaded", ok and ("A " .. tostring(msg) .. " is behind the menu") or tostring(msg), ok and "good" or "warn", 5)
+        end)
+    end)}
+    settings:Slider{Title = "Darken the picture / video", Min = 0, Max = 0.9, Step = 0.05, Default = S.bgDim, Flag = "bgDim", Callback = guard("bgDim", function(v)
+        if S.bgDim ~= v then S.bgDim = v; if Win.SetBackgroundDim then Win:SetBackgroundDim(v) end; markDirty() end
     end)}
     settings:Section("Ping")
     settings:Label("What the Tech Lab does with your ping: waits that start at one of your own animations start earlier by how late those animations arrive after your input (measured from your own dashes), another player is led by half your ping plus Roblox's drawing delay, and a number tuned at 60 ms scales with your ping.")
@@ -20047,6 +20495,7 @@ local function __run()
         notify(ok and "Config saved" or "Not saved", ok and ("'" .. S.configName .. "' will be available next time") or tostring(why), ok and "good" or "bad", 4)
         if ok then refreshConfigList() end
     end)}
+    local LAB_FLAGS = {master = true, input = true, dashGuard = true, releaseBlock = true, targetMode = true, skipBlocking = true, safeMoves = true, guardKnocked = true, bufferMs = true}
     settings:Button{Title = "Load config (rebuilds nothing - applies live)", Callback = guard("load", function()
         local data = decodeFile(pathOf(S.configName))
         if not data then notify("Not loaded", "There is no saved config called " .. S.configName, "warn", 4) return end
@@ -20062,13 +20511,19 @@ local function __run()
                 if tech and key == "on" then el:Set(tech.enabled, true)
                 elseif tech and tech.opt[key] ~= nil then el:Set(tech.opt[key], true)
                 elseif id == "net" and lab.net[key] ~= nil then el:Set(lab.net[key], true)
-                elseif id == "float" and S.floats[key] then el:Set(S.floats[key].visible, true) end
+                elseif id == "float" and S.floats[key] then el:Set(S.floats[key].visible, true)
+                elseif not id and S[flag] ~= nil and type(S[flag]) ~= "table" then el:Set(S[flag], true)
+                elseif not id and LAB_FLAGS[flag] then el:Set(lab[flag], true) end
             end
         end
         for id, f in pairs(Floats) do f:SetVisible(S.floats[id].visible) end
         Win:SetTheme(S.theme)
         if Win.SetScale then Win:SetScale(S.uiScale) end
         if Win.SetBackgroundTransparency then Win:SetBackgroundTransparency(S.uiAlpha) end
+        Win:SetWater{Enabled = S.water, Strength = S.waterStrength, Speed = S.waterSpeed, Tint = waterTint(S.theme)}
+        do local fam = fontFamily(S.font); if fam then Win:SetFont(fam) end end
+        if Win.SetBackgroundDim then Win:SetBackgroundDim(S.bgDim) end
+        if Win.SetBackground then Win:SetBackground(S.bgUrl) end
         refreshConfigStatus()
         notify("Config loaded", "'" .. S.configName .. "' is applied", "good", 3)
     end)}
@@ -20079,6 +20534,7 @@ local function __run()
     end)}
     settings:Button{Title = "Refresh the list", Callback = guard("refresh", refreshConfigList)}
     settings:Section("Help")
+    settings:Button{Title = "What is new in v1.5", Callback = guard("changelog", function() showChangelog() end)}
     settings:Button{Title = "Copy the log (for a bug report)", Callback = guard("copy log", function()
         local text = #LOG > 0 and table.concat(LOG, "\n") or "no errors logged"
         if Cap.clipboard and pcall(setclipboard, text) then notify("Log copied", #LOG .. " lines", "good", 2) else notify("Log", LOG[#LOG] or "empty", "info", 6) end
@@ -20099,10 +20555,16 @@ local function __run()
             local text = string.format("Forward dash: %s   |   Side dash: %s\nPing %s ms (jitter %.0f)   |   my animations arrive %s after my input   |   other players are led by %.0f ms",
                 f > 0 and string.format("%.1f s", f) or "ready", sd > 0 and string.format("%.1f s", sd) or "ready", n.ping and string.format("%.0f", n.ping) or "?", n.jitter,
                 n.lag and string.format("%.0f ms", n.lag * 1000) or string.format("not measured yet (%d of 3 samples)", n.samples), n.lead * 1000)
+            local hits = {}
+            for _, tech in ipairs(lab.order) do
+                local st = tech.stats
+                if (st.checked or 0) > 0 then hits[#hits + 1] = string.format("%s %d/%d", tech.title, st.hits or 0, st.checked) end
+            end
+            text = text .. "\n" .. (#hits > 0 and ("Hits: " .. table.concat(hits, ", ")) or "Hits: nothing checked yet")
             if text ~= last then
                 last = text
-                local a, b = text:match("^(.-)\n(.*)$")
-                cooldownLabel:Set(a); pingLabel:Set(b)
+                local a, b, c = text:match("^(.-)\n(.-)\n(.*)$")
+                cooldownLabel:Set(a); pingLabel:Set(b); hitsLabel:Set(c)
             end
         end))
     end
@@ -20110,13 +20572,18 @@ local function __run()
     refreshConfigStatus()
     Win:SelectTab("Overview")
     ready = true
-    notify("Wraith's TSB Lab loaded", "33 techs, all off. Nothing was run in the real game: use Learn trigger if one does not react.", "good", 5)
+    notify("Wraith Hub v1.5 loaded", #lab.order .. " techs, all off. Nothing was run in the real game: use Learn trigger if one does not react.", "good", 5)
+    if S.popup then
+        Win:Popup{Title = '<font color="#ffffff">Wraith</font> <font color="#dfe7f1">Hub</font> <font color="#aab6c6">v1.5</font>', Icon = tabIcon("sparkles", nil),
+            Content = "White water edition for The Strongest Battlegrounds. Every tech starts off; nothing is saved until you press Save config. Nothing was tested in the real game.",
+            Buttons = {{Title = "What is new", Variant = "Secondary", Callback = showChangelog}, {Title = "Start", Variant = "Primary"}}}
+    end
 end
 
 local ok, err = xpcall(__run, function(e) return debug.traceback(tostring(e), 2) end)
 if not ok and not tostring(err):find("__unloaded__", 1, true) then
-    warn("[Wraith's TSB Lab] failed to start: " .. tostring(err))
+    warn("[Wraith Hub v1.5] failed to start: " .. tostring(err))
     pcall(function()
-        game:GetService("StarterGui"):SetCore("SendNotification", {Title = "Wraith's TSB Lab failed to start", Text = tostring(err):sub(1, 180), Duration = 20})
+        game:GetService("StarterGui"):SetCore("SendNotification", {Title = "Wraith Hub v1.5 failed to start", Text = tostring(err):sub(1, 180), Duration = 20})
     end)
 end

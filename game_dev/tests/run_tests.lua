@@ -871,6 +871,37 @@ test("tech math: hook dash 'Behind' picks the side that ends up behind them, pre
     assert(top.point.x == top.point.x and top.point.z == top.point.z, "no NaN when standing on the target")
 end)
 
+test("tech math: target picking by mode", function()
+    local a = {name = "a", x = 0, y = 0, z = -10, dist = 10, health = 80}
+    local b = {name = "b", x = 6, y = 0, z = -3, dist = 6.7, health = 100}
+    local c = {name = "c", x = 0, y = 0, z = -30, dist = 30, health = 20}
+    local list = {a, b, c}
+    eq(TM.pickTarget(list, "Nearest").name, "b")
+    eq(TM.pickTarget(list, "Lowest health").name, "c")
+    local cam = {camPos = {x = 0, y = 0, z = 0}, camLook = {x = 0, y = 0, z = -1}}
+    eq(TM.pickTarget(list, "Crosshair", cam).name, "a", "a and c are both straight ahead: the nearer one wins")
+    eq(TM.pickTarget(list, "Hook target first", {preferred = c}).name, "c")
+    eq(TM.pickTarget(list, "Hook target first", {preferred = {}}).name, "b", "a preferred target that is not in range: the nearest")
+    eq(TM.pickTarget(list, "Crosshair").name, "b", "no camera: the nearest")
+    eq(TM.pickTarget({}, "Nearest"), nil)
+    eq(TM.pickTarget(nil, "Nearest"), nil)
+    eq(TM.pickTarget({{x = 1, y = 0, z = 0, dist = 1}}, "Lowest health").dist, 1, "no health known: falls back to distance")
+end)
+
+test("tech math: a move stops before a wall and never goes under the floor", function()
+    local from, to = {x = 0, y = 3, z = 0}, {x = 0, y = 3, z = -20}
+    local p = TM.stopShort(from, to, {x = 0, y = 3, z = -8}, 2)
+    near(p.z, -6, 1e-9); near(p.x, 0, 1e-9)
+    local q = TM.stopShort(from, to, nil, 2)
+    eq(q, to, "no hit: unchanged")
+    local r = TM.stopShort(from, to, {x = 0, y = 3, z = -1}, 2)
+    near(r.z, 0, 1e-9, "a wall right in front: stay where I am")
+    local u = TM.aboveFloor({x = 1, y = -4, z = 2}, 0, 2.5)
+    near(u.y, 2.5, 1e-9)
+    near(TM.aboveFloor({x = 1, y = 9, z = 2}, 0, 2.5).y, 9, 1e-9, "above the floor already: unchanged")
+    eq(TM.aboveFloor({x = 1, y = 9, z = 2}, nil, 2.5).y, 9)
+end)
+
 test("tech math: latency lead, tuned numbers scale with ping, waits shift by the animation lag", function()
     near(TM.leadSeconds(100, 80, 1), 0.13, 1e-9, "(50 + 80) ms")
     near(TM.leadSeconds(100, 80, 0), 0, 1e-9, "strength 0 = no lead")
