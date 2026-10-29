@@ -126,7 +126,7 @@ Only the **menu** changed. Auto block, the combo cards (Run / On screen / Assist
 - **Built a little at a time**: the ~700 controls are made a few per frame (the tab on screen first), so opening the hub does not freeze a phone. The window is usable at once; the other tabs fill in behind it.
 - **The old menu is the fallback**: if WindUI cannot start (an executor that blocks its file / web calls) or half-builds, the previous menu opens exactly as it was, and `getgenv().AH_LEGACY_UI = true` before running the loader keeps it on purpose.
 - **Size**: the script now carries WindUI (about 670 KB minified instead of 290 KB). The file names and loader links are unchanged.
-- **Tested** (`tests/classic_wind_tests.lua`: 66 checks of the menu layer against a stub; `tests/classic_tests.lua`: the whole hub on the real WindUI in the strict simulated world - boot and structure, controls, the Tech Lab, combo cards with pins and
+- **Tested** (`tests/classic_wind_tests.lua`: 66 checks of the menu layer against a stub; `tests/classic_tests.lua`: 224 checks of the whole hub on the real WindUI in the strict simulated world - boot and structure, controls, the Tech Lab, combo cards with pins and
   option drawers, teleports, the floating bar, the look, config save / load / junk / reload / delete, Panic, the built-in menu both ways, unloading - and the old 34-scenario smoke test, which now covers the built-in menu). Mutation checks (`tools/mutate_classic_wind.py`, `tools/mutate_classic.py`) are in the repo.
   **Not tested**: how it looks on a screen (there is no renderer for WindUI's images), how fast ~700 WindUI controls build on a phone, or anything in the real game.
 
