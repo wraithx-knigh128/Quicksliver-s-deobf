@@ -121,9 +121,9 @@ take-over, clicks the game already consumed are ignored, and touch players teach
 
 ```lua
 -- Wraith Hub v1.5 (WindUI)
-loadstring(game:HttpGet("https://raw.githubusercontent.com/wraithx-knigh128/Quicksliver-s-deobf/33dc2ecd9a334cba03259182b5508e9ac3d80ec0/dist/tsb_lab.min.txt"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/wraithx-knigh128/Quicksliver-s-deobf/56a8e15004c3c0096cd282c3475b64b8366ccd0a/dist/tsb_lab.min.txt"))()
 -- Animation Hub (auto block, combos, Tech Lab tab)
-loadstring(game:HttpGet("https://raw.githubusercontent.com/wraithx-knigh128/Quicksliver-s-deobf/33dc2ecd9a334cba03259182b5508e9ac3d80ec0/dist/tsb_hub_executor.min.txt"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/wraithx-knigh128/Quicksliver-s-deobf/56a8e15004c3c0096cd282c3475b64b8366ccd0a/dist/tsb_hub_executor.min.txt"))()
 ```
 
 ## Tech Lab
