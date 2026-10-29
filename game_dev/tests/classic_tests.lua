@@ -561,11 +561,12 @@ if on then
     check(from ~= nil, "(the test could break the window half way)")
     local half = SCRIPT_SOURCE:sub(1, from - 1) .. 'error("half way")' .. SCRIPT_SOURCE:sub(to + 1)
     local sim2 = game()
-    boot(sim2, half, 2)
+    boot(sim2, half, 0.1)
     local left = 0
     for _, g in ipairs(sim2.W.M.GetChildren(sim2.W.coreGui)) do if g.Name:find("^WindUI") then left = left + 1 end end
-    check(hub(sim2) == nil and hasText(sim2, "AnimationHubTSB", "Effects Preset"), "a window that fails half way: the built-in menu opens")
-    check(left == 0, "...and the half-made WindUI window is gone (" .. left .. " WindUI ScreenGuis left)")
+    check(left == 0, "a window that fails half way is taken down at once, not after WindUI's own 0.4 s (" .. left .. " WindUI ScreenGuis left)")
+    sim2:run(2)
+    check(hub(sim2) == nil and hasText(sim2, "AnimationHubTSB", "Effects Preset"), "...and the built-in menu opens")
     check(#sim2.W.warns == 1 and sim2.W.warns[1]:find("half way", 1, true), "...with one warning: " .. tostring(sim2.W.warns[1]))
     -- (WindUI's own opening animation, already under way, meets the window that was taken down: it trips over the missing Background and ends - harmless)
     clean(sim2, "half-made window", true, "Background is not a valid member")

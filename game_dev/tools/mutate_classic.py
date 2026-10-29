@@ -33,6 +33,9 @@ MUTANTS = {
  "tabs open without their card": ("        if cards then\n            local blurb", "        if false then\n            local blurb", "boot"),
  "the ping is never shown": ("        pingPill = Backend.pingPill(\"-- ms\", \"#9be8c4\")", "        pingPill = {}", "teleports"),
 }
+# the slider that shows a look value starts by reporting its (clamped) value to the hub, which stores it: a wrong number from a file never survives into anything
+# a test can see, whether or not the loader clamps it first
+EQUIVALENT = {"a wrong look value is not clamped"}
 bad = 0
 ran = 0
 with tempfile.TemporaryDirectory() as tmp:
@@ -47,7 +50,7 @@ with tempfile.TemporaryDirectory() as tmp:
         r = subprocess.run([sys.executable, "tests/run_tsb.py", "classic"], capture_output=True, text=True, env=dict(os.environ, CLASSIC_HUB=path, CLASSIC_SECTIONS=sections))
         caught = r.returncode != 0
         first = [l for l in (r.stdout + r.stderr).splitlines() if l.startswith("FAIL")][:1]
-        print("caught   " if caught else "SURVIVED ", name, first, flush=True)
-        if not caught: bad += 1
+        print("caught   " if caught else ("equivalent" if name in EQUIVALENT else "SURVIVED "), name, first, flush=True)
+        if not caught and name not in EQUIVALENT: bad += 1
 print("%d mutants, %d problems" % (ran, bad))
 sys.exit(1 if bad else 0)
