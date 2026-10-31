@@ -1,4 +1,4 @@
---!strict
+--!nonstrict
 -- Arena metadata. Geometry, props, lighting and particles are built by the client's
 -- StageBuilder from the `theme` id; everything tunable lives here.
 

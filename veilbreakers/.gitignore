@@ -1,0 +1,5 @@
+# individual synthesized clips (regenerate with tools/synth_audio.py); the four
+# upload-ready atlases in audio/atlas/ are committed
+audio/*.ogg
+/tmp/
+*.rbxl.lock

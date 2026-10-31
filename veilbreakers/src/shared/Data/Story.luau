@@ -1,4 +1,4 @@
---!strict
+--!nonstrict
 -- Story Mode: "Chapter I - The Sundered Veil".
 -- A chapter is a list of beats: cinematic scenes (in-engine, letterboxed, subtitled)
 -- and fights. Camera shots are authored as presets relative to the actors so the

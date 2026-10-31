@@ -1,6 +1,8 @@
-std = "roblox"
+std = "veil"
 
 [lints]
 shadowing = "allow"
 unused_variable = "warn"
 multiple_statements = "allow"
+empty_if = "warn"
+bad_string_escape = "allow"

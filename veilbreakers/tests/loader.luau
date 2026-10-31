@@ -67,9 +67,11 @@ local function vrequire(node)
 	local src = sources[file]
 	assert(src, "module not found: " .. file)
 	local env = {}
+	for k, v in Loader.extra do
+		env[k] = v
+	end
 	env.script = node
 	env.require = vrequire
-	setmetatable(env, { __index = Loader.globals })
 	local fn = luau.load(src, { debugName = file, environment = env })
 	local result = fn()
 	cache[path] = result
@@ -77,6 +79,14 @@ local function vrequire(node)
 end
 
 Loader.globals = getfenv(1)
+
+-- Expose extra globals (e.g. Roblox datatypes from @lune/roblox) to loaded modules.
+Loader.extra = {}
+function Loader.addGlobals(extra)
+	for k, v in extra do
+		Loader.extra[k] = v
+	end
+end
 
 function Loader.root(dir: string)
 	-- returns a node representing a folder, e.g. "src/shared"

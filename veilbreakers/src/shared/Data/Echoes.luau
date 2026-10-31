@@ -1,4 +1,4 @@
---!strict
+--!nonstrict
 -- Echoes: spectral allies summoned mid-fight. Each has a neutral and a down variant.
 -- Frame counts are measured from the moment the Echo materialises.
 

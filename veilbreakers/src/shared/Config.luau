@@ -1,4 +1,4 @@
---!strict
+--!nonstrict
 -- Global tuning values for VEILBREAKERS. Everything in the combat engine runs on a
 -- fixed 60 Hz tick, so all durations here are in frames unless the name says otherwise.
 

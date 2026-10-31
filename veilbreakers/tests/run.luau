@@ -296,6 +296,7 @@ local totals = {
 	maxComboDamage = 0,
 }
 local moveUse = {}
+local sideWins = { 0, 0 }
 local seed = 1
 for _, a in Fighters.list do
 	for _, b in Fighters.list do
@@ -335,6 +336,9 @@ for _, a in Fighters.list do
 			end)
 			check(ok, string.format("%s vs %s (lvl %d) crashed: %s", a.id, b.id, level, tostring(err)))
 			check(match.over, string.format("%s vs %s (lvl %d) did not finish in time (phase %s, round %d)", a.id, b.id, level, match.phase, match.round))
+			if match.winner then
+				sideWins[match.winner] += 1
+			end
 			totals.matches += 1
 			totals.frames += frames
 			for _, f in match.fighters do
@@ -375,6 +379,8 @@ print(string.format(
 	totals.parries
 ))
 print(string.format("  best combo %d hits / %d damage", totals.maxCombo, totals.maxComboDamage))
+print(string.format("  side balance: P1 won %d, P2 won %d", sideWins[1], sideWins[2]))
+check(math.min(sideWins[1], sideWins[2]) >= totals.matches * 0.3, "no side advantage from processing order")
 check(totals.supers > 0, "CPU uses supers")
 check(totals.echoes > 0, "CPU summons echoes")
 check(totals.throws > 0, "CPU throws")

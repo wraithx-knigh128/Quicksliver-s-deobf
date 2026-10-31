@@ -47,7 +47,7 @@ end
 -- Fighter construction
 -------------------------------------------------------------------------------
 
-local function newFighter(match, index: number, spec)
+local function newFighter(_match, index: number, spec)
 	local def = Fighters.get(spec.fighter)
 	local echoDef = Echoes.get(spec.echo or "okoro")
 	local maxHp = def.health
@@ -850,9 +850,8 @@ local function applyHit(match, attacker, victim, hit, source: string, activeIdx:
 	if guard == "unblockable" then
 		blocking = false
 	elseif blocking then
-		if guard == "low" and not victim.crouch then
-			blocking = false
-		elseif guard == "overhead" and victim.crouch then
+		local wrongHeight = (guard == "low" and not victim.crouch) or (guard == "overhead" and victim.crouch)
+		if wrongHeight then
 			blocking = false
 		end
 	end
@@ -1376,8 +1375,6 @@ local function stepFighter(match, f)
 		if not f.throwPartner then
 			setState(f, "stand")
 		end
-	elseif st == "super" then
-		-- driven by the cinematic
 	elseif st == "dead_down" or st == "win" or st == "dazed" or st == "banished" then
 		-- idle until the next round
 		if isAirborne(f) then
@@ -1484,12 +1481,27 @@ local function checkMoveHits(match)
 		emit(match, { type = "tech", fighter = 1, x = (match.fighters[1].x + match.fighters[2].x) / 2, y = 3 })
 		return
 	end
+	-- strikes beat throws that start on the same frame
+	local striking = {}
+	for _, p in pending do
+		if not p.grab then
+			striking[p.f.index] = true
+		end
+	end
+	-- capture each attacker's move before resolving so simultaneous hits trade
+	-- symmetrically (neither player gets priority from processing order)
+	for _, p in pending do
+		p.move = p.f.move
+	end
 	for _, p in pending do
 		local f, o = p.f, p.o
-		if f.state ~= "attack" then
-			continue -- got hit by a simultaneous attack resolved first (trade still applies below)
+		local m = p.move
+		if p.grab and striking[o.index] then
+			continue
 		end
-		local m = f.move
+		if p.grab and f.state ~= "attack" then
+			continue
+		end
 		if p.grab then
 			if o.state == "attack" and o.move and o.move.id == "THROW" and o.moveT <= o.move.startup + o.move.active then
 				-- both throwing
@@ -1511,7 +1523,7 @@ local function checkMoveHits(match)
 				f.moveBlocked = true
 			elseif result == "hit" or result == "launch" or result == "knockdown" then
 				f.moveHit = true
-				if m.cinematic and match.phase == "fight" then
+				if m.cinematic and match.phase == "fight" and f.state == "attack" and f.move == m then
 					-- start the super cinematic
 					match.cinematic = {
 						attacker = f.index,

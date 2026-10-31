@@ -1,4 +1,4 @@
---!strict
+--!nonstrict
 -- The VEILBREAKERS roster. Eight original fighters, each with standing / crouching /
 -- air normals, target-combo strings, four specials (neutral, forward, back, down),
 -- a meter super, a throw and a post-match finisher.

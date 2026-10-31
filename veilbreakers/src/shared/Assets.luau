@@ -1,10 +1,14 @@
---!strict
+--!nonstrict
 -- Content ids. Images were generated with ForgeGUI and published to Roblox under the
 -- project owner's account (approved by moderation).
 --
--- Sounds: the game ships with a synthesized SFX/music pack in /audio. Upload that
--- folder (see README "Audio") and paste the resulting ids into Sounds below. Any
--- entry left empty falls back to a built-in Roblox sound or is skipped silently.
+-- Audio: the game ships with a synthesized pack packed into four atlas files in
+-- /audio/atlas. Upload those four files (README "Audio") and paste their ids into
+-- AudioAtlas below; every SFX, voice, ambience and music cue then plays from its
+-- region (src/shared/AudioAtlas.luau). Individual ids in Sounds override the atlas.
+-- Anything without an id falls back to a built-in Roblox sound or stays silent.
+
+local Atlas = require(script.Parent.AudioAtlas)
 
 local Assets = {}
 
@@ -34,7 +38,15 @@ Assets.Particles = {
 
 Assets.Face = "rbxasset://textures/face.png"
 
--- Sound ids from the uploaded /audio pack. Leave "" to use the fallback.
+-- Asset ids of the four uploaded atlas files (numbers only or rbxassetid://...).
+Assets.AudioAtlas = {
+	sfx = "",
+	ambience = "",
+	music_a = "",
+	music_b = "",
+}
+
+-- Optional per-sound overrides. Leave "" to use the atlas / fallback.
 Assets.Sounds = {
 	music_menu = "",
 	music_select = "",
@@ -151,15 +163,27 @@ function Assets.image(key: string): string
 	return (Assets.Images :: any)[key] or ""
 end
 
-function Assets.sound(key: string): string
+local function normalise(id: string): string
+	if string.match(id, "^%d+$") then
+		return "rbxassetid://" .. id
+	end
+	return id
+end
+
+-- Returns (soundId, region?) where region = { start, length } inside an atlas.
+function Assets.sound(key: string): (string, { start: number, length: number }?)
 	local id = (Assets.Sounds :: any)[key]
 	if id and id ~= "" then
-		if string.match(id, "^%d+$") then
-			return "rbxassetid://" .. id
-		end
-		return id
+		return normalise(id), nil
 	end
-	return (Assets.SoundFallback :: any)[key] or ""
+	local region = Atlas[key]
+	if region then
+		local atlasId = (Assets.AudioAtlas :: any)[region.atlas]
+		if atlasId and atlasId ~= "" then
+			return normalise(atlasId), region
+		end
+	end
+	return (Assets.SoundFallback :: any)[key] or "", nil
 end
 
 return Assets

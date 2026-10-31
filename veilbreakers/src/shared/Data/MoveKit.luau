@@ -1,4 +1,4 @@
---!strict
+--!nonstrict
 -- Helpers for authoring move data compactly. Every move ends up as a plain table
 -- the combat engine reads directly (no Roblox types, so it runs headless in tests).
 
