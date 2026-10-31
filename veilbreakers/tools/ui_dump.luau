@@ -29,7 +29,24 @@ local function pump(n)
 	task.wait()
 end
 
-if which == "hud" then
+if which == "intro" then
+	-- round 1 intro: letterbox, P1 name card
+	local FightView = Loader.require(client.Render.FightView)
+	local view = FightView.new({
+		root = root,
+		p1 = { fighter = "studzilla", echo = "grandpa" },
+		p2 = { fighter = "guest", echo = "nightguard", cpu = true, difficulty = 3 },
+		stage = "cathedral",
+		seed = 5,
+	})
+	for _ = 1, 60 do
+		pump(5)
+		if view.hud.cards[1].frame.Visible then
+			break
+		end
+	end
+	pump(40)
+elseif which == "hud" then
 	if touch then
 		Input.mode = "touch"
 	end

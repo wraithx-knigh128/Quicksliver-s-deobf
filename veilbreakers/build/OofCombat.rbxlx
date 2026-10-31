@@ -14920,7 +14920,8 @@ local function sideBlock(hud, root, side: number, fighter, echo)
 	local tag = Theme.frame(holder, {
 		Name = "Tag",
 		Size = UDim2.fromOffset(58, 24),
-		Position = UDim2.new(left and 0 or 1, left and (barX + BAR_W - 58) or (barX - BAR_W + 58), 0, 54),
+		-- clear of the round pips at the inner end of the row
+		Position = UDim2.new(left and 0 or 1, left and (barX + BAR_W - 104) or (barX - BAR_W + 104), 0, 54),
 		AnchorPoint = Vector2.new(left and 0 or 1, 0),
 		BackgroundColor3 = tagText == "CPU" and Color3.fromHex("#2A2B30") or Color3.fromHex(fighter.accent),
 		BackgroundTransparency = 0.05,
@@ -15451,6 +15452,22 @@ function HUD:cinema(on: boolean, time: number?)
 	end
 	if self.timerFrame and self.timerPos then
 		Theme.tween(self.timerFrame, t, { Position = on and (self.timerPos + UDim2.fromOffset(0, -260)) or self.timerPos }, style)
+	end
+	if not on then
+		-- leaving the cinematic: no name card may linger into the fight
+		for side, c in self.cards do
+			if c.frame.Visible then
+				c.token += 1
+				local token = c.token
+				local left = side == 1
+				Theme.tween(c.frame, 0.25, { Position = UDim2.new(left and -0.6 or 1.6, 0, 0.62, 0) }, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+				task.delay(0.27, function()
+					if c.token == token and not self.destroyed then
+						c.frame.Visible = false
+					end
+				end)
+			end
+		end
 	end
 end
 

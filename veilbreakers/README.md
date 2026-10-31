@@ -217,9 +217,9 @@ It fails on any error raised in any handler.
 ## Previews
 
 `tools/rig_preview.py` and `tools/ui_preview.py` render offline previews from the
-real code: `docs/attacks_preview.png` shows heavy-attack poses, and
+real code: `docs/attacks_preview.png` shows heavy-attack poses,
 `docs/hud_layout.png` / `docs/hud_touch_layout.png` show the HUD layout for desktop
-and touch. These are layout mock-ups, not in-engine screenshots.
+and touch, and `docs/intro_layout.png` shows the letterboxed intro with its name card. These are layout mock-ups, not in-engine screenshots.
 
 ## Asset credits
 
