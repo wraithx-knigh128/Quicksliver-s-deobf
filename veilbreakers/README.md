@@ -9,6 +9,11 @@ mobile / gamepad / keyboard support.
 > arenas, UI and audio were made for this project. It is not a recreation of any
 > existing game.
 
+![Roster](docs/roster_preview.png)
+
+*Roster and Echoes rendered offline from the real rig code (`tools/rig_dump.luau`).
+In Roblox they're lit, shadowed and animated.*
+
 ## Play it
 
 1. Open **`build/Veilbreakers.rbxlx`** in Roblox Studio (File → Open from File).
@@ -153,6 +158,13 @@ is checked against Roblox's API. It then:
 - walks the real game flow: title → Practice → pause → quit → Versus → results.
 
 It fails on any error raised in any handler.
+
+## Previews
+
+`tools/rig_preview.py` and `tools/ui_preview.py` render offline previews from the
+real code: `docs/attacks_preview.png` shows heavy-attack poses, and
+`docs/hud_layout.png` / `docs/hud_touch_layout.png` show the HUD layout for desktop
+and touch. These are layout mock-ups, not in-engine screenshots.
 
 ## Asset credits
 
