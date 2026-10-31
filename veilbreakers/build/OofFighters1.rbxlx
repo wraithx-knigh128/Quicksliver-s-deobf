@@ -49,6 +49,7 @@ Assets.Images = {
 	Backdrop_cathedral = "rbxassetid://101210805452512",
 	Backdrop_emberthrone = "",
 	Backdrop_proving = "",
+	Backdrop_baseplate = "",
 }
 
 -- Built-in particle textures that ship with every Roblox client.
@@ -141,6 +142,7 @@ Assets.Sounds = {
 	fight = "",
 	finisher_ready = "",
 	shatter = "",
+	oof = "",
 	ui_move = "",
 	ui_confirm = "",
 	ui_back = "",
@@ -272,41 +274,42 @@ return {
 	music_select = { atlas = "music_a", start = 53.6833, length = 38.4 },
 	music_story = { atlas = "music_a", start = 92.4333, length = 45.0 },
 	music_victory = { atlas = "music_a", start = 137.7833, length = 15.0909 },
-	palm = { atlas = "sfx", start = 63.4732, length = 1.8 },
-	parry = { atlas = "sfx", start = 65.6232, length = 2.3 },
-	parry_ready = { atlas = "sfx", start = 68.2732, length = 0.6008 },
-	projectile_hit = { atlas = "sfx", start = 69.224, length = 1.75 },
-	ravens = { atlas = "sfx", start = 71.324, length = 2.4 },
-	roots = { atlas = "sfx", start = 74.074, length = 0.7971 },
-	round_gong = { atlas = "sfx", start = 75.2211, length = 5.75 },
-	shatter = { atlas = "sfx", start = 81.3211, length = 3.2 },
-	slide = { atlas = "sfx", start = 84.8711, length = 0.4471 },
-	smoke = { atlas = "sfx", start = 85.6682, length = 0.4971 },
-	spin = { atlas = "sfx", start = 86.5153, length = 0.3971 },
-	super_impact = { atlas = "sfx", start = 87.2624, length = 3.1 },
-	super_start = { atlas = "sfx", start = 90.7124, length = 3.9 },
-	tech = { atlas = "sfx", start = 94.9624, length = 0.3512 },
-	teleport = { atlas = "sfx", start = 95.6636, length = 1.85 },
-	throw_slam = { atlas = "sfx", start = 97.8635, length = 1.7 },
-	trap_set = { atlas = "sfx", start = 99.9135, length = 0.3971 },
-	ui_back = { atlas = "sfx", start = 100.6606, length = 0.1771 },
-	ui_confirm = { atlas = "sfx", start = 101.1877, length = 1.95 },
-	ui_lock = { atlas = "sfx", start = 103.4877, length = 2.1 },
-	ui_move = { atlas = "sfx", start = 105.9377, length = 0.0624 },
-	ui_select = { atlas = "sfx", start = 106.3501, length = 0.0471 },
-	ui_versus = { atlas = "sfx", start = 106.7472, length = 2.85 },
-	voice_d_attack = { atlas = "sfx", start = 109.9472, length = 1.74 },
-	voice_d_hurt = { atlas = "sfx", start = 112.0372, length = 1.82 },
-	voice_f_attack = { atlas = "sfx", start = 114.2072, length = 0.2371 },
-	voice_f_hurt = { atlas = "sfx", start = 114.7943, length = 0.3171 },
-	voice_h_attack = { atlas = "sfx", start = 115.4614, length = 2.19 },
-	voice_h_hurt = { atlas = "sfx", start = 118.0014, length = 2.27 },
-	voice_m_attack = { atlas = "sfx", start = 120.6214, length = 0.2371 },
-	voice_m_hurt = { atlas = "sfx", start = 121.2085, length = 0.3171 },
-	whoosh_heavy = { atlas = "sfx", start = 121.8756, length = 0.3371 },
-	whoosh_light = { atlas = "sfx", start = 122.5627, length = 0.1971 },
-	wing_flap = { atlas = "sfx", start = 123.1098, length = 0.4971 },
-	wolf_howl = { atlas = "sfx", start = 123.9569, length = 3.6 },
+	oof = { atlas = "sfx", start = 63.4732, length = 1.09 },
+	palm = { atlas = "sfx", start = 64.9132, length = 1.8 },
+	parry = { atlas = "sfx", start = 67.0632, length = 2.3 },
+	parry_ready = { atlas = "sfx", start = 69.7132, length = 0.6008 },
+	projectile_hit = { atlas = "sfx", start = 70.664, length = 1.75 },
+	ravens = { atlas = "sfx", start = 72.764, length = 2.4 },
+	roots = { atlas = "sfx", start = 75.514, length = 0.7971 },
+	round_gong = { atlas = "sfx", start = 76.6611, length = 5.75 },
+	shatter = { atlas = "sfx", start = 82.7611, length = 3.2 },
+	slide = { atlas = "sfx", start = 86.3111, length = 0.4471 },
+	smoke = { atlas = "sfx", start = 87.1082, length = 0.4971 },
+	spin = { atlas = "sfx", start = 87.9553, length = 0.3971 },
+	super_impact = { atlas = "sfx", start = 88.7024, length = 3.1 },
+	super_start = { atlas = "sfx", start = 92.1524, length = 3.9 },
+	tech = { atlas = "sfx", start = 96.4024, length = 0.3512 },
+	teleport = { atlas = "sfx", start = 97.1036, length = 1.85 },
+	throw_slam = { atlas = "sfx", start = 99.3035, length = 1.7 },
+	trap_set = { atlas = "sfx", start = 101.3535, length = 0.3971 },
+	ui_back = { atlas = "sfx", start = 102.1006, length = 0.1771 },
+	ui_confirm = { atlas = "sfx", start = 102.6277, length = 1.95 },
+	ui_lock = { atlas = "sfx", start = 104.9277, length = 2.1 },
+	ui_move = { atlas = "sfx", start = 107.3777, length = 0.0624 },
+	ui_select = { atlas = "sfx", start = 107.7901, length = 0.0471 },
+	ui_versus = { atlas = "sfx", start = 108.1872, length = 2.85 },
+	voice_d_attack = { atlas = "sfx", start = 111.3872, length = 1.74 },
+	voice_d_hurt = { atlas = "sfx", start = 113.4772, length = 1.82 },
+	voice_f_attack = { atlas = "sfx", start = 115.6472, length = 0.2371 },
+	voice_f_hurt = { atlas = "sfx", start = 116.2343, length = 0.3171 },
+	voice_h_attack = { atlas = "sfx", start = 116.9014, length = 2.19 },
+	voice_h_hurt = { atlas = "sfx", start = 119.4414, length = 2.27 },
+	voice_m_attack = { atlas = "sfx", start = 122.0614, length = 0.2371 },
+	voice_m_hurt = { atlas = "sfx", start = 122.6485, length = 0.3171 },
+	whoosh_heavy = { atlas = "sfx", start = 123.3156, length = 0.3371 },
+	whoosh_light = { atlas = "sfx", start = 124.0027, length = 0.1971 },
+	wing_flap = { atlas = "sfx", start = 124.5498, length = 0.4971 },
+	wolf_howl = { atlas = "sfx", start = 125.3969, length = 3.6 },
 }
 ]]></string>
         </Properties>
@@ -981,7 +984,7 @@ return AI
           <Properties>
             <string name="Name">Engine</string>
             <string name="Source"><![CDATA[--!nonstrict
--- VEILBREAKERS combat engine.
+-- OOF FIGHTERS 1 combat engine.
 --
 -- A deterministic, fixed-step (60 Hz) 2D fighting simulation. It knows nothing about
 -- Roblox instances: the client renders whatever state this module exposes and reacts
@@ -1031,7 +1034,7 @@ end
 
 local function newFighter(_match, index: number, spec)
 	local def = Fighters.get(spec.fighter)
-	local echoDef = Echoes.get(spec.echo or "okoro")
+	local echoDef = Echoes.get(spec.echo or "grandpa")
 	local maxHp = def.health
 	if spec.boss then
 		maxHp += Config.BossHealthBonus
@@ -3180,14 +3183,14 @@ return Rng
         <Properties>
           <string name="Name">Config</string>
           <string name="Source"><![CDATA[--!nonstrict
--- Global tuning values for VEILBREAKERS. Everything in the combat engine runs on a
+-- Global tuning values for OOF FIGHTERS 1. Everything in the combat engine runs on a
 -- fixed 60 Hz tick, so all durations here are in frames unless the name says otherwise.
 
 local Config = {}
 
-Config.GameTitle = "VEILBREAKERS"
-Config.GameSubtitle = "THE SUNDERED REALMS"
-Config.Version = "1.0.0"
+Config.GameTitle = "OOF FIGHTERS 1"
+Config.GameSubtitle = "THE GREAT SERVER RESET"
+Config.Version = "1.1.0"
 
 Config.TickRate = 60
 Config.TickDt = 1 / 60
@@ -3268,7 +3271,7 @@ Config.CameraLookHeight = 3.6
 Config.Difficulty = {
 	{
 		id = "novice",
-		name = "NOVICE",
+		name = "NOOB",
 		reaction = 26,
 		blockChance = 0.18,
 		punishChance = 0.15,
@@ -3281,7 +3284,7 @@ Config.Difficulty = {
 	},
 	{
 		id = "adept",
-		name = "ADEPT",
+		name = "PRO",
 		reaction = 16,
 		blockChance = 0.42,
 		punishChance = 0.45,
@@ -3294,7 +3297,7 @@ Config.Difficulty = {
 	},
 	{
 		id = "veteran",
-		name = "VETERAN",
+		name = "TRYHARD",
 		reaction = 11,
 		blockChance = 0.66,
 		punishChance = 0.75,
@@ -3307,7 +3310,7 @@ Config.Difficulty = {
 	},
 	{
 		id = "veilbreaker",
-		name = "VEILBREAKER",
+		name = "SWEAT",
 		reaction = 7,
 		blockChance = 0.86,
 		punishChance = 0.95,
@@ -3332,7 +3335,7 @@ return Config
           <Properties>
             <string name="Name">Echoes</string>
             <string name="Source"><![CDATA[--!nonstrict
--- Echoes: spectral allies summoned mid-fight. Each has a neutral and a down variant.
+-- Friends (internally "Echoes"): spectral allies summoned mid-fight. Each has a neutral and a down variant.
 -- Frame counts are measured from the moment the Echo materialises.
 
 local MoveKit = require(script.Parent.MoveKit)
@@ -3389,12 +3392,12 @@ end
 
 local list: { Echo } = {
 	{
-		id = "okoro",
-		name = "BROTHER OKORO",
-		title = "Keeper of Seals",
-		bio = "A monk of Skyreach whose prayer-seals once held back a flood of the dead. He answers any call made in good faith.",
+		id = "grandpa",
+		name = "GRANDPA STUDS",
+		title = "Played Since Beta, Will Tell You About It",
+		bio = "He remembers when everything was bricks and there was no jumping. He will tell you about it. Mid-fight. Whether you asked or not.",
 		accent = "#E8C66A",
-		callLine = "The seal holds!",
+		callLine = "Back in MY day we didn't HAVE combos!",
 		look = {
 			scale = 1.02,
 			width = 1.05,
@@ -3410,9 +3413,9 @@ local list: { Echo } = {
 			accent = "#E8C66A",
 			trim = "#7A2E1E",
 			glow = "#FFE39A",
-			face = "plain",
+			face = "bearded",
 			hair = "none",
-			hairColor = "#000000",
+			hairColor = "#E8E8E8",
 			headwear = "none",
 			mask = "none",
 			extras = { "prayer_beads", "sash" },
@@ -3420,7 +3423,7 @@ local list: { Echo } = {
 		},
 		neutral = E({
 			id = "okoro_n",
-			name = "Warding Seal",
+			name = "Back In My Day",
 			input = "ECHO",
 			anim = "cast_forward",
 			spawn = "behind",
@@ -3447,7 +3450,7 @@ local list: { Echo } = {
 		}),
 		down = E({
 			id = "okoro_d",
-			name = "Palm of Stillness",
+			name = "Old Man Strength",
 			input = "↓ + ECHO",
 			anim = "palm_strike",
 			spawn = "front",
@@ -3463,12 +3466,12 @@ local list: { Echo } = {
 		}),
 	},
 	{
-		id = "ilsa",
-		name = "ILSA",
-		title = "Huntress of the Pack",
-		bio = "A ranger raised by the great grey wolves of the Hrimfell pines. Where she goes, the pack follows.",
+		id = "dana",
+		name = "DOG WALKER DANA",
+		title = "Owner of Biscuit (Very Good Boy)",
+		bio = "Dana just wanted to walk her dog. Biscuit had other plans. Biscuit always has other plans.",
 		accent = "#C8D0D8",
-		callLine = "Hunt them down!",
+		callLine = "Biscuit! ZOOMIES!",
 		look = {
 			scale = 0.98,
 			width = 0.95,
@@ -3494,7 +3497,7 @@ local list: { Echo } = {
 		},
 		neutral = E({
 			id = "ilsa_n",
-			name = "Pack Rush",
+			name = "Biscuit Zoomies",
 			input = "ECHO",
 			anim = "point",
 			spawn = "behind",
@@ -3519,7 +3522,7 @@ local list: { Echo } = {
 		}),
 		down = E({
 			id = "ilsa_d",
-			name = "Fang Rise",
+			name = "Dig Attack",
 			input = "↓ + ECHO",
 			anim = "cast_ground",
 			spawn = "behind",
@@ -3547,12 +3550,12 @@ local list: { Echo } = {
 		}),
 	},
 	{
-		id = "warden",
-		name = "THE LANTERN WARDEN",
-		title = "Guide of Lost Souls",
-		bio = "Nobody remembers the face beneath the hood. The lantern leads the lost home, or somewhere far worse.",
+		id = "nightguard",
+		name = "THE NIGHT GUARD",
+		title = "Horror Game Survivor",
+		bio = "He has survived every horror game on the front page, mostly by screaming. His lantern has never once helped. He brings it anyway.",
 		accent = "#7FE3FF",
-		callLine = "Follow the light...",
+		callLine = "Did you hear that too?!",
 		look = {
 			scale = 1.1,
 			width = 1.0,
@@ -3579,7 +3582,7 @@ local list: { Echo } = {
 		},
 		neutral = E({
 			id = "warden_n",
-			name = "Gloam Lantern",
+			name = "Glowstick Grenade",
 			input = "ECHO",
 			anim = "cast_forward",
 			spawn = "behind",
@@ -3605,7 +3608,7 @@ local list: { Echo } = {
 		}),
 		down = E({
 			id = "warden_d",
-			name = "Wick Flare",
+			name = "Flashlight In The Face",
 			input = "↓ + ECHO",
 			anim = "lantern_raise",
 			spawn = "front",
@@ -3622,12 +3625,12 @@ local list: { Echo } = {
 		}),
 	},
 	{
-		id = "talon",
-		name = "GRIM TALON",
-		title = "Speaker for the Ravens",
-		bio = "An oracle who traded her eyes to the ravens for sight beyond the Veil. They still answer when she calls.",
+		id = "pigeon",
+		name = "PIGEON LADY",
+		title = "Commander of the Park",
+		bio = "She feeds the pigeons. The pigeons feed on her enemies. It's a whole ecosystem.",
 		accent = "#B03A4A",
-		callLine = "Feast, my children!",
+		callLine = "My babies are HUNGRY!",
 		look = {
 			scale = 0.96,
 			width = 0.92,
@@ -3653,7 +3656,7 @@ local list: { Echo } = {
 		},
 		neutral = E({
 			id = "talon_n",
-			name = "Murder of Crows",
+			name = "Pigeon Barrage",
 			input = "ECHO",
 			anim = "cast_forward",
 			spawn = "behind",
@@ -3679,7 +3682,7 @@ local list: { Echo } = {
 		}),
 		down = E({
 			id = "talon_d",
-			name = "Gallows Dive",
+			name = "Pigeon Dive Bomb",
 			input = "↓ + ECHO",
 			anim = "cast_up",
 			spawn = "behind",
@@ -3729,7 +3732,7 @@ return Echoes
           <Properties>
             <string name="Name">Fighters</string>
             <string name="Source"><![CDATA[--!nonstrict
--- The VEILBREAKERS roster. Eight original fighters, each with standing / crouching /
+-- The OOF FIGHTERS 1 roster: eight Roblox-parody fighters, each with standing / crouching /
 -- air normals, target-combo strings, four specials (neutral, forward, back, down),
 -- a meter super, a throw and a post-match finisher.
 --
@@ -4234,53 +4237,53 @@ local function add(f: { [string]: any })
 	table.insert(list, (f :: any) :: Fighter)
 end
 
--- 1. RAIKEN -------------------------------------------------------------------
+-- 1. THE NOOB -------------------------------------------------------------------
 add({
-	id = "raiken",
-	name = "RAIKEN",
-	short = "Raiken",
-	title = "The Storm Ronin",
-	realm = "Skyreach",
+	id = "noob",
+	name = "THE NOOB",
+	short = "Noob",
+	title = "Default Avatar Since 2006",
+	realm = "The Starter Place",
 	archetype = "Rushdown",
-	bio = "A masterless swordsman who swore his blade to the monks of Skyreach after the storm spirits chose him as their vessel. He hunts what crawls through the torn Veil.",
+	bio = "Never bought a single item. Never lost a fight he actually tried in. The storm spirits possessed him by accident while he was AFK, and now he fights for every player who has ever been called 'noob' in chat.",
 	accent = "#58B4FF",
 	health = 1000,
 	walkMult = 1.05,
 	weight = 1.0,
 	stance = "stance_blade",
-	superName = "HEAVEN'S SEVERANCE",
+	superName = "PING OF DEATH",
 	finisher = {
-		name = "TEN THOUSAND CUTS",
-		desc = "Raiken vanishes in a storm flash; a lattice of lightning cuts splits the foe into fading light.",
+		name = "FACTORY RESET",
+		desc = "The Noob slices so fast the opponent's avatar resets to default, then falls apart into bricks. Oof.",
 		style = "lightning",
 	},
 	voice = "male",
 	look = {
 		scale = 1.0,
 		width = 1.0,
-		skin = "#C98E6A",
-		torso = "#1E2A55",
-		torsoMat = "Fabric",
-		arms = "#1E2A55",
-		armsMat = "Fabric",
-		legs = "#141A33",
-		legsMat = "Fabric",
-		hands = "#2B2620",
-		feet = "#1B1712",
+		skin = "#F5CD30",
+		torso = "#0D69AC",
+		torsoMat = "SmoothPlastic",
+		arms = "#F5CD30",
+		armsMat = "SmoothPlastic",
+		legs = "#A4BD47",
+		legsMat = "SmoothPlastic",
+		hands = "#F5CD30",
+		feet = "#7C9C3A",
 		accent = "#58B4FF",
 		trim = "#C9A24A",
 		glow = "#7CC8FF",
-		face = "scarred",
-		hair = "topknot",
+		face = "classic",
+		hair = "none",
 		hairColor = "#141012",
 		headwear = "headband",
 		mask = "none",
-		extras = { "sash", "pauldron_l", "arm_wraps", "hakama" },
+		extras = { "sash", "arm_wraps" },
 		weapon = "katana",
 	},
 	moves = apply(baseNormals("blade"), {
 		SN = {
-			name = "Thunderbolt Toss",
+			name = "Ping Spike",
 			input = "SP",
 			kind = "special",
 			anim = "cast_forward",
@@ -4304,7 +4307,7 @@ add({
 			element = "lightning",
 		},
 		SF = {
-			name = "Flashstep Cut",
+			name = "Lag Dash",
 			input = "→ + SP",
 			kind = "special",
 			anim = "lunge_slash",
@@ -4324,7 +4327,7 @@ add({
 			trail = true,
 		},
 		SB = {
-			name = "Skybreaker",
+			name = "Rage Jump",
 			input = "← + SP",
 			kind = "special",
 			anim = "rising_slash",
@@ -4343,7 +4346,7 @@ add({
 			trail = true,
 		},
 		SD = {
-			name = "Storm Parry",
+			name = "AFK Parry",
 			input = "↓ + SP",
 			kind = "special",
 			anim = "parry_stance",
@@ -4357,7 +4360,7 @@ add({
 			element = "lightning",
 		},
 		PARRY_HIT = {
-			name = "Storm Retort",
+			name = "Wasn't Actually AFK",
 			input = "(parry)",
 			kind = "special",
 			anim = "slash_rising",
@@ -4374,7 +4377,7 @@ add({
 			element = "lightning",
 		},
 		SA = {
-			name = "Falling Storm",
+			name = "Fall Damage",
 			input = "Air ↓ + SP",
 			kind = "special",
 			anim = "dive_kick",
@@ -4392,7 +4395,7 @@ add({
 			sfx = "dash_slash",
 			element = "lightning",
 		},
-		SUPER = super("Heaven's Severance", "super_raiken", "storm", 0.4),
+		SUPER = super("Ping of Death", "super_raiken", "storm", 0.4),
 	}),
 	ai = {
 		range = 2.6,
@@ -4407,40 +4410,40 @@ add({
 		juggle = { "H", "SF" },
 	},
 	intro = {
-		"The storm chose me. I only follow its path.",
-		"Draw your weapon. I will not ask twice.",
-		"Lightning does not hesitate. Neither will I.",
+		"I've been playing since 2006. You joined yesterday.",
+		"Default avatar. Maximum damage.",
+		"Bro really thinks his skin makes him stronger.",
 	},
 	victory = {
-		"The storm passes. You remain on the ground.",
-		"One stroke. That is all a true cut needs.",
-		"Rise when you have learned humility.",
+		"gg ez. ...jk. Unless?",
+		"Skins don't block damage.",
+		"That's what you get for calling me a noob.",
 	},
 	ending = {
-		"With the Hollow King's crown shattered, the storm spirits fell silent within Raiken for the first time in years.",
-		"He returned to Skyreach and laid his katana before the monks, but the abbot pressed it back into his hands.",
-		"\"The Veil is thin in a thousand places,\" she said. \"A storm cannot rest.\" Raiken walked into the clouds that same night.",
+		"With the Admin defeated, the Noob was offered every item in the Avatar Shop. For free.",
+		"He looked at the shop for a very long time. Then he closed it.",
+		"The default avatar is not a lack of style, he explained to nobody in particular. It is a lifestyle.",
 	},
 })
 
--- 2. SERAPHINE VAEL ----------------------------------------------------------
+-- 2. BACON HAIR ----------------------------------------------------------
 add({
-	id = "seraphine",
-	name = "SERAPHINE",
-	short = "Seraphine",
-	title = "The Last Lancer",
-	realm = "Aurelian Spire",
+	id = "bacon",
+	name = "BACON HAIR",
+	short = "Bacon Hair",
+	title = "Knight of the Free Hairstyle",
+	realm = "Avatar Shop (Free Section)",
 	archetype = "Mid-Range Control",
-	bio = "Final knight of the Aurelian Lance, an order that guarded the Veil from a citadel above the clouds. Her order fell in a single night. She intends to learn why.",
+	bio = "Everyone underestimates the Bacon Hair. That is exactly the plan. She saved for three years to buy those wings and she will absolutely put a spear through anyone who laughs at them.",
 	accent = "#3FE0C8",
 	health = 1000,
 	walkMult = 1.0,
 	weight = 0.95,
 	stance = "stance_pole",
-	superName = "AURELIAN JUDGEMENT",
+	superName = "HAIR FLIP OF JUDGEMENT",
 	finisher = {
-		name = "THE WINGED VERDICT",
-		desc = "Seraphine rises on wings of light and drives her lance down; the foe is sealed in a pillar of radiance and crumbles to glowing ash.",
+		name = "EXTRA CRISPY",
+		desc = "Bacon Hair calls down a sizzling pillar of holy light and fries the opponent until only a crispy outline remains. It smells amazing.",
 		style = "radiant",
 	},
 	voice = "female",
@@ -4459,8 +4462,8 @@ add({
 		accent = "#3FE0C8",
 		trim = "#D6B25E",
 		glow = "#7FFFE8",
-		face = "plain",
-		hair = "braid_long",
+		face = "classic",
+		hair = "bacon",
 		hairColor = "#1A120E",
 		headwear = "circlet",
 		mask = "none",
@@ -4469,7 +4472,7 @@ add({
 	},
 	moves = apply(baseNormals("pole"), {
 		SN = {
-			name = "Halo Disc",
+			name = "Free Halo",
 			input = "SP",
 			kind = "special",
 			anim = "cast_forward",
@@ -4495,7 +4498,7 @@ add({
 			element = "radiant",
 		},
 		SF = {
-			name = "Lance Rush",
+			name = "Skewer Run",
 			input = "→ + SP",
 			kind = "special",
 			anim = "thrust_lunge",
@@ -4514,7 +4517,7 @@ add({
 			trail = true,
 		},
 		SB = {
-			name = "Ascension",
+			name = "Wings I Saved Up For",
 			input = "← + SP",
 			kind = "special",
 			anim = "rising_slash",
@@ -4533,7 +4536,7 @@ add({
 			trail = true,
 		},
 		SD = {
-			name = "Judgement Pillar",
+			name = "Report Button",
 			input = "↓ + SP",
 			kind = "special",
 			anim = "cast_ground",
@@ -4561,7 +4564,7 @@ add({
 			element = "radiant",
 		},
 		SA = {
-			name = "Heavenfall Lance",
+			name = "Dive Bomb",
 			input = "Air ↓ + SP",
 			kind = "special",
 			anim = "dive_lance",
@@ -4579,7 +4582,7 @@ add({
 			sfx = "wing_flap",
 			element = "radiant",
 		},
-		SUPER = super("Aurelian Judgement", "super_seraphine", "radiant", 0.8),
+		SUPER = super("Hair Flip of Judgement", "super_seraphine", "radiant", 0.8),
 	}),
 	ai = {
 		range = 4.2,
@@ -4594,73 +4597,72 @@ add({
 		juggle = { "H", "SF" },
 	},
 	intro = {
-		"By the Lance, I will see this through.",
-		"Stand aside, or be cast down.",
-		"My order fell. I did not.",
+		"Say 'bacon hair' one more time. I dare you.",
+		"These wings cost 400 Robux. Don't touch them.",
+		"I'm about to serve you. Breakfast style.",
 	},
 	victory = {
-		"The Spire remembers. So shall you.",
-		"Judgement is rendered.",
-		"Rest. The Veil still needs guarding.",
+		"Sizzled.",
+		"Free hairstyle. Paid beatdown.",
+		"And THAT is why you respect the bacon.",
 	},
 	ending = {
-		"In the ashes of the Ember Throne, Seraphine found the sigil of her fallen order, carried as a trophy by the Hollow King.",
-		"She rebuilt the Aurelian Lance from survivors of every realm: warriors, wardens, even hunters who had once stood against her.",
-		"The new order swore a single oath: no realm would ever again face the dark alone.",
+		"Bacon Hair took the Admin's crown and finally bought the hairstyle she always wanted.",
+		"Two days later she changed it back. Nobody feared her without the bacon.",
+		"She now leads the most feared group on the server: Bacon Hair Knights (No Hats Allowed).",
 	},
 })
 
--- 3. MORRGATH ----------------------------------------------------------------
+-- 3. STUDZILLA ----------------------------------------------------------------
 add({
-	id = "morrgath",
-	name = "MORRGATH",
-	short = "Morrgath",
-	title = "The Bog Warden",
-	realm = "Hollowroot Mire",
+	id = "studzilla",
+	name = "STUDZILLA",
+	short = "Studzilla",
+	title = "The 2008 Kaiju Made of Free Bricks",
+	realm = "Abandoned Build Server",
 	archetype = "Grappler",
-	bio = "Ancient guardian of the Hollowroot, grown from the bones of a fallen giant and a thousand years of roots. Slow to anger. Impossible to stop once he is.",
+	bio = "Built by a bored kid in 2008 out of every brick in the toolbox, then left unanchored. Now he is sentient, enormous, and extremely upset about never being anchored.",
 	accent = "#5BFF6A",
 	health = 1060,
 	walkMult = 0.82,
 	weight = 1.35,
 	stance = "stance_heavy",
-	superName = "THE MIRE REMEMBERS",
+	superName = "BUILDING TOOLS UNLOCKED",
 	finisher = {
-		name = "RETURN TO THE ROOT",
-		desc = "Roots erupt and swallow the foe whole; the mire closes over them and a single jade flower blooms where they stood.",
+		name = "WELD FAILURE",
+		desc = "Studzilla hugs the opponent so hard their welds break. Every limb falls off, one at a time, the classic way.",
 		style = "nature",
 	},
 	voice = "deep",
 	look = {
 		scale = 1.18,
 		width = 1.25,
-		skin = "#4A3A2A",
-		torso = "#3B2E22",
-		torsoMat = "Wood",
-		arms = "#46372A",
-		armsMat = "Wood",
-		legs = "#2E241B",
-		legsMat = "Wood",
-		hands = "#3A2D21",
-		feet = "#2A2018",
+		skin = "#F5CD30",
+		torso = "#C4281C",
+		torsoMat = "SmoothPlastic",
+		arms = "#F5CD30",
+		armsMat = "SmoothPlastic",
+		legs = "#0D69AC",
+		legsMat = "SmoothPlastic",
+		hands = "#4B974B",
+		feet = "#1B2A35",
 		accent = "#5BFF6A",
 		trim = "#5C6B3A",
 		glow = "#7DFF8C",
-		face = "none",
-		hair = "moss",
-		hairColor = "#2F4A22",
-		headwear = "antlers",
-		mask = "skull",
-		eyes = "#7DFF8C",
-		extras = { "bark_plates", "moss_cloak", "root_arms", "mushrooms" },
-		weapon = "fists",
+		face = "classic",
+		hair = "none",
+		hairColor = "#4B974B",
+		headwear = "none",
+		mask = "none",
+		extras = { "studs", "brick_plates" },
+		weapon = "brick_fists",
 	},
 	moves = apply(baseNormals("unarmed"), {
 		L = { damage = 32, startup = 7, recovery = 10 },
 		H = { damage = 68, startup = 13, recovery = 17, box = { x = 2.2, y = 3.6, w = 2.4, h = 1.8 } },
 		DH = { damage = 78, startup = 11 },
 		SN = {
-			name = "Thornline",
+			name = "Brick Wave",
 			input = "SP",
 			kind = "special",
 			anim = "cast_ground",
@@ -4686,7 +4688,7 @@ add({
 			element = "nature",
 		},
 		SF = {
-			name = "Rootsnare",
+			name = "Unanchored Hug",
 			input = "→ + SP",
 			kind = "special",
 			anim = "grab_cmd",
@@ -4703,7 +4705,7 @@ add({
 			element = "nature",
 		},
 		SB = {
-			name = "Mire Quake",
+			name = "Gravity Check",
 			input = "← + SP",
 			kind = "special",
 			anim = "ground_pound",
@@ -4721,7 +4723,7 @@ add({
 			element = "nature",
 		},
 		SD = {
-			name = "Barkhide",
+			name = "Anchored Mode",
 			input = "↓ + SP",
 			kind = "special",
 			anim = "armor_stance",
@@ -4735,7 +4737,7 @@ add({
 			element = "nature",
 		},
 		BARK_HIT = {
-			name = "Splintering Retort",
+			name = "UNANCHOR!",
 			input = "(barkhide)",
 			kind = "special",
 			anim = "hammer_fist",
@@ -4751,7 +4753,7 @@ add({
 			hitSfx = "hit_heavy",
 			element = "nature",
 		},
-		SUPER = super("The Mire Remembers", "super_morrgath", "nature", 0.6),
+		SUPER = super("Building Tools Unlocked", "super_morrgath", "nature", 0.6),
 	}),
 	ai = {
 		range = 2.4,
@@ -4766,69 +4768,70 @@ add({
 		juggle = { "H", "SB" },
 	},
 	intro = {
-		"Root and stone. You tread on both.",
-		"The Mire does not forgive trespass.",
-		"I have buried kings older than your bloodline.",
+		"ME. UNANCHORED. YOU. UNPREPARED.",
+		"STUDZILLA. HAS. STUDS.",
+		"YOU. ARE. A. FREE MODEL.",
 	},
 	victory = {
-		"Sleep. The roots will keep you.",
-		"The Mire is patient. As am I.",
-		"Go home, small one.",
+		"STUDZILLA. WINS. CLICK. SAVE.",
+		"YOU. FELL. APART. CLASSIC.",
+		"ANCHOR. YOURSELF. NEXT TIME.",
 	},
 	ending = {
-		"Morrgath carried the Hollow King's broken body back to the Mire and buried it beneath the oldest root.",
-		"From the grave grew a tree that wept green fire, and its seeds sealed every tear in the Veil they touched.",
-		"The Warden tends that tree still, and woe to anyone who comes to harvest it.",
+		"Studzilla was finally anchored. By choice.",
+		"He built a beautiful new map out of the Admin's throne, every brick placed with love.",
+		"It has no spawn location. He is still working on that part.",
 	},
 })
 
--- 4. NYX ASHVEIL -------------------------------------------------------------
+-- 4. GUEST 666 -------------------------------------------------------------
 add({
-	id = "nyx",
-	name = "NYX",
-	short = "Nyx",
-	title = "Shade of the Drowned Choir",
-	realm = "Drowned Cathedral",
+	id = "guest",
+	name = "GUEST 666",
+	short = "Guest 666",
+	title = "The Account That Should Not Exist",
+	realm = "Deleted Accounts Folder",
 	archetype = "Mix-up / Teleport",
-	bio = "Once a choir novice in the cathedral that sank beneath the moon-lake, Nyx returned from the drowning with a voice no one could hear and a shadow that moves on its own.",
+	bio = "Guests were removed from the platform years ago. Guest 666 did not get the memo. It appears in empty servers at 3 AM, never types in chat, and is always standing right behind you.",
 	accent = "#A86BFF",
 	health = 950,
 	walkMult = 1.12,
 	weight = 0.85,
 	stance = "stance_dual",
-	superName = "REQUIEM OF SHADOWS",
+	superName = "3 AM SERVER",
 	finisher = {
-		name = "SILENT HYMN",
-		desc = "Nyx's shadow rises behind the foe and pulls them beneath a lake of violet ink; only their echo remains, fading like a held note.",
+		name = "ACCOUNT TERMINATED",
+		desc = "Guest 666 just stares. The opponent's username turns into a row of hashtags, then they glitch out of existence.",
 		style = "shadow",
 	},
 	voice = "female",
 	look = {
 		scale = 0.95,
 		width = 0.9,
-		skin = "#D9B9A4",
-		torso = "#1A1424",
+		skin = "#A3A2A5",
+		torso = "#1B1B1F",
 		torsoMat = "Fabric",
 		arms = "#1A1424",
 		armsMat = "Fabric",
-		legs = "#120E1A",
+		legs = "#2A2A30",
 		legsMat = "Leather",
-		hands = "#0F0C14",
+		hands = "#A3A2A5",
 		feet = "#0F0C14",
 		accent = "#A86BFF",
 		trim = "#7A6A8E",
 		glow = "#C9A0FF",
-		face = "plain",
-		hair = "bob",
+		face = "classic",
+		hair = "none",
 		hairColor = "#E8E6F0",
-		headwear = "hood",
-		mask = "veil",
-		extras = { "shadow_cape", "belt_daggers", "arm_wraps", "skirt_tatters" },
+		headwear = "guest_cap",
+		mask = "none",
+		extras = { "shadow_cape", "belt_daggers" },
 		weapon = "daggers",
+		eyes = "#FF2A2A",
 	},
 	moves = apply(baseNormals("dual"), {
 		SN = {
-			name = "Umbral Orb",
+			name = "Creepypasta Orb",
 			input = "SP",
 			kind = "special",
 			anim = "cast_forward",
@@ -4852,7 +4855,7 @@ add({
 			element = "shadow",
 		},
 		SF = {
-			name = "Shade Step",
+			name = "Behind You",
 			input = "→ + SP",
 			kind = "special",
 			anim = "teleport",
@@ -4867,7 +4870,7 @@ add({
 			element = "shadow",
 		},
 		SB = {
-			name = "Crescent Flurry",
+			name = "Spam Click",
 			input = "← + SP",
 			kind = "special",
 			anim = "dual_flurry",
@@ -4888,7 +4891,7 @@ add({
 			trail = true,
 		},
 		SD = {
-			name = "Veil Drop",
+			name = "Jumpscare",
 			input = "↓ + SP",
 			kind = "special",
 			anim = "veil_drop",
@@ -4908,7 +4911,7 @@ add({
 			element = "shadow",
 		},
 		SA = {
-			name = "Night Glide",
+			name = "Spooky Glide",
 			input = "Air ↓ + SP",
 			kind = "special",
 			anim = "dive_kick",
@@ -4926,7 +4929,7 @@ add({
 			sfx = "teleport",
 			element = "shadow",
 		},
-		SUPER = super("Requiem of Shadows", "super_nyx", "shadow", 0.3),
+		SUPER = super("3 AM Server", "super_nyx", "shadow", 0.3),
 	}),
 	ai = {
 		range = 3.0,
@@ -4942,39 +4945,39 @@ add({
 	},
 	intro = {
 		"...",
-		"Shhh. Listen to the water.",
-		"The choir sings for you tonight.",
+		"[Guest 666 has joined the game]",
+		"Turn around.",
 	},
 	victory = {
-		"Hush now.",
-		"Another voice for the choir.",
-		"The lake is very cold. You will see.",
+		"...",
+		"[Guest 666 has left the game]",
+		"See you at 3 AM.",
 	},
 	ending = {
-		"When the Hollow King fell, the drowned choir beneath the cathedral finally stopped singing.",
-		"Nyx walked into the moon-lake and did not come back up, but every night since, a single voice has been heard from the water, singing a hymn of thanks.",
-		"Some say she found her way home. Others say she is still listening, waiting for the next voice to join her.",
+		"Guest 666 took over the Admin panel and did the scariest thing imaginable.",
+		"Absolutely nothing. It just stood there. For eleven hours.",
+		"The server has never been quieter. They say if you join at 3 AM, you can hear it typing.",
 	},
 })
 
--- 5. TORVALD -----------------------------------------------------------------
+-- 5. FROSTY -----------------------------------------------------------------
 add({
-	id = "torvald",
-	name = "TORVALD",
-	short = "Torvald",
-	title = "The Frostbound",
-	realm = "Hrimfell",
+	id = "frosty",
+	name = "FROSTY",
+	short = "Frosty",
+	title = "100% Free Model, 0% Scripts",
+	realm = "The Toolbox",
 	archetype = "Heavy Zoner",
-	bio = "Jarl of a frozen hold buried in a single night of endless winter. He wields a hammer of glacier iron and carries the cold of his lost people in his chest.",
+	bio = "A viking found in the toolbox under 'cool ice guy no virus'. He contains at least four viruses and one extremely real hammer. Nobody knows who made him. Neither does he.",
 	accent = "#8FE6FF",
 	health = 1050,
 	walkMult = 0.86,
 	weight = 1.25,
 	stance = "stance_heavy",
-	superName = "WINTER WITHOUT END",
+	superName = "INFINITE BRAIN FREEZE",
 	finisher = {
-		name = "GLACIAL TOMB",
-		desc = "Torvald plants his hammer; ice races over the foe and seals them in a glacier, which he shatters into a storm of glittering frost.",
+		name = "ICE TO MEET YOU",
+		desc = "Frosty freezes the opponent solid, then punts the ice block so hard it slides off the edge of the map forever.",
 		style = "ice",
 	},
 	voice = "deep",
@@ -4998,12 +5001,12 @@ add({
 		hairColor = "#C9B8A0",
 		headwear = "horned_helm",
 		mask = "none",
-		extras = { "fur_collar", "belt_heavy", "bracers", "fur_kilt" },
+		extras = { "fur_collar", "belt_heavy", "bracers", "fur_kilt", "free_model_tag" },
 		weapon = "hammer",
 	},
 	moves = apply(baseNormals("heavy"), {
 		SN = {
-			name = "Rime Shard",
+			name = "Ice Cube Toss",
 			input = "SP",
 			kind = "special",
 			anim = "cast_forward",
@@ -5027,7 +5030,7 @@ add({
 			element = "ice",
 		},
 		SF = {
-			name = "Avalanche Charge",
+			name = "Free Model Rush",
 			input = "→ + SP",
 			kind = "special",
 			anim = "shoulder_charge",
@@ -5047,7 +5050,7 @@ add({
 			element = "ice",
 		},
 		SB = {
-			name = "Hammerfall",
+			name = "Hammer Time",
 			input = "← + SP",
 			kind = "special",
 			anim = "leap_slam",
@@ -5066,7 +5069,7 @@ add({
 			element = "ice",
 		},
 		SD = {
-			name = "Glacier Wall",
+			name = "Anti-Exploit Wall",
 			input = "↓ + SP",
 			kind = "special",
 			anim = "cast_ground",
@@ -5093,7 +5096,7 @@ add({
 			sfx = "cast_ice",
 			element = "ice",
 		},
-		SUPER = super("Winter Without End", "super_torvald", "ice", 0.7),
+		SUPER = super("Infinite Brain Freeze", "super_torvald", "ice", 0.7),
 	}),
 	ai = {
 		range = 4.2,
@@ -5108,40 +5111,40 @@ add({
 		juggle = { "H", "SF" },
 	},
 	intro = {
-		"My hold froze for a thousand nights. You will not last one.",
-		"Come then. Warm my hammer.",
-		"Hrimfell remembers every debt.",
+		"Inserting free model... done.",
+		"I came from the toolbox. You're going back in it.",
+		"Four viruses. One hammer. Zero chill.",
 	},
 	victory = {
-		"Winter takes all in the end.",
-		"Stay down. The cold is kinder than I am.",
-		"Skål, to a worthy foe.",
+		"Chill out.",
+		"Ice to meet you. Bye.",
+		"Rate 5 stars, no virus. Probably.",
 	},
 	ending = {
-		"From the Hollow King's vault Torvald recovered the Heartflame of Hrimfell, stolen the night his hold froze.",
-		"He carried it home across the ice and set it in the great hearth. For the first time in a generation, the snow outside began to melt.",
-		"Torvald's people woke from the ice one by one. The first thing they saw was their jarl, weeping, hammer at his feet.",
+		"Frosty was cleaned of all four viruses and became a respected moderator.",
+		"Then someone inserted him into a new game and he got all four viruses back.",
+		"He considers this the circle of life.",
 	},
 })
 
--- 6. ZHURA -------------------------------------------------------------------
+-- 6. EMOTE QUEEN -------------------------------------------------------------------
 add({
-	id = "zhura",
-	name = "ZHURA",
-	short = "Zhura",
-	title = "The Sunfire Dancer",
-	realm = "Saffron Dunes",
+	id = "emote",
+	name = "EMOTE QUEEN",
+	short = "Emote Queen",
+	title = "Owns Every Dance, Paid For None",
+	realm = "The Dance Floor Server",
 	archetype = "Rushdown",
-	bio = "A blade-dancer of the sun temples who turned her ritual chakrams into weapons when the Veil-tide swallowed the oasis cities. She fights the way she dances: without pause.",
+	bio = "She spent her entire life savings on emotes and fights exclusively in choreography. Her chakrams are technically two hula hoops. Nobody has ever landed a hit on her mid-dance. Do not be the first to try.",
 	accent = "#FF9A2E",
 	health = 970,
 	walkMult = 1.15,
 	weight = 0.9,
 	stance = "stance_unarmed",
-	superName = "NOON ETERNAL",
+	superName = "DANCE BATTLE (MANDATORY)",
 	finisher = {
-		name = "SOLAR ECLIPSE",
-		desc = "Zhura's chakrams orbit faster and faster into a miniature sun that engulfs the foe, then collapses into a falling rain of golden embers.",
+		name = "SPOTLIGHT",
+		desc = "She drops a disco ball on the opponent. They're forced to dance until they fall apart. Brutal, but rhythmic.",
 		style = "fire",
 	},
 	voice = "female",
@@ -5165,14 +5168,14 @@ add({
 		hairColor = "#1C1210",
 		headwear = "veil_headdress",
 		mask = "none",
-		extras = { "sash", "bangles", "skirt_tatters", "gold_collar" },
+		extras = { "sash", "bangles", "skirt_tatters", "gold_collar", "headphones" },
 		weapon = "chakram",
 	},
 	moves = apply(baseNormals("unarmed"), {
 		L = { startup = 5, recovery = 8 },
 		K = { startup = 8, damage = 44 },
 		SN = {
-			name = "Sunwheel",
+			name = "Hula Hoop Toss",
 			input = "SP",
 			kind = "special",
 			anim = "cast_forward",
@@ -5199,7 +5202,7 @@ add({
 			element = "fire",
 		},
 		SF = {
-			name = "Dune Glide",
+			name = "Moonwalk Slide",
 			input = "→ + SP",
 			kind = "special",
 			anim = "slide",
@@ -5219,7 +5222,7 @@ add({
 			element = "fire",
 		},
 		SB = {
-			name = "Solar Arc",
+			name = "Backflip Emote",
 			input = "← + SP",
 			kind = "special",
 			anim = "flip_kick",
@@ -5237,7 +5240,7 @@ add({
 			element = "fire",
 		},
 		SD = {
-			name = "Ember Bloom",
+			name = "Spin Emote",
 			input = "↓ + SP",
 			kind = "special",
 			anim = "spin_burst",
@@ -5255,7 +5258,7 @@ add({
 			hitSfx = "hit_heavy",
 			element = "fire",
 		},
-		SUPER = super("Noon Eternal", "super_zhura", "fire", 0.4),
+		SUPER = super("Dance Battle (Mandatory)", "super_zhura", "fire", 0.4),
 	}),
 	ai = {
 		range = 2.3,
@@ -5270,40 +5273,40 @@ add({
 		juggle = { "L", "SN" },
 	},
 	intro = {
-		"Keep up, if you can.",
-		"The sun is watching. Make it a good show.",
-		"Every step is a prayer. Every strike, an answer.",
+		"Five, six, seven, eight!",
+		"Keep up. If you can.",
+		"This next emote is called 'you lose'.",
 	},
 	victory = {
-		"Too slow for the dance.",
-		"The sun sets on you.",
-		"Ha! Again? No? Shame.",
+		"And... pose!",
+		"Too slow for the dance floor.",
+		"Encore? No? Shame.",
 	},
 	ending = {
-		"Zhura danced the Rite of First Light atop the ruins of the Ember Throne, and the dunes answered.",
-		"Oases bloomed in a single night across the Saffron Dunes, and the buried temple cities rose from the sand.",
-		"She is high priestess now, though she still slips away from ceremonies to spar with anyone foolish enough to challenge her.",
+		"Emote Queen celebrated her victory with a 47-minute dance routine.",
+		"Every emote she owns, in alphabetical order. The crowd left at minute nine.",
+		"She danced the remaining 38 minutes alone. Honestly? Her best performance.",
 	},
 })
 
--- 7. VESPER CROWE ------------------------------------------------------------
+-- 7. THE CAMPER ------------------------------------------------------------
 add({
-	id = "vesper",
-	name = "VESPER",
-	short = "Vesper",
-	title = "The Ashen Hunter",
-	realm = "Gallowmoor",
+	id = "camper",
+	name = "THE CAMPER",
+	short = "Camper",
+	title = "Hasn't Moved Since Round One",
+	realm = "The Bush (Battle Royale Map)",
 	archetype = "Zoner",
-	bio = "A monster hunter from the gallows-town on the moor, paid in silver and secrets. The Hollow King's coin bought her crossbow. Nobody has ever bought her loyalty.",
+	bio = "A sniper who believes the best fight is one where the other person never finds you. She has camped in the same bush for six days. The bush is part of her now.",
 	accent = "#FF3B4E",
 	health = 960,
 	walkMult = 1.0,
 	weight = 0.92,
 	stance = "stance_ranged",
-	superName = "HUNTER'S REQUIEM",
+	superName = "THIRD PARTY",
 	finisher = {
-		name = "LAST RITES",
-		desc = "Vesper pins the foe with silver bolts, lights a censer of ash-powder, and walks away as the target crumbles to drifting cinders.",
+		name = "CAMPED",
+		desc = "She hides in a bush. The opponent looks around, confused. Forty arrows later, the bush wins.",
 		style = "ash",
 	},
 	voice = "female",
@@ -5327,12 +5330,12 @@ add({
 		hairColor = "#8E2A1E",
 		headwear = "tricorn",
 		mask = "half",
-		extras = { "long_coat", "bandolier", "belt_pouches", "gauntlet" },
+		extras = { "long_coat", "bandolier", "belt_pouches", "gauntlet", "bush_suit" },
 		weapon = "crossbow",
 	},
 	moves = apply(baseNormals("ranged"), {
 		SN = {
-			name = "Silver Bolt",
+			name = "Bush Shot",
 			input = "SP",
 			kind = "special",
 			anim = "shoot",
@@ -5356,7 +5359,7 @@ add({
 			element = "ash",
 		},
 		SF = {
-			name = "Rending Hook",
+			name = "Yoink Hook",
 			input = "→ + SP",
 			kind = "special",
 			anim = "hook_throw",
@@ -5381,7 +5384,7 @@ add({
 			element = "ash",
 		},
 		SB = {
-			name = "Smoke Vial",
+			name = "Hide In Bush",
 			input = "← + SP",
 			kind = "special",
 			anim = "roll_back",
@@ -5396,7 +5399,7 @@ add({
 			element = "ash",
 		},
 		SD = {
-			name = "Gallows Trap",
+			name = "Bear Trap (Rare)",
 			input = "↓ + SP",
 			kind = "special",
 			anim = "place_trap",
@@ -5423,7 +5426,7 @@ add({
 			sfx = "trap_set",
 			element = "ash",
 		},
-		SUPER = super("Hunter's Requiem", "super_vesper", "ash", 0.9),
+		SUPER = super("Third Party", "super_vesper", "ash", 0.9),
 	}),
 	ai = {
 		range = 6.0,
@@ -5438,47 +5441,47 @@ add({
 		juggle = { "L", "SN" },
 	},
 	intro = {
-		"Nothing personal. Just paid.",
-		"Hold still. It's cleaner that way.",
-		"I've hunted worse than you before breakfast.",
+		"Shh. I'm a bush.",
+		"You can't hit what you can't see.",
+		"I've been here six days. You're not ruining this spot.",
 	},
 	victory = {
-		"Bounty collected.",
-		"Next time, run.",
-		"Silver never misses.",
+		"Camped.",
+		"Back to the bush.",
+		"Never saw it coming, did you?",
 	},
 	ending = {
-		"Vesper collected the Hollow King's crown as proof of the kill and walked into the Gallowmoor guildhall with it under her arm.",
-		"The bounty was enough to buy the whole town. She bought the gallows instead, and burned them.",
-		"Rumour says she still takes contracts, but only on things that hunt the helpless.",
+		"The Camper won the entire tower without anyone seeing her once.",
+		"Officials still aren't sure she was in the building.",
+		"Somewhere, a very suspicious bush is holding a trophy.",
 	},
 })
 
--- 8. THE HOLLOW KING -----------------------------------------------------------
+-- 8. THE ADMIN (boss) -----------------------------------------------------------
 add({
-	id = "hollowking",
-	name = "THE HOLLOW KING",
-	short = "Hollow King",
-	title = "Tyrant of the Ember Throne",
-	realm = "Ember Throne",
+	id = "admin",
+	name = "THE ADMIN",
+	short = "Admin",
+	title = "Owner of the Server (Allegedly)",
+	realm = "The Admin Panel",
 	archetype = "Boss / Power",
-	bio = "Aurel Mor, once a just king who bargained with the void to save his dying realm. The void kept its promise. His realm lives, inside him, a thousand screaming souls fuelling green fire.",
+	bio = "He bought admin commands for 25 Robux and the power went straight to his head. He has kicked thousands of players for 'being cringe' and now plans to ;shutdown the whole server. Somebody has to stop him.",
 	accent = "#63FF8A",
 	health = 1080,
 	walkMult = 0.9,
 	weight = 1.3,
 	stance = "stance_blade",
-	superName = "THRONE OF A THOUSAND SOULS",
+	superName = "THRONE OF A THOUSAND BANS",
 	finisher = {
-		name = "SOUL HARVEST",
-		desc = "The Hollow King opens his hand; the foe's soul is drawn out as green fire and swallowed by his crown, leaving an empty shell that collapses into ash.",
+		name = ";KILL",
+		desc = "The Admin types ;kill in chat. That's it. That's the whole finisher. The opponent falls apart instantly.",
 		style = "soulfire",
 	},
 	voice = "hollow",
 	look = {
 		scale = 1.16,
 		width = 1.14,
-		skin = "#6D7A6A",
+		skin = "#EAB892",
 		torso = "#1C1F1B",
 		torsoMat = "CorrodedMetal",
 		arms = "#23271F",
@@ -5490,19 +5493,18 @@ add({
 		accent = "#63FF8A",
 		trim = "#8C6A2E",
 		glow = "#63FF8A",
-		face = "none",
+		face = "classic",
 		hair = "none",
 		hairColor = "#000000",
 		headwear = "crown",
-		mask = "skull_helm",
-		eyes = "#63FF8A",
-		extras = { "royal_cape", "pauldron_l", "pauldron_r", "soul_chains", "greaves" },
+		mask = "none",
+		extras = { "royal_cape", "pauldron_l", "pauldron_r", "soul_chains", "greaves", "admin_tag" },
 		weapon = "greatsword",
 	},
 	moves = apply(baseNormals("blade"), {
 		H = { damage = 64, startup = 12 },
 		SN = {
-			name = "Soulfire Wave",
+			name = ";fire all",
 			input = "SP",
 			kind = "special",
 			anim = "cast_ground",
@@ -5527,7 +5529,7 @@ add({
 			element = "soulfire",
 		},
 		SF = {
-			name = "Tyrant's Advance",
+			name = ";speed 100",
 			input = "→ + SP",
 			kind = "special",
 			anim = "lunge_slash",
@@ -5548,7 +5550,7 @@ add({
 			trail = true,
 		},
 		SB = {
-			name = "Grave Rise",
+			name = ";tp me",
 			input = "← + SP",
 			kind = "special",
 			anim = "rising_slash",
@@ -5567,7 +5569,7 @@ add({
 			trail = true,
 		},
 		SD = {
-			name = "Crown of Thorns",
+			name = ";explode all",
 			input = "↓ + SP",
 			kind = "special",
 			anim = "spin_burst",
@@ -5584,7 +5586,7 @@ add({
 			hitSfx = "hit_heavy",
 			element = "soulfire",
 		},
-		SUPER = super("Throne of a Thousand Souls", "super_hollowking", "soulfire", 0.8),
+		SUPER = super("Throne of a Thousand Bans", "super_hollowking", "soulfire", 0.8),
 	}),
 	ai = {
 		range = 3.6,
@@ -5599,19 +5601,19 @@ add({
 		juggle = { "H", "SF" },
 	},
 	intro = {
-		"Kneel. Your soul is already mine.",
-		"We are a kingdom. You are a single candle.",
-		"Another crown-seeker. How tiresome.",
+		"Kneel. Or get kicked.",
+		"I have admin. You have a default avatar. Do the math.",
+		"Another player who didn't read the rules.",
 	},
 	victory = {
-		"Your soul burns sweetly.",
-		"The throne is eternal.",
-		"Kneel. Forever.",
+		";kick loser",
+		"Reason for ban: skill issue.",
+		"Server's still mine.",
 	},
 	ending = {
-		"With every challenger broken, the Hollow King tore the Veil open completely and let the realms bleed into one another.",
-		"The thousand souls inside him screamed in triumph, and then, one by one, fell silent as the void came to collect its due.",
-		"The Ember Throne stands empty now. The fire in its hearth still burns green, and some nights, it whispers.",
+		"The Admin beat every challenger and finally typed ;shutdown.",
+		"The server closed. Everyone was kicked. Including him.",
+		"He rejoined to gloat and found an empty baseplate. He has been standing there ever since.",
 	},
 })
 
@@ -5831,9 +5833,9 @@ export type Stage = {
 local list: { Stage } = {
 	{
 		id = "hollowroot",
-		name = "HOLLOWROOT MIRE",
-		realm = "The Mire",
-		desc = "A drowned primeval forest where spirit-fire drifts between dead giants.",
+		name = "THE SPOOKY OBBY FOREST",
+		realm = "Horror Game Lobby",
+		desc = "A haunted forest from a horror game that never got finished. The trees have glowing eyes. Nobody added collisions.",
 		theme = "forest",
 		music = "music_battle_b",
 		ambience = "amb_forest",
@@ -5848,9 +5850,9 @@ local list: { Stage } = {
 	},
 	{
 		id = "skyreach",
-		name = "SKYREACH MONASTERY",
-		realm = "Skyreach",
-		desc = "A cliffside temple courtyard above a sea of clouds, at the last light of dusk.",
+		name = "ANIME DOJO SIMULATOR",
+		realm = "Anime Fighting Sim",
+		desc = "A snowy mountain dojo where everyone shouts their attack names. Rebirth required to enter.",
 		theme = "monastery",
 		music = "music_battle_a",
 		ambience = "amb_wind",
@@ -5865,9 +5867,9 @@ local list: { Stage } = {
 	},
 	{
 		id = "cathedral",
-		name = "THE DROWNED CATHEDRAL",
-		realm = "Moon-Lake",
-		desc = "A sunken gothic nave flooded by a moonlit lake. The choir still sings below.",
+		name = "FLOODED CHURCH ESCAPE",
+		realm = "Flood Escape Map",
+		desc = "The water is rising, the choir is still singing, and nobody pressed the button.",
 		theme = "cathedral",
 		music = "music_battle_b",
 		ambience = "amb_cathedral",
@@ -5882,9 +5884,9 @@ local list: { Stage } = {
 	},
 	{
 		id = "emberthrone",
-		name = "THE EMBER THRONE",
-		realm = "Ember Throne",
-		desc = "The obsidian seat of the Hollow King, ringed by rivers of molten stone.",
+		name = "THE ADMIN'S LAVA THRONE",
+		realm = "The Floor Is Lava",
+		desc = "The Admin's private throne room. The floor is lava. He typed that in on purpose.",
 		theme = "volcano",
 		music = "music_boss",
 		ambience = "amb_lava",
@@ -5898,10 +5900,27 @@ local list: { Stage } = {
 		selectable = true,
 	},
 	{
+		id = "baseplate",
+		name = "THE BASEPLATE",
+		realm = "Every Game Ever (At First)",
+		desc = "Gray. Flat. Infinite. Where every great game began, and where most of them were abandoned.",
+		theme = "baseplate",
+		music = "music_battle_a",
+		ambience = "amb_wind",
+		backdrop = "Backdrop_baseplate",
+		accent = "#A3A2A5",
+		fogColor = "#B9D7F2",
+		ambient = "#8A8C92",
+		clockTime = 14.0,
+		floorColor = "#A3A2A5",
+		floorMaterial = "SmoothPlastic",
+		selectable = true,
+	},
+	{
 		id = "proving",
-		name = "THE PROVING GROUNDS",
-		realm = "Between Realms",
-		desc = "A quiet practice hall suspended in the space between the realms.",
+		name = "THE TRAINING ROOM",
+		realm = "Studio Test Mode",
+		desc = "A quiet practice room that only exists when you press Play Solo.",
 		theme = "proving",
 		music = "music_select",
 		ambience = "",
@@ -5941,7 +5960,7 @@ return Stages
           <Properties>
             <string name="Name">Story</string>
             <string name="Source"><![CDATA[--!nonstrict
--- Story Mode: "Chapter I - The Sundered Veil".
+-- Story Mode: "Chapter I - The Great Server Reset".
 -- A chapter is a list of beats: cinematic scenes (in-engine, letterboxed, subtitled)
 -- and fights. Camera shots are authored as presets relative to the actors so the
 -- CutscenePlayer can frame them on any stage.
@@ -5979,42 +5998,39 @@ Story.chapters = {
 	{
 		id = "ch1",
 		number = "CHAPTER I",
-		name = "THE SUNDERED VEIL",
-		synopsis = "The sky over Skyreach tears open on the night of the autumn festival. Something has been waiting on the other side.",
+		name = "THE GREAT SERVER RESET",
+		synopsis = "The Admin has typed ;shutdown. Every tycoon, every obby, every 400-Robux pair of wings is about to be deleted. Only a Noob stands in his way. This is fine.",
 		beats = {
 			{
 				type = "scene",
 				stage = "skyreach",
 				actors = {
-					{ id = "raiken", x = -2.5, facing = 1, anim = "stance" },
-					{ id = "seraphine", x = 2.5, facing = -1, anim = "stance" },
-					{ id = "nyx", x = 0, facing = -1, anim = "stance", hidden = true },
+					{ id = "noob", x = -2.5, facing = 1, anim = "stance" },
+					{ id = "bacon", x = 2.5, facing = -1, anim = "stance" },
+					{ id = "guest", x = 0, facing = -1, anim = "stance", hidden = true },
 				},
 				shots = {
 					{
 						cam = "sky",
 						duration = 4.5,
-						caption = "SKYREACH MONASTERY  \u{2014}  THE LAST NIGHT OF THE AUTUMN FESTIVAL",
+						caption = "ANIME DOJO SIMULATOR  \u{2014}  SERVER UPTIME: 847 DAYS",
 					},
 					{
 						cam = "two",
 						a = 1,
 						b = 2,
 						lines = {
-							{ speaker = "seraphine", text = "Your guard drops every time you breathe, Raiken." },
-							{ speaker = "raiken", text = "Then I'll stop breathing." },
-							{ speaker = "seraphine", text = "The abbot says the storm spirits have been restless all day." },
-							{
-								speaker = "raiken",
-								text = "They've been restless for a month. Something is pressing against the Veil.",
-							},
+							{ speaker = "bacon", text = "Your guard drops every time you check your phone, Noob." },
+							{ speaker = "noob", text = "I'm not checking my phone. I'm AFK. I fight better AFK." },
+							{ speaker = "bacon", text = "The chat's been weird all day. People keep typing 'it's happening'." },
+							{ speaker = "noob", text = "Probably another free Robux scam. ...Probably." },
 						},
 					},
 					{
 						cam = "sky",
 						duration = 3.4,
 						events = { { t = 0.4, type = "vfx", kind = "rift" }, { t = 0.4, type = "sfx", key = "lightning_crack" } },
-						lines = { { speaker = "seraphine", text = "Spirits preserve us... the sky is splitting open." } },
+						lines = { { speaker = "bacon", text = "Uh. Why is the sky... buffering?" } },
 					},
 					{
 						cam = "wide",
@@ -6022,23 +6038,19 @@ Story.chapters = {
 							{ t = 0.2, type = "show", actor = 3 },
 							{ t = 0.2, type = "vfx", kind = "teleport", actor = 3 },
 							{ t = 0.2, type = "sfx", key = "teleport" },
-							{ t = 0.3, type = "anim", actor = 1, anim = "stance" },
 						},
-						lines = { { speaker = "nyx", text = "Shhh. The King is listening." } },
+						lines = { { speaker = "system", text = "Guest 666 has joined the game." } },
 					},
 					{
 						cam = "close",
 						a = 1,
-						lines = { { speaker = "raiken", text = "Who sent you?" } },
+						lines = { { speaker = "noob", text = "Guests were removed years ago. How are you even here?" } },
 					},
 					{
 						cam = "close",
 						a = 3,
 						lines = {
-							{
-								speaker = "nyx",
-								text = "The one who wears the Ember Crown. He wants your monastery's seals... and your storm, little ronin.",
-							},
+							{ speaker = "guest", text = "The Admin sends his regards. He's shutting the server down. And he wants your sword." },
 						},
 					},
 					{
@@ -6046,53 +6058,50 @@ Story.chapters = {
 						a = 1,
 						b = 3,
 						lines = {
-							{ speaker = "raiken", text = "Then he can come and take it himself." },
-							{ speaker = "nyx", text = "He did. He sent me." },
+							{ speaker = "noob", text = "It's a free gear. He can literally just get one." },
+							{ speaker = "guest", text = "He wants YOURS." },
 						},
 					},
 				},
 			},
 			{
 				type = "fight",
-				title = "RAIKEN  VS  NYX",
+				title = "THE NOOB  VS  GUEST 666",
 				stage = "skyreach",
-				player = "raiken",
-				playerEcho = "okoro",
-				opponent = "nyx",
-				opponentEcho = "talon",
+				player = "noob",
+				playerEcho = "grandpa",
+				opponent = "guest",
+				opponentEcho = "pigeon",
 				difficulty = 1,
 			},
 			{
 				type = "scene",
 				stage = "skyreach",
 				actors = {
-					{ id = "raiken", x = -2.2, facing = 1, anim = "stance" },
-					{ id = "nyx", x = 2.2, facing = -1, anim = "dazed" },
-					{ id = "seraphine", x = -5.5, facing = 1, anim = "stance" },
+					{ id = "noob", x = -2.2, facing = 1, anim = "stance" },
+					{ id = "guest", x = 2.2, facing = -1, anim = "dazed" },
+					{ id = "bacon", x = -5.5, facing = 1, anim = "stance" },
 				},
 				shots = {
 					{
 						cam = "close",
 						a = 2,
-						lines = { { speaker = "nyx", text = "...The choir will remember your voice, ronin." } },
+						lines = { { speaker = "system", text = "Guest 666 has left the game." } },
 						events = {
-							{ t = 2.6, type = "vfx", kind = "teleport", actor = 2 },
-							{ t = 2.6, type = "hide", actor = 2 },
-							{ t = 2.6, type = "sfx", key = "teleport" },
+							{ t = 1.6, type = "vfx", kind = "teleport", actor = 2 },
+							{ t = 1.6, type = "hide", actor = 2 },
+							{ t = 1.6, type = "sfx", key = "teleport" },
 						},
-						duration = 3.4,
+						duration = 3.0,
 					},
 					{
 						cam = "two",
 						a = 3,
 						b = 1,
 						lines = {
-							{ speaker = "seraphine", text = "She fled into the rift. It leads down into the Hollowroot Mire." },
-							{
-								speaker = "seraphine",
-								text = "If something comes through there, the Warden will think we sent it.",
-							},
-							{ speaker = "raiken", text = "Then we go before it closes." },
+							{ speaker = "bacon", text = "It glitched into the forest map. The one nobody finished building." },
+							{ speaker = "bacon", text = "If the Admin shuts the server down, I lose my wings. My four hundred Robux wings." },
+							{ speaker = "noob", text = "Then we stop him before the timer hits zero. Let's go." },
 						},
 					},
 				},
@@ -6101,70 +6110,67 @@ Story.chapters = {
 				type = "scene",
 				stage = "hollowroot",
 				actors = {
-					{ id = "seraphine", x = -2.4, facing = 1, anim = "stance" },
-					{ id = "raiken", x = -5.2, facing = 1, anim = "stance" },
-					{ id = "morrgath", x = 3.0, facing = -1, anim = "stance", hidden = true },
+					{ id = "bacon", x = -2.4, facing = 1, anim = "stance" },
+					{ id = "noob", x = -5.2, facing = 1, anim = "stance" },
+					{ id = "studzilla", x = 3.0, facing = -1, anim = "stance", hidden = true },
 				},
 				shots = {
-					{ cam = "sky", duration = 4.2, caption = "HOLLOWROOT MIRE  \u{2014}  WHERE THE OLD GIANTS SLEEP" },
+					{ cam = "sky", duration = 4.2, caption = "THE SPOOKY OBBY FOREST  \u{2014}  COLLISIONS: OFF" },
 					{
 						cam = "wide",
 						events = {
 							{ t = 0.3, type = "show", actor = 3 },
 							{ t = 0.3, type = "vfx", kind = "roots", actor = 3 },
-							{ t = 0.3, type = "sfx", key = "roots" },
+							{ t = 0.3, type = "sfx", key = "ground_slam" },
 							{ t = 0.4, type = "shake", amount = 0.6 },
 						},
-						lines = { { speaker = "morrgath", text = "Outsiders. The sky tore open... and you crawled out of the wound." } },
+						lines = { { speaker = "studzilla", text = "WHO. DARES. ENTER. MY. UNFINISHED. MAP." } },
 					},
 					{
 						cam = "close",
 						a = 1,
-						lines = { { speaker = "seraphine", text = "Warden, wait! We are hunting the one who opened it!" } },
+						lines = { { speaker = "bacon", text = "Whoa, big guy! We're not here to grief your build!" } },
 					},
 					{
 						cam = "low",
 						a = 3,
-						lines = { { speaker = "morrgath", text = "Every thief says so. The Mire will judge you." } },
+						lines = { { speaker = "studzilla", text = "EVERYONE. SAYS. THAT. THEN. THEY. DELETE. MY. BRICKS." } },
 					},
 					{
 						cam = "two",
 						a = 2,
 						b = 1,
 						lines = {
-							{ speaker = "seraphine", text = "Stand back, Raiken. I'll speak to him in a language he respects." },
+							{ speaker = "bacon", text = "Stand back, Noob. I speak fluent block." },
 						},
 					},
 				},
 			},
 			{
 				type = "fight",
-				title = "SERAPHINE  VS  MORRGATH",
+				title = "BACON HAIR  VS  STUDZILLA",
 				stage = "hollowroot",
-				player = "seraphine",
-				playerEcho = "ilsa",
-				opponent = "morrgath",
-				opponentEcho = "warden",
+				player = "bacon",
+				playerEcho = "dana",
+				opponent = "studzilla",
+				opponentEcho = "nightguard",
 				difficulty = 2,
 			},
 			{
 				type = "scene",
 				stage = "hollowroot",
 				actors = {
-					{ id = "seraphine", x = -2.4, facing = 1, anim = "stance" },
-					{ id = "morrgath", x = 2.6, facing = -1, anim = "kneel" },
-					{ id = "raiken", x = -5.2, facing = 1, anim = "stance" },
+					{ id = "bacon", x = -2.4, facing = 1, anim = "stance" },
+					{ id = "studzilla", x = 2.6, facing = -1, anim = "kneel" },
+					{ id = "noob", x = -5.2, facing = 1, anim = "stance" },
 				},
 				shots = {
 					{
 						cam = "close",
 						a = 2,
 						lines = {
-							{ speaker = "morrgath", text = "...You fight without hatred. Thieves fight with nothing else." },
-							{
-								speaker = "morrgath",
-								text = "The one you seek is Aurel Mor. The Hollow King. He burned a kingdom to feed the fire in his crown.",
-							},
+							{ speaker = "studzilla", text = "...YOU. DID. NOT. DELETE. ME. RESPECT." },
+							{ speaker = "studzilla", text = "THE ADMIN. ANCHORED. MY FRIENDS. THEN. HE. DELETED. THEM. ALL." },
 						},
 					},
 					{
@@ -6172,11 +6178,8 @@ Story.chapters = {
 						a = 1,
 						b = 2,
 						lines = {
-							{ speaker = "seraphine", text = "Then the fall of my order... it was him." },
-							{
-								speaker = "morrgath",
-								text = "His road runs through the Drowned Cathedral. I will walk it with you.",
-							},
+							{ speaker = "bacon", text = "That monster. Who deletes builds?!" },
+							{ speaker = "studzilla", text = "PATH. TO. ADMIN. THROUGH. FLOOD. MAP. I. COME. WITH. YOU." },
 						},
 					},
 				},
@@ -6185,12 +6188,12 @@ Story.chapters = {
 				type = "scene",
 				stage = "cathedral",
 				actors = {
-					{ id = "morrgath", x = -2.6, facing = 1, anim = "stance" },
-					{ id = "vesper", x = 3.2, facing = -1, anim = "stance", hidden = true },
-					{ id = "raiken", x = -6.0, facing = 1, anim = "stance" },
+					{ id = "studzilla", x = -2.6, facing = 1, anim = "stance" },
+					{ id = "camper", x = 3.2, facing = -1, anim = "stance", hidden = true },
+					{ id = "noob", x = -6.0, facing = 1, anim = "stance" },
 				},
 				shots = {
-					{ cam = "sky", duration = 4.2, caption = "THE DROWNED CATHEDRAL  \u{2014}  BENEATH THE MOON-LAKE" },
+					{ cam = "sky", duration = 4.2, caption = "FLOODED CHURCH ESCAPE  \u{2014}  THE WATER IS RISING (AGAIN)" },
 					{
 						cam = "wide",
 						events = {
@@ -6200,58 +6203,52 @@ Story.chapters = {
 							{ t = 0.9, type = "vfx", kind = "smoke", actor = 2 },
 						},
 						lines = {
-							{ speaker = "vesper", text = "That's far enough. The King paid for you, Warden. In advance." },
+							{ speaker = "camper", text = "Don't mind me. Just a bush. A completely normal bush with a crossbow." },
 						},
 					},
 					{
 						cam = "close",
 						a = 2,
-						lines = { { speaker = "vesper", text = "Nothing personal. I just never refund." } },
+						lines = { { speaker = "camper", text = "The Admin promised me VIP if I camp this spot. I've been here six days." } },
 					},
 					{
 						cam = "low",
 						a = 1,
-						lines = { { speaker = "morrgath", text = "Go on ahead, ronin. The hunter is mine." } },
+						lines = { { speaker = "studzilla", text = "NOOB. GO. AHEAD. I. WILL. UN-BUSH. HER." } },
 					},
 				},
 			},
 			{
 				type = "fight",
-				title = "MORRGATH  VS  VESPER",
+				title = "STUDZILLA  VS  THE CAMPER",
 				stage = "cathedral",
-				player = "morrgath",
-				playerEcho = "warden",
-				opponent = "vesper",
-				opponentEcho = "talon",
+				player = "studzilla",
+				playerEcho = "nightguard",
+				opponent = "camper",
+				opponentEcho = "pigeon",
 				difficulty = 2,
 			},
 			{
 				type = "scene",
 				stage = "cathedral",
 				actors = {
-					{ id = "morrgath", x = -2.4, facing = 1, anim = "stance" },
-					{ id = "vesper", x = 2.6, facing = -1, anim = "kneel" },
+					{ id = "studzilla", x = -2.4, facing = 1, anim = "stance" },
+					{ id = "camper", x = 2.6, facing = -1, anim = "kneel" },
 				},
 				shots = {
 					{
 						cam = "close",
 						a = 2,
 						lines = {
-							{
-								speaker = "vesper",
-								text = "...Fine. Contract's void. He never mentioned you hit like a landslide.",
-							},
-							{
-								speaker = "vesper",
-								text = "His throne lies past the ember gate. You'll want a guide. I'll take my fee in his crown.",
-							},
+							{ speaker = "camper", text = "...Okay, okay. The VIP was fake anyway. He literally said 'trust me bro'." },
+							{ speaker = "camper", text = "His throne's past the lava. The floor is lava. He typed it. Like, actually." },
 						},
 					},
 					{
 						cam = "two",
 						a = 1,
 						b = 2,
-						lines = { { speaker = "morrgath", text = "Then we hunt together, little hunter." } },
+						lines = { { speaker = "studzilla", text = "WE. CAMP. TOGETHER. NOW. FRIEND." } },
 					},
 				},
 			},
@@ -6259,48 +6256,45 @@ Story.chapters = {
 				type = "scene",
 				stage = "emberthrone",
 				actors = {
-					{ id = "raiken", x = -3.4, facing = 1, anim = "stance" },
-					{ id = "hollowking", x = 3.6, facing = -1, anim = "stance" },
+					{ id = "noob", x = -3.4, facing = 1, anim = "stance" },
+					{ id = "admin", x = 3.6, facing = -1, anim = "stance" },
 				},
 				shots = {
-					{ cam = "sky", duration = 4.4, caption = "THE EMBER THRONE  \u{2014}  SEAT OF THE HOLLOW KING" },
+					{ cam = "sky", duration = 4.4, caption = "THE ADMIN'S LAVA THRONE  \u{2014}  SERVER SHUTDOWN IN 99 SECONDS" },
 					{
 						cam = "low",
 						a = 2,
 						lines = {
 							{
-								speaker = "hollowking",
-								text = "Storm-bearer. Lancer. Warden. Hunter. You have brought me quite a feast.",
+								speaker = "admin",
+								text = "A Noob. A Bacon Hair. A bush. And... is that a pile of bricks? I've seen better lobbies on a Tuesday.",
 							},
 						},
 					},
 					{
 						cam = "close",
 						a = 1,
-						lines = { { speaker = "raiken", text = "We came to close the Veil. Through you, if we must." } },
+						lines = { { speaker = "noob", text = "Cancel the shutdown. Some of us have tycoons running." } },
 					},
 					{
 						cam = "over",
 						a = 1,
 						b = 2,
 						lines = {
-							{
-								speaker = "hollowking",
-								text = "We are a kingdom of a thousand souls. You are a single candle in the wind.",
-							},
-							{ speaker = "raiken", text = "Then let's see how your kingdom handles a storm." },
+							{ speaker = "admin", text = "I have admin. You have a default avatar. Do the math." },
+							{ speaker = "noob", text = "Never been good at math. Pretty good at this though." },
 						},
 					},
 				},
 			},
 			{
 				type = "fight",
-				title = "RAIKEN  VS  THE HOLLOW KING",
+				title = "THE NOOB  VS  THE ADMIN",
 				stage = "emberthrone",
-				player = "raiken",
-				playerEcho = "okoro",
-				opponent = "hollowking",
-				opponentEcho = "warden",
+				player = "noob",
+				playerEcho = "grandpa",
+				opponent = "admin",
+				opponentEcho = "nightguard",
 				difficulty = 3,
 				boss = true,
 			},
@@ -6308,15 +6302,15 @@ Story.chapters = {
 				type = "scene",
 				stage = "emberthrone",
 				actors = {
-					{ id = "raiken", x = -2.4, facing = 1, anim = "stance" },
-					{ id = "hollowking", x = 2.4, facing = -1, anim = "kneel" },
-					{ id = "seraphine", x = -6.0, facing = 1, anim = "stance" },
+					{ id = "noob", x = -2.4, facing = 1, anim = "stance" },
+					{ id = "admin", x = 2.4, facing = -1, anim = "kneel" },
+					{ id = "bacon", x = -6.0, facing = 1, anim = "stance" },
 				},
 				shots = {
 					{
 						cam = "close",
 						a = 2,
-						lines = { { speaker = "hollowking", text = "Impossible... the souls... they are leaving me..." } },
+						lines = { { speaker = "admin", text = "No... my commands... why isn't ;kill WORKING?!" } },
 						events = { { t = 0.5, type = "vfx", kind = "souls", actor = 2 } },
 					},
 					{
@@ -6324,8 +6318,8 @@ Story.chapters = {
 						a = 3,
 						b = 1,
 						lines = {
-							{ speaker = "seraphine", text = "The rift is collapsing! Raiken, the seal, now!" },
-							{ speaker = "raiken", text = "Storm, hear me. Close the door." },
+							{ speaker = "bacon", text = "His admin's expiring! It was a free trial! Noob, NOW!" },
+							{ speaker = "noob", text = "Hey Admin. ;unadmin." },
 						},
 					},
 					{
@@ -6337,16 +6331,14 @@ Story.chapters = {
 							{ t = 0.4, type = "shake", amount = 1.0 },
 							{ t = 0.6, type = "hide", actor = 2 },
 						},
-						caption = "THE VEIL HOLDS.  FOR NOW.",
+						caption = "SHUTDOWN CANCELLED.  SERVER SAVED.  FOR NOW.",
 					},
 					{
 						cam = "wide",
 						duration = 5.0,
 						lines = {
-							{
-								speaker = "nyx",
-								text = "...The King was only one voice, ronin. The choir is so much larger.",
-							},
+							{ speaker = "system", text = "Guest 666 has joined the game." },
+							{ speaker = "guest", text = "...see you in Chapter 2." },
 						},
 					},
 				},
@@ -6356,18 +6348,19 @@ Story.chapters = {
 }
 
 Story.speakerNames = {
-	raiken = "RAIKEN",
-	seraphine = "SERAPHINE",
-	morrgath = "MORRGATH",
-	nyx = "NYX",
-	torvald = "TORVALD",
-	zhura = "ZHURA",
-	vesper = "VESPER",
-	hollowking = "THE HOLLOW KING",
-	okoro = "BROTHER OKORO",
-	ilsa = "ILSA",
-	warden = "THE LANTERN WARDEN",
-	talon = "GRIM TALON",
+	noob = "THE NOOB",
+	bacon = "BACON HAIR",
+	studzilla = "STUDZILLA",
+	guest = "GUEST 666",
+	frosty = "FROSTY",
+	emote = "EMOTE QUEEN",
+	camper = "THE CAMPER",
+	admin = "THE ADMIN",
+	grandpa = "GRANDPA STUDS",
+	dana = "DOG WALKER DANA",
+	nightguard = "THE NIGHT GUARD",
+	pigeon = "PIGEON LADY",
+	system = "[SYSTEM]",
 }
 
 -- Seconds a subtitle stays on screen.
@@ -6395,7 +6388,7 @@ return Story
           <string name="Name">Main</string>
           <token name="RunContext">0</token>
           <string name="Source"><![CDATA[--!nonstrict
--- VEILBREAKERS server bootstrap.
+-- OOF FIGHTERS 1 server bootstrap.
 -- The fights themselves run on each player's client (single-player vs CPU), so the
 -- server only owns profile persistence: settings + lifetime stats in a DataStore.
 -- All remote input is validated and rate-limited; DataStore failures degrade to
@@ -6408,7 +6401,7 @@ local RunService = game:GetService("RunService")
 
 Players.CharacterAutoLoads = false
 
-local STORE_NAME = "VeilbreakersProfile_v1"
+local STORE_NAME = "OofFightersProfile_v1"
 local store = nil
 do
 	local ok, result = pcall(function()
@@ -7126,7 +7119,7 @@ end
 local GLYPHS = {
 	keyboard = { L = "J", H = "K", K = "L", S = "I", B = "U", E = "O", X = "P", THROW = "H", down = "S", up = "W", left = "A", right = "D", confirm = "ENTER", back = "BKSP", start = "TAB", tabL = "Q", tabR = "E", alt = "F" },
 	gamepad = { L = "X", H = "Y", K = "A", S = "B", B = "RB", E = "LB", X = "RT", THROW = "LT", down = "\u{2193}", up = "\u{2191}", left = "\u{2190}", right = "\u{2192}", confirm = "A", back = "B", start = "START", tabL = "LB", tabR = "RB", alt = "Y" },
-	touch = { L = "LIGHT", H = "HEAVY", K = "KICK", S = "SPECIAL", B = "BLOCK", E = "ECHO", X = "SUPER", THROW = "THROW", down = "\u{2193}", up = "\u{2191}", left = "\u{2190}", right = "\u{2192}", confirm = "TAP", back = "BACK", start = "II", tabL = "\u{25C0}", tabR = "\u{25B6}", alt = "" },
+	touch = { L = "LIGHT", H = "HEAVY", K = "KICK", S = "SPECIAL", B = "BLOCK", E = "FRIEND", X = "SUPER", THROW = "THROW", down = "\u{2193}", up = "\u{2191}", left = "\u{2190}", right = "\u{2192}", confirm = "TAP", back = "BACK", start = "II", tabL = "\u{25C0}", tabR = "\u{25B6}", alt = "" },
 }
 function Input.glyph(action: string): string
 	local set = GLYPHS[Input.mode] or GLYPHS.keyboard
@@ -7142,7 +7135,7 @@ return Input
           <Properties>
             <string name="Name">Main</string>
             <string name="Source"><![CDATA[--!nonstrict
--- VEILBREAKERS client entry point: builds the UI root and runs the game flow
+-- OOF FIGHTERS 1 client entry point: builds the UI root and runs the game flow
 -- (title -> main menu -> Story / Ascent / Versus / Practice / Move List / Settings).
 
 local Players = game:GetService("Players")
@@ -7419,7 +7412,7 @@ end
 local function buildLadder(playerId: string)
 	local pool = {}
 	for _, f in Fighters.list do
-		if f.id ~= playerId and f.id ~= "hollowking" then
+		if f.id ~= playerId and f.id ~= "admin" then
 			table.insert(pool, f.id)
 		end
 	end
@@ -7432,16 +7425,16 @@ local function buildLadder(playerId: string)
 	for i = 1, math.min(6, #pool) do
 		table.insert(ladder, { fighter = pool[i], echo = randomEcho() })
 	end
-	if playerId ~= "hollowking" then
-		table.insert(ladder, { fighter = "hollowking", echo = "warden", boss = true })
+	if playerId ~= "admin" then
+		table.insert(ladder, { fighter = "admin", echo = "nightguard", boss = true })
 	else
-		table.insert(ladder, { fighter = "raiken", echo = "okoro", boss = true })
+		table.insert(ladder, { fighter = "noob", echo = "grandpa", boss = true })
 	end
 	return ladder
 end
 
 local function runAscent()
-	local sel = Screens.characterSelect(root, { title = "ASCENT: CHOOSE YOUR FIGHTER", subtitle = "SEVEN CHALLENGERS STAND BETWEEN YOU AND THE THRONE" })
+	local sel = Screens.characterSelect(root, { title = "THE TOWER: CHOOSE YOUR FIGHTER", subtitle = "SEVEN TRYHARDS STAND BETWEEN YOU AND THE ADMIN" })
 	if not sel then
 		return
 	end
@@ -7458,12 +7451,12 @@ local function runAscent()
 		if opp.boss then
 			stageId = "emberthrone"
 		else
-			local options = { "hollowroot", "skyreach", "cathedral" }
+			local options = { "hollowroot", "skyreach", "cathedral", "baseplate" }
 			stageId = options[(i % #options) + 1]
 		end
 		local p1 = { fighter = sel.fighter, echo = sel.echo }
 		local p2 = { fighter = opp.fighter, echo = opp.echo, cpu = true, difficulty = diff }
-		local cover = Screens.versus(root, p1, p2, stageId, string.format("ASCENT  \u{00B7}  CHALLENGER %d OF %d", i, #ladder))
+		local cover = Screens.versus(root, p1, p2, stageId, string.format("THE TOWER  \u{00B7}  TRYHARD %d OF %d", i, #ladder))
 		local outcome, out = runFight({ p1 = p1, p2 = p2, stage = stageId, boss = opp.boss }, cover)
 		Screens.fadeFromBlack(out, 0.4)
 		if outcome.kind == "quit" then
@@ -7516,7 +7509,7 @@ local function runStory()
 		end
 	end
 	saveProfile({ storyDone = true })
-	Screens.card(root, "CHAPTER I COMPLETE", "TO BE CONTINUED", "The Veil holds, for now. But in the drowned dark beneath the moon-lake, the choir is still singing, and it has learned a new name.", { darkness = 0.7 })
+	Screens.card(root, "CHAPTER I COMPLETE", "TO BE CONTINUED", "The server is safe. For now. But deep in the Deleted Accounts folder, a guest is typing... and it just found out what ;admin does.", { darkness = 0.7 })
 end
 
 -------------------------------------------------------------------------------
@@ -7545,7 +7538,7 @@ while true do
 	end)
 	if not ok then
 		-- never leave the player stuck: log, clean up the world and return to the menu
-		warn("[Veilbreakers] recovered from error: " .. tostring(err))
+		warn("[OofFighters] recovered from error: " .. tostring(err))
 		StageBuilder.clear()
 		FightCamera.disable()
 		for _, ch in root:GetChildren() do
@@ -8697,7 +8690,7 @@ function FightView:onEvent(ev)
 	elseif typ == "round_call" then
 		FightCamera.clearCinematic()
 		local final = m.fighters[1].roundWins == m.roundsToWin - 1 and m.fighters[2].roundWins == m.roundsToWin - 1
-		self.hud:announce(final and "FINAL ROUND" or ("ROUND " .. tostring(ev.round)), nil, { hold = 1.1 })
+		self.hud:announce(final and "FINAL ROUND (NO PRESSURE)" or ("ROUND " .. tostring(ev.round)), nil, { hold = 1.1 })
 		Audio.play("round_gong", { volume = 0.9 })
 		Audio.play("countdown", { volume = 0.6 })
 	elseif typ == "fight" then
@@ -8763,7 +8756,7 @@ function FightView:onEvent(ev)
 	elseif typ == "tech" then
 		VFX.parry(v3(ev.x, ev.y, 0.3))
 		Audio.play("tech", { volume = 0.8 })
-		self.hud:announce("ESCAPE", nil, { size = 56, hold = 0.6, band = false })
+		self.hud:announce("NICE TRY", nil, { size = 56, hold = 0.6, band = false })
 	elseif typ == "projectile_spawn" then
 		local p = nil
 		for _, pp in m.projectiles do
@@ -8825,7 +8818,7 @@ function FightView:onEvent(ev)
 		VFX.parry(v3(ev.x, ev.y, 0.3))
 		Audio.play("parry", { volume = 1 })
 		self.hud:flash(Color3.new(1, 1, 1), 0.3)
-		self.hud:announce("PARRY", nil, { size = 60, hold = 0.6, band = false, color = Theme.Colors.goldBright })
+		self.hud:announce("NOT TODAY", nil, { size = 60, hold = 0.6, band = false, color = Theme.Colors.goldBright })
 	elseif typ == "armor" then
 		VFX.ring(v3(ev.x, ev.y, 0.3), Color3.fromHex("#FFD27A"), 5, 0.25)
 		Audio.play("block", { volume = 0.9, pitch = 0.8 })
@@ -8834,7 +8827,7 @@ function FightView:onEvent(ev)
 		VFX.burstShockwave(v3(ev.x, ev.y), Color3.fromHex(f.def.accent))
 		Audio.play("breaker", { volume = 1 })
 		self.hud:flash(Color3.fromHex(f.def.accent), 0.5)
-		self.hud:announce("BREAKER", nil, { size = 70, hold = 0.7, band = false, color = Color3.fromHex(f.def.accent) })
+		self.hud:announce("RAGE QUIT!", nil, { size = 70, hold = 0.7, band = false, color = Color3.fromHex(f.def.accent) })
 		FightCamera.shake(1)
 	elseif typ == "super_hit" then
 		self:startSuperCinematic(ev)
@@ -8842,8 +8835,9 @@ function FightView:onEvent(ev)
 		self:endSuperCinematic()
 	elseif typ == "ko" then
 		self.hud:flash(Color3.new(1, 1, 1), 0.8)
-		self.hud:announce("K.O.", ev.perfect and "UNTOUCHED" or nil, { punch = true, color = Theme.Colors.crimsonBright, size = 150, hold = 2.0 })
+		self.hud:announce("OOF!", ev.perfect and "NO DAMAGE TAKEN. EMBARRASSING." or nil, { punch = true, color = Theme.Colors.crimsonBright, size = 150, hold = 2.0 })
 		Audio.play("ko", { volume = 1 })
+		Audio.play("oof", { group = "voice", volume = 1 })
 		Audio.duck(0.35, 2.5)
 		FightCamera.shake(1.4)
 		VFX.burstShockwave(v3(ev.x, ev.y), Theme.Colors.crimsonBright)
@@ -8853,14 +8847,14 @@ function FightView:onEvent(ev)
 	elseif typ == "round_win" then
 		if ev.winner and ev.winner > 0 then
 			local wf = m.fighters[ev.winner]
-			self.hud:announce(wf.def.name .. " WINS", ev.perfect and "UNTOUCHED" or (ev.timeOver and "TIME" or nil), {
+			self.hud:announce(wf.def.name .. " WINS", ev.perfect and "NOT EVEN CLOSE" or (ev.timeOver and "TIME (SERVER LAG)" or nil), {
 				size = 84,
 				hold = 1.8,
 				color = Theme.Colors.ivory,
 			})
 			self:winCamera(ev.winner)
 		else
-			self.hud:announce("DRAW", nil, { hold = 1.6 })
+			self.hud:announce("DRAW", "BOTH OF YOU ARE NOOBS", { hold = 1.6 })
 		end
 	elseif typ == "finish_prompt" then
 		FightCamera.clearCinematic()
@@ -8874,16 +8868,18 @@ function FightView:onEvent(ev)
 		local loser = self.rigs[ev.loser]
 		local wf = m.fighters[ev.winner]
 		local col = Color3.fromHex(wf.def.accent)
-		VFX.shatter(loser, col, ev.style)
+		VFX.elementBurst(v3(m.fighters[ev.loser].x, 3), ev.style, true)
+		VFX.oofBreak(loser, col)
 		loser.shattered = true
 		Audio.play("shatter", { volume = 1 })
+		Audio.play("oof", { group = "voice", volume = 1 })
 		self.hud:flash(col, 0.8)
 		FightCamera.shake(1.5)
 		task.delay(0.6, function()
 			if self.destroyed then
 				return
 			end
-			self.hud:announce("BANISHED", nil, { size = 110, hold = 2.0, color = Theme.Colors.crimsonBright })
+			self.hud:announce("ACCOUNT DELETED", nil, { size = 100, hold = 2.0, color = Theme.Colors.crimsonBright })
 		end)
 	elseif typ == "match_end" then
 		self.hud:showFinisherPrompt(false)
@@ -9107,6 +9103,19 @@ FACES.blindfold = function(attach, look)
 	attach("Head", V(0.28, 0.04, 0.04), C(0, -0.27, -0.61), "#3A1E1E", "SmoothPlastic", { shadow = false })
 end
 FACES.none = function() end
+-- The classic Roblox smile, as a decal on the head.
+FACES.classic = function(_attach, _look, rig)
+	local head = rig and rig.parts and rig.parts.Head
+	if not head then
+		return
+	end
+	local d = Instance.new("Decal")
+	d.Name = "face"
+	d.Texture = "rbxasset://textures/face.png"
+	d.Face = Enum.NormalId.Front
+	d.Parent = head
+	table.insert(rig.decals, d)
+end
 
 -------------------------------------------------------------------------------
 -- Hair
@@ -9165,6 +9174,23 @@ HAIR.short = function(attach, look)
 	attach("Head", V(1.22, 0.55, 0.22), C(0, 0.2, 0.58), look.hairColor, "SmoothPlastic")
 end
 HAIR.none = function() end
+-- Bacon hair: layered wavy strips of brown and pink.
+HAIR.bacon = function(attach, _look)
+	local cols = { "#7A3B1E", "#D98C74" }
+	for i = 0, 4 do
+		attach("Head", V(1.3, 0.15, 1.32), C(0, 0.66 - i * 0.09, 0.04 + i * 0.03) * A(rad(math.sin(i * 1.7) * 6), 0, rad(math.cos(i * 1.3) * 5)), cols[i % 2 + 1], "SmoothPlastic")
+	end
+	for i = 0, 5 do
+		attach("Head", V(1.26, 0.16, 0.22), C(0, 0.42 - i * 0.15, 0.6 + i * 0.01) * A(0, 0, rad(math.sin(i * 2.1) * 7)), cols[i % 2 + 1], "SmoothPlastic", {
+			swing = { amp = 2, speed = 2, phase = i * 0.4, vel = 15, pivot = V(0, 0.4 + i * 0.15, 0) },
+		})
+	end
+	for _, sx in { 1, -1 } do
+		for i = 0, 2 do
+			attach("Head", V(0.18, 0.18, 0.95), C(sx * 0.63, 0.35 - i * 0.18, 0.12), cols[(i + (sx > 0 and 1 or 0)) % 2 + 1], "SmoothPlastic")
+		end
+	end
+end
 
 -------------------------------------------------------------------------------
 -- Headwear
@@ -9271,6 +9297,12 @@ HEAD.feather_crown = function(attach, look)
 	attach("Head", V(0.14, 0.14, 0.06), C(0, 0.46, -0.66), look.glow, "Neon", { glow = true })
 end
 HEAD.none = function() end
+-- The legendary guest cap.
+HEAD.guest_cap = function(attach, _look)
+	attach("Head", V(1.32, 0.44, 1.34), C(0, 0.5, 0.04), "#1B1B1F", "SmoothPlastic")
+	attach("Head", V(1.28, 0.08, 0.72), C(0, 0.31, -0.86), "#C4281C", "SmoothPlastic")
+	attach("Head", V(0.26, 0.26, 0.04), C(0, 0.52, -0.68), "#F2F3F3", "SmoothPlastic", { shadow = false })
+end
 
 -------------------------------------------------------------------------------
 -- Masks
@@ -9563,6 +9595,87 @@ EXTRA.prayer_beads = function(attach, look, w)
 		})
 	end
 end
+-- Classic studs on top of the torso and shoulders.
+EXTRA.studs = function(attach, look, w)
+	for ix = -1.5, 1.5 do
+		for iz = -0.5, 0.5 do
+			attach("UpperTorso", V(0.16, 0.42, 0.42), C(ix * 0.48 * w, 0.86, iz * 0.5 * w) * A(0, 0, rad(90)), look.torso, "SmoothPlastic", { shape = CYL })
+		end
+	end
+	for _, side in { "Right", "Left" } do
+		attach(side .. "UpperArm", V(0.16, 0.4, 0.4), C(0, 0.55, 0) * A(0, 0, rad(90)), look.arms, "SmoothPlastic", { shape = CYL })
+	end
+end
+-- Mismatched free-model bricks stuck all over the body.
+EXTRA.brick_plates = function(attach, _look, w)
+	local bricks = {
+		{ "UpperTorso", V(0.9, 0.5, 0.25), C(0.45 * w, 0.2, -(w / 2) - 0.1), "#F5CD30" },
+		{ "UpperTorso", V(0.7, 0.45, 0.25), C(-0.5 * w, -0.3, -(w / 2) - 0.1), "#4B974B" },
+		{ "UpperTorso", V(1.2, 0.5, 0.25), C(0, 0.1, w / 2 + 0.1), "#0D69AC" },
+		{ "LowerTorso", V(0.8, 0.35, 0.25), C(0.4 * w, 0, -(w / 2) - 0.1), "#F2F3F3" },
+		{ "RightUpperLeg", V(0.6, 0.45, 0.2), C(0, 0.1, -0.55), "#C4281C" },
+		{ "LeftUpperLeg", V(0.6, 0.45, 0.2), C(0, -0.1, -0.55), "#F5CD30" },
+		{ "LeftUpperArm", V(1.1, 0.45, 1.1), C(0, 0.3, 0), "#0D69AC" },
+		{ "RightUpperArm", V(1.1, 0.45, 1.1), C(0, 0.3, 0), "#4B974B" },
+	}
+	for _, b in bricks do
+		attach(b[1], b[2], b[3], b[4], "SmoothPlastic")
+		attach(b[1], V(0.14, 0.3, 0.3), b[3] * C(0, b[2].Y / 2 + 0.06, 0) * A(0, 0, rad(90)), b[4], "SmoothPlastic", { shape = CYL })
+	end
+end
+-- Floating tag above the head (Roblox-style overhead text).
+local function overheadTag(rig, text: string, color: string, size: number?)
+	local head = rig and rig.parts and rig.parts.Head
+	if not head then
+		return
+	end
+	local bb = Instance.new("BillboardGui")
+	bb.Name = "OverheadTag"
+	bb.Size = UDim2.fromOffset(240, 34)
+	bb.StudsOffset = Vector3.new(0, 2.3 * (rig.scale or 1), 0)
+	bb.LightInfluence = 0
+	bb.MaxDistance = 90
+	bb.AlwaysOnTop = false
+	bb.Parent = head
+	local t = Instance.new("TextLabel")
+	t.BackgroundTransparency = 1
+	t.Size = UDim2.fromScale(1, 1)
+	t.Text = text
+	t.TextColor3 = Color3.fromHex(color)
+	t.TextStrokeTransparency = 0.3
+	t.FontFace = Font.fromEnum(Enum.Font.GothamBold)
+	t.TextSize = size or 20
+	t.Parent = bb
+end
+EXTRA.admin_tag = function(_attach, _look, _w, rig)
+	overheadTag(rig, "[ADMIN]", "#FF3B3B", 22)
+end
+EXTRA.free_model_tag = function(_attach, _look, _w, rig)
+	overheadTag(rig, "Free Model (Untitled) (2)", "#C8C8C8", 16)
+end
+-- Ghillie "bush" suit.
+EXTRA.bush_suit = function(attach, _look, w)
+	local spots = {
+		{ "Head", V(0.75, 0.6, 0.75), C(0.35, 0.75, 0.15) },
+		{ "Head", V(0.65, 0.55, 0.65), C(-0.4, 0.7, 0.25) },
+		{ "UpperTorso", V(1.0, 0.8, 0.8), C(0.6 * w, 0.6, 0.35) },
+		{ "UpperTorso", V(0.9, 0.75, 0.75), C(-0.6 * w, 0.55, 0.4) },
+		{ "UpperTorso", V(1.1, 0.9, 0.7), C(0, -0.1, w / 2 + 0.3) },
+		{ "LowerTorso", V(1.0, 0.7, 0.7), C(0.3, -0.3, w / 2 + 0.25) },
+	}
+	for i, sp in spots do
+		attach(sp[1], sp[2], sp[3], i % 2 == 0 and "#5E8C3A" or "#79A64A", "Grass", { shape = BALL })
+	end
+end
+-- DJ headphones.
+EXTRA.headphones = function(attach, look)
+	attach("Head", V(1.42, 0.12, 0.22), C(0, 0.68, 0.05), "#1A1A1A", "SmoothPlastic")
+	for _, sx in { 1, -1 } do
+		attach("Head", V(0.2, 0.55, 0.55), C(sx * 0.68, 0.12, 0.05) * A(0, 0, 0), "#1A1A1A", "SmoothPlastic", { shape = CYL })
+		attach("Head", V(0.06, 0.58, 0.58), C(sx * 0.79, 0.12, 0.05), look.glow, "Neon", { shape = CYL, glow = true, shadow = false })
+	end
+end
+
 EXTRA.feather_cloak = function(attach, _look, w)
 	for i = 0, 6 do
 		local a = (i - 3) * 11
@@ -9729,13 +9842,28 @@ WEAPON.lantern = function(rig, attach, look)
 	light.Parent = cage
 	table.insert(rig.lights, light)
 end
+-- Studzilla's fists: oversized brick blocks with studs.
+WEAPON.brick_fists = function(rig, attach, look)
+	local cols = { "#C4281C", "#0D69AC" }
+	for i, side in { "Right", "Left" } do
+		local g = attach(side .. "Hand", V(1.3, 0.85, 1.3), C(0, -0.12, 0), cols[i], "SmoothPlastic")
+		for ix = -0.5, 0.5 do
+			for iz = -0.5, 0.5 do
+				attach(side .. "Hand", V(0.14, 0.34, 0.34), C(ix * 0.6, 0.38, iz * 0.6) * A(0, 0, rad(90)), cols[i], "SmoothPlastic", { shape = CYL })
+			end
+		end
+		if side == "Right" then
+			trail(rig, g, V(0, 0.45, 0), V(0, -0.45, 0), Color3.fromHex(look.glow))
+		end
+	end
+end
 WEAPON.none = function() end
 
 -------------------------------------------------------------------------------
 
 function Looks.apply(rig, look, attach)
 	local w = look.width or 1
-	;(FACES[look.face] or FACES.plain)(attach, look)
+	;(FACES[look.face] or FACES.plain)(attach, look, rig)
 	;(HAIR[look.hair] or HAIR.none)(attach, look)
 	;(HEAD[look.headwear] or HEAD.none)(attach, look)
 	;(MASK[look.mask] or MASK.none)(attach, look)
@@ -9743,7 +9871,7 @@ function Looks.apply(rig, look, attach)
 	for _, ex in look.extras or {} do
 		local fn = EXTRA[ex]
 		if fn then
-			fn(attach, look, w)
+			fn(attach, look, w, rig)
 		end
 	end
 	;(WEAPON[look.weapon] or WEAPON.none)(rig, attach, look)
@@ -10911,6 +11039,7 @@ function Rig.build(look, opts)
 		poseCache = {},
 		transparency = 0,
 		baseT = {},
+		decals = {},
 	}
 
 	for _, name in sk.order do
@@ -11084,6 +11213,9 @@ function Rig.setTransparency(rig, t: number)
 	for _, p in rig.allParts do
 		p.Transparency = math.max(rig.baseT[p] or 0, t)
 	end
+	for _, d in rig.decals do
+		d.Transparency = t
+	end
 end
 
 function Rig.setTrails(rig, enabled: boolean)
@@ -11108,7 +11240,7 @@ return Rig
             <Properties>
               <string name="Name">RigMath</string>
               <string name="Source"><![CDATA[--!nonstrict
--- Skeleton definition + forward kinematics + leg IK for VEILBREAKERS fighters.
+-- Skeleton definition + forward kinematics + leg IK for OOF FIGHTERS 1 fighters.
 -- Pure CFrame math (no Instances) so poses can be evaluated headless for previews.
 --
 -- Rig space: origin on the floor between the feet, +Y up, facing -Z (Roblox
@@ -11486,6 +11618,23 @@ local function applyLighting(stage, theme: string, made: { Instance })
 		cc.Saturation = 0.08
 		cc.Contrast = 0.18
 		sky.StarCount = 0
+	elseif theme == "baseplate" then
+		Lighting.Brightness = 2.8
+		Lighting.ColorShift_Top = hex("#FFFFFF")
+		Lighting.ColorShift_Bottom = hex("#000000")
+		Lighting.EnvironmentDiffuseScale = 1
+		atmo.Density = 0.22
+		atmo.Haze = 0.6
+		atmo.Color = hex("#C8E0F5")
+		atmo.Decay = hex("#9FC3E6")
+		cc.TintColor = hex("#FFFFFF")
+		cc.Contrast = 0.04
+		cc.Saturation = 0.05
+		dof.FarIntensity = 0.12
+		sky.StarCount = 0
+		rays = Instance.new("SunRaysEffect")
+		rays.Intensity = 0.06
+		rays.Spread = 0.5
 	else
 		Lighting.Brightness = 1.4
 		Lighting.ColorShift_Top = hex("#C9B88A")
@@ -11519,6 +11668,8 @@ local function floor(model, stage, _theme)
 		color = stage.floorColor,
 		material = (Enum.Material :: any)[stage.floorMaterial] or Enum.Material.Slate,
 	})
+	-- solid so finisher debris (Roblox-style break apart) lands on it
+	f.CanCollide = true
 	-- lane strip: slightly different tone under the fighters
 	part(model, {
 		name = "Lane",
@@ -12047,6 +12198,52 @@ THEMES.volcano = function(model, _stage, ctx)
 			part(model, { size = V(0.5, 1.0, 0.5), cf = C(sx * 27, 30 - k * 1.0, 9), color = "#0A0808", material = Enum.Material.Metal })
 		end
 	end
+end
+
+-- The default Roblox baseplate: flat, gray, infinite and a little bit sad.
+THEMES.baseplate = function(model, _stage, _ctx)
+	-- faint stud grid
+	for i = -25, 25 do
+		part(model, { size = V(0.06, 0.02, 70), cf = C(i * 4, 0.01, -12), color = "#9A999C", material = Enum.Material.SmoothPlastic, shadow = false })
+	end
+	for k = -8, 8 do
+		part(model, { size = V(220, 0.02, 0.06), cf = C(0, 0.01, -12 + k * 4), color = "#9A999C", material = Enum.Material.SmoothPlastic, shadow = false })
+	end
+	-- the spawn pad everybody has seen a million times
+	part(model, { name = "SpawnPad", size = V(6, 1, 6), cf = C(0, 0.5, -14), color = "#A3A2A5", material = Enum.Material.SmoothPlastic })
+	part(model, { size = V(4, 0.06, 4), cf = C(0, 1.03, -14), color = "#E8E8E8", material = Enum.Material.SmoothPlastic, shadow = false })
+	-- leftover test bricks somebody forgot to delete
+	local colors = { "#C4281C", "#0D69AC", "#F5CD30", "#4B974B", "#F2F3F3" }
+	local stacks = { { -18, -10 }, { 16, -9 }, { -30, -20 }, { 28, -22 }, { 6, -30 } }
+	for si, st in stacks do
+		for h = 0, (si % 3) + 1 do
+			part(model, {
+				size = V(4, 1.2, 2),
+				cf = C(st[1] + (h % 2) * 0.6, 0.6 + h * 1.2, st[2]) * A(0, rad(si * 17 + h * 9), 0),
+				color = colors[(si + h) % #colors + 1],
+				material = Enum.Material.SmoothPlastic,
+			})
+		end
+	end
+	-- a sign
+	part(model, { size = V(0.4, 5, 0.4), cf = C(-9, 2.5, -8), color = "#6B4A2A", material = Enum.Material.Wood })
+	local sign = part(model, { size = V(6, 2.6, 0.3), cf = C(-9, 5.6, -8), color = "#F2F3F3", material = Enum.Material.SmoothPlastic })
+	local gui = Instance.new("SurfaceGui")
+	gui.Face = Enum.NormalId.Back
+	gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+	gui.PixelsPerStud = 40
+	gui.Parent = sign
+	local t = Instance.new("TextLabel")
+	t.Size = UDim2.fromScale(1, 1)
+	t.BackgroundTransparency = 1
+	t.Text = "my first game\n(work in progress)\n(since 2014)"
+	t.TextColor3 = Color3.fromHex("#1B1B1F")
+	t.TextScaled = true
+	t.FontFace = Font.fromEnum(Enum.Font.Cartoon)
+	t.Parent = gui
+	-- floating dust motes in the sun
+	local air = part(model, { name = "Motes", size = V(90, 14, 30), cf = C(0, 7, -12), transparency = 1, shadow = false })
+	emitter(air, { rate = 8, lifetime = NumberRange.new(5, 9), speed = NumberRange.new(0.2, 0.4), size = 0.12, color = "#FFFFFF", spread = Vector2.new(180, 180) })
 end
 
 THEMES.proving = function(model, _stage, _ctx)
@@ -13020,6 +13217,65 @@ function VFX.shatter(rig, color: Color3, style: string?)
 	})
 end
 
+-------------------------------------------------------------------------------
+-- Parody finisher: the classic Roblox death. Every part pops loose, flies apart
+-- with real physics and clatters onto the floor, with a big "OOF".
+-------------------------------------------------------------------------------
+
+function VFX.oofBreak(rig, color: Color3)
+	local pivot = rig.model:GetPivot().Position
+	for _, p in rig.allParts do
+		if p:IsA("BasePart") then
+			local here = p.CFrame.Position
+			local dir = here - pivot
+			if dir.Magnitude < 0.05 then
+				dir = V(math.random() - 0.5, 1, math.random() - 0.5)
+			end
+			dir = dir.Unit
+			p.Anchored = false
+			p.CanCollide = true
+			p.CanQuery = false
+			p.Massless = false
+			p.AssemblyLinearVelocity = dir * (10 + math.random() * 14) + V(0, 14 + math.random() * 12, (math.random() - 0.5) * 10)
+			p.AssemblyAngularVelocity = V((math.random() - 0.5) * 20, (math.random() - 0.5) * 20, (math.random() - 0.5) * 20)
+		end
+	end
+	VFX.burstShockwave(pivot + V(0, 1.5, 0), color)
+	-- the OOF
+	local a = anchorAt(pivot + V(0, 5, 0), 3)
+	local bb = Instance.new("BillboardGui")
+	bb.Size = UDim2.fromOffset(420, 160)
+	bb.LightInfluence = 0
+	bb.AlwaysOnTop = true
+	bb.Parent = a
+	local t = Instance.new("TextLabel")
+	t.BackgroundTransparency = 1
+	t.Size = UDim2.fromScale(1, 1)
+	t.Text = "OOF"
+	t.TextColor3 = Color3.fromHex("#FFF2C8")
+	t.TextStrokeColor3 = Color3.fromHex("#B0141E")
+	t.TextStrokeTransparency = 0
+	t.FontFace = Font.fromEnum(Enum.Font.LuckiestGuy)
+	t.TextScaled = true
+	t.Parent = bb
+	TweenService:Create(bb, TweenInfo.new(2.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { StudsOffset = V(0, 4, 0) }):Play()
+	task.delay(1.4, function()
+		if t.Parent then
+			TweenService:Create(t, TweenInfo.new(0.8), { TextTransparency = 1, TextStrokeTransparency = 1 }):Play()
+		end
+	end)
+	-- a little confetti of studs
+	burst(a, 40, {
+		color = ColorSequence.new(Color3.fromHex("#F5CD30"), Color3.fromHex("#0D69AC")),
+		speed = NumberRange.new(8, 20),
+		size = NumberSequence.new(0.4, 0.1),
+		lifetime = NumberRange.new(1, 2),
+		accel = V(0, -30, 0),
+		drag = 0.5,
+		lightEmission = 0.3,
+	})
+end
+
 return VFX
 ]]></string>
             </Properties>
@@ -13207,7 +13463,7 @@ local function sideBlock(_self, root, side: number, fighter, echo)
 		Theme.gradient(f, { Color3.fromHex("#FFE7A0"), Color3.fromHex("#D08A1A") }, 90)
 		segs[i] = { frame = seg, fill = f }
 	end
-	local meterLabel = Theme.label(bottom, "VEIL  0", {
+	local meterLabel = Theme.label(bottom, "RAGE  0", {
 		Size = UDim2.fromOffset(340, 22),
 		Position = UDim2.new(left and 0 or 1, sx * 82, 0, 4),
 		AnchorPoint = Vector2.new(left and 0 or 1, 0),
@@ -13439,7 +13695,7 @@ function HUD.new(parentRoot: Instance, p1Def, p1Echo, p2Def, p2Echo, opts)
 		Visible = false,
 		ZIndex = 6,
 	})
-	local finText = Theme.label(fin, "SEAL THEIR FATE", {
+	local finText = Theme.label(fin, "DELETE THEM", {
 		Size = UDim2.new(1, 0, 0, 90),
 		TextXAlignment = Enum.TextXAlignment.Center,
 		FontFace = F.display,
@@ -13639,7 +13895,7 @@ function HUD:update(match, dt: number)
 			seg.fill.Size = UDim2.fromScale(v, 1)
 			seg.frame:FindFirstChildOfClass("UIStroke").Color = (v >= 1) and C.goldBright or C.goldDim
 		end
-		s.meterLabel.Text = string.format("VEIL  %d", math.floor(m / Config.MeterBar))
+		s.meterLabel.Text = string.format("RAGE  %d", math.floor(m / Config.MeterBar))
 		-- echo gauge
 		local ready = f.echoCD <= 0
 		local e = 1 - math.clamp(f.echoCD / Config.EchoCooldown, 0, 1)
@@ -13809,7 +14065,7 @@ function MobileControls.new(root: Instance, opts)
 	end
 	local blk, blkSt = circleButton(gui, "BLOCK", 128 * scale, UDim2.new(1, cx - gap * 2.5, 1, cy + gap * 0.65), Color3.fromHex("#9AD8FF"))
 	self:bind(blk, "B", blkSt, Color3.fromHex("#9AD8FF"))
-	local echo, echoSt = circleButton(gui, "ECHO", 92 * scale, UDim2.new(1, cx - gap * 1.9, 1, cy - gap * 1.25), Color3.fromHex("#7FE3FF"))
+	local echo, echoSt = circleButton(gui, "FRIEND", 92 * scale, UDim2.new(1, cx - gap * 1.9, 1, cy - gap * 1.25), Color3.fromHex("#7FE3FF"))
 	self:bind(echo, "E", echoSt, Color3.fromHex("#7FE3FF"))
 	local sup, supSt = circleButton(gui, "SUPER", 92 * scale, UDim2.new(1, cx + gap * 1.05, 1, cy - gap * 1.45), Color3.fromHex("#FF6A4A"))
 	self:bind(sup, "X", supSt, Color3.fromHex("#FF6A4A"))
@@ -13923,7 +14179,7 @@ function MobileControls:update(fighter, superCost: number, breakerCost: number)
 	local label = entry.button:FindFirstChildOfClass("TextLabel")
 	if inCombo then
 		if label then
-			label.Text = "BREAK"
+			label.Text = "RAGE"
 		end
 		entry.stroke.Transparency = fighter.meter >= breakerCost and 0 or 0.7
 	else
@@ -14375,7 +14631,7 @@ function Screens.loading(root: Instance, text: string?)
 	local spin = RunService.RenderStepped:Connect(function(dt)
 		emblem.Rotation += dt * 60
 	end)
-	Theme.label(f, text or "ENTERING THE VEIL", {
+	Theme.label(f, text or "JOINING SERVER...", {
 		Size = UDim2.fromOffset(600, 40),
 		Position = UDim2.new(1, -190, 1, -110),
 		AnchorPoint = Vector2.new(1, 0.5),
@@ -14447,8 +14703,8 @@ function Screens.title(root: Instance)
 		ZIndex = 20,
 	})
 	Theme.textStroke(press, 2, 0.3)
-	press.Text = Input.mode == "touch" and "TAP TO BEGIN" or (Input.mode == "gamepad" and "PRESS ANY BUTTON" or "PRESS ANY KEY")
-	Theme.label(f, "v" .. Config.Version .. "   \u{00B7}   An original fighting game", {
+	press.Text = Input.mode == "touch" and "TAP TO JOIN (WE'LL WAIT)" or (Input.mode == "gamepad" and "PRESS ANY BUTTON (WE'LL WAIT)" or "PRESS ANY KEY (WE'LL WAIT)")
+	Theme.label(f, "v" .. Config.Version .. "   \u{00B7}   A Roblox fighting game parody", {
 		Size = UDim2.fromOffset(600, 24),
 		Position = UDim2.new(0, 24, 1, -16),
 		AnchorPoint = Vector2.new(0, 1),
@@ -14501,12 +14757,12 @@ end
 -------------------------------------------------------------------------------
 
 local MAIN_ITEMS = {
-	{ id = "story", text = "STORY", desc = "Chapter I \u{2014} The Sundered Veil. The sky over Skyreach tears open." },
-	{ id = "ascent", text = "ASCENT", desc = "Climb the tower of seven challengers and face the Hollow King. Every fighter has an ending." },
-	{ id = "versus", text = "VERSUS", desc = "Choose your fighter, your Echo, your arena and your opponent." },
-	{ id = "practice", text = "PRACTICE", desc = "Learn combos and frame data against a dummy. Infinite health and meter." },
-	{ id = "movelist", text = "MOVE LIST", desc = "Every strike, special, super and finisher for the whole roster." },
-	{ id = "settings", text = "SETTINGS", desc = "Audio, subtitles, camera shake, difficulty and touch controls." },
+	{ id = "story", text = "STORY", desc = "Chapter I \u{2014} The Great Server Reset. The Admin typed ;shutdown. Only a Noob can stop him." },
+	{ id = "ascent", text = "TOWER", desc = "Climb a tower of seven tryhards and dethrone the Admin. Every fighter gets an ending. Most of them are dumb." },
+	{ id = "versus", text = "VERSUS", desc = "Pick a fighter, a friend, a server and a victim. The CPU has been practicing." },
+	{ id = "practice", text = "PRACTICE", desc = "Beat up a dummy that can't fight back. Or can it? (It can. Press F.)" },
+	{ id = "movelist", text = "MOVE LIST", desc = "Every combo, special, super and finisher. Reading is a skill too." },
+	{ id = "settings", text = "SETTINGS", desc = "Volume, subtitles, camera shake, CPU difficulty and touch controls." },
 }
 
 function Screens.mainMenu(root: Instance, profile)
@@ -14548,12 +14804,13 @@ function Screens.mainMenu(root: Instance, profile)
 	end
 	showFighter()
 	local showName = Theme.label(f, "", {
-		Size = UDim2.fromOffset(600, 40),
+		Size = UDim2.fromOffset(720, 40),
 		Position = UDim2.new(1, -60, 1, -60),
 		AnchorPoint = Vector2.new(1, 1),
 		TextXAlignment = Enum.TextXAlignment.Right,
+		TextScaled = true,
 		FontFace = F.display,
-		TextSize = 34,
+		TextSize = 30,
 		TextColor3 = C.goldBright,
 		ZIndex = 16,
 	})
@@ -14579,10 +14836,10 @@ function Screens.mainMenu(root: Instance, profile)
 
 	-- logo
 	local logo = Theme.label(f, Config.GameTitle, {
-		Size = UDim2.fromOffset(700, 90),
+		Size = UDim2.fromOffset(740, 90),
 		Position = UDim2.fromOffset(90, 70),
 		FontFace = F.display,
-		TextSize = 84,
+		TextSize = 74,
 		TextColor3 = C.ivory,
 		ZIndex = 16,
 	})
@@ -14612,7 +14869,7 @@ function Screens.mainMenu(root: Instance, profile)
 		ZIndex = 16,
 	})
 	if profile then
-		Theme.label(f, string.format("WINS %d    \u{00B7}    ASCENTS %d    \u{00B7}    STORY %s", profile.wins or 0, profile.ascents or 0, profile.storyDone and "COMPLETE" or "IN PROGRESS"), {
+		Theme.label(f, string.format("WINS %d    \u{00B7}    TOWERS %d    \u{00B7}    STORY %s", profile.wins or 0, profile.ascents or 0, profile.storyDone and "COMPLETE" or "IN PROGRESS"), {
 			Size = UDim2.fromOffset(640, 24),
 			Position = UDim2.fromOffset(110, 770),
 			FontFace = F.label,
@@ -14809,7 +15066,7 @@ local function fighterPicker(root: Instance, opts)
 			end
 		else
 			nameL.Text = "RANDOM"
-			titleL.Text = "LET THE VEIL DECIDE"
+			titleL.Text = "LET THE ALGORITHM DECIDE"
 			infoText.Text = "A random fighter will be chosen."
 		end
 	end
@@ -14882,7 +15139,7 @@ end
 local function echoPicker(root: Instance, fighterId: string, side: number?)
 	local f = screenFrame(root, "EchoSelect")
 	backdrop(f, 0.78)
-	title(f, "SUMMON YOUR ECHO", "A SPECTRAL ALLY WHO ANSWERS YOUR CALL MID-FIGHT")
+	title(f, "CALL A FRIEND", "YOUR ONE (1) FRIEND WHO SHOWS UP MID-FIGHT")
 	local def = Fighters.get(fighterId)
 	local style = Poses.STYLE_OF[def.stance] or "unarmed"
 	Portrait.create(f, def.look, {
@@ -14976,7 +15233,7 @@ local function echoPicker(root: Instance, fighterId: string, side: number?)
 		)
 	end
 	refresh()
-	hintBar(f, { { "left", "" }, { "right", "BROWSE" }, { "confirm", "SUMMON" }, { "back", "BACK" } })
+	hintBar(f, { { "left", "" }, { "right", "BROWSE" }, { "confirm", "BRING THEM" }, { "back", "BACK" } })
 	fadeIn(f)
 	local w = waiter()
 	local conns = connections()
@@ -15075,7 +15332,7 @@ end
 function Screens.stageSelect(root: Instance, defaultDifficulty: number?)
 	local f = screenFrame(root, "StageSelect")
 	backdrop(f, 0.85)
-	title(f, "CHOOSE THE ARENA")
+	title(f, "PICK A SERVER")
 	local stages = {}
 	for _, id in Stages.selectable do
 		table.insert(stages, Stages.get(id))
@@ -15190,8 +15447,8 @@ function Screens.stageSelect(root: Instance, defaultDifficulty: number?)
 		else
 			heroImg.Image = Assets.image("KeyArt")
 			heroImg.BackgroundTransparency = 1
-			heroName.Text = "RANDOM ARENA"
-			heroDesc.Text = "Let fate choose the battleground."
+			heroName.Text = "RANDOM SERVER"
+			heroDesc.Text = "Server hopping. The noble way."
 		end
 	end
 	refresh()
@@ -15370,7 +15627,7 @@ end
 function Screens.ladder(root: Instance, ladder, index: number, playerId: string)
 	local f = screenFrame(root, "Ladder")
 	backdrop(f, 0.8)
-	title(f, "ASCENT", string.format("CHALLENGER %d OF %d", index, #ladder))
+	title(f, "THE TOWER", string.format("TRYHARD %d OF %d", index, #ladder))
 	local tower = Theme.frame(f, {
 		Size = UDim2.fromOffset(300, #ladder * 98),
 		Position = UDim2.new(0.5, 280, 0.55, 0),
@@ -15531,7 +15788,7 @@ function Screens.ending(root: Instance, fighterId: string)
 	local def = Fighters.get(fighterId)
 	Audio.music("music_victory")
 	for i, para in def.ending do
-		Screens.card(root, i == 1 and "ASCENT COMPLETE" or "", i == 1 and def.name or "", para, { darkness = 0.7 })
+		Screens.card(root, i == 1 and "TOWER CLEARED" or "", i == 1 and def.name or "", para, { darkness = 0.7 })
 	end
 end
 
@@ -15604,7 +15861,7 @@ function Screens.results(root: Instance, result, opts)
 		AnchorPoint = Vector2.new(0, 1),
 		ZIndex = 13,
 	})
-	local head = Theme.label(f, won and "VICTORY" or "DEFEAT", {
+	local head = Theme.label(f, won and "BIG W" or "TAKE THE L", {
 		Size = UDim2.fromOffset(800, 110),
 		Position = UDim2.new(0, 600, 0, 60),
 		FontFace = F.display,
@@ -15761,10 +16018,10 @@ function Screens.moveList(root: Instance, startFighter: string?)
 				row(m.name, m.input, MoveKit.describe(m), nextOrder())
 			end
 		end
-		section("SUPER  \u{00B7}  2 VEIL BARS", nextOrder())
+		section("SUPER  \u{00B7}  2 RAGE BARS", nextOrder())
 		row(def.superName, "SUPER  (" .. Input.glyph("X") .. ")", "Cinematic super. Invulnerable on startup. " .. MoveKit.describe(def.moves.SUPER), nextOrder())
 		section("FINISHER", nextOrder())
-		row(def.finisher.name, "HOLD \u{2193} + SPECIAL at SEAL THEIR FATE", def.finisher.desc, nextOrder())
+		row(def.finisher.name, "HOLD \u{2193} + SPECIAL at DELETE THEM", def.finisher.desc, nextOrder())
 		section("STRINGS & NORMALS", nextOrder())
 		for _, id in { "L", "L2", "L3", "H", "H2", "K", "K2", "FH", "BK", "DL", "DH", "DK", "JL", "JH", "JK", "THROW" } do
 			local m = def.moves[id]
@@ -15773,8 +16030,8 @@ function Screens.moveList(root: Instance, startFighter: string?)
 			end
 		end
 		section("SYSTEM", nextOrder())
-		row("Echo Summon", "ECHO  /  \u{2193} + ECHO", "Call your spectral ally. Cooldown " .. tostring(math.floor(Config.EchoCooldown / 60)) .. "s.", nextOrder())
-		row("Breaker", "SUPER while being comboed", "Costs 1 Veil bar. Bursts free of a combo.", nextOrder())
+		row("Call a Friend", "FRIEND  /  \u{2193} + FRIEND", "Your friend runs in and helps. Cooldown " .. tostring(math.floor(Config.EchoCooldown / 60)) .. "s.", nextOrder())
+		row("Rage Quit", "SUPER while being comboed", "Costs 1 Rage bar. Bursts you out of a combo.", nextOrder())
 		row("Dash / Backdash", "\u{2192}\u{2192}  /  \u{2190}\u{2190}", "Double-tap a direction. Backdash is briefly invulnerable.", nextOrder())
 		row("Throw Escape", "BLOCK + LIGHT when grabbed", "Break a throw on reaction.", nextOrder())
 		scroll.CanvasPosition = Vector2.zero
@@ -16004,7 +16261,7 @@ return Subtitles
             <Properties>
               <string name="Name">Theme</string>
               <string name="Source"><![CDATA[--!nonstrict
--- Visual language for the VEILBREAKERS interface: black glass panels, thin engraved
+-- Visual language for the OOF FIGHTERS 1 interface: black glass panels, thin engraved
 -- gold lines, high-contrast serif display type. All layout is authored at a 1600x900
 -- design resolution and scaled with a UIScale, so it fits PC, console and phones.
 

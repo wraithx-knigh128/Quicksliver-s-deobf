@@ -207,6 +207,23 @@ local function applyLighting(stage, theme: string, made: { Instance })
 		cc.Saturation = 0.08
 		cc.Contrast = 0.18
 		sky.StarCount = 0
+	elseif theme == "baseplate" then
+		Lighting.Brightness = 2.8
+		Lighting.ColorShift_Top = hex("#FFFFFF")
+		Lighting.ColorShift_Bottom = hex("#000000")
+		Lighting.EnvironmentDiffuseScale = 1
+		atmo.Density = 0.22
+		atmo.Haze = 0.6
+		atmo.Color = hex("#C8E0F5")
+		atmo.Decay = hex("#9FC3E6")
+		cc.TintColor = hex("#FFFFFF")
+		cc.Contrast = 0.04
+		cc.Saturation = 0.05
+		dof.FarIntensity = 0.12
+		sky.StarCount = 0
+		rays = Instance.new("SunRaysEffect")
+		rays.Intensity = 0.06
+		rays.Spread = 0.5
 	else
 		Lighting.Brightness = 1.4
 		Lighting.ColorShift_Top = hex("#C9B88A")
@@ -240,6 +257,8 @@ local function floor(model, stage, _theme)
 		color = stage.floorColor,
 		material = (Enum.Material :: any)[stage.floorMaterial] or Enum.Material.Slate,
 	})
+	-- solid so finisher debris (Roblox-style break apart) lands on it
+	f.CanCollide = true
 	-- lane strip: slightly different tone under the fighters
 	part(model, {
 		name = "Lane",
@@ -768,6 +787,52 @@ THEMES.volcano = function(model, _stage, ctx)
 			part(model, { size = V(0.5, 1.0, 0.5), cf = C(sx * 27, 30 - k * 1.0, 9), color = "#0A0808", material = Enum.Material.Metal })
 		end
 	end
+end
+
+-- The default Roblox baseplate: flat, gray, infinite and a little bit sad.
+THEMES.baseplate = function(model, _stage, _ctx)
+	-- faint stud grid
+	for i = -25, 25 do
+		part(model, { size = V(0.06, 0.02, 70), cf = C(i * 4, 0.01, -12), color = "#9A999C", material = Enum.Material.SmoothPlastic, shadow = false })
+	end
+	for k = -8, 8 do
+		part(model, { size = V(220, 0.02, 0.06), cf = C(0, 0.01, -12 + k * 4), color = "#9A999C", material = Enum.Material.SmoothPlastic, shadow = false })
+	end
+	-- the spawn pad everybody has seen a million times
+	part(model, { name = "SpawnPad", size = V(6, 1, 6), cf = C(0, 0.5, -14), color = "#A3A2A5", material = Enum.Material.SmoothPlastic })
+	part(model, { size = V(4, 0.06, 4), cf = C(0, 1.03, -14), color = "#E8E8E8", material = Enum.Material.SmoothPlastic, shadow = false })
+	-- leftover test bricks somebody forgot to delete
+	local colors = { "#C4281C", "#0D69AC", "#F5CD30", "#4B974B", "#F2F3F3" }
+	local stacks = { { -18, -10 }, { 16, -9 }, { -30, -20 }, { 28, -22 }, { 6, -30 } }
+	for si, st in stacks do
+		for h = 0, (si % 3) + 1 do
+			part(model, {
+				size = V(4, 1.2, 2),
+				cf = C(st[1] + (h % 2) * 0.6, 0.6 + h * 1.2, st[2]) * A(0, rad(si * 17 + h * 9), 0),
+				color = colors[(si + h) % #colors + 1],
+				material = Enum.Material.SmoothPlastic,
+			})
+		end
+	end
+	-- a sign
+	part(model, { size = V(0.4, 5, 0.4), cf = C(-9, 2.5, -8), color = "#6B4A2A", material = Enum.Material.Wood })
+	local sign = part(model, { size = V(6, 2.6, 0.3), cf = C(-9, 5.6, -8), color = "#F2F3F3", material = Enum.Material.SmoothPlastic })
+	local gui = Instance.new("SurfaceGui")
+	gui.Face = Enum.NormalId.Back
+	gui.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+	gui.PixelsPerStud = 40
+	gui.Parent = sign
+	local t = Instance.new("TextLabel")
+	t.Size = UDim2.fromScale(1, 1)
+	t.BackgroundTransparency = 1
+	t.Text = "my first game\n(work in progress)\n(since 2014)"
+	t.TextColor3 = Color3.fromHex("#1B1B1F")
+	t.TextScaled = true
+	t.FontFace = Font.fromEnum(Enum.Font.Cartoon)
+	t.Parent = gui
+	-- floating dust motes in the sun
+	local air = part(model, { name = "Motes", size = V(90, 14, 30), cf = C(0, 7, -12), transparency = 1, shadow = false })
+	emitter(air, { rate = 8, lifetime = NumberRange.new(5, 9), speed = NumberRange.new(0.2, 0.4), size = 0.12, color = "#FFFFFF", spread = Vector2.new(180, 180) })
 end
 
 THEMES.proving = function(model, _stage, _ctx)

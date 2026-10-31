@@ -633,7 +633,7 @@ function FightView:onEvent(ev)
 	elseif typ == "round_call" then
 		FightCamera.clearCinematic()
 		local final = m.fighters[1].roundWins == m.roundsToWin - 1 and m.fighters[2].roundWins == m.roundsToWin - 1
-		self.hud:announce(final and "FINAL ROUND" or ("ROUND " .. tostring(ev.round)), nil, { hold = 1.1 })
+		self.hud:announce(final and "FINAL ROUND (NO PRESSURE)" or ("ROUND " .. tostring(ev.round)), nil, { hold = 1.1 })
 		Audio.play("round_gong", { volume = 0.9 })
 		Audio.play("countdown", { volume = 0.6 })
 	elseif typ == "fight" then
@@ -699,7 +699,7 @@ function FightView:onEvent(ev)
 	elseif typ == "tech" then
 		VFX.parry(v3(ev.x, ev.y, 0.3))
 		Audio.play("tech", { volume = 0.8 })
-		self.hud:announce("ESCAPE", nil, { size = 56, hold = 0.6, band = false })
+		self.hud:announce("NICE TRY", nil, { size = 56, hold = 0.6, band = false })
 	elseif typ == "projectile_spawn" then
 		local p = nil
 		for _, pp in m.projectiles do
@@ -761,7 +761,7 @@ function FightView:onEvent(ev)
 		VFX.parry(v3(ev.x, ev.y, 0.3))
 		Audio.play("parry", { volume = 1 })
 		self.hud:flash(Color3.new(1, 1, 1), 0.3)
-		self.hud:announce("PARRY", nil, { size = 60, hold = 0.6, band = false, color = Theme.Colors.goldBright })
+		self.hud:announce("NOT TODAY", nil, { size = 60, hold = 0.6, band = false, color = Theme.Colors.goldBright })
 	elseif typ == "armor" then
 		VFX.ring(v3(ev.x, ev.y, 0.3), Color3.fromHex("#FFD27A"), 5, 0.25)
 		Audio.play("block", { volume = 0.9, pitch = 0.8 })
@@ -770,7 +770,7 @@ function FightView:onEvent(ev)
 		VFX.burstShockwave(v3(ev.x, ev.y), Color3.fromHex(f.def.accent))
 		Audio.play("breaker", { volume = 1 })
 		self.hud:flash(Color3.fromHex(f.def.accent), 0.5)
-		self.hud:announce("BREAKER", nil, { size = 70, hold = 0.7, band = false, color = Color3.fromHex(f.def.accent) })
+		self.hud:announce("RAGE QUIT!", nil, { size = 70, hold = 0.7, band = false, color = Color3.fromHex(f.def.accent) })
 		FightCamera.shake(1)
 	elseif typ == "super_hit" then
 		self:startSuperCinematic(ev)
@@ -778,8 +778,9 @@ function FightView:onEvent(ev)
 		self:endSuperCinematic()
 	elseif typ == "ko" then
 		self.hud:flash(Color3.new(1, 1, 1), 0.8)
-		self.hud:announce("K.O.", ev.perfect and "UNTOUCHED" or nil, { punch = true, color = Theme.Colors.crimsonBright, size = 150, hold = 2.0 })
+		self.hud:announce("OOF!", ev.perfect and "NO DAMAGE TAKEN. EMBARRASSING." or nil, { punch = true, color = Theme.Colors.crimsonBright, size = 150, hold = 2.0 })
 		Audio.play("ko", { volume = 1 })
+		Audio.play("oof", { group = "voice", volume = 1 })
 		Audio.duck(0.35, 2.5)
 		FightCamera.shake(1.4)
 		VFX.burstShockwave(v3(ev.x, ev.y), Theme.Colors.crimsonBright)
@@ -789,14 +790,14 @@ function FightView:onEvent(ev)
 	elseif typ == "round_win" then
 		if ev.winner and ev.winner > 0 then
 			local wf = m.fighters[ev.winner]
-			self.hud:announce(wf.def.name .. " WINS", ev.perfect and "UNTOUCHED" or (ev.timeOver and "TIME" or nil), {
+			self.hud:announce(wf.def.name .. " WINS", ev.perfect and "NOT EVEN CLOSE" or (ev.timeOver and "TIME (SERVER LAG)" or nil), {
 				size = 84,
 				hold = 1.8,
 				color = Theme.Colors.ivory,
 			})
 			self:winCamera(ev.winner)
 		else
-			self.hud:announce("DRAW", nil, { hold = 1.6 })
+			self.hud:announce("DRAW", "BOTH OF YOU ARE NOOBS", { hold = 1.6 })
 		end
 	elseif typ == "finish_prompt" then
 		FightCamera.clearCinematic()
@@ -810,16 +811,18 @@ function FightView:onEvent(ev)
 		local loser = self.rigs[ev.loser]
 		local wf = m.fighters[ev.winner]
 		local col = Color3.fromHex(wf.def.accent)
-		VFX.shatter(loser, col, ev.style)
+		VFX.elementBurst(v3(m.fighters[ev.loser].x, 3), ev.style, true)
+		VFX.oofBreak(loser, col)
 		loser.shattered = true
 		Audio.play("shatter", { volume = 1 })
+		Audio.play("oof", { group = "voice", volume = 1 })
 		self.hud:flash(col, 0.8)
 		FightCamera.shake(1.5)
 		task.delay(0.6, function()
 			if self.destroyed then
 				return
 			end
-			self.hud:announce("BANISHED", nil, { size = 110, hold = 2.0, color = Theme.Colors.crimsonBright })
+			self.hud:announce("ACCOUNT DELETED", nil, { size = 100, hold = 2.0, color = Theme.Colors.crimsonBright })
 		end)
 	elseif typ == "match_end" then
 		self.hud:showFinisherPrompt(false)

@@ -110,7 +110,7 @@ function MobileControls.new(root: Instance, opts)
 	end
 	local blk, blkSt = circleButton(gui, "BLOCK", 128 * scale, UDim2.new(1, cx - gap * 2.5, 1, cy + gap * 0.65), Color3.fromHex("#9AD8FF"))
 	self:bind(blk, "B", blkSt, Color3.fromHex("#9AD8FF"))
-	local echo, echoSt = circleButton(gui, "ECHO", 92 * scale, UDim2.new(1, cx - gap * 1.9, 1, cy - gap * 1.25), Color3.fromHex("#7FE3FF"))
+	local echo, echoSt = circleButton(gui, "FRIEND", 92 * scale, UDim2.new(1, cx - gap * 1.9, 1, cy - gap * 1.25), Color3.fromHex("#7FE3FF"))
 	self:bind(echo, "E", echoSt, Color3.fromHex("#7FE3FF"))
 	local sup, supSt = circleButton(gui, "SUPER", 92 * scale, UDim2.new(1, cx + gap * 1.05, 1, cy - gap * 1.45), Color3.fromHex("#FF6A4A"))
 	self:bind(sup, "X", supSt, Color3.fromHex("#FF6A4A"))
@@ -224,7 +224,7 @@ function MobileControls:update(fighter, superCost: number, breakerCost: number)
 	local label = entry.button:FindFirstChildOfClass("TextLabel")
 	if inCombo then
 		if label then
-			label.Text = "BREAK"
+			label.Text = "RAGE"
 		end
 		entry.stroke.Transparency = fighter.meter >= breakerCost and 0 or 0.7
 	else

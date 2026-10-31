@@ -1,4 +1,4 @@
-"""Procedural audio pack for VEILBREAKERS.
+"""Procedural audio pack for OOF FIGHTERS 1.
 
 Synthesises every sound effect, voice grunt, ambience bed and music track the game
 references (Assets.Sounds keys) and writes them to ../audio as .ogg files ready for
@@ -369,6 +369,9 @@ def sfx():
         sh[p : p + len(g)] += g[: len(sh) - p]
     S["shatter"] = reverb(mix(sh, hp(noise(0.3), 2500) * env_exp(int(0.3 * SR), 0.08), thump(80, 30, 0.6)), 0.35, 1.2)
     # UI
+    # comedic "oof" (our own synthesis)
+    oof = formant_voice(150, 0.34, [(480, 950, 2450)], 1.0, 0.16, pitch_drop=0.5) * env_ad(int(0.34 * SR), 0.012, 0.1)
+    S["oof"] = reverb(drive(oof, 2.4), 0.12, 0.5)
     S["ui_move"] = mix(bp(noise(0.03), 1500, 4000) * env_exp(int(0.03 * SR), 0.006) * 0.6, partials([2200], [0.3], [0.03], 0.05))
     S["ui_select"] = S["ui_move"]
     S["ui_confirm"] = reverb(mix(metal(1900, 0.45, 4) * 0.4, thump(120, 60, 0.15) * 0.6, hp(noise(0.2), 4000) * env_ad(int(0.2 * SR), 0.03, 0.06) * 0.4), 0.25)
@@ -687,6 +690,13 @@ def music_victory():
 
 
 def main():
+    only = set(sys.argv[1:])
+    if only:
+        allfx = {**sfx(), **voices()}
+        for name in only:
+            write(name, fade(np.asarray(allfx[name], dtype=float), 0.001, 0.01))
+        print("wrote", ", ".join(sorted(only)))
+        return
     made = []
     for name, x in sfx().items():
         made.append(write(name, fade(np.asarray(x, dtype=float), 0.001, 0.01)))

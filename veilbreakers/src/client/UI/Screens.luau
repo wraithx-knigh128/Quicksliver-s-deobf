@@ -337,7 +337,7 @@ function Screens.loading(root: Instance, text: string?)
 	local spin = RunService.RenderStepped:Connect(function(dt)
 		emblem.Rotation += dt * 60
 	end)
-	Theme.label(f, text or "ENTERING THE VEIL", {
+	Theme.label(f, text or "JOINING SERVER...", {
 		Size = UDim2.fromOffset(600, 40),
 		Position = UDim2.new(1, -190, 1, -110),
 		AnchorPoint = Vector2.new(1, 0.5),
@@ -409,8 +409,8 @@ function Screens.title(root: Instance)
 		ZIndex = 20,
 	})
 	Theme.textStroke(press, 2, 0.3)
-	press.Text = Input.mode == "touch" and "TAP TO BEGIN" or (Input.mode == "gamepad" and "PRESS ANY BUTTON" or "PRESS ANY KEY")
-	Theme.label(f, "v" .. Config.Version .. "   \u{00B7}   An original fighting game", {
+	press.Text = Input.mode == "touch" and "TAP TO JOIN (WE'LL WAIT)" or (Input.mode == "gamepad" and "PRESS ANY BUTTON (WE'LL WAIT)" or "PRESS ANY KEY (WE'LL WAIT)")
+	Theme.label(f, "v" .. Config.Version .. "   \u{00B7}   A Roblox fighting game parody", {
 		Size = UDim2.fromOffset(600, 24),
 		Position = UDim2.new(0, 24, 1, -16),
 		AnchorPoint = Vector2.new(0, 1),
@@ -463,12 +463,12 @@ end
 -------------------------------------------------------------------------------
 
 local MAIN_ITEMS = {
-	{ id = "story", text = "STORY", desc = "Chapter I \u{2014} The Sundered Veil. The sky over Skyreach tears open." },
-	{ id = "ascent", text = "ASCENT", desc = "Climb the tower of seven challengers and face the Hollow King. Every fighter has an ending." },
-	{ id = "versus", text = "VERSUS", desc = "Choose your fighter, your Echo, your arena and your opponent." },
-	{ id = "practice", text = "PRACTICE", desc = "Learn combos and frame data against a dummy. Infinite health and meter." },
-	{ id = "movelist", text = "MOVE LIST", desc = "Every strike, special, super and finisher for the whole roster." },
-	{ id = "settings", text = "SETTINGS", desc = "Audio, subtitles, camera shake, difficulty and touch controls." },
+	{ id = "story", text = "STORY", desc = "Chapter I \u{2014} The Great Server Reset. The Admin typed ;shutdown. Only a Noob can stop him." },
+	{ id = "ascent", text = "TOWER", desc = "Climb a tower of seven tryhards and dethrone the Admin. Every fighter gets an ending. Most of them are dumb." },
+	{ id = "versus", text = "VERSUS", desc = "Pick a fighter, a friend, a server and a victim. The CPU has been practicing." },
+	{ id = "practice", text = "PRACTICE", desc = "Beat up a dummy that can't fight back. Or can it? (It can. Press F.)" },
+	{ id = "movelist", text = "MOVE LIST", desc = "Every combo, special, super and finisher. Reading is a skill too." },
+	{ id = "settings", text = "SETTINGS", desc = "Volume, subtitles, camera shake, CPU difficulty and touch controls." },
 }
 
 function Screens.mainMenu(root: Instance, profile)
@@ -510,12 +510,13 @@ function Screens.mainMenu(root: Instance, profile)
 	end
 	showFighter()
 	local showName = Theme.label(f, "", {
-		Size = UDim2.fromOffset(600, 40),
+		Size = UDim2.fromOffset(720, 40),
 		Position = UDim2.new(1, -60, 1, -60),
 		AnchorPoint = Vector2.new(1, 1),
 		TextXAlignment = Enum.TextXAlignment.Right,
+		TextScaled = true,
 		FontFace = F.display,
-		TextSize = 34,
+		TextSize = 30,
 		TextColor3 = C.goldBright,
 		ZIndex = 16,
 	})
@@ -541,10 +542,10 @@ function Screens.mainMenu(root: Instance, profile)
 
 	-- logo
 	local logo = Theme.label(f, Config.GameTitle, {
-		Size = UDim2.fromOffset(700, 90),
+		Size = UDim2.fromOffset(740, 90),
 		Position = UDim2.fromOffset(90, 70),
 		FontFace = F.display,
-		TextSize = 84,
+		TextSize = 74,
 		TextColor3 = C.ivory,
 		ZIndex = 16,
 	})
@@ -574,7 +575,7 @@ function Screens.mainMenu(root: Instance, profile)
 		ZIndex = 16,
 	})
 	if profile then
-		Theme.label(f, string.format("WINS %d    \u{00B7}    ASCENTS %d    \u{00B7}    STORY %s", profile.wins or 0, profile.ascents or 0, profile.storyDone and "COMPLETE" or "IN PROGRESS"), {
+		Theme.label(f, string.format("WINS %d    \u{00B7}    TOWERS %d    \u{00B7}    STORY %s", profile.wins or 0, profile.ascents or 0, profile.storyDone and "COMPLETE" or "IN PROGRESS"), {
 			Size = UDim2.fromOffset(640, 24),
 			Position = UDim2.fromOffset(110, 770),
 			FontFace = F.label,
@@ -771,7 +772,7 @@ local function fighterPicker(root: Instance, opts)
 			end
 		else
 			nameL.Text = "RANDOM"
-			titleL.Text = "LET THE VEIL DECIDE"
+			titleL.Text = "LET THE ALGORITHM DECIDE"
 			infoText.Text = "A random fighter will be chosen."
 		end
 	end
@@ -844,7 +845,7 @@ end
 local function echoPicker(root: Instance, fighterId: string, side: number?)
 	local f = screenFrame(root, "EchoSelect")
 	backdrop(f, 0.78)
-	title(f, "SUMMON YOUR ECHO", "A SPECTRAL ALLY WHO ANSWERS YOUR CALL MID-FIGHT")
+	title(f, "CALL A FRIEND", "YOUR ONE (1) FRIEND WHO SHOWS UP MID-FIGHT")
 	local def = Fighters.get(fighterId)
 	local style = Poses.STYLE_OF[def.stance] or "unarmed"
 	Portrait.create(f, def.look, {
@@ -938,7 +939,7 @@ local function echoPicker(root: Instance, fighterId: string, side: number?)
 		)
 	end
 	refresh()
-	hintBar(f, { { "left", "" }, { "right", "BROWSE" }, { "confirm", "SUMMON" }, { "back", "BACK" } })
+	hintBar(f, { { "left", "" }, { "right", "BROWSE" }, { "confirm", "BRING THEM" }, { "back", "BACK" } })
 	fadeIn(f)
 	local w = waiter()
 	local conns = connections()
@@ -1037,7 +1038,7 @@ end
 function Screens.stageSelect(root: Instance, defaultDifficulty: number?)
 	local f = screenFrame(root, "StageSelect")
 	backdrop(f, 0.85)
-	title(f, "CHOOSE THE ARENA")
+	title(f, "PICK A SERVER")
 	local stages = {}
 	for _, id in Stages.selectable do
 		table.insert(stages, Stages.get(id))
@@ -1152,8 +1153,8 @@ function Screens.stageSelect(root: Instance, defaultDifficulty: number?)
 		else
 			heroImg.Image = Assets.image("KeyArt")
 			heroImg.BackgroundTransparency = 1
-			heroName.Text = "RANDOM ARENA"
-			heroDesc.Text = "Let fate choose the battleground."
+			heroName.Text = "RANDOM SERVER"
+			heroDesc.Text = "Server hopping. The noble way."
 		end
 	end
 	refresh()
@@ -1332,7 +1333,7 @@ end
 function Screens.ladder(root: Instance, ladder, index: number, playerId: string)
 	local f = screenFrame(root, "Ladder")
 	backdrop(f, 0.8)
-	title(f, "ASCENT", string.format("CHALLENGER %d OF %d", index, #ladder))
+	title(f, "THE TOWER", string.format("TRYHARD %d OF %d", index, #ladder))
 	local tower = Theme.frame(f, {
 		Size = UDim2.fromOffset(300, #ladder * 98),
 		Position = UDim2.new(0.5, 280, 0.55, 0),
@@ -1493,7 +1494,7 @@ function Screens.ending(root: Instance, fighterId: string)
 	local def = Fighters.get(fighterId)
 	Audio.music("music_victory")
 	for i, para in def.ending do
-		Screens.card(root, i == 1 and "ASCENT COMPLETE" or "", i == 1 and def.name or "", para, { darkness = 0.7 })
+		Screens.card(root, i == 1 and "TOWER CLEARED" or "", i == 1 and def.name or "", para, { darkness = 0.7 })
 	end
 end
 
@@ -1566,7 +1567,7 @@ function Screens.results(root: Instance, result, opts)
 		AnchorPoint = Vector2.new(0, 1),
 		ZIndex = 13,
 	})
-	local head = Theme.label(f, won and "VICTORY" or "DEFEAT", {
+	local head = Theme.label(f, won and "BIG W" or "TAKE THE L", {
 		Size = UDim2.fromOffset(800, 110),
 		Position = UDim2.new(0, 600, 0, 60),
 		FontFace = F.display,
@@ -1723,10 +1724,10 @@ function Screens.moveList(root: Instance, startFighter: string?)
 				row(m.name, m.input, MoveKit.describe(m), nextOrder())
 			end
 		end
-		section("SUPER  \u{00B7}  2 VEIL BARS", nextOrder())
+		section("SUPER  \u{00B7}  2 RAGE BARS", nextOrder())
 		row(def.superName, "SUPER  (" .. Input.glyph("X") .. ")", "Cinematic super. Invulnerable on startup. " .. MoveKit.describe(def.moves.SUPER), nextOrder())
 		section("FINISHER", nextOrder())
-		row(def.finisher.name, "HOLD \u{2193} + SPECIAL at SEAL THEIR FATE", def.finisher.desc, nextOrder())
+		row(def.finisher.name, "HOLD \u{2193} + SPECIAL at DELETE THEM", def.finisher.desc, nextOrder())
 		section("STRINGS & NORMALS", nextOrder())
 		for _, id in { "L", "L2", "L3", "H", "H2", "K", "K2", "FH", "BK", "DL", "DH", "DK", "JL", "JH", "JK", "THROW" } do
 			local m = def.moves[id]
@@ -1735,8 +1736,8 @@ function Screens.moveList(root: Instance, startFighter: string?)
 			end
 		end
 		section("SYSTEM", nextOrder())
-		row("Echo Summon", "ECHO  /  \u{2193} + ECHO", "Call your spectral ally. Cooldown " .. tostring(math.floor(Config.EchoCooldown / 60)) .. "s.", nextOrder())
-		row("Breaker", "SUPER while being comboed", "Costs 1 Veil bar. Bursts free of a combo.", nextOrder())
+		row("Call a Friend", "FRIEND  /  \u{2193} + FRIEND", "Your friend runs in and helps. Cooldown " .. tostring(math.floor(Config.EchoCooldown / 60)) .. "s.", nextOrder())
+		row("Rage Quit", "SUPER while being comboed", "Costs 1 Rage bar. Bursts you out of a combo.", nextOrder())
 		row("Dash / Backdash", "\u{2192}\u{2192}  /  \u{2190}\u{2190}", "Double-tap a direction. Backdash is briefly invulnerable.", nextOrder())
 		row("Throw Escape", "BLOCK + LIGHT when grabbed", "Break a throw on reaction.", nextOrder())
 		scroll.CanvasPosition = Vector2.zero

@@ -1,5 +1,5 @@
 --!nonstrict
--- VEILBREAKERS client entry point: builds the UI root and runs the game flow
+-- OOF FIGHTERS 1 client entry point: builds the UI root and runs the game flow
 -- (title -> main menu -> Story / Ascent / Versus / Practice / Move List / Settings).
 
 local Players = game:GetService("Players")
@@ -276,7 +276,7 @@ end
 local function buildLadder(playerId: string)
 	local pool = {}
 	for _, f in Fighters.list do
-		if f.id ~= playerId and f.id ~= "hollowking" then
+		if f.id ~= playerId and f.id ~= "admin" then
 			table.insert(pool, f.id)
 		end
 	end
@@ -289,16 +289,16 @@ local function buildLadder(playerId: string)
 	for i = 1, math.min(6, #pool) do
 		table.insert(ladder, { fighter = pool[i], echo = randomEcho() })
 	end
-	if playerId ~= "hollowking" then
-		table.insert(ladder, { fighter = "hollowking", echo = "warden", boss = true })
+	if playerId ~= "admin" then
+		table.insert(ladder, { fighter = "admin", echo = "nightguard", boss = true })
 	else
-		table.insert(ladder, { fighter = "raiken", echo = "okoro", boss = true })
+		table.insert(ladder, { fighter = "noob", echo = "grandpa", boss = true })
 	end
 	return ladder
 end
 
 local function runAscent()
-	local sel = Screens.characterSelect(root, { title = "ASCENT: CHOOSE YOUR FIGHTER", subtitle = "SEVEN CHALLENGERS STAND BETWEEN YOU AND THE THRONE" })
+	local sel = Screens.characterSelect(root, { title = "THE TOWER: CHOOSE YOUR FIGHTER", subtitle = "SEVEN TRYHARDS STAND BETWEEN YOU AND THE ADMIN" })
 	if not sel then
 		return
 	end
@@ -315,12 +315,12 @@ local function runAscent()
 		if opp.boss then
 			stageId = "emberthrone"
 		else
-			local options = { "hollowroot", "skyreach", "cathedral" }
+			local options = { "hollowroot", "skyreach", "cathedral", "baseplate" }
 			stageId = options[(i % #options) + 1]
 		end
 		local p1 = { fighter = sel.fighter, echo = sel.echo }
 		local p2 = { fighter = opp.fighter, echo = opp.echo, cpu = true, difficulty = diff }
-		local cover = Screens.versus(root, p1, p2, stageId, string.format("ASCENT  \u{00B7}  CHALLENGER %d OF %d", i, #ladder))
+		local cover = Screens.versus(root, p1, p2, stageId, string.format("THE TOWER  \u{00B7}  TRYHARD %d OF %d", i, #ladder))
 		local outcome, out = runFight({ p1 = p1, p2 = p2, stage = stageId, boss = opp.boss }, cover)
 		Screens.fadeFromBlack(out, 0.4)
 		if outcome.kind == "quit" then
@@ -373,7 +373,7 @@ local function runStory()
 		end
 	end
 	saveProfile({ storyDone = true })
-	Screens.card(root, "CHAPTER I COMPLETE", "TO BE CONTINUED", "The Veil holds, for now. But in the drowned dark beneath the moon-lake, the choir is still singing, and it has learned a new name.", { darkness = 0.7 })
+	Screens.card(root, "CHAPTER I COMPLETE", "TO BE CONTINUED", "The server is safe. For now. But deep in the Deleted Accounts folder, a guest is typing... and it just found out what ;admin does.", { darkness = 0.7 })
 end
 
 -------------------------------------------------------------------------------
@@ -402,7 +402,7 @@ while true do
 	end)
 	if not ok then
 		-- never leave the player stuck: log, clean up the world and return to the menu
-		warn("[Veilbreakers] recovered from error: " .. tostring(err))
+		warn("[OofFighters] recovered from error: " .. tostring(err))
 		StageBuilder.clear()
 		FightCamera.disable()
 		for _, ch in root:GetChildren() do

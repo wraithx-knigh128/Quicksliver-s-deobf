@@ -1,5 +1,5 @@
 --!nonstrict
--- VEILBREAKERS combat engine.
+-- OOF FIGHTERS 1 combat engine.
 --
 -- A deterministic, fixed-step (60 Hz) 2D fighting simulation. It knows nothing about
 -- Roblox instances: the client renders whatever state this module exposes and reacts
@@ -49,7 +49,7 @@ end
 
 local function newFighter(_match, index: number, spec)
 	local def = Fighters.get(spec.fighter)
-	local echoDef = Echoes.get(spec.echo or "okoro")
+	local echoDef = Echoes.get(spec.echo or "grandpa")
 	local maxHp = def.health
 	if spec.boss then
 		maxHp += Config.BossHealthBonus

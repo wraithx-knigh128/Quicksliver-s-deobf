@@ -1,5 +1,5 @@
 --!nonstrict
--- Echoes: spectral allies summoned mid-fight. Each has a neutral and a down variant.
+-- Friends (internally "Echoes"): spectral allies summoned mid-fight. Each has a neutral and a down variant.
 -- Frame counts are measured from the moment the Echo materialises.
 
 local MoveKit = require(script.Parent.MoveKit)
@@ -56,12 +56,12 @@ end
 
 local list: { Echo } = {
 	{
-		id = "okoro",
-		name = "BROTHER OKORO",
-		title = "Keeper of Seals",
-		bio = "A monk of Skyreach whose prayer-seals once held back a flood of the dead. He answers any call made in good faith.",
+		id = "grandpa",
+		name = "GRANDPA STUDS",
+		title = "Played Since Beta, Will Tell You About It",
+		bio = "He remembers when everything was bricks and there was no jumping. He will tell you about it. Mid-fight. Whether you asked or not.",
 		accent = "#E8C66A",
-		callLine = "The seal holds!",
+		callLine = "Back in MY day we didn't HAVE combos!",
 		look = {
 			scale = 1.02,
 			width = 1.05,
@@ -77,9 +77,9 @@ local list: { Echo } = {
 			accent = "#E8C66A",
 			trim = "#7A2E1E",
 			glow = "#FFE39A",
-			face = "plain",
+			face = "bearded",
 			hair = "none",
-			hairColor = "#000000",
+			hairColor = "#E8E8E8",
 			headwear = "none",
 			mask = "none",
 			extras = { "prayer_beads", "sash" },
@@ -87,7 +87,7 @@ local list: { Echo } = {
 		},
 		neutral = E({
 			id = "okoro_n",
-			name = "Warding Seal",
+			name = "Back In My Day",
 			input = "ECHO",
 			anim = "cast_forward",
 			spawn = "behind",
@@ -114,7 +114,7 @@ local list: { Echo } = {
 		}),
 		down = E({
 			id = "okoro_d",
-			name = "Palm of Stillness",
+			name = "Old Man Strength",
 			input = "↓ + ECHO",
 			anim = "palm_strike",
 			spawn = "front",
@@ -130,12 +130,12 @@ local list: { Echo } = {
 		}),
 	},
 	{
-		id = "ilsa",
-		name = "ILSA",
-		title = "Huntress of the Pack",
-		bio = "A ranger raised by the great grey wolves of the Hrimfell pines. Where she goes, the pack follows.",
+		id = "dana",
+		name = "DOG WALKER DANA",
+		title = "Owner of Biscuit (Very Good Boy)",
+		bio = "Dana just wanted to walk her dog. Biscuit had other plans. Biscuit always has other plans.",
 		accent = "#C8D0D8",
-		callLine = "Hunt them down!",
+		callLine = "Biscuit! ZOOMIES!",
 		look = {
 			scale = 0.98,
 			width = 0.95,
@@ -161,7 +161,7 @@ local list: { Echo } = {
 		},
 		neutral = E({
 			id = "ilsa_n",
-			name = "Pack Rush",
+			name = "Biscuit Zoomies",
 			input = "ECHO",
 			anim = "point",
 			spawn = "behind",
@@ -186,7 +186,7 @@ local list: { Echo } = {
 		}),
 		down = E({
 			id = "ilsa_d",
-			name = "Fang Rise",
+			name = "Dig Attack",
 			input = "↓ + ECHO",
 			anim = "cast_ground",
 			spawn = "behind",
@@ -214,12 +214,12 @@ local list: { Echo } = {
 		}),
 	},
 	{
-		id = "warden",
-		name = "THE LANTERN WARDEN",
-		title = "Guide of Lost Souls",
-		bio = "Nobody remembers the face beneath the hood. The lantern leads the lost home, or somewhere far worse.",
+		id = "nightguard",
+		name = "THE NIGHT GUARD",
+		title = "Horror Game Survivor",
+		bio = "He has survived every horror game on the front page, mostly by screaming. His lantern has never once helped. He brings it anyway.",
 		accent = "#7FE3FF",
-		callLine = "Follow the light...",
+		callLine = "Did you hear that too?!",
 		look = {
 			scale = 1.1,
 			width = 1.0,
@@ -246,7 +246,7 @@ local list: { Echo } = {
 		},
 		neutral = E({
 			id = "warden_n",
-			name = "Gloam Lantern",
+			name = "Glowstick Grenade",
 			input = "ECHO",
 			anim = "cast_forward",
 			spawn = "behind",
@@ -272,7 +272,7 @@ local list: { Echo } = {
 		}),
 		down = E({
 			id = "warden_d",
-			name = "Wick Flare",
+			name = "Flashlight In The Face",
 			input = "↓ + ECHO",
 			anim = "lantern_raise",
 			spawn = "front",
@@ -289,12 +289,12 @@ local list: { Echo } = {
 		}),
 	},
 	{
-		id = "talon",
-		name = "GRIM TALON",
-		title = "Speaker for the Ravens",
-		bio = "An oracle who traded her eyes to the ravens for sight beyond the Veil. They still answer when she calls.",
+		id = "pigeon",
+		name = "PIGEON LADY",
+		title = "Commander of the Park",
+		bio = "She feeds the pigeons. The pigeons feed on her enemies. It's a whole ecosystem.",
 		accent = "#B03A4A",
-		callLine = "Feast, my children!",
+		callLine = "My babies are HUNGRY!",
 		look = {
 			scale = 0.96,
 			width = 0.92,
@@ -320,7 +320,7 @@ local list: { Echo } = {
 		},
 		neutral = E({
 			id = "talon_n",
-			name = "Murder of Crows",
+			name = "Pigeon Barrage",
 			input = "ECHO",
 			anim = "cast_forward",
 			spawn = "behind",
@@ -346,7 +346,7 @@ local list: { Echo } = {
 		}),
 		down = E({
 			id = "talon_d",
-			name = "Gallows Dive",
+			name = "Pigeon Dive Bomb",
 			input = "↓ + ECHO",
 			anim = "cast_up",
 			spawn = "behind",

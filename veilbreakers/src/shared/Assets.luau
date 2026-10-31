@@ -20,6 +20,7 @@ Assets.Images = {
 	Backdrop_cathedral = "rbxassetid://101210805452512",
 	Backdrop_emberthrone = "",
 	Backdrop_proving = "",
+	Backdrop_baseplate = "",
 }
 
 -- Built-in particle textures that ship with every Roblox client.
@@ -112,6 +113,7 @@ Assets.Sounds = {
 	fight = "",
 	finisher_ready = "",
 	shatter = "",
+	oof = "",
 	ui_move = "",
 	ui_confirm = "",
 	ui_back = "",

@@ -14,6 +14,8 @@ Loader.addGlobals({
 	ColorSequence = roblox.ColorSequence,
 	NumberSequence = roblox.NumberSequence,
 	NumberSequenceKeypoint = roblox.NumberSequenceKeypoint,
+	UDim2 = roblox.UDim2,
+	Font = roblox.Font,
 	workspace = roblox.Instance.new("Model"),
 })
 local shared = Loader.root("src/shared")

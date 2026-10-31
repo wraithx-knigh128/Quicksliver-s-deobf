@@ -1,12 +1,12 @@
 --!nonstrict
--- Global tuning values for VEILBREAKERS. Everything in the combat engine runs on a
+-- Global tuning values for OOF FIGHTERS 1. Everything in the combat engine runs on a
 -- fixed 60 Hz tick, so all durations here are in frames unless the name says otherwise.
 
 local Config = {}
 
-Config.GameTitle = "VEILBREAKERS"
-Config.GameSubtitle = "THE SUNDERED REALMS"
-Config.Version = "1.0.0"
+Config.GameTitle = "OOF FIGHTERS 1"
+Config.GameSubtitle = "THE GREAT SERVER RESET"
+Config.Version = "1.1.0"
 
 Config.TickRate = 60
 Config.TickDt = 1 / 60
@@ -87,7 +87,7 @@ Config.CameraLookHeight = 3.6
 Config.Difficulty = {
 	{
 		id = "novice",
-		name = "NOVICE",
+		name = "NOOB",
 		reaction = 26,
 		blockChance = 0.18,
 		punishChance = 0.15,
@@ -100,7 +100,7 @@ Config.Difficulty = {
 	},
 	{
 		id = "adept",
-		name = "ADEPT",
+		name = "PRO",
 		reaction = 16,
 		blockChance = 0.42,
 		punishChance = 0.45,
@@ -113,7 +113,7 @@ Config.Difficulty = {
 	},
 	{
 		id = "veteran",
-		name = "VETERAN",
+		name = "TRYHARD",
 		reaction = 11,
 		blockChance = 0.66,
 		punishChance = 0.75,
@@ -126,7 +126,7 @@ Config.Difficulty = {
 	},
 	{
 		id = "veilbreaker",
-		name = "VEILBREAKER",
+		name = "SWEAT",
 		reaction = 7,
 		blockChance = 0.86,
 		punishChance = 0.95,

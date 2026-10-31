@@ -119,8 +119,8 @@ for _, f in Fighters.list do
 	for id, spec in INPUTS do
 		if f.moves[id] then
 			local match = Engine.newMatch({
-				p1 = { fighter = f.id, echo = "okoro" },
-				p2 = { fighter = "raiken", echo = "okoro" },
+				p1 = { fighter = f.id, echo = "grandpa" },
+				p2 = { fighter = "noob", echo = "grandpa" },
 				training = true,
 				stage = "proving",
 			})
@@ -154,8 +154,8 @@ for _, f in Fighters.list do
 	end
 	-- jump-in air normal
 	local match = Engine.newMatch({
-		p1 = { fighter = f.id, echo = "ilsa" },
-		p2 = { fighter = "morrgath", echo = "ilsa" },
+		p1 = { fighter = f.id, echo = "dana" },
+		p2 = { fighter = "studzilla", echo = "dana" },
 		training = true,
 	})
 	local inp = neutral()
@@ -175,8 +175,8 @@ print("[3] Hits, blocks, combos and KO")
 ---------------------------------------------------------------------------
 do
 	local match = Engine.newMatch({
-		p1 = { fighter = "raiken", echo = "okoro" },
-		p2 = { fighter = "nyx", echo = "talon" },
+		p1 = { fighter = "noob", echo = "grandpa" },
+		p2 = { fighter = "guest", echo = "pigeon" },
 		skipIntro = true,
 		seed = 7,
 	})
@@ -402,8 +402,8 @@ print("[5] Determinism")
 ---------------------------------------------------------------------------
 local function runOnce(s)
 	local match = Engine.newMatch({
-		p1 = { fighter = "zhura", echo = "ilsa", cpu = true },
-		p2 = { fighter = "torvald", echo = "warden", cpu = true },
+		p1 = { fighter = "emote", echo = "dana", cpu = true },
+		p2 = { fighter = "frosty", echo = "nightguard", cpu = true },
 		seed = s,
 		shortIntro = true,
 	})

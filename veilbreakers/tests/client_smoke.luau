@@ -162,11 +162,11 @@ local function add(c)
 		totals[k] = (totals[k] or 0) + v
 	end
 end
-add(runFight("raiken vs hollowking @ emberthrone", { p1 = { fighter = "raiken", echo = "okoro", cpu = true, difficulty = 4 }, p2 = { fighter = "hollowking", echo = "warden", cpu = true, difficulty = 4 }, stage = "emberthrone", boss = true, seed = 11 }, 60 * 60 * 8))
-add(runFight("seraphine vs nyx @ cathedral (touch UI)", { p1 = { fighter = "seraphine", echo = "ilsa", cpu = true, difficulty = 4 }, p2 = { fighter = "nyx", echo = "talon", cpu = true, difficulty = 4 }, stage = "cathedral", seed = 12, forceTouch = true }, 60 * 60 * 8))
-add(runFight("morrgath vs zhura @ hollowroot", { p1 = { fighter = "morrgath", echo = "warden", cpu = true, difficulty = 4 }, p2 = { fighter = "zhura", echo = "okoro", cpu = true, difficulty = 4 }, stage = "hollowroot", seed = 13 }, 60 * 60 * 8))
-add(runFight("torvald vs vesper @ skyreach", { p1 = { fighter = "torvald", echo = "talon", cpu = true, difficulty = 4 }, p2 = { fighter = "vesper", echo = "ilsa", cpu = true, difficulty = 4 }, stage = "skyreach", seed = 14 }, 60 * 60 * 8))
-runFight("practice @ proving", { p1 = { fighter = "nyx", echo = "okoro" }, p2 = { fighter = "raiken", echo = "okoro" }, stage = "proving", training = true, dummy = "stand", seed = 15 }, 60 * 10)
+add(runFight("noob vs admin @ emberthrone", { p1 = { fighter = "noob", echo = "grandpa", cpu = true, difficulty = 4 }, p2 = { fighter = "admin", echo = "nightguard", cpu = true, difficulty = 4 }, stage = "emberthrone", boss = true, seed = 11 }, 60 * 60 * 8))
+add(runFight("bacon vs guest @ cathedral (touch UI)", { p1 = { fighter = "bacon", echo = "dana", cpu = true, difficulty = 4 }, p2 = { fighter = "guest", echo = "pigeon", cpu = true, difficulty = 4 }, stage = "cathedral", seed = 12, forceTouch = true }, 60 * 60 * 8))
+add(runFight("studzilla vs emote @ hollowroot", { p1 = { fighter = "studzilla", echo = "nightguard", cpu = true, difficulty = 4 }, p2 = { fighter = "emote", echo = "grandpa", cpu = true, difficulty = 4 }, stage = "hollowroot", seed = 13 }, 60 * 60 * 8))
+add(runFight("frosty vs camper @ skyreach", { p1 = { fighter = "frosty", echo = "pigeon", cpu = true, difficulty = 4 }, p2 = { fighter = "camper", echo = "dana", cpu = true, difficulty = 4 }, stage = "skyreach", seed = 14 }, 60 * 60 * 8))
+runFight("practice @ proving", { p1 = { fighter = "guest", echo = "grandpa" }, p2 = { fighter = "noob", echo = "grandpa" }, stage = "proving", training = true, dummy = "stand", seed = 15 }, 60 * 10)
 for _, k in { "hit", "block", "super_hit", "echo_summon", "projectile_spawn", "finisher_hit" } do
 	if (totals[k] or 0) == 0 then
 		fail("no '" .. k .. "' events rendered across the matches")
@@ -223,12 +223,12 @@ drive("stage select", function()
 	return Screens.stageSelect(root, 2)
 end, { { nav = "right" }, { nav = "tabR" }, { nav = "confirm" } })
 drive("versus splash", function()
-	local cover = Screens.versus(root, { fighter = "raiken", echo = "okoro" }, { fighter = "nyx", echo = "talon" }, "skyreach")
+	local cover = Screens.versus(root, { fighter = "noob", echo = "grandpa" }, { fighter = "guest", echo = "pigeon" }, "skyreach")
 	Screens.fadeFromBlack(cover)
 	return "ok"
 end, {}, 8)
 drive("ascent ladder", function()
-	return Screens.ladder(root, { { fighter = "nyx" }, { fighter = "zhura" }, { fighter = "hollowking", boss = true } }, 2, "raiken")
+	return Screens.ladder(root, { { fighter = "guest" }, { fighter = "emote" }, { fighter = "admin", boss = true } }, 2, "noob")
 end, { { nav = "confirm" } })
 drive("chapter card", function()
 	return Screens.card(root, "CHAPTER I", "THE SUNDERED VEIL", "Synopsis text.")
@@ -236,8 +236,8 @@ end, { { wait = 1.5, nav = "confirm" } }, 8)
 drive("results", function()
 	return Screens.results(root, {
 		winner = 1,
-		p1 = { fighter = "raiken", echo = "okoro" },
-		p2 = { fighter = "nyx", echo = "talon" },
+		p1 = { fighter = "noob", echo = "grandpa" },
+		p2 = { fighter = "guest", echo = "pigeon" },
 		stats = { { damage = 900, hits = 30, maxCombo = 6 }, { damage = 500, hits = 20, maxCombo = 4 } },
 	})
 end, { { nav = "down" }, { nav = "confirm" } })
@@ -245,14 +245,14 @@ drive("pause", function()
 	return Screens.pause(root, {})
 end, { { nav = "down" }, { nav = "back" } })
 drive("move list", function()
-	return Screens.moveList(root, "torvald")
+	return Screens.moveList(root, "frosty")
 end, { { nav = "right" }, { nav = "down" }, { nav = "left" }, { nav = "back" } })
 local settings = { music = 0.6, sfx = 0.8, voice = 0.8, subtitles = true, shake = true, difficulty = 2, touch = "auto" }
 drive("settings", function()
 	return Screens.settings(root, settings)
 end, { { nav = "right" }, { nav = "down" }, { nav = "left" }, { nav = "confirm" }, { nav = "back" } })
 drive("ending", function()
-	return Screens.ending(root, "zhura")
+	return Screens.ending(root, "emote")
 end, { { wait = 1.6, nav = "confirm" }, { wait = 1.8, nav = "confirm" }, { wait = 1.8, nav = "confirm" } }, 14)
 
 print("[6] Story cutscenes")

@@ -876,4 +876,63 @@ function VFX.shatter(rig, color: Color3, style: string?)
 	})
 end
 
+-------------------------------------------------------------------------------
+-- Parody finisher: the classic Roblox death. Every part pops loose, flies apart
+-- with real physics and clatters onto the floor, with a big "OOF".
+-------------------------------------------------------------------------------
+
+function VFX.oofBreak(rig, color: Color3)
+	local pivot = rig.model:GetPivot().Position
+	for _, p in rig.allParts do
+		if p:IsA("BasePart") then
+			local here = p.CFrame.Position
+			local dir = here - pivot
+			if dir.Magnitude < 0.05 then
+				dir = V(math.random() - 0.5, 1, math.random() - 0.5)
+			end
+			dir = dir.Unit
+			p.Anchored = false
+			p.CanCollide = true
+			p.CanQuery = false
+			p.Massless = false
+			p.AssemblyLinearVelocity = dir * (10 + math.random() * 14) + V(0, 14 + math.random() * 12, (math.random() - 0.5) * 10)
+			p.AssemblyAngularVelocity = V((math.random() - 0.5) * 20, (math.random() - 0.5) * 20, (math.random() - 0.5) * 20)
+		end
+	end
+	VFX.burstShockwave(pivot + V(0, 1.5, 0), color)
+	-- the OOF
+	local a = anchorAt(pivot + V(0, 5, 0), 3)
+	local bb = Instance.new("BillboardGui")
+	bb.Size = UDim2.fromOffset(420, 160)
+	bb.LightInfluence = 0
+	bb.AlwaysOnTop = true
+	bb.Parent = a
+	local t = Instance.new("TextLabel")
+	t.BackgroundTransparency = 1
+	t.Size = UDim2.fromScale(1, 1)
+	t.Text = "OOF"
+	t.TextColor3 = Color3.fromHex("#FFF2C8")
+	t.TextStrokeColor3 = Color3.fromHex("#B0141E")
+	t.TextStrokeTransparency = 0
+	t.FontFace = Font.fromEnum(Enum.Font.LuckiestGuy)
+	t.TextScaled = true
+	t.Parent = bb
+	TweenService:Create(bb, TweenInfo.new(2.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { StudsOffset = V(0, 4, 0) }):Play()
+	task.delay(1.4, function()
+		if t.Parent then
+			TweenService:Create(t, TweenInfo.new(0.8), { TextTransparency = 1, TextStrokeTransparency = 1 }):Play()
+		end
+	end)
+	-- a little confetti of studs
+	burst(a, 40, {
+		color = ColorSequence.new(Color3.fromHex("#F5CD30"), Color3.fromHex("#0D69AC")),
+		speed = NumberRange.new(8, 20),
+		size = NumberSequence.new(0.4, 0.1),
+		lifetime = NumberRange.new(1, 2),
+		accel = V(0, -30, 0),
+		drag = 0.5,
+		lightEmission = 0.3,
+	})
+end
+
 return VFX

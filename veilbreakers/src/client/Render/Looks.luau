@@ -58,6 +58,19 @@ FACES.blindfold = function(attach, look)
 	attach("Head", V(0.28, 0.04, 0.04), C(0, -0.27, -0.61), "#3A1E1E", "SmoothPlastic", { shadow = false })
 end
 FACES.none = function() end
+-- The classic Roblox smile, as a decal on the head.
+FACES.classic = function(_attach, _look, rig)
+	local head = rig and rig.parts and rig.parts.Head
+	if not head then
+		return
+	end
+	local d = Instance.new("Decal")
+	d.Name = "face"
+	d.Texture = "rbxasset://textures/face.png"
+	d.Face = Enum.NormalId.Front
+	d.Parent = head
+	table.insert(rig.decals, d)
+end
 
 -------------------------------------------------------------------------------
 -- Hair
@@ -116,6 +129,23 @@ HAIR.short = function(attach, look)
 	attach("Head", V(1.22, 0.55, 0.22), C(0, 0.2, 0.58), look.hairColor, "SmoothPlastic")
 end
 HAIR.none = function() end
+-- Bacon hair: layered wavy strips of brown and pink.
+HAIR.bacon = function(attach, _look)
+	local cols = { "#7A3B1E", "#D98C74" }
+	for i = 0, 4 do
+		attach("Head", V(1.3, 0.15, 1.32), C(0, 0.66 - i * 0.09, 0.04 + i * 0.03) * A(rad(math.sin(i * 1.7) * 6), 0, rad(math.cos(i * 1.3) * 5)), cols[i % 2 + 1], "SmoothPlastic")
+	end
+	for i = 0, 5 do
+		attach("Head", V(1.26, 0.16, 0.22), C(0, 0.42 - i * 0.15, 0.6 + i * 0.01) * A(0, 0, rad(math.sin(i * 2.1) * 7)), cols[i % 2 + 1], "SmoothPlastic", {
+			swing = { amp = 2, speed = 2, phase = i * 0.4, vel = 15, pivot = V(0, 0.4 + i * 0.15, 0) },
+		})
+	end
+	for _, sx in { 1, -1 } do
+		for i = 0, 2 do
+			attach("Head", V(0.18, 0.18, 0.95), C(sx * 0.63, 0.35 - i * 0.18, 0.12), cols[(i + (sx > 0 and 1 or 0)) % 2 + 1], "SmoothPlastic")
+		end
+	end
+end
 
 -------------------------------------------------------------------------------
 -- Headwear
@@ -222,6 +252,12 @@ HEAD.feather_crown = function(attach, look)
 	attach("Head", V(0.14, 0.14, 0.06), C(0, 0.46, -0.66), look.glow, "Neon", { glow = true })
 end
 HEAD.none = function() end
+-- The legendary guest cap.
+HEAD.guest_cap = function(attach, _look)
+	attach("Head", V(1.32, 0.44, 1.34), C(0, 0.5, 0.04), "#1B1B1F", "SmoothPlastic")
+	attach("Head", V(1.28, 0.08, 0.72), C(0, 0.31, -0.86), "#C4281C", "SmoothPlastic")
+	attach("Head", V(0.26, 0.26, 0.04), C(0, 0.52, -0.68), "#F2F3F3", "SmoothPlastic", { shadow = false })
+end
 
 -------------------------------------------------------------------------------
 -- Masks
@@ -514,6 +550,87 @@ EXTRA.prayer_beads = function(attach, look, w)
 		})
 	end
 end
+-- Classic studs on top of the torso and shoulders.
+EXTRA.studs = function(attach, look, w)
+	for ix = -1.5, 1.5 do
+		for iz = -0.5, 0.5 do
+			attach("UpperTorso", V(0.16, 0.42, 0.42), C(ix * 0.48 * w, 0.86, iz * 0.5 * w) * A(0, 0, rad(90)), look.torso, "SmoothPlastic", { shape = CYL })
+		end
+	end
+	for _, side in { "Right", "Left" } do
+		attach(side .. "UpperArm", V(0.16, 0.4, 0.4), C(0, 0.55, 0) * A(0, 0, rad(90)), look.arms, "SmoothPlastic", { shape = CYL })
+	end
+end
+-- Mismatched free-model bricks stuck all over the body.
+EXTRA.brick_plates = function(attach, _look, w)
+	local bricks = {
+		{ "UpperTorso", V(0.9, 0.5, 0.25), C(0.45 * w, 0.2, -(w / 2) - 0.1), "#F5CD30" },
+		{ "UpperTorso", V(0.7, 0.45, 0.25), C(-0.5 * w, -0.3, -(w / 2) - 0.1), "#4B974B" },
+		{ "UpperTorso", V(1.2, 0.5, 0.25), C(0, 0.1, w / 2 + 0.1), "#0D69AC" },
+		{ "LowerTorso", V(0.8, 0.35, 0.25), C(0.4 * w, 0, -(w / 2) - 0.1), "#F2F3F3" },
+		{ "RightUpperLeg", V(0.6, 0.45, 0.2), C(0, 0.1, -0.55), "#C4281C" },
+		{ "LeftUpperLeg", V(0.6, 0.45, 0.2), C(0, -0.1, -0.55), "#F5CD30" },
+		{ "LeftUpperArm", V(1.1, 0.45, 1.1), C(0, 0.3, 0), "#0D69AC" },
+		{ "RightUpperArm", V(1.1, 0.45, 1.1), C(0, 0.3, 0), "#4B974B" },
+	}
+	for _, b in bricks do
+		attach(b[1], b[2], b[3], b[4], "SmoothPlastic")
+		attach(b[1], V(0.14, 0.3, 0.3), b[3] * C(0, b[2].Y / 2 + 0.06, 0) * A(0, 0, rad(90)), b[4], "SmoothPlastic", { shape = CYL })
+	end
+end
+-- Floating tag above the head (Roblox-style overhead text).
+local function overheadTag(rig, text: string, color: string, size: number?)
+	local head = rig and rig.parts and rig.parts.Head
+	if not head then
+		return
+	end
+	local bb = Instance.new("BillboardGui")
+	bb.Name = "OverheadTag"
+	bb.Size = UDim2.fromOffset(240, 34)
+	bb.StudsOffset = Vector3.new(0, 2.3 * (rig.scale or 1), 0)
+	bb.LightInfluence = 0
+	bb.MaxDistance = 90
+	bb.AlwaysOnTop = false
+	bb.Parent = head
+	local t = Instance.new("TextLabel")
+	t.BackgroundTransparency = 1
+	t.Size = UDim2.fromScale(1, 1)
+	t.Text = text
+	t.TextColor3 = Color3.fromHex(color)
+	t.TextStrokeTransparency = 0.3
+	t.FontFace = Font.fromEnum(Enum.Font.GothamBold)
+	t.TextSize = size or 20
+	t.Parent = bb
+end
+EXTRA.admin_tag = function(_attach, _look, _w, rig)
+	overheadTag(rig, "[ADMIN]", "#FF3B3B", 22)
+end
+EXTRA.free_model_tag = function(_attach, _look, _w, rig)
+	overheadTag(rig, "Free Model (Untitled) (2)", "#C8C8C8", 16)
+end
+-- Ghillie "bush" suit.
+EXTRA.bush_suit = function(attach, _look, w)
+	local spots = {
+		{ "Head", V(0.75, 0.6, 0.75), C(0.35, 0.75, 0.15) },
+		{ "Head", V(0.65, 0.55, 0.65), C(-0.4, 0.7, 0.25) },
+		{ "UpperTorso", V(1.0, 0.8, 0.8), C(0.6 * w, 0.6, 0.35) },
+		{ "UpperTorso", V(0.9, 0.75, 0.75), C(-0.6 * w, 0.55, 0.4) },
+		{ "UpperTorso", V(1.1, 0.9, 0.7), C(0, -0.1, w / 2 + 0.3) },
+		{ "LowerTorso", V(1.0, 0.7, 0.7), C(0.3, -0.3, w / 2 + 0.25) },
+	}
+	for i, sp in spots do
+		attach(sp[1], sp[2], sp[3], i % 2 == 0 and "#5E8C3A" or "#79A64A", "Grass", { shape = BALL })
+	end
+end
+-- DJ headphones.
+EXTRA.headphones = function(attach, look)
+	attach("Head", V(1.42, 0.12, 0.22), C(0, 0.68, 0.05), "#1A1A1A", "SmoothPlastic")
+	for _, sx in { 1, -1 } do
+		attach("Head", V(0.2, 0.55, 0.55), C(sx * 0.68, 0.12, 0.05) * A(0, 0, 0), "#1A1A1A", "SmoothPlastic", { shape = CYL })
+		attach("Head", V(0.06, 0.58, 0.58), C(sx * 0.79, 0.12, 0.05), look.glow, "Neon", { shape = CYL, glow = true, shadow = false })
+	end
+end
+
 EXTRA.feather_cloak = function(attach, _look, w)
 	for i = 0, 6 do
 		local a = (i - 3) * 11
@@ -680,13 +797,28 @@ WEAPON.lantern = function(rig, attach, look)
 	light.Parent = cage
 	table.insert(rig.lights, light)
 end
+-- Studzilla's fists: oversized brick blocks with studs.
+WEAPON.brick_fists = function(rig, attach, look)
+	local cols = { "#C4281C", "#0D69AC" }
+	for i, side in { "Right", "Left" } do
+		local g = attach(side .. "Hand", V(1.3, 0.85, 1.3), C(0, -0.12, 0), cols[i], "SmoothPlastic")
+		for ix = -0.5, 0.5 do
+			for iz = -0.5, 0.5 do
+				attach(side .. "Hand", V(0.14, 0.34, 0.34), C(ix * 0.6, 0.38, iz * 0.6) * A(0, 0, rad(90)), cols[i], "SmoothPlastic", { shape = CYL })
+			end
+		end
+		if side == "Right" then
+			trail(rig, g, V(0, 0.45, 0), V(0, -0.45, 0), Color3.fromHex(look.glow))
+		end
+	end
+end
 WEAPON.none = function() end
 
 -------------------------------------------------------------------------------
 
 function Looks.apply(rig, look, attach)
 	local w = look.width or 1
-	;(FACES[look.face] or FACES.plain)(attach, look)
+	;(FACES[look.face] or FACES.plain)(attach, look, rig)
 	;(HAIR[look.hair] or HAIR.none)(attach, look)
 	;(HEAD[look.headwear] or HEAD.none)(attach, look)
 	;(MASK[look.mask] or MASK.none)(attach, look)
@@ -694,7 +826,7 @@ function Looks.apply(rig, look, attach)
 	for _, ex in look.extras or {} do
 		local fn = EXTRA[ex]
 		if fn then
-			fn(attach, look, w)
+			fn(attach, look, w, rig)
 		end
 	end
 	;(WEAPON[look.weapon] or WEAPON.none)(rig, attach, look)

@@ -88,6 +88,7 @@ function Rig.build(look, opts)
 		poseCache = {},
 		transparency = 0,
 		baseT = {},
+		decals = {},
 	}
 
 	for _, name in sk.order do
@@ -260,6 +261,9 @@ function Rig.setTransparency(rig, t: number)
 	rig.transparency = t
 	for _, p in rig.allParts do
 		p.Transparency = math.max(rig.baseT[p] or 0, t)
+	end
+	for _, d in rig.decals do
+		d.Transparency = t
 	end
 end
 

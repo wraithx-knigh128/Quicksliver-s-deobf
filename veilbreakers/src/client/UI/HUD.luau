@@ -173,7 +173,7 @@ local function sideBlock(_self, root, side: number, fighter, echo)
 		Theme.gradient(f, { Color3.fromHex("#FFE7A0"), Color3.fromHex("#D08A1A") }, 90)
 		segs[i] = { frame = seg, fill = f }
 	end
-	local meterLabel = Theme.label(bottom, "VEIL  0", {
+	local meterLabel = Theme.label(bottom, "RAGE  0", {
 		Size = UDim2.fromOffset(340, 22),
 		Position = UDim2.new(left and 0 or 1, sx * 82, 0, 4),
 		AnchorPoint = Vector2.new(left and 0 or 1, 0),
@@ -405,7 +405,7 @@ function HUD.new(parentRoot: Instance, p1Def, p1Echo, p2Def, p2Echo, opts)
 		Visible = false,
 		ZIndex = 6,
 	})
-	local finText = Theme.label(fin, "SEAL THEIR FATE", {
+	local finText = Theme.label(fin, "DELETE THEM", {
 		Size = UDim2.new(1, 0, 0, 90),
 		TextXAlignment = Enum.TextXAlignment.Center,
 		FontFace = F.display,
@@ -605,7 +605,7 @@ function HUD:update(match, dt: number)
 			seg.fill.Size = UDim2.fromScale(v, 1)
 			seg.frame:FindFirstChildOfClass("UIStroke").Color = (v >= 1) and C.goldBright or C.goldDim
 		end
-		s.meterLabel.Text = string.format("VEIL  %d", math.floor(m / Config.MeterBar))
+		s.meterLabel.Text = string.format("RAGE  %d", math.floor(m / Config.MeterBar))
 		-- echo gauge
 		local ready = f.echoCD <= 0
 		local e = 1 - math.clamp(f.echoCD / Config.EchoCooldown, 0, 1)

@@ -1,5 +1,5 @@
 --!nonstrict
--- VEILBREAKERS server bootstrap.
+-- OOF FIGHTERS 1 server bootstrap.
 -- The fights themselves run on each player's client (single-player vs CPU), so the
 -- server only owns profile persistence: settings + lifetime stats in a DataStore.
 -- All remote input is validated and rate-limited; DataStore failures degrade to
@@ -12,7 +12,7 @@ local RunService = game:GetService("RunService")
 
 Players.CharacterAutoLoads = false
 
-local STORE_NAME = "VeilbreakersProfile_v1"
+local STORE_NAME = "OofFightersProfile_v1"
 local store = nil
 do
 	local ok, result = pcall(function()

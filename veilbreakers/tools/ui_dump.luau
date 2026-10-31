@@ -36,8 +36,8 @@ if which == "hud" then
 	local FightView = Loader.require(client.Render.FightView)
 	local view = FightView.new({
 		root = root,
-		p1 = { fighter = "raiken", echo = "okoro", cpu = true, difficulty = 4 },
-		p2 = { fighter = "hollowking", echo = "warden", cpu = true, difficulty = 4 },
+		p1 = { fighter = "noob", echo = "grandpa", cpu = true, difficulty = 4 },
+		p2 = { fighter = "admin", echo = "nightguard", cpu = true, difficulty = 4 },
 		stage = "emberthrone",
 		seed = 3,
 		shortIntro = true,
@@ -66,16 +66,16 @@ else
 		elseif which == "results" then
 			Screens.results(root, {
 				winner = 1,
-				p1 = { fighter = "zhura", echo = "ilsa" },
-				p2 = { fighter = "torvald", echo = "talon" },
+				p1 = { fighter = "emote", echo = "dana" },
+				p2 = { fighter = "frosty", echo = "pigeon" },
 				stats = { { damage = 1012, hits = 41, maxCombo = 7, specials = 9, supers = 1, echoes = 3, throws = 2, blocks = 14 }, { damage = 640, hits = 22, maxCombo = 4, specials = 6, supers = 0, echoes = 2, throws = 1, blocks = 20 } },
 			})
 		elseif which == "versus" then
-			Screens.versus(root, { fighter = "seraphine", echo = "ilsa" }, { fighter = "morrgath", echo = "warden" }, "hollowroot")
+			Screens.versus(root, { fighter = "bacon", echo = "dana" }, { fighter = "studzilla", echo = "nightguard" }, "hollowroot")
 		elseif which == "pause" then
 			Screens.pause(root, {})
 		elseif which == "movelist" then
-			Screens.moveList(root, "nyx")
+			Screens.moveList(root, "guest")
 		elseif which == "title" then
 			Screens.title(root)
 		end
