@@ -9,6 +9,8 @@ local Veil = game:GetService("ReplicatedStorage"):WaitForChild("Veil")
 local Assets = require(Veil.Assets)
 local Stages = require(Veil.Data.Stages)
 
+local StageLife = require(script.Parent.StageLife)
+
 local StageBuilder = {}
 
 local V = Vector3.new
@@ -855,6 +857,7 @@ end
 
 function StageBuilder.clear()
 	if current then
+		StageLife.clear(current.life)
 		for _, inst in current.made do
 			if inst and inst.Parent then
 				inst:Destroy()
@@ -890,15 +893,18 @@ function StageBuilder.build(stageId: string)
 		ctx = ctx,
 		fx = fx,
 	}
+	StageLife.build(current)
 	return current
 end
 
--- Per-frame animation of stage elements; camX gives backdrop parallax.
-function StageBuilder.update(t: number, camX: number)
+-- Per-frame animation of stage elements; camX gives backdrop parallax. `fighters`
+-- (optional, the engine's fighter list) drives the key/rim lighting rig.
+function StageBuilder.update(t: number, camX: number, dt: number?, fighters: { any }?)
 	local cur = current
 	if not cur then
 		return
 	end
+	StageLife.update(cur.life, t, dt or 1 / 60, fighters)
 	if cur.backdrop and cur.backdropBase then
 		cur.backdrop.CFrame = cur.backdropBase * C(camX * 0.55, 0, 0)
 	end
@@ -914,6 +920,13 @@ function StageBuilder.update(t: number, camX: number)
 			local kk = 0.5 + 0.5 * math.sin(t * 1.3 + i)
 			p.Color = Color3.fromRGB(255, 70 + math.floor(50 * kk), 10 + math.floor(20 * k))
 		end
+	end
+end
+
+-- Arena reaction to a fight beat: heavy | super | ko | round
+function StageBuilder.react(kind: string)
+	if current then
+		StageLife.react(current.life, kind)
 	end
 end
 

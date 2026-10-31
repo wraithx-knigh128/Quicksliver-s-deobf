@@ -1,5 +1,5 @@
 --!nonstrict
--- The OOF FIGHTERS 1 roster: eight Roblox-parody fighters, each with standing / crouching /
+-- The OOF COMBAT roster: eight Roblox-parody fighters, each with standing / crouching /
 -- air normals, target-combo strings, four specials (neutral, forward, back, down),
 -- a meter super, a throw and a post-match finisher.
 --
@@ -68,6 +68,8 @@ export type Fighter = {
 	victory: { string },
 	ending: { string },
 	voice: string, -- "male" | "female" | "deep" | "hollow"
+	-- body language for idles (see Poses.idleFor): bounce, calm, heavy, creepy, dance, sniper, smug
+	personality: string?,
 }
 
 -------------------------------------------------------------------------------
@@ -507,6 +509,7 @@ end
 -- 1. THE NOOB -------------------------------------------------------------------
 add({
 	id = "noob",
+	personality = "bounce",
 	name = "THE NOOB",
 	short = "Noob",
 	title = "Default Avatar Since 2006",
@@ -696,6 +699,7 @@ add({
 -- 2. BACON HAIR ----------------------------------------------------------
 add({
 	id = "bacon",
+	personality = "calm",
 	name = "BACON HAIR",
 	short = "Bacon Hair",
 	title = "Knight of the Free Hairstyle",
@@ -883,6 +887,7 @@ add({
 -- 3. STUDZILLA ----------------------------------------------------------------
 add({
 	id = "studzilla",
+	personality = "heavy",
 	name = "STUDZILLA",
 	short = "Studzilla",
 	title = "The 2008 Kaiju Made of Free Bricks",
@@ -1054,6 +1059,7 @@ add({
 -- 4. GUEST 666 -------------------------------------------------------------
 add({
 	id = "guest",
+	personality = "creepy",
 	name = "GUEST 666",
 	short = "Guest 666",
 	title = "The Account That Should Not Exist",
@@ -1230,6 +1236,7 @@ add({
 -- 5. FROSTY -----------------------------------------------------------------
 add({
 	id = "frosty",
+	personality = "heavy",
 	name = "FROSTY",
 	short = "Frosty",
 	title = "100% Free Model, 0% Scripts",
@@ -1397,6 +1404,7 @@ add({
 -- 6. EMOTE QUEEN -------------------------------------------------------------------
 add({
 	id = "emote",
+	personality = "dance",
 	name = "EMOTE QUEEN",
 	short = "Emote Queen",
 	title = "Owns Every Dance, Paid For None",
@@ -1559,6 +1567,7 @@ add({
 -- 7. THE CAMPER ------------------------------------------------------------
 add({
 	id = "camper",
+	personality = "sniper",
 	name = "THE CAMPER",
 	short = "Camper",
 	title = "Hasn't Moved Since Round One",
@@ -1727,6 +1736,7 @@ add({
 -- 8. THE ADMIN (boss) -----------------------------------------------------------
 add({
 	id = "admin",
+	personality = "smug",
 	name = "THE ADMIN",
 	short = "Admin",
 	title = "Owner of the Server (Allegedly)",

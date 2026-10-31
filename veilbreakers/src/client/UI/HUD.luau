@@ -21,7 +21,7 @@ HUD.__index = HUD
 local BAR_W = 560
 local BAR_H = 26
 
-local function sideBlock(_self, root, side: number, fighter, echo)
+local function sideBlock(hud, root, side: number, fighter, echo)
 	local left = side == 1
 	local anchorX = left and 0 or 1
 	local sx = left and 1 or -1
@@ -236,8 +236,32 @@ local function sideBlock(_self, root, side: number, fighter, echo)
 	})
 	Theme.textStroke(comboDmg, 2, 0.2)
 
+	-- player tag chip (P1 / P2 / CPU) at the far end of the name row
+	local tagText = (hud.tags and hud.tags[side]) or (left and "P1" or "P2")
+	local tag = Theme.frame(holder, {
+		Name = "Tag",
+		Size = UDim2.fromOffset(58, 24),
+		Position = UDim2.new(left and 0 or 1, left and (barX + BAR_W - 58) or (barX - BAR_W + 58), 0, 54),
+		AnchorPoint = Vector2.new(left and 0 or 1, 0),
+		BackgroundColor3 = tagText == "CPU" and Color3.fromHex("#2A2B30") or Color3.fromHex(fighter.accent),
+		BackgroundTransparency = 0.05,
+	})
+	Theme.corner(tag, 5)
+	Theme.stroke(tag, C.goldDim, 1)
+	Theme.label(tag, tagText, {
+		Size = UDim2.fromScale(1, 1),
+		TextXAlignment = Enum.TextXAlignment.Center,
+		FontFace = F.labelBold,
+		TextSize = 15,
+		TextColor3 = tagText == "CPU" and C.text or Color3.fromHex("#0A0A0C"),
+	})
+
 	return {
 		holder = holder,
+		bottom = bottom,
+		tag = tag,
+		holderPos = holder.Position,
+		bottomPos = bottom.Position,
 		portrait = por,
 		fill = fill,
 		fillGrad = fillGrad,
@@ -266,6 +290,7 @@ function HUD.new(parentRoot: Instance, p1Def, p1Echo, p2Def, p2Echo, opts)
 	opts = opts or {}
 	local root = Theme.frame(parentRoot, { Name = "HUD", Size = UDim2.fromScale(1, 1), ZIndex = 2 })
 	self.root = root
+	self.tags = opts.tags
 
 	-- top vignette for legibility
 	local vig = Theme.frame(root, {
@@ -433,6 +458,88 @@ function HUD.new(parentRoot: Instance, p1Def, p1Echo, p2Def, p2Echo, opts)
 		BackgroundTransparency = 1,
 		ZIndex = 20,
 	})
+
+	-- cinematic letterbox (intros, supers, victories)
+	local barTop = Theme.frame(root, {
+		Name = "LetterboxTop",
+		Size = UDim2.new(1, 0, 0.12, 0),
+		Position = UDim2.fromScale(0, -0.12),
+		BackgroundColor3 = Color3.new(0, 0, 0),
+		BackgroundTransparency = 0,
+		ZIndex = 18,
+	})
+	local barBot = Theme.frame(root, {
+		Name = "LetterboxBottom",
+		Size = UDim2.new(1, 0, 0.12, 0),
+		Position = UDim2.fromScale(0, 1),
+		BackgroundColor3 = Color3.new(0, 0, 0),
+		BackgroundTransparency = 0,
+		ZIndex = 18,
+	})
+	self.cinemaBars = { top = barTop, bottom = barBot, on = false }
+	self.timerPos = timer.Position
+
+	-- intro name cards (one per side, lower third)
+	self.cards = {}
+	for side = 1, 2 do
+		local left = side == 1
+		local card = Theme.frame(root, {
+			Name = "NameCard" .. side,
+			Size = UDim2.fromOffset(620, 150),
+			Position = UDim2.new(left and -0.6 or 1.6, 0, 0.62, 0),
+			AnchorPoint = Vector2.new(left and 0 or 1, 0),
+			BackgroundColor3 = Color3.new(0, 0, 0),
+			BackgroundTransparency = 0.25,
+			Visible = false,
+			ZIndex = 19,
+		})
+		Theme.gradient(card, { Color3.new(0, 0, 0), Color3.new(0, 0, 0) }, left and 0 or 180, NumberSequence.new({
+			NumberSequenceKeypoint.new(0, 0.1),
+			NumberSequenceKeypoint.new(0.7, 0.45),
+			NumberSequenceKeypoint.new(1, 1),
+		}))
+		local stripe = Theme.frame(card, {
+			Size = UDim2.new(0, 8, 1, 0),
+			Position = UDim2.fromScale(left and 0 or 1, 0),
+			AnchorPoint = Vector2.new(left and 0 or 1, 0),
+			BackgroundColor3 = C.gold,
+			BackgroundTransparency = 0,
+			ZIndex = 20,
+		})
+		local cname = Theme.label(card, "", {
+			Size = UDim2.new(1, -60, 0, 70),
+			Position = UDim2.new(left and 0 or 1, left and 36 or -36, 0, 10),
+			AnchorPoint = Vector2.new(left and 0 or 1, 0),
+			FontFace = F.display,
+			TextSize = 66,
+			TextColor3 = C.ivory,
+			TextXAlignment = left and Enum.TextXAlignment.Left or Enum.TextXAlignment.Right,
+			ZIndex = 21,
+		})
+		Theme.textStroke(cname, 2.5, 0.1)
+		local ctitle = Theme.label(card, "", {
+			Size = UDim2.new(1, -60, 0, 30),
+			Position = UDim2.new(left and 0 or 1, left and 38 or -38, 0, 80),
+			AnchorPoint = Vector2.new(left and 0 or 1, 0),
+			FontFace = F.labelBold,
+			TextSize = 22,
+			TextColor3 = C.goldBright,
+			TextXAlignment = left and Enum.TextXAlignment.Left or Enum.TextXAlignment.Right,
+			ZIndex = 21,
+		})
+		Theme.textStroke(ctitle, 1.5, 0.3)
+		local crealm = Theme.label(card, "", {
+			Size = UDim2.new(1, -60, 0, 22),
+			Position = UDim2.new(left and 0 or 1, left and 38 or -38, 0, 112),
+			AnchorPoint = Vector2.new(left and 0 or 1, 0),
+			FontFace = F.label,
+			TextSize = 16,
+			TextColor3 = C.text,
+			TextXAlignment = left and Enum.TextXAlignment.Left or Enum.TextXAlignment.Right,
+			ZIndex = 21,
+		})
+		self.cards[side] = { frame = card, stripe = stripe, name = cname, title = ctitle, realm = crealm, token = 0 }
+	end
 
 	-- low health vignette
 	self.lowVig = Theme.frame(root, {
@@ -645,6 +752,56 @@ function HUD:trainingInfo(lines: { string })
 	for i, l in self.training.lines do
 		l.Text = lines[i] or ""
 	end
+end
+
+-- Cinematic mode: letterbox bars slide in and the gameplay HUD slides out of frame.
+function HUD:cinema(on: boolean, time: number?)
+	local cb = self.cinemaBars
+	if not cb or cb.on == on then
+		return
+	end
+	cb.on = on
+	local t = time or 0.45
+	local style = Enum.EasingStyle.Quart
+	Theme.tween(cb.top, t, { Position = UDim2.fromScale(0, on and 0 or -0.12) }, style)
+	Theme.tween(cb.bottom, t, { Position = UDim2.fromScale(0, on and 0.88 or 1) }, style)
+	for _, s in self.sides do
+		local hp, bp = s.holderPos, s.bottomPos
+		Theme.tween(s.holder, t, { Position = on and (hp + UDim2.fromOffset(0, -260)) or hp }, style)
+		Theme.tween(s.bottom, t, { Position = on and (bp + UDim2.fromOffset(0, 200)) or bp }, style)
+	end
+	if self.timerFrame and self.timerPos then
+		Theme.tween(self.timerFrame, t, { Position = on and (self.timerPos + UDim2.fromOffset(0, -260)) or self.timerPos }, style)
+	end
+end
+
+-- Lower-third name card for a fighter's intro.
+function HUD:nameCard(side: number, def, hold: number?)
+	local c = self.cards and self.cards[side]
+	if not c then
+		return
+	end
+	local left = side == 1
+	c.token += 1
+	local token = c.token
+	c.name.Text = def.name
+	c.title.Text = string.upper(def.title or "")
+	c.realm.Text = (def.realm or "") .. (def.archetype and ("   \u{2022}   " .. string.upper(def.archetype)) or "")
+	c.stripe.BackgroundColor3 = Color3.fromHex(def.accent)
+	c.frame.Visible = true
+	c.frame.Position = UDim2.new(left and -0.6 or 1.6, 0, 0.62, 0)
+	Theme.tween(c.frame, 0.35, { Position = UDim2.new(left and 0 or 1, 0, 0.62, 0) }, Enum.EasingStyle.Quart)
+	task.delay(hold or 2.0, function()
+		if c.token ~= token or self.destroyed then
+			return
+		end
+		Theme.tween(c.frame, 0.3, { Position = UDim2.new(left and -0.6 or 1.6, 0, 0.62, 0) }, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+		task.delay(0.32, function()
+			if c.token == token and not self.destroyed then
+				c.frame.Visible = false
+			end
+		end)
+	end)
 end
 
 function HUD:setVisible(v: boolean)

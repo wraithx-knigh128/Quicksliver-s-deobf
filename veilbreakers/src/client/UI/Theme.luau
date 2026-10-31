@@ -1,5 +1,5 @@
 --!nonstrict
--- Visual language for the OOF FIGHTERS 1 interface: black glass panels, thin engraved
+-- Visual language for the OOF COMBAT interface: black glass panels, thin engraved
 -- gold lines, high-contrast serif display type. All layout is authored at a 1600x900
 -- design resolution and scaled with a UIScale, so it fits PC, console and phones.
 

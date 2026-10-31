@@ -133,31 +133,20 @@ Assets.Sounds = {
 
 -- Built-in Roblox sounds used when the matching Sounds entry is empty.
 Assets.SoundFallback = {
+	-- Only long-standing built-in client sounds (classic sword gear + character
+	-- sounds), so a fresh place never logs "Failed to load sound".
 	whoosh_light = "rbxasset://sounds/swordslash.wav",
 	whoosh_heavy = "rbxasset://sounds/swordlunge.wav",
 	dash_slash = "rbxasset://sounds/swordlunge.wav",
 	dagger_flurry = "rbxasset://sounds/swordslash.wav",
 	hit_blade = "rbxasset://sounds/swordslash.wav",
+	ui_confirm = "rbxasset://sounds/unsheath.wav",
+	ui_lock = "rbxasset://sounds/unsheath.wav",
+	parry_ready = "rbxasset://sounds/unsheath.wav",
 	jump = "rbxasset://sounds/action_jump.mp3",
 	land = "rbxasset://sounds/action_jump_land.mp3",
 	knockdown = "rbxasset://sounds/action_jump_land.mp3",
 	throw_slam = "rbxasset://sounds/action_jump_land.mp3",
-	ground_slam = "rbxasset://sounds/collide.wav",
-	super_impact = "rbxasset://sounds/collide.wav",
-	projectile_hit = "rbxasset://sounds/collide.wav",
-	fire_burst = "rbxasset://sounds/collide.wav",
-	ko = "rbxasset://sounds/collide.wav",
-	crossbow = "rbxasset://sounds/Rocket shot.wav",
-	cast_lightning = "rbxasset://sounds/Rocket shot.wav",
-	cast_ice = "rbxasset://sounds/Rocket shot.wav",
-	cast_soul = "rbxasset://sounds/Rocket whoosh 01.wav",
-	cast_shadow = "rbxasset://sounds/Rocket whoosh 01.wav",
-	cast_radiant = "rbxasset://sounds/Rocket whoosh 01.wav",
-	chakram_throw = "rbxasset://sounds/Rocket whoosh 01.wav",
-	fire_whoosh = "rbxasset://sounds/Rocket whoosh 01.wav",
-	ui_confirm = "rbxasset://sounds/unsheath.wav",
-	ui_lock = "rbxasset://sounds/unsheath.wav",
-	parry_ready = "rbxasset://sounds/unsheath.wav",
 	getup = "rbxasset://sounds/action_get_up.mp3",
 }
 

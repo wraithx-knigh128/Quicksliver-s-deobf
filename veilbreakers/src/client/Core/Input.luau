@@ -12,7 +12,16 @@ Input.modeChanged = Instance.new("BindableEvent")
 Input.nav = Instance.new("BindableEvent") -- (action: string)
 Input.anyPressed = Instance.new("BindableEvent")
 
+-- PC layout: WASD move, Q block, left click light, right click heavy,
+-- E kick, F special, R call a friend, G throw, Z super. The older J/K/L/I/U/O/P/H
+-- layout still works as an alternate.
 local KEY_FIGHT = {
+	[Enum.KeyCode.Q] = "B",
+	[Enum.KeyCode.E] = "K",
+	[Enum.KeyCode.F] = "S",
+	[Enum.KeyCode.R] = "E",
+	[Enum.KeyCode.G] = "THROW",
+	[Enum.KeyCode.Z] = "X",
 	[Enum.KeyCode.A] = "left",
 	[Enum.KeyCode.Left] = "left",
 	[Enum.KeyCode.D] = "right",
@@ -67,7 +76,12 @@ local KEY_NAV = {
 	[Enum.KeyCode.Q] = "tabL",
 	[Enum.KeyCode.E] = "tabR",
 	[Enum.KeyCode.Tab] = "start",
-	[Enum.KeyCode.F] = "alt",
+	[Enum.KeyCode.T] = "alt",
+}
+
+local MOUSE_FIGHT = {
+	[Enum.UserInputType.MouseButton1] = "L",
+	[Enum.UserInputType.MouseButton2] = "H",
 }
 
 local PAD_NAV = {
@@ -139,15 +153,20 @@ UserInputService.InputBegan:Connect(function(io, processed)
 		if not processed then
 			Input.anyPressed:Fire()
 		end
-	elseif io.UserInputType == Enum.UserInputType.MouseButton1 then
+	elseif MOUSE_FIGHT[io.UserInputType] then
+		-- clicks on buttons / menus are processed by the GUI and never become attacks
 		if not processed then
+			setMode("keyboard")
+			held[MOUSE_FIGHT[io.UserInputType]] = true
 			Input.anyPressed:Fire()
 		end
 	end
 end)
 
 UserInputService.InputEnded:Connect(function(io)
-	if io.UserInputType == Enum.UserInputType.Keyboard then
+	if MOUSE_FIGHT[io.UserInputType] then
+		held[MOUSE_FIGHT[io.UserInputType]] = false
+	elseif io.UserInputType == Enum.UserInputType.Keyboard then
 		local f = KEY_FIGHT[io.KeyCode]
 		if f then
 			held[f] = false
@@ -167,6 +186,14 @@ UserInputService.InputEnded:Connect(function(io)
 		end
 	end
 end)
+
+-- Never leave an input stuck down when the window or a text box steals focus.
+local function releaseAll()
+	table.clear(held)
+	repeatState.action = nil
+end
+UserInputService.WindowFocusReleased:Connect(releaseAll)
+UserInputService.TextBoxFocused:Connect(releaseAll)
 
 -- analog stick
 local lastStickDir = nil
@@ -279,13 +306,27 @@ end
 
 -- Button glyphs for prompts
 local GLYPHS = {
-	keyboard = { L = "J", H = "K", K = "L", S = "I", B = "U", E = "O", X = "P", THROW = "H", down = "S", up = "W", left = "A", right = "D", confirm = "ENTER", back = "BKSP", start = "TAB", tabL = "Q", tabR = "E", alt = "F" },
+	keyboard = { L = "LMB", H = "RMB", K = "E", S = "F", B = "Q", E = "R", X = "Z", THROW = "G", down = "S", up = "W", left = "A", right = "D", confirm = "ENTER", back = "BKSP", start = "TAB", tabL = "Q", tabR = "E", alt = "T" },
 	gamepad = { L = "X", H = "Y", K = "A", S = "B", B = "RB", E = "LB", X = "RT", THROW = "LT", down = "\u{2193}", up = "\u{2191}", left = "\u{2190}", right = "\u{2192}", confirm = "A", back = "B", start = "START", tabL = "LB", tabR = "RB", alt = "Y" },
 	touch = { L = "LIGHT", H = "HEAVY", K = "KICK", S = "SPECIAL", B = "BLOCK", E = "FRIEND", X = "SUPER", THROW = "THROW", down = "\u{2193}", up = "\u{2191}", left = "\u{2190}", right = "\u{2192}", confirm = "TAP", back = "BACK", start = "II", tabL = "\u{25C0}", tabR = "\u{25B6}", alt = "" },
 }
 function Input.glyph(action: string): string
 	local set = GLYPHS[Input.mode] or GLYPHS.keyboard
 	return set[action] or action
+end
+
+-- Rewrites move-list notation ("L, L, H", "\u{2192} + SP", "BLOCK + L") into the
+-- buttons of the current device ("LMB, LMB, RMB", "\u{2192} + F", "Q + LMB").
+function Input.formatNotation(text: string): string
+	local out = text
+	out = string.gsub(out, "%f[%w]SUPER%f[%W]", Input.glyph("X"))
+	out = string.gsub(out, "%f[%w]BLOCK%f[%W]", Input.glyph("B"))
+	out = string.gsub(out, "%f[%w]ECHO%f[%W]", Input.glyph("E"))
+	out = string.gsub(out, "%f[%w]SP%f[%W]", Input.glyph("S"))
+	out = string.gsub(out, "%f[%w]L%f[%W]", Input.glyph("L"))
+	out = string.gsub(out, "%f[%w]H%f[%W]", Input.glyph("H"))
+	out = string.gsub(out, "%f[%w]K%f[%W]", Input.glyph("K"))
+	return out
 end
 
 return Input

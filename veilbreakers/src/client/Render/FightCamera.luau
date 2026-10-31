@@ -17,6 +17,12 @@ local state = {
 	cinematic = nil,
 	enabled = false,
 	shakeScale = 1,
+	-- directional kick: a damped spring offset in camera space (x right, y up)
+	kick = Vector2.zero,
+	kickV = Vector2.zero,
+	-- FOV punch (degrees, negative = zoom in) and its velocity
+	fovPunch = 0,
+	fovPunchV = 0,
 }
 
 function FightCamera.enable()
@@ -34,8 +40,24 @@ function FightCamera.setShakeScale(k: number)
 	state.shakeScale = k
 end
 
-function FightCamera.shake(amount: number)
-	state.shake = math.max(state.shake, amount * state.shakeScale)
+-- Noise shake, optionally with a directional jolt (dirX: +1 = push right on screen,
+-- dirY: -1 = slam down). Directional jolts read as weight: a heavy hit knocks the
+-- frame the way the blow travelled instead of rattling randomly.
+function FightCamera.shake(amount: number, dirX: number?, dirY: number?)
+	local s = amount * state.shakeScale
+	state.shake = math.max(state.shake, s)
+	if dirX or dirY then
+		-- initial velocity sized so the peak offset is roughly 0.25 studs per unit of shake
+		state.kickV += Vector2.new((dirX or 0) * s * 17, (dirY or 0) * s * 17)
+	end
+end
+
+-- Brief zoom-in on big impacts (amount in degrees of FOV).
+function FightCamera.punch(amount: number)
+	if state.shakeScale <= 0 then
+		return
+	end
+	state.fovPunchV -= amount * 60
 end
 
 -- fn(t) -> (CFrame, fov?) ; duration in seconds (nil = until cleared)
@@ -108,8 +130,26 @@ function FightCamera.update(dt: number, x1: number, y1: number, x2: number, y2: 
 		cf = cf * CFrame.new(noise(clock, 1) * s * 0.35, noise(clock, 7) * s * 0.35, 0) * CFrame.Angles(0, 0, noise(clock, 3) * s * 0.02)
 		state.shake = math.max(0, s - dt * state.shakeDecay * math.max(0.4, s))
 	end
+	-- directional kick + FOV punch springs (stiff, slightly underdamped), substepped
+	do
+		local w, z = 38, 0.55
+		local steps = math.max(1, math.ceil(math.min(dt, 0.1) / (1 / 240)))
+		local h = math.min(dt, 0.1) / steps
+		for _ = 1, steps do
+			local acc = state.kick * -(w * w) - state.kickV * (2 * z * w)
+			state.kickV += acc * h
+			state.kick += state.kickV * h
+			local fa = -state.fovPunch * (w * w) - state.fovPunchV * (2 * z * w)
+			state.fovPunchV += fa * h
+			state.fovPunch += state.fovPunchV * h
+		end
+		state.fovPunch = math.clamp(state.fovPunch, -12, 6)
+	end
+	if state.kick.Magnitude > 0.0005 then
+		cf = cf * CFrame.new(state.kick.X, state.kick.Y, 0) * CFrame.Angles(0, 0, -state.kick.X * 0.03)
+	end
 	cam.CFrame = cf
-	cam.FieldOfView = state.fov
+	cam.FieldOfView = math.clamp(state.fov + state.fovPunch, 10, 100)
 end
 
 function FightCamera.position(): Vector3

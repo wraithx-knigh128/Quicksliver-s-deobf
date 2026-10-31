@@ -1,4 +1,4 @@
-"""Procedural audio pack for OOF FIGHTERS 1.
+"""Procedural audio pack for OOF COMBAT.
 
 Synthesises every sound effect, voice grunt, ambience bed and music track the game
 references (Assets.Sounds keys) and writes them to ../audio as .ogg files ready for
@@ -372,6 +372,11 @@ def sfx():
     # comedic "oof" (our own synthesis)
     oof = formant_voice(150, 0.34, [(480, 950, 2450)], 1.0, 0.16, pitch_drop=0.5) * env_ad(int(0.34 * SR), 0.012, 0.1)
     S["oof"] = reverb(drive(oof, 2.4), 0.12, 0.5)
+    # locomotion / body layers
+    S["footstep"] = mix(thump(140, 70, 0.07) * 0.7, bp(noise(0.06), 400, 2200) * env_exp(int(0.06 * SR), 0.012) * 0.5)
+    S["body_fall"] = reverb(mix(thump(70, 30, 0.42) * 1.2, lp(noise(0.3), 500) * env_exp(int(0.3 * SR), 0.06) * 0.8, np.concatenate([np.zeros(int(0.11 * SR)), thump(110, 50, 0.16) * 0.6])), 0.12, 0.5)
+    # sub-bass layer that sits under heavy / special / super impacts
+    S["impact_sub"] = drive(mix(sine_sweep(0.45, 70, 26, 2.5) * env_exp(int(0.45 * SR), 0.14) * 1.4, lp(noise(0.12), 250) * env_exp(int(0.12 * SR), 0.03) * 0.6), 1.5)
     S["ui_move"] = mix(bp(noise(0.03), 1500, 4000) * env_exp(int(0.03 * SR), 0.006) * 0.6, partials([2200], [0.3], [0.03], 0.05))
     S["ui_select"] = S["ui_move"]
     S["ui_confirm"] = reverb(mix(metal(1900, 0.45, 4) * 0.4, thump(120, 60, 0.15) * 0.6, hp(noise(0.2), 4000) * env_ad(int(0.2 * SR), 0.03, 0.06) * 0.4), 0.25)

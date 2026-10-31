@@ -930,6 +930,17 @@ function Poses.lerp(a, b, t: number)
 	for _, k in POSE_KEYS do
 		out[k] = lerpVec(a[k], b[k], t)
 	end
+	-- root rotations take the short way round, so leaving a 360 spin or flip never
+	-- visibly unwinds back through a full turn
+	local ra, rb = a.root, b.root
+	if ra and rb and out.root then
+		local r = out.root
+		for i = 4, 6 do
+			local x, y = ra[i] or 0, rb[i] or 0
+			local d = (y - x + 180) % 360 - 180
+			r[i] = x + d * t
+		end
+	end
 	-- leg IK: blend targets when both have them; otherwise snap at halfway
 	for _, k in { "ikL", "ikR" } do
 		if a[k] and b[k] then
@@ -1020,7 +1031,8 @@ function Poses.attack(name: string, style: string, t: number, startup: number, a
 	return pose
 end
 
--- Walk cycle: stepping IK targets around the stance.
+-- Walk cycle: stepping IK targets around the stance, with weight transfer,
+-- counter-rotation through the torso and a stabilised head.
 function Poses.walk(style: string, phase: number, dir: number)
 	local base = Poses.stance(style)
 	local p = table.clone(base)
@@ -1030,27 +1042,151 @@ function Poses.walk(style: string, phase: number, dir: number)
 	local lift = 0.28
 	local L = base.ikL
 	local R = base.ikR
-	p.ikL = { L[1], math.max(0, s) * lift, L[3] - s * stride, 0 }
-	p.ikR = { R[1], math.max(0, -s) * lift, R[3] + s * stride, 0 }
+	p.ikL = { L[1], math.max(0, s) * lift, L[3] - s * stride, math.max(0, s) * -12 }
+	p.ikR = { R[1], math.max(0, -s) * lift, R[3] + s * stride, math.max(0, -s) * -12 }
 	local r = base.root
-	p.root = { r[1], r[2] + math.abs(c) * 0.06, r[3] }
+	-- bob twice per cycle, sway over the planted foot
+	p.root = { (r[1] or 0) + s * 0.05, (r[2] or 0) - math.abs(c) * 0.08, r[3] or 0, 0, 0, s * 2.5 }
+	local lt, ut, h = base.LT or { 0, 0, 0 }, base.UT or { 0, 0, 0 }, base.H or { 0, 0, 0 }
+	p.LT = { lt[1], lt[2] + s * 6, lt[3] }
+	p.UT = { ut[1] - 2 * dir, ut[2] - s * 7, ut[3] - s * 1.5 }
+	p.H = { h[1], h[2] + s * 3, h[3] }
+	if p.RUA then
+		p.RUA = { p.RUA[1] - s * 6, p.RUA[2], p.RUA[3] }
+	end
+	if p.LUA then
+		p.LUA = { p.LUA[1] + s * 6, p.LUA[2], p.LUA[3] }
+	end
 	return p
 end
 
 -- Idle breathing on top of the stance.
 function Poses.idle(style: string, time: number)
+	return Poses.idleFor(style, "calm", time)
+end
+
+local function add3(v, a, b, c)
+	v = v or { 0, 0, 0 }
+	return { (v[1] or 0) + a, (v[2] or 0) + b, (v[3] or 0) + c }
+end
+
+-- Personality idles: every fighter carries their weight differently.
+--   bounce  boxer's bounce on the balls of the feet
+--   calm    controlled breathing, weapon held still
+--   heavy   slow, deep breaths, shoulders rolling, weight shifting side to side
+--   creepy  barely breathing, then a sudden head tilt twitch
+--   dance   can't stop moving to a beat only she can hear
+--   sniper  low and still, head scanning
+--   smug    chest out, chin up, slow and pleased with himself
+function Poses.idleFor(style: string, personality: string?, time: number)
 	local p = table.clone(Poses.stance(style))
-	local b = math.sin(time * 2.4)
-	local r = p.root
-	p.root = { r[1], r[2] + b * 0.04, r[3] }
-	p.UT = { (p.UT[1] or 0) + b * 1.6, p.UT[2], p.UT[3] }
-	if p.RUA then
-		p.RUA = { p.RUA[1] + b * 2, p.RUA[2], p.RUA[3] }
-	end
-	if p.LUA then
-		p.LUA = { p.LUA[1] - b * 2, p.LUA[2], p.LUA[3] }
+	local r = p.root or { 0, 0, 0 }
+	local kind = personality or "calm"
+	if kind == "bounce" then
+		local b = math.abs(math.sin(time * 4.6))
+		p.root = { r[1], (r[2] or 0) - 0.12 + b * 0.16, r[3] or 0 }
+		p.UT = add3(p.UT, -b * 3, math.sin(time * 2.3) * 4, 0)
+		p.H = add3(p.H, b * 2, 0, 0)
+		p.RUA = add3(p.RUA, b * 4, 0, 0)
+		p.LUA = add3(p.LUA, -b * 4, 0, 0)
+	elseif kind == "heavy" then
+		local b = math.sin(time * 1.5)
+		local sway = math.sin(time * 0.75)
+		p.root = { (r[1] or 0) + sway * 0.12, (r[2] or 0) + b * 0.06, r[3] or 0, 0, 0, sway * 3 }
+		p.UT = add3(p.UT, b * 3, 0, -sway * 3)
+		p.RUA = add3(p.RUA, b * 3, 0, b * 2)
+		p.LUA = add3(p.LUA, b * 3, 0, -b * 2)
+		p.H = add3(p.H, -b * 2, 0, sway * 2)
+	elseif kind == "creepy" then
+		local b = math.sin(time * 0.9)
+		local cycle = time % 3.4
+		local twitch = (cycle > 2.6 and cycle < 3.2) and 1 or 0
+		p.root = { r[1], (r[2] or 0) + b * 0.02, r[3] or 0 }
+		p.H = add3(p.H, 4, 0, twitch * 32 + b * 3)
+		p.UT = add3(p.UT, b, 0, twitch * 6)
+	elseif kind == "dance" then
+		local beat = time * 2 * math.pi * 1.1
+		local bob = math.abs(math.sin(beat))
+		p.root = { (r[1] or 0) + math.sin(beat / 2) * 0.1, (r[2] or 0) - bob * 0.14, r[3] or 0, 0, math.sin(beat / 2) * 6, math.sin(beat / 2) * 5 }
+		p.H = add3(p.H, -bob * 8, math.sin(beat / 2) * 6, 0)
+		p.RUA = add3(p.RUA, math.sin(beat) * 8, 0, 0)
+		p.LUA = add3(p.LUA, -math.sin(beat) * 8, 0, 0)
+	elseif kind == "sniper" then
+		local scan = math.sin(time * 0.6)
+		p.root = { r[1], (r[2] or 0) - 0.15 + math.sin(time * 2) * 0.02, r[3] or 0 }
+		p.H = add3(p.H, 2, scan * 14, 0)
+		p.UT = add3(p.UT, -4, scan * 3, 0)
+	elseif kind == "smug" then
+		local b = math.sin(time * 1.2)
+		p.root = { r[1], (r[2] or 0) + 0.08 + b * 0.04, r[3] or 0 }
+		p.UT = add3(p.UT, 8 + b * 2, 0, 0)
+		p.H = add3(p.H, 12, math.sin(time * 0.5) * 6, 0)
+	else
+		local b = math.sin(time * 2.4)
+		p.root = { r[1], (r[2] or 0) + b * 0.04, r[3] or 0 }
+		p.UT = add3(p.UT, b * 1.6, 0, 0)
+		p.RUA = add3(p.RUA, b * 2, 0, 0)
+		p.LUA = add3(p.LUA, -b * 2, 0, 0)
 	end
 	return p
+end
+
+-------------------------------------------------------------------------------
+-- Signature victory poses (two poses each, looped) per fighter
+-------------------------------------------------------------------------------
+
+local V = {}
+Poses.Victory = V
+-- The Noob: the default dance, arms swinging side to side.
+V.noob = {
+	merge(LEGS.tall, { root = { 0, 0, 0, 0, 0, 6 }, UT = { 0, 0, 8 }, H = { 0, 0, -8 } }, { RUA = { 10, 0, 70 }, RLA = { 10, 0, 0 }, LUA = { 10, 0, -10 }, LLA = { 10, 0, 0 }, RH = { -18, 0, 0 } }),
+	merge(LEGS.tall, { root = { 0, 0, 0, 0, 0, -6 }, UT = { 0, 0, -8 }, H = { 0, 0, 8 } }, { RUA = { 10, 0, 10 }, RLA = { 10, 0, 0 }, LUA = { 10, 0, -70 }, LLA = { 10, 0, 0 }, RH = { -18, 0, 0 } }),
+}
+-- Bacon Hair: plants the spear and flips her hair.
+V.bacon = {
+	merge(LEGS.tall, { UT = { 4, 10, 0 }, H = { 10, -20, 0 } }, { RUA = { 30, 0, 26 }, RLA = { 40, 0, 0 }, RH = { -88, 0, 0 }, LUA = { 160, 0, -30 }, LLA = { 110, 0, 0 } }),
+	merge(LEGS.tall, { UT = { 6, 14, 0 }, H = { 22, -30, 12 } }, { RUA = { 30, 0, 26 }, RLA = { 40, 0, 0 }, RH = { -88, 0, 0 }, LUA = { 120, 0, -70 }, LLA = { 60, 0, 0 } }),
+}
+-- Studzilla: double bicep flex, shaking with effort.
+V.studzilla = {
+	merge(LEGS.wide, { UT = { 6, 0, 0 }, H = { 14, 0, 0 } }, { RUA = { 92, 0, 80 }, RLA = { 125, 0, 0 }, LUA = { 92, 0, -80 }, LLA = { 125, 0, 0 } }),
+	merge(LEGS.wide, { root = { 0, -0.1, 0 }, UT = { 10, 0, 0 }, H = { 20, 0, 0 } }, { RUA = { 96, 0, 84 }, RLA = { 130, 0, 0 }, LUA = { 96, 0, -84 }, LLA = { 130, 0, 0 } }),
+}
+-- Guest 666: does nothing. Just stares, head tilted.
+V.guest = {
+	merge(LEGS.square, { UT = { -4, 0, 0 }, H = { 6, 0, 28 } }, { RUA = { 2, 0, 6 }, RLA = { 6, 0, 0 }, RH = { 60, 0, 0 }, LUA = { 2, 0, -6 }, LLA = { 6, 0, 0 } }),
+	merge(LEGS.square, { UT = { -4, 0, 0 }, H = { 6, 0, 32 } }, { RUA = { 2, 0, 6 }, RLA = { 6, 0, 0 }, RH = { 60, 0, 0 }, LUA = { 2, 0, -6 }, LLA = { 6, 0, 0 } }),
+}
+-- Frosty: hammer on the shoulder, fist pump.
+V.frosty = {
+	merge(LEGS.wide, { UT = { 6, 20, 0 }, H = { 14, -10, 0 } }, { RUA = { 140, 0, 40 }, RLA = { 120, 0, 0 }, RH = { 50, 0, 0 }, LUA = { 160, 0, -20 }, LLA = { 30, 0, 0 } }),
+	merge(LEGS.wide, { UT = { 6, 20, 0 }, H = { 18, -10, 0 } }, { RUA = { 140, 0, 40 }, RLA = { 120, 0, 0 }, RH = { 50, 0, 0 }, LUA = { 110, 0, -20 }, LLA = { 120, 0, 0 } }),
+}
+-- Emote Queen: a two-count dance.
+V.emote = {
+	merge(LEGS.square, { root = { 0, -0.2, 0, 0, 12, 8 }, UT = { 6, 0, 8 }, H = { 10, -10, 0 } }, { RUA = { 170, 0, 20 }, RLA = { 10, 0, 0 }, LUA = { 20, 0, -60 }, LLA = { 60, 0, 0 } }),
+	merge(LEGS.square, { root = { 0, -0.05, 0, 0, -12, -8 }, UT = { 6, 0, -8 }, H = { 10, 10, 0 } }, { RUA = { 20, 0, 60 }, RLA = { 60, 0, 0 }, LUA = { 170, 0, -20 }, LLA = { 10, 0, 0 } }),
+}
+-- The Camper: low, still, scanning down the sights.
+V.camper = {
+	merge(LEGS.low, { UT = { -6, -10, 0 }, H = { 0, 20, 0 } }, { RUA = { 88, 0, -4 }, RLA = { 6, 0, 0 }, RH = { -4, 0, 0 }, LUA = { 84, 0, 30 }, LLA = { 40, 0, 0 } }),
+	merge(LEGS.low, { UT = { -6, 10, 0 }, H = { 0, -10, 0 } }, { RUA = { 88, 0, -4 }, RLA = { 6, 0, 0 }, RH = { -4, 0, 0 }, LUA = { 84, 0, 30 }, LLA = { 40, 0, 0 } }),
+}
+-- The Admin: arms crossed, chin up. Unbearable.
+V.admin = {
+	merge(LEGS.tall, { UT = { 10, 0, 0 }, H = { 18, -10, 0 } }, { RUA = { 70, 0, -46 }, RLA = { 100, 0, 0 }, RH = { 60, 0, 0 }, LUA = { 70, 0, 46 }, LLA = { 100, 0, 0 } }),
+	merge(LEGS.tall, { UT = { 12, 0, 0 }, H = { 24, 10, 0 } }, { RUA = { 70, 0, -46 }, RLA = { 100, 0, 0 }, RH = { 60, 0, 0 }, LUA = { 70, 0, 46 }, LLA = { 100, 0, 0 } }),
+}
+
+-- Looping victory pose for a fighter (falls back to the weapon-style pose).
+function Poses.victoryFor(fighterId: string, style: string, time: number)
+	local pair = V[fighterId]
+	if not pair then
+		return WIN[style] or WIN.unarmed
+	end
+	local speed = fighterId == "emote" and 2.2 or (fighterId == "noob" and 1.8 or 0.8)
+	local k = 0.5 + 0.5 * math.sin(time * speed * math.pi)
+	return Poses.lerp(pair[1], pair[2], ease(k))
 end
 
 return Poses

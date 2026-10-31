@@ -1,5 +1,5 @@
 --!nonstrict
--- OOF FIGHTERS 1 combat engine.
+-- OOF COMBAT combat engine.
 --
 -- A deterministic, fixed-step (60 Hz) 2D fighting simulation. It knows nothing about
 -- Roblox instances: the client renders whatever state this module exposes and reacts

@@ -1,5 +1,5 @@
 --!nonstrict
--- OOF FIGHTERS 1 client entry point: builds the UI root and runs the game flow
+-- OOF COMBAT client entry point: builds the UI root and runs the game flow
 -- (title -> main menu -> Story / Ascent / Versus / Practice / Move List / Settings).
 
 local Players = game:GetService("Players")
@@ -402,7 +402,7 @@ while true do
 	end)
 	if not ok then
 		-- never leave the player stuck: log, clean up the world and return to the menu
-		warn("[OofFighters] recovered from error: " .. tostring(err))
+		warn("[OofCombat] recovered from error: " .. tostring(err))
 		StageBuilder.clear()
 		FightCamera.disable()
 		for _, ch in root:GetChildren() do

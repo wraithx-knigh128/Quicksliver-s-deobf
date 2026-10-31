@@ -146,61 +146,139 @@ VFX.ring = ring
 -- Impacts
 -------------------------------------------------------------------------------
 
+-- Short-lived point light that flashes the surroundings (fighters, floor, walls).
+local function impactLight(parent: BasePart, color: Color3, brightness: number, range: number, life: number)
+	local l = Instance.new("PointLight")
+	l.Color = color
+	l.Brightness = brightness
+	l.Range = range
+	l.Shadows = false
+	l.Parent = parent
+	TweenService:Create(l, TweenInfo.new(life, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Brightness = 0, Range = range * 0.6 }):Play()
+	Debris:AddItem(l, life + 0.05)
+	return l
+end
+VFX.impactLight = impactLight
+
+-- Bright streak along the line of the blow (heavies only).
+local function streak(pos: Vector3, dir: number, color: Color3, len: number, life: number)
+	local p = Instance.new("Part")
+	p.Anchored = true
+	p.CanCollide = false
+	p.CanQuery = false
+	p.CanTouch = false
+	p.CastShadow = false
+	p.Material = Enum.Material.Neon
+	p.Color = color
+	p.Size = V(len, 0.14, 0.14)
+	p.CFrame = C(pos + V(dir * len * 0.1, 0, 0.6)) * A(0, 0, rad((math.random() - 0.5) * 30))
+	p.Parent = container()
+	TweenService:Create(p, TweenInfo.new(life, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+		Size = V(len * 1.6, 0.02, 0.02),
+		Transparency = 1,
+	}):Play()
+	Debris:AddItem(p, life + 0.05)
+end
+
+-- Per-strength tuning: light hits stay small and quick so they never clutter the
+-- screen; heavies, specials and supers escalate with light, streaks and rings.
+local HIT_TUNING = {
+	light = { sparks = 7, speed = { 8, 16 }, spark = 0.26, core = { 1.8, 2.4 }, essence = 4, flash = 1.3, light = { 2.5, 8, 0.1 } },
+	medium = { sparks = 12, speed = { 10, 22 }, spark = 0.34, core = { 2.6, 3.6 }, essence = 8, flash = 1.9, light = { 4, 11, 0.14 } },
+	heavy = { sparks = 20, speed = { 16, 34 }, spark = 0.5, core = { 4.2, 6.6 }, essence = 14, flash = 3.0, light = { 7, 16, 0.22 }, streak = 4.5, ring = 7 },
+	special = { sparks = 18, speed = { 14, 30 }, spark = 0.46, core = { 4, 6 }, essence = 12, flash = 2.8, light = { 6, 15, 0.22 }, streak = 4, ring = 6 },
+	super = { sparks = 30, speed = { 18, 40 }, spark = 0.6, core = { 5.5, 8.5 }, essence = 20, flash = 4.2, light = { 10, 22, 0.32 }, streak = 6, ring = 14 },
+}
+
 -- strength: light | medium | heavy | special | super
 function VFX.hit(pos: Vector3, strength: string, element: string?, dir: number, essence: boolean?)
 	local cols = colors(element)
-	local heavy = strength == "heavy" or strength == "special" or strength == "super"
+	local tune = HIT_TUNING[strength] or HIT_TUNING.medium
 	local a = anchorAt(pos + V(0, 0, 0.8), 1.4)
-	burst(a, heavy and 22 or 12, {
+	-- sparks fly the way the blow travelled, with a smaller radial spray
+	burst(a, math.ceil(tune.sparks * 0.65), {
 		color = ColorSequence.new(cols[1], cols[2]),
-		speed = NumberRange.new(heavy and 16 or 10, heavy and 34 or 20),
-		size = NumberSequence.new(heavy and 0.55 or 0.35, 0),
+		speed = NumberRange.new(tune.speed[1], tune.speed[2]),
+		spread = Vector2.new(55, 55),
+		dir = dir > 0 and Enum.NormalId.Right or Enum.NormalId.Left,
+		size = NumberSequence.new(tune.spark, 0),
 		lifetime = NumberRange.new(0.12, 0.32),
+		orientation = Enum.ParticleOrientation.VelocityParallel,
+	})
+	burst(a, math.floor(tune.sparks * 0.35), {
+		color = ColorSequence.new(cols[1], cols[2]),
+		speed = NumberRange.new(tune.speed[1] * 0.6, tune.speed[2] * 0.6),
+		size = NumberSequence.new(tune.spark * 0.7, 0),
+		lifetime = NumberRange.new(0.08, 0.2),
 		orientation = Enum.ParticleOrientation.VelocityParallel,
 	})
 	burst(a, 1, {
 		texture = Assets.Particles.ExplosionCore,
 		color = ColorSequence.new(cols[1], cols[2]),
 		speed = NumberRange.new(0, 0),
-		size = NumberSequence.new(heavy and 4.5 or 2.6, heavy and 7 or 3.6),
-		lifetime = NumberRange.new(0.12, 0.16),
+		size = NumberSequence.new(tune.core[1], tune.core[2]),
+		lifetime = NumberRange.new(0.1, 0.15),
 		transparency = NumberSequence.new(0, 1),
 	})
 	if essence ~= false then
-		-- stylised crimson "veil essence" spray
-		burst(a, heavy and 16 or 8, {
+		-- stylised crimson "essence" spray
+		burst(a, tune.essence, {
 			color = ColorSequence.new(Color3.fromHex("#B0101C"), Color3.fromHex("#4A0408")),
-			speed = NumberRange.new(6, heavy and 18 or 11),
+			speed = NumberRange.new(6, tune.speed[2] * 0.55),
 			spread = Vector2.new(40, 40),
 			dir = dir > 0 and Enum.NormalId.Right or Enum.NormalId.Left,
-			size = NumberSequence.new(heavy and 0.38 or 0.26, 0.05),
+			size = NumberSequence.new(tune.spark * 0.75, 0.05),
 			lifetime = NumberRange.new(0.35, 0.7),
 			accel = V(0, -60, 0),
 			drag = 1,
 			lightEmission = 0.1,
 		})
 	end
-	flashBall(pos, cols[1], heavy and 3.2 or 1.8, heavy and 0.16 or 0.1)
-	if heavy then
-		ring(pos, cols[2], strength == "super" and 14 or 7, 0.3)
+	flashBall(pos, cols[1], tune.flash, tune.streak and 0.16 or 0.09)
+	impactLight(a, cols[2], tune.light[1], tune.light[2], tune.light[3])
+	if tune.streak then
+		streak(pos, dir, cols[1], tune.streak, 0.12)
+	end
+	if tune.ring then
+		ring(pos, cols[2], tune.ring, 0.3)
 	end
 	if element and element ~= "default" then
-		VFX.elementBurst(pos, element, heavy)
+		VFX.elementBurst(pos, element, tune.streak ~= nil)
 	end
 end
 
-function VFX.block(pos: Vector3, dir: number)
+function VFX.block(pos: Vector3, dir: number, strength: string?)
+	local heavy = strength == "heavy" or strength == "special" or strength == "super"
 	local a = anchorAt(pos + V(0, 0, 0.8), 1)
-	burst(a, 14, {
+	-- sparks deflect back toward the attacker off the guard
+	burst(a, heavy and 18 or 10, {
 		color = ColorSequence.new(Color3.fromHex("#FFFFFF"), Color3.fromHex("#7FC8FF")),
-		speed = NumberRange.new(8, 18),
+		speed = NumberRange.new(8, heavy and 24 or 16),
 		spread = Vector2.new(60, 60),
 		dir = dir > 0 and Enum.NormalId.Left or Enum.NormalId.Right,
-		size = NumberSequence.new(0.3, 0),
+		size = NumberSequence.new(heavy and 0.38 or 0.28, 0),
 		lifetime = NumberRange.new(0.12, 0.3),
 		orientation = Enum.ParticleOrientation.VelocityParallel,
 	})
-	ring(pos, Color3.fromHex("#9AD8FF"), 3.4, 0.18)
+	ring(pos, Color3.fromHex("#9AD8FF"), heavy and 4.6 or 3.2, 0.18)
+	impactLight(a, Color3.fromHex("#9AD8FF"), heavy and 4 or 2.5, heavy and 10 or 7, 0.14)
+end
+
+-- Small kick-up of dust at the feet (foot plants, dashes). dir = direction it sprays.
+function VFX.footDust(pos: Vector3, dir: number)
+	local a = anchorAt(pos + V(0, 0.15, 0), 1.4)
+	burst(a, 3, {
+		texture = Assets.Particles.Smoke,
+		color = ColorSequence.new(Color3.fromHex("#B8AE9E")),
+		speed = NumberRange.new(1.5, 3.5),
+		spread = Vector2.new(25, 10),
+		dir = dir > 0 and Enum.NormalId.Right or Enum.NormalId.Left,
+		size = NumberSequence.new(0.5, 1.4),
+		lifetime = NumberRange.new(0.35, 0.7),
+		transparency = NumberSequence.new(0.55, 1),
+		lightEmission = 0,
+		drag = 4,
+	})
 end
 
 function VFX.parry(pos: Vector3)

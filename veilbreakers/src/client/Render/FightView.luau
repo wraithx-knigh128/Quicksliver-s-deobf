@@ -17,6 +17,7 @@ local AI = require(Veil.Combat.AI)
 local Client = script.Parent.Parent
 local Rig = require(script.Parent.Rig)
 local Poses = require(script.Parent.Poses)
+local AnimSpring = require(script.Parent.AnimSpring)
 local StageBuilder = require(script.Parent.StageBuilder)
 local FightCamera = require(script.Parent.FightCamera)
 local VFX = require(script.Parent.VFX)
@@ -37,6 +38,8 @@ local ECHO_STYLE = { staff = "pole", bow = "ranged", lantern = "unarmed", none =
 
 local STRENGTH_SFX = { light = "hit_light", medium = "hit_medium", heavy = "hit_heavy", special = "hit_heavy", super = "super_impact" }
 local STRENGTH_SHAKE = { light = 0.25, medium = 0.45, heavy = 0.8, special = 0.7, super = 1.4 }
+-- how hard a hit "kicks" the victim's spine and head (secondary-motion impulses)
+local STRENGTH_KICK = { light = 0.55, medium = 1.0, heavy = 1.6, special = 1.4, super = 2.0 }
 
 local function v3(x: number, y: number, z: number?): Vector3
 	return Vector3.new(x, y, z or 0)
@@ -96,15 +99,26 @@ function FightView.new(opts)
 		self.match.trainingDummy = opts.dummy or "stand"
 	end
 
+	-- who is who: P1 / P2 / CPU / DUMMY (HUD chips and floating markers)
+	local function tagFor(spec, side: number)
+		if opts.training and side == 2 then
+			return "DUMMY"
+		end
+		return spec.cpu and "CPU" or ("P" .. side)
+	end
+	self.tags = { tagFor(opts.p1, 1), tagFor(opts.p2, 2) }
+
 	-- rigs
 	self.rigs = {}
 	self.anim = {}
+	self.springs = {}
 	self.highlights = {}
 	for i, def in self.defs do
 		local rig = Rig.build(def.look, { name = def.name, world = workspace })
 		rig.model.Parent = self.folder
 		self.rigs[i] = rig
-		self.anim[i] = { key = nil, start = 0, from = nil, last = Poses.stance(self.styles[i]), walkPhase = 0 }
+		self.anim[i] = { key = nil, start = 0, from = nil, last = Poses.stance(self.styles[i]), walkPhase = 0, idleOffset = i * 1.37 }
+		self.springs[i] = AnimSpring.new()
 		local hl = Instance.new("Highlight")
 		hl.FillColor = Color3.new(1, 1, 1)
 		hl.FillTransparency = 1
@@ -112,6 +126,40 @@ function FightView.new(opts)
 		hl.DepthMode = Enum.HighlightDepthMode.Occluded
 		hl.Parent = rig.model
 		self.highlights[i] = hl
+	end
+	self.worldTags = {}
+	for i, rig in self.rigs do
+		local head = rig.parts.Head
+		local g = Instance.new("BillboardGui")
+		g.Name = "PlayerTag"
+		g.Size = UDim2.fromOffset(90, 44)
+		g.StudsOffset = Vector3.new(0, 2.6 * rig.scale, 0)
+		g.AlwaysOnTop = true
+		g.LightInfluence = 0
+		g.Enabled = false
+		g.Parent = head
+		local isCpu = self.tags[i] ~= "P1" and self.tags[i] ~= "P2"
+		local accent = isCpu and Theme.Colors.text or Color3.fromHex(self.defs[i].accent)
+		local l = Instance.new("TextLabel")
+		l.BackgroundTransparency = 1
+		l.Size = UDim2.new(1, 0, 0, 26)
+		l.Text = self.tags[i]
+		l.FontFace = Theme.Fonts.labelBold
+		l.TextSize = 22
+		l.TextColor3 = accent
+		l.TextStrokeTransparency = 0.2
+		l.Parent = g
+		local arrow = Instance.new("TextLabel")
+		arrow.BackgroundTransparency = 1
+		arrow.Position = UDim2.fromOffset(0, 22)
+		arrow.Size = UDim2.new(1, 0, 0, 20)
+		arrow.Text = "\u{25BC}"
+		arrow.FontFace = Theme.Fonts.labelBold
+		arrow.TextSize = 16
+		arrow.TextColor3 = accent
+		arrow.TextStrokeTransparency = 0.3
+		arrow.Parent = g
+		self.worldTags[i] = { gui = g, label = l, arrow = arrow, token = 0 }
 	end
 	self.echoRigs = {}
 	self.projVisuals = {}
@@ -121,7 +169,7 @@ function FightView.new(opts)
 	end
 
 	-- UI
-	self.hud = HUD.new(opts.root, p1Def, p1Echo, p2Def, p2Echo, { training = opts.training })
+	self.hud = HUD.new(opts.root, p1Def, p1Echo, p2Def, p2Echo, { training = opts.training, tags = self.tags })
 	if (Input.mode == "touch" or opts.forceTouch) and not opts.noTouch then
 		self.touch = MobileControls.new(self.hud.root, {
 			onPause = function()
@@ -179,6 +227,7 @@ function FightView.new(opts)
 	end))
 	if self.match.phase == "intro" then
 		self:introCamera(1)
+		self.hud:cinema(true, 0.01)
 	end
 	return self
 end
@@ -275,14 +324,20 @@ function FightView:poseFor(i: number, f, t: number)
 		pose = Poses.attack(mv.anim, style, f.moveT, mv.startup, mv.active, mv.recovery)
 	elseif st == "stand" or st == "walk" then
 		local walking = f.walk ~= 0 and (m.phase == "fight" or m.phase == "finish_prompt")
+		local a = self.anim[i]
 		if walking then
 			key = "walk"
-			local a = self.anim[i]
-			a.walkPhase += (f.walk > 0 and 1 or -1) * 0.22 * f.def.walkMult
+			local before = a.walkPhase
+			-- phase advances with real time so the stride is frame-rate independent
+			a.walkPhase += (f.walk > 0 and 1 or -1) * 13.2 * f.def.walkMult * (self.renderDt or DT)
+			local stepA, stepB = math.floor(before / math.pi), math.floor(a.walkPhase / math.pi)
+			if stepA ~= stepB then
+				self:footstep(i, f)
+			end
 			pose = Poses.walk(style, a.walkPhase, f.walk)
 		else
 			key = "idle"
-			pose = Poses.idle(style, t)
+			pose = Poses.idleFor(style, f.def.personality, t + a.idleOffset)
 		end
 	elseif st == "crouch" then
 		key = "crouch"
@@ -347,9 +402,7 @@ function FightView:poseFor(i: number, f, t: number)
 		pose, key = self:finisherPose(i, f, style)
 	elseif st == "win" then
 		key = "win"
-		pose = table.clone(Poses.WIN[style] or Poses.WIN.unarmed)
-		local b = math.sin(t * 2) * 1.5
-		pose.UT = { (pose.UT and pose.UT[1] or 0) + b, pose.UT and pose.UT[2] or 0, 0 }
+		pose = Poses.victoryFor(f.def.id, style, t)
 	elseif st == "dazed" then
 		key = "dazed"
 		pose = table.clone(Poses.States.dazed())
@@ -360,9 +413,11 @@ function FightView:poseFor(i: number, f, t: number)
 		local introT = m.phaseT / 60
 		local mine = (i == 1 and introT < 2.5) or (i == 2 and introT >= 2.5)
 		if mine and m.round == 1 then
-			pose = Poses.lerp(Poses.stance(style), Poses.WIN[style] or Poses.WIN.unarmed, math.clamp(math.sin(math.min(introT % 2.5, 2.2) / 2.2 * math.pi) * 1.4, 0, 1))
+			-- signature pose on your name card, then settle into your fighting stance
+			local hump = math.clamp(math.sin(math.min(introT % 2.5, 2.2) / 2.2 * math.pi) * 1.4, 0, 1)
+			pose = Poses.lerp(Poses.idleFor(style, f.def.personality, t), Poses.victoryFor(f.def.id, style, t), Poses.ease(hump))
 		else
-			pose = Poses.idle(style, t)
+			pose = Poses.idleFor(style, f.def.personality, t + self.anim[i].idleOffset)
 		end
 	elseif st == "banished" then
 		key = "banished"
@@ -403,7 +458,7 @@ function FightView:superPose(i: number, _f, style: string)
 	end
 end
 
-function FightView:finisherPose(_i: number, _f, style: string)
+function FightView:finisherPose(_i: number, f, style: string)
 	local fin = self.match.finisher
 	local t = fin and fin.t or 0
 	if t < 50 then
@@ -417,13 +472,14 @@ function FightView:finisherPose(_i: number, _f, style: string)
 		local def = Poses.Attacks[(Poses.SuperSequence[style] or Poses.SuperSequence.unarmed)[5]]
 		return def.hit, "fin:final"
 	end
-	return Poses.WIN[style] or Poses.WIN.unarmed, "fin:win"
+	return Poses.victoryFor(f.def.id, style, self.time), "fin:win"
 end
 
 function FightView:render(dt: number)
 	local m = self.match
 	local alpha = math.clamp(self.acc / DT, 0, 1)
 	local t = self.time
+	self.renderDt = self.paused and 0 or dt * ((m.slowmo and m.slowmo > 0) and 0.35 or 1)
 	for i, f in m.fighters do
 		local rig = self.rigs[i]
 		if rig.shattered then
@@ -447,6 +503,18 @@ function FightView:render(dt: number)
 			end
 		end
 		a.last = final
+		-- secondary motion: springs chase the authored pose for weight, overshoot and
+		-- hit impulses; arms stiffen around active frames so strikes stay crisp.
+		local snap = 0
+		if f.state == "attack" and f.move then
+			local mv = f.move
+			if f.moveT >= mv.startup - 3 and f.moveT <= mv.startup + mv.active + 2 then
+				snap = 1
+			end
+		elseif f.state == "super" or f.state == "finisher" or f.state == "throwing" then
+			snap = 1
+		end
+		final = self.springs[i]:step(final, self.renderDt, snap)
 		local pp = self.prevPos[i]
 		local x = pp.x + (f.x - pp.x) * alpha
 		local y = pp.y + (f.y - pp.y) * alpha
@@ -484,7 +552,7 @@ function FightView:render(dt: number)
 
 	local f1, f2 = m.fighters[1], m.fighters[2]
 	FightCamera.update(dt, f1.x, f1.y, f2.x, f2.y)
-	StageBuilder.update(t, FightCamera.position().X)
+	StageBuilder.update(t, FightCamera.position().X, self.renderDt, m.fighters)
 	self.hud:update(m, dt)
 	if self.touch then
 		self.touch:update(f1, Config.SuperCost, Config.BreakerCost)
@@ -590,6 +658,78 @@ end
 -- Events
 -------------------------------------------------------------------------------
 
+-- Floating P1 / CPU markers over the fighters for the start of each round.
+function FightView:showWorldTags(seconds: number)
+	for _, wt in self.worldTags do
+		wt.token += 1
+		local token = wt.token
+		wt.gui.Enabled = true
+		wt.label.TextTransparency = 0
+		wt.arrow.TextTransparency = 0
+		task.delay(seconds, function()
+			if self.destroyed or wt.token ~= token then
+				return
+			end
+			Theme.tween(wt.label, 0.4, { TextTransparency = 1 })
+			Theme.tween(wt.arrow, 0.4, { TextTransparency = 1 })
+			task.delay(0.42, function()
+				if not self.destroyed and wt.token == token then
+					wt.gui.Enabled = false
+				end
+			end)
+		end)
+	end
+end
+
+-- Foot plant during walks: soft step sound, and a puff of dust for the heavyweights.
+function FightView:footstep(i: number, f)
+	local heavy = (f.def.weight or 1) >= 1.15
+	Audio.play("footstep", { volume = heavy and 0.32 or 0.16, pitch = heavy and 0.8 or 1, pitchVar = 0.08 })
+	if heavy then
+		VFX.footDust(v3(f.x, 0), f.facing)
+		FightCamera.shake(0.08)
+	end
+	local _ = i
+end
+
+-- Physical reaction impulses on the victim's spine / head, by hit height.
+function FightView:hitImpulse(victimIndex: number, strength: string?, react: string?, blocked: boolean?)
+	local sp = self.springs[victimIndex]
+	if not sp then
+		return
+	end
+	local k = STRENGTH_KICK[strength or "medium"] or 1
+	if blocked then
+		-- guard absorbs it: chest compresses back, a small skid on the root
+		sp:kick("UT", 1, 160 * k)
+		sp:kick("H", 1, 120 * k)
+		sp:kick("root", 3, 3.5 * k)
+		sp:kick("RUA", 1, -120 * k)
+		sp:kick("LUA", 1, -120 * k)
+		return
+	end
+	local side = (math.random() < 0.5) and -1 or 1
+	if react == "high" then
+		-- head snaps back and twists away from the blow
+		sp:kick("H", 1, 520 * k)
+		sp:kick("H", 3, 260 * k * side)
+		sp:kick("UT", 1, 240 * k)
+	elseif react == "low" then
+		-- legs taken out: hips drop, torso pitches forward
+		sp:kick("root", 2, -5 * k)
+		sp:kick("UT", 1, -200 * k)
+		sp:kick("H", 1, -160 * k)
+	else
+		-- gut shot: doubles over, head whips forward
+		sp:kick("UT", 1, -320 * k)
+		sp:kick("H", 1, -260 * k)
+		sp:kick("root", 3, 3 * k)
+	end
+	sp:kick("UT", 2, 140 * k * side)
+	sp:kick("RUA", 3, 200 * k)
+	sp:kick("LUA", 3, -200 * k)
+end
+
 function FightView:rigFlash(i: number, color: Color3?)
 	local hl = self.highlights[i]
 	if not hl then
@@ -626,18 +766,23 @@ function FightView:onEvent(ev)
 		local f = m.fighters[ev.fighter]
 		local def = f.def
 		Subtitles.show(def.name, def.intro[ev.line] or def.intro[1], 2.3, Color3.fromHex(def.accent))
+		self.hud:cinema(true)
+		self.hud:nameCard(ev.fighter, def, 2.1)
 		Audio.voice(def.voice, "attack")
 		if ev.fighter == 2 then
 			self:introCamera(2)
 		end
 	elseif typ == "round_call" then
 		FightCamera.clearCinematic()
+		self.hud:cinema(false)
 		local final = m.fighters[1].roundWins == m.roundsToWin - 1 and m.fighters[2].roundWins == m.roundsToWin - 1
 		self.hud:announce(final and "FINAL ROUND (NO PRESSURE)" or ("ROUND " .. tostring(ev.round)), nil, { hold = 1.1 })
+		StageBuilder.react("round")
 		Audio.play("round_gong", { volume = 0.9 })
 		Audio.play("countdown", { volume = 0.6 })
 	elseif typ == "fight" then
 		self.hud:announce("FIGHT", nil, { punch = true, color = Theme.Colors.goldBright, hold = 0.7 })
+		self:showWorldTags(2.2)
 		Audio.play("fight", { volume = 1 })
 		FightCamera.shake(0.5)
 	elseif typ == "move" then
@@ -662,6 +807,7 @@ function FightView:onEvent(ev)
 		local f = m.fighters[ev.fighter]
 		self.hud:flash(Color3.fromHex(f.def.accent), 0.45)
 		Audio.play("super_start", { volume = 1 })
+		StageBuilder.react("super")
 		FightCamera.shake(0.6)
 		VFX.burstShockwave(self:fighterWorldPos(ev.fighter, 3), Color3.fromHex(f.def.accent))
 	elseif typ == "hit" then
@@ -670,9 +816,24 @@ function FightView:onEvent(ev)
 		local pos = v3(ev.x, ev.y, 0.2)
 		local essence = ev.source ~= "throw"
 		VFX.hit(pos, ev.strength or "medium", ev.element, dir, essence)
-		Audio.play(ev.sfx or STRENGTH_SFX[ev.strength] or "hit_medium", { volume = 0.85, pitchVar = 0.07 })
-		FightCamera.shake(STRENGTH_SHAKE[ev.strength] or 0.4)
+		-- layered impact: the move's own sound, a body layer by strength, and a low
+		-- thump under the big ones
+		local strength = ev.strength or "medium"
+		Audio.play(ev.sfx or STRENGTH_SFX[strength] or "hit_medium", { volume = 0.85, pitchVar = 0.07 })
+		if ev.sfx and STRENGTH_SFX[strength] and ev.sfx ~= STRENGTH_SFX[strength] then
+			Audio.play(STRENGTH_SFX[strength], { volume = 0.45, pitchVar = 0.06 })
+		end
+		local big = strength == "heavy" or strength == "special" or strength == "super"
+		if big then
+			StageBuilder.react("heavy")
+			Audio.play("impact_sub", { volume = strength == "super" and 1 or 0.75, pitchVar = 0.05 })
+			FightCamera.punch(strength == "super" and 5 or 2.5)
+		end
+		-- the camera jolts the way the blow travelled (launchers kick upward)
+		local upward = ev.result == "launch" and 0.8 or -0.25
+		FightCamera.shake(STRENGTH_SHAKE[strength] or 0.4, big and dir or dir * 0.4, big and upward or 0)
 		self:rigFlash(ev.victim)
+		self:hitImpulse(ev.victim, ev.strength, ev.react, false)
 		local victim = m.fighters[ev.victim]
 		victim.lastHitFrame = m.frame
 		if ev.combo and ev.combo >= 2 then
@@ -683,6 +844,7 @@ function FightView:onEvent(ev)
 		end
 		if ev.result == "knockdown" or ev.result == "launch" then
 			FightCamera.shake(0.6)
+			VFX.impactLight(self.rigs[ev.victim].parts.UpperTorso, Color3.fromHex(attacker.def.accent), 5, 14, 0.3)
 		end
 		if ev.attacker == 1 then
 			self.lastCombo = ev.combo
@@ -690,8 +852,9 @@ function FightView:onEvent(ev)
 		end
 	elseif typ == "block" then
 		local attacker = m.fighters[ev.attacker]
-		VFX.block(v3(ev.x, ev.y, 0.2), attacker.facing)
+		VFX.block(v3(ev.x, ev.y, 0.2), attacker.facing, ev.strength)
 		Audio.play("block", { volume = 0.7, pitchVar = 0.06 })
+		self:hitImpulse(ev.victim, ev.strength, nil, true)
 		FightCamera.shake(0.15)
 	elseif typ == "throw" then
 		Audio.play("whoosh_heavy", { volume = 0.7 })
@@ -740,13 +903,23 @@ function FightView:onEvent(ev)
 		Audio.play("teleport", { volume = 0.8 })
 	elseif typ == "dash" then
 		local f = m.fighters[ev.fighter]
-		VFX.dust(v3(f.x, 0), false)
+		VFX.footDust(v3(f.x, 0), -f.facing * (ev.dir or 1))
 		Audio.play("dash", { volume = 0.5 })
+		-- lean into a dash, rock back on a backdash
+		self.springs[ev.fighter]:kick("UT", 1, (ev.dir or 1) > 0 and -240 or 200)
 	elseif typ == "jump" then
 		Audio.play("jump", { volume = 0.45, pitchVar = 0.05 })
 	elseif typ == "land" then
 		VFX.dust(v3(ev.x, 0), ev.heavy)
 		Audio.play("land", { volume = ev.heavy and 0.9 or 0.4 })
+		-- weight on landing: hips squash down, chest folds, arms follow through
+		local sp = self.springs[ev.fighter]
+		if sp then
+			sp:kick("root", 2, ev.heavy and -14 or -8)
+			sp:kick("UT", 1, ev.heavy and -260 or -150)
+			sp:kick("RUA", 1, -160)
+			sp:kick("LUA", 1, -160)
+		end
 		if ev.heavy then
 			FightCamera.shake(0.6)
 			VFX.groundEruption(v3(ev.x, 0), m.fighters[ev.fighter].def.moves.SB and m.fighters[ev.fighter].def.moves.SB.element or "ice", 2.5)
@@ -754,7 +927,13 @@ function FightView:onEvent(ev)
 	elseif typ == "knockdown" then
 		VFX.dust(v3(ev.x, 0), true)
 		Audio.play("knockdown", { volume = 0.9 })
-		FightCamera.shake(0.5)
+		Audio.play("body_fall", { volume = 0.8, pitchVar = 0.06 })
+		FightCamera.shake(0.5, 0, -1)
+		local sp = self.springs[ev.fighter]
+		if sp then
+			sp:kick("root", 2, -6)
+			sp:kick("H", 1, 300)
+		end
 	elseif typ == "getup" then
 		Audio.play("getup", { volume = 0.4 })
 	elseif typ == "parry" then
@@ -780,6 +959,7 @@ function FightView:onEvent(ev)
 		self.hud:flash(Color3.new(1, 1, 1), 0.8)
 		self.hud:announce("OOF!", ev.perfect and "NO DAMAGE TAKEN. EMBARRASSING." or nil, { punch = true, color = Theme.Colors.crimsonBright, size = 150, hold = 2.0 })
 		Audio.play("ko", { volume = 1 })
+		StageBuilder.react("ko")
 		Audio.play("oof", { group = "voice", volume = 1 })
 		Audio.duck(0.35, 2.5)
 		FightCamera.shake(1.4)
@@ -796,16 +976,19 @@ function FightView:onEvent(ev)
 				color = Theme.Colors.ivory,
 			})
 			self:winCamera(ev.winner)
+			self.hud:cinema(true)
 		else
 			self.hud:announce("DRAW", "BOTH OF YOU ARE NOOBS", { hold = 1.6 })
 		end
 	elseif typ == "finish_prompt" then
 		FightCamera.clearCinematic()
+		self.hud:cinema(false)
 		self.hud:showFinisherPrompt(true)
 		Audio.play("finisher_ready", { volume = 1 })
 		Audio.duck(0.4, 6)
 	elseif typ == "finisher_start" then
 		self.hud:showFinisherPrompt(false)
+		self.hud:cinema(true)
 		self:startFinisherCinematic(ev)
 	elseif typ == "finisher_hit" then
 		local loser = self.rigs[ev.loser]
@@ -826,6 +1009,7 @@ function FightView:onEvent(ev)
 		end)
 	elseif typ == "match_end" then
 		self.hud:showFinisherPrompt(false)
+		self.hud:cinema(true)
 		local wf = m.fighters[ev.winner]
 		local quote = wf.def.victory[wf.winQuote or 1] or wf.def.victory[1]
 		task.delay(ev.finisher and 1.2 or 0.4, function()
@@ -858,6 +1042,7 @@ function FightView:startSuperCinematic(ev)
 	local v = m.fighters[ev.victim]
 	local col = Color3.fromHex(a.def.accent)
 	self.hud:superBanner(a.def.superName, ev.attacker, col)
+	self.hud:cinema(true, 0.25)
 	Audio.duck(0.3, 2.6)
 	local grade = self.stage and self.stage.fx and self.stage.fx.grade
 	if grade then
@@ -899,6 +1084,9 @@ end
 
 function FightView:endSuperCinematic()
 	FightCamera.clearCinematic()
+	if not self.match.over and self.match.phase == "fight" then
+		self.hud:cinema(false, 0.3)
+	end
 	local grade = self.stage and self.stage.fx and self.stage.fx.grade
 	if grade and self.savedGrade then
 		Theme.tween(grade, 0.4, { Brightness = self.savedGrade[1], Saturation = self.savedGrade[2], TintColor = self.savedGrade[3] })

@@ -43,6 +43,8 @@ for _, path in {
 	{ "Render", "Poses" },
 	{ "Render", "Looks" },
 	{ "Render", "Rig" },
+	{ "Render", "AnimSpring" },
+	{ "Render", "StageLife" },
 	{ "Render", "StageBuilder" },
 	{ "Render", "VFX" },
 	{ "Render", "FightCamera" },
@@ -80,12 +82,175 @@ end
 
 local only = process.args[1]
 if only ~= "flow" then
+print("[1b] Animation layer: springs, personality idles, victory poses")
+local Poses, AnimSpring = mods.Poses, mods.AnimSpring
+local function finitePose(pose, label)
+	for k, v in pose do
+		if type(v) == "table" then
+			for i, x in v do
+				assert(type(x) == "number" and x == x and math.abs(x) < 1e5, label .. ": bad value at " .. tostring(k) .. "[" .. i .. "]")
+			end
+		end
+	end
+end
+step("spring converges to the target and stays within its lag bound", function()
+	local sp = AnimSpring.new()
+	local a = Poses.stance("blade")
+	local b = Poses.Attacks.lunge_slash.hit
+	sp:reset(a)
+	local worst = 0
+	for _ = 1, 30 do
+		local out = sp:step(b, 1 / 60, 1)
+		for _, k in AnimSpring.KEYS do
+			if b[k] and k ~= "root" then
+				for i = 1, 3 do
+					local d = math.abs(((b[k][i] or 0) - out[k][i] + 180) % 360 - 180)
+					worst = math.max(worst, d)
+				end
+			end
+		end
+	end
+	assert(worst <= 48.001, "lag bound exceeded: " .. worst)
+	local out
+	for _ = 1, 120 do
+		out = sp:step(b, 1 / 60, 0)
+	end
+	for _, k in AnimSpring.KEYS do
+		if b[k] and k ~= "root" then
+			for i = 1, 3 do
+				local d = math.abs(((b[k][i] or 0) - out[k][i] + 180) % 360 - 180)
+				assert(d < 0.5, "did not settle on " .. k .. ": " .. d)
+			end
+		end
+	end
+	-- impulse produces motion that decays back
+	sp:kick("H", 1, 520)
+	local peak = 0
+	for _ = 1, 20 do
+		out = sp:step(b, 1 / 60, 0)
+		peak = math.max(peak, math.abs(out.H[1] - (b.H and b.H[1] or 0)))
+	end
+	assert(peak > 5, "head kick too weak: " .. peak)
+	for _ = 1, 120 do
+		out = sp:step(b, 1 / 60, 0)
+	end
+	assert(math.abs(out.H[1] - (b.H and b.H[1] or 0)) < 0.5, "head kick did not settle")
+	-- paused frames (dt = 0) leave the pose untouched
+	local h1 = out.H[1]
+	out = sp:step(b, 0, 0)
+	assert(out.H[1] == h1, "dt=0 moved the pose")
+end)
+step("crossfading out of a 360 spin takes the short way round", function()
+	local spun = table.clone(Poses.stance("dual"))
+	spun.root = { 0, 0, 0, 0, 360, 0 }
+	local mid = Poses.lerp(spun, Poses.stance("dual"), 0.5)
+	assert(math.abs(((mid.root[5] or 0) + 180) % 360 - 180) < 1, "unwound through a full turn: " .. tostring(mid.root[5]))
+end)
+for _, def in Fighters.list do
+	step("idle + victory poses: " .. def.id .. " (" .. tostring(def.personality) .. ")", function()
+		assert(def.personality, "no personality")
+		local style = Poses.STYLE_OF[def.stance] or "unarmed"
+		for k = 0, 40 do
+			finitePose(Poses.idleFor(style, def.personality, k * 0.137), def.id .. " idle")
+			finitePose(Poses.victoryFor(def.id, style, k * 0.137), def.id .. " victory")
+			finitePose(Poses.walk(style, k * 0.4, 1), def.id .. " walk")
+		end
+		assert(Poses.Victory[def.id], "no signature victory pose")
+	end)
+end
+step("controls: Q block, mouse light/heavy, WASD, notation glyphs", function()
+	local prevMode = Input.mode
+	Input.mode = "keyboard"
+	assert(Input.glyph("B") == "Q", "block glyph " .. tostring(Input.glyph("B")))
+	assert(Input.glyph("L") == "LMB" and Input.glyph("H") == "RMB", "mouse glyphs")
+	local txt = Input.formatNotation("L, L, H")
+	assert(string.find(txt, "LMB") and string.find(txt, "RMB"), "notation: " .. txt)
+	-- drive the real UserInputService handlers
+	local UIS = Mock.uis
+	local Enum = roblox.Enum
+	local function key(code, down)
+		local io = { UserInputType = Enum.UserInputType.Keyboard, KeyCode = code }
+		if down then
+			UIS.InputBegan:Fire(io, false)
+		else
+			UIS.InputEnded:Fire(io, false)
+		end
+	end
+	local function mouse(kind, down, processed)
+		local io = { UserInputType = kind }
+		if down then
+			UIS.InputBegan:Fire(io, processed == true)
+		else
+			UIS.InputEnded:Fire(io, false)
+		end
+	end
+	local function settle()
+		task.wait()
+		task.wait()
+	end
+	key(Enum.KeyCode.Q, true)
+	key(Enum.KeyCode.A, true)
+	key(Enum.KeyCode.W, true)
+	mouse(Enum.UserInputType.MouseButton1, true)
+	mouse(Enum.UserInputType.MouseButton2, true)
+	settle()
+	local st = Input.fightState()
+	assert(st.B, "Q did not block")
+	assert(st.left and st.up, "A / W did not move / jump")
+	assert(st.L, "left click did not light attack")
+	assert(st.H, "right click did not heavy attack")
+	key(Enum.KeyCode.Q, false)
+	key(Enum.KeyCode.A, false)
+	key(Enum.KeyCode.W, false)
+	mouse(Enum.UserInputType.MouseButton1, false)
+	mouse(Enum.UserInputType.MouseButton2, false)
+	key(Enum.KeyCode.D, true)
+	key(Enum.KeyCode.S, true)
+	settle()
+	st = Input.fightState()
+	assert(st.right and st.down and not st.B and not st.L and not st.H, "release / D / S state wrong")
+	key(Enum.KeyCode.D, false)
+	key(Enum.KeyCode.S, false)
+	-- clicks that land on GUI buttons must not become attacks
+	mouse(Enum.UserInputType.MouseButton1, true, true)
+	settle()
+	assert(not Input.fightState().L, "a GUI click became an attack")
+	mouse(Enum.UserInputType.MouseButton1, false)
+	-- losing window focus releases everything
+	key(Enum.KeyCode.Q, true)
+	settle()
+	UIS.WindowFocusReleased:Fire()
+	settle()
+	assert(not Input.fightState().B, "input stuck after focus loss")
+	settle()
+	Input.mode = prevMode
+end)
+if only == "anim" then
+	print(#failures == 0 and "\n0 failures" or ("\n" .. #failures .. " failures"))
+	process.exit(#failures == 0 and 0 or 1)
+end
+
 print("[2] Build every stage")
 for _, s in Stages.list do
 	step("stage " .. s.id, function()
 		local cur = StageBuilder.build(s.id)
 		assert(#cur.model:GetChildren() > 10, "stage too empty")
-		StageBuilder.update(1.0, 3)
+		assert(cur.life and #cur.life.fighterLights == 2, "fighter lighting rig missing")
+		-- run the arena through ~25 s of life: crowd, chatter, flickers, lightning, eruptions
+		local fighters = { { x = -4, y = 0 }, { x = 4, y = 0 } }
+		for k = 1, 1500 do
+			StageBuilder.update(k / 60, 3, 1 / 60, fighters)
+		end
+		for _, kind in { "round", "heavy", "super", "ko" } do
+			StageBuilder.react(kind)
+			StageBuilder.update(26, 3, 1 / 60, fighters)
+		end
+		for _, n in cur.life.crowd do
+			for _, p in n.parts do
+				local pos = p.CFrame.Position
+				assert(pos.Y > -1 and pos.Y < 40, "crowd part out of bounds: " .. tostring(pos))
+			end
+		end
 	end)
 end
 StageBuilder.clear()

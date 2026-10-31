@@ -1,5 +1,5 @@
 --!nonstrict
--- Skeleton definition + forward kinematics + leg IK for OOF FIGHTERS 1 fighters.
+-- Skeleton definition + forward kinematics + leg IK for OOF COMBAT fighters.
 -- Pure CFrame math (no Instances) so poses can be evaluated headless for previews.
 --
 -- Rig space: origin on the floor between the feet, +Y up, facing -Z (Roblox

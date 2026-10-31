@@ -305,10 +305,41 @@ local function fadeIn(frame: Instance)
 	end)
 end
 
+-- Screen transition: a slanted black panel with a gold leading edge wipes across,
+-- covers the cut, then carries on off the other side (see fadeFromBlack).
 function Screens.fadeToBlack(root: Instance, time: number?)
-	local cover = Theme.frame(root, { Name = "Fade", Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 1, ZIndex = 90 })
-	Theme.tween(cover, time or 0.4, { BackgroundTransparency = 0 })
-	task.wait(time or 0.4)
+	local t = time or 0.4
+	local cover = Theme.frame(root, {
+		Name = "Fade",
+		Size = UDim2.fromScale(1.5, 1),
+		Position = UDim2.fromScale(-1.9, 0),
+		BackgroundColor3 = Color3.new(0, 0, 0),
+		BackgroundTransparency = 0,
+		ZIndex = 90,
+	})
+	-- slanted edges so the wipe reads as a diagonal cut
+	for _, side in { 0, 1 } do
+		local edge = Theme.frame(cover, {
+			Name = side == 1 and "LeadEdge" or "TailEdge",
+			Size = UDim2.new(0, 260, 1.5, 0),
+			Position = UDim2.new(side, 0, 0.5, 0),
+			AnchorPoint = Vector2.new(0.5, 0.5),
+			BackgroundColor3 = Color3.new(0, 0, 0),
+			BackgroundTransparency = 0,
+			Rotation = 14,
+			ZIndex = 90,
+		})
+		Theme.frame(edge, {
+			Name = "Stripe",
+			Size = UDim2.new(0, 10, 1, 0),
+			Position = UDim2.new(side, side == 1 and 0 or -10, 0, 0),
+			BackgroundColor3 = Theme.Colors.gold,
+			BackgroundTransparency = 0,
+			ZIndex = 91,
+		})
+	end
+	Theme.tween(cover, t, { Position = UDim2.fromScale(-0.25, 0) }, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+	task.wait(t)
 	return cover
 end
 
@@ -316,8 +347,9 @@ function Screens.fadeFromBlack(cover: Instance?, time: number?)
 	if not cover then
 		return
 	end
-	Theme.tween(cover, time or 0.5, { BackgroundTransparency = 1 })
-	task.delay((time or 0.5) + 0.05, function()
+	local t = time or 0.5
+	Theme.tween(cover, t, { Position = UDim2.fromScale(1.5, 0) }, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+	task.delay(t + 0.05, function()
 		cover:Destroy()
 	end)
 end
@@ -1721,25 +1753,27 @@ function Screens.moveList(root: Instance, startFighter: string?)
 		for _, id in { "SN", "SF", "SB", "SD", "SA" } do
 			local m = def.moves[id]
 			if m then
-				row(m.name, m.input, MoveKit.describe(m), nextOrder())
+				row(m.name, Input.formatNotation(m.input), MoveKit.describe(m), nextOrder())
 			end
 		end
 		section("SUPER  \u{00B7}  2 RAGE BARS", nextOrder())
-		row(def.superName, "SUPER  (" .. Input.glyph("X") .. ")", "Cinematic super. Invulnerable on startup. " .. MoveKit.describe(def.moves.SUPER), nextOrder())
+		row(def.superName, Input.glyph("X") .. "  (2 RAGE BARS)", "Cinematic super. Invulnerable on startup. " .. MoveKit.describe(def.moves.SUPER), nextOrder())
 		section("FINISHER", nextOrder())
-		row(def.finisher.name, "HOLD \u{2193} + SPECIAL at DELETE THEM", def.finisher.desc, nextOrder())
+		row(def.finisher.name, "HOLD " .. Input.glyph("down") .. " + " .. Input.glyph("S") .. " at DELETE THEM", def.finisher.desc, nextOrder())
 		section("STRINGS & NORMALS", nextOrder())
 		for _, id in { "L", "L2", "L3", "H", "H2", "K", "K2", "FH", "BK", "DL", "DH", "DK", "JL", "JH", "JK", "THROW" } do
 			local m = def.moves[id]
 			if m then
-				row(m.name, m.input, MoveKit.describe(m), nextOrder())
+				row(m.name, Input.formatNotation(m.input), MoveKit.describe(m), nextOrder())
 			end
 		end
 		section("SYSTEM", nextOrder())
-		row("Call a Friend", "FRIEND  /  \u{2193} + FRIEND", "Your friend runs in and helps. Cooldown " .. tostring(math.floor(Config.EchoCooldown / 60)) .. "s.", nextOrder())
-		row("Rage Quit", "SUPER while being comboed", "Costs 1 Rage bar. Bursts you out of a combo.", nextOrder())
+		row("Call a Friend", Input.glyph("E") .. "  /  " .. Input.glyph("down") .. " + " .. Input.glyph("E"), "Your friend runs in and helps. Cooldown " .. tostring(math.floor(Config.EchoCooldown / 60)) .. "s.", nextOrder())
+		row("Rage Quit", Input.glyph("X") .. " while being comboed", "Costs 1 Rage bar. Bursts you out of a combo.", nextOrder())
 		row("Dash / Backdash", "\u{2192}\u{2192}  /  \u{2190}\u{2190}", "Double-tap a direction. Backdash is briefly invulnerable.", nextOrder())
-		row("Throw Escape", "BLOCK + LIGHT when grabbed", "Break a throw on reaction.", nextOrder())
+		row("Throw", Input.glyph("THROW") .. "  (or " .. Input.glyph("B") .. " + " .. Input.glyph("L") .. ")", "Grab a blocking opponent. Throws beat block.", nextOrder())
+		row("Throw Escape", Input.glyph("THROW") .. " when grabbed", "Break a throw on reaction.", nextOrder())
+		row("Block", "HOLD " .. Input.glyph("B") .. "  (+ " .. Input.glyph("down") .. " for lows)", "Highs and mids standing, lows crouching, overheads standing.", nextOrder())
 		scroll.CanvasPosition = Vector2.zero
 	end
 	build()

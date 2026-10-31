@@ -1,12 +1,12 @@
 --!nonstrict
--- Global tuning values for OOF FIGHTERS 1. Everything in the combat engine runs on a
+-- Global tuning values for OOF COMBAT. Everything in the combat engine runs on a
 -- fixed 60 Hz tick, so all durations here are in frames unless the name says otherwise.
 
 local Config = {}
 
-Config.GameTitle = "OOF FIGHTERS 1"
+Config.GameTitle = "OOF COMBAT"
 Config.GameSubtitle = "THE GREAT SERVER RESET"
-Config.Version = "1.1.0"
+Config.Version = "1.2.0"
 
 Config.TickRate = 60
 Config.TickDt = 1 / 60

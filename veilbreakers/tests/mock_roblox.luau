@@ -140,6 +140,9 @@ local EVENTS = {
 	"PlayerAdded",
 	"PlayerRemoving",
 	"OnClientEvent",
+	"WindowFocusReleased",
+	"WindowFocused",
+	"TextBoxFocused",
 }
 for _, ev in EVENTS do
 	roblox.implementProperty("Instance", ev, function(inst)
