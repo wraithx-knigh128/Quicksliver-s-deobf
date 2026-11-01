@@ -184,11 +184,11 @@ end
 -- Per-strength tuning: light hits stay small and quick so they never clutter the
 -- screen; heavies, specials and supers escalate with light, streaks and rings.
 local HIT_TUNING = {
-	light = { sparks = 7, speed = { 8, 16 }, spark = 0.26, core = { 1.8, 2.4 }, essence = 4, flash = 1.3, light = { 2.5, 8, 0.1 } },
-	medium = { sparks = 12, speed = { 10, 22 }, spark = 0.34, core = { 2.6, 3.6 }, essence = 8, flash = 1.9, light = { 4, 11, 0.14 } },
-	heavy = { sparks = 20, speed = { 16, 34 }, spark = 0.5, core = { 4.2, 6.6 }, essence = 14, flash = 3.0, light = { 7, 16, 0.22 }, streak = 4.5, ring = 7 },
-	special = { sparks = 18, speed = { 14, 30 }, spark = 0.46, core = { 4, 6 }, essence = 12, flash = 2.8, light = { 6, 15, 0.22 }, streak = 4, ring = 6 },
-	super = { sparks = 30, speed = { 18, 40 }, spark = 0.6, core = { 5.5, 8.5 }, essence = 20, flash = 4.2, light = { 10, 22, 0.32 }, streak = 6, ring = 14 },
+	light = { sparks = 10, speed = { 9, 18 }, spark = 0.34, core = { 2.4, 3.2 }, essence = 6, flash = 1.8, light = { 4, 11, 0.12 } },
+	medium = { sparks = 16, speed = { 12, 26 }, spark = 0.44, core = { 3.4, 4.8 }, essence = 10, flash = 2.5, light = { 6, 14, 0.16 }, ring = 3.6 },
+	heavy = { sparks = 28, speed = { 18, 40 }, spark = 0.62, core = { 5.6, 8.6 }, essence = 18, flash = 3.9, light = { 10, 20, 0.26 }, streak = 5.6, ring = 9, ground = 8 },
+	special = { sparks = 24, speed = { 16, 36 }, spark = 0.58, core = { 5.2, 8 }, essence = 16, flash = 3.6, light = { 9, 19, 0.26 }, streak = 5, ring = 8, ground = 7 },
+	super = { sparks = 40, speed = { 22, 48 }, spark = 0.75, core = { 7.2, 11 }, essence = 26, flash = 5.4, light = { 14, 28, 0.38 }, streak = 7.5, ring = 17, ground = 14 },
 }
 
 -- strength: light | medium | heavy | special | super
@@ -256,6 +256,10 @@ function VFX.hit(pos: Vector3, strength: string, element: string?, dir: number, 
 	end
 	if tune.ring then
 		ring(pos, cols[2], tune.ring, 0.3)
+	end
+	-- shock ring along the floor under big hits
+	if tune.ground then
+		ring(Vector3.new(pos.X, 0.15, pos.Z - 0.8), cols[2]:Lerp(Color3.new(1, 1, 1), 0.3), tune.ground, 0.35, true)
 	end
 	if element and element ~= "default" then
 		VFX.elementBurst(pos, element, tune.streak ~= nil)
@@ -983,6 +987,18 @@ function VFX.projectile(kind: string, element: string?)
 	local cols = colors(element)
 	local builder = PROJ[kind] or PROJ.lightning_bolt
 	local update = builder(m, cols)
+	-- every projectile lights up the arena around it
+	if not m:FindFirstChildWhichIsA("PointLight", true) then
+		local host = m:FindFirstChildWhichIsA("BasePart", true)
+		if host then
+			local l = Instance.new("PointLight")
+			l.Color = cols[2]
+			l.Brightness = 3
+			l.Range = 11
+			l.Shadows = false
+			l.Parent = host
+		end
+	end
 	m.Parent = container()
 	local obj = { model = m, update = update, kind = kind, element = element }
 	function obj:set(pos: Vector3, facing: number, t: number, origin: Vector3?)
@@ -991,13 +1007,15 @@ function VFX.projectile(kind: string, element: string?)
 	end
 	function obj:destroy(pos: Vector3?)
 		if pos then
-			flashBall(pos, cols[2], 2.6, 0.15)
+			flashBall(pos, cols[2], 3.4, 0.18)
 			local a = anchorAt(pos, 1)
-			burst(a, 10, {
+			burst(a, 18, {
 				color = ColorSequence.new(cols[1], cols[2]),
-				speed = NumberRange.new(6, 14),
-				size = NumberSequence.new(0.4, 0),
+				speed = NumberRange.new(8, 18),
+				size = NumberSequence.new(0.5, 0),
+				orientation = Enum.ParticleOrientation.VelocityParallel,
 			})
+			impactLight(a, cols[2], 6, 14, 0.2)
 		end
 		self.model:Destroy()
 	end

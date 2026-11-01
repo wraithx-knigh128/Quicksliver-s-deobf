@@ -30,6 +30,7 @@ local FightCamera = require(script.Parent.FightCamera)
 local VFX = require(script.Parent.VFX)
 local Audio = require(Client.Core.Audio)
 local Input = require(Client.Core.Input)
+local Voice = require(Client.Core.Voice)
 local Theme = require(Client.UI.Theme)
 local Subtitles = require(Client.UI.Subtitles)
 
@@ -86,6 +87,38 @@ end
 local function addTo(pose, key: string, a: number, b: number, c: number)
 	local v = pose[key] or { 0, 0, 0 }
 	pose[key] = { (v[1] or 0) + a, (v[2] or 0) + b, (v[3] or 0) + c }
+end
+
+-- Face for an actor: from its gesture while talking, else from its base anim.
+local GESTURE_FACE = {
+	shout = "angry",
+	fist = "angry",
+	point = "focus",
+	sad = "sad",
+	nervous = "sad",
+	facepalm = "sad",
+	shrug = "neutral",
+	laugh = "happy",
+	wave = "happy",
+	flex = "angry",
+	cross = "focus",
+	think = "focus",
+}
+function Cutscene.expressionFor(a): string
+	if a.act then
+		return "angry"
+	end
+	if a.gesture and GESTURE_FACE[a.gesture] then
+		return GESTURE_FACE[a.gesture]
+	end
+	if a.anim == "dazed" then
+		return "ko"
+	elseif a.anim == "kneel" then
+		return "hurt"
+	elseif a.anim == "win" then
+		return "happy"
+	end
+	return GESTURE_FACE[a.anim] or "neutral"
 end
 
 -- Pick a gesture from how the line reads.
@@ -458,6 +491,7 @@ function Cutscene.play(scene, uiRoot: Instance)
 			a.y = y
 			local final = a.spring:step(pose, adt, snap)
 			Rig.apply(a.rig, rootCF(a.x, a.facing, y), final, { time = t })
+			Rig.setExpression(a.rig, Cutscene.expressionFor(a))
 			local _ = i
 		end
 		FightCamera.update(dt, -2, 0, 2, 0)
@@ -727,7 +761,8 @@ function Cutscene.play(scene, uiRoot: Instance)
 					runEvent({ type = "pop", text = line.pop, x = line.popX, y = line.popY })
 				end
 				Subtitles.show(Story.speakerNames[line.speaker] or line.speaker, line.text, d - 0.15, col)
-				if spk then
+				local profile = spk and spk.voice or (line.speaker == "system" and "system" or "announcer")
+				if not Voice.say(line.text, profile, { channel = "dialogue" }) and spk then
 					Audio.voice(spk.voice, "attack")
 				end
 				local ok = wait(d)

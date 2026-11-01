@@ -97,6 +97,20 @@ for _, ch in Story.chapters do
 end
 
 ---------------------------------------------------------------------------
+print("[1b] Balance lock: no fighter buffed or nerfed")
+---------------------------------------------------------------------------
+do
+	-- Fingerprint of every combat number (health, weight, walk speed, all move
+	-- frame data / damage / hitboxes / projectiles). Cosmetics, items and
+	-- enchantments can't move it. Only change BALANCE_FINGERPRINT for an
+	-- intentional balance patch.
+	local BALANCE_FINGERPRINT = 861491771
+	local Balance = require("./balance")
+	local h, n = Balance.fingerprint(Fighters)
+	check(h == BALANCE_FINGERPRINT, string.format("combat data changed (fingerprint %d over %d values)", h, n))
+end
+
+---------------------------------------------------------------------------
 print("[2] Every input produces its move (training mode, scripted input)")
 ---------------------------------------------------------------------------
 local INPUTS = {

@@ -533,6 +533,187 @@ end
 
 end
 
+if only == nil or only == "online" then
+	print("[9] Online: the client replays a server-run match; online screens")
+	local function odrive(label, fn, actions, timeout)
+		local finished, res = false, nil
+		task.spawn(function()
+			local ok, err = pcall(function()
+				res = fn()
+			end)
+			if not ok then
+				fail(label .. ": " .. tostring(err))
+			end
+			finished = true
+		end)
+		for _, act in actions do
+			task.wait(act.wait or 0.25)
+			pump(2)
+			if act.nav then
+				Input.nav:Fire(act.nav)
+			end
+		end
+		local t0 = os.clock()
+		while not finished and os.clock() - t0 < (timeout or 10) do
+			task.wait(0.05)
+			pump(1)
+		end
+		if finished then
+			print("  ok  " .. label .. " -> " .. tostring(res))
+		else
+			fail(label .. " did not finish")
+		end
+		return res
+	end
+	local serverRoot = Loader.root("src/server")
+	local OnlineMatch = Loader.require(serverRoot.OnlineMatch)
+	local SInv = Loader.require(serverRoot.Inventory)
+	local SProfiles = Loader.require(serverRoot.Profiles)
+	local AI = Loader.require(shared.Combat.AI)
+	local NetInput = Loader.require(shared.Combat.NetInput)
+	local Rng = Loader.require(shared.Combat.Rng)
+	local Net = Loader.require(client.Net.Net)
+	local OnlineScreens = Loader.require(client.UI.OnlineScreens)
+	local A = { UserId = 1, DisplayName = "Tester", Name = "Tester", Parent = true }
+	local B = { UserId = 2, DisplayName = "Rival", Name = "Rival", Parent = true }
+	local profiles = { [A] = SProfiles.sanitize(nil), [B] = SProfiles.sanitize(nil) }
+	local skin = SInv.addWeapon(profiles[A].inv, 1, "katana_neon", "rainbow")
+	SInv.equip(profiles[A].inv, "noob", skin.uid)
+	local skin2 = SInv.addWeapon(profiles[B].inv, 2, "daggers_666", "glitched")
+	SInv.equip(profiles[B].inv, "guest", skin2.uid)
+	local inbox = { [A] = {}, [B] = {} }
+	local clock = 0
+	local r = Rng.new(9)
+	local svc = OnlineMatch.new({
+		getProfile = function(p)
+			return profiles[p]
+		end,
+		send = function(p, m)
+			table.insert(inbox[p], m)
+		end,
+		save = function() end,
+		now = function()
+			return clock
+		end,
+		rand = function()
+			return r:next()
+		end,
+	})
+	svc:queuePlayer(A, { fighter = "noob", echo = "grandpa", stage = "baseplate" })
+	svc:queuePlayer(B, { fighter = "guest", echo = "pigeon", stage = "baseplate" })
+	local startMsg
+	for _, m in inbox[A] do
+		if m.op == "start" then
+			startMsg = m
+		end
+	end
+	local spec = startMsg.spec
+	svc:setReady(A, spec.id)
+	svc:setReady(B, spec.id)
+	local sm = svc.byPlayer[A]
+	local ai1, ai2 = AI.new(sm.engine, 1, 3, 5), AI.new(sm.engine, 2, 3, 6)
+	local guard = 0
+	while svc.byPlayer[A] and guard < 20000 do
+		local i1, i2 = ai1:getInput(), ai2:getInput()
+		svc:input(A, NetInput.encode(i1), NetInput.encode(i1))
+		svc:input(B, NetInput.encode(i2), NetInput.encode(i2))
+		clock += 1 / 60
+		svc:tick(1 / 60)
+		guard += 1
+	end
+	local serverWinner = sm.engine.winner
+	-- the client, fed the same packets through a stand-in network
+	local fakeNet = { onOnline = roblox.Instance.new("BindableEvent"), sendInput = function() end }
+	local done, result = false, nil
+	local view
+	step("online FightView builds (cosmetics on both rigs)", function()
+		view = FightView.new({
+			root = root,
+			p1 = { fighter = spec.p1.fighter, echo = spec.p1.echo, cosmetic = spec.p1.cosmetic },
+			p2 = { fighter = spec.p2.fighter, echo = spec.p2.echo, cosmetic = spec.p2.cosmetic },
+			stage = spec.stage,
+			variant = spec.variant,
+			seed = spec.seed,
+			online = { side = 1, spec = spec, net = fakeNet },
+			onEnd = function(res)
+				result = res
+				done = true
+			end,
+		})
+		assert(view.rigs[1].cosmetic and view.rigs[2].cosmetic, "cosmetics not applied")
+	end)
+	if view then
+		local idx = 1
+		local t0 = os.clock()
+		while not done and os.clock() - t0 < 240 do
+			for _ = 1, 3 do
+				local m = inbox[A][idx]
+				if m then
+					idx += 1
+					if m.op ~= "start" and m.op ~= "queued" then
+						fakeNet.onOnline:Fire(m)
+					end
+				end
+			end
+			Mock.frame(1 / 60)
+			task.wait()
+		end
+		step("online replay reaches the server's result", function()
+			assert(done and result, "the online fight never ended")
+			assert(result.online and result.winner == serverWinner, "winner differs: client " .. tostring(result and result.winner) .. " server " .. tostring(serverWinner))
+			assert(view.match.frame == sm.engine.frame, "frame count differs")
+			assert(result.corrections == 0, "the client drifted and needed " .. tostring(result.corrections) .. " corrections")
+			assert(result.rewarded ~= nil, "server verdict missing from the result")
+		end)
+		view:destroy()
+		StageBuilder.clear()
+	end
+	-- screens
+	Net.inv = {
+		res = { studs = 120, scrap = 40, glitch = 5, relic = 2 },
+		weapons = { { uid = "w1-1", item = "katana_neon", ench = "blazing" }, { uid = "w1-2", item = "hammer_ban" } },
+		equipped = { noob = "w1-1" },
+	}
+	odrive("online hub", function()
+		return OnlineScreens.hub(root, { pending = 2 })
+	end, { { wait = 0.6, nav = "down" }, { nav = "back" } })
+	odrive("inventory (options, back)", function()
+		OnlineScreens.inventory(root)
+		return "closed"
+	end, { { wait = 0.8, nav = "confirm" }, { wait = 0.6, nav = "back" }, { wait = 0.6, nav = "back" } }, 12)
+	odrive("trade window (ready toggle, server closes it)", function()
+		task.spawn(function()
+			task.wait(1.2)
+			Net.onTrade:Fire({ op = "closed", reason = "Rival cancelled" })
+		end)
+		return OnlineScreens.trade(root, { with = 2, name = "Rival" })
+	end, {
+		{ wait = 0.5, nav = "confirm" },
+		{ wait = 0.3, nav = "confirm" },
+	}, 6)
+	-- feed server trade messages into the open window
+	odrive("trade window reacts to the server", function()
+		task.spawn(function()
+			task.wait(0.4)
+			Net.onTrade:Fire({ op = "state", mine = { weapons = { { uid = "w1-2", item = "hammer_ban" } }, res = { studs = 10 } }, theirs = { weapons = {}, res = { relic = 1 } }, readyMe = true, readyThem = true, countdown = 2.2 })
+			task.wait(0.4)
+			Net.onTrade:Fire({ op = "done", inv = Net.inv })
+		end)
+		return OnlineScreens.trade(root, { with = 2, name = "Rival" })
+	end, {}, 6)
+	odrive("online results", function()
+		OnlineScreens.results(root, { side = 1, winner = 1, rounds = { 2, 1 }, rewards = { studs = 30, relic = 1 }, weapon = { uid = "x", item = "bow_vip" }, rewarded = true })
+		return "ok"
+	end, { { wait = 0.6, nav = "confirm" } })
+	if only == "online" then
+		for _, e in Mock.errors do
+			fail("handler error: " .. e)
+		end
+		print(#failures == 0 and "\n0 failures" or ("\n" .. #failures .. " failures"))
+		process.exit(#failures == 0 and 0 or 1)
+	end
+end
+
 print("[8] Full game flow through Main.client (title -> practice -> pause/quit -> versus -> results)")
 do
 	-- fresh UI so Main builds its own; forget the menu cursor from section [5]
@@ -575,8 +756,17 @@ do
 	task.wait(2.0)
 	Input.anyPressed:Fire()
 	waitFor("MainMenu", 6)
+	-- ONLINE without a server explains itself and returns to the menu
 	nav("down")
 	nav("down")
+	nav("down")
+	nav("confirm")
+	waitFor("Card", 6)
+	nav("confirm", 1.8)
+	if waitFor("MainMenu", 6) then
+		print("  ok  online without a server shows the explanation")
+	end
+	-- practice: menu index 5
 	nav("down")
 	nav("confirm")
 	waitFor("Select", 6)
@@ -600,6 +790,7 @@ do
 	waitFor("MainMenu", 8)
 	print("  ok  pause -> quit returned to the main menu")
 	-- versus: menu index 3
+	nav("up")
 	nav("up")
 	nav("confirm")
 	waitFor("Select", 6)

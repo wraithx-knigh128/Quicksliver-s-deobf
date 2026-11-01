@@ -156,6 +156,24 @@ end
 
 Mock.waitForChildOverrides = {}
 
+roblox.implementMethod("Players", "GetPlayers", function(players)
+	local out = {}
+	for _, c in players:GetChildren() do
+		if c.ClassName == "Player" then
+			table.insert(out, c)
+		end
+	end
+	return out
+end)
+roblox.implementMethod("Players", "GetPlayerByUserId", function(players, id)
+	for _, c in players:GetChildren() do
+		if c.ClassName == "Player" and c.UserId == id then
+			return c
+		end
+	end
+	return nil
+end)
+
 roblox.implementMethod("Instance", "WaitForChild", function(inst, name, _timeout)
 	local o = Mock.waitForChildOverrides[name]
 	if o ~= nil and (inst.ClassName == "ReplicatedStorage") then

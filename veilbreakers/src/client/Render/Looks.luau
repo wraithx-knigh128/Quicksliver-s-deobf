@@ -26,25 +26,30 @@ Looks.darken = hexDarken
 
 local FEATURE = "#1A1310"
 
-local function eyes(attach, look, z)
+local function eyes(attach, look, z, rig)
 	attach("Head", V(0.17, 0.08, 0.04), C(0.23, 0.07, z), FEATURE, "SmoothPlastic", { shadow = false })
 	attach("Head", V(0.17, 0.08, 0.04), C(-0.23, 0.07, z), FEATURE, "SmoothPlastic", { shadow = false })
 	attach("Head", V(0.3, 0.06, 0.04), C(0.23, 0.21, z) * A(0, 0, rad(12)), look.hairColor or FEATURE, "SmoothPlastic", { shadow = false })
+	local browR = rig and rig.attached[#rig.attached]
 	attach("Head", V(0.3, 0.06, 0.04), C(-0.23, 0.21, z) * A(0, 0, rad(-12)), look.hairColor or FEATURE, "SmoothPlastic", { shadow = false })
+	local browL = rig and rig.attached[#rig.attached]
+	if rig then
+		rig.faceBrows = { r = browR, l = browL, z = z }
+	end
 end
 
 local FACES = {}
-FACES.plain = function(attach, look)
-	eyes(attach, look, -0.62)
+FACES.plain = function(attach, look, rig)
+	eyes(attach, look, -0.62, rig)
 	attach("Head", V(0.1, 0.16, 0.06), C(0, -0.06, -0.63), hexDarken(look.skin, 0.88), "SmoothPlastic", { shadow = false })
 	attach("Head", V(0.28, 0.04, 0.04), C(0, -0.27, -0.61), "#5A2E26", "SmoothPlastic", { shadow = false })
 end
-FACES.scarred = function(attach, look)
-	FACES.plain(attach, look)
+FACES.scarred = function(attach, look, rig)
+	FACES.plain(attach, look, rig)
 	attach("Head", V(0.04, 0.42, 0.03), C(-0.3, 0.12, -0.635) * A(0, 0, rad(-18)), "#7A2E26", "SmoothPlastic", { shadow = false })
 end
-FACES.bearded = function(attach, look)
-	eyes(attach, look, -0.62)
+FACES.bearded = function(attach, look, rig)
+	eyes(attach, look, -0.62, rig)
 	attach("Head", V(0.1, 0.16, 0.06), C(0, -0.06, -0.63), hexDarken(look.skin, 0.88), "SmoothPlastic", { shadow = false })
 	attach("Head", V(1.0, 0.55, 0.34), C(0, -0.5, -0.42), look.hairColor, "Fabric")
 	attach("Head", V(0.55, 0.09, 0.06), C(0, -0.2, -0.63), look.hairColor, "Fabric", { shadow = false })
@@ -659,11 +664,11 @@ local function trail(rig, part: BasePart, a0: Vector3, a1: Vector3, color: Color
 	tr.Attachment1 = att1
 	tr.Color = ColorSequence.new(Color3.new(1, 1, 1), color)
 	tr.Transparency = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 0.15),
-		NumberSequenceKeypoint.new(0.6, 0.6),
+		NumberSequenceKeypoint.new(0, 0.02),
+		NumberSequenceKeypoint.new(0.55, 0.45),
 		NumberSequenceKeypoint.new(1, 1),
 	})
-	tr.Lifetime = 0.16
+	tr.Lifetime = 0.24
 	tr.MinLength = 0.02
 	tr.LightEmission = 1
 	tr.LightInfluence = 0
@@ -816,6 +821,67 @@ WEAPON.none = function() end
 
 -------------------------------------------------------------------------------
 
+-------------------------------------------------------------------------------
+-- Joint caps: rounded elbows, knees and shoulders so limbs don't show block seams
+-- when they bend (the colour and material follow the limb they sit on).
+-------------------------------------------------------------------------------
+
+local CAPS = {
+	{ "RightLowerArm", V(0, 0.4, 0), 0.9 },
+	{ "LeftLowerArm", V(0, 0.4, 0), 0.9 },
+	{ "RightLowerLeg", V(0, 0.45, 0), 0.92 },
+	{ "LeftLowerLeg", V(0, 0.45, 0), 0.92 },
+	{ "RightUpperArm", V(0, 0.22, 0), 0.9 },
+	{ "LeftUpperArm", V(0, 0.22, 0), 0.9 },
+}
+
+local function jointCaps(rig, attach)
+	for _, c in CAPS do
+		local limb = rig.parts[c[1]]
+		if limb then
+			attach(c[1], V(c[3], c[3], c[3]), C(c[2]), limb.Color, limb.Material.Name, { shape = BALL, name = "JointCap" })
+		end
+	end
+end
+
+-------------------------------------------------------------------------------
+-- Facial expressions: brows that tilt, an "O" mouth and X eyes, driven by
+-- Rig.setExpression (angry while attacking, hurt when hit, X eyes on KO...).
+-------------------------------------------------------------------------------
+
+local function expressionParts(rig, attach, look)
+	if look.face == "none" or look.face == "blindfold" then
+		return
+	end
+	local classic = look.face == "classic"
+	local z = classic and -0.62 or ((rig.faceBrows and rig.faceBrows.z or -0.62) - 0.01)
+	local browCol = look.hairColor or FEATURE
+	local expr = { classic = classic }
+	if classic or not rig.faceBrows then
+		attach("Head", V(0.3, 0.06, 0.04), C(0.22, 0.25, z), browCol, "SmoothPlastic", { shadow = false, transparency = 1, name = "BrowR" })
+		expr.browR = rig.attached[#rig.attached]
+		attach("Head", V(0.3, 0.06, 0.04), C(-0.22, 0.25, z), browCol, "SmoothPlastic", { shadow = false, transparency = 1, name = "BrowL" })
+		expr.browL = rig.attached[#rig.attached]
+		expr.hideBrows = true
+	else
+		expr.browR = rig.faceBrows.r
+		expr.browL = rig.faceBrows.l
+	end
+	expr.baseR = expr.browR.offset
+	expr.baseL = expr.browL.offset
+	-- "O" mouth (hurt / oof)
+	expr.mouth = attach("Head", V(0.04, 0.22, 0.2), C(0, -0.25, z - 0.01) * A(0, rad(90), 0), "#1A0808", "SmoothPlastic", { shape = CYL, shadow = false, transparency = 1, name = "MouthO" })
+	-- X eyes (KO)
+	expr.xeyes = {}
+	for _, sx in { -1, 1 } do
+		for _, ang in { 45, -45 } do
+			table.insert(expr.xeyes, attach("Head", V(0.26, 0.05, 0.03), C(sx * 0.22, 0.08, z - 0.02) * A(0, 0, rad(ang)), "#120808", "SmoothPlastic", { shadow = false, transparency = 1, name = "XEye" }))
+		end
+	end
+	rig.expr = expr
+	rig.expression = "neutral"
+end
+
 function Looks.apply(rig, look, attach)
 	local w = look.width or 1
 	;(FACES[look.face] or FACES.plain)(attach, look, rig)
@@ -829,7 +895,19 @@ function Looks.apply(rig, look, attach)
 			fn(attach, look, w, rig)
 		end
 	end
+	jointCaps(rig, attach)
+	expressionParts(rig, attach, look)
+	-- remember which parts and trails belong to the weapon (cosmetic skins restyle them)
+	local before = #rig.attached
+	local trailsBefore = #rig.trails
 	;(WEAPON[look.weapon] or WEAPON.none)(rig, attach, look)
+	rig.weapon = { type = look.weapon, parts = {}, trails = {} }
+	for i = before + 1, #rig.attached do
+		table.insert(rig.weapon.parts, rig.attached[i])
+	end
+	for i = trailsBefore + 1, #rig.trails do
+		table.insert(rig.weapon.trails, rig.trails[i])
+	end
 end
 
 Looks.WEAPON = WEAPON

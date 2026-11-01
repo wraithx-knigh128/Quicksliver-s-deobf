@@ -29,7 +29,31 @@ local function pump(n)
 	task.wait()
 end
 
-if which == "freeze" then
+if which == "hub" or which == "trade" or which == "inv" then
+	local Net = Loader.require(client.Net.Net)
+	local OnlineScreens = Loader.require(client.UI.OnlineScreens)
+	Net.inv = {
+		res = { studs = 120, scrap = 40, glitch = 5, relic = 2, token = 1 },
+		weapons = { { uid = "w1-1", item = "katana_neon", ench = "blazing" }, { uid = "w1-2", item = "hammer_ban", ench = "rainbow" }, { uid = "w1-3", item = "great_cosmic" }, { uid = "w1-4", item = "bow_camo", ench = "toxic" } },
+		equipped = { noob = "w1-1" },
+	}
+	task.spawn(function()
+		if which == "hub" then
+			OnlineScreens.hub(root, { pending = 2 })
+		elseif which == "inv" then
+			OnlineScreens.inventory(root)
+		else
+			OnlineScreens.trade(root, { with = 2, name = "Rival" })
+		end
+	end)
+	pump(20)
+	task.wait(0.6)
+	if which == "trade" then
+		Net.onTrade:Fire({ op = "state", mine = { weapons = { { uid = "w1-2", item = "hammer_ban", ench = "rainbow" } }, res = { studs = 25 } }, theirs = { weapons = { { uid = "w2-9", item = "daggers_666", ench = "glitched" } }, res = { relic = 1 } }, readyMe = true, readyThem = false })
+		task.wait(0.2)
+	end
+	pump(5)
+elseif which == "freeze" then
 	-- cutscene editing overlays: freeze-frame name card + pop caption + letterbox
 	local CineFX = Loader.require(client.Render.CineFX)
 	local fx = CineFX.new(root, 40)

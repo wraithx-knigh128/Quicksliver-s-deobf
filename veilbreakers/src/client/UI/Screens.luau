@@ -499,6 +499,7 @@ local MAIN_ITEMS = {
 	{ id = "story", text = "STORY", desc = "Chapter I \u{2014} The Great Server Reset. The Admin typed ;shutdown. Only a Noob can stop him." },
 	{ id = "ascent", text = "TOWER", desc = "Climb a tower of seven tryhards and dethrone the Admin. Every fighter gets an ending. Most of them are dumb." },
 	{ id = "versus", text = "VERSUS", desc = "Pick a fighter, a friend, a server and a victim. The CPU has been practicing." },
+	{ id = "online", text = "ONLINE", desc = "1v1 real players, trade weapons and resources, enchant at the altar, forge new skins." },
 	{ id = "practice", text = "PRACTICE", desc = "Beat up a dummy that can't fight back. Or can it? (It can. Press F.)" },
 	{ id = "movelist", text = "MOVE LIST", desc = "Every combo, special, super and finisher. Reading is a skill too." },
 	{ id = "settings", text = "SETTINGS", desc = "Volume, subtitles, camera shake, screen flashes, CPU difficulty and touch controls." },
@@ -595,11 +596,11 @@ function Screens.mainMenu(root: Instance, profile)
 	local list = Theme.frame(f, { Size = UDim2.fromOffset(560, 520), Position = UDim2.fromOffset(80, 210), ZIndex = 15 })
 	local items = {}
 	for i, it in MAIN_ITEMS do
-		items[i] = menuItem(list, it.text, (i - 1) * 72, 50)
+		items[i] = menuItem(list, it.text, (i - 1) * 62, 44)
 	end
 	local desc = Theme.label(f, "", {
 		Size = UDim2.fromOffset(640, 60),
-		Position = UDim2.fromOffset(110, 680),
+		Position = UDim2.fromOffset(110, 708),
 		FontFace = F.serif,
 		TextSize = 24,
 		TextWrapped = true,
@@ -610,7 +611,7 @@ function Screens.mainMenu(root: Instance, profile)
 	if profile then
 		Theme.label(f, string.format("WINS %d    \u{00B7}    TOWERS %d    \u{00B7}    STORY %s", profile.wins or 0, profile.ascents or 0, profile.storyDone and "COMPLETE" or "IN PROGRESS"), {
 			Size = UDim2.fromOffset(640, 24),
-			Position = UDim2.fromOffset(110, 770),
+			Position = UDim2.fromOffset(110, 790),
 			FontFace = F.label,
 			TextSize = 15,
 			TextColor3 = C.gold,
@@ -1068,10 +1069,12 @@ end
 -- Stage + difficulty select
 -------------------------------------------------------------------------------
 
-function Screens.stageSelect(root: Instance, defaultDifficulty: number?)
+-- opts.online: no CPU difficulty; the title explains the map coin flip
+function Screens.stageSelect(root: Instance, defaultDifficulty: number?, opts)
+	opts = opts or {}
 	local f = screenFrame(root, "StageSelect")
 	backdrop(f, 0.85)
-	title(f, "PICK A SERVER")
+	title(f, opts.online and "PICK YOUR MAP" or "PICK A SERVER", opts.online and "YOUR RIVAL PICKS ONE TOO. IF THEY DIFFER, THE SERVER FLIPS A COIN." or nil)
 	local stages = {}
 	for _, id in Stages.selectable do
 		table.insert(stages, Stages.get(id))
@@ -1168,6 +1171,11 @@ function Screens.stageSelect(root: Instance, defaultDifficulty: number?)
 	local diffRight = new("TextButton", { Text = "\u{25B6}", FontFace = F.labelBold, TextSize = 24, TextColor3 = C.gold, BackgroundTransparency = 1, Size = UDim2.fromOffset(50, 34), Position = UDim2.new(0.5, 250, 0, 772), ZIndex = 17 }, f)
 	local function refreshDiff()
 		diffL.Text = "CPU DIFFICULTY:  " .. Config.Difficulty[diff].name .. "   [" .. Input.glyph("tabL") .. " / " .. Input.glyph("tabR") .. "]"
+	end
+	if opts.online then
+		diffL.Visible = false
+		diffLeft.Visible = false
+		diffRight.Visible = false
 	end
 	refreshDiff()
 	local sel = 1
@@ -1558,7 +1566,7 @@ function Screens.pause(root: Instance, opts)
 		ZIndex = 72,
 	})
 	Theme.rule(panel, { Size = UDim2.fromOffset(400, 1), Position = UDim2.new(0.5, 0, 0, 100), AnchorPoint = Vector2.new(0.5, 0), ZIndex = 72 })
-	local entries = { { "resume", "RESUME" }, { "restart", "RESTART MATCH" }, { "movelist", "MOVE LIST" }, { "settings", "SETTINGS" }, { "quit", "QUIT TO MENU" } }
+	local entries = { { "resume", "RESUME" }, { "restart", "RESTART MATCH" }, { "movelist", "MOVE LIST" }, { "settings", "SETTINGS" }, { "quit", opts.quitText or "QUIT TO MENU" } }
 	if opts.noRestart then
 		table.remove(entries, 2)
 	end
@@ -1848,6 +1856,7 @@ function Screens.settings(root: Instance, settings)
 		{ key = "subtitles", label = "SUBTITLES", kind = "toggle" },
 		{ key = "shake", label = "CAMERA SHAKE", kind = "toggle" },
 		{ key = "flashes", label = "SCREEN FLASHES / IMPACT FRAMES", kind = "toggle" },
+		{ key = "tts", label = "VOICED LINES (TEXT-TO-SPEECH)", kind = "toggle" },
 		{ key = "difficulty", label = "DEFAULT CPU DIFFICULTY", kind = "choice", choices = { 1, 2, 3, 4 } },
 		{ key = "touch", label = "TOUCH CONTROLS", kind = "choice", choices = { "auto", "on", "off" } },
 	}
@@ -1867,7 +1876,7 @@ function Screens.settings(root: Instance, settings)
 	end
 	local valueLabels = {}
 	for i, d in defs do
-		local it = menuItem(list, d.label, (i - 1) * 74, 32)
+		local it = menuItem(list, d.label, (i - 1) * 66, 32)
 		it.button.Size = UDim2.fromOffset(1000, 60)
 		valueLabels[i] = Theme.label(it.button, valueText(d), {
 			Size = UDim2.fromOffset(360, 60),
@@ -1919,5 +1928,19 @@ function Screens.settings(root: Instance, settings)
 	f:Destroy()
 	return settings
 end
+
+-- Shared building blocks for other screen modules (OnlineScreens).
+Screens._h = {
+	waiter = waiter,
+	connections = connections,
+	screenFrame = screenFrame,
+	backdrop = backdrop,
+	title = title,
+	hintBar = hintBar,
+	menuItem = menuItem,
+	setItemSelected = setItemSelected,
+	runList = runList,
+	fadeIn = fadeIn,
+}
 
 return Screens

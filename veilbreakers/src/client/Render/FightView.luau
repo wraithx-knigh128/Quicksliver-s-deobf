@@ -18,12 +18,15 @@ local Client = script.Parent.Parent
 local Rig = require(script.Parent.Rig)
 local Poses = require(script.Parent.Poses)
 local AnimSpring = require(script.Parent.AnimSpring)
+local Cosmetics = require(script.Parent.Cosmetics)
+local NetInput = require(Veil.Combat.NetInput)
 local StageBuilder = require(script.Parent.StageBuilder)
 local FightCamera = require(script.Parent.FightCamera)
 local VFX = require(script.Parent.VFX)
 local CineFX = require(script.Parent.CineFX)
 local Audio = require(Client.Core.Audio)
 local Input = require(Client.Core.Input)
+local Voice = require(Client.Core.Voice)
 local HUD = require(Client.UI.HUD)
 local Subtitles = require(Client.UI.Subtitles)
 local MobileControls = require(Client.UI.MobileControls)
@@ -72,7 +75,8 @@ function FightView.new(opts)
 	self.styles = { Poses.STYLE_OF[p1Def.stance] or "unarmed", Poses.STYLE_OF[p2Def.stance] or "unarmed" }
 
 	-- world
-	self.stage = StageBuilder.build(opts.stage)
+	self.online = opts.online -- { side, spec, net } for online matches
+	self.stage = StageBuilder.build(opts.stage, { variant = opts.variant })
 	local stageDef = Stages.get(opts.stage)
 	self.folder = Instance.new("Folder")
 	self.folder.Name = "VeilFight"
@@ -105,6 +109,9 @@ function FightView.new(opts)
 		if opts.training and side == 2 then
 			return "DUMMY"
 		end
+		if opts.online then
+			return side == opts.online.side and "YOU" or "RIVAL"
+		end
 		return spec.cpu and "CPU" or ("P" .. side)
 	end
 	self.tags = { tagFor(opts.p1, 1), tagFor(opts.p2, 2) }
@@ -118,6 +125,10 @@ function FightView.new(opts)
 		local rig = Rig.build(def.look, { name = def.name, world = workspace })
 		rig.model.Parent = self.folder
 		self.rigs[i] = rig
+		local spec = i == 1 and opts.p1 or opts.p2
+		if spec.cosmetic then
+			Cosmetics.apply(rig, spec.cosmetic)
+		end
 		self.anim[i] = { key = nil, start = 0, from = nil, last = Poses.stance(self.styles[i]), walkPhase = 0, idleOffset = i * 1.37 }
 		self.springs[i] = AnimSpring.new()
 		local hl = Instance.new("Highlight")
@@ -139,12 +150,18 @@ function FightView.new(opts)
 		g.LightInfluence = 0
 		g.Enabled = false
 		g.Parent = head
-		local isCpu = self.tags[i] ~= "P1" and self.tags[i] ~= "P2"
+		local isCpu = self.tags[i] ~= "P1" and self.tags[i] ~= "P2" and self.tags[i] ~= "YOU"
 		local accent = isCpu and Theme.Colors.text or Color3.fromHex(self.defs[i].accent)
 		local l = Instance.new("TextLabel")
 		l.BackgroundTransparency = 1
 		l.Size = UDim2.new(1, 0, 0, 26)
 		l.Text = self.tags[i]
+		if opts.online then
+			local ps = i == 1 and opts.online.spec.p1 or opts.online.spec.p2
+			l.Text = i == opts.online.side and "YOU" or string.upper(ps.name or "RIVAL")
+			g.Size = UDim2.fromOffset(240, 44)
+			l.TextScaled = true
+		end
 		l.FontFace = Theme.Fonts.labelBold
 		l.TextSize = 22
 		l.TextColor3 = accent
@@ -173,19 +190,21 @@ function FightView.new(opts)
 	-- power hotbar (keys 1-4) for the human player
 	local useTouch = (Input.mode == "touch" or opts.forceTouch) and not opts.noTouch
 	local powers = nil
-	if not opts.p1.cpu or opts.showPowers then
+	local powerSide = opts.online and opts.online.side or 1
+	if (powerSide == 1 and not opts.p1.cpu) or opts.online or opts.showPowers then
 		powers = {}
-		local f1 = self.match.fighters[1]
+		local fs = self.match.fighters[powerSide]
+		local sideDef = self.defs[powerSide]
 		for slot = 1, 4 do
-			local id = Engine.powerSlotId(f1, slot)
-			local mv = id and p1Def.moves[id]
+			local id = Engine.powerSlotId(fs, slot)
+			local mv = id and sideDef.moves[id]
 			if mv then
 				local cols = VFX.colors(mv.element)
 				table.insert(powers, { id = id, name = mv.name, key = Input.glyph("P" .. slot), color = cols[2] })
 			end
 		end
 	end
-	self.hud = HUD.new(opts.root, p1Def, p1Echo, p2Def, p2Echo, { training = opts.training, tags = self.tags, powers = powers, touchHotbar = useTouch })
+	self.hud = HUD.new(opts.root, p1Def, p1Echo, p2Def, p2Echo, { training = opts.training, tags = self.tags, powers = powers, touchHotbar = useTouch, powerSide = powerSide })
 	-- editing effects for supers / finishers (impact frames, speed lines)
 	self.cine = CineFX.new(self.hud.root, 22)
 	self.cine.vignette.Visible = false
@@ -245,7 +264,7 @@ function FightView.new(opts)
 		elseif action == "alt" and self.match.training then
 			self:cycleDummy()
 		elseif action == "confirm" or action == "back" then
-			if self.match.phase == "intro" then
+			if self.match.phase == "intro" and not self.online then
 				Engine.skipIntro(self.match)
 			end
 		end
@@ -253,6 +272,9 @@ function FightView.new(opts)
 	if self.match.phase == "intro" then
 		self:introCamera(1)
 		self.hud:cinema(true, 0.01)
+	end
+	if self.online then
+		self:startOnline()
 	end
 	return self
 end
@@ -262,6 +284,10 @@ end
 -------------------------------------------------------------------------------
 
 function FightView:setPaused(p: boolean)
+	if self.online then
+		-- an online match can't be paused: the menu opens over the live fight
+		return
+	end
 	self.paused = p
 	if self.touch then
 		self.touch:setVisible(not p)
@@ -296,9 +322,142 @@ function FightView:inputFor(i: number)
 	return Engine.NeutralInput
 end
 
+-------------------------------------------------------------------------------
+-- Online: replay the server's input stream through the same engine
+-------------------------------------------------------------------------------
+
+function FightView:startOnline()
+	local on = self.online
+	self.net = on.net
+	self.netFrames = {} -- frame number -> { mask1, mask2 }
+	self.netNext = 1
+	self.netLast = 0
+	self.netSyncs = {}
+	self.netHeld = 0
+	self.netPressed = 0
+	self.netSendT = 0
+	self.netCorrections = 0
+	table.insert(self.connections, self.net.onOnline.Event:Connect(function(msg)
+		if msg.id ~= on.spec.id then
+			return
+		end
+		if msg.op == "f" then
+			for k = 1, #msg.m, 2 do
+				local fr = msg.from + (k - 1) // 2
+				self.netFrames[fr] = { msg.m[k], msg.m[k + 1] }
+				self.netLast = math.max(self.netLast, fr)
+			end
+		elseif msg.op == "sync" then
+			self.netSyncs[msg.frame] = msg
+		elseif msg.op == "end" then
+			self.netEnd = msg
+		end
+	end))
+end
+
+-- Send the local controller state (on change, and at least 4 times a second).
+function FightView:sendOnlineInput(dt: number)
+	local mask = NetInput.encode(Input.fightState())
+	-- buttons newly pressed since the last packet (so quick taps are never lost)
+	local newly = 0
+	local bit = 1
+	local held, prev = mask, self.netHeld
+	while held > 0 or prev > 0 do
+		if held % 2 == 1 and prev % 2 == 0 then
+			newly += bit
+		end
+		held, prev = held // 2, prev // 2
+		bit *= 2
+	end
+	self.netPressed = NetInput.union(self.netPressed, newly)
+	self.netSendT += dt
+	if mask ~= self.netHeld or self.netPressed ~= 0 or self.netSendT >= 0.25 then
+		self.net.sendInput(mask, self.netPressed)
+		self.netPressed = 0
+		self.netSendT = 0
+	end
+	self.netHeld = mask
+end
+
+function FightView:onlineFrame(dt: number)
+	local m = self.match
+	self:sendOnlineInput(dt)
+	local scale = (m.slowmo and m.slowmo > 0) and 0.35 or 1
+	self.acc += dt * scale
+	local buffered = self.netLast - self.netNext + 1
+	-- keep a small cushion of frames; catch up quickly when behind
+	local maxSteps = buffered > 10 and 6 or 4
+	if buffered > 10 then
+		self.acc += DT * 2
+	end
+	local steps = 0
+	while self.acc >= DT and steps < maxSteps do
+		local fr = self.netFrames[self.netNext]
+		if not fr then
+			self.acc = math.min(self.acc, DT) -- waiting on the network
+			break
+		end
+		self.netFrames[self.netNext] = nil
+		self.netNext += 1
+		self.acc -= DT
+		steps += 1
+		for i, f in m.fighters do
+			self.prevPos[i].x = f.x
+			self.prevPos[i].y = f.y
+		end
+		Engine.step(m, NetInput.decode(fr[1]), NetInput.decode(fr[2]))
+		for _, ev in Engine.drainEvents(m) do
+			self:onEvent(ev)
+		end
+		local sync = self.netSyncs[m.frame]
+		if sync then
+			self.netSyncs[m.frame] = nil
+			self:applySync(sync)
+		end
+	end
+	-- the server ended it early (forfeit / disconnect)
+	if self.netEnd and self.netEnd.reason ~= "ko" and not self.ended then
+		self.ended = true
+		self.hud:announce(self.netEnd.winner == self.online.side and "YOU WIN" or "YOU LOSE", self.netEnd.reason == "disconnect" and "YOUR RIVAL DISCONNECTED" or "FORFEIT", { size = 90, hold = 2.2 })
+		task.delay(2.4, function()
+			if not self.destroyed and self.opts.onEnd then
+				self.opts.onEnd(self:result())
+			end
+		end)
+	end
+end
+
+-- The server's state check: any drift is corrected to the authoritative values.
+function FightView:applySync(sync)
+	local m = self.match
+	local drift = false
+	for i, f in m.fighters do
+		if f.hp ~= sync.hp[i] or math.abs(f.x - sync.x[i]) > 1e-6 then
+			drift = true
+			f.hp = sync.hp[i]
+			f.x = sync.x[i]
+			f.y = sync.y[i]
+			f.meter = sync.meter[i]
+			f.roundWins = sync.wins[i]
+		end
+	end
+	if m.timer ~= sync.timer then
+		drift = true
+		m.timer = sync.timer
+	end
+	if drift then
+		self.netCorrections += 1
+	end
+end
+
 function FightView:frame(dt: number)
 	self.time += dt
 	local m = self.match
+	if self.online then
+		self:onlineFrame(dt)
+		self:render(dt)
+		return
+	end
 	if not self.paused then
 		local scale = (m.slowmo and m.slowmo > 0) and 0.35 or 1
 		self.acc += dt * scale
@@ -500,6 +659,29 @@ function FightView:finisherPose(_i: number, f, style: string)
 	return Poses.victoryFor(f.def.id, style, self.time), "fin:win"
 end
 
+-- Face for a fighter's current state.
+local EXPRESSION_OF = {
+	attack = "angry",
+	super = "angry",
+	finisher = "angry",
+	throwing = "angry",
+	breaker = "angry",
+	block = "focus",
+	blockstun = "focus",
+	hitstun = "hurt",
+	juggle = "hurt",
+	thrown = "hurt",
+	knockdown = "hurt",
+	getup = "hurt",
+	dead_down = "ko",
+	banished = "ko",
+	dazed = "ko",
+	win = "happy",
+}
+function FightView.expressionFor(f): string
+	return EXPRESSION_OF[f.state] or "neutral"
+end
+
 function FightView:render(dt: number)
 	local m = self.match
 	local alpha = math.clamp(self.acc / DT, 0, 1)
@@ -548,6 +730,8 @@ function FightView:render(dt: number)
 		end
 		local cf = rootCFrame(x, y, f.facing, extraYaw)
 		Rig.apply(rig, cf, final, { time = t, vx = (f.x - pp.x) * f.facing * 3, vy = f.vy or 0 })
+		Rig.setExpression(rig, FightView.expressionFor(f))
+		Cosmetics.update(rig, t)
 		-- weapon trails during active frames
 		local trailOn = false
 		if f.state == "attack" and f.move then
@@ -595,6 +779,12 @@ function FightView:render(dt: number)
 	if m.over and not self.ended then
 		self.ended = true
 		task.delay(3.4, function()
+			-- online: wait (briefly) for the server's verdict and rewards
+			local waited = 0
+			while self.online and not self.netEnd and waited < 6 and not self.destroyed do
+				task.wait(0.1)
+				waited += 0.1
+			end
 			if not self.destroyed and self.opts.onEnd then
 				self.opts.onEnd(self:result())
 			end
@@ -797,10 +987,13 @@ function FightView:onEvent(ev)
 	if typ == "intro" then
 		local f = m.fighters[ev.fighter]
 		local def = f.def
-		Subtitles.show(def.name, def.intro[ev.line] or def.intro[1], 2.3, Color3.fromHex(def.accent))
+		local line = def.intro[ev.line] or def.intro[1]
+		Subtitles.show(def.name, line, 2.3, Color3.fromHex(def.accent))
 		self.hud:cinema(true)
 		self.hud:nameCard(ev.fighter, def, 2.1)
-		Audio.voice(def.voice, "attack")
+		if not Voice.say(line, def.voice, { channel = "fighter" }) then
+			Audio.voice(def.voice, "attack")
+		end
 		if ev.fighter == 2 then
 			self:introCamera(2)
 		end
@@ -809,6 +1002,7 @@ function FightView:onEvent(ev)
 		self.hud:cinema(false)
 		local final = m.fighters[1].roundWins == m.roundsToWin - 1 and m.fighters[2].roundWins == m.roundsToWin - 1
 		self.hud:announce(final and "FINAL ROUND (NO PRESSURE)" or ("ROUND " .. tostring(ev.round)), nil, { hold = 1.1 })
+		Voice.say(final and "Final round. No pressure." or ("Round " .. tostring(ev.round)), "announcer", { channel = "announcer" })
 		StageBuilder.react("round")
 		Audio.play("round_gong", { volume = 0.9 })
 		Audio.play("countdown", { volume = 0.6 })
@@ -816,6 +1010,7 @@ function FightView:onEvent(ev)
 		self.hud:announce("FIGHT", nil, { punch = true, color = Theme.Colors.goldBright, hold = 0.7 })
 		self:showWorldTags(2.2)
 		Audio.play("fight", { volume = 1 })
+		Voice.say("Fight!", "announcer", { channel = "announcer", volume = 1.2 })
 		FightCamera.shake(0.5)
 	elseif typ == "move" then
 		local f = m.fighters[ev.fighter]
@@ -827,7 +1022,7 @@ function FightView:onEvent(ev)
 			if (mv.kind == "special" or mv.strength == "heavy") and math.random() < 0.55 then
 				Audio.voice(f.def.voice, "attack")
 			end
-			if ev.fighter == 1 then
+			if ev.fighter == (self.online and self.online.side or 1) then
 				self.lastMove = mv
 				self.hud:powerUsed(ev.move)
 			end
@@ -1058,7 +1253,9 @@ function FightView:onEvent(ev)
 			end
 			self.hud:announce(wf.def.name .. " WINS", nil, { size = 92, hold = 2.4 })
 			Subtitles.show(wf.def.name, quote, 2.8, Color3.fromHex(wf.def.accent))
-			Audio.voice(wf.def.voice, "attack")
+			if not Voice.say(quote, wf.def.voice, { channel = "fighter" }) then
+				Audio.voice(wf.def.voice, "attack")
+			end
 			Audio.music("music_victory", 1.0)
 		end)
 		self:winCamera(ev.winner)
@@ -1176,6 +1373,24 @@ end
 
 function FightView:result()
 	local m = self.match
+	if self.online then
+		local e = self.netEnd or {}
+		return {
+			online = true,
+			side = self.online.side,
+			winner = e.winner or m.winner,
+			reason = e.reason,
+			rewards = e.rewards,
+			weapon = e.weapon,
+			rewarded = e.rewarded,
+			rounds = { m.fighters[1].roundWins, m.fighters[2].roundWins },
+			stats = { m.fighters[1].stats, m.fighters[2].stats },
+			p1 = self.opts.p1,
+			p2 = self.opts.p2,
+			stage = self.opts.stage,
+			corrections = self.netCorrections,
+		}
+	end
 	return {
 		winner = m.winner,
 		rounds = { m.fighters[1].roundWins, m.fighters[2].roundWins },

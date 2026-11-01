@@ -35,8 +35,9 @@ clatters across the floor with a big **OOF**.
 ## Play it
 
 1. Open **`build/OofCombat.rbxlx`** in Roblox Studio (File → Open from File).
-2. Press **Play** (F5). Fights run on your client against the CPU, so solo
-   playtesting is the full experience.
+2. Press **Play** (F5) for the single-player modes (CPU fights run on your client).
+   For online 1v1 and trading, use Test → Clients and Servers with 2 players (see
+   *Online 1v1, trading and enchanting* below).
 3. Optional: **File → Publish to Roblox** to play it on phone, tablet, console or PC.
 
 The images (key art, emblem, stage backdrops) are already uploaded and approved on
@@ -118,6 +119,63 @@ well inside Roblox's monthly audio upload limit.
 
 Menus: arrows / WASD to move, Enter or Space to confirm, Backspace or Escape to go back.
 The old J K L I U O P H layout still works as an alternate.
+
+## Online 1v1, trading and enchanting
+
+**ONLINE** on the main menu opens a multiplayer hub for the players in your server.
+
+- **Quick Match / Challenge a player:**
+  - Each player picks a fighter, a Friend and a map. If the maps differ, the server
+    flips a coin between the two picks.
+  - Every fight also rolls the arena's conditions: dusk, night, fog, rain, snow, a
+    lightning storm or an ash storm. No two fights on a map look the same.
+- **Server-authoritative fights** (`src/server/OnlineMatch.luau`):
+  - The server runs the real match with the same deterministic engine. Clients send
+    only their controller state.
+  - The server streams the resolved inputs (one number per player per frame) back to
+    both players. Each client replays them through its own engine, so both see the
+    full animated fight.
+  - Periodic state checks correct any drift. Results and rewards come only from the
+    server.
+  - Leaving mid-fight forfeits.
+- **Items:** resources (Loose Studs, Free Model Scrap, Glitch Shards, Enchant Relics,
+  Admin Tokens, Oof Essence) and 25 weapon skins across the 8 fighter weapons.
+  - **Enchant Altar:** spend 1 Enchant Relic + 15 Studs to roll one of 10
+    enchantments: Blazing, Frostbite, Bubbly, Toxic, Stormcaller, Void, Golden,
+    Glitched, Rainbow or the mythic Certified Oof.
+  - **Forge:** spend Scrap + Studs for a random skin of a chosen weapon type.
+  - **Cosmetic only.** Skins and enchantments change colours, materials, trails,
+    particles and glow. They never touch damage, health, speed or frame data, so no
+    fighter is buffed or nerfed. `tests/run` locks every fighter's combat numbers to
+    a fingerprint and fails if any of them change.
+- **Trading:**
+  - Swap weapons (with their enchantments) and resources with another player.
+  - Any change to either offer clears both READY flags. When both are ready, a
+    3-second countdown runs, then the server re-checks ownership and swaps the exact
+    records in one step. Both profiles save immediately.
+  - Profiles are session-locked in the DataStore, so a player can't duplicate items
+    by hopping servers.
+- **Rewards:**
+  - Online fights pay resources, with a chance at weapons.
+  - CPU fights run on your own device, so the server can't verify them. They pay a
+    small, rate-limited amount (one claim per 45 s, 60 per day) and never drop
+    weapons.
+  - Rematches between the same two players pay out at most 4 times per hour, which
+    stops win-trading.
+
+**Testing online in Studio:** Test → Clients and Servers → 2 players → Start. Both
+windows can open ONLINE and challenge or trade with each other. To keep inventories
+between sessions, turn on Game Settings → Security → *Enable Studio Access to API
+Services*. Without it, profiles live in memory for the session.
+
+## Voices
+
+Intros, victory quotes, story dialogue and the announcer ("Round 1", "Fight!") speak
+their lines through Roblox's built-in text-to-speech (`AudioTextToSpeech`). Each
+character has their own pitch and speed. The lines are OOF COMBAT's own originals.
+If your Studio or experience doesn't offer text-to-speech, the game falls back to the
+synthesized voice grunts. You can switch it off in **Settings → Voiced lines**. Voice
+ids are in `src/client/Core/Voice.luau` if you want to recast anyone.
 
 ## Powers (keys 1-4)
 
@@ -217,7 +275,12 @@ src/client/                  StarterPlayerScripts.VeilClient
   Render/ RigMath (FK + leg IK), Poses (60+ animations), AnimSpring, Looks, Rig,
           StageBuilder, StageLife, VFX, FightCamera, FightView, Cutscene, CineFX
   UI/     Theme, Screens, HUD, Portrait, Subtitles, MobileControls
-src/server/Main.server        DataStore profiles (settings + stats), validated remotes
+src/server/                  ServerScriptService.VeilServer
+  Main.server                remotes, validation, rate limits
+  Profiles                   DataStore profiles with session locking (v1 saves migrate)
+  Inventory                  resources, weapon skins, enchant altar, forge, rewards
+  Trading                    trade state machine + atomic swap
+  OnlineMatch                queue, challenges, server-run fights, input relay
 tests/                       Lune test-suites + headless Roblox runtime mock
 tools/                       audio synth, atlas packer, VFX texture maker, pose / rig / UI previews
 art/vfx/                     optional VFX textures to upload
@@ -232,6 +295,7 @@ The tools are [Rojo](https://rojo.space) 7, [Lune](https://lune-org.github.io/do
 ```sh
 rojo build -o build/OofCombat.rbxlx   # place file
 lune run tests/run                       # engine + AI: every input, 128 CPU matches, determinism
+lune run tests/server                    # inventory, trading (dupe checks), online matches + replay
 lune run tests/client_smoke              # whole client in a mock Roblox runtime
 selene src                               # lint (custom std: veil.yml)
 python3 tools/synth_audio.py && python3 tools/build_atlas.py   # regenerate audio

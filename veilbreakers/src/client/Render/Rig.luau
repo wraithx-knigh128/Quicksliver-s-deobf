@@ -267,6 +267,61 @@ function Rig.setTransparency(rig, t: number)
 	end
 end
 
+-------------------------------------------------------------------------------
+-- Facial expressions (parts created by Looks: brows, "O" mouth, X eyes)
+-------------------------------------------------------------------------------
+
+-- brow angles in degrees: right brow +angle = inner end down (angry)
+local EXPR = {
+	neutral = {},
+	angry = { r = 28, l = -28, dy = -0.03 },
+	focus = { r = 18, l = -18, dy = -0.015 },
+	hurt = { r = -22, l = 22, dy = 0.035, mouth = true },
+	sad = { r = -20, l = 20, dy = 0.02 },
+	happy = { r = -8, l = 8, dy = 0.06 },
+	ko = { xeyes = true, mouth = true, hideBrows = true },
+}
+Rig.EXPRESSIONS = EXPR
+
+local function showPart(rig, p: BasePart, visible: boolean)
+	local base = visible and 0 or 1
+	rig.baseT[p] = base
+	p.Transparency = math.max(base, rig.transparency or 0)
+end
+
+function Rig.setExpression(rig, name: string)
+	local e = rig.expr
+	if not e or rig.expression == name then
+		return
+	end
+	rig.expression = name
+	local d = EXPR[name] or EXPR.neutral
+	local baseR = e.classic and 0 or 12
+	local baseL = e.classic and 0 or -12
+	if d.r and not d.hideBrows then
+		e.browR.offset = e.baseR * CFrame.new(0, d.dy or 0, 0) * CFrame.Angles(0, 0, math.rad(d.r - baseR))
+		e.browL.offset = e.baseL * CFrame.new(0, d.dy or 0, 0) * CFrame.Angles(0, 0, math.rad(d.l - baseL))
+	else
+		e.browR.offset = e.baseR
+		e.browL.offset = e.baseL
+	end
+	if e.hideBrows then
+		local vis = d.r ~= nil and not d.hideBrows
+		showPart(rig, e.browR.part, vis)
+		showPart(rig, e.browL.part, vis)
+	elseif d.hideBrows then
+		showPart(rig, e.browR.part, false)
+		showPart(rig, e.browL.part, false)
+	else
+		showPart(rig, e.browR.part, true)
+		showPart(rig, e.browL.part, true)
+	end
+	showPart(rig, e.mouth, d.mouth == true)
+	for _, x in e.xeyes do
+		showPart(rig, x, d.xeyes == true)
+	end
+end
+
 function Rig.setTrails(rig, enabled: boolean)
 	for _, tr in rig.trails do
 		tr.Enabled = enabled

@@ -545,6 +545,7 @@ function HUD.new(parentRoot: Instance, p1Def, p1Echo, p2Def, p2Echo, opts)
 	-- power hotbar (keys 1-4) for the human player
 	if opts.powers and #opts.powers > 0 then
 		self.hotbar = self:buildHotbar(root, opts.powers, opts.touchHotbar == true)
+		self.hotbar.side = opts.powerSide or 1
 	end
 
 	-- low health vignette
@@ -749,7 +750,7 @@ function HUD:update(match, dt: number)
 		self:updateHotbar(match.fighters[self.hotbar.side])
 	end
 	-- low health vignette for the human player
-	local p1 = match.fighters[1]
+	local p1 = match.fighters[self.hotbar and self.hotbar.side or 1]
 	local low = (p1.hp / p1.maxHp) < 0.25 and match.phase == "fight"
 	self.lowVig.BackgroundTransparency = low and (0.55 + 0.25 * math.sin(os.clock() * 5)) or 1
 end

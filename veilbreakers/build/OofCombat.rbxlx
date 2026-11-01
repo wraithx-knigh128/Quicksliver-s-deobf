@@ -3212,6 +3212,60 @@ return Engine
         </Item>
         <Item class="ModuleScript" referent="9">
           <Properties>
+            <string name="Name">NetInput</string>
+            <string name="Source"><![CDATA[--!nonstrict
+-- Compact input encoding for online matches: one integer per player per frame.
+-- Directions are absolute (left / right on screen), exactly what Engine.step takes.
+
+local NetInput = {}
+
+NetInput.KEYS = { "left", "right", "up", "down", "L", "H", "K", "S", "B", "E", "X", "P1", "P2", "P3", "P4" }
+NetInput.MAX = 2 ^ #NetInput.KEYS - 1
+
+function NetInput.encode(inp): number
+	local m = 0
+	for i, k in NetInput.KEYS do
+		if inp[k] then
+			m += 2 ^ (i - 1)
+		end
+	end
+	return m
+end
+
+function NetInput.decode(m: number)
+	local out = {}
+	local v = math.floor(m)
+	for _, k in NetInput.KEYS do
+		out[k] = v % 2 == 1
+		v = math.floor(v / 2)
+	end
+	return out
+end
+
+-- Bitwise OR for two masks (no bit32 dependency so it runs anywhere).
+function NetInput.union(a: number, b: number): number
+	local out, bit = 0, 1
+	a, b = math.floor(a), math.floor(b)
+	while a > 0 or b > 0 do
+		if a % 2 == 1 or b % 2 == 1 then
+			out += bit
+		end
+		a, b = math.floor(a / 2), math.floor(b / 2)
+		bit *= 2
+	end
+	return out
+end
+
+function NetInput.valid(m): boolean
+	return type(m) == "number" and m == m and m >= 0 and m <= NetInput.MAX and math.floor(m) == m
+end
+
+return NetInput
+]]></string>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="10">
+          <Properties>
             <string name="Name">Rng</string>
             <string name="Source"><![CDATA[--!nonstrict
 -- Tiny deterministic PRNG (xorshift32) so matches and CPU behaviour replay identically
@@ -3268,7 +3322,7 @@ return Rng
           </Properties>
         </Item>
       </Item>
-      <Item class="ModuleScript" referent="10">
+      <Item class="ModuleScript" referent="11">
         <Properties>
           <string name="Name">Config</string>
           <string name="Source"><![CDATA[--!nonstrict
@@ -3279,7 +3333,7 @@ local Config = {}
 
 Config.GameTitle = "OOF COMBAT"
 Config.GameSubtitle = "THE GREAT SERVER RESET"
-Config.Version = "1.3.0"
+Config.Version = "1.4.0"
 
 Config.TickRate = 60
 Config.TickDt = 1 / 60
@@ -3428,11 +3482,11 @@ return Config
 ]]></string>
         </Properties>
       </Item>
-      <Item class="Folder" referent="11">
+      <Item class="Folder" referent="12">
         <Properties>
           <string name="Name">Data</string>
         </Properties>
-        <Item class="ModuleScript" referent="12">
+        <Item class="ModuleScript" referent="13">
           <Properties>
             <string name="Name">Echoes</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -3829,7 +3883,7 @@ return Echoes
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="13">
+        <Item class="ModuleScript" referent="14">
           <Properties>
             <string name="Name">Fighters</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -5751,7 +5805,214 @@ return Fighters
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="14">
+        <Item class="ModuleScript" referent="15">
+          <Properties>
+            <string name="Name">Items</string>
+            <string name="Source"><![CDATA[--!nonstrict
+-- Tradeable items: resources, weapon skins and enchantments.
+--
+-- Everything here is COSMETIC. A weapon skin changes how a fighter's weapon looks;
+-- an enchantment adds visual effects (particles, glow, trail colour). None of it
+-- touches frame data, damage, health or meter, so no fighter is buffed or nerfed.
+-- (tests/run.luau checks the combat data against a fixed checksum.)
+--
+-- Weapons are unique records { uid, item, ench }; resources are stack counts.
+-- The server owns every roll (enchant altar, forge, drops); clients only ask.
+
+local Items = {}
+
+Items.RARITIES = { "common", "uncommon", "rare", "epic", "legendary", "mythic" }
+Items.RARITY = {
+	common = { order = 1, name = "COMMON", color = "#C8C8C8" },
+	uncommon = { order = 2, name = "UNCOMMON", color = "#5BD15B" },
+	rare = { order = 3, name = "RARE", color = "#4AA8FF" },
+	epic = { order = 4, name = "EPIC", color = "#B65CFF" },
+	legendary = { order = 5, name = "LEGENDARY", color = "#FFB02E" },
+	mythic = { order = 6, name = "MYTHIC", color = "#FF4A6A" },
+}
+
+-------------------------------------------------------------------------------
+-- Resources
+-------------------------------------------------------------------------------
+
+Items.Resources = {
+	{ id = "studs", name = "Loose Studs", rarity = "common", desc = "Fell off a 2008 build. Everyone has a pocket full." },
+	{ id = "scrap", name = "Free Model Scrap", rarity = "common", desc = "Salvaged from the toolbox. Mostly safe. Mostly." },
+	{ id = "glitch", name = "Glitch Shard", rarity = "uncommon", desc = "A piece of a texture that failed to load." },
+	{ id = "relic", name = "Enchant Relic", rarity = "rare", desc = "Offer one at the Enchant Altar to roll a new enchantment." },
+	{ id = "token", name = "Admin Token", rarity = "epic", desc = "Dropped by someone who definitely bought admin." },
+	{ id = "essence", name = "Oof Essence", rarity = "legendary", desc = "The distilled sound of a thousand resets." },
+}
+Items.ResourceById = {}
+for _, r in Items.Resources do
+	Items.ResourceById[r.id] = r
+end
+
+-------------------------------------------------------------------------------
+-- Weapon types (one per fighter weapon) and skins
+-------------------------------------------------------------------------------
+
+-- weapon type -> display name (types match Looks.WEAPON keys)
+Items.WeaponTypes = {
+	{ id = "katana", name = "Katana" },
+	{ id = "spear", name = "Spear" },
+	{ id = "brick_fists", name = "Brick Fists" },
+	{ id = "daggers", name = "Daggers" },
+	{ id = "hammer", name = "Hammer" },
+	{ id = "chakram", name = "Hula Hoops" },
+	{ id = "crossbow", name = "Crossbow" },
+	{ id = "greatsword", name = "Greatsword" },
+}
+Items.WeaponTypeById = {}
+for _, t in Items.WeaponTypes do
+	Items.WeaponTypeById[t.id] = t
+end
+
+-- Skin colours: primary = metal / main body, secondary = handle / wood / leather,
+-- glow = neon accents and trail. primaryMat replaces metal materials.
+Items.Weapons = {
+	-- katana
+	{ id = "katana_bloxy", type = "katana", name = "Bloxy Blade", rarity = "uncommon", primary = "#F2C94C", primaryMat = "Foil", secondary = "#3A2410", glow = "#FFE27A" },
+	{ id = "katana_neon", type = "katana", name = "Neon Katana", rarity = "rare", primary = "#1BE7FF", primaryMat = "Neon", secondary = "#101418", glow = "#7FF6FF" },
+	{ id = "katana_404", type = "katana", name = "Error 404 Edge", rarity = "epic", primary = "#111111", primaryMat = "Glass", secondary = "#FF2BD6", glow = "#FF2BD6" },
+	{ id = "katana_starter", type = "katana", name = "Starter Katana", rarity = "common", primary = "#A9B3BC", primaryMat = "Metal", secondary = "#2A1C12", glow = "#58B4FF" },
+	-- spear
+	{ id = "spear_wings", type = "spear", name = "Wingspan Lance", rarity = "rare", primary = "#FFFFFF", primaryMat = "Glass", secondary = "#FFB6E1", glow = "#FF8FCB" },
+	{ id = "spear_rust", type = "spear", name = "Rusty Pool Noodle", rarity = "common", primary = "#B4652A", primaryMat = "CorrodedMetal", secondary = "#4A3A2A", glow = "#FF9A4A" },
+	{ id = "spear_void", type = "spear", name = "Void Pike", rarity = "epic", primary = "#1A0E2A", primaryMat = "Glass", secondary = "#3A1A5A", glow = "#B65CFF" },
+	-- brick fists
+	{ id = "fists_gold", type = "brick_fists", name = "Golden Bricks", rarity = "rare", primary = "#E8B53A", primaryMat = "Foil", secondary = "#E8B53A", glow = "#FFE27A" },
+	{ id = "fists_lego", type = "brick_fists", name = "Rainbow Bricks", rarity = "uncommon", primary = "#4B974B", primaryMat = "SmoothPlastic", secondary = "#F5CD30", glow = "#7DFF8C" },
+	{ id = "fists_obsidian", type = "brick_fists", name = "Obsidian Blocks", rarity = "epic", primary = "#15121C", primaryMat = "Basalt", secondary = "#2A1A3A", glow = "#FF4A2A" },
+	-- daggers
+	{ id = "daggers_ghost", type = "daggers", name = "Ghost Shivs", rarity = "rare", primary = "#E8F4FF", primaryMat = "ForceField", secondary = "#101018", glow = "#9FEFFF" },
+	{ id = "daggers_red", type = "daggers", name = "Redline Knives", rarity = "uncommon", primary = "#C4281C", primaryMat = "Metal", secondary = "#1A1414", glow = "#FF4A4A" },
+	{ id = "daggers_666", type = "daggers", name = "Daggers 666", rarity = "legendary", primary = "#0A0A0A", primaryMat = "Glass", secondary = "#5A0A10", glow = "#FF1A1A" },
+	-- hammer
+	{ id = "hammer_ice", type = "hammer", name = "Glacier Mallet", rarity = "rare", primary = "#BDEBFF", primaryMat = "Ice", secondary = "#3A5A7A", glow = "#7FE3FF" },
+	{ id = "hammer_toy", type = "hammer", name = "Squeaky Toy Hammer", rarity = "common", primary = "#FF3A3A", primaryMat = "SmoothPlastic", secondary = "#F5CD30", glow = "#FFE14A" },
+	{ id = "hammer_ban", type = "hammer", name = "The Ban Hammer", rarity = "legendary", primary = "#2A2A2E", primaryMat = "DiamondPlate", secondary = "#C4281C", glow = "#FF3A3A" },
+	-- chakram (hula hoops)
+	{ id = "hoops_disco", type = "chakram", name = "Disco Hoops", rarity = "rare", primary = "#E8E8E8", primaryMat = "Glass", secondary = "#FF4AD8", glow = "#FF8AF0" },
+	{ id = "hoops_basic", type = "chakram", name = "Gym Class Hoops", rarity = "common", primary = "#3A8AFF", primaryMat = "SmoothPlastic", secondary = "#FFFFFF", glow = "#8AC8FF" },
+	{ id = "hoops_sun", type = "chakram", name = "Solar Rings", rarity = "epic", primary = "#FFB02E", primaryMat = "Foil", secondary = "#7A3A0A", glow = "#FFD86A" },
+	-- crossbow
+	{ id = "bow_camo", type = "crossbow", name = "Bush Camo Crossbow", rarity = "uncommon", primary = "#3A5A2A", primaryMat = "Grass", secondary = "#2A3A1A", glow = "#9AFF5A" },
+	{ id = "bow_sniper", type = "crossbow", name = "No-Scope Repeater", rarity = "rare", primary = "#1A1C20", primaryMat = "Metal", secondary = "#4A4A52", glow = "#FF3A3A" },
+	{ id = "bow_vip", type = "crossbow", name = "VIP Crossbow", rarity = "legendary", primary = "#F2C94C", primaryMat = "Foil", secondary = "#FFFFFF", glow = "#FFE27A" },
+	-- greatsword
+	{ id = "great_admin", type = "greatsword", name = "Command Blade", rarity = "epic", primary = "#0A0A0A", primaryMat = "Glass", secondary = "#FFB02E", glow = "#FFB02E" },
+	{ id = "great_noob", type = "greatsword", name = "Big Noob Sword", rarity = "common", primary = "#F5CD30", primaryMat = "SmoothPlastic", secondary = "#0D69AC", glow = "#A4BD47" },
+	{ id = "great_cosmic", type = "greatsword", name = "Cosmic Buster", rarity = "mythic", primary = "#140A2A", primaryMat = "Glass", secondary = "#6A3AFF", glow = "#C89AFF" },
+}
+Items.WeaponById = {}
+for _, w in Items.Weapons do
+	Items.WeaponById[w.id] = w
+end
+
+-------------------------------------------------------------------------------
+-- Enchantments (cosmetic visual effects only)
+-------------------------------------------------------------------------------
+
+-- fx: particles = particle preset, color = effect colour, light = glow colour,
+-- trail = trail colour override, animated = per-frame effect kind
+Items.Enchantments = {
+	{ id = "blazing", name = "Blazing", rarity = "common", weight = 220, desc = "On fire. Permanently. Somehow fine.", fx = { particles = "fire", color = "#FF7A2A", light = "#FF8A3A", trail = "#FF7A2A" } },
+	{ id = "frostbite", name = "Frostbite", rarity = "common", weight = 220, desc = "Leaves a little frost on everything it touches.", fx = { particles = "frost", color = "#BDEBFF", light = "#7FE3FF", trail = "#9FEFFF" } },
+	{ id = "bubbly", name = "Bubbly", rarity = "uncommon", weight = 150, desc = "Blows bubbles. Very intimidating.", fx = { particles = "bubbles", color = "#BDF4FF", light = "#8AD8FF", trail = "#BDF4FF" } },
+	{ id = "toxic", name = "Toxic", rarity = "uncommon", weight = 140, desc = "Drips something green. Do not lick.", fx = { particles = "drip", color = "#7DFF4A", light = "#5AFF3A", trail = "#7DFF4A" } },
+	{ id = "stormcaller", name = "Stormcaller", rarity = "rare", weight = 85, desc = "Crackles with static, like a 2009 voice chat.", fx = { particles = "sparks", color = "#9FD8FF", light = "#7FC8FF", trail = "#C8E8FF" } },
+	{ id = "void", name = "Void", rarity = "rare", weight = 80, desc = "Swallows light. And the occasional texture.", fx = { particles = "smoke", color = "#3A1A5A", light = "#8A3AFF", trail = "#6A2ACF" } },
+	{ id = "golden", name = "Golden", rarity = "epic", weight = 40, desc = "Turns the weapon to solid gold. Purely for flex.", fx = { particles = "sparkle", color = "#FFE27A", light = "#FFD24A", trail = "#FFE27A", gold = true } },
+	{ id = "glitched", name = "Glitched", rarity = "epic", weight = 38, desc = "Flickers between textures that never finished loading.", fx = { particles = "sparks", color = "#FF2BD6", light = "#2BE7FF", trail = "#FF2BD6", animated = "glitch" } },
+	{ id = "rainbow", name = "Rainbow", rarity = "legendary", weight = 14, desc = "Cycles every colour. Bought with zero Robux.", fx = { particles = "sparkle", color = "#FFFFFF", light = "#FFFFFF", animated = "rainbow" } },
+	{ id = "oof", name = "Certified Oof", rarity = "mythic", weight = 3, desc = "Every swing remembers the old death sound.", fx = { particles = "embers", color = "#FF3A3A", light = "#FF2A2A", trail = "#FF3A3A", animated = "pulse" } },
+}
+Items.EnchantById = {}
+for _, e in Items.Enchantments do
+	Items.EnchantById[e.id] = e
+end
+
+-------------------------------------------------------------------------------
+-- Economy (all rolls happen on the server)
+-------------------------------------------------------------------------------
+
+Items.EnchantCost = { relic = 1, studs = 15 }
+Items.ForgeCost = { scrap = 25, studs = 40 }
+Items.MaxWeapons = 150
+Items.MaxResource = 99999
+
+-- Forge rarity weights for a new weapon of a chosen type.
+Items.ForgeWeights = { common = 50, uncommon = 28, rare = 14, epic = 6, legendary = 1.8, mythic = 0.2 }
+
+-- Rewards. Online matches are simulated by the server, so they pay out properly.
+-- CPU fights run on the player's own device and can't be verified, so they pay a
+-- small, rate-limited amount and never drop weapons.
+Items.Rewards = {
+	onlineWin = { studs = { 20, 35 }, scrap = { 8, 14 }, glitch = { 2, 4 }, relic = 0.35, token = 0.05, essence = 0.01, weapon = 0.15 },
+	onlineLoss = { studs = { 10, 18 }, scrap = { 4, 8 }, glitch = { 0, 2 }, relic = 0.12, token = 0.01, essence = 0, weapon = 0.05 },
+	offline = { studs = { 5, 9 }, scrap = { 2, 4 }, glitch = { 0, 1 }, relic = 0.03, token = 0, essence = 0, weapon = 0 },
+}
+Items.OfflineClaimInterval = 45 -- seconds between CPU-fight claims
+Items.OfflineClaimsPerDay = 60
+Items.PairRewardsPerHour = 4 -- rewarded online matches between the same two players
+
+Items.StarterPack = { studs = 60, scrap = 30, glitch = 3, relic = 2 }
+
+-- Trades
+Items.TradeMaxWeapons = 8
+Items.TradeConfirmSeconds = 3
+
+-------------------------------------------------------------------------------
+-- Helpers
+-------------------------------------------------------------------------------
+
+function Items.weaponTypeOf(fighterDef): string?
+	return fighterDef and fighterDef.look and fighterDef.look.weapon
+end
+
+-- Weighted pick from a list of { id, weight } with a 0..1 random number.
+function Items.weightedPick(list, r: number)
+	local total = 0
+	for _, e in list do
+		total += e.weight
+	end
+	local x = r * total
+	for _, e in list do
+		x -= e.weight
+		if x <= 0 then
+			return e
+		end
+	end
+	return list[#list]
+end
+
+function Items.weaponsOfType(weaponType: string)
+	local out = {}
+	for _, w in Items.Weapons do
+		if w.type == weaponType then
+			table.insert(out, w)
+		end
+	end
+	return out
+end
+
+-- Readable name for a weapon record: "Neon Katana (Blazing)".
+function Items.weaponLabel(rec): string
+	local def = Items.WeaponById[rec.item]
+	local name = def and def.name or rec.item
+	local e = rec.ench and Items.EnchantById[rec.ench]
+	if e then
+		return name .. "  \u{00B7}  " .. e.name
+	end
+	return name
+end
+
+return Items
+]]></string>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="16">
           <Properties>
             <string name="Name">MoveKit</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -5916,7 +6177,60 @@ return MoveKit
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="15">
+        <Item class="ModuleScript" referent="17">
+          <Properties>
+            <string name="Name">StageVariants</string>
+            <string name="Source"><![CDATA[--!nonstrict
+-- Per-fight looks for each arena: the map you pick decides the place, the variant
+-- (rolled every fight) decides the time of day and weather, so no two fights look
+-- the same. Online, the server rolls it so both players see the same sky.
+
+local StageVariants = {}
+
+-- id -> { name, clock (ClockTime override), bright (Lighting.Brightness multiplier),
+--         tint (grade tint), fog (atmosphere density add), weather = rain|snow|ash|leaves|nil,
+--         storm (lightning flashes) }
+StageVariants.Defs = {
+	default = { name = "" },
+	dusk = { name = "DUSK", clock = 17.6, bright = 0.85, tint = "#FFD2B0", fog = 0.05 },
+	night = { name = "NIGHT", clock = 0.4, bright = 0.55, tint = "#B8C8FF", fog = 0.04 },
+	storm = { name = "STORM", bright = 0.7, tint = "#C8D2E0", fog = 0.08, weather = "rain", storm = true },
+	fog = { name = "FOG", bright = 0.9, tint = "#E6ECEC", fog = 0.22 },
+	rain = { name = "RAIN", bright = 0.8, tint = "#D2DCE6", fog = 0.06, weather = "rain" },
+	snow = { name = "SNOWFALL", bright = 1.0, tint = "#E8F2FF", fog = 0.08, weather = "snow" },
+	ashstorm = { name = "ASH STORM", bright = 0.75, tint = "#FFC8A8", fog = 0.12, weather = "ash" },
+	sunset = { name = "SUNSET", clock = 18.1, bright = 0.9, tint = "#FFC89A", fog = 0.03 },
+}
+
+-- Which variants each stage can roll.
+StageVariants.ByStage = {
+	hollowroot = { "default", "fog", "storm", "night" },
+	skyreach = { "default", "dusk", "night", "rain" },
+	cathedral = { "default", "storm", "fog", "snow" },
+	emberthrone = { "default", "ashstorm", "night" },
+	baseplate = { "default", "sunset", "night", "rain" },
+	proving = { "default" },
+}
+
+function StageVariants.list(stageId: string)
+	return StageVariants.ByStage[stageId] or { "default" }
+end
+
+-- r in [0, 1)
+function StageVariants.roll(stageId: string, r: number): string
+	local list = StageVariants.list(stageId)
+	return list[math.floor(r * #list) + 1] or "default"
+end
+
+function StageVariants.get(id: string?)
+	return StageVariants.Defs[id or "default"] or StageVariants.Defs.default
+end
+
+return StageVariants
+]]></string>
+          </Properties>
+        </Item>
+        <Item class="ModuleScript" referent="18">
           <Properties>
             <string name="Name">Stages</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -6067,7 +6381,7 @@ return Stages
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="16">
+        <Item class="ModuleScript" referent="19">
           <Properties>
             <string name="Name">Story</string>
             <string name="Source"><![CDATA[--!nonstrict
@@ -6135,6 +6449,10 @@ Story.chapters = {
 						cam = "two",
 						a = 1,
 						b = 2,
+						events = {
+							{ t = 0.3, type = "act", actor = 2, anim = "thrust", time = 0.8 },
+							{ t = 1.4, type = "act", actor = 1, anim = "slash_diag", time = 0.7 },
+						},
 						lines = {
 							{ speaker = "bacon", text = "Your guard drops every time you check your phone, Noob." },
 							{ speaker = "noob", text = "I'm not checking my phone. I'm AFK. I fight better AFK.", gesture = "cross", pop = "SKILL ISSUE?", popX = 0.72, popY = 0.32 },
@@ -6161,6 +6479,8 @@ Story.chapters = {
 							{ t = 0.2, type = "vfx", kind = "teleport", actor = 3 },
 							{ t = 0.2, type = "sfx", key = "teleport" },
 							{ t = 0.25, type = "impact", count = 2 },
+							{ t = 0.6, type = "act", actor = 1, anim = "parry_stance", time = 0.9 },
+							{ t = 0.6, type = "jump", actor = 2 },
 							{ t = 0.9, type = "cam", cam = "dolly", a = 3 },
 							{ t = 1.3, type = "freeze", actor = 3 },
 						},
@@ -6223,6 +6543,7 @@ Story.chapters = {
 						cam = "two",
 						a = 3,
 						b = 1,
+						events = { { t = 0.2, type = "walk", actor = 3, to = -4.4, time = 1.1 } },
 						lines = {
 							{ speaker = "bacon", text = "It glitched into the forest map. The one nobody finished building." },
 							{ speaker = "bacon", text = "If the Admin shuts the server down, I lose my wings. My four hundred Robux wings.", gesture = "sad", pop = "-400 ROBUX", popX = 0.3, popY = 0.3 },
@@ -6235,12 +6556,21 @@ Story.chapters = {
 				type = "scene",
 				stage = "hollowroot",
 				actors = {
-					{ id = "bacon", x = -2.4, facing = 1, anim = "stance" },
-					{ id = "noob", x = -5.2, facing = 1, anim = "stance" },
+					{ id = "bacon", x = -9.4, facing = 1, anim = "stance" },
+					{ id = "noob", x = -12.2, facing = 1, anim = "stance" },
 					{ id = "studzilla", x = 3.0, facing = -1, anim = "stance", hidden = true },
 				},
 				shots = {
 					{ cam = "sky", duration = 4.2, caption = "THE SPOOKY OBBY FOREST  \u{2014}  COLLISIONS: OFF" },
+					{
+						cam = "track",
+						a = 1,
+						duration = 2.8,
+						events = {
+							{ t = 0, type = "walk", actor = 1, to = -2.4, time = 2.6 },
+							{ t = 0, type = "walk", actor = 2, to = -5.2, time = 2.7 },
+						},
+					},
 					{
 						cam = "wide",
 						events = {
@@ -6312,9 +6642,14 @@ Story.chapters = {
 						cam = "two",
 						a = 1,
 						b = 2,
+						events = {
+							{ t = 2.6, type = "anim", actor = 2, anim = "stance" },
+							{ t = 2.6, type = "jump", actor = 2 },
+							{ t = 3.1, type = "boom", amount = 0.4 },
+						},
 						lines = {
 							{ speaker = "bacon", text = "That monster. Who deletes builds?!", gesture = "facepalm" },
-							{ speaker = "studzilla", text = "PATH. TO. ADMIN. THROUGH. FLOOD. MAP. I. COME. WITH. YOU." },
+							{ speaker = "studzilla", text = "PATH. TO. ADMIN. THROUGH. FLOOD. MAP. I. COME. WITH. YOU.", gesture = "flex" },
 						},
 					},
 				},
@@ -6323,12 +6658,21 @@ Story.chapters = {
 				type = "scene",
 				stage = "cathedral",
 				actors = {
-					{ id = "studzilla", x = -2.6, facing = 1, anim = "stance" },
+					{ id = "studzilla", x = -9.6, facing = 1, anim = "stance" },
 					{ id = "camper", x = 3.2, facing = -1, anim = "stance", hidden = true },
-					{ id = "noob", x = -6.0, facing = 1, anim = "stance" },
+					{ id = "noob", x = -12.0, facing = 1, anim = "stance" },
 				},
 				shots = {
 					{ cam = "sky", duration = 4.2, caption = "FLOODED CHURCH ESCAPE  \u{2014}  THE WATER IS RISING (AGAIN)" },
+					{
+						cam = "track",
+						a = 1,
+						duration = 3.0,
+						events = {
+							{ t = 0, type = "walk", actor = 1, to = -2.6, time = 2.9 },
+							{ t = 0, type = "walk", actor = 3, to = -6.0, time = 2.8 },
+						},
+					},
 					{
 						cam = "wide",
 						events = {
@@ -6390,6 +6734,7 @@ Story.chapters = {
 						cam = "two",
 						a = 1,
 						b = 2,
+						events = { { t = 1.2, type = "anim", actor = 2, anim = "stance" }, { t = 1.2, type = "jump", actor = 2 } },
 						lines = { { speaker = "studzilla", text = "WE. CAMP. TOGETHER. NOW. FRIEND.", gesture = "flex" } },
 					},
 				},
@@ -6398,11 +6743,17 @@ Story.chapters = {
 				type = "scene",
 				stage = "emberthrone",
 				actors = {
-					{ id = "noob", x = -3.4, facing = 1, anim = "stance" },
+					{ id = "noob", x = -10.4, facing = 1, anim = "stance" },
 					{ id = "admin", x = 3.6, facing = -1, anim = "cross" },
 				},
 				shots = {
 					{ cam = "sky", duration = 4.4, caption = "THE ADMIN'S LAVA THRONE  \u{2014}  SERVER SHUTDOWN IN 99 SECONDS" },
+					{
+						cam = "track",
+						a = 1,
+						duration = 3.0,
+						events = { { t = 0, type = "walk", actor = 1, to = -3.4, time = 2.8 } },
+					},
 					{
 						cam = "low",
 						a = 2,
@@ -6483,9 +6834,12 @@ Story.chapters = {
 						cam = "wide",
 						duration = 5.0,
 						events = {
+							{ t = 0, type = "anim", actor = 1, anim = "win" },
+							{ t = 0, type = "anim", actor = 3, anim = "win" },
 							{ t = 0.3, type = "show", actor = 4 },
 							{ t = 0.3, type = "vfx", kind = "teleport", actor = 4 },
 							{ t = 0.3, type = "sfx", key = "teleport" },
+							{ t = 0.5, type = "face", actor = 1, facing = 1 },
 						},
 						lines = {
 							{ speaker = "system", text = "Guest 666 has joined the game." },
@@ -6534,33 +6888,1104 @@ return Story
       </Item>
     </Item>
   </Item>
-  <Item class="ServerScriptService" referent="17">
+  <Item class="ServerScriptService" referent="20">
     <Properties>
       <string name="Name">ServerScriptService</string>
     </Properties>
-    <Item class="Folder" referent="18">
+    <Item class="Folder" referent="21">
       <Properties>
         <string name="Name">VeilServer</string>
       </Properties>
-      <Item class="Script" referent="19">
+      <Item class="ModuleScript" referent="22">
+        <Properties>
+          <string name="Name">Inventory</string>
+          <string name="Source"><![CDATA[--!nonstrict
+-- Server-side inventory rules. Pure functions over a profile's `inv` table so they
+-- can be unit-tested without Roblox. Every mutation validates ownership, counts and
+-- item ids; randomness comes from an injected rand() returning [0, 1).
+--
+-- inv = {
+--   res = { [resourceId] = count },
+--   weapons = { { uid = "w123-4", item = "katana_neon", ench = "blazing"? } },
+--   equipped = { [fighterId] = uid },
+--   nextUid = 1,
+-- }
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Veil = ReplicatedStorage:WaitForChild("Veil")
+local Items = require(Veil.Data.Items)
+local Fighters = require(Veil.Data.Fighters)
+
+local Inventory = {}
+
+local function isInt(n): boolean
+	return type(n) == "number" and n == n and n >= 0 and n <= Items.MaxResource and math.floor(n) == n
+end
+
+function Inventory.new()
+	local inv = { res = {}, weapons = {}, equipped = {}, nextUid = 1 }
+	for id, n in Items.StarterPack do
+		inv.res[id] = n
+	end
+	return inv
+end
+
+-- Keep only valid data (used on load; never trust what was stored).
+function Inventory.sanitize(raw)
+	if type(raw) ~= "table" then
+		return Inventory.new()
+	end
+	local inv = { res = {}, weapons = {}, equipped = {}, nextUid = 1 }
+	if type(raw.res) == "table" then
+		for _, r in Items.Resources do
+			local n = raw.res[r.id]
+			if isInt(n) then
+				inv.res[r.id] = n
+			end
+		end
+	end
+	local seen = {}
+	if type(raw.weapons) == "table" then
+		for _, w in raw.weapons do
+			if #inv.weapons >= Items.MaxWeapons then
+				break
+			end
+			if type(w) == "table" and type(w.uid) == "string" and #w.uid <= 40 and not seen[w.uid] and Items.WeaponById[w.item] then
+				local ench = (type(w.ench) == "string" and Items.EnchantById[w.ench]) and w.ench or nil
+				seen[w.uid] = true
+				table.insert(inv.weapons, { uid = w.uid, item = w.item, ench = ench })
+			end
+		end
+	end
+	if type(raw.equipped) == "table" then
+		for fid, uid in raw.equipped do
+			if type(fid) == "string" and Fighters.byId[fid] and type(uid) == "string" and seen[uid] then
+				inv.equipped[fid] = uid
+			end
+		end
+	end
+	if isInt(raw.nextUid) and raw.nextUid >= 1 then
+		inv.nextUid = raw.nextUid
+	end
+	return inv
+end
+
+function Inventory.findWeapon(inv, uid: string)
+	for i, w in inv.weapons do
+		if w.uid == uid then
+			return w, i
+		end
+	end
+	return nil, nil
+end
+
+function Inventory.count(inv, resId: string): number
+	return inv.res[resId] or 0
+end
+
+function Inventory.canAfford(inv, cost): boolean
+	for id, n in cost do
+		if Inventory.count(inv, id) < n then
+			return false
+		end
+	end
+	return true
+end
+
+function Inventory.spend(inv, cost): boolean
+	if not Inventory.canAfford(inv, cost) then
+		return false
+	end
+	for id, n in cost do
+		inv.res[id] = Inventory.count(inv, id) - n
+	end
+	return true
+end
+
+function Inventory.addResources(inv, add)
+	for id, n in add do
+		if Items.ResourceById[id] and isInt(n) then
+			inv.res[id] = math.min(Items.MaxResource, Inventory.count(inv, id) + n)
+		end
+	end
+end
+
+-- uid prefix keeps ids unique across all players even after trades.
+function Inventory.addWeapon(inv, ownerId: number, item: string, ench: string?)
+	if not Items.WeaponById[item] or #inv.weapons >= Items.MaxWeapons then
+		return nil
+	end
+	local uid = string.format("w%d-%d", ownerId, inv.nextUid)
+	inv.nextUid += 1
+	local rec = { uid = uid, item = item, ench = (ench and Items.EnchantById[ench]) and ench or nil }
+	table.insert(inv.weapons, rec)
+	return rec
+end
+
+-- Remove a weapon (unequips it everywhere). Returns the record.
+function Inventory.takeWeapon(inv, uid: string)
+	local w, i = Inventory.findWeapon(inv, uid)
+	if not w then
+		return nil
+	end
+	table.remove(inv.weapons, i)
+	for fid, e in inv.equipped do
+		if e == uid then
+			inv.equipped[fid] = nil
+		end
+	end
+	return w
+end
+
+-- Equip a weapon skin on a fighter whose weapon type matches (nil uid = default).
+function Inventory.equip(inv, fighterId: string, uid: string?): (boolean, string?)
+	local def = Fighters.byId[fighterId]
+	if not def then
+		return false, "unknown fighter"
+	end
+	if uid == nil then
+		inv.equipped[fighterId] = nil
+		return true
+	end
+	local w = Inventory.findWeapon(inv, uid)
+	if not w then
+		return false, "you don't own that weapon"
+	end
+	local wdef = Items.WeaponById[w.item]
+	if wdef.type ~= Items.weaponTypeOf(def) then
+		return false, def.name .. " can't use a " .. (Items.WeaponTypeById[wdef.type] and Items.WeaponTypeById[wdef.type].name or wdef.type)
+	end
+	inv.equipped[fighterId] = uid
+	return true
+end
+
+-- Enchant Altar: spend the cost, roll a weighted enchantment (replaces the old one).
+function Inventory.enchant(inv, uid: string, rand: () -> number): (boolean, string?)
+	local w = Inventory.findWeapon(inv, uid)
+	if not w then
+		return false, "you don't own that weapon"
+	end
+	if not Inventory.spend(inv, Items.EnchantCost) then
+		return false, "not enough resources"
+	end
+	local e = Items.weightedPick(Items.Enchantments, rand())
+	w.ench = e.id
+	return true, e.id
+end
+
+local function rarityPick(weights, rand)
+	local list = {}
+	for _, r in Items.RARITIES do
+		table.insert(list, { id = r, weight = weights[r] or 0 })
+	end
+	return Items.weightedPick(list, rand()).id
+end
+
+-- Pick a weapon skin of a type at a rolled rarity (falls back to the nearest rarity).
+local function rollSkin(weaponType: string, rand)
+	local pool = Items.weaponsOfType(weaponType)
+	if #pool == 0 then
+		return nil
+	end
+	local want = Items.RARITY[rarityPick(Items.ForgeWeights, rand)].order
+	local best, bestD = {}, math.huge
+	for _, w in pool do
+		local d = math.abs(Items.RARITY[w.rarity].order - want)
+		if d < bestD then
+			best, bestD = { w }, d
+		elseif d == bestD then
+			table.insert(best, w)
+		end
+	end
+	return best[math.floor(rand() * #best) + 1] or best[1]
+end
+Inventory.rollSkin = rollSkin
+
+-- Forge: spend scrap + studs for a random skin of the chosen weapon type.
+function Inventory.forge(inv, ownerId: number, weaponType: string, rand: () -> number)
+	if not Items.WeaponTypeById[weaponType] then
+		return nil, "unknown weapon type"
+	end
+	if #inv.weapons >= Items.MaxWeapons then
+		return nil, "inventory full"
+	end
+	if not Inventory.spend(inv, Items.ForgeCost) then
+		return nil, "not enough resources"
+	end
+	local skin = rollSkin(weaponType, rand)
+	return Inventory.addWeapon(inv, ownerId, skin.id, nil)
+end
+
+-- Roll a reward table ({ min, max } ranges or a 0..1 chance) into concrete amounts.
+function Inventory.rollRewards(spec, rand: () -> number)
+	local out = { res = {}, weapon = nil }
+	for _, r in Items.Resources do
+		local v = spec[r.id]
+		if type(v) == "table" then
+			local n = v[1] + math.floor(rand() * (v[2] - v[1] + 1))
+			if n > 0 then
+				out.res[r.id] = n
+			end
+		elseif type(v) == "number" and v > 0 and rand() < v then
+			out.res[r.id] = 1
+		end
+	end
+	if (spec.weapon or 0) > 0 and rand() < spec.weapon then
+		local t = Items.WeaponTypes[math.floor(rand() * #Items.WeaponTypes) + 1]
+		local skin = rollSkin(t.id, rand)
+		out.weapon = skin and skin.id or nil
+	end
+	return out
+end
+
+function Inventory.applyRewards(inv, ownerId: number, rewards)
+	Inventory.addResources(inv, rewards.res or {})
+	local rec = nil
+	if rewards.weapon then
+		rec = Inventory.addWeapon(inv, ownerId, rewards.weapon, nil)
+	end
+	return rec
+end
+
+-- The cosmetic a fighter wears in a fight: { item, ench } or nil.
+function Inventory.cosmeticFor(inv, fighterId: string)
+	local uid = inv.equipped[fighterId]
+	if not uid then
+		return nil
+	end
+	local w = Inventory.findWeapon(inv, uid)
+	if not w then
+		return nil
+	end
+	return { item = w.item, ench = w.ench }
+end
+
+-- Copy for the client.
+function Inventory.snapshot(inv)
+	local out = { res = table.clone(inv.res), weapons = {}, equipped = table.clone(inv.equipped) }
+	for _, w in inv.weapons do
+		table.insert(out.weapons, { uid = w.uid, item = w.item, ench = w.ench })
+	end
+	return out
+end
+
+return Inventory
+]]></string>
+        </Properties>
+      </Item>
+      <Item class="Script" referent="23">
         <Properties>
           <string name="Name">Main</string>
           <token name="RunContext">0</token>
           <string name="Source"><![CDATA[--!nonstrict
--- OOF COMBAT server bootstrap.
--- The fights themselves run on each player's client (single-player vs CPU), so the
--- server only owns profile persistence: settings + lifetime stats in a DataStore.
--- All remote input is validated and rate-limited; DataStore failures degrade to
--- in-memory profiles without erroring.
+-- OOF COMBAT server.
+--
+--   Profiles     DataStore profiles with session locking (settings, stats, inventory)
+--   Inventory    weapons, enchantments, resources (all cosmetic), altar, forge
+--   Trading      player-to-player trades with confirm countdown and atomic swap
+--   OnlineMatch  online 1v1: queue, challenges, server-run fights, input relay
+--
+-- Single-player modes (story, tower, versus CPU, practice) still run on the client;
+-- they can only claim a small, rate-limited resource reward. Every remote payload is
+-- type-checked and rate-limited here before it reaches a service.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local DataStoreService = game:GetService("DataStoreService")
 local RunService = game:GetService("RunService")
 
 Players.CharacterAutoLoads = false
 
-local STORE_NAME = "OofCombatProfile_v1"
+local Veil = ReplicatedStorage:WaitForChild("Veil")
+local Items = require(Veil.Data.Items)
+local Fighters = require(Veil.Data.Fighters)
+
+local Profiles = require(script.Parent.Profiles)
+local Inventory = require(script.Parent.Inventory)
+local Trading = require(script.Parent.Trading)
+local OnlineMatch = require(script.Parent.OnlineMatch)
+
+-------------------------------------------------------------------------------
+-- Remotes
+-------------------------------------------------------------------------------
+
+local remotes = Instance.new("Folder")
+remotes.Name = "VeilRemotes"
+remotes.Parent = ReplicatedStorage
+
+local function remote(class: string, name: string)
+	local r = Instance.new(class)
+	r.Name = name
+	r.Parent = remotes
+	return r
+end
+
+local getProfile = remote("RemoteFunction", "GetProfile")
+local saveProfile = remote("RemoteEvent", "SaveProfile")
+local invFn = remote("RemoteFunction", "Inventory")
+local tradeEv = remote("RemoteEvent", "Trade")
+local onlineEv = remote("RemoteEvent", "Online")
+local inputEv = remote("RemoteEvent", "OnlineInput")
+
+-------------------------------------------------------------------------------
+-- Rate limiting
+-------------------------------------------------------------------------------
+
+local buckets = {}
+local function allow(player: Player, key: string, perSecond: number, burst: number): boolean
+	local b = buckets[player]
+	if not b then
+		b = {}
+		buckets[player] = b
+	end
+	local now = os.clock()
+	local e = b[key]
+	if not e then
+		e = { tokens = burst, t = now }
+		b[key] = e
+	end
+	e.tokens = math.min(burst, e.tokens + (now - e.t) * perSecond)
+	e.t = now
+	if e.tokens < 1 then
+		return false
+	end
+	e.tokens -= 1
+	return true
+end
+
+-------------------------------------------------------------------------------
+-- Services
+-------------------------------------------------------------------------------
+
+local rng = Random.new()
+local function rand(): number
+	return rng:NextNumber()
+end
+
+local function log(msg: string)
+	print("[OofCombat] " .. msg)
+end
+
+local online
+local trading = Trading.new({
+	getProfile = Profiles.get,
+	send = function(p, msg)
+		if p.Parent then
+			tradeEv:FireClient(p, msg)
+		end
+	end,
+	save = function(p)
+		-- deferred: if the player is leaving, the release save supersedes this one
+		task.defer(Profiles.save, p)
+	end,
+	now = os.clock,
+	isBusy = function(p)
+		return online and online:isBusy(p)
+	end,
+	log = log,
+})
+
+online = OnlineMatch.new({
+	getProfile = Profiles.get,
+	send = function(p, msg)
+		if p.Parent then
+			onlineEv:FireClient(p, msg)
+		end
+	end,
+	save = function(p)
+		-- deferred: if the player is leaving, the release save supersedes this one
+		task.defer(Profiles.save, p)
+	end,
+	now = os.clock,
+	rand = rand,
+	log = log,
+})
+
+Profiles.start()
+
+Players.PlayerRemoving:Connect(function(player)
+	-- settle first (forfeit counts, trades cancel), then save and release the profile
+	online:playerLeft(player)
+	trading:playerLeft(player)
+	buckets[player] = nil
+	Profiles.release(player)
+end)
+
+RunService.Heartbeat:Connect(function(dt)
+	online:tick(dt)
+	trading:step()
+end)
+
+-------------------------------------------------------------------------------
+-- Profile (settings + stats)
+-------------------------------------------------------------------------------
+
+local function publicProfile(p)
+	return {
+		settings = Profiles.deepCopy(p.settings),
+		stats = Profiles.deepCopy(p.stats),
+		inv = Inventory.snapshot(p.inv),
+	}
+end
+
+getProfile.OnServerInvoke = function(player: Player)
+	local p = Profiles.await(player, 10)
+	if not p then
+		return publicProfile(Profiles.sanitize(nil))
+	end
+	return publicProfile(p)
+end
+
+-- Client reports settings + stat deltas. Stats only grow by small amounts per
+-- request so a tampered client can't inflate them.
+saveProfile.OnServerEvent:Connect(function(player: Player, payload)
+	if type(payload) ~= "table" or not allow(player, "save", 1, 3) then
+		return
+	end
+	local p = Profiles.get(player)
+	if not p then
+		return
+	end
+	if type(payload.settings) == "table" then
+		local merged = Profiles.sanitize({ settings = payload.settings, stats = p.stats, inv = p.inv, daily = p.daily, lastClaim = p.lastClaim })
+		p.settings = merged.settings
+	end
+	if type(payload.delta) == "table" then
+		local d = payload.delta
+		local function bump(key: string, maxStep: number)
+			local v = d[key]
+			if type(v) == "number" and v == v and v >= 0 and v <= maxStep then
+				p.stats[key] += math.floor(v)
+			end
+		end
+		bump("wins", 1)
+		bump("losses", 1)
+		bump("ascents", 1)
+		bump("finishers", 1)
+		if d.storyDone == true then
+			p.stats.storyDone = true
+		end
+	end
+	Profiles.markDirty(player)
+end)
+
+-------------------------------------------------------------------------------
+-- Inventory: equip, enchant altar, forge, CPU-fight claims
+-------------------------------------------------------------------------------
+
+local function today(): number
+	return math.floor(os.time() / 86400)
+end
+
+invFn.OnServerInvoke = function(player: Player, op, arg)
+	if type(op) ~= "string" or not allow(player, "inv", 4, 8) then
+		return { ok = false, err = "slow down" }
+	end
+	local p = Profiles.await(player, 5)
+	if not p then
+		return { ok = false, err = "profile not loaded" }
+	end
+	local inv = p.inv
+	if op == "get" then
+		return { ok = true, inv = Inventory.snapshot(inv) }
+	end
+	if trading:inTrade(player) and op ~= "equip" then
+		return { ok = false, err = "finish your trade first" }
+	end
+	if op == "equip" then
+		if type(arg) ~= "table" or type(arg.fighter) ~= "string" or (arg.uid ~= nil and type(arg.uid) ~= "string") then
+			return { ok = false, err = "bad request" }
+		end
+		local ok, err = Inventory.equip(inv, arg.fighter, arg.uid)
+		Profiles.markDirty(player)
+		return { ok = ok, err = err, inv = Inventory.snapshot(inv) }
+	elseif op == "enchant" then
+		if type(arg) ~= "string" then
+			return { ok = false, err = "bad request" }
+		end
+		local ok, res = Inventory.enchant(inv, arg, rand)
+		if ok then
+			Profiles.markDirty(player)
+		end
+		return { ok = ok, err = (not ok) and res or nil, ench = ok and res or nil, inv = Inventory.snapshot(inv) }
+	elseif op == "forge" then
+		if type(arg) ~= "string" then
+			return { ok = false, err = "bad request" }
+		end
+		local rec, err = Inventory.forge(inv, player.UserId, arg, rand)
+		if rec then
+			Profiles.markDirty(player)
+		end
+		return { ok = rec ~= nil, err = err, weapon = rec and { uid = rec.uid, item = rec.item } or nil, inv = Inventory.snapshot(inv) }
+	elseif op == "claim" then
+		-- reward for finishing a CPU fight (unverifiable): small and rate-limited
+		local now = os.time()
+		if p.daily.day ~= today() then
+			p.daily.day = today()
+			p.daily.claims = 0
+		end
+		if now - (p.lastClaim or 0) < Items.OfflineClaimInterval or p.daily.claims >= Items.OfflineClaimsPerDay then
+			return { ok = false, err = "no reward this time", inv = Inventory.snapshot(inv) }
+		end
+		p.lastClaim = now
+		p.daily.claims += 1
+		local rewards = Inventory.rollRewards(Items.Rewards.offline, rand)
+		Inventory.applyRewards(inv, player.UserId, rewards)
+		Profiles.markDirty(player)
+		return { ok = true, rewards = rewards.res, inv = Inventory.snapshot(inv) }
+	end
+	return { ok = false, err = "unknown request" }
+end
+
+-------------------------------------------------------------------------------
+-- Trading
+-------------------------------------------------------------------------------
+
+local function playerById(userId)
+	if type(userId) ~= "number" then
+		return nil
+	end
+	return Players:GetPlayerByUserId(userId)
+end
+
+tradeEv.OnServerEvent:Connect(function(player: Player, msg)
+	if type(msg) ~= "table" or type(msg.op) ~= "string" or not allow(player, "trade", 8, 16) then
+		return
+	end
+	local ok, err = true, nil
+	if msg.op == "request" then
+		ok, err = trading:request(player, playerById(msg.target))
+	elseif msg.op == "respond" then
+		ok, err = trading:respond(player, playerById(msg.from), msg.accept == true)
+	elseif msg.op == "offer" then
+		ok, err = trading:offer(player, msg.offer)
+	elseif msg.op == "ready" then
+		ok, err = trading:setReady(player, msg.on == true)
+	elseif msg.op == "cancel" then
+		trading:cancel(player, player.DisplayName .. " cancelled")
+	elseif msg.op == "incoming" then
+		local list = {}
+		for _, r in trading:incoming(player) do
+			table.insert(list, { from = r.from.UserId, name = r.from.DisplayName })
+		end
+		tradeEv:FireClient(player, { op = "incoming", list = list })
+	end
+	if not ok then
+		tradeEv:FireClient(player, { op = "error", err = err or "trade error" })
+	end
+end)
+
+-------------------------------------------------------------------------------
+-- Online matches
+-------------------------------------------------------------------------------
+
+onlineEv.OnServerEvent:Connect(function(player: Player, msg)
+	if type(msg) ~= "table" or type(msg.op) ~= "string" or not allow(player, "online", 6, 12) then
+		return
+	end
+	local ok, err = true, nil
+	if msg.op == "queue" then
+		if trading:inTrade(player) then
+			ok, err = false, "finish your trade first"
+		else
+			ok, err = online:queuePlayer(player, msg.pick)
+		end
+	elseif msg.op == "unqueue" then
+		online:unqueue(player)
+	elseif msg.op == "challenge" then
+		ok, err = online:challenge(player, playerById(msg.target), msg.pick)
+	elseif msg.op == "respond" then
+		ok, err = online:respond(player, playerById(msg.from), msg.accept == true, msg.pick)
+	elseif msg.op == "ready" then
+		online:setReady(player, msg.id)
+	elseif msg.op == "forfeit" then
+		online:forfeit(player, "forfeit")
+	end
+	if not ok then
+		onlineEv:FireClient(player, { op = "error", err = err or "online error" })
+	end
+end)
+
+inputEv.OnServerEvent:Connect(function(player: Player, held, pressed)
+	online:input(player, held, pressed)
+end)
+
+-- keep the lints honest about used modules
+local _ = Fighters
+]]></string>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="24">
+        <Properties>
+          <string name="Name">OnlineMatch</string>
+          <string name="Source"><![CDATA[--!nonstrict
+-- Online 1v1, server authoritative.
+--
+-- The server runs the real match with the same deterministic engine the clients
+-- use. Each client sends its controller state; every tick the server resolves both
+-- players' inputs, steps the engine, and streams the resolved inputs (one integer
+-- per player per frame) back to both clients. Clients replay exactly those frames
+-- through their own copy of the engine, so they render the authoritative fight with
+-- full animation and effects from a few bytes per frame. The engine uses only
+-- deterministic arithmetic, and the server also sends periodic state checks that
+-- clients correct against. Results and rewards come only from the server's match.
+--
+-- Map choice: each player picks a map; if they differ the server flips a coin
+-- between the two picks. The weather / time-of-day variant is rolled every fight.
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Veil = ReplicatedStorage:WaitForChild("Veil")
+local Engine = require(Veil.Combat.Engine)
+local NetInput = require(Veil.Combat.NetInput)
+local Fighters = require(Veil.Data.Fighters)
+local Echoes = require(Veil.Data.Echoes)
+local Stages = require(Veil.Data.Stages)
+local StageVariants = require(Veil.Data.StageVariants)
+local Items = require(Veil.Data.Items)
+
+local Inventory = require(script.Parent.Inventory)
+
+local OnlineMatch = {}
+OnlineMatch.__index = OnlineMatch
+
+local DT = 1 / 60
+local CHALLENGE_TTL = 25
+local READY_TIMEOUT = 15
+local SEND_EVERY = 2 -- frames per packet
+local SYNC_EVERY = 120 -- frames between state checks
+local MIN_FRAMES_FOR_FORFEIT_REWARD = 60 * 20
+
+-- deps: getProfile(p), send(p, msg), save(p), now(), rand() -> [0,1), log?(msg)
+function OnlineMatch.new(deps)
+	local self = setmetatable({}, OnlineMatch)
+	self.deps = deps
+	self.queue = {}
+	self.challenges = {} -- [target] = { [from] = { pick, expires } }
+	self.matches = {}
+	self.byPlayer = {}
+	self.pairLog = {} -- "a:b" -> { timestamps }
+	self.nextId = 1
+	return self
+end
+
+function OnlineMatch:isBusy(p): boolean
+	return self.byPlayer[p] ~= nil
+end
+
+function OnlineMatch:isQueued(p): boolean
+	for _, q in self.queue do
+		if q.player == p then
+			return true
+		end
+	end
+	return false
+end
+
+-- Validate a player's pick. Practice room is not an online arena.
+function OnlineMatch.validatePick(pick)
+	if type(pick) ~= "table" then
+		return nil
+	end
+	local f = type(pick.fighter) == "string" and Fighters.byId[pick.fighter]
+	local e = type(pick.echo) == "string" and Echoes.get(pick.echo)
+	local ok, s = pcall(Stages.get, pick.stage)
+	if not f or not e or e.id ~= pick.echo or not ok or not s or s.id ~= pick.stage or s.id == "proving" then
+		return nil
+	end
+	return { fighter = f.id, echo = e.id, stage = s.id }
+end
+
+function OnlineMatch:queuePlayer(p, pick)
+	local clean = OnlineMatch.validatePick(pick)
+	if not clean then
+		return false, "bad pick"
+	end
+	if self:isBusy(p) then
+		return false, "already in a match"
+	end
+	self:unqueue(p)
+	table.insert(self.queue, { player = p, pick = clean, t = self.deps.now() })
+	self.deps.send(p, { op = "queued", size = #self.queue })
+	-- pair the two longest-waiting players
+	while #self.queue >= 2 do
+		local a = table.remove(self.queue, 1)
+		local b = table.remove(self.queue, 1)
+		if a.player.Parent and b.player.Parent then
+			self:createMatch(a.player, a.pick, b.player, b.pick)
+		elseif a.player.Parent then
+			table.insert(self.queue, 1, a)
+		elseif b.player.Parent then
+			table.insert(self.queue, 1, b)
+		end
+	end
+	return true
+end
+
+function OnlineMatch:unqueue(p)
+	for i = #self.queue, 1, -1 do
+		if self.queue[i].player == p then
+			table.remove(self.queue, i)
+		end
+	end
+end
+
+function OnlineMatch:challenge(from, target, pick)
+	local clean = OnlineMatch.validatePick(pick)
+	if not clean then
+		return false, "bad pick"
+	end
+	if from == target or not target or not target.Parent then
+		return false, "can't challenge that player"
+	end
+	if self:isBusy(from) or self:isBusy(target) then
+		return false, "player is in a match"
+	end
+	self.challenges[target] = self.challenges[target] or {}
+	self.challenges[target][from] = { pick = clean, expires = self.deps.now() + CHALLENGE_TTL }
+	local s = Stages.get(clean.stage)
+	self.deps.send(target, { op = "challenge", from = from.UserId, name = from.DisplayName, stage = clean.stage, stageName = s.name, fighter = clean.fighter })
+	return true
+end
+
+function OnlineMatch:respond(target, from, accept: boolean, pick)
+	local list = self.challenges[target]
+	local c = list and list[from]
+	if not c or c.expires < self.deps.now() then
+		return false, "challenge expired"
+	end
+	list[from] = nil
+	if not accept then
+		self.deps.send(from, { op = "declined", by = target.UserId, name = target.DisplayName })
+		return true
+	end
+	local clean = OnlineMatch.validatePick(pick)
+	if not clean then
+		return false, "bad pick"
+	end
+	if self:isBusy(from) or self:isBusy(target) or not from.Parent then
+		return false, "player is busy"
+	end
+	self:unqueue(from)
+	self:unqueue(target)
+	self:createMatch(from, c.pick, target, clean)
+	return true
+end
+
+local function playerSpec(p, pick, profile)
+	return {
+		userId = p.UserId,
+		name = p.DisplayName,
+		fighter = pick.fighter,
+		echo = pick.echo,
+		cosmetic = profile and Inventory.cosmeticFor(profile.inv, pick.fighter) or nil,
+	}
+end
+
+function OnlineMatch:createMatch(pa, pickA, pb, pickB)
+	local rand = self.deps.rand
+	local stage = pickA.stage
+	local pickedBy = pa
+	if pickB.stage ~= pickA.stage and rand() < 0.5 then
+		stage = pickB.stage
+		pickedBy = pb
+	end
+	local spec = {
+		id = self.nextId,
+		seed = math.floor(rand() * 1000000),
+		stage = stage,
+		stagePickedBy = pickedBy.DisplayName,
+		variant = StageVariants.roll(stage, rand()),
+		p1 = playerSpec(pa, pickA, self.deps.getProfile(pa)),
+		p2 = playerSpec(pb, pickB, self.deps.getProfile(pb)),
+	}
+	self.nextId += 1
+	local m = {
+		id = spec.id,
+		spec = spec,
+		players = { pa, pb },
+		state = "loading",
+		ready = { false, false },
+		createdAt = self.deps.now(),
+		engine = Engine.newMatch(OnlineMatch.engineOpts(spec)),
+		acc = 0,
+		held = { 0, 0 },
+		pending = { 0, 0 },
+		out = {},
+		sentFrame = 0,
+		inputCount = { 0, 0 },
+		inputWindow = self.deps.now(),
+	}
+	self.matches[m.id] = m
+	self.byPlayer[pa] = m
+	self.byPlayer[pb] = m
+	for side, p in m.players do
+		self.deps.send(p, { op = "start", spec = spec, side = side })
+	end
+	return m
+end
+
+-- The exact options both server and clients pass to Engine.newMatch.
+function OnlineMatch.engineOpts(spec)
+	return {
+		p1 = { fighter = spec.p1.fighter, echo = spec.p1.echo },
+		p2 = { fighter = spec.p2.fighter, echo = spec.p2.echo },
+		stage = spec.stage,
+		seed = spec.seed,
+	}
+end
+
+function OnlineMatch:setReady(p, matchId)
+	local m = self.byPlayer[p]
+	if not m or m.id ~= matchId or m.state ~= "loading" then
+		return false
+	end
+	local side = m.players[1] == p and 1 or 2
+	m.ready[side] = true
+	if m.ready[1] and m.ready[2] then
+		m.state = "running"
+		for _, pl in m.players do
+			self.deps.send(pl, { op = "go", id = m.id })
+		end
+	end
+	return true
+end
+
+-- Controller state from a client: held mask + buttons pressed since its last send.
+function OnlineMatch:input(p, held, pressed)
+	local m = self.byPlayer[p]
+	if not m or m.state ~= "running" then
+		return false
+	end
+	if not NetInput.valid(held) or not NetInput.valid(pressed) then
+		return false
+	end
+	local side = m.players[1] == p and 1 or 2
+	-- rate limit: 120 messages per second per player
+	local now = self.deps.now()
+	if now - m.inputWindow >= 1 then
+		m.inputWindow = now
+		m.inputCount = { 0, 0 }
+	end
+	m.inputCount[side] += 1
+	if m.inputCount[side] > 120 then
+		return false
+	end
+	m.held[side] = held
+	m.pending[side] = NetInput.union(m.pending[side], pressed)
+	return true
+end
+
+function OnlineMatch:flush(m)
+	if #m.out == 0 then
+		return
+	end
+	local msg = { op = "f", id = m.id, from = m.sentFrame + 1, m = m.out }
+	for _, p in m.players do
+		if p.Parent then
+			self.deps.send(p, msg)
+		end
+	end
+	m.sentFrame += #m.out // 2
+	m.out = {}
+end
+
+local function pairKey(a, b)
+	local x, y = a.UserId, b.UserId
+	if x > y then
+		x, y = y, x
+	end
+	return x .. ":" .. y
+end
+
+function OnlineMatch:finish(m, winnerSide: number?, reason: string)
+	if m.state == "over" then
+		return
+	end
+	self:flush(m)
+	m.state = "over"
+	local now = self.deps.now()
+	-- anti win-trading: limited rewarded matches per pair per hour
+	local key = pairKey(m.players[1], m.players[2])
+	local log = self.pairLog[key] or {}
+	for i = #log, 1, -1 do
+		if now - log[i] > 3600 then
+			table.remove(log, i)
+		end
+	end
+	local rewarded = #log < Items.PairRewardsPerHour
+	if reason ~= "ko" and m.engine.frame < MIN_FRAMES_FOR_FORFEIT_REWARD then
+		rewarded = false
+	end
+	if rewarded then
+		table.insert(log, now)
+	end
+	self.pairLog[key] = log
+	for side, p in m.players do
+		local prof = self.deps.getProfile(p)
+		local won = winnerSide == side
+		local rewards = { res = {} }
+		local newWeapon = nil
+		if prof then
+			if won then
+				prof.stats.onlineWins = (prof.stats.onlineWins or 0) + 1
+			elseif winnerSide then
+				prof.stats.onlineLosses = (prof.stats.onlineLosses or 0) + 1
+			end
+			if rewarded and winnerSide then
+				rewards = Inventory.rollRewards(won and Items.Rewards.onlineWin or Items.Rewards.onlineLoss, self.deps.rand)
+				newWeapon = Inventory.applyRewards(prof.inv, p.UserId, rewards)
+			end
+		end
+		if p.Parent then
+			local f = m.engine.fighters
+			self.deps.send(p, {
+				op = "end",
+				id = m.id,
+				winner = winnerSide,
+				side = side,
+				reason = reason,
+				rounds = { f[1].roundWins, f[2].roundWins },
+				stats = { f[1].stats, f[2].stats },
+				rewards = rewards.res,
+				weapon = newWeapon and { uid = newWeapon.uid, item = newWeapon.item } or nil,
+				rewarded = rewarded,
+				inv = prof and Inventory.snapshot(prof.inv) or nil,
+			})
+			self.deps.save(p)
+		end
+		self.byPlayer[p] = nil
+	end
+	self.matches[m.id] = nil
+	if self.deps.log then
+		self.deps.log(string.format("match %d over: winner side %s (%s)", m.id, tostring(winnerSide), reason))
+	end
+end
+
+-- Step every running match by real time.
+function OnlineMatch:tick(dt: number)
+	local now = self.deps.now()
+	for _, m in self.matches do
+		if m.state == "loading" then
+			if now - m.createdAt > READY_TIMEOUT then
+				for _, p in m.players do
+					self.byPlayer[p] = nil
+					if p.Parent then
+						self.deps.send(p, { op = "cancelled", id = m.id, reason = "the other player didn't load in" })
+					end
+				end
+				self.matches[m.id] = nil
+			end
+			continue
+		end
+		if m.state ~= "running" then
+			continue
+		end
+		-- KO slow motion plays at the same pace the clients show it
+		local scale = ((m.engine.slowmo or 0) > 0) and 0.35 or 1
+		m.acc += math.min(dt, 0.25) * scale
+		local steps = 0
+		while m.acc >= DT and steps < 6 do
+			m.acc -= DT
+			steps += 1
+			local in1 = NetInput.union(m.held[1], m.pending[1])
+			local in2 = NetInput.union(m.held[2], m.pending[2])
+			m.pending[1], m.pending[2] = 0, 0
+			Engine.step(m.engine, NetInput.decode(in1), NetInput.decode(in2))
+			Engine.drainEvents(m.engine)
+			table.insert(m.out, in1)
+			table.insert(m.out, in2)
+			local frame = m.engine.frame
+			if #m.out >= SEND_EVERY * 2 then
+				self:flush(m)
+			end
+			if frame % SYNC_EVERY == 0 then
+				self:flush(m)
+				local f1, f2 = m.engine.fighters[1], m.engine.fighters[2]
+				local sync = { op = "sync", id = m.id, frame = frame, hp = { f1.hp, f2.hp }, x = { f1.x, f2.x }, y = { f1.y, f2.y }, meter = { f1.meter, f2.meter }, timer = m.engine.timer, wins = { f1.roundWins, f2.roundWins } }
+				for _, p in m.players do
+					if p.Parent then
+						self.deps.send(p, sync)
+					end
+				end
+			end
+			if m.engine.over then
+				self:finish(m, m.engine.winner, "ko")
+				break
+			end
+		end
+		if m.acc > DT * 6 then
+			m.acc = 0 -- server hitch: don't spiral
+		end
+	end
+	-- expire challenges
+	for target, list in self.challenges do
+		for from, c in list do
+			if c.expires < now then
+				list[from] = nil
+			end
+		end
+		if next(list) == nil then
+			self.challenges[target] = nil
+		end
+	end
+end
+
+function OnlineMatch:forfeit(p, reason: string?)
+	local m = self.byPlayer[p]
+	if not m then
+		return false
+	end
+	if m.state == "loading" then
+		for _, pl in m.players do
+			self.byPlayer[pl] = nil
+			if pl.Parent and pl ~= p then
+				self.deps.send(pl, { op = "cancelled", id = m.id, reason = "the other player backed out" })
+			end
+		end
+		self.matches[m.id] = nil
+		return true
+	end
+	local side = m.players[1] == p and 1 or 2
+	self:finish(m, 3 - side, reason or "forfeit")
+	return true
+end
+
+function OnlineMatch:playerLeft(p)
+	self:unqueue(p)
+	self:forfeit(p, "disconnect")
+	self.challenges[p] = nil
+	for _, list in self.challenges do
+		list[p] = nil
+	end
+end
+
+return OnlineMatch
+]]></string>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="25">
+        <Properties>
+          <string name="Name">Profiles</string>
+          <string name="Source"><![CDATA[--!nonstrict
+-- Player profiles: settings, lifetime stats and the tradeable inventory.
+--
+-- Persistence uses one DataStore key per player with a session lock, so a profile
+-- can only be live on one server at a time (the lock is taken in UpdateAsync on
+-- load, refreshed on every save and released when the player leaves). That is what
+-- stops item duplication by hopping servers mid-trade. If the DataStore isn't
+-- reachable (Studio without API access) profiles live in memory for the session.
+
+local Players = game:GetService("Players")
+local DataStoreService = game:GetService("DataStoreService")
+local RunService = game:GetService("RunService")
+
+local Inventory = require(script.Parent.Inventory)
+
+local Profiles = {}
+
+local STORE_NAME = "OofCombatProfile_v1" -- key name kept so v1 saves migrate in place
+local SCHEMA = 2
+local LOCK_STALE = 30 * 60 -- seconds before a crashed server's lock is ignored
+
 local store = nil
 do
 	local ok, result = pcall(function()
@@ -6570,21 +7995,9 @@ do
 		store = result
 	end
 end
+Profiles.persistent = store ~= nil
 
-local remotes = Instance.new("Folder")
-remotes.Name = "VeilRemotes"
-remotes.Parent = ReplicatedStorage
-
-local getProfile = Instance.new("RemoteFunction")
-getProfile.Name = "GetProfile"
-getProfile.Parent = remotes
-
-local saveProfile = Instance.new("RemoteEvent")
-saveProfile.Name = "SaveProfile"
-saveProfile.Parent = remotes
-
-local DEFAULT = {
-	version = 1,
+Profiles.DEFAULT = {
 	settings = {
 		music = 0.6,
 		sfx = 0.8,
@@ -6592,6 +8005,7 @@ local DEFAULT = {
 		subtitles = true,
 		shake = true,
 		flashes = true,
+		tts = true,
 		difficulty = 2,
 		touch = "auto",
 	},
@@ -6601,13 +8015,17 @@ local DEFAULT = {
 		ascents = 0,
 		finishers = 0,
 		storyDone = false,
+		onlineWins = 0,
+		onlineLosses = 0,
+		trades = 0,
 	},
 }
 
-local profiles: { [Player]: any } = {}
+local live: { [Player]: any } = {}
 local dirty: { [Player]: boolean } = {}
-local lastSave: { [Player]: number } = {}
-local loaded: { [Player]: boolean } = {}
+local releasing: { [Player]: boolean } = {}
+local loadedEvent = Instance.new("BindableEvent")
+Profiles.Loaded = loadedEvent.Event
 
 local function deepCopy(t)
 	local out = {}
@@ -6616,17 +8034,22 @@ local function deepCopy(t)
 	end
 	return out
 end
+Profiles.deepCopy = deepCopy
 
 -- Merge stored data over defaults, keeping only known keys with the right types.
-local function sanitize(data)
-	local p = deepCopy(DEFAULT)
+function Profiles.sanitize(data)
+	local p = deepCopy(Profiles.DEFAULT)
+	p.version = SCHEMA
 	if type(data) ~= "table" then
+		p.inv = Inventory.new()
+		p.daily = { day = 0, claims = 0 }
+		p.lastClaim = 0
 		return p
 	end
 	for _, section in { "settings", "stats" } do
 		local src = data[section]
 		if type(src) == "table" then
-			for k, def in DEFAULT[section] do
+			for k, def in Profiles.DEFAULT[section] do
 				local v = src[k]
 				if type(v) == type(def) then
 					if type(v) == "number" then
@@ -6652,168 +8075,532 @@ local function sanitize(data)
 			end
 		end
 	end
+	-- v1 saves had no inventory: they get the starter pack
+	p.inv = data.inv and Inventory.sanitize(data.inv) or Inventory.new()
+	local d = data.daily
+	p.daily = { day = 0, claims = 0 }
+	if type(d) == "table" and type(d.day) == "number" and type(d.claims) == "number" then
+		p.daily.day = math.floor(d.day)
+		p.daily.claims = math.clamp(math.floor(d.claims), 0, 1000)
+	end
+	p.lastClaim = type(data.lastClaim) == "number" and data.lastClaim or 0
 	return p
 end
 
-local function load(player: Player)
+local function key(player: Player): string
+	return "p_" .. player.UserId
+end
+
+local function lockFree(lock): boolean
+	if type(lock) ~= "table" then
+		return true
+	end
+	if lock.job == game.JobId then
+		return true
+	end
+	return type(lock.t) ~= "number" or os.time() - lock.t > LOCK_STALE
+end
+
+function Profiles.load(player: Player)
 	local data = nil
 	if store then
-		-- Studio without API access fails fast: try once, never stall the session.
-		local attempts = RunService:IsStudio() and 1 or 3
+		local attempts = RunService:IsStudio() and 1 or 6
 		for attempt = 1, attempts do
+			local locked = false
 			local ok, result = pcall(function()
-				return store:GetAsync("p_" .. player.UserId)
+				return store:UpdateAsync(key(player), function(old)
+					if old ~= nil and not lockFree(old.lock) then
+						locked = true
+						return nil -- leave it untouched; another server owns it
+					end
+					old = old or {}
+					old.lock = { job = game.JobId, t = os.time() }
+					return old
+				end)
 			end)
-			if ok then
+			if ok and not locked then
 				data = result
 				break
 			end
 			if attempt < attempts then
-				task.wait(attempt)
+				task.wait(math.min(8, attempt * 1.5))
 			end
 		end
 	end
-	profiles[player] = sanitize(data)
-	loaded[player] = true
+	if not player.Parent then
+		return -- left while loading
+	end
+	live[player] = Profiles.sanitize(data)
+	loadedEvent:Fire(player)
 end
 
-local function save(player: Player)
-	local p = profiles[player]
-	if not p or not store or not dirty[player] then
-		return
+function Profiles.get(player: Player)
+	return live[player]
+end
+
+-- Wait (briefly) for a profile to load.
+function Profiles.await(player: Player, timeout: number?)
+	local t = 0
+	while not live[player] and t < (timeout or 10) and player.Parent do
+		task.wait(0.2)
+		t += 0.2
+	end
+	return live[player]
+end
+
+function Profiles.markDirty(player: Player)
+	dirty[player] = true
+end
+
+-- Write the profile now (keeps the session lock unless `release`).
+function Profiles.save(player: Player, release: boolean?)
+	local p = live[player]
+	if not p or not store then
+		return true
+	end
+	if releasing[player] and not release then
+		return true -- the final (lock-releasing) save is already on its way
 	end
 	dirty[player] = false
 	local snapshot = deepCopy(p)
+	snapshot.lock = (not release) and { job = game.JobId, t = os.time() } or nil
 	local attempts = RunService:IsStudio() and 1 or 3
 	for attempt = 1, attempts do
 		local ok = pcall(function()
-			store:UpdateAsync("p_" .. player.UserId, function()
+			store:UpdateAsync(key(player), function(old)
+				if old and not lockFree(old.lock) then
+					return nil -- someone else owns it now: never overwrite their data
+				end
 				return snapshot
 			end)
 		end)
 		if ok then
-			return
+			return true
 		end
 		if attempt < attempts then
 			task.wait(attempt)
 		end
 	end
 	dirty[player] = true
+	return false
 end
 
-Players.PlayerAdded:Connect(function(player)
-	load(player)
-end)
-for _, player in Players:GetPlayers() do
-	task.spawn(load, player)
-end
-
-Players.PlayerRemoving:Connect(function(player)
-	save(player)
-	profiles[player] = nil
+function Profiles.release(player: Player)
+	if releasing[player] then
+		return
+	end
+	releasing[player] = true
+	Profiles.save(player, true)
+	live[player] = nil
 	dirty[player] = nil
-	lastSave[player] = nil
-	loaded[player] = nil
-end)
-
-game:BindToClose(function()
-	for _, player in Players:GetPlayers() do
-		task.spawn(save, player)
-	end
-	task.wait(2)
-end)
-
-getProfile.OnServerInvoke = function(player: Player)
-	local waited = 0
-	while not loaded[player] and waited < 10 do
-		task.wait(0.2)
-		waited += 0.2
-	end
-	return deepCopy(profiles[player] or DEFAULT)
+	releasing[player] = nil
 end
 
--- Client reports settings + stat deltas. Stats are only allowed to grow by small
--- amounts per request so a tampered client can't inflate them arbitrarily.
-saveProfile.OnServerEvent:Connect(function(player: Player, payload)
-	if type(payload) ~= "table" then
-		return
+function Profiles.start()
+	Players.PlayerAdded:Connect(function(player)
+		Profiles.load(player)
+	end)
+	for _, player in Players:GetPlayers() do
+		task.spawn(Profiles.load, player)
 	end
-	local now = os.clock()
-	if lastSave[player] and now - lastSave[player] < 1 then
-		return
-	end
-	lastSave[player] = now
-	local p = profiles[player]
-	if not p then
-		return
-	end
-	if type(payload.settings) == "table" then
-		local merged = sanitize({ settings = payload.settings, stats = p.stats })
-		p.settings = merged.settings
-	end
-	if type(payload.delta) == "table" then
-		local d = payload.delta
-		local function bump(key: string, maxStep: number)
-			local v = d[key]
-			if type(v) == "number" and v == v and v >= 0 and v <= maxStep then
-				p.stats[key] += math.floor(v)
+	-- PlayerRemoving is handled by Main.server so matches and trades settle first,
+	-- then it calls Profiles.release.
+	game:BindToClose(function()
+		for _, player in Players:GetPlayers() do
+			task.spawn(Profiles.release, player)
+		end
+		task.wait(3)
+	end)
+	task.spawn(function()
+		while true do
+			task.wait(60)
+			for _, player in Players:GetPlayers() do
+				-- always save: it also refreshes the session lock
+				task.spawn(Profiles.save, player)
 			end
 		end
-		bump("wins", 1)
-		bump("losses", 1)
-		bump("ascents", 1)
-		bump("finishers", 1)
-		if d.storyDone == true then
-			p.stats.storyDone = true
-		end
-	end
-	dirty[player] = true
-end)
+	end)
+end
 
--- periodic autosave
-task.spawn(function()
-	while true do
-		task.wait(90)
-		for _, player in Players:GetPlayers() do
-			task.spawn(save, player)
+-- Test hook: install a profile directly.
+function Profiles._set(player, profile)
+	live[player] = profile
+end
+
+return Profiles
+]]></string>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="26">
+        <Properties>
+          <string name="Name">Trading</string>
+          <string name="Source"><![CDATA[--!nonstrict
+-- Player-to-player trading, server authoritative.
+--
+--   request -> (other player) accept -> both edit offers -> both READY ->
+--   short countdown -> ownership re-checked -> atomic swap -> both profiles saved
+--
+-- Anti-scam / anti-dupe rules:
+--   * any change to either offer clears both READY flags and the countdown
+--   * offers are validated against the live inventory on every change AND again
+--     at the moment of the swap (items enchanted/forged away mid-trade fail it)
+--   * inventory actions (enchant, forge) are refused while a player is trading
+--   * the swap moves the exact weapon records (uids are globally unique) and is
+--     done in one server step; both profiles are saved immediately afterwards
+--   * profiles are session-locked (Profiles.luau), so a player can't hop servers
+--
+-- Dependencies are injected so the whole flow runs in the headless tests.
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Veil = ReplicatedStorage:WaitForChild("Veil")
+local Items = require(Veil.Data.Items)
+
+local Inventory = require(script.Parent.Inventory)
+
+local Trading = {}
+Trading.__index = Trading
+
+local REQUEST_TTL = 30
+
+-- deps: getProfile(p), send(p, msg), save(p), now(), isBusy(p)?, log(msg)?
+function Trading.new(deps)
+	local self = setmetatable({}, Trading)
+	self.deps = deps
+	self.requests = {} -- [target] = { [from] = expiry }
+	self.trades = {} -- [player] = trade
+	self.nextId = 1
+	return self
+end
+
+function Trading:inTrade(p): boolean
+	return self.trades[p] ~= nil
+end
+
+local function emptyOffer()
+	return { weapons = {}, res = {} }
+end
+
+local function otherOf(t, p)
+	return t.a == p and t.b or t.a
+end
+
+-- Validate an offer against an inventory. Returns a clean copy or nil + reason.
+function Trading.validateOffer(inv, offer)
+	if type(offer) ~= "table" then
+		return nil, "bad offer"
+	end
+	local clean = emptyOffer()
+	local seen = {}
+	if offer.weapons ~= nil then
+		if type(offer.weapons) ~= "table" then
+			return nil, "bad offer"
+		end
+		for _, uid in offer.weapons do
+			if type(uid) ~= "string" or seen[uid] then
+				return nil, "bad weapon"
+			end
+			if not Inventory.findWeapon(inv, uid) then
+				return nil, "you don't own that weapon"
+			end
+			seen[uid] = true
+			table.insert(clean.weapons, uid)
+			if #clean.weapons > Items.TradeMaxWeapons then
+				return nil, "too many weapons (max " .. Items.TradeMaxWeapons .. ")"
+			end
 		end
 	end
-end)
+	if offer.res ~= nil then
+		if type(offer.res) ~= "table" then
+			return nil, "bad offer"
+		end
+		for id, n in offer.res do
+			if not Items.ResourceById[id] then
+				return nil, "unknown resource"
+			end
+			if type(n) ~= "number" or n ~= n or n < 0 or math.floor(n) ~= n then
+				return nil, "bad amount"
+			end
+			if n > Inventory.count(inv, id) then
+				return nil, "not enough " .. Items.ResourceById[id].name
+			end
+			if n > 0 then
+				clean.res[id] = n
+			end
+		end
+	end
+	return clean
+end
+
+-- What the client is shown for an offer (weapon records resolved).
+local function describe(inv, offer)
+	local out = { weapons = {}, res = table.clone(offer.res) }
+	for _, uid in offer.weapons do
+		local w = Inventory.findWeapon(inv, uid)
+		if w then
+			table.insert(out.weapons, { uid = w.uid, item = w.item, ench = w.ench })
+		end
+	end
+	return out
+end
+
+function Trading:broadcast(t)
+	local now = self.deps.now()
+	for _, p in { t.a, t.b } do
+		local o = otherOf(t, p)
+		local mine = self.deps.getProfile(p)
+		local theirs = self.deps.getProfile(o)
+		if mine and theirs then
+			self.deps.send(p, {
+				op = "state",
+				id = t.id,
+				with = o.UserId,
+				mine = describe(mine.inv, t.offers[p]),
+				theirs = describe(theirs.inv, t.offers[o]),
+				readyMe = t.ready[p],
+				readyThem = t.ready[o],
+				countdown = t.confirmAt and math.max(0, t.confirmAt - now) or nil,
+			})
+		end
+	end
+end
+
+function Trading:request(from, to)
+	if from == to or not to or not to.Parent then
+		return false, "can't trade with that player"
+	end
+	if self.trades[from] or self.trades[to] then
+		return false, "already trading"
+	end
+	if self.deps.isBusy and (self.deps.isBusy(from) or self.deps.isBusy(to)) then
+		return false, "player is in a match"
+	end
+	self.requests[to] = self.requests[to] or {}
+	self.requests[to][from] = self.deps.now() + REQUEST_TTL
+	self.deps.send(to, { op = "request", from = from.UserId, name = from.DisplayName })
+	return true
+end
+
+function Trading:respond(to, from, accept: boolean)
+	local list = self.requests[to]
+	local exp = list and list[from]
+	if not exp or exp < self.deps.now() then
+		return false, "request expired"
+	end
+	list[from] = nil
+	if not accept then
+		self.deps.send(from, { op = "declined", by = to.UserId })
+		return true
+	end
+	if self.trades[from] or self.trades[to] then
+		return false, "already trading"
+	end
+	if not from.Parent then
+		return false, "player left"
+	end
+	local t = {
+		id = self.nextId,
+		a = from,
+		b = to,
+		offers = { [from] = emptyOffer(), [to] = emptyOffer() },
+		ready = { [from] = false, [to] = false },
+		confirmAt = nil,
+	}
+	self.nextId += 1
+	self.trades[from] = t
+	self.trades[to] = t
+	self.deps.send(from, { op = "open", id = t.id, with = to.UserId, name = to.DisplayName })
+	self.deps.send(to, { op = "open", id = t.id, with = from.UserId, name = from.DisplayName })
+	self:broadcast(t)
+	return true
+end
+
+function Trading:offer(p, offer)
+	local t = self.trades[p]
+	if not t then
+		return false, "not trading"
+	end
+	local prof = self.deps.getProfile(p)
+	if not prof then
+		return false, "no profile"
+	end
+	local clean, why = Trading.validateOffer(prof.inv, offer)
+	if not clean then
+		return false, why
+	end
+	t.offers[p] = clean
+	-- any change resets both sides
+	t.ready[t.a] = false
+	t.ready[t.b] = false
+	t.confirmAt = nil
+	self:broadcast(t)
+	return true
+end
+
+function Trading:setReady(p, on: boolean)
+	local t = self.trades[p]
+	if not t then
+		return false, "not trading"
+	end
+	t.ready[p] = on == true
+	if t.ready[t.a] and t.ready[t.b] then
+		t.confirmAt = self.deps.now() + Items.TradeConfirmSeconds
+	else
+		t.confirmAt = nil
+	end
+	self:broadcast(t)
+	return true
+end
+
+function Trading:close(t, reason: string, okResult)
+	self.trades[t.a] = nil
+	self.trades[t.b] = nil
+	for _, p in { t.a, t.b } do
+		if p.Parent then
+			local prof = self.deps.getProfile(p)
+			self.deps.send(p, {
+				op = okResult and "done" or "closed",
+				id = t.id,
+				reason = reason,
+				inv = prof and Inventory.snapshot(prof.inv) or nil,
+			})
+		end
+	end
+end
+
+function Trading:cancel(p, reason: string?)
+	local t = self.trades[p]
+	if not t then
+		return false
+	end
+	self:close(t, reason or "cancelled")
+	return true
+end
+
+-- The swap. Re-validates both sides against the live inventories first.
+function Trading:execute(t)
+	local pa, pb = self.deps.getProfile(t.a), self.deps.getProfile(t.b)
+	if not pa or not pb then
+		self:close(t, "a profile is missing")
+		return false
+	end
+	local oa = Trading.validateOffer(pa.inv, t.offers[t.a])
+	local ob = Trading.validateOffer(pb.inv, t.offers[t.b])
+	if not oa or not ob then
+		self:close(t, "an item changed during the trade")
+		return false
+	end
+	-- capacity
+	if #pa.inv.weapons - #oa.weapons + #ob.weapons > Items.MaxWeapons or #pb.inv.weapons - #ob.weapons + #oa.weapons > Items.MaxWeapons then
+		self:close(t, "inventory full")
+		return false
+	end
+	-- move weapons (same records, same uids)
+	local moveA, moveB = {}, {}
+	for _, uid in oa.weapons do
+		table.insert(moveA, Inventory.takeWeapon(pa.inv, uid))
+	end
+	for _, uid in ob.weapons do
+		table.insert(moveB, Inventory.takeWeapon(pb.inv, uid))
+	end
+	for _, rec in moveA do
+		table.insert(pb.inv.weapons, rec)
+	end
+	for _, rec in moveB do
+		table.insert(pa.inv.weapons, rec)
+	end
+	-- move resources
+	Inventory.spend(pa.inv, oa.res)
+	Inventory.spend(pb.inv, ob.res)
+	Inventory.addResources(pb.inv, oa.res)
+	Inventory.addResources(pa.inv, ob.res)
+	pa.stats.trades = (pa.stats.trades or 0) + 1
+	pb.stats.trades = (pb.stats.trades or 0) + 1
+	if self.deps.log then
+		self.deps.log(string.format("trade %d: %d -> %d [%s] / %d -> %d [%s]", t.id, t.a.UserId, t.b.UserId, table.concat(oa.weapons, ","), t.b.UserId, t.a.UserId, table.concat(ob.weapons, ",")))
+	end
+	self:close(t, "trade complete", true)
+	self.deps.save(t.a)
+	self.deps.save(t.b)
+	return true
+end
+
+-- Call regularly: finishes countdowns and expires stale requests.
+function Trading:step()
+	local now = self.deps.now()
+	local done = {}
+	for _, t in self.trades do
+		if t.confirmAt and now >= t.confirmAt and not done[t] then
+			done[t] = true
+		end
+	end
+	for t in done do
+		self:execute(t)
+	end
+	for to, list in self.requests do
+		for from, exp in list do
+			if exp < now then
+				list[from] = nil
+			end
+		end
+		if next(list) == nil then
+			self.requests[to] = nil
+		end
+	end
+end
+
+function Trading:playerLeft(p)
+	self:cancel(p, "the other player left")
+	self.requests[p] = nil
+	for _, list in self.requests do
+		list[p] = nil
+	end
+end
+
+-- Pending incoming requests for a player: { { from = Player, expires } }
+function Trading:incoming(p)
+	local out = {}
+	for from, exp in self.requests[p] or {} do
+		table.insert(out, { from = from, expires = exp })
+	end
+	return out
+end
+
+return Trading
 ]]></string>
         </Properties>
       </Item>
     </Item>
   </Item>
-  <Item class="SoundService" referent="20">
+  <Item class="SoundService" referent="27">
     <Properties>
       <string name="Name">SoundService</string>
       <token name="AmbientReverb">0</token>
       <bool name="RespectFilteringEnabled">true</bool>
     </Properties>
   </Item>
-  <Item class="StarterGui" referent="21">
+  <Item class="StarterGui" referent="28">
     <Properties>
       <string name="Name">StarterGui</string>
       <bool name="ResetPlayerGuiOnSpawn">false</bool>
     </Properties>
   </Item>
-  <Item class="StarterPlayer" referent="22">
+  <Item class="StarterPlayer" referent="29">
     <Properties>
       <string name="Name">StarterPlayer</string>
     </Properties>
-    <Item class="StarterPlayerScripts" referent="23">
+    <Item class="StarterPlayerScripts" referent="30">
       <Properties>
         <string name="Name">StarterPlayerScripts</string>
       </Properties>
-      <Item class="Folder" referent="24">
+      <Item class="Folder" referent="31">
         <Properties>
           <string name="Name">VeilClient</string>
         </Properties>
-        <Item class="Folder" referent="25">
+        <Item class="Folder" referent="32">
           <Properties>
             <string name="Name">Core</string>
           </Properties>
-          <Item class="ModuleScript" referent="26">
+          <Item class="ModuleScript" referent="33">
             <Properties>
               <string name="Name">Audio</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -6993,7 +8780,7 @@ return Audio
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="27">
+          <Item class="ModuleScript" referent="34">
             <Properties>
               <string name="Name">Input</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -7344,13 +9131,133 @@ return Input
 ]]></string>
             </Properties>
           </Item>
+          <Item class="ModuleScript" referent="35">
+            <Properties>
+              <string name="Name">Voice</string>
+              <string name="Source"><![CDATA[--!nonstrict
+-- Spoken lines through Roblox's built-in text-to-speech (AudioTextToSpeech, part of
+-- the audio API). It reads the game's own original lines (intros, victory quotes,
+-- story dialogue, the announcer) with a voice profile per character.
+--
+-- It is feature-detected: if the experience/Studio version doesn't offer
+-- AudioTextToSpeech, or a line fails to load, Voice.say returns false and callers
+-- fall back to the synthesized voice grunts. The first failure disables it for the
+-- session so it never spams errors.
+
+local SoundService = game:GetService("SoundService")
+local Debris = game:GetService("Debris")
+
+local Voice = {}
+
+Voice.enabled = true
+Voice.volume = 0.85
+
+-- VoiceId values are Roblox's built-in TTS voices; Pitch / Speed shape each cast
+-- member. If your Studio lists different voice ids, change them here.
+Voice.PROFILES = {
+	male = { id = "1", pitch = 1.0, speed = 1.05 },
+	female = { id = "2", pitch = 1.05, speed = 1.05 },
+	deep = { id = "1", pitch = 0.72, speed = 0.9 },
+	hollow = { id = "2", pitch = 0.82, speed = 0.88 },
+	announcer = { id = "1", pitch = 0.8, speed = 0.95 },
+	system = { id = "2", pitch = 1.2, speed = 1.15 },
+}
+
+local supported = nil
+local channels = {}
+
+function Voice.isSupported(): boolean
+	if supported ~= nil then
+		return supported
+	end
+	local ok, inst = pcall(Instance.new, "AudioTextToSpeech")
+	supported = ok and inst ~= nil
+	if ok and inst then
+		inst:Destroy()
+	end
+	return supported
+end
+
+local function stopChannel(name: string)
+	local cur = channels[name]
+	if cur then
+		channels[name] = nil
+		pcall(function()
+			cur:Pause()
+			cur:Destroy()
+		end)
+	end
+end
+
+-- Speak `text` with a profile ("male", "deep", "announcer"...). One line per
+-- channel: a new line on the same channel cuts the previous one off.
+-- Returns true if text-to-speech is handling it.
+function Voice.say(text: string, profile: string?, opts): boolean
+	if not Voice.enabled or not text or text == "" or not Voice.isSupported() then
+		return false
+	end
+	opts = opts or {}
+	local prof = Voice.PROFILES[profile or "male"] or Voice.PROFILES.male
+	local channel = opts.channel or "dialogue"
+	stopChannel(channel)
+	local ok = pcall(function()
+		local tts = Instance.new("AudioTextToSpeech")
+		tts.Text = text
+		tts.VoiceId = prof.id
+		tts.Pitch = prof.pitch
+		tts.Speed = prof.speed
+		tts.Volume = math.clamp(Voice.volume * (opts.volume or 1), 0, 3)
+		local out = Instance.new("AudioDeviceOutput")
+		out.Parent = tts
+		local wire = Instance.new("Wire")
+		wire.SourceInstance = tts
+		wire.TargetInstance = out
+		wire.Parent = tts
+		tts.Parent = SoundService
+		channels[channel] = tts
+		Debris:AddItem(tts, 15)
+		task.spawn(function()
+			local loaded, status = pcall(function()
+				return tts:LoadAsync()
+			end)
+			if not loaded or status ~= Enum.AssetFetchStatus.Success then
+				if not loaded then
+					supported = false
+				end
+				if channels[channel] == tts then
+					channels[channel] = nil
+				end
+				tts:Destroy()
+				return
+			end
+			if channels[channel] == tts then
+				tts:Play()
+			end
+		end)
+	end)
+	if not ok then
+		supported = false
+	end
+	return ok
+end
+
+function Voice.stopAll()
+	for name in channels do
+		stopChannel(name)
+	end
+end
+
+return Voice
+]]></string>
+            </Properties>
+          </Item>
         </Item>
-        <Item class="LocalScript" referent="28">
+        <Item class="LocalScript" referent="36">
           <Properties>
             <string name="Name">Main</string>
             <string name="Source"><![CDATA[--!nonstrict
 -- OOF COMBAT client entry point: builds the UI root and runs the game flow
--- (title -> main menu -> Story / Ascent / Versus / Practice / Move List / Settings).
+-- (title -> main menu -> Story / Tower / Versus / Online / Practice / Move List / Settings).
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -7363,6 +9270,8 @@ local Fighters = require(Veil.Data.Fighters)
 local Echoes = require(Veil.Data.Echoes)
 local Story = require(Veil.Data.Story)
 local Config = require(Veil.Config)
+local StageVariants = require(Veil.Data.StageVariants)
+local Items = require(Veil.Data.Items)
 
 local Client = script.Parent
 local Theme = require(Client.UI.Theme)
@@ -7375,6 +9284,10 @@ local Cutscene = require(Client.Render.Cutscene)
 local StageBuilder = require(Client.Render.StageBuilder)
 local FightCamera = require(Client.Render.FightCamera)
 local CineFX = require(Client.Render.CineFX)
+local Voice = require(Client.Core.Voice)
+local Net = require(Client.Net.Net)
+local Toast = require(Client.UI.Toast)
+local OnlineScreens = require(Client.UI.OnlineScreens)
 
 -------------------------------------------------------------------------------
 -- Boot
@@ -7400,6 +9313,7 @@ gui.DisplayOrder = 10
 gui.Parent = player:WaitForChild("PlayerGui")
 local root = Theme.root(gui)
 Subtitles.mount(root)
+Toast.mount(root)
 
 -- a quiet backdrop behind menus
 local camera = workspace.CurrentCamera
@@ -7412,10 +9326,48 @@ Lighting.ClockTime = 0.5
 -------------------------------------------------------------------------------
 
 local profile = {
-	settings = { music = 0.6, sfx = 0.8, voice = 0.85, subtitles = true, shake = true, flashes = true, difficulty = 2, touch = "auto" },
+	settings = { music = 0.6, sfx = 0.8, voice = 0.85, subtitles = true, shake = true, flashes = true, tts = true, difficulty = 2, touch = "auto" },
 	stats = { wins = 0, losses = 0, ascents = 0, finishers = 0, storyDone = false },
 }
 local remotes = ReplicatedStorage:WaitForChild("VeilRemotes", 10)
+Net.start(remotes)
+
+-- incoming challenges / trade requests (answered from ONLINE > REQUESTS)
+local pendingRequests = {}
+local inFight = false
+local function addRequest(kind: string, msg)
+	for i = #pendingRequests, 1, -1 do
+		local r = pendingRequests[i]
+		if r.kind == kind and r.from == msg.from then
+			table.remove(pendingRequests, i)
+		end
+	end
+	table.insert(pendingRequests, { kind = kind, from = msg.from, name = msg.name, stageName = msg.stageName, expires = os.clock() + 25 })
+end
+local function liveRequests()
+	for i = #pendingRequests, 1, -1 do
+		if pendingRequests[i].expires < os.clock() then
+			table.remove(pendingRequests, i)
+		end
+	end
+	return pendingRequests
+end
+Net.onOnline.Event:Connect(function(msg)
+	if msg.op == "challenge" then
+		addRequest("challenge", msg)
+		Toast.show(string.upper(msg.name) .. " CHALLENGED YOU", inFight and "Finish your fight, then ONLINE > REQUESTS" or "Open ONLINE > REQUESTS to accept", Theme.Colors.crimsonBright, 7)
+	elseif msg.op == "declined" then
+		Toast.show(string.upper(msg.name or "THEY") .. " DECLINED", nil, Theme.Colors.textDim)
+	elseif msg.op == "error" then
+		Toast.show("ONLINE", msg.err, Theme.Colors.crimsonBright)
+	end
+end)
+Net.onTrade.Event:Connect(function(msg)
+	if msg.op == "request" then
+		addRequest("trade", msg)
+		Toast.show(string.upper(msg.name) .. " WANTS TO TRADE", "Open ONLINE > REQUESTS to accept", Theme.Colors.goldBright, 7)
+	end
+end)
 
 task.spawn(function()
 	if not remotes then
@@ -7449,6 +9401,8 @@ local function applySettings()
 	Subtitles.enabled = profile.settings.subtitles ~= false
 	FightCamera.setShakeScale(profile.settings.shake == false and 0 or 1)
 	CineFX.flashesEnabled = profile.settings.flashes ~= false
+	Voice.enabled = profile.settings.tts ~= false
+	Voice.volume = profile.settings.voice or 0.85
 end
 applySettings()
 
@@ -7501,6 +9455,14 @@ local function runFight(opts, cover)
 
 	local fightOpts = table.clone(opts)
 	fightOpts.root = root
+	if not opts.online then
+		-- your equipped weapon skin shows on your fighter in every mode
+		fightOpts.p1 = table.clone(opts.p1)
+		fightOpts.p1.cosmetic = fightOpts.p1.cosmetic or Net.cosmeticFor(opts.p1.fighter)
+		if not opts.training and not opts.variant then
+			fightOpts.variant = StageVariants.roll(opts.stage, math.random())
+		end
+	end
 	fightOpts.settings = profile.settings
 	fightOpts.forceTouch = profile.settings.touch == "on"
 	fightOpts.noTouch = profile.settings.touch == "off"
@@ -7515,7 +9477,7 @@ local function runFight(opts, cover)
 		task.spawn(function()
 			view:setPaused(true)
 			Audio.ui("ui_back")
-			local r = Screens.pause(root, { noRestart = opts.noRestart })
+			local r = Screens.pause(root, { noRestart = opts.noRestart or opts.online ~= nil, quitText = opts.online and "FORFEIT" or nil })
 			while r == "movelist" or r == "settings" do
 				if r == "movelist" then
 					Screens.moveList(root, opts.p1.fighter)
@@ -7532,17 +9494,27 @@ local function runFight(opts, cover)
 			elseif r == "restart" then
 				finish({ kind = "restart" })
 			elseif r == "quit" then
-				finish({ kind = "quit" })
+				if opts.online then
+					Net.online({ op = "forfeit" })
+				else
+					finish({ kind = "quit" })
+				end
 			end
 		end)
 	end
 
+	inFight = true
 	view = FightView.new(fightOpts)
+	if opts.online then
+		-- loaded: the server starts the clock once both players are in
+		Net.online({ op = "ready", id = opts.online.spec.id })
+	end
 	Screens.fadeFromBlack(cover, 0.7)
 	if not outcome then
 		finished.Event:Wait()
 	end
 	finished:Destroy()
+	inFight = false
 	local out = Screens.fadeToBlack(root, 0.45)
 	view:destroy()
 	StageBuilder.clear()
@@ -7552,6 +9524,24 @@ end
 local function recordResult(result)
 	if not result then
 		return
+	end
+	-- a small resource reward for finishing a CPU fight (the server rate-limits it)
+	if Net.available then
+		task.spawn(function()
+			local res = Net.request("claim")
+			if res.ok and res.rewards then
+				local parts = {}
+				for _, r in Items.Resources do
+					local n = res.rewards[r.id]
+					if n and n > 0 then
+						table.insert(parts, "+" .. n .. " " .. r.name)
+					end
+				end
+				if #parts > 0 then
+					Toast.show("REWARD", table.concat(parts, "   "), Theme.Colors.goldBright)
+				end
+			end
+		end)
 	end
 	local delta = {}
 	if result.winner == 1 then
@@ -7584,8 +9574,10 @@ local function runVersus()
 			local p1 = { fighter = sel.fighter, echo = sel.echo }
 			local p2 = { fighter = sel.opp, echo = sel.oppEcho, cpu = true, difficulty = diff }
 			while true do
-				local cover = Screens.versus(root, p1, p2, stageId)
-				local outcome, out = runFight({ p1 = p1, p2 = p2, stage = stageId }, cover)
+				local variant = StageVariants.roll(stageId, math.random())
+				local vname = StageVariants.get(variant).name
+				local cover = Screens.versus(root, p1, p2, stageId, vname ~= "" and ("CONDITIONS: " .. vname) or nil)
+				local outcome, out = runFight({ p1 = p1, p2 = p2, stage = stageId, variant = variant }, cover)
 				if outcome.kind == "restart" then
 					Screens.fadeFromBlack(out, 0.1)
 				elseif outcome.kind == "quit" then
@@ -7729,6 +9721,128 @@ local function runStory()
 end
 
 -------------------------------------------------------------------------------
+-- Online
+-------------------------------------------------------------------------------
+
+-- Fighter + friend + map for an online match.
+local function pickLoadout(heading: string)
+	local sel = Screens.characterSelect(root, { title = heading, subtitle = "YOUR EQUIPPED WEAPON SKIN COMES WITH YOU" })
+	if not sel then
+		return nil
+	end
+	local stageId = Screens.stageSelect(root, nil, { online = true })
+	if not stageId then
+		return nil
+	end
+	return { fighter = sel.fighter, echo = sel.echo, stage = stageId }
+end
+
+local function runOnlineMatch(startMsg)
+	local spec, side = startMsg.spec, startMsg.side
+	local p1 = { fighter = spec.p1.fighter, echo = spec.p1.echo, cosmetic = spec.p1.cosmetic }
+	local p2 = { fighter = spec.p2.fighter, echo = spec.p2.echo, cosmetic = spec.p2.cosmetic }
+	local vname = StageVariants.get(spec.variant).name
+	local sub = string.format("ONLINE  \u{00B7}  %s  VS  %s  \u{00B7}  MAP PICKED BY %s%s", string.upper(spec.p1.name), string.upper(spec.p2.name), string.upper(spec.stagePickedBy or "?"), vname ~= "" and ("  \u{00B7}  " .. vname) or "")
+	local cover = Screens.versus(root, p1, p2, spec.stage, sub)
+	local outcome, out = runFight({
+		p1 = p1,
+		p2 = p2,
+		stage = spec.stage,
+		variant = spec.variant,
+		seed = spec.seed,
+		online = { side = side, spec = spec, net = Net },
+	}, cover)
+	Screens.fadeFromBlack(out, 0.4)
+	if outcome and outcome.result then
+		OnlineScreens.results(root, outcome.result)
+	end
+end
+
+local START_OPS = { start = true, declined = true, error = true, cancelled = true }
+
+local function waitForMatch(heading: string, sub: string?, onCancel)
+	local op, msg = OnlineScreens.wait(root, heading, sub, { ops = START_OPS, onCancel = onCancel, timeout = 120 })
+	if op == "start" then
+		runOnlineMatch(msg)
+	elseif op == "timeout" and onCancel then
+		onCancel()
+	end
+end
+
+local function openTrade(info)
+	OnlineScreens.trade(root, info)
+end
+
+local function runOnline()
+	if not Net.available then
+		Screens.card(root, "ONLINE", "NO SERVER", "Online play needs the game running on a Roblox server. In Studio use Test > Clients and Servers with 2 players, or publish and play with a friend.", { darkness = 0.7 })
+		return
+	end
+	local start = 1
+	while true do
+		local choice, idx = OnlineScreens.hub(root, { pending = #liveRequests(), start = start })
+		start = idx or start
+		if not choice then
+			return
+		elseif choice == "quick" then
+			local pick = pickLoadout("QUICK MATCH: CHOOSE YOUR FIGHTER")
+			if pick then
+				Net.online({ op = "queue", pick = pick })
+				waitForMatch("SEARCHING FOR A RIVAL", "PLAYERS IN SERVER: " .. #Players:GetPlayers(), function()
+					Net.online({ op = "unqueue" })
+				end)
+			end
+		elseif choice == "challenge" then
+			local target = OnlineScreens.pickPlayer(root, "CHALLENGE WHO?")
+			if target then
+				local pick = pickLoadout("CHALLENGE " .. string.upper(target.DisplayName) .. ": CHOOSE YOUR FIGHTER")
+				if pick then
+					Net.online({ op = "challenge", target = target.UserId, pick = pick })
+					waitForMatch("WAITING FOR " .. string.upper(target.DisplayName), "THEY HAVE 25 SECONDS TO ACCEPT")
+				end
+			end
+		elseif choice == "requests" then
+			local req = OnlineScreens.requests(root, liveRequests())
+			if req then
+				table.remove(pendingRequests, table.find(pendingRequests, req))
+				if req.kind == "challenge" then
+					local pick = pickLoadout("ACCEPT " .. string.upper(req.name) .. "'S CHALLENGE")
+					if pick then
+						Net.online({ op = "respond", from = req.from, accept = true, pick = pick })
+						waitForMatch("STARTING MATCH", nil)
+					else
+						Net.online({ op = "respond", from = req.from, accept = false })
+					end
+				else
+					Net.trade({ op = "respond", from = req.from, accept = true })
+					local op, msg = OnlineScreens.wait(root, "OPENING TRADE", nil, { tradeOps = { open = true, error = true }, timeout = 10 })
+					if op == "open" then
+						openTrade({ with = msg.with, name = msg.name })
+					end
+				end
+			end
+		elseif choice == "trade" then
+			local target = OnlineScreens.pickPlayer(root, "TRADE WITH WHO?")
+			if target then
+				Net.trade({ op = "request", target = target.UserId })
+				local op, msg = OnlineScreens.wait(root, "WAITING FOR " .. string.upper(target.DisplayName), "THEY HAVE 30 SECONDS TO ACCEPT", { tradeOps = { open = true, declined = true, error = true }, timeout = 32 })
+				if op == "open" then
+					openTrade({ with = msg.with, name = msg.name })
+				elseif op == "declined" then
+					Toast.show(string.upper(target.DisplayName) .. " DECLINED THE TRADE", nil, Theme.Colors.textDim)
+				end
+			end
+		elseif choice == "inventory" then
+			OnlineScreens.inventory(root)
+		elseif choice == "altar" then
+			OnlineScreens.altar(root)
+		elseif choice == "forge" then
+			OnlineScreens.forge(root)
+		end
+	end
+end
+
+-------------------------------------------------------------------------------
 -- Main loop
 -------------------------------------------------------------------------------
 
@@ -7744,6 +9858,8 @@ while true do
 			runAscent()
 		elseif choice == "practice" then
 			runPractice()
+		elseif choice == "online" then
+			runOnline()
 		elseif choice == "movelist" then
 			Screens.moveList(root)
 		elseif choice == "settings" then
@@ -7775,11 +9891,151 @@ end
 ]]></string>
           </Properties>
         </Item>
-        <Item class="Folder" referent="29">
+        <Item class="Folder" referent="37">
+          <Properties>
+            <string name="Name">Net</string>
+          </Properties>
+          <Item class="ModuleScript" referent="38">
+            <Properties>
+              <string name="Name">Net</string>
+              <string name="Source"><![CDATA[--!nonstrict
+-- Client side of the multiplayer remotes. Caches the latest inventory snapshot and
+-- re-broadcasts server messages as local signals so screens can listen safely.
+-- When the remotes aren't there (offline tests) everything reports unavailable.
+
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local Net = {}
+
+Net.onOnline = Instance.new("BindableEvent")
+Net.onTrade = Instance.new("BindableEvent")
+Net.onInventory = Instance.new("BindableEvent")
+Net.inv = { res = {}, weapons = {}, equipped = {} }
+Net.available = false
+
+local remotes = nil
+
+function Net.start(folder)
+	remotes = folder
+	if not remotes then
+		return
+	end
+	local online = remotes:FindFirstChild("Online")
+	local trade = remotes:FindFirstChild("Trade")
+	if not online or not trade or not remotes:FindFirstChild("Inventory") then
+		return
+	end
+	Net.available = true
+	online.OnClientEvent:Connect(function(msg)
+		if type(msg) ~= "table" then
+			return
+		end
+		if msg.inv then
+			Net.setInventory(msg.inv)
+		end
+		Net.onOnline:Fire(msg)
+	end)
+	trade.OnClientEvent:Connect(function(msg)
+		if type(msg) ~= "table" then
+			return
+		end
+		if msg.inv then
+			Net.setInventory(msg.inv)
+		end
+		Net.onTrade:Fire(msg)
+	end)
+	task.spawn(function()
+		Net.request("get")
+	end)
+end
+
+function Net.setInventory(inv)
+	if type(inv) == "table" and type(inv.weapons) == "table" then
+		Net.inv = inv
+		Net.onInventory:Fire(inv)
+	end
+end
+
+-- Inventory remote function: returns the server reply table (never errors).
+function Net.request(op: string, arg)
+	if not remotes then
+		return { ok = false, err = "offline" }
+	end
+	local fn = remotes:FindFirstChild("Inventory")
+	if not fn then
+		return { ok = false, err = "offline" }
+	end
+	local ok, res = pcall(function()
+		return fn:InvokeServer(op, arg)
+	end)
+	if not ok or type(res) ~= "table" then
+		return { ok = false, err = "the server didn't answer" }
+	end
+	if res.inv then
+		Net.setInventory(res.inv)
+	end
+	return res
+end
+
+function Net.online(msg)
+	local ev = remotes and remotes:FindFirstChild("Online")
+	if ev then
+		ev:FireServer(msg)
+	end
+end
+
+function Net.trade(msg)
+	local ev = remotes and remotes:FindFirstChild("Trade")
+	if ev then
+		ev:FireServer(msg)
+	end
+end
+
+function Net.sendInput(held: number, pressed: number)
+	local ev = remotes and remotes:FindFirstChild("OnlineInput")
+	if ev then
+		ev:FireServer(held, pressed)
+	end
+end
+
+-- The cosmetic the local player has equipped on a fighter: { item, ench } or nil.
+function Net.cosmeticFor(fighterId: string)
+	local uid = Net.inv.equipped and Net.inv.equipped[fighterId]
+	if not uid then
+		return nil
+	end
+	for _, w in Net.inv.weapons do
+		if w.uid == uid then
+			return { item = w.item, ench = w.ench }
+		end
+	end
+	return nil
+end
+
+-- Other players in this server (for challenges and trades).
+function Net.others()
+	local out = {}
+	local me = Players.LocalPlayer
+	for _, p in Players:GetPlayers() do
+		if p ~= me then
+			table.insert(out, p)
+		end
+	end
+	return out
+end
+
+local _ = ReplicatedStorage
+return Net
+]]></string>
+            </Properties>
+          </Item>
+        </Item>
+        <Item class="Folder" referent="39">
           <Properties>
             <string name="Name">Render</string>
           </Properties>
-          <Item class="ModuleScript" referent="30">
+          <Item class="ModuleScript" referent="40">
             <Properties>
               <string name="Name">AnimSpring</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -7920,7 +10176,7 @@ return AnimSpring
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="31">
+          <Item class="ModuleScript" referent="41">
             <Properties>
               <string name="Name">CineFX</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -8331,7 +10587,201 @@ return CineFX
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="32">
+          <Item class="ModuleScript" referent="42">
+            <Properties>
+              <string name="Name">Cosmetics</string>
+              <string name="Source"><![CDATA[--!nonstrict
+-- Applies a player's equipped weapon skin and enchantment to a fighter rig.
+-- Purely visual: colours, materials, trail colours, particles and glow. Combat
+-- data never changes, so cosmetics can't buff or nerf anyone.
+
+local Veil = game:GetService("ReplicatedStorage"):WaitForChild("Veil")
+local Items = require(Veil.Data.Items)
+local Assets = require(Veil.Assets)
+
+local Cosmetics = {}
+
+local PRIMARY = {
+	[Enum.Material.Metal] = true,
+	[Enum.Material.CorrodedMetal] = true,
+	[Enum.Material.DiamondPlate] = true,
+	[Enum.Material.SmoothPlastic] = true,
+	[Enum.Material.Foil] = true,
+}
+local SECONDARY = {
+	[Enum.Material.Wood] = true,
+	[Enum.Material.Leather] = true,
+	[Enum.Material.Fabric] = true,
+	[Enum.Material.Grass] = true,
+}
+
+local function hex(h: string): Color3
+	return Color3.fromHex(h)
+end
+
+local function mat(name: string?)
+	if name and (Enum.Material :: any)[name] then
+		return (Enum.Material :: any)[name]
+	end
+	return nil
+end
+
+-- particle presets: texture, rate, speed, lifetime, size, accel, spread
+local PRESETS = {
+	fire = { tex = "Fire", rate = 18, speed = { 0.5, 1.5 }, life = { 0.3, 0.6 }, size = { 0.7, 0 }, accel = Vector3.new(0, 6, 0), emission = 1 },
+	frost = { tex = "Spark", rate = 14, speed = { 0.2, 0.6 }, life = { 0.6, 1.2 }, size = { 0.25, 0 }, accel = Vector3.new(0, -2, 0), emission = 0.8 },
+	bubbles = { tex = "Glow", rate = 8, speed = { 0.4, 1 }, life = { 0.8, 1.4 }, size = { 0.3, 0.45 }, accel = Vector3.new(0, 3, 0), emission = 0.4 },
+	drip = { tex = "Spark", rate = 10, speed = { 0, 0.3 }, life = { 0.5, 0.9 }, size = { 0.2, 0.05 }, accel = Vector3.new(0, -14, 0), emission = 0.6 },
+	sparks = { tex = "Spark", rate = 22, speed = { 3, 6 }, life = { 0.08, 0.2 }, size = { 0.25, 0 }, accel = Vector3.zero, emission = 1 },
+	smoke = { tex = "Smoke", rate = 10, speed = { 0.2, 0.6 }, life = { 0.6, 1.1 }, size = { 0.6, 1.4 }, accel = Vector3.new(0, 1, 0), emission = 0 },
+	sparkle = { tex = "Spark", rate = 10, speed = { 0, 0.3 }, life = { 0.4, 0.9 }, size = { 0.35, 0 }, accel = Vector3.zero, emission = 1 },
+	embers = { tex = "FireSparks", rate = 14, speed = { 0.5, 1.5 }, life = { 0.5, 1 }, size = { 0.35, 0 }, accel = Vector3.new(0, 4, 0), emission = 1 },
+}
+
+local function emitter(parent: BasePart, preset, color: Color3)
+	local p = PRESETS[preset] or PRESETS.sparkle
+	local e = Instance.new("ParticleEmitter")
+	e.Name = "EnchantFX"
+	e.Texture = Assets.Particles[p.tex] or Assets.Particles.Spark
+	e.Rate = p.rate
+	e.Speed = NumberRange.new(p.speed[1], p.speed[2])
+	e.Lifetime = NumberRange.new(p.life[1], p.life[2])
+	e.Size = NumberSequence.new(p.size[1], p.size[2])
+	e.Acceleration = p.accel
+	e.SpreadAngle = Vector2.new(180, 180)
+	e.Color = ColorSequence.new(color)
+	e.LightEmission = p.emission
+	e.LightInfluence = 0
+	e.Transparency = NumberSequence.new(0.1, 1)
+	e.Rotation = NumberRange.new(0, 360)
+	e.RotSpeed = NumberRange.new(-90, 90)
+	e.Parent = parent
+	return e
+end
+
+-- The biggest weapon part held in each hand: where effects attach.
+local function hosts(rig)
+	local best = {}
+	for _, entry in rig.weapon.parts do
+		local bone = entry.bone
+		if string.find(bone, "Hand") then
+			local p = entry.part
+			local size = p.Size.Magnitude
+			if not best[bone] or size > best[bone].Size.Magnitude then
+				best[bone] = p
+			end
+		end
+	end
+	local out = {}
+	for _, p in best do
+		table.insert(out, p)
+	end
+	return out
+end
+
+-- cosmetic = { item = weaponSkinId, ench = enchantId? }
+function Cosmetics.apply(rig, cosmetic)
+	if not cosmetic or not rig.weapon then
+		return false
+	end
+	local def = Items.WeaponById[cosmetic.item]
+	if not def or def.type ~= rig.weapon.type then
+		return false
+	end
+	local ench = cosmetic.ench and Items.EnchantById[cosmetic.ench]
+	local fx = ench and ench.fx or {}
+	local primary = fx.gold and hex("#FFD24A") or hex(def.primary)
+	local primaryMat = fx.gold and Enum.Material.Foil or mat(def.primaryMat)
+	local glow = hex(def.glow)
+	local glowParts = {}
+	for _, entry in rig.weapon.parts do
+		local p = entry.part
+		local m = p.Material
+		if m == Enum.Material.Neon or m == Enum.Material.Glass then
+			p.Color = glow
+			table.insert(glowParts, p)
+		elseif PRIMARY[m] then
+			p.Color = primary
+			if primaryMat then
+				p.Material = primaryMat
+			end
+			if primaryMat == Enum.Material.Neon then
+				table.insert(glowParts, p)
+			end
+		elseif SECONDARY[m] then
+			p.Color = hex(def.secondary)
+		end
+	end
+	local trailColor = fx.trail and hex(fx.trail) or glow
+	for _, tr in rig.weapon.trails do
+		tr.Color = ColorSequence.new(Color3.new(1, 1, 1), trailColor)
+	end
+	local state = { glowParts = glowParts, trails = rig.weapon.trails, lights = {}, emitters = {}, anim = fx.animated, glow = glow }
+	if ench then
+		for _, host in hosts(rig) do
+			table.insert(state.emitters, emitter(host, fx.particles, hex(fx.color)))
+			local l = Instance.new("PointLight")
+			l.Name = "EnchantGlow"
+			l.Color = hex(fx.light or fx.color)
+			l.Brightness = 1.6
+			l.Range = 7
+			l.Shadows = false
+			l.Parent = host
+			table.insert(state.lights, l)
+		end
+	end
+	rig.cosmetic = state
+	return true
+end
+
+-- Per-frame animated enchantments (rainbow, glitch, pulse).
+function Cosmetics.update(rig, t: number)
+	local st = rig.cosmetic
+	if not st or not st.anim then
+		return
+	end
+	if st.anim == "rainbow" then
+		local c = Color3.fromHSV((t * 0.35) % 1, 0.85, 1)
+		for _, p in st.glowParts do
+			p.Color = c
+		end
+		for _, l in st.lights do
+			l.Color = c
+		end
+		local seq = ColorSequence.new(Color3.new(1, 1, 1), c)
+		for _, tr in st.trails do
+			tr.Color = seq
+		end
+		for _, e in st.emitters do
+			e.Color = ColorSequence.new(c)
+		end
+	elseif st.anim == "glitch" then
+		-- hold a colour for a few frames, then snap to another (stuttery texture)
+		local slot = math.floor(t * 9)
+		if slot ~= st.slot then
+			st.slot = slot
+			local pick = (slot * 7919) % 3
+			local c = pick == 0 and hex("#FF2BD6") or (pick == 1 and hex("#2BE7FF") or st.glow)
+			for _, p in st.glowParts do
+				p.Color = c
+			end
+			for _, l in st.lights do
+				l.Color = c
+			end
+		end
+	elseif st.anim == "pulse" then
+		local k = 0.5 + 0.5 * math.sin(t * 6)
+		for _, l in st.lights do
+			l.Brightness = 0.8 + k * 2.4
+		end
+	end
+end
+
+return Cosmetics
+]]></string>
+            </Properties>
+          </Item>
+          <Item class="ModuleScript" referent="43">
             <Properties>
               <string name="Name">Cutscene</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -8366,6 +10816,7 @@ local FightCamera = require(script.Parent.FightCamera)
 local VFX = require(script.Parent.VFX)
 local Audio = require(Client.Core.Audio)
 local Input = require(Client.Core.Input)
+local Voice = require(Client.Core.Voice)
 local Theme = require(Client.UI.Theme)
 local Subtitles = require(Client.UI.Subtitles)
 
@@ -8422,6 +10873,38 @@ end
 local function addTo(pose, key: string, a: number, b: number, c: number)
 	local v = pose[key] or { 0, 0, 0 }
 	pose[key] = { (v[1] or 0) + a, (v[2] or 0) + b, (v[3] or 0) + c }
+end
+
+-- Face for an actor: from its gesture while talking, else from its base anim.
+local GESTURE_FACE = {
+	shout = "angry",
+	fist = "angry",
+	point = "focus",
+	sad = "sad",
+	nervous = "sad",
+	facepalm = "sad",
+	shrug = "neutral",
+	laugh = "happy",
+	wave = "happy",
+	flex = "angry",
+	cross = "focus",
+	think = "focus",
+}
+function Cutscene.expressionFor(a): string
+	if a.act then
+		return "angry"
+	end
+	if a.gesture and GESTURE_FACE[a.gesture] then
+		return GESTURE_FACE[a.gesture]
+	end
+	if a.anim == "dazed" then
+		return "ko"
+	elseif a.anim == "kneel" then
+		return "hurt"
+	elseif a.anim == "win" then
+		return "happy"
+	end
+	return GESTURE_FACE[a.anim] or "neutral"
 end
 
 -- Pick a gesture from how the line reads.
@@ -8794,6 +11277,7 @@ function Cutscene.play(scene, uiRoot: Instance)
 			a.y = y
 			local final = a.spring:step(pose, adt, snap)
 			Rig.apply(a.rig, rootCF(a.x, a.facing, y), final, { time = t })
+			Rig.setExpression(a.rig, Cutscene.expressionFor(a))
 			local _ = i
 		end
 		FightCamera.update(dt, -2, 0, 2, 0)
@@ -9063,7 +11547,8 @@ function Cutscene.play(scene, uiRoot: Instance)
 					runEvent({ type = "pop", text = line.pop, x = line.popX, y = line.popY })
 				end
 				Subtitles.show(Story.speakerNames[line.speaker] or line.speaker, line.text, d - 0.15, col)
-				if spk then
+				local profile = spk and spk.voice or (line.speaker == "system" and "system" or "announcer")
+				if not Voice.say(line.text, profile, { channel = "dialogue" }) and spk then
 					Audio.voice(spk.voice, "attack")
 				end
 				local ok = wait(d)
@@ -9123,7 +11608,7 @@ return Cutscene
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="33">
+          <Item class="ModuleScript" referent="44">
             <Properties>
               <string name="Name">FightCamera</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -9288,7 +11773,7 @@ return FightCamera
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="34">
+          <Item class="ModuleScript" referent="45">
             <Properties>
               <string name="Name">FightView</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -9311,12 +11796,15 @@ local Client = script.Parent.Parent
 local Rig = require(script.Parent.Rig)
 local Poses = require(script.Parent.Poses)
 local AnimSpring = require(script.Parent.AnimSpring)
+local Cosmetics = require(script.Parent.Cosmetics)
+local NetInput = require(Veil.Combat.NetInput)
 local StageBuilder = require(script.Parent.StageBuilder)
 local FightCamera = require(script.Parent.FightCamera)
 local VFX = require(script.Parent.VFX)
 local CineFX = require(script.Parent.CineFX)
 local Audio = require(Client.Core.Audio)
 local Input = require(Client.Core.Input)
+local Voice = require(Client.Core.Voice)
 local HUD = require(Client.UI.HUD)
 local Subtitles = require(Client.UI.Subtitles)
 local MobileControls = require(Client.UI.MobileControls)
@@ -9365,7 +11853,8 @@ function FightView.new(opts)
 	self.styles = { Poses.STYLE_OF[p1Def.stance] or "unarmed", Poses.STYLE_OF[p2Def.stance] or "unarmed" }
 
 	-- world
-	self.stage = StageBuilder.build(opts.stage)
+	self.online = opts.online -- { side, spec, net } for online matches
+	self.stage = StageBuilder.build(opts.stage, { variant = opts.variant })
 	local stageDef = Stages.get(opts.stage)
 	self.folder = Instance.new("Folder")
 	self.folder.Name = "VeilFight"
@@ -9398,6 +11887,9 @@ function FightView.new(opts)
 		if opts.training and side == 2 then
 			return "DUMMY"
 		end
+		if opts.online then
+			return side == opts.online.side and "YOU" or "RIVAL"
+		end
 		return spec.cpu and "CPU" or ("P" .. side)
 	end
 	self.tags = { tagFor(opts.p1, 1), tagFor(opts.p2, 2) }
@@ -9411,6 +11903,10 @@ function FightView.new(opts)
 		local rig = Rig.build(def.look, { name = def.name, world = workspace })
 		rig.model.Parent = self.folder
 		self.rigs[i] = rig
+		local spec = i == 1 and opts.p1 or opts.p2
+		if spec.cosmetic then
+			Cosmetics.apply(rig, spec.cosmetic)
+		end
 		self.anim[i] = { key = nil, start = 0, from = nil, last = Poses.stance(self.styles[i]), walkPhase = 0, idleOffset = i * 1.37 }
 		self.springs[i] = AnimSpring.new()
 		local hl = Instance.new("Highlight")
@@ -9432,12 +11928,18 @@ function FightView.new(opts)
 		g.LightInfluence = 0
 		g.Enabled = false
 		g.Parent = head
-		local isCpu = self.tags[i] ~= "P1" and self.tags[i] ~= "P2"
+		local isCpu = self.tags[i] ~= "P1" and self.tags[i] ~= "P2" and self.tags[i] ~= "YOU"
 		local accent = isCpu and Theme.Colors.text or Color3.fromHex(self.defs[i].accent)
 		local l = Instance.new("TextLabel")
 		l.BackgroundTransparency = 1
 		l.Size = UDim2.new(1, 0, 0, 26)
 		l.Text = self.tags[i]
+		if opts.online then
+			local ps = i == 1 and opts.online.spec.p1 or opts.online.spec.p2
+			l.Text = i == opts.online.side and "YOU" or string.upper(ps.name or "RIVAL")
+			g.Size = UDim2.fromOffset(240, 44)
+			l.TextScaled = true
+		end
 		l.FontFace = Theme.Fonts.labelBold
 		l.TextSize = 22
 		l.TextColor3 = accent
@@ -9466,19 +11968,21 @@ function FightView.new(opts)
 	-- power hotbar (keys 1-4) for the human player
 	local useTouch = (Input.mode == "touch" or opts.forceTouch) and not opts.noTouch
 	local powers = nil
-	if not opts.p1.cpu or opts.showPowers then
+	local powerSide = opts.online and opts.online.side or 1
+	if (powerSide == 1 and not opts.p1.cpu) or opts.online or opts.showPowers then
 		powers = {}
-		local f1 = self.match.fighters[1]
+		local fs = self.match.fighters[powerSide]
+		local sideDef = self.defs[powerSide]
 		for slot = 1, 4 do
-			local id = Engine.powerSlotId(f1, slot)
-			local mv = id and p1Def.moves[id]
+			local id = Engine.powerSlotId(fs, slot)
+			local mv = id and sideDef.moves[id]
 			if mv then
 				local cols = VFX.colors(mv.element)
 				table.insert(powers, { id = id, name = mv.name, key = Input.glyph("P" .. slot), color = cols[2] })
 			end
 		end
 	end
-	self.hud = HUD.new(opts.root, p1Def, p1Echo, p2Def, p2Echo, { training = opts.training, tags = self.tags, powers = powers, touchHotbar = useTouch })
+	self.hud = HUD.new(opts.root, p1Def, p1Echo, p2Def, p2Echo, { training = opts.training, tags = self.tags, powers = powers, touchHotbar = useTouch, powerSide = powerSide })
 	-- editing effects for supers / finishers (impact frames, speed lines)
 	self.cine = CineFX.new(self.hud.root, 22)
 	self.cine.vignette.Visible = false
@@ -9538,7 +12042,7 @@ function FightView.new(opts)
 		elseif action == "alt" and self.match.training then
 			self:cycleDummy()
 		elseif action == "confirm" or action == "back" then
-			if self.match.phase == "intro" then
+			if self.match.phase == "intro" and not self.online then
 				Engine.skipIntro(self.match)
 			end
 		end
@@ -9546,6 +12050,9 @@ function FightView.new(opts)
 	if self.match.phase == "intro" then
 		self:introCamera(1)
 		self.hud:cinema(true, 0.01)
+	end
+	if self.online then
+		self:startOnline()
 	end
 	return self
 end
@@ -9555,6 +12062,10 @@ end
 -------------------------------------------------------------------------------
 
 function FightView:setPaused(p: boolean)
+	if self.online then
+		-- an online match can't be paused: the menu opens over the live fight
+		return
+	end
 	self.paused = p
 	if self.touch then
 		self.touch:setVisible(not p)
@@ -9589,9 +12100,142 @@ function FightView:inputFor(i: number)
 	return Engine.NeutralInput
 end
 
+-------------------------------------------------------------------------------
+-- Online: replay the server's input stream through the same engine
+-------------------------------------------------------------------------------
+
+function FightView:startOnline()
+	local on = self.online
+	self.net = on.net
+	self.netFrames = {} -- frame number -> { mask1, mask2 }
+	self.netNext = 1
+	self.netLast = 0
+	self.netSyncs = {}
+	self.netHeld = 0
+	self.netPressed = 0
+	self.netSendT = 0
+	self.netCorrections = 0
+	table.insert(self.connections, self.net.onOnline.Event:Connect(function(msg)
+		if msg.id ~= on.spec.id then
+			return
+		end
+		if msg.op == "f" then
+			for k = 1, #msg.m, 2 do
+				local fr = msg.from + (k - 1) // 2
+				self.netFrames[fr] = { msg.m[k], msg.m[k + 1] }
+				self.netLast = math.max(self.netLast, fr)
+			end
+		elseif msg.op == "sync" then
+			self.netSyncs[msg.frame] = msg
+		elseif msg.op == "end" then
+			self.netEnd = msg
+		end
+	end))
+end
+
+-- Send the local controller state (on change, and at least 4 times a second).
+function FightView:sendOnlineInput(dt: number)
+	local mask = NetInput.encode(Input.fightState())
+	-- buttons newly pressed since the last packet (so quick taps are never lost)
+	local newly = 0
+	local bit = 1
+	local held, prev = mask, self.netHeld
+	while held > 0 or prev > 0 do
+		if held % 2 == 1 and prev % 2 == 0 then
+			newly += bit
+		end
+		held, prev = held // 2, prev // 2
+		bit *= 2
+	end
+	self.netPressed = NetInput.union(self.netPressed, newly)
+	self.netSendT += dt
+	if mask ~= self.netHeld or self.netPressed ~= 0 or self.netSendT >= 0.25 then
+		self.net.sendInput(mask, self.netPressed)
+		self.netPressed = 0
+		self.netSendT = 0
+	end
+	self.netHeld = mask
+end
+
+function FightView:onlineFrame(dt: number)
+	local m = self.match
+	self:sendOnlineInput(dt)
+	local scale = (m.slowmo and m.slowmo > 0) and 0.35 or 1
+	self.acc += dt * scale
+	local buffered = self.netLast - self.netNext + 1
+	-- keep a small cushion of frames; catch up quickly when behind
+	local maxSteps = buffered > 10 and 6 or 4
+	if buffered > 10 then
+		self.acc += DT * 2
+	end
+	local steps = 0
+	while self.acc >= DT and steps < maxSteps do
+		local fr = self.netFrames[self.netNext]
+		if not fr then
+			self.acc = math.min(self.acc, DT) -- waiting on the network
+			break
+		end
+		self.netFrames[self.netNext] = nil
+		self.netNext += 1
+		self.acc -= DT
+		steps += 1
+		for i, f in m.fighters do
+			self.prevPos[i].x = f.x
+			self.prevPos[i].y = f.y
+		end
+		Engine.step(m, NetInput.decode(fr[1]), NetInput.decode(fr[2]))
+		for _, ev in Engine.drainEvents(m) do
+			self:onEvent(ev)
+		end
+		local sync = self.netSyncs[m.frame]
+		if sync then
+			self.netSyncs[m.frame] = nil
+			self:applySync(sync)
+		end
+	end
+	-- the server ended it early (forfeit / disconnect)
+	if self.netEnd and self.netEnd.reason ~= "ko" and not self.ended then
+		self.ended = true
+		self.hud:announce(self.netEnd.winner == self.online.side and "YOU WIN" or "YOU LOSE", self.netEnd.reason == "disconnect" and "YOUR RIVAL DISCONNECTED" or "FORFEIT", { size = 90, hold = 2.2 })
+		task.delay(2.4, function()
+			if not self.destroyed and self.opts.onEnd then
+				self.opts.onEnd(self:result())
+			end
+		end)
+	end
+end
+
+-- The server's state check: any drift is corrected to the authoritative values.
+function FightView:applySync(sync)
+	local m = self.match
+	local drift = false
+	for i, f in m.fighters do
+		if f.hp ~= sync.hp[i] or math.abs(f.x - sync.x[i]) > 1e-6 then
+			drift = true
+			f.hp = sync.hp[i]
+			f.x = sync.x[i]
+			f.y = sync.y[i]
+			f.meter = sync.meter[i]
+			f.roundWins = sync.wins[i]
+		end
+	end
+	if m.timer ~= sync.timer then
+		drift = true
+		m.timer = sync.timer
+	end
+	if drift then
+		self.netCorrections += 1
+	end
+end
+
 function FightView:frame(dt: number)
 	self.time += dt
 	local m = self.match
+	if self.online then
+		self:onlineFrame(dt)
+		self:render(dt)
+		return
+	end
 	if not self.paused then
 		local scale = (m.slowmo and m.slowmo > 0) and 0.35 or 1
 		self.acc += dt * scale
@@ -9793,6 +12437,29 @@ function FightView:finisherPose(_i: number, f, style: string)
 	return Poses.victoryFor(f.def.id, style, self.time), "fin:win"
 end
 
+-- Face for a fighter's current state.
+local EXPRESSION_OF = {
+	attack = "angry",
+	super = "angry",
+	finisher = "angry",
+	throwing = "angry",
+	breaker = "angry",
+	block = "focus",
+	blockstun = "focus",
+	hitstun = "hurt",
+	juggle = "hurt",
+	thrown = "hurt",
+	knockdown = "hurt",
+	getup = "hurt",
+	dead_down = "ko",
+	banished = "ko",
+	dazed = "ko",
+	win = "happy",
+}
+function FightView.expressionFor(f): string
+	return EXPRESSION_OF[f.state] or "neutral"
+end
+
 function FightView:render(dt: number)
 	local m = self.match
 	local alpha = math.clamp(self.acc / DT, 0, 1)
@@ -9841,6 +12508,8 @@ function FightView:render(dt: number)
 		end
 		local cf = rootCFrame(x, y, f.facing, extraYaw)
 		Rig.apply(rig, cf, final, { time = t, vx = (f.x - pp.x) * f.facing * 3, vy = f.vy or 0 })
+		Rig.setExpression(rig, FightView.expressionFor(f))
+		Cosmetics.update(rig, t)
 		-- weapon trails during active frames
 		local trailOn = false
 		if f.state == "attack" and f.move then
@@ -9888,6 +12557,12 @@ function FightView:render(dt: number)
 	if m.over and not self.ended then
 		self.ended = true
 		task.delay(3.4, function()
+			-- online: wait (briefly) for the server's verdict and rewards
+			local waited = 0
+			while self.online and not self.netEnd and waited < 6 and not self.destroyed do
+				task.wait(0.1)
+				waited += 0.1
+			end
 			if not self.destroyed and self.opts.onEnd then
 				self.opts.onEnd(self:result())
 			end
@@ -10090,10 +12765,13 @@ function FightView:onEvent(ev)
 	if typ == "intro" then
 		local f = m.fighters[ev.fighter]
 		local def = f.def
-		Subtitles.show(def.name, def.intro[ev.line] or def.intro[1], 2.3, Color3.fromHex(def.accent))
+		local line = def.intro[ev.line] or def.intro[1]
+		Subtitles.show(def.name, line, 2.3, Color3.fromHex(def.accent))
 		self.hud:cinema(true)
 		self.hud:nameCard(ev.fighter, def, 2.1)
-		Audio.voice(def.voice, "attack")
+		if not Voice.say(line, def.voice, { channel = "fighter" }) then
+			Audio.voice(def.voice, "attack")
+		end
 		if ev.fighter == 2 then
 			self:introCamera(2)
 		end
@@ -10102,6 +12780,7 @@ function FightView:onEvent(ev)
 		self.hud:cinema(false)
 		local final = m.fighters[1].roundWins == m.roundsToWin - 1 and m.fighters[2].roundWins == m.roundsToWin - 1
 		self.hud:announce(final and "FINAL ROUND (NO PRESSURE)" or ("ROUND " .. tostring(ev.round)), nil, { hold = 1.1 })
+		Voice.say(final and "Final round. No pressure." or ("Round " .. tostring(ev.round)), "announcer", { channel = "announcer" })
 		StageBuilder.react("round")
 		Audio.play("round_gong", { volume = 0.9 })
 		Audio.play("countdown", { volume = 0.6 })
@@ -10109,6 +12788,7 @@ function FightView:onEvent(ev)
 		self.hud:announce("FIGHT", nil, { punch = true, color = Theme.Colors.goldBright, hold = 0.7 })
 		self:showWorldTags(2.2)
 		Audio.play("fight", { volume = 1 })
+		Voice.say("Fight!", "announcer", { channel = "announcer", volume = 1.2 })
 		FightCamera.shake(0.5)
 	elseif typ == "move" then
 		local f = m.fighters[ev.fighter]
@@ -10120,7 +12800,7 @@ function FightView:onEvent(ev)
 			if (mv.kind == "special" or mv.strength == "heavy") and math.random() < 0.55 then
 				Audio.voice(f.def.voice, "attack")
 			end
-			if ev.fighter == 1 then
+			if ev.fighter == (self.online and self.online.side or 1) then
 				self.lastMove = mv
 				self.hud:powerUsed(ev.move)
 			end
@@ -10351,7 +13031,9 @@ function FightView:onEvent(ev)
 			end
 			self.hud:announce(wf.def.name .. " WINS", nil, { size = 92, hold = 2.4 })
 			Subtitles.show(wf.def.name, quote, 2.8, Color3.fromHex(wf.def.accent))
-			Audio.voice(wf.def.voice, "attack")
+			if not Voice.say(quote, wf.def.voice, { channel = "fighter" }) then
+				Audio.voice(wf.def.voice, "attack")
+			end
 			Audio.music("music_victory", 1.0)
 		end)
 		self:winCamera(ev.winner)
@@ -10469,6 +13151,24 @@ end
 
 function FightView:result()
 	local m = self.match
+	if self.online then
+		local e = self.netEnd or {}
+		return {
+			online = true,
+			side = self.online.side,
+			winner = e.winner or m.winner,
+			reason = e.reason,
+			rewards = e.rewards,
+			weapon = e.weapon,
+			rewarded = e.rewarded,
+			rounds = { m.fighters[1].roundWins, m.fighters[2].roundWins },
+			stats = { m.fighters[1].stats, m.fighters[2].stats },
+			p1 = self.opts.p1,
+			p2 = self.opts.p2,
+			stage = self.opts.stage,
+			corrections = self.netCorrections,
+		}
+	end
 	return {
 		winner = m.winner,
 		rounds = { m.fighters[1].roundWins, m.fighters[2].roundWins },
@@ -10510,7 +13210,7 @@ return FightView
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="35">
+          <Item class="ModuleScript" referent="46">
             <Properties>
               <string name="Name">Looks</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -10541,25 +13241,30 @@ Looks.darken = hexDarken
 
 local FEATURE = "#1A1310"
 
-local function eyes(attach, look, z)
+local function eyes(attach, look, z, rig)
 	attach("Head", V(0.17, 0.08, 0.04), C(0.23, 0.07, z), FEATURE, "SmoothPlastic", { shadow = false })
 	attach("Head", V(0.17, 0.08, 0.04), C(-0.23, 0.07, z), FEATURE, "SmoothPlastic", { shadow = false })
 	attach("Head", V(0.3, 0.06, 0.04), C(0.23, 0.21, z) * A(0, 0, rad(12)), look.hairColor or FEATURE, "SmoothPlastic", { shadow = false })
+	local browR = rig and rig.attached[#rig.attached]
 	attach("Head", V(0.3, 0.06, 0.04), C(-0.23, 0.21, z) * A(0, 0, rad(-12)), look.hairColor or FEATURE, "SmoothPlastic", { shadow = false })
+	local browL = rig and rig.attached[#rig.attached]
+	if rig then
+		rig.faceBrows = { r = browR, l = browL, z = z }
+	end
 end
 
 local FACES = {}
-FACES.plain = function(attach, look)
-	eyes(attach, look, -0.62)
+FACES.plain = function(attach, look, rig)
+	eyes(attach, look, -0.62, rig)
 	attach("Head", V(0.1, 0.16, 0.06), C(0, -0.06, -0.63), hexDarken(look.skin, 0.88), "SmoothPlastic", { shadow = false })
 	attach("Head", V(0.28, 0.04, 0.04), C(0, -0.27, -0.61), "#5A2E26", "SmoothPlastic", { shadow = false })
 end
-FACES.scarred = function(attach, look)
-	FACES.plain(attach, look)
+FACES.scarred = function(attach, look, rig)
+	FACES.plain(attach, look, rig)
 	attach("Head", V(0.04, 0.42, 0.03), C(-0.3, 0.12, -0.635) * A(0, 0, rad(-18)), "#7A2E26", "SmoothPlastic", { shadow = false })
 end
-FACES.bearded = function(attach, look)
-	eyes(attach, look, -0.62)
+FACES.bearded = function(attach, look, rig)
+	eyes(attach, look, -0.62, rig)
 	attach("Head", V(0.1, 0.16, 0.06), C(0, -0.06, -0.63), hexDarken(look.skin, 0.88), "SmoothPlastic", { shadow = false })
 	attach("Head", V(1.0, 0.55, 0.34), C(0, -0.5, -0.42), look.hairColor, "Fabric")
 	attach("Head", V(0.55, 0.09, 0.06), C(0, -0.2, -0.63), look.hairColor, "Fabric", { shadow = false })
@@ -11174,11 +13879,11 @@ local function trail(rig, part: BasePart, a0: Vector3, a1: Vector3, color: Color
 	tr.Attachment1 = att1
 	tr.Color = ColorSequence.new(Color3.new(1, 1, 1), color)
 	tr.Transparency = NumberSequence.new({
-		NumberSequenceKeypoint.new(0, 0.15),
-		NumberSequenceKeypoint.new(0.6, 0.6),
+		NumberSequenceKeypoint.new(0, 0.02),
+		NumberSequenceKeypoint.new(0.55, 0.45),
 		NumberSequenceKeypoint.new(1, 1),
 	})
-	tr.Lifetime = 0.16
+	tr.Lifetime = 0.24
 	tr.MinLength = 0.02
 	tr.LightEmission = 1
 	tr.LightInfluence = 0
@@ -11331,6 +14036,67 @@ WEAPON.none = function() end
 
 -------------------------------------------------------------------------------
 
+-------------------------------------------------------------------------------
+-- Joint caps: rounded elbows, knees and shoulders so limbs don't show block seams
+-- when they bend (the colour and material follow the limb they sit on).
+-------------------------------------------------------------------------------
+
+local CAPS = {
+	{ "RightLowerArm", V(0, 0.4, 0), 0.9 },
+	{ "LeftLowerArm", V(0, 0.4, 0), 0.9 },
+	{ "RightLowerLeg", V(0, 0.45, 0), 0.92 },
+	{ "LeftLowerLeg", V(0, 0.45, 0), 0.92 },
+	{ "RightUpperArm", V(0, 0.22, 0), 0.9 },
+	{ "LeftUpperArm", V(0, 0.22, 0), 0.9 },
+}
+
+local function jointCaps(rig, attach)
+	for _, c in CAPS do
+		local limb = rig.parts[c[1]]
+		if limb then
+			attach(c[1], V(c[3], c[3], c[3]), C(c[2]), limb.Color, limb.Material.Name, { shape = BALL, name = "JointCap" })
+		end
+	end
+end
+
+-------------------------------------------------------------------------------
+-- Facial expressions: brows that tilt, an "O" mouth and X eyes, driven by
+-- Rig.setExpression (angry while attacking, hurt when hit, X eyes on KO...).
+-------------------------------------------------------------------------------
+
+local function expressionParts(rig, attach, look)
+	if look.face == "none" or look.face == "blindfold" then
+		return
+	end
+	local classic = look.face == "classic"
+	local z = classic and -0.62 or ((rig.faceBrows and rig.faceBrows.z or -0.62) - 0.01)
+	local browCol = look.hairColor or FEATURE
+	local expr = { classic = classic }
+	if classic or not rig.faceBrows then
+		attach("Head", V(0.3, 0.06, 0.04), C(0.22, 0.25, z), browCol, "SmoothPlastic", { shadow = false, transparency = 1, name = "BrowR" })
+		expr.browR = rig.attached[#rig.attached]
+		attach("Head", V(0.3, 0.06, 0.04), C(-0.22, 0.25, z), browCol, "SmoothPlastic", { shadow = false, transparency = 1, name = "BrowL" })
+		expr.browL = rig.attached[#rig.attached]
+		expr.hideBrows = true
+	else
+		expr.browR = rig.faceBrows.r
+		expr.browL = rig.faceBrows.l
+	end
+	expr.baseR = expr.browR.offset
+	expr.baseL = expr.browL.offset
+	-- "O" mouth (hurt / oof)
+	expr.mouth = attach("Head", V(0.04, 0.22, 0.2), C(0, -0.25, z - 0.01) * A(0, rad(90), 0), "#1A0808", "SmoothPlastic", { shape = CYL, shadow = false, transparency = 1, name = "MouthO" })
+	-- X eyes (KO)
+	expr.xeyes = {}
+	for _, sx in { -1, 1 } do
+		for _, ang in { 45, -45 } do
+			table.insert(expr.xeyes, attach("Head", V(0.26, 0.05, 0.03), C(sx * 0.22, 0.08, z - 0.02) * A(0, 0, rad(ang)), "#120808", "SmoothPlastic", { shadow = false, transparency = 1, name = "XEye" }))
+		end
+	end
+	rig.expr = expr
+	rig.expression = "neutral"
+end
+
 function Looks.apply(rig, look, attach)
 	local w = look.width or 1
 	;(FACES[look.face] or FACES.plain)(attach, look, rig)
@@ -11344,7 +14110,19 @@ function Looks.apply(rig, look, attach)
 			fn(attach, look, w, rig)
 		end
 	end
+	jointCaps(rig, attach)
+	expressionParts(rig, attach, look)
+	-- remember which parts and trails belong to the weapon (cosmetic skins restyle them)
+	local before = #rig.attached
+	local trailsBefore = #rig.trails
 	;(WEAPON[look.weapon] or WEAPON.none)(rig, attach, look)
+	rig.weapon = { type = look.weapon, parts = {}, trails = {} }
+	for i = before + 1, #rig.attached do
+		table.insert(rig.weapon.parts, rig.attached[i])
+	end
+	for i = trailsBefore + 1, #rig.trails do
+		table.insert(rig.weapon.trails, rig.trails[i])
+	end
 end
 
 Looks.WEAPON = WEAPON
@@ -11354,7 +14132,7 @@ return Looks
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="36">
+          <Item class="ModuleScript" referent="47">
             <Properties>
               <string name="Name">Poses</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -12552,7 +15330,7 @@ return Poses
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="37">
+          <Item class="ModuleScript" referent="48">
             <Properties>
               <string name="Name">Rig</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -12824,6 +15602,61 @@ function Rig.setTransparency(rig, t: number)
 	end
 end
 
+-------------------------------------------------------------------------------
+-- Facial expressions (parts created by Looks: brows, "O" mouth, X eyes)
+-------------------------------------------------------------------------------
+
+-- brow angles in degrees: right brow +angle = inner end down (angry)
+local EXPR = {
+	neutral = {},
+	angry = { r = 28, l = -28, dy = -0.03 },
+	focus = { r = 18, l = -18, dy = -0.015 },
+	hurt = { r = -22, l = 22, dy = 0.035, mouth = true },
+	sad = { r = -20, l = 20, dy = 0.02 },
+	happy = { r = -8, l = 8, dy = 0.06 },
+	ko = { xeyes = true, mouth = true, hideBrows = true },
+}
+Rig.EXPRESSIONS = EXPR
+
+local function showPart(rig, p: BasePart, visible: boolean)
+	local base = visible and 0 or 1
+	rig.baseT[p] = base
+	p.Transparency = math.max(base, rig.transparency or 0)
+end
+
+function Rig.setExpression(rig, name: string)
+	local e = rig.expr
+	if not e or rig.expression == name then
+		return
+	end
+	rig.expression = name
+	local d = EXPR[name] or EXPR.neutral
+	local baseR = e.classic and 0 or 12
+	local baseL = e.classic and 0 or -12
+	if d.r and not d.hideBrows then
+		e.browR.offset = e.baseR * CFrame.new(0, d.dy or 0, 0) * CFrame.Angles(0, 0, math.rad(d.r - baseR))
+		e.browL.offset = e.baseL * CFrame.new(0, d.dy or 0, 0) * CFrame.Angles(0, 0, math.rad(d.l - baseL))
+	else
+		e.browR.offset = e.baseR
+		e.browL.offset = e.baseL
+	end
+	if e.hideBrows then
+		local vis = d.r ~= nil and not d.hideBrows
+		showPart(rig, e.browR.part, vis)
+		showPart(rig, e.browL.part, vis)
+	elseif d.hideBrows then
+		showPart(rig, e.browR.part, false)
+		showPart(rig, e.browL.part, false)
+	else
+		showPart(rig, e.browR.part, true)
+		showPart(rig, e.browL.part, true)
+	end
+	showPart(rig, e.mouth, d.mouth == true)
+	for _, x in e.xeyes do
+		showPart(rig, x, d.xeyes == true)
+	end
+end
+
 function Rig.setTrails(rig, enabled: boolean)
 	for _, tr in rig.trails do
 		tr.Enabled = enabled
@@ -12842,7 +15675,7 @@ return Rig
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="38">
+          <Item class="ModuleScript" referent="49">
             <Properties>
               <string name="Name">RigMath</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -13012,7 +15845,7 @@ return RigMath
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="39">
+          <Item class="ModuleScript" referent="50">
             <Properties>
               <string name="Name">StageBuilder</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -13027,6 +15860,7 @@ local Assets = require(Veil.Assets)
 local Stages = require(Veil.Data.Stages)
 
 local StageLife = require(script.Parent.StageLife)
+local StageVariants = require(Veil.Data.StageVariants)
 
 local StageBuilder = {}
 
@@ -13158,9 +15992,9 @@ local function applyLighting(stage, theme: string, made: { Instance })
 	sky.SunAngularSize = 12
 
 	local bloom = Instance.new("BloomEffect")
-	bloom.Intensity = 0.9
+	bloom.Intensity = 1.1
 	bloom.Size = 30
-	bloom.Threshold = 1.6
+	bloom.Threshold = 1.25
 
 	local cc = Instance.new("ColorCorrectionEffect")
 	cc.Name = "StageGrade"
@@ -13887,7 +16721,90 @@ function StageBuilder.clear()
 	end
 end
 
-function StageBuilder.build(stageId: string)
+-- Time of day / weather for this fight (StageVariants). Applied after the theme
+-- lighting so it layers on top of each arena's own look.
+local function applyVariant(cur, variantId: string?)
+	local v = StageVariants.get(variantId)
+	cur.variant = variantId or "default"
+	if v == StageVariants.Defs.default then
+		return
+	end
+	local fx = cur.fx
+	local life = cur.life
+	if v.clock then
+		Lighting.ClockTime = v.clock
+	end
+	if v.bright then
+		Lighting.Brightness *= v.bright
+		Lighting.ExposureCompensation = (v.bright < 0.7) and -0.15 or 0
+	end
+	if fx and fx.grade and v.tint then
+		fx.grade.TintColor = fx.grade.TintColor:Lerp(Color3.fromHex(v.tint), 0.6)
+	end
+	if fx and fx.atmosphere and v.fog then
+		fx.atmosphere.Density = math.clamp(fx.atmosphere.Density + v.fog, 0, 0.75)
+		fx.atmosphere.Haze = math.clamp(fx.atmosphere.Haze + v.fog * 6, 0, 10)
+	end
+	if life then
+		life.baseBrightness = Lighting.Brightness
+		life.baseAmbient = Lighting.Ambient
+		if life.gradeBase and fx and fx.grade then
+			life.gradeBase.TintColor = fx.grade.TintColor
+		end
+		if v.storm and not life.lightning then
+			life.lightning = { next = 3 + math.random() * 4, t = -1 }
+		end
+	end
+	if v.weather then
+		local sky = part(cur.model, { name = "Weather", size = V(120, 1, 40), cf = C(0, 34, -8), transparency = 1, shadow = false })
+		local e = Instance.new("ParticleEmitter")
+		e.Name = "Weather"
+		e.Texture = Assets.Particles.Spark
+		e.EmissionDirection = Enum.NormalId.Bottom
+		e.SpreadAngle = Vector2.new(6, 6)
+		e.LightInfluence = 1
+		e.Rotation = NumberRange.new(0, 360)
+		if v.weather == "rain" then
+			e.Rate = 260
+			e.Speed = NumberRange.new(60, 80)
+			e.Lifetime = NumberRange.new(0.5, 0.7)
+			e.Size = NumberSequence.new(0.12)
+			e.Color = ColorSequence.new(Color3.fromHex("#C8D8E8"))
+			e.Transparency = NumberSequence.new(0.35, 0.6)
+			e.Orientation = Enum.ParticleOrientation.VelocityParallel
+			e.LightEmission = 0.3
+			-- wet floor
+			local floorPart = cur.model:FindFirstChild("Floor")
+			if floorPart then
+				floorPart.Reflectance = math.max(floorPart.Reflectance, 0.22)
+			end
+		elseif v.weather == "snow" then
+			e.Rate = 70
+			e.Speed = NumberRange.new(2, 4)
+			e.Lifetime = NumberRange.new(9, 12)
+			e.Size = NumberSequence.new(0.22)
+			e.Acceleration = Vector3.new(0.6, -0.4, 0)
+			e.Color = ColorSequence.new(Color3.new(1, 1, 1))
+			e.Transparency = NumberSequence.new(0.1, 0.4)
+			e.LightEmission = 0.4
+			e.RotSpeed = NumberRange.new(-60, 60)
+		elseif v.weather == "ash" then
+			e.Rate = 90
+			e.Speed = NumberRange.new(3, 6)
+			e.Lifetime = NumberRange.new(6, 9)
+			e.Size = NumberSequence.new(0.2, 0.12)
+			e.Acceleration = Vector3.new(2.5, -0.6, 0)
+			e.Color = ColorSequence.new(Color3.fromHex("#8A807A"), Color3.fromHex("#FF7A3A"))
+			e.Transparency = NumberSequence.new(0.1, 0.6)
+			e.LightEmission = 0.2
+			e.RotSpeed = NumberRange.new(-90, 90)
+		end
+		e.Parent = sky
+	end
+end
+
+-- opts: { variant = StageVariants id }
+function StageBuilder.build(stageId: string, opts)
 	StageBuilder.clear()
 	local stage = Stages.get(stageId)
 	local model = Instance.new("Model")
@@ -13911,6 +16828,7 @@ function StageBuilder.build(stageId: string)
 		fx = fx,
 	}
 	StageLife.build(current)
+	applyVariant(current, opts and opts.variant)
 	return current
 end
 
@@ -13955,7 +16873,7 @@ return StageBuilder
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="40">
+          <Item class="ModuleScript" referent="51">
             <Properties>
               <string name="Name">StageLife</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -14705,7 +17623,7 @@ return StageLife
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="41">
+          <Item class="ModuleScript" referent="52">
             <Properties>
               <string name="Name">VFX</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -14894,11 +17812,11 @@ end
 -- Per-strength tuning: light hits stay small and quick so they never clutter the
 -- screen; heavies, specials and supers escalate with light, streaks and rings.
 local HIT_TUNING = {
-	light = { sparks = 7, speed = { 8, 16 }, spark = 0.26, core = { 1.8, 2.4 }, essence = 4, flash = 1.3, light = { 2.5, 8, 0.1 } },
-	medium = { sparks = 12, speed = { 10, 22 }, spark = 0.34, core = { 2.6, 3.6 }, essence = 8, flash = 1.9, light = { 4, 11, 0.14 } },
-	heavy = { sparks = 20, speed = { 16, 34 }, spark = 0.5, core = { 4.2, 6.6 }, essence = 14, flash = 3.0, light = { 7, 16, 0.22 }, streak = 4.5, ring = 7 },
-	special = { sparks = 18, speed = { 14, 30 }, spark = 0.46, core = { 4, 6 }, essence = 12, flash = 2.8, light = { 6, 15, 0.22 }, streak = 4, ring = 6 },
-	super = { sparks = 30, speed = { 18, 40 }, spark = 0.6, core = { 5.5, 8.5 }, essence = 20, flash = 4.2, light = { 10, 22, 0.32 }, streak = 6, ring = 14 },
+	light = { sparks = 10, speed = { 9, 18 }, spark = 0.34, core = { 2.4, 3.2 }, essence = 6, flash = 1.8, light = { 4, 11, 0.12 } },
+	medium = { sparks = 16, speed = { 12, 26 }, spark = 0.44, core = { 3.4, 4.8 }, essence = 10, flash = 2.5, light = { 6, 14, 0.16 }, ring = 3.6 },
+	heavy = { sparks = 28, speed = { 18, 40 }, spark = 0.62, core = { 5.6, 8.6 }, essence = 18, flash = 3.9, light = { 10, 20, 0.26 }, streak = 5.6, ring = 9, ground = 8 },
+	special = { sparks = 24, speed = { 16, 36 }, spark = 0.58, core = { 5.2, 8 }, essence = 16, flash = 3.6, light = { 9, 19, 0.26 }, streak = 5, ring = 8, ground = 7 },
+	super = { sparks = 40, speed = { 22, 48 }, spark = 0.75, core = { 7.2, 11 }, essence = 26, flash = 5.4, light = { 14, 28, 0.38 }, streak = 7.5, ring = 17, ground = 14 },
 }
 
 -- strength: light | medium | heavy | special | super
@@ -14966,6 +17884,10 @@ function VFX.hit(pos: Vector3, strength: string, element: string?, dir: number, 
 	end
 	if tune.ring then
 		ring(pos, cols[2], tune.ring, 0.3)
+	end
+	-- shock ring along the floor under big hits
+	if tune.ground then
+		ring(Vector3.new(pos.X, 0.15, pos.Z - 0.8), cols[2]:Lerp(Color3.new(1, 1, 1), 0.3), tune.ground, 0.35, true)
 	end
 	if element and element ~= "default" then
 		VFX.elementBurst(pos, element, tune.streak ~= nil)
@@ -15693,6 +18615,18 @@ function VFX.projectile(kind: string, element: string?)
 	local cols = colors(element)
 	local builder = PROJ[kind] or PROJ.lightning_bolt
 	local update = builder(m, cols)
+	-- every projectile lights up the arena around it
+	if not m:FindFirstChildWhichIsA("PointLight", true) then
+		local host = m:FindFirstChildWhichIsA("BasePart", true)
+		if host then
+			local l = Instance.new("PointLight")
+			l.Color = cols[2]
+			l.Brightness = 3
+			l.Range = 11
+			l.Shadows = false
+			l.Parent = host
+		end
+	end
 	m.Parent = container()
 	local obj = { model = m, update = update, kind = kind, element = element }
 	function obj:set(pos: Vector3, facing: number, t: number, origin: Vector3?)
@@ -15701,13 +18635,15 @@ function VFX.projectile(kind: string, element: string?)
 	end
 	function obj:destroy(pos: Vector3?)
 		if pos then
-			flashBall(pos, cols[2], 2.6, 0.15)
+			flashBall(pos, cols[2], 3.4, 0.18)
 			local a = anchorAt(pos, 1)
-			burst(a, 10, {
+			burst(a, 18, {
 				color = ColorSequence.new(cols[1], cols[2]),
-				speed = NumberRange.new(6, 14),
-				size = NumberSequence.new(0.4, 0),
+				speed = NumberRange.new(8, 18),
+				size = NumberSequence.new(0.5, 0),
+				orientation = Enum.ParticleOrientation.VelocityParallel,
 			})
+			impactLight(a, cols[2], 6, 14, 0.2)
 		end
 		self.model:Destroy()
 	end
@@ -15821,11 +18757,11 @@ return VFX
             </Properties>
           </Item>
         </Item>
-        <Item class="Folder" referent="42">
+        <Item class="Folder" referent="53">
           <Properties>
             <string name="Name">UI</string>
           </Properties>
-          <Item class="ModuleScript" referent="43">
+          <Item class="ModuleScript" referent="54">
             <Properties>
               <string name="Name">HUD</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -16375,6 +19311,7 @@ function HUD.new(parentRoot: Instance, p1Def, p1Echo, p2Def, p2Echo, opts)
 	-- power hotbar (keys 1-4) for the human player
 	if opts.powers and #opts.powers > 0 then
 		self.hotbar = self:buildHotbar(root, opts.powers, opts.touchHotbar == true)
+		self.hotbar.side = opts.powerSide or 1
 	end
 
 	-- low health vignette
@@ -16579,7 +19516,7 @@ function HUD:update(match, dt: number)
 		self:updateHotbar(match.fighters[self.hotbar.side])
 	end
 	-- low health vignette for the human player
-	local p1 = match.fighters[1]
+	local p1 = match.fighters[self.hotbar and self.hotbar.side or 1]
 	local low = (p1.hp / p1.maxHp) < 0.25 and match.phase == "fight"
 	self.lowVig.BackgroundTransparency = low and (0.55 + 0.25 * math.sin(os.clock() * 5)) or 1
 end
@@ -16816,7 +19753,7 @@ return HUD
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="44">
+          <Item class="ModuleScript" referent="55">
             <Properties>
               <string name="Name">MobileControls</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -17079,7 +20016,801 @@ return MobileControls
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="45">
+          <Item class="ModuleScript" referent="56">
+            <Properties>
+              <string name="Name">OnlineScreens</string>
+              <string name="Source"><![CDATA[--!nonstrict
+-- Online menus: the hub, matchmaking, challenges, inventory & loadout, the Enchant
+-- Altar, the Forge, the trade window and online results. Everything that changes
+-- an inventory goes through the server (Net.request / Net.trade); these screens only
+-- display the server's answers.
+
+local Players = game:GetService("Players")
+
+local Veil = game:GetService("ReplicatedStorage"):WaitForChild("Veil")
+local Items = require(Veil.Data.Items)
+local Fighters = require(Veil.Data.Fighters)
+local Stages = require(Veil.Data.Stages)
+
+local Client = script.Parent.Parent
+local Theme = require(script.Parent.Theme)
+local Screens = require(script.Parent.Screens)
+local Toast = require(script.Parent.Toast)
+local Audio = require(Client.Core.Audio)
+local Input = require(Client.Core.Input)
+local Net = require(Client.Net.Net)
+
+local C = Theme.Colors
+local F = Theme.Fonts
+local new = Theme.new
+local H = Screens._h
+
+local OnlineScreens = {}
+
+local function rarityColor(r: string): Color3
+	return Color3.fromHex((Items.RARITY[r] or Items.RARITY.common).color)
+end
+
+local function weaponDef(rec)
+	return Items.WeaponById[rec.item]
+end
+
+-- Fighters whose weapon a skin fits.
+local function fightersFor(weaponType: string)
+	local out = {}
+	for _, f in Fighters.list do
+		if f.look.weapon == weaponType then
+			table.insert(out, f)
+		end
+	end
+	return out
+end
+
+local function equippedOn(uid: string): string?
+	for fid, e in Net.inv.equipped or {} do
+		if e == uid then
+			local f = Fighters.byId[fid]
+			return f and f.name or fid
+		end
+	end
+	return nil
+end
+
+local function resourceLine(): string
+	local parts = {}
+	for _, r in Items.Resources do
+		table.insert(parts, string.upper(r.name) .. " " .. tostring((Net.inv.res or {})[r.id] or 0))
+	end
+	return table.concat(parts, "   \u{00B7}   ")
+end
+
+local function strip(parent: Instance, y: number)
+	local l = Theme.label(parent, resourceLine(), {
+		Size = UDim2.new(1, -80, 0, 26),
+		Position = UDim2.new(0, 40, 0, y),
+		TextXAlignment = Enum.TextXAlignment.Center,
+		FontFace = F.labelBold,
+		TextSize = 15,
+		TextColor3 = C.gold,
+		ZIndex = 16,
+	})
+	local conn = Net.onInventory.Event:Connect(function()
+		l.Text = resourceLine()
+	end)
+	l.Destroying:Connect(function()
+		conn:Disconnect()
+	end)
+	return l
+end
+
+local function costText(cost): string
+	local parts = {}
+	for id, n in cost do
+		local r = Items.ResourceById[id]
+		table.insert(parts, n .. " " .. (r and r.name or id))
+	end
+	table.sort(parts)
+	return table.concat(parts, " + ")
+end
+
+-------------------------------------------------------------------------------
+-- Generic vertical choice list with descriptions
+-------------------------------------------------------------------------------
+
+-- entries: { { id, text, desc?, color? } }. Returns id or nil.
+local function choose(root: Instance, name: string, heading: string, sub: string?, entries, opts)
+	opts = opts or {}
+	local f = H.screenFrame(root, name)
+	H.backdrop(f, 0.82)
+	H.title(f, heading, sub)
+	if opts.strip ~= false then
+		strip(f, 150)
+	end
+	local list = Theme.frame(f, { Size = UDim2.fromOffset(900, 560), Position = UDim2.new(0.5, -380, 0, 196), ZIndex = 15 })
+	local items = {}
+	local spacing = opts.spacing or 58
+	for i, e in entries do
+		local it = H.menuItem(list, e.text, (i - 1) * spacing, opts.size or 34)
+		it.button.Size = UDim2.fromOffset(900, (opts.size or 34) + 14)
+		if e.tag then
+			Theme.label(it.button, e.tag, {
+				Size = UDim2.fromOffset(240, 30),
+				Position = UDim2.new(1, -250, 0.5, 0),
+				AnchorPoint = Vector2.new(0, 0.5),
+				TextXAlignment = Enum.TextXAlignment.Right,
+				FontFace = F.labelBold,
+				TextSize = 15,
+				TextColor3 = e.tagColor or C.gold,
+				ZIndex = 17,
+			})
+		end
+		items[i] = it
+	end
+	local desc = Theme.label(f, "", {
+		Size = UDim2.fromOffset(900, 54),
+		Position = UDim2.new(0.5, -380, 1, -104),
+		FontFace = F.serif,
+		TextSize = 20,
+		TextWrapped = true,
+		TextYAlignment = Enum.TextYAlignment.Top,
+		TextColor3 = C.text,
+		ZIndex = 16,
+	})
+	H.hintBar(f, opts.hints or { { "confirm", "SELECT" }, { "back", "BACK" } })
+	H.fadeIn(f)
+	if #entries == 0 then
+		desc.Text = opts.emptyText or "Nothing here yet."
+		local w = H.waiter()
+		local conn = Input.nav.Event:Connect(function(a)
+			if a == "back" or a == "confirm" then
+				w.resolve(nil)
+			end
+		end)
+		w.wait()
+		conn:Disconnect()
+		f:Destroy()
+		return nil
+	end
+	local r = H.runList(items, {
+		start = opts.start,
+		onSelect = function(i)
+			desc.Text = entries[i].desc or ""
+		end,
+		onAction = opts.onAction,
+	})
+	f:Destroy()
+	return r and entries[r].id or nil, r
+end
+OnlineScreens.choose = choose
+
+-------------------------------------------------------------------------------
+-- Hub
+-------------------------------------------------------------------------------
+
+function OnlineScreens.hub(root: Instance, info)
+	local pending = info and info.pending or 0
+	local entries = {
+		{ id = "quick", text = "QUICK MATCH", desc = "Get paired with the next player in this server who's looking for a fight. Server-run, no CPU." },
+		{ id = "challenge", text = "CHALLENGE A PLAYER", desc = "Pick someone in this server and send them a 1v1 invite." },
+		{ id = "requests", text = "REQUESTS", tag = pending > 0 and (pending .. " WAITING") or nil, tagColor = C.crimsonBright, desc = "Challenges and trade offers other players sent you." },
+		{ id = "trade", text = "TRADE", desc = "Swap weapons, enchantments and resources with another player. Both sides must press READY." },
+		{ id = "inventory", text = "INVENTORY & LOADOUT", desc = "Your weapon skins and resources. Equip a skin on the fighter who uses that weapon." },
+		{ id = "altar", text = "ENCHANT ALTAR", desc = "Offer " .. costText(Items.EnchantCost) .. " to roll an enchantment on a weapon. Cosmetic only: no stat changes." },
+		{ id = "forge", text = "FORGE", desc = "Spend " .. costText(Items.ForgeCost) .. " to forge a random skin for a weapon type." },
+	}
+	return choose(root, "OnlineHub", "ONLINE", "PLAYERS IN THIS SERVER: " .. #Players:GetPlayers(), entries, { start = info and info.start })
+end
+
+-------------------------------------------------------------------------------
+-- Waiting (matchmaking, challenges, trade requests)
+-------------------------------------------------------------------------------
+
+-- Waits for one of `ops` on the online channel or `tradeOps` on the trade channel.
+-- Returns (op, msg) or ("cancel").
+function OnlineScreens.wait(root: Instance, heading: string, sub: string?, opts)
+	opts = opts or {}
+	local f = H.screenFrame(root, "OnlineWait")
+	H.backdrop(f, 0.85)
+	H.title(f, heading, sub)
+	local dots = Theme.label(f, "", {
+		Size = UDim2.fromOffset(600, 60),
+		Position = UDim2.new(0.5, 0, 0.5, 0),
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		TextXAlignment = Enum.TextXAlignment.Center,
+		FontFace = F.display,
+		TextSize = 54,
+		TextColor3 = C.goldBright,
+		ZIndex = 16,
+	})
+	H.hintBar(f, { { "back", "CANCEL" } })
+	H.fadeIn(f)
+	local w = H.waiter()
+	local conns = H.connections()
+	conns.add(Net.onOnline.Event:Connect(function(msg)
+		if opts.ops and opts.ops[msg.op] then
+			w.resolve({ msg.op, msg })
+		end
+	end))
+	conns.add(Net.onTrade.Event:Connect(function(msg)
+		if opts.tradeOps and opts.tradeOps[msg.op] then
+			w.resolve({ msg.op, msg })
+		end
+	end))
+	conns.add(Input.nav.Event:Connect(function(a)
+		if a == "back" then
+			w.resolve({ "cancel" })
+		end
+	end))
+	task.spawn(function()
+		local t = 0
+		while not w.done() do
+			t += 1
+			dots.Text = string.rep("\u{25C6} ", (t % 4) + 1)
+			task.wait(0.35)
+			if opts.timeout and t * 0.35 > opts.timeout then
+				w.resolve({ "timeout" })
+			end
+		end
+	end)
+	local r = w.wait()
+	conns.clear()
+	f:Destroy()
+	if r[1] == "cancel" and opts.onCancel then
+		opts.onCancel()
+	end
+	return r[1], r[2]
+end
+
+function OnlineScreens.pickPlayer(root: Instance, heading: string)
+	local entries = {}
+	for _, p in Net.others() do
+		table.insert(entries, { id = p.UserId, text = string.upper(p.DisplayName), desc = "@" .. p.Name })
+	end
+	local id = choose(root, "PickPlayer", heading, nil, entries, {
+		emptyText = "Nobody else is in this server yet. Invite a friend, or use Quick Match. (Studio: Test > Clients and Servers > 2 players.)",
+	})
+	return id and Players:GetPlayerByUserId(id) or nil
+end
+
+-- list: { { kind = "challenge"|"trade", from, name, stageName? } }
+function OnlineScreens.requests(root: Instance, list)
+	local entries = {}
+	for i, r in list do
+		if r.kind == "challenge" then
+			table.insert(entries, { id = i, text = "1V1 FROM " .. string.upper(r.name), tag = r.stageName and string.upper(r.stageName) or nil, desc = "Accept, pick your fighter and map, and the fight starts." })
+		else
+			table.insert(entries, { id = i, text = "TRADE FROM " .. string.upper(r.name), desc = "Accept to open the trade window." })
+		end
+	end
+	local id = choose(root, "Requests", "REQUESTS", nil, entries, { emptyText = "No requests right now." })
+	return id and list[id] or nil
+end
+
+-------------------------------------------------------------------------------
+-- Inventory & loadout
+-------------------------------------------------------------------------------
+
+local function weaponEntries(filterType: string?)
+	local entries = {}
+	local list = table.clone(Net.inv.weapons or {})
+	table.sort(list, function(a, b)
+		local da, db = weaponDef(a), weaponDef(b)
+		local ra, rb = Items.RARITY[da.rarity].order, Items.RARITY[db.rarity].order
+		if ra ~= rb then
+			return ra > rb
+		end
+		return da.name < db.name
+	end)
+	for _, rec in list do
+		local def = weaponDef(rec)
+		if def and (not filterType or def.type == filterType) then
+			local e = rec.ench and Items.EnchantById[rec.ench]
+			local on = equippedOn(rec.uid)
+			local fitNames = {}
+			for _, fd in fightersFor(def.type) do
+				table.insert(fitNames, fd.name)
+			end
+			table.insert(entries, {
+				id = rec.uid,
+				rec = rec,
+				text = string.upper(Items.weaponLabel(rec)),
+				tag = Items.RARITY[def.rarity].name .. (e and ("  \u{00B7}  " .. Items.RARITY[e.rarity].name .. " ENCHANT") or ""),
+				tagColor = rarityColor(def.rarity),
+				desc = (Items.WeaponTypeById[def.type] and Items.WeaponTypeById[def.type].name or def.type)
+					.. " skin for " .. table.concat(fitNames, ", ")
+					.. (e and (".  " .. e.name .. ": " .. e.desc) or ".  No enchantment.")
+					.. (on and ("  EQUIPPED ON " .. string.upper(on) .. ".") or ""),
+			})
+		end
+	end
+	return entries
+end
+
+function OnlineScreens.pickWeapon(root: Instance, heading: string, sub: string?)
+	local entries = weaponEntries(nil)
+	if #entries > 9 then
+		-- long lists: show the best first; the hub's inventory pages through all
+		for i = #entries, 10, -1 do
+			table.remove(entries, i)
+		end
+	end
+	return choose(root, "PickWeapon", heading, sub, entries, { emptyText = "No weapons yet. Win online fights or forge one." })
+end
+
+function OnlineScreens.inventory(root: Instance)
+	Net.request("get")
+	local page = 1
+	local PER = 9
+	while true do
+		local all = weaponEntries(nil)
+		local pages = math.max(1, math.ceil(#all / PER))
+		page = math.clamp(page, 1, pages)
+		local entries = {}
+		for i = (page - 1) * PER + 1, math.min(#all, page * PER) do
+			table.insert(entries, all[i])
+		end
+		local turned = nil
+		local uid = choose(root, "Inventory", "INVENTORY & LOADOUT", string.format("%d WEAPONS  \u{00B7}  PAGE %d / %d", #all, page, pages), entries, {
+			emptyText = "No weapons yet. Win online fights or visit the Forge.",
+			hints = { { "left", "" }, { "right", "PAGE" }, { "confirm", "OPTIONS" }, { "back", "BACK" } },
+			onAction = function(a)
+				if a == "left" and page > 1 then
+					turned = -1
+					Input.nav:Fire("back")
+				elseif a == "right" and page < pages then
+					turned = 1
+					Input.nav:Fire("back")
+				end
+			end,
+		})
+		if turned then
+			page += turned
+			continue
+		end
+		if not uid then
+			return
+		end
+		local rec = nil
+		for _, w in Net.inv.weapons do
+			if w.uid == uid then
+				rec = w
+			end
+		end
+		if rec then
+			local def = weaponDef(rec)
+			local actions = {}
+			for _, fd in fightersFor(def.type) do
+				table.insert(actions, { id = "equip:" .. fd.id, text = "EQUIP ON " .. fd.name, desc = "Shows in every fight you play as " .. fd.name .. ", online and offline." })
+			end
+			if equippedOn(uid) then
+				table.insert(actions, { id = "unequip", text = "UNEQUIP", desc = "Back to the default look." })
+			end
+			table.insert(actions, { id = "enchant", text = "ENCHANT", desc = "Roll a new enchantment at the altar (" .. costText(Items.EnchantCost) .. ")." })
+			local act = choose(root, "WeaponActions", string.upper(Items.weaponLabel(rec)), Items.RARITY[def.rarity].name, actions)
+			if act and string.sub(act, 1, 6) == "equip:" then
+				local res = Net.request("equip", { fighter = string.sub(act, 7), uid = uid })
+				Toast.show(res.ok and "EQUIPPED" or "COULDN'T EQUIP", res.err, res.ok and C.goldBright or C.crimsonBright)
+			elseif act == "unequip" then
+				for fid, e in Net.inv.equipped do
+					if e == uid then
+						Net.request("equip", { fighter = fid })
+					end
+				end
+			elseif act == "enchant" then
+				OnlineScreens.altar(root, uid)
+			end
+		end
+	end
+end
+
+-------------------------------------------------------------------------------
+-- Enchant Altar
+-------------------------------------------------------------------------------
+
+local function reveal(root: Instance, heading: string, name: string, sub: string, color: Color3, spinNames)
+	local f = H.screenFrame(root, "Reveal")
+	H.backdrop(f, 0.9)
+	H.title(f, heading)
+	local big = Theme.label(f, "", {
+		Size = UDim2.fromOffset(1100, 110),
+		Position = UDim2.new(0.5, 0, 0.45, 0),
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		TextXAlignment = Enum.TextXAlignment.Center,
+		FontFace = F.display,
+		TextSize = 84,
+		TextColor3 = C.ivory,
+		ZIndex = 16,
+	})
+	Theme.textStroke(big, 3, 0.2)
+	local small = Theme.label(f, "", {
+		Size = UDim2.fromOffset(1100, 80),
+		Position = UDim2.new(0.5, 0, 0.45, 80),
+		AnchorPoint = Vector2.new(0.5, 0),
+		TextXAlignment = Enum.TextXAlignment.Center,
+		TextWrapped = true,
+		FontFace = F.serif,
+		TextSize = 24,
+		TextColor3 = C.text,
+		ZIndex = 16,
+	})
+	H.hintBar(f, { { "confirm", "CONTINUE" } })
+	-- spin through the possibilities, slowing down, then land on the result
+	if spinNames and #spinNames > 0 then
+		local delay = 0.04
+		local i = 1
+		while delay < 0.28 do
+			local e = spinNames[i]
+			big.Text = e.name
+			big.TextColor3 = e.color
+			Audio.ui("ui_move")
+			task.wait(delay)
+			delay *= 1.12
+			i = i % #spinNames + 1
+		end
+	end
+	big.Text = name
+	big.TextColor3 = color
+	small.Text = sub
+	Audio.ui("ui_lock")
+	local sc = Instance.new("UIScale")
+	sc.Scale = 1.4
+	sc.Parent = big
+	Theme.tween(sc, 0.35, { Scale = 1 }, Enum.EasingStyle.Back)
+	local w = H.waiter()
+	local conn = Input.nav.Event:Connect(function(a)
+		if a == "confirm" or a == "back" then
+			w.resolve(true)
+		end
+	end)
+	w.wait()
+	conn:Disconnect()
+	f:Destroy()
+end
+
+function OnlineScreens.altar(root: Instance, uid: string?)
+	while true do
+		local target = uid or OnlineScreens.pickWeapon(root, "ENCHANT ALTAR", "COST: " .. string.upper(costText(Items.EnchantCost)) .. "  \u{00B7}  COSMETIC ONLY")
+		if not target then
+			return
+		end
+		local res = Net.request("enchant", target)
+		if not res.ok then
+			Toast.show("THE ALTAR REFUSES", res.err, C.crimsonBright)
+			return
+		end
+		local e = Items.EnchantById[res.ench]
+		local spin = {}
+		for _, x in Items.Enchantments do
+			table.insert(spin, { name = string.upper(x.name), color = rarityColor(x.rarity) })
+		end
+		reveal(root, "ENCHANT ALTAR", string.upper(e.name), Items.RARITY[e.rarity].name .. "  \u{00B7}  " .. e.desc .. "  (Cosmetic: no stat changes.)", rarityColor(e.rarity), spin)
+		if uid then
+			return
+		end
+	end
+end
+
+-------------------------------------------------------------------------------
+-- Forge
+-------------------------------------------------------------------------------
+
+function OnlineScreens.forge(root: Instance)
+	while true do
+		local entries = {}
+		for _, t in Items.WeaponTypes do
+			local names = {}
+			for _, fd in fightersFor(t.id) do
+				table.insert(names, fd.name)
+			end
+			table.insert(entries, { id = t.id, text = string.upper(t.name), tag = #Items.weaponsOfType(t.id) .. " SKINS", desc = "Used by " .. table.concat(names, ", ") .. ".  Cost: " .. costText(Items.ForgeCost) .. "." })
+		end
+		local wtype = choose(root, "Forge", "FORGE", "PICK A WEAPON TYPE", entries)
+		if not wtype then
+			return
+		end
+		local res = Net.request("forge", wtype)
+		if not res.ok then
+			Toast.show("THE FORGE IS COLD", res.err, C.crimsonBright)
+		else
+			local def = Items.WeaponById[res.weapon.item]
+			local spin = {}
+			for _, w in Items.weaponsOfType(wtype) do
+				table.insert(spin, { name = string.upper(w.name), color = rarityColor(w.rarity) })
+			end
+			reveal(root, "FORGE", string.upper(def.name), Items.RARITY[def.rarity].name .. " " .. string.upper(Items.WeaponTypeById[def.type].name) .. " SKIN", rarityColor(def.rarity), spin)
+		end
+	end
+end
+
+-------------------------------------------------------------------------------
+-- Trade window
+-------------------------------------------------------------------------------
+
+local function offerLines(offer)
+	local lines = {}
+	for _, w in offer.weapons or {} do
+		local def = Items.WeaponById[w.item]
+		table.insert(lines, { text = Items.weaponLabel(w), color = def and rarityColor(def.rarity) or C.text })
+	end
+	for _, r in Items.Resources do
+		local n = offer.res and offer.res[r.id]
+		if n and n > 0 then
+			table.insert(lines, { text = n .. "  \u{00D7}  " .. r.name, color = rarityColor(r.rarity) })
+		end
+	end
+	return lines
+end
+
+-- Returns "done" | "closed".
+function OnlineScreens.trade(root: Instance, info)
+	local f = H.screenFrame(root, "Trade")
+	f.ZIndex = 80
+	H.backdrop(f, 0.9)
+	H.title(f, "TRADING WITH " .. string.upper(info.name or "PLAYER"), "BOTH PLAYERS PRESS READY. ANY CHANGE RESETS READY.")
+	local function panel(x: number, heading: string)
+		local p = Theme.panel(f, { Size = UDim2.fromOffset(560, 290), Position = UDim2.new(0.5, x, 0, 160), ZIndex = 15 })
+		Theme.label(p, heading, { Size = UDim2.new(1, -24, 0, 30), Position = UDim2.fromOffset(12, 8), FontFace = F.labelBold, TextSize = 18, TextColor3 = C.goldBright, ZIndex = 16 })
+		local rows = {}
+		for i = 1, 10 do
+			rows[i] = Theme.label(p, "", { Size = UDim2.new(1, -24, 0, 24), Position = UDim2.fromOffset(12, 40 + (i - 1) * 24), FontFace = F.label, TextSize = 16, TextColor3 = C.text, TextTruncate = Enum.TextTruncate.AtEnd, ZIndex = 16 })
+		end
+		local status = Theme.label(p, "", { Size = UDim2.new(1, -24, 0, 26), Position = UDim2.new(0, 12, 1, -34), FontFace = F.labelBold, TextSize = 16, TextColor3 = C.textDim, ZIndex = 16 })
+		return { panel = p, rows = rows, status = status }
+	end
+	local mine = panel(-580, "YOUR OFFER")
+	local theirs = panel(20, string.upper(info.name or "THEIR") .. "'S OFFER")
+	local function fill(pn, offer)
+		local lines = offerLines(offer)
+		for i, row in pn.rows do
+			local l = lines[i]
+			row.Text = l and l.text or (i == 1 and "(nothing yet)" or "")
+			row.TextColor3 = l and l.color or C.textDim
+		end
+	end
+	-- your inventory: weapons (click to add/remove) + resource steppers
+	local invPanel = Theme.panel(f, { Size = UDim2.fromOffset(1160, 300), Position = UDim2.new(0.5, -580, 0, 470), ZIndex = 15 })
+	local scroll = new("ScrollingFrame", {
+		Size = UDim2.new(0, 640, 1, -20),
+		Position = UDim2.fromOffset(10, 10),
+		BackgroundTransparency = 1,
+		ScrollBarThickness = 6,
+		CanvasSize = UDim2.new(0, 0, 0, 0),
+		ZIndex = 16,
+	}, invPanel)
+	local offer = { weapons = {}, res = {} }
+	local conns = H.connections()
+	local sendPending = false
+	local function pushOffer()
+		if sendPending then
+			return
+		end
+		sendPending = true
+		task.delay(0.15, function()
+			sendPending = false
+			Net.trade({ op = "offer", offer = offer })
+		end)
+	end
+	local weaponButtons = {}
+	local function rebuildWeapons()
+		for _, b in weaponButtons do
+			b:Destroy()
+		end
+		table.clear(weaponButtons)
+		local n = 0
+		for _, rec in Net.inv.weapons or {} do
+			local def = Items.WeaponById[rec.item]
+			if def then
+				n += 1
+				local b = new("TextButton", {
+					Size = UDim2.fromOffset(200, 50),
+					Position = UDim2.fromOffset(((n - 1) % 3) * 208, ((n - 1) // 3) * 58),
+					Text = Items.weaponLabel(rec),
+					TextWrapped = true,
+					FontFace = F.labelBold,
+					TextSize = 13,
+					TextColor3 = C.ivory,
+					AutoButtonColor = false,
+					BackgroundColor3 = Color3.fromHex("#14151A"),
+					ZIndex = 17,
+				}, scroll)
+				Theme.corner(b, 6)
+				local st = Theme.stroke(b, rarityColor(def.rarity), 1.5)
+				local function refresh()
+					local inOffer = table.find(offer.weapons, rec.uid) ~= nil
+					b.BackgroundColor3 = inOffer and rarityColor(def.rarity):Lerp(Color3.new(0, 0, 0), 0.55) or Color3.fromHex("#14151A")
+					st.Thickness = inOffer and 3 or 1.5
+				end
+				refresh()
+				conns.add(b.Activated:Connect(function()
+					local i = table.find(offer.weapons, rec.uid)
+					if i then
+						table.remove(offer.weapons, i)
+					elseif #offer.weapons < Items.TradeMaxWeapons then
+						table.insert(offer.weapons, rec.uid)
+					else
+						Toast.show("OFFER FULL", "Up to " .. Items.TradeMaxWeapons .. " weapons per trade.", C.crimsonBright)
+					end
+					Audio.ui("ui_move")
+					refresh()
+					pushOffer()
+				end))
+				table.insert(weaponButtons, b)
+			end
+		end
+		scroll.CanvasSize = UDim2.fromOffset(0, math.ceil(n / 3) * 58)
+	end
+	rebuildWeapons()
+	-- resource steppers
+	local resLabels = {}
+	for i, r in Items.Resources do
+		local y = 12 + (i - 1) * 46
+		local l = Theme.label(invPanel, "", { Size = UDim2.fromOffset(280, 36), Position = UDim2.fromOffset(664, y), FontFace = F.labelBold, TextSize = 15, TextColor3 = rarityColor(r.rarity), ZIndex = 16 })
+		resLabels[r.id] = l
+		for k, step in { -10, -1, 1, 10 } do
+			local b = new("TextButton", {
+				Text = (step > 0 and "+" or "") .. step,
+				FontFace = F.labelBold,
+				TextSize = 15,
+				TextColor3 = C.ivory,
+				AutoButtonColor = true,
+				BackgroundColor3 = Color3.fromHex("#1A1B20"),
+				Size = UDim2.fromOffset(48, 34),
+				Position = UDim2.fromOffset(940 + (k - 1) * 54, y),
+				ZIndex = 17,
+			}, invPanel)
+			Theme.corner(b, 6)
+			conns.add(b.Activated:Connect(function()
+				local have = (Net.inv.res or {})[r.id] or 0
+				local n = math.clamp((offer.res[r.id] or 0) + step, 0, have)
+				offer.res[r.id] = n > 0 and n or nil
+				Audio.ui("ui_move")
+				l.Text = string.upper(r.name) .. ":  " .. (offer.res[r.id] or 0) .. " / " .. have
+				pushOffer()
+			end))
+		end
+		l.Text = string.upper(r.name) .. ":  0 / " .. ((Net.inv.res or {})[r.id] or 0)
+	end
+	-- ready / cancel
+	local readyBtn = new("TextButton", {
+		Text = "READY",
+		FontFace = F.display,
+		TextSize = 34,
+		TextColor3 = C.ivory,
+		AutoButtonColor = false,
+		BackgroundColor3 = Color3.fromHex("#1F3A1F"),
+		Size = UDim2.fromOffset(260, 60),
+		Position = UDim2.new(0.5, -270, 1, -122),
+		ZIndex = 17,
+	}, f)
+	Theme.corner(readyBtn, 8)
+	local readyStroke = Theme.stroke(readyBtn, C.gold, 2)
+	local cancelBtn = new("TextButton", {
+		Text = "CANCEL",
+		FontFace = F.display,
+		TextSize = 34,
+		TextColor3 = C.ivory,
+		AutoButtonColor = false,
+		BackgroundColor3 = Color3.fromHex("#3A1414"),
+		Size = UDim2.fromOffset(260, 60),
+		Position = UDim2.new(0.5, 10, 1, -122),
+		ZIndex = 17,
+	}, f)
+	Theme.corner(cancelBtn, 8)
+	H.hintBar(f, { { "confirm", "READY" }, { "back", "CANCEL" } })
+	local readyMe = false
+	local function toggleReady()
+		readyMe = not readyMe
+		Net.trade({ op = "ready", on = readyMe })
+		Audio.ui(readyMe and "ui_lock" or "ui_back")
+	end
+	local w = H.waiter()
+	conns.add(readyBtn.Activated:Connect(toggleReady))
+	conns.add(cancelBtn.Activated:Connect(function()
+		Net.trade({ op = "cancel" })
+	end))
+	conns.add(Input.nav.Event:Connect(function(a)
+		if a == "confirm" then
+			toggleReady()
+		elseif a == "back" then
+			Net.trade({ op = "cancel" })
+		end
+	end))
+	conns.add(Net.onTrade.Event:Connect(function(msg)
+		if msg.op == "state" then
+			fill(mine, msg.mine)
+			fill(theirs, msg.theirs)
+			readyMe = msg.readyMe == true
+			readyBtn.Text = readyMe and "UNREADY" or "READY"
+			readyStroke.Color = readyMe and Color3.fromHex("#5BD15B") or C.gold
+			mine.status.Text = msg.readyMe and "READY" or "NOT READY"
+			mine.status.TextColor3 = msg.readyMe and Color3.fromHex("#5BD15B") or C.textDim
+			theirs.status.Text = msg.readyThem and "READY" or "NOT READY"
+			theirs.status.TextColor3 = msg.readyThem and Color3.fromHex("#5BD15B") or C.textDim
+			if msg.countdown then
+				mine.status.Text = "TRADING IN " .. math.ceil(msg.countdown) .. "..."
+			end
+		elseif msg.op == "done" then
+			Toast.show("TRADE COMPLETE", "Items are in your inventory.", Color3.fromHex("#5BD15B"))
+			w.resolve("done")
+		elseif msg.op == "closed" then
+			Toast.show("TRADE CLOSED", msg.reason, C.crimsonBright)
+			w.resolve("closed")
+		elseif msg.op == "error" then
+			Toast.show("TRADE", msg.err, C.crimsonBright)
+		end
+	end))
+	conns.add(Net.onInventory.Event:Connect(function()
+		rebuildWeapons()
+	end))
+	fill(mine, offer)
+	fill(theirs, { weapons = {}, res = {} })
+	local r = w.wait()
+	conns.clear()
+	f:Destroy()
+	return r
+end
+
+-------------------------------------------------------------------------------
+-- Online results
+-------------------------------------------------------------------------------
+
+function OnlineScreens.results(root: Instance, result)
+	local won = result.winner == result.side
+	local f = H.screenFrame(root, "OnlineResults")
+	H.backdrop(f, 0.85, won and nil or Color3.fromHex("#A08080"))
+	local why = result.reason == "disconnect" and "YOUR RIVAL DISCONNECTED" or (result.reason == "forfeit" and "FORFEIT" or nil)
+	H.title(f, won and "YOU WIN" or "YOU LOSE", why)
+	local lines = {}
+	if result.rounds then
+		table.insert(lines, string.format("ROUNDS  %d \u{2013} %d", result.rounds[result.side] or 0, result.rounds[3 - result.side] or 0))
+	end
+	if result.rewarded == false then
+		table.insert(lines, "No rewards this match (rematch limit or an early forfeit).")
+	elseif result.rewards then
+		for _, r in Items.Resources do
+			local n = result.rewards[r.id]
+			if n and n > 0 then
+				table.insert(lines, "+" .. n .. "  " .. r.name)
+			end
+		end
+	end
+	if result.weapon then
+		local def = Items.WeaponById[result.weapon.item]
+		if def then
+			table.insert(lines, "NEW WEAPON:  " .. def.name .. "  (" .. Items.RARITY[def.rarity].name .. ")")
+		end
+	end
+	for i, text in lines do
+		Theme.label(f, text, {
+			Size = UDim2.fromOffset(900, 36),
+			Position = UDim2.new(0.5, 0, 0, 220 + (i - 1) * 42),
+			AnchorPoint = Vector2.new(0.5, 0),
+			TextXAlignment = Enum.TextXAlignment.Center,
+			FontFace = i == 1 and F.display or F.labelBold,
+			TextSize = i == 1 and 34 or 22,
+			TextColor3 = (string.sub(text, 1, 3) == "NEW") and Color3.fromHex("#FFB02E") or C.ivory,
+			ZIndex = 16,
+		})
+	end
+	H.hintBar(f, { { "confirm", "CONTINUE" } })
+	H.fadeIn(f)
+	local w = H.waiter()
+	local conn = Input.nav.Event:Connect(function(a)
+		if a == "confirm" or a == "back" then
+			w.resolve(true)
+		end
+	end)
+	w.wait()
+	conn:Disconnect()
+	f:Destroy()
+end
+
+local _ = Stages
+return OnlineScreens
+]]></string>
+            </Properties>
+          </Item>
+          <Item class="ModuleScript" referent="57">
             <Properties>
               <string name="Name">Portrait</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -17155,7 +20886,7 @@ return Portrait
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="46">
+          <Item class="ModuleScript" referent="58">
             <Properties>
               <string name="Name">Screens</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -17659,6 +21390,7 @@ local MAIN_ITEMS = {
 	{ id = "story", text = "STORY", desc = "Chapter I \u{2014} The Great Server Reset. The Admin typed ;shutdown. Only a Noob can stop him." },
 	{ id = "ascent", text = "TOWER", desc = "Climb a tower of seven tryhards and dethrone the Admin. Every fighter gets an ending. Most of them are dumb." },
 	{ id = "versus", text = "VERSUS", desc = "Pick a fighter, a friend, a server and a victim. The CPU has been practicing." },
+	{ id = "online", text = "ONLINE", desc = "1v1 real players, trade weapons and resources, enchant at the altar, forge new skins." },
 	{ id = "practice", text = "PRACTICE", desc = "Beat up a dummy that can't fight back. Or can it? (It can. Press F.)" },
 	{ id = "movelist", text = "MOVE LIST", desc = "Every combo, special, super and finisher. Reading is a skill too." },
 	{ id = "settings", text = "SETTINGS", desc = "Volume, subtitles, camera shake, screen flashes, CPU difficulty and touch controls." },
@@ -17755,11 +21487,11 @@ function Screens.mainMenu(root: Instance, profile)
 	local list = Theme.frame(f, { Size = UDim2.fromOffset(560, 520), Position = UDim2.fromOffset(80, 210), ZIndex = 15 })
 	local items = {}
 	for i, it in MAIN_ITEMS do
-		items[i] = menuItem(list, it.text, (i - 1) * 72, 50)
+		items[i] = menuItem(list, it.text, (i - 1) * 62, 44)
 	end
 	local desc = Theme.label(f, "", {
 		Size = UDim2.fromOffset(640, 60),
-		Position = UDim2.fromOffset(110, 680),
+		Position = UDim2.fromOffset(110, 708),
 		FontFace = F.serif,
 		TextSize = 24,
 		TextWrapped = true,
@@ -17770,7 +21502,7 @@ function Screens.mainMenu(root: Instance, profile)
 	if profile then
 		Theme.label(f, string.format("WINS %d    \u{00B7}    TOWERS %d    \u{00B7}    STORY %s", profile.wins or 0, profile.ascents or 0, profile.storyDone and "COMPLETE" or "IN PROGRESS"), {
 			Size = UDim2.fromOffset(640, 24),
-			Position = UDim2.fromOffset(110, 770),
+			Position = UDim2.fromOffset(110, 790),
 			FontFace = F.label,
 			TextSize = 15,
 			TextColor3 = C.gold,
@@ -18228,10 +21960,12 @@ end
 -- Stage + difficulty select
 -------------------------------------------------------------------------------
 
-function Screens.stageSelect(root: Instance, defaultDifficulty: number?)
+-- opts.online: no CPU difficulty; the title explains the map coin flip
+function Screens.stageSelect(root: Instance, defaultDifficulty: number?, opts)
+	opts = opts or {}
 	local f = screenFrame(root, "StageSelect")
 	backdrop(f, 0.85)
-	title(f, "PICK A SERVER")
+	title(f, opts.online and "PICK YOUR MAP" or "PICK A SERVER", opts.online and "YOUR RIVAL PICKS ONE TOO. IF THEY DIFFER, THE SERVER FLIPS A COIN." or nil)
 	local stages = {}
 	for _, id in Stages.selectable do
 		table.insert(stages, Stages.get(id))
@@ -18328,6 +22062,11 @@ function Screens.stageSelect(root: Instance, defaultDifficulty: number?)
 	local diffRight = new("TextButton", { Text = "\u{25B6}", FontFace = F.labelBold, TextSize = 24, TextColor3 = C.gold, BackgroundTransparency = 1, Size = UDim2.fromOffset(50, 34), Position = UDim2.new(0.5, 250, 0, 772), ZIndex = 17 }, f)
 	local function refreshDiff()
 		diffL.Text = "CPU DIFFICULTY:  " .. Config.Difficulty[diff].name .. "   [" .. Input.glyph("tabL") .. " / " .. Input.glyph("tabR") .. "]"
+	end
+	if opts.online then
+		diffL.Visible = false
+		diffLeft.Visible = false
+		diffRight.Visible = false
 	end
 	refreshDiff()
 	local sel = 1
@@ -18718,7 +22457,7 @@ function Screens.pause(root: Instance, opts)
 		ZIndex = 72,
 	})
 	Theme.rule(panel, { Size = UDim2.fromOffset(400, 1), Position = UDim2.new(0.5, 0, 0, 100), AnchorPoint = Vector2.new(0.5, 0), ZIndex = 72 })
-	local entries = { { "resume", "RESUME" }, { "restart", "RESTART MATCH" }, { "movelist", "MOVE LIST" }, { "settings", "SETTINGS" }, { "quit", "QUIT TO MENU" } }
+	local entries = { { "resume", "RESUME" }, { "restart", "RESTART MATCH" }, { "movelist", "MOVE LIST" }, { "settings", "SETTINGS" }, { "quit", opts.quitText or "QUIT TO MENU" } }
 	if opts.noRestart then
 		table.remove(entries, 2)
 	end
@@ -19008,6 +22747,7 @@ function Screens.settings(root: Instance, settings)
 		{ key = "subtitles", label = "SUBTITLES", kind = "toggle" },
 		{ key = "shake", label = "CAMERA SHAKE", kind = "toggle" },
 		{ key = "flashes", label = "SCREEN FLASHES / IMPACT FRAMES", kind = "toggle" },
+		{ key = "tts", label = "VOICED LINES (TEXT-TO-SPEECH)", kind = "toggle" },
 		{ key = "difficulty", label = "DEFAULT CPU DIFFICULTY", kind = "choice", choices = { 1, 2, 3, 4 } },
 		{ key = "touch", label = "TOUCH CONTROLS", kind = "choice", choices = { "auto", "on", "off" } },
 	}
@@ -19027,7 +22767,7 @@ function Screens.settings(root: Instance, settings)
 	end
 	local valueLabels = {}
 	for i, d in defs do
-		local it = menuItem(list, d.label, (i - 1) * 74, 32)
+		local it = menuItem(list, d.label, (i - 1) * 66, 32)
 		it.button.Size = UDim2.fromOffset(1000, 60)
 		valueLabels[i] = Theme.label(it.button, valueText(d), {
 			Size = UDim2.fromOffset(360, 60),
@@ -19080,11 +22820,25 @@ function Screens.settings(root: Instance, settings)
 	return settings
 end
 
+-- Shared building blocks for other screen modules (OnlineScreens).
+Screens._h = {
+	waiter = waiter,
+	connections = connections,
+	screenFrame = screenFrame,
+	backdrop = backdrop,
+	title = title,
+	hintBar = hintBar,
+	menuItem = menuItem,
+	setItemSelected = setItemSelected,
+	runList = runList,
+	fadeIn = fadeIn,
+}
+
 return Screens
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="47">
+          <Item class="ModuleScript" referent="59">
             <Properties>
               <string name="Name">Subtitles</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -19170,7 +22924,7 @@ return Subtitles
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="48">
+          <Item class="ModuleScript" referent="60">
             <Properties>
               <string name="Name">Theme</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -19381,11 +23135,92 @@ return Theme
 ]]></string>
             </Properties>
           </Item>
+          <Item class="ModuleScript" referent="61">
+            <Properties>
+              <string name="Name">Toast</string>
+              <string name="Source"><![CDATA[--!nonstrict
+-- Small stacked notifications in the top-right corner (challenges, trade requests,
+-- rewards, errors). Purely visual: they never take input focus.
+
+local Theme = require(script.Parent.Theme)
+
+local C = Theme.Colors
+local F = Theme.Fonts
+
+local Toast = {}
+
+local holder = nil
+
+function Toast.mount(root: Instance)
+	holder = Theme.frame(root, {
+		Name = "Toasts",
+		Size = UDim2.fromOffset(460, 600),
+		Position = UDim2.new(1, -24, 0, 150),
+		AnchorPoint = Vector2.new(1, 0),
+		ZIndex = 95,
+	})
+	local layout = Instance.new("UIListLayout")
+	layout.Padding = UDim.new(0, 8)
+	layout.HorizontalAlignment = Enum.HorizontalAlignment.Right
+	layout.SortOrder = Enum.SortOrder.LayoutOrder
+	layout.Parent = holder
+end
+
+local order = 0
+function Toast.show(text: string, sub: string?, color: Color3?, life: number?)
+	if not holder then
+		return
+	end
+	order += 1
+	local box = Theme.frame(holder, {
+		Size = UDim2.fromOffset(440, sub and 78 or 50),
+		BackgroundColor3 = Color3.fromHex("#0C0D10"),
+		BackgroundTransparency = 0.1,
+		LayoutOrder = order,
+		ZIndex = 95,
+	})
+	Theme.corner(box, 8)
+	Theme.stroke(box, color or C.gold, 1.5)
+	Theme.frame(box, { Size = UDim2.new(0, 5, 1, 0), BackgroundColor3 = color or C.gold, BackgroundTransparency = 0, ZIndex = 96 })
+	Theme.label(box, text, {
+		Size = UDim2.new(1, -30, 0, 28),
+		Position = UDim2.fromOffset(18, 10),
+		FontFace = F.labelBold,
+		TextSize = 18,
+		TextColor3 = C.ivory,
+		TextTruncate = Enum.TextTruncate.AtEnd,
+		ZIndex = 96,
+	})
+	if sub then
+		Theme.label(box, sub, {
+			Size = UDim2.new(1, -30, 0, 24),
+			Position = UDim2.fromOffset(18, 42),
+			FontFace = F.label,
+			TextSize = 15,
+			TextColor3 = C.text,
+			TextTruncate = Enum.TextTruncate.AtEnd,
+			ZIndex = 96,
+		})
+	end
+	task.delay(life or 5, function()
+		if box.Parent then
+			Theme.tween(box, 0.3, { BackgroundTransparency = 1 })
+			task.delay(0.32, function()
+				box:Destroy()
+			end)
+		end
+	end)
+end
+
+return Toast
+]]></string>
+            </Properties>
+          </Item>
         </Item>
       </Item>
     </Item>
   </Item>
-  <Item class="Workspace" referent="49">
+  <Item class="Workspace" referent="62">
     <Properties>
       <string name="Name">Workspace</string>
       <float name="Gravity">196.2</float>

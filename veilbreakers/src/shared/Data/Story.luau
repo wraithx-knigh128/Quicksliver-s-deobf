@@ -63,6 +63,10 @@ Story.chapters = {
 						cam = "two",
 						a = 1,
 						b = 2,
+						events = {
+							{ t = 0.3, type = "act", actor = 2, anim = "thrust", time = 0.8 },
+							{ t = 1.4, type = "act", actor = 1, anim = "slash_diag", time = 0.7 },
+						},
 						lines = {
 							{ speaker = "bacon", text = "Your guard drops every time you check your phone, Noob." },
 							{ speaker = "noob", text = "I'm not checking my phone. I'm AFK. I fight better AFK.", gesture = "cross", pop = "SKILL ISSUE?", popX = 0.72, popY = 0.32 },
@@ -89,6 +93,8 @@ Story.chapters = {
 							{ t = 0.2, type = "vfx", kind = "teleport", actor = 3 },
 							{ t = 0.2, type = "sfx", key = "teleport" },
 							{ t = 0.25, type = "impact", count = 2 },
+							{ t = 0.6, type = "act", actor = 1, anim = "parry_stance", time = 0.9 },
+							{ t = 0.6, type = "jump", actor = 2 },
 							{ t = 0.9, type = "cam", cam = "dolly", a = 3 },
 							{ t = 1.3, type = "freeze", actor = 3 },
 						},
@@ -151,6 +157,7 @@ Story.chapters = {
 						cam = "two",
 						a = 3,
 						b = 1,
+						events = { { t = 0.2, type = "walk", actor = 3, to = -4.4, time = 1.1 } },
 						lines = {
 							{ speaker = "bacon", text = "It glitched into the forest map. The one nobody finished building." },
 							{ speaker = "bacon", text = "If the Admin shuts the server down, I lose my wings. My four hundred Robux wings.", gesture = "sad", pop = "-400 ROBUX", popX = 0.3, popY = 0.3 },
@@ -163,12 +170,21 @@ Story.chapters = {
 				type = "scene",
 				stage = "hollowroot",
 				actors = {
-					{ id = "bacon", x = -2.4, facing = 1, anim = "stance" },
-					{ id = "noob", x = -5.2, facing = 1, anim = "stance" },
+					{ id = "bacon", x = -9.4, facing = 1, anim = "stance" },
+					{ id = "noob", x = -12.2, facing = 1, anim = "stance" },
 					{ id = "studzilla", x = 3.0, facing = -1, anim = "stance", hidden = true },
 				},
 				shots = {
 					{ cam = "sky", duration = 4.2, caption = "THE SPOOKY OBBY FOREST  \u{2014}  COLLISIONS: OFF" },
+					{
+						cam = "track",
+						a = 1,
+						duration = 2.8,
+						events = {
+							{ t = 0, type = "walk", actor = 1, to = -2.4, time = 2.6 },
+							{ t = 0, type = "walk", actor = 2, to = -5.2, time = 2.7 },
+						},
+					},
 					{
 						cam = "wide",
 						events = {
@@ -240,9 +256,14 @@ Story.chapters = {
 						cam = "two",
 						a = 1,
 						b = 2,
+						events = {
+							{ t = 2.6, type = "anim", actor = 2, anim = "stance" },
+							{ t = 2.6, type = "jump", actor = 2 },
+							{ t = 3.1, type = "boom", amount = 0.4 },
+						},
 						lines = {
 							{ speaker = "bacon", text = "That monster. Who deletes builds?!", gesture = "facepalm" },
-							{ speaker = "studzilla", text = "PATH. TO. ADMIN. THROUGH. FLOOD. MAP. I. COME. WITH. YOU." },
+							{ speaker = "studzilla", text = "PATH. TO. ADMIN. THROUGH. FLOOD. MAP. I. COME. WITH. YOU.", gesture = "flex" },
 						},
 					},
 				},
@@ -251,12 +272,21 @@ Story.chapters = {
 				type = "scene",
 				stage = "cathedral",
 				actors = {
-					{ id = "studzilla", x = -2.6, facing = 1, anim = "stance" },
+					{ id = "studzilla", x = -9.6, facing = 1, anim = "stance" },
 					{ id = "camper", x = 3.2, facing = -1, anim = "stance", hidden = true },
-					{ id = "noob", x = -6.0, facing = 1, anim = "stance" },
+					{ id = "noob", x = -12.0, facing = 1, anim = "stance" },
 				},
 				shots = {
 					{ cam = "sky", duration = 4.2, caption = "FLOODED CHURCH ESCAPE  \u{2014}  THE WATER IS RISING (AGAIN)" },
+					{
+						cam = "track",
+						a = 1,
+						duration = 3.0,
+						events = {
+							{ t = 0, type = "walk", actor = 1, to = -2.6, time = 2.9 },
+							{ t = 0, type = "walk", actor = 3, to = -6.0, time = 2.8 },
+						},
+					},
 					{
 						cam = "wide",
 						events = {
@@ -318,6 +348,7 @@ Story.chapters = {
 						cam = "two",
 						a = 1,
 						b = 2,
+						events = { { t = 1.2, type = "anim", actor = 2, anim = "stance" }, { t = 1.2, type = "jump", actor = 2 } },
 						lines = { { speaker = "studzilla", text = "WE. CAMP. TOGETHER. NOW. FRIEND.", gesture = "flex" } },
 					},
 				},
@@ -326,11 +357,17 @@ Story.chapters = {
 				type = "scene",
 				stage = "emberthrone",
 				actors = {
-					{ id = "noob", x = -3.4, facing = 1, anim = "stance" },
+					{ id = "noob", x = -10.4, facing = 1, anim = "stance" },
 					{ id = "admin", x = 3.6, facing = -1, anim = "cross" },
 				},
 				shots = {
 					{ cam = "sky", duration = 4.4, caption = "THE ADMIN'S LAVA THRONE  \u{2014}  SERVER SHUTDOWN IN 99 SECONDS" },
+					{
+						cam = "track",
+						a = 1,
+						duration = 3.0,
+						events = { { t = 0, type = "walk", actor = 1, to = -3.4, time = 2.8 } },
+					},
 					{
 						cam = "low",
 						a = 2,
@@ -411,9 +448,12 @@ Story.chapters = {
 						cam = "wide",
 						duration = 5.0,
 						events = {
+							{ t = 0, type = "anim", actor = 1, anim = "win" },
+							{ t = 0, type = "anim", actor = 3, anim = "win" },
 							{ t = 0.3, type = "show", actor = 4 },
 							{ t = 0.3, type = "vfx", kind = "teleport", actor = 4 },
 							{ t = 0.3, type = "sfx", key = "teleport" },
+							{ t = 0.5, type = "face", actor = 1, facing = 1 },
 						},
 						lines = {
 							{ speaker = "system", text = "Guest 666 has joined the game." },

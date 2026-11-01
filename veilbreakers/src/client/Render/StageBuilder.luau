@@ -10,6 +10,7 @@ local Assets = require(Veil.Assets)
 local Stages = require(Veil.Data.Stages)
 
 local StageLife = require(script.Parent.StageLife)
+local StageVariants = require(Veil.Data.StageVariants)
 
 local StageBuilder = {}
 
@@ -141,9 +142,9 @@ local function applyLighting(stage, theme: string, made: { Instance })
 	sky.SunAngularSize = 12
 
 	local bloom = Instance.new("BloomEffect")
-	bloom.Intensity = 0.9
+	bloom.Intensity = 1.1
 	bloom.Size = 30
-	bloom.Threshold = 1.6
+	bloom.Threshold = 1.25
 
 	local cc = Instance.new("ColorCorrectionEffect")
 	cc.Name = "StageGrade"
@@ -870,7 +871,90 @@ function StageBuilder.clear()
 	end
 end
 
-function StageBuilder.build(stageId: string)
+-- Time of day / weather for this fight (StageVariants). Applied after the theme
+-- lighting so it layers on top of each arena's own look.
+local function applyVariant(cur, variantId: string?)
+	local v = StageVariants.get(variantId)
+	cur.variant = variantId or "default"
+	if v == StageVariants.Defs.default then
+		return
+	end
+	local fx = cur.fx
+	local life = cur.life
+	if v.clock then
+		Lighting.ClockTime = v.clock
+	end
+	if v.bright then
+		Lighting.Brightness *= v.bright
+		Lighting.ExposureCompensation = (v.bright < 0.7) and -0.15 or 0
+	end
+	if fx and fx.grade and v.tint then
+		fx.grade.TintColor = fx.grade.TintColor:Lerp(Color3.fromHex(v.tint), 0.6)
+	end
+	if fx and fx.atmosphere and v.fog then
+		fx.atmosphere.Density = math.clamp(fx.atmosphere.Density + v.fog, 0, 0.75)
+		fx.atmosphere.Haze = math.clamp(fx.atmosphere.Haze + v.fog * 6, 0, 10)
+	end
+	if life then
+		life.baseBrightness = Lighting.Brightness
+		life.baseAmbient = Lighting.Ambient
+		if life.gradeBase and fx and fx.grade then
+			life.gradeBase.TintColor = fx.grade.TintColor
+		end
+		if v.storm and not life.lightning then
+			life.lightning = { next = 3 + math.random() * 4, t = -1 }
+		end
+	end
+	if v.weather then
+		local sky = part(cur.model, { name = "Weather", size = V(120, 1, 40), cf = C(0, 34, -8), transparency = 1, shadow = false })
+		local e = Instance.new("ParticleEmitter")
+		e.Name = "Weather"
+		e.Texture = Assets.Particles.Spark
+		e.EmissionDirection = Enum.NormalId.Bottom
+		e.SpreadAngle = Vector2.new(6, 6)
+		e.LightInfluence = 1
+		e.Rotation = NumberRange.new(0, 360)
+		if v.weather == "rain" then
+			e.Rate = 260
+			e.Speed = NumberRange.new(60, 80)
+			e.Lifetime = NumberRange.new(0.5, 0.7)
+			e.Size = NumberSequence.new(0.12)
+			e.Color = ColorSequence.new(Color3.fromHex("#C8D8E8"))
+			e.Transparency = NumberSequence.new(0.35, 0.6)
+			e.Orientation = Enum.ParticleOrientation.VelocityParallel
+			e.LightEmission = 0.3
+			-- wet floor
+			local floorPart = cur.model:FindFirstChild("Floor")
+			if floorPart then
+				floorPart.Reflectance = math.max(floorPart.Reflectance, 0.22)
+			end
+		elseif v.weather == "snow" then
+			e.Rate = 70
+			e.Speed = NumberRange.new(2, 4)
+			e.Lifetime = NumberRange.new(9, 12)
+			e.Size = NumberSequence.new(0.22)
+			e.Acceleration = Vector3.new(0.6, -0.4, 0)
+			e.Color = ColorSequence.new(Color3.new(1, 1, 1))
+			e.Transparency = NumberSequence.new(0.1, 0.4)
+			e.LightEmission = 0.4
+			e.RotSpeed = NumberRange.new(-60, 60)
+		elseif v.weather == "ash" then
+			e.Rate = 90
+			e.Speed = NumberRange.new(3, 6)
+			e.Lifetime = NumberRange.new(6, 9)
+			e.Size = NumberSequence.new(0.2, 0.12)
+			e.Acceleration = Vector3.new(2.5, -0.6, 0)
+			e.Color = ColorSequence.new(Color3.fromHex("#8A807A"), Color3.fromHex("#FF7A3A"))
+			e.Transparency = NumberSequence.new(0.1, 0.6)
+			e.LightEmission = 0.2
+			e.RotSpeed = NumberRange.new(-90, 90)
+		end
+		e.Parent = sky
+	end
+end
+
+-- opts: { variant = StageVariants id }
+function StageBuilder.build(stageId: string, opts)
 	StageBuilder.clear()
 	local stage = Stages.get(stageId)
 	local model = Instance.new("Model")
@@ -894,6 +978,7 @@ function StageBuilder.build(stageId: string)
 		fx = fx,
 	}
 	StageLife.build(current)
+	applyVariant(current, opts and opts.variant)
 	return current
 end
 
