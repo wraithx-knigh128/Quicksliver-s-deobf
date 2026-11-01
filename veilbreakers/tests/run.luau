@@ -171,6 +171,89 @@ for _, f in Fighters.list do
 end
 
 ---------------------------------------------------------------------------
+print("[2b] Powers on keys 1-4: slots, cooldowns, motion inputs share them")
+---------------------------------------------------------------------------
+for _, f in Fighters.list do
+	local match = Engine.newMatch({
+		p1 = { fighter = f.id, echo = "grandpa" },
+		p2 = { fighter = "noob", echo = "grandpa" },
+		stage = "proving",
+		skipIntro = true,
+	})
+	local function settle(n)
+		for _ = 1, n do
+			Engine.step(match, neutral(), neutral())
+		end
+	end
+	local function waitForFight()
+		local g = 0
+		while match.phase ~= "fight" and g < 600 do
+			settle(1)
+			g += 1
+		end
+	end
+	waitForFight()
+	local p = match.fighters[1]
+	p.x, match.fighters[2].x = -12, 12
+	for slot = 1, 4 do
+		local id = Engine.powerSlotId(p, slot)
+		check(id ~= nil and f.moves[id] ~= nil, f.id .. " has power " .. slot)
+		-- recover to neutral (and out of any hitstop from a returning projectile)
+		local g = 0
+		while ((p.state ~= "stand" and p.state ~= "crouch") or match.hitstop > 0) and g < 400 do
+			settle(1)
+			g += 1
+		end
+		p.x, match.fighters[2].x = -12, 12
+		local inp = neutral()
+		inp["P" .. slot] = true
+		Engine.step(match, inp, neutral())
+		check(p.state == "attack" and p.move and p.move.id == id, string.format("%s key %d -> %s (got %s)", f.id, slot, tostring(id), p.move and p.move.id or p.state))
+		local cd = Engine.powerCooldown(p, id)
+		check(cd > 30, f.id .. " power " .. slot .. " went on cooldown (" .. cd .. ")")
+	end
+	-- the motion input for a power on cooldown does nothing
+	local g = 0
+	while ((p.state ~= "stand" and p.state ~= "crouch") or match.hitstop > 0) and g < 400 do
+		settle(1)
+		g += 1
+	end
+	local snIdx = nil
+	for slot = 1, 4 do
+		if Engine.powerSlotId(p, slot) == "SN" then
+			snIdx = slot
+		end
+	end
+	if snIdx and Engine.powerCooldown(p, "SN") > 0 then
+		local inp = neutral()
+		inp.S = true
+		Engine.step(match, inp, neutral())
+		check(not (p.move and p.move.id == "SN" and p.moveT <= 1), f.id .. " SN came out while on cooldown")
+	end
+	-- cooldowns expire
+	settle(200)
+	for slot = 1, 4 do
+		check(Engine.powerCooldown(p, Engine.powerSlotId(p, slot)) == 0, f.id .. " power " .. slot .. " cooldown expired")
+	end
+end
+do
+	-- no cooldowns in practice
+	local match = Engine.newMatch({
+		p1 = { fighter = "frosty", echo = "grandpa" },
+		p2 = { fighter = "noob", echo = "grandpa" },
+		training = true,
+		stage = "proving",
+	})
+	for _ = 1, 5 do
+		Engine.step(match, neutral(), neutral())
+	end
+	local inp = neutral()
+	inp.P1 = true
+	Engine.step(match, inp, neutral())
+	check(Engine.powerCooldown(match.fighters[1], "SN") == 0, "practice mode has no power cooldowns")
+end
+
+---------------------------------------------------------------------------
 print("[3] Hits, blocks, combos and KO")
 ---------------------------------------------------------------------------
 do

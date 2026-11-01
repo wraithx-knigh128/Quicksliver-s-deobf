@@ -12,6 +12,7 @@ local Fighters = require(Veil.Data.Fighters)
 local Echoes = require(Veil.Data.Echoes)
 local Stages = require(Veil.Data.Stages)
 local MoveKit = require(Veil.Data.MoveKit)
+local Engine = require(Veil.Combat.Engine)
 
 local Client = script.Parent.Parent
 local Theme = require(script.Parent.Theme)
@@ -500,7 +501,7 @@ local MAIN_ITEMS = {
 	{ id = "versus", text = "VERSUS", desc = "Pick a fighter, a friend, a server and a victim. The CPU has been practicing." },
 	{ id = "practice", text = "PRACTICE", desc = "Beat up a dummy that can't fight back. Or can it? (It can. Press F.)" },
 	{ id = "movelist", text = "MOVE LIST", desc = "Every combo, special, super and finisher. Reading is a skill too." },
-	{ id = "settings", text = "SETTINGS", desc = "Volume, subtitles, camera shake, CPU difficulty and touch controls." },
+	{ id = "settings", text = "SETTINGS", desc = "Volume, subtitles, camera shake, screen flashes, CPU difficulty and touch controls." },
 }
 
 function Screens.mainMenu(root: Instance, profile)
@@ -1749,11 +1750,22 @@ function Screens.moveList(root: Instance, startFighter: string?)
 			order += 1
 			return order
 		end
-		section("SPECIALS", nextOrder())
+		section("POWERS  \u{00B7}  KEYS 1-4 OR MOTION + " .. Input.glyph("S"), nextOrder())
+		local slots = def.powers or Config.PowerSlots
 		for _, id in { "SN", "SF", "SB", "SD", "SA" } do
 			local m = def.moves[id]
 			if m then
-				row(m.name, Input.formatNotation(m.input), MoveKit.describe(m), nextOrder())
+				local slot = table.find(slots, id)
+				local keys = Input.formatNotation(m.input)
+				local desc = MoveKit.describe(m)
+				if slot then
+					keys = "[" .. Input.glyph("P" .. slot) .. "]   or   " .. keys
+					if Config.PowerCooldowns then
+						local cd = Engine.powerCooldownFor(m)
+						desc = desc .. "  \u{00B7}  Cooldown " .. string.format("%.1f", cd / 60) .. "s"
+					end
+				end
+				row(m.name, keys, desc, nextOrder())
 			end
 		end
 		section("SUPER  \u{00B7}  2 RAGE BARS", nextOrder())
@@ -1835,6 +1847,7 @@ function Screens.settings(root: Instance, settings)
 		{ key = "voice", label = "VOICE VOLUME", kind = "slider" },
 		{ key = "subtitles", label = "SUBTITLES", kind = "toggle" },
 		{ key = "shake", label = "CAMERA SHAKE", kind = "toggle" },
+		{ key = "flashes", label = "SCREEN FLASHES / IMPACT FRAMES", kind = "toggle" },
 		{ key = "difficulty", label = "DEFAULT CPU DIFFICULTY", kind = "choice", choices = { 1, 2, 3, 4 } },
 		{ key = "touch", label = "TOUCH CONTROLS", kind = "choice", choices = { "auto", "on", "off" } },
 	}

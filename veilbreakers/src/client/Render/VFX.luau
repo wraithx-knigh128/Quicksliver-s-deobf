@@ -5,6 +5,7 @@
 
 local Debris = game:GetService("Debris")
 local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
 
 local Veil = game:GetService("ReplicatedStorage"):WaitForChild("Veil")
 local Assets = require(Veil.Assets)
@@ -236,6 +237,20 @@ function VFX.hit(pos: Vector3, strength: string, element: string?, dir: number, 
 	end
 	flashBall(pos, cols[1], tune.flash, tune.streak and 0.16 or 0.09)
 	impactLight(a, cols[2], tune.light[1], tune.light[2], tune.light[3])
+	-- comic hit burst (custom texture, when uploaded)
+	local burstTex = Assets.image("FX_HitBurst")
+	if burstTex ~= "" then
+		burst(a, 1, {
+			texture = burstTex,
+			color = ColorSequence.new(cols[1]),
+			speed = NumberRange.new(0, 0),
+			size = NumberSequence.new(tune.core[1] * 0.9, tune.core[2]),
+			lifetime = NumberRange.new(0.08, 0.12),
+			transparency = NumberSequence.new(0, 1),
+			rotSpeed = NumberRange.new(-90, 90),
+			zoffset = 2,
+		})
+	end
 	if tune.streak then
 		streak(pos, dir, cols[1], tune.streak, 0.12)
 	end
@@ -423,7 +438,85 @@ function VFX.teleport(pos: Vector3, color: Color3)
 	flashBall(pos + V(0, 2.6, 0), color, 4, 0.22)
 end
 
+-- Anime slash arc across the swing (screen plane). dir = facing (+1 / -1).
+-- Uses the FX_Slash texture on a card when uploaded, else a bowed neon beam.
+function VFX.slash(pos: Vector3, dir: number, color: Color3, big: boolean?)
+	local scale = big and 1.35 or 1
+	local tex = Assets.image("FX_Slash")
+	if tex ~= "" then
+		local card = Instance.new("Part")
+		card.Anchored = true
+		card.CanCollide = false
+		card.CanQuery = false
+		card.CanTouch = false
+		card.CastShadow = false
+		card.Transparency = 1
+		card.Size = V(4.4 * scale, 2.2 * scale, 0.05)
+		card.CFrame = C(pos + V(dir * 0.6, 0.4, 0.9)) * A(0, dir > 0 and 0 or math.pi, rad(-28))
+		card.Parent = container()
+		local d = Instance.new("Decal")
+		d.Texture = tex
+		d.Color3 = color
+		d.Face = Enum.NormalId.Back
+		d.Parent = card
+		local d2 = d:Clone()
+		d2.Face = Enum.NormalId.Front
+		d2.Parent = card
+		TweenService:Create(d, TweenInfo.new(0.18), { Transparency = 1 }):Play()
+		TweenService:Create(d2, TweenInfo.new(0.18), { Transparency = 1 }):Play()
+		TweenService:Create(card, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Size = card.Size * 1.25 }):Play()
+		Debris:AddItem(card, 0.25)
+		return
+	end
+	local holder = anchorAt(pos, 0.3)
+	local a0 = Instance.new("Attachment")
+	-- attachment X axes point up so both control points bow the beam upward
+	a0.CFrame = C(-dir * 1.4 * scale, 1.9 * scale, 0.8) * A(0, 0, rad(90))
+	a0.Parent = holder
+	local a1 = Instance.new("Attachment")
+	a1.CFrame = C(dir * 2.0 * scale, -0.3 * scale, 0.8) * A(0, 0, rad(90))
+	a1.Parent = holder
+	local b = Instance.new("Beam")
+	b.Attachment0 = a0
+	b.Attachment1 = a1
+	b.CurveSize0 = 1.6 * scale
+	b.CurveSize1 = -1.2 * scale
+	b.Width0 = 0.05
+	b.Width1 = 0.75 * scale
+	b.FaceCamera = true
+	b.Segments = 16
+	b.LightEmission = 1
+	b.LightInfluence = 0
+	b.Color = ColorSequence.new(Color3.new(1, 1, 1), color)
+	b.Transparency = NumberSequence.new(0.6, 0)
+	b.Parent = holder
+	-- fade the arc out from the tail
+	local t0 = os.clock()
+	local conn
+	conn = RunService.Heartbeat:Connect(function()
+		local k = (os.clock() - t0) / 0.16
+		if k >= 1 or not b.Parent then
+			conn:Disconnect()
+			return
+		end
+		b.Transparency = NumberSequence.new(math.min(1, 0.6 + k), math.min(1, k * 1.1))
+	end)
+end
+
 function VFX.burstShockwave(pos: Vector3, color: Color3)
+	local swTex = Assets.image("FX_Shockwave")
+	if swTex ~= "" then
+		local a = anchorAt(pos, 1)
+		burst(a, 1, {
+			texture = swTex,
+			color = ColorSequence.new(color),
+			speed = NumberRange.new(0, 0),
+			size = NumberSequence.new(2, 18),
+			lifetime = NumberRange.new(0.4, 0.4),
+			transparency = NumberSequence.new(0, 1),
+			rotSpeed = NumberRange.new(0, 0),
+		})
+	end
 	ring(pos, color, 16, 0.45)
 	ring(pos, Color3.new(1, 1, 1), 9, 0.3)
 	flashBall(pos, color, 6, 0.3)

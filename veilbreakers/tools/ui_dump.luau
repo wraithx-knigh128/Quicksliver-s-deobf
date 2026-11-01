@@ -29,7 +29,20 @@ local function pump(n)
 	task.wait()
 end
 
-if which == "intro" then
+if which == "freeze" then
+	-- cutscene editing overlays: freeze-frame name card + pop caption + letterbox
+	local CineFX = Loader.require(client.Render.CineFX)
+	local fx = CineFX.new(root, 40)
+	Theme.frame(root, { Size = roblox.UDim2.new(1, 0, 0, 96), BackgroundColor3 = roblox.Color3.new(0, 0, 0), BackgroundTransparency = 0, ZIndex = 50 })
+	Theme.frame(root, { Size = roblox.UDim2.new(1, 0, 0, 96), Position = roblox.UDim2.new(0, 0, 1, -96), BackgroundColor3 = roblox.Color3.new(0, 0, 0), BackgroundTransparency = 0, ZIndex = 50 })
+	task.spawn(function()
+		fx:freezeFrame("GUEST 666", "The Account That Should Not Exist", roblox.Color3.fromHex("#B03AFF"), 2, 30)
+	end)
+	fx:pop("SUS", roblox.Vector2.new(0.3, 0.3), nil, nil, 30)
+	pump(40)
+	task.wait(0.4)
+	pump(5)
+elseif which == "intro" then
 	-- round 1 intro: letterbox, P1 name card
 	local FightView = Loader.require(client.Render.FightView)
 	local view = FightView.new({
@@ -59,6 +72,7 @@ elseif which == "hud" then
 		seed = 3,
 		shortIntro = true,
 		forceTouch = touch,
+		showPowers = true,
 	})
 	for _ = 1, 40 do
 		pump(30)

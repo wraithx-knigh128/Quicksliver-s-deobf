@@ -14,7 +14,7 @@ local Rng = require(script.Parent.Rng)
 
 local Engine = {}
 
-local BUTTONS = { "L", "H", "K", "S", "B", "E", "X" }
+local BUTTONS = { "L", "H", "K", "S", "B", "E", "X", "P1", "P2", "P3", "P4" }
 local NEUTRAL_INPUT = {
 	left = false,
 	right = false,
@@ -27,6 +27,11 @@ local NEUTRAL_INPUT = {
 	B = false,
 	E = false,
 	X = false,
+	-- power slots (keys 1-4)
+	P1 = false,
+	P2 = false,
+	P3 = false,
+	P4 = false,
 }
 Engine.NeutralInput = NEUTRAL_INPUT
 
@@ -68,6 +73,8 @@ local function newFighter(_match, index: number, spec)
 		maxHp = maxHp,
 		meter = 0,
 		echoCD = 0,
+		powerCD = {}, -- move id -> frames left
+		powerCDMax = {}, -- move id -> cooldown it started with
 		state = "intro",
 		t = 0,
 		move = nil,
@@ -222,6 +229,7 @@ local function resetRound(match)
 		f.crouch = false
 		f.throwPartner = nil
 		f.echoCD = 0
+		table.clear(f.powerCD)
 		f.pendingChain = nil
 		f.pose = "stance"
 		f.dying = false
@@ -358,9 +366,58 @@ local function inHitstun(f): boolean
 end
 Engine.inHitstun = inHitstun
 
+-------------------------------------------------------------------------------
+-- Powers (keys 1-4)
+-------------------------------------------------------------------------------
+
+local POWER_BUTTONS = { "P1", "P2", "P3", "P4" }
+
+-- Move id in power slot 1-4 for this fighter.
+function Engine.powerSlotId(f, slot: number): string?
+	local slots = f.def.powers or Config.PowerSlots
+	return slots[slot]
+end
+
+-- Slot index (1-4) if the move is one of the fighter's powers.
+function Engine.powerSlotOf(f, id: string): number?
+	local slots = f.def.powers or Config.PowerSlots
+	for i, sid in slots do
+		if sid == id then
+			return i
+		end
+	end
+	return nil
+end
+
+-- Cooldown in frames for a power move (explicit `cooldown`, else by type).
+function Engine.powerCooldownFor(move): number
+	if move.cooldown then
+		return move.cooldown
+	end
+	local t = Config.PowerCooldown
+	if move.parry then
+		return t.parry
+	elseif move.invuln and move.invuln[1] <= 2 then
+		return t.reversal
+	elseif move.teleport then
+		return t.teleport
+	elseif move.projectile then
+		return t.projectile
+	end
+	return t.default
+end
+
+-- Frames left before the power can be used again (0 = ready).
+function Engine.powerCooldown(f, id: string): number
+	return f.powerCD[id] or 0
+end
+
 local function startMove(match, f, id: string)
 	local move = f.def.moves[id]
 	if not move then
+		return false
+	end
+	if (f.powerCD[id] or 0) > 0 then
 		return false
 	end
 	if move.cost and f.meter < move.cost then
@@ -386,6 +443,11 @@ local function startMove(match, f, id: string)
 	f.crouch = move.crouching == true
 	if move.kind == "special" then
 		f.stats.specials += 1
+	end
+	if Config.PowerCooldowns and not match.training and Engine.powerSlotOf(f, id) then
+		local cd = Engine.powerCooldownFor(move)
+		f.powerCD[id] = cd
+		f.powerCDMax[id] = cd
 	end
 	emit(match, { type = "move", fighter = f.index, move = id, anim = move.anim, kind = move.kind })
 	if move.kind == "super" then
@@ -525,6 +587,19 @@ local function tryActions(match, f, cancelMode: string?)
 		if f.def.moves[id] then
 			consume(f, "S")
 			return startMove(match, f, id)
+		end
+	end
+	-- Powers: keys 1-4 fire a slot directly (ground only)
+	if (cancelMode == nil or cancelMode == "normal") and not isAirborne(f) then
+		for slot = 1, 4 do
+			local b = POWER_BUTTONS[slot]
+			if pressed(match, f, b) then
+				consume(f, b)
+				local id = Engine.powerSlotId(f, slot)
+				if id and f.def.moves[id] then
+					return startMove(match, f, id)
+				end
+			end
 		end
 	end
 	if cancelMode ~= nil then
@@ -1197,6 +1272,13 @@ local function stepFighter(match, f)
 	end
 	if f.echoCD > 0 and match.phase == "fight" then
 		f.echoCD -= 1
+	end
+	if match.phase == "fight" then
+		for id, cd in f.powerCD do
+			if cd > 0 then
+				f.powerCD[id] = cd - 1
+			end
+		end
 	end
 
 	-- pushback slide

@@ -225,7 +225,102 @@ step("controls: Q block, mouse light/heavy, WASD, notation glyphs", function()
 	settle()
 	Input.mode = prevMode
 end)
+step("power hotbar: 4 slots, cooldown sweep, keys 1-4 reach the engine", function()
+	local HUD = mods.HUD
+	local Engine = Loader.require(shared.Combat.Engine)
+	local def = Fighters.get("noob")
+	local powers = {}
+	for slot, id in { "SN", "SF", "SB", "SD" } do
+		table.insert(powers, { id = id, name = def.moves[id].name, key = tostring(slot), color = roblox.Color3.new(1, 1, 1) })
+	end
+	local hud = HUD.new(root, def, Loader.require(shared.Data.Echoes).get("grandpa"), Fighters.get("admin"), Loader.require(shared.Data.Echoes).get("dana"), { powers = powers })
+	assert(hud.hotbar and #hud.hotbar.slots == 4, "hotbar missing")
+	local fake = { powerCD = { SF = 48 }, powerCDMax = { SF = 96 } }
+	hud:updateHotbar(fake)
+	local sl = hud.hotbar.slots[2]
+	assert(math.abs(sl.cover.Size.Y.Scale - 0.5) < 0.01, "cooldown sweep wrong: " .. sl.cover.Size.Y.Scale)
+	assert(sl.secs.Text == "0.8", "cooldown seconds wrong: " .. sl.secs.Text)
+	fake.powerCD.SF = 0
+	hud:updateHotbar(fake)
+	assert(sl.secs.Text == "" and sl.cover.Size.Y.Scale == 0, "slot did not come back up")
+	hud:destroy()
+	-- keyboard 1-4 -> P1..P4 in the fight state
+	local UIS = Mock.uis
+	local Enum = roblox.Enum
+	for i, code in { Enum.KeyCode.One, Enum.KeyCode.Two, Enum.KeyCode.Three, Enum.KeyCode.Four } do
+		UIS.InputBegan:Fire({ UserInputType = Enum.UserInputType.Keyboard, KeyCode = code }, false)
+		task.wait()
+		task.wait()
+		assert(Input.fightState()["P" .. i], "key " .. i .. " did not press power " .. i)
+		UIS.InputEnded:Fire({ UserInputType = Enum.UserInputType.Keyboard, KeyCode = code }, false)
+		task.wait()
+		task.wait()
+		assert(not Input.fightState()["P" .. i], "power " .. i .. " stuck")
+	end
+	local _ = Engine
+end)
+-- Full, unskipped playback of story scenes: acting, coverage cuts, freeze frames,
+-- impact frames, pop captions, walks, attacks, slow motion.
+local function playScene(label: string, beat)
+	local done, res, err = false, nil, nil
+	task.spawn(function()
+		local ok, e = pcall(function()
+			res = mods.Cutscene.play(beat, root)
+		end)
+		if not ok then
+			err = e
+		end
+		done = true
+	end)
+	local frames = 0
+	local t0 = os.clock()
+	while not done and os.clock() - t0 < 120 do
+		Mock.frame(1 / 60)
+		frames += 1
+		task.wait()
+	end
+	if err then
+		fail(label .. ": " .. tostring(err))
+	elseif not done then
+		fail(label .. " did not finish")
+	elseif res ~= "done" then
+		fail(label .. " returned " .. tostring(res))
+	else
+		print(string.format("  ok  %s (%d frames, played to the end)", label, frames))
+	end
+	StageBuilder.clear()
+end
+if only == "cine" or only == nil then
+	print("[1c] Cinematics: autoGesture, full scene playback")
+	step("autoGesture reads the line", function()
+		local g = mods.Cutscene.autoGesture
+		assert(g("WHO. DARES. ENTER. MY. UNFINISHED. MAP.", "studzilla") == "shout", "caps -> shout")
+		assert(g("How are you even here?", "noob") == "shrug", "question -> shrug")
+		assert(g("Hey Admin. ;unadmin.", "noob") == "wave", "hey -> wave")
+		assert(g("...see you in Chapter 2.", "guest") == "sad", "ellipsis -> sad")
+		assert(g("Noob, NOW!", "bacon") == "point", "exclamation -> point")
+		assert(g("Guest 666 has joined the game.", "system") == nil, "system has no body")
+	end)
+	local beats = Story.chapters[1].beats
+	playScene("scene 1 (freeze, impact, crash, pops, coverage)", beats[1])
+	playScene("final scene (impact x4, flash, to-be-continued freeze)", beats[#beats])
+	-- every cinematic effect leaves nothing behind in Lighting
+	local Lighting = Mock.game:GetService("Lighting")
+	for _, c in Lighting:GetChildren() do
+		assert(c.Name ~= "CineFXGrade" and c.Name ~= "CineFXBlur", "CineFX left " .. c.Name .. " in Lighting")
+	end
+end
+if only == "cine" then
+	for _, e in Mock.errors do
+		fail("handler error: " .. e)
+	end
+	print(#failures == 0 and "\n0 failures" or ("\n" .. #failures .. " failures"))
+	process.exit(#failures == 0 and 0 or 1)
+end
 if only == "anim" then
+	for _, e in Mock.errors do
+		fail("handler error: " .. e)
+	end
 	print(#failures == 0 and "\n0 failures" or ("\n" .. #failures .. " failures"))
 	process.exit(#failures == 0 and 0 or 1)
 end

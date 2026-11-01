@@ -50,6 +50,13 @@ Assets.Images = {
 	Backdrop_emberthrone = "",
 	Backdrop_proving = "",
 	Backdrop_baseplate = "",
+	-- Original VFX textures in /art/vfx (tools/make_vfx_textures.py). Upload them in
+	-- Studio (Asset Manager > Bulk Import) and paste the image ids here; until then the
+	-- game draws speed lines procedurally and uses the built-in particle textures.
+	FX_SpeedLines = "",
+	FX_Slash = "",
+	FX_HitBurst = "",
+	FX_Shockwave = "",
 }
 
 -- Built-in particle textures that ship with every Roblox client.
@@ -224,41 +231,43 @@ return {
 	amb_wind = { atlas = "ambience", start = 73.05, length = 24.0 },
 	block = { atlas = "sfx", start = 0.0, length = 1.35 },
 	body_fall = { atlas = "sfx", start = 1.7, length = 1.17 },
-	breaker = { atlas = "sfx", start = 3.22, length = 2.1 },
-	cast_ice = { atlas = "sfx", start = 5.67, length = 2.1 },
-	cast_lightning = { atlas = "sfx", start = 8.12, length = 2.0 },
-	cast_radiant = { atlas = "sfx", start = 10.47, length = 2.4 },
-	cast_shadow = { atlas = "sfx", start = 13.22, length = 2.0 },
-	cast_soul = { atlas = "sfx", start = 15.57, length = 2.5 },
-	chain = { atlas = "sfx", start = 18.42, length = 0.4971 },
-	chakram_throw = { atlas = "sfx", start = 19.2671, length = 0.5971 },
-	charge = { atlas = "sfx", start = 20.2142, length = 0.521 },
-	countdown = { atlas = "sfx", start = 21.0852, length = 2.1 },
-	crossbow = { atlas = "sfx", start = 23.5352, length = 0.3471 },
-	dagger_flurry = { atlas = "sfx", start = 24.2322, length = 0.4971 },
-	dash = { atlas = "sfx", start = 25.0793, length = 0.2017 },
-	dash_slash = { atlas = "sfx", start = 25.6311, length = 0.5602 },
-	echo_summon = { atlas = "sfx", start = 26.5412, length = 2.95 },
-	fight = { atlas = "sfx", start = 29.8412, length = 2.7 },
-	finisher_ready = { atlas = "sfx", start = 32.8912, length = 5.1 },
-	fire_burst = { atlas = "sfx", start = 38.3412, length = 2.1 },
-	fire_whoosh = { atlas = "sfx", start = 40.7912, length = 0.6971 },
-	flare = { atlas = "sfx", start = 41.8383, length = 0.5123 },
-	footstep = { atlas = "sfx", start = 42.7006, length = 0.0671 },
-	getup = { atlas = "sfx", start = 43.1177, length = 0.2971 },
-	ground_crack = { atlas = "sfx", start = 43.7648, length = 0.4471 },
-	ground_slam = { atlas = "sfx", start = 44.5619, length = 2.3 },
-	hit_blade = { atlas = "sfx", start = 47.2119, length = 1.4 },
-	hit_heavy = { atlas = "sfx", start = 48.9619, length = 1.43 },
-	hit_light = { atlas = "sfx", start = 50.7419, length = 0.1171 },
-	hit_medium = { atlas = "sfx", start = 51.209, length = 0.1971 },
-	impact_sub = { atlas = "sfx", start = 51.7561, length = 0.4471 },
-	jump = { atlas = "sfx", start = 52.5532, length = 0.1571 },
-	knockdown = { atlas = "sfx", start = 53.0603, length = 1.3 },
-	ko = { atlas = "sfx", start = 54.7103, length = 4.7 },
-	land = { atlas = "sfx", start = 59.7603, length = 0.1971 },
-	lantern = { atlas = "sfx", start = 60.3074, length = 2.2 },
-	lightning_crack = { atlas = "sfx", start = 62.8574, length = 3.0 },
+	boom = { atlas = "sfx", start = 3.22, length = 3.7 },
+	breaker = { atlas = "sfx", start = 7.27, length = 2.1 },
+	cast_ice = { atlas = "sfx", start = 9.72, length = 2.1 },
+	cast_lightning = { atlas = "sfx", start = 12.17, length = 2.0 },
+	cast_radiant = { atlas = "sfx", start = 14.52, length = 2.4 },
+	cast_shadow = { atlas = "sfx", start = 17.27, length = 2.0 },
+	cast_soul = { atlas = "sfx", start = 19.62, length = 2.5 },
+	chain = { atlas = "sfx", start = 22.47, length = 0.4971 },
+	chakram_throw = { atlas = "sfx", start = 23.3171, length = 0.5971 },
+	charge = { atlas = "sfx", start = 24.2642, length = 0.521 },
+	countdown = { atlas = "sfx", start = 25.1352, length = 2.1 },
+	crossbow = { atlas = "sfx", start = 27.5852, length = 0.3471 },
+	dagger_flurry = { atlas = "sfx", start = 28.2822, length = 0.4971 },
+	dash = { atlas = "sfx", start = 29.1293, length = 0.2017 },
+	dash_slash = { atlas = "sfx", start = 29.6811, length = 0.5602 },
+	echo_summon = { atlas = "sfx", start = 30.5912, length = 2.95 },
+	fight = { atlas = "sfx", start = 33.8912, length = 2.7 },
+	finisher_ready = { atlas = "sfx", start = 36.9412, length = 5.1 },
+	fire_burst = { atlas = "sfx", start = 42.3912, length = 2.1 },
+	fire_whoosh = { atlas = "sfx", start = 44.8412, length = 0.6971 },
+	flare = { atlas = "sfx", start = 45.8883, length = 0.5123 },
+	footstep = { atlas = "sfx", start = 46.7506, length = 0.0671 },
+	getup = { atlas = "sfx", start = 47.1677, length = 0.2971 },
+	ground_crack = { atlas = "sfx", start = 47.8148, length = 0.4471 },
+	ground_slam = { atlas = "sfx", start = 48.6119, length = 2.3 },
+	hit_blade = { atlas = "sfx", start = 51.2619, length = 1.4 },
+	hit_heavy = { atlas = "sfx", start = 53.0119, length = 1.43 },
+	hit_light = { atlas = "sfx", start = 54.7919, length = 0.1171 },
+	hit_medium = { atlas = "sfx", start = 55.259, length = 0.1971 },
+	impact_frame = { atlas = "sfx", start = 55.8061, length = 1.85 },
+	impact_sub = { atlas = "sfx", start = 58.0061, length = 0.4471 },
+	jump = { atlas = "sfx", start = 58.8032, length = 0.1571 },
+	knockdown = { atlas = "sfx", start = 59.3103, length = 1.3 },
+	ko = { atlas = "sfx", start = 60.9603, length = 4.7 },
+	land = { atlas = "sfx", start = 66.0103, length = 0.1971 },
+	lantern = { atlas = "sfx", start = 66.5574, length = 2.2 },
+	lightning_crack = { atlas = "sfx", start = 69.1074, length = 3.0 },
 	music_battle_a = { atlas = "music_b", start = 0.0, length = 54.8571 },
 	music_battle_b = { atlas = "music_b", start = 55.2071, length = 61.9355 },
 	music_boss = { atlas = "music_b", start = 117.4926, length = 51.2 },
@@ -266,42 +275,44 @@ return {
 	music_select = { atlas = "music_a", start = 53.6833, length = 38.4 },
 	music_story = { atlas = "music_a", start = 92.4333, length = 45.0 },
 	music_victory = { atlas = "music_a", start = 137.7833, length = 15.0909 },
-	oof = { atlas = "sfx", start = 66.2074, length = 1.09 },
-	palm = { atlas = "sfx", start = 67.6474, length = 1.8 },
-	parry = { atlas = "sfx", start = 69.7974, length = 2.3 },
-	parry_ready = { atlas = "sfx", start = 72.4474, length = 0.6008 },
-	projectile_hit = { atlas = "sfx", start = 73.3982, length = 1.75 },
-	ravens = { atlas = "sfx", start = 75.4982, length = 2.4 },
-	roots = { atlas = "sfx", start = 78.2482, length = 0.7971 },
-	round_gong = { atlas = "sfx", start = 79.3953, length = 5.75 },
-	shatter = { atlas = "sfx", start = 85.4953, length = 3.2 },
-	slide = { atlas = "sfx", start = 89.0453, length = 0.4471 },
-	smoke = { atlas = "sfx", start = 89.8424, length = 0.4971 },
-	spin = { atlas = "sfx", start = 90.6895, length = 0.3971 },
-	super_impact = { atlas = "sfx", start = 91.4366, length = 3.1 },
-	super_start = { atlas = "sfx", start = 94.8866, length = 3.9 },
-	tech = { atlas = "sfx", start = 99.1366, length = 0.3512 },
-	teleport = { atlas = "sfx", start = 99.8378, length = 1.85 },
-	throw_slam = { atlas = "sfx", start = 102.0377, length = 1.7 },
-	trap_set = { atlas = "sfx", start = 104.0877, length = 0.3971 },
-	ui_back = { atlas = "sfx", start = 104.8348, length = 0.1771 },
-	ui_confirm = { atlas = "sfx", start = 105.3619, length = 1.95 },
-	ui_lock = { atlas = "sfx", start = 107.6619, length = 2.1 },
-	ui_move = { atlas = "sfx", start = 110.1119, length = 0.0624 },
-	ui_select = { atlas = "sfx", start = 110.5243, length = 0.0471 },
-	ui_versus = { atlas = "sfx", start = 110.9214, length = 2.85 },
-	voice_d_attack = { atlas = "sfx", start = 114.1214, length = 1.74 },
-	voice_d_hurt = { atlas = "sfx", start = 116.2114, length = 1.82 },
-	voice_f_attack = { atlas = "sfx", start = 118.3814, length = 0.2371 },
-	voice_f_hurt = { atlas = "sfx", start = 118.9685, length = 0.3171 },
-	voice_h_attack = { atlas = "sfx", start = 119.6356, length = 2.19 },
-	voice_h_hurt = { atlas = "sfx", start = 122.1756, length = 2.27 },
-	voice_m_attack = { atlas = "sfx", start = 124.7956, length = 0.2371 },
-	voice_m_hurt = { atlas = "sfx", start = 125.3827, length = 0.3171 },
-	whoosh_heavy = { atlas = "sfx", start = 126.0498, length = 0.3371 },
-	whoosh_light = { atlas = "sfx", start = 126.7369, length = 0.1971 },
-	wing_flap = { atlas = "sfx", start = 127.284, length = 0.4971 },
-	wolf_howl = { atlas = "sfx", start = 128.1311, length = 3.6 },
+	oof = { atlas = "sfx", start = 72.4574, length = 1.09 },
+	palm = { atlas = "sfx", start = 73.8974, length = 1.8 },
+	parry = { atlas = "sfx", start = 76.0474, length = 2.3 },
+	parry_ready = { atlas = "sfx", start = 78.6974, length = 0.6008 },
+	pop = { atlas = "sfx", start = 79.6482, length = 0.1171 },
+	projectile_hit = { atlas = "sfx", start = 80.1153, length = 1.75 },
+	ravens = { atlas = "sfx", start = 82.2153, length = 2.4 },
+	roots = { atlas = "sfx", start = 84.9653, length = 0.7971 },
+	round_gong = { atlas = "sfx", start = 86.1124, length = 5.75 },
+	scratch = { atlas = "sfx", start = 92.2124, length = 0.5471 },
+	shatter = { atlas = "sfx", start = 93.1095, length = 3.2 },
+	slide = { atlas = "sfx", start = 96.6595, length = 0.4471 },
+	smoke = { atlas = "sfx", start = 97.4566, length = 0.4971 },
+	spin = { atlas = "sfx", start = 98.3037, length = 0.3971 },
+	super_impact = { atlas = "sfx", start = 99.0507, length = 3.1 },
+	super_start = { atlas = "sfx", start = 102.5007, length = 3.9 },
+	tech = { atlas = "sfx", start = 106.7507, length = 0.3512 },
+	teleport = { atlas = "sfx", start = 107.452, length = 1.85 },
+	throw_slam = { atlas = "sfx", start = 109.6519, length = 1.7 },
+	trap_set = { atlas = "sfx", start = 111.7019, length = 0.3971 },
+	ui_back = { atlas = "sfx", start = 112.449, length = 0.1771 },
+	ui_confirm = { atlas = "sfx", start = 112.9761, length = 1.95 },
+	ui_lock = { atlas = "sfx", start = 115.2761, length = 2.1 },
+	ui_move = { atlas = "sfx", start = 117.7261, length = 0.0624 },
+	ui_select = { atlas = "sfx", start = 118.1385, length = 0.0471 },
+	ui_versus = { atlas = "sfx", start = 118.5356, length = 2.85 },
+	voice_d_attack = { atlas = "sfx", start = 121.7356, length = 1.74 },
+	voice_d_hurt = { atlas = "sfx", start = 123.8256, length = 1.82 },
+	voice_f_attack = { atlas = "sfx", start = 125.9956, length = 0.2371 },
+	voice_f_hurt = { atlas = "sfx", start = 126.5827, length = 0.3171 },
+	voice_h_attack = { atlas = "sfx", start = 127.2498, length = 2.19 },
+	voice_h_hurt = { atlas = "sfx", start = 129.7898, length = 2.27 },
+	voice_m_attack = { atlas = "sfx", start = 132.4098, length = 0.2371 },
+	voice_m_hurt = { atlas = "sfx", start = 132.9969, length = 0.3171 },
+	whoosh_heavy = { atlas = "sfx", start = 133.664, length = 0.3371 },
+	whoosh_light = { atlas = "sfx", start = 134.3511, length = 0.1971 },
+	wing_flap = { atlas = "sfx", start = 134.8982, length = 0.4971 },
+	wolf_howl = { atlas = "sfx", start = 135.7453, length = 3.6 },
 }
 ]]></string>
         </Properties>
@@ -431,7 +442,7 @@ function AI:startCombo(route: { string })
 	end
 	local valid = {}
 	for _, id in route do
-		if self.f.def.moves[id] then
+		if self.f.def.moves[id] and Engine.powerCooldown(self.f, id) == 0 then
 			table.insert(valid, id)
 		end
 	end
@@ -451,6 +462,10 @@ end
 function AI:pressMoveInput(id: string): boolean
 	local spec = BTN_FOR[id]
 	if not spec then
+		return false
+	end
+	-- powers on cooldown can't come out; don't waste the press
+	if Engine.powerCooldown(self.f, id) > 0 then
 		return false
 	end
 	if not self:press(spec.btn, 2) then
@@ -991,7 +1006,7 @@ local Rng = require(script.Parent.Rng)
 
 local Engine = {}
 
-local BUTTONS = { "L", "H", "K", "S", "B", "E", "X" }
+local BUTTONS = { "L", "H", "K", "S", "B", "E", "X", "P1", "P2", "P3", "P4" }
 local NEUTRAL_INPUT = {
 	left = false,
 	right = false,
@@ -1004,6 +1019,11 @@ local NEUTRAL_INPUT = {
 	B = false,
 	E = false,
 	X = false,
+	-- power slots (keys 1-4)
+	P1 = false,
+	P2 = false,
+	P3 = false,
+	P4 = false,
 }
 Engine.NeutralInput = NEUTRAL_INPUT
 
@@ -1045,6 +1065,8 @@ local function newFighter(_match, index: number, spec)
 		maxHp = maxHp,
 		meter = 0,
 		echoCD = 0,
+		powerCD = {}, -- move id -> frames left
+		powerCDMax = {}, -- move id -> cooldown it started with
 		state = "intro",
 		t = 0,
 		move = nil,
@@ -1199,6 +1221,7 @@ local function resetRound(match)
 		f.crouch = false
 		f.throwPartner = nil
 		f.echoCD = 0
+		table.clear(f.powerCD)
 		f.pendingChain = nil
 		f.pose = "stance"
 		f.dying = false
@@ -1335,9 +1358,58 @@ local function inHitstun(f): boolean
 end
 Engine.inHitstun = inHitstun
 
+-------------------------------------------------------------------------------
+-- Powers (keys 1-4)
+-------------------------------------------------------------------------------
+
+local POWER_BUTTONS = { "P1", "P2", "P3", "P4" }
+
+-- Move id in power slot 1-4 for this fighter.
+function Engine.powerSlotId(f, slot: number): string?
+	local slots = f.def.powers or Config.PowerSlots
+	return slots[slot]
+end
+
+-- Slot index (1-4) if the move is one of the fighter's powers.
+function Engine.powerSlotOf(f, id: string): number?
+	local slots = f.def.powers or Config.PowerSlots
+	for i, sid in slots do
+		if sid == id then
+			return i
+		end
+	end
+	return nil
+end
+
+-- Cooldown in frames for a power move (explicit `cooldown`, else by type).
+function Engine.powerCooldownFor(move): number
+	if move.cooldown then
+		return move.cooldown
+	end
+	local t = Config.PowerCooldown
+	if move.parry then
+		return t.parry
+	elseif move.invuln and move.invuln[1] <= 2 then
+		return t.reversal
+	elseif move.teleport then
+		return t.teleport
+	elseif move.projectile then
+		return t.projectile
+	end
+	return t.default
+end
+
+-- Frames left before the power can be used again (0 = ready).
+function Engine.powerCooldown(f, id: string): number
+	return f.powerCD[id] or 0
+end
+
 local function startMove(match, f, id: string)
 	local move = f.def.moves[id]
 	if not move then
+		return false
+	end
+	if (f.powerCD[id] or 0) > 0 then
 		return false
 	end
 	if move.cost and f.meter < move.cost then
@@ -1363,6 +1435,11 @@ local function startMove(match, f, id: string)
 	f.crouch = move.crouching == true
 	if move.kind == "special" then
 		f.stats.specials += 1
+	end
+	if Config.PowerCooldowns and not match.training and Engine.powerSlotOf(f, id) then
+		local cd = Engine.powerCooldownFor(move)
+		f.powerCD[id] = cd
+		f.powerCDMax[id] = cd
 	end
 	emit(match, { type = "move", fighter = f.index, move = id, anim = move.anim, kind = move.kind })
 	if move.kind == "super" then
@@ -1502,6 +1579,19 @@ local function tryActions(match, f, cancelMode: string?)
 		if f.def.moves[id] then
 			consume(f, "S")
 			return startMove(match, f, id)
+		end
+	end
+	-- Powers: keys 1-4 fire a slot directly (ground only)
+	if (cancelMode == nil or cancelMode == "normal") and not isAirborne(f) then
+		for slot = 1, 4 do
+			local b = POWER_BUTTONS[slot]
+			if pressed(match, f, b) then
+				consume(f, b)
+				local id = Engine.powerSlotId(f, slot)
+				if id and f.def.moves[id] then
+					return startMove(match, f, id)
+				end
+			end
 		end
 	end
 	if cancelMode ~= nil then
@@ -2174,6 +2264,13 @@ local function stepFighter(match, f)
 	end
 	if f.echoCD > 0 and match.phase == "fight" then
 		f.echoCD -= 1
+	end
+	if match.phase == "fight" then
+		for id, cd in f.powerCD do
+			if cd > 0 then
+				f.powerCD[id] = cd - 1
+			end
+		end
 	end
 
 	-- pushback slide
@@ -3182,7 +3279,7 @@ local Config = {}
 
 Config.GameTitle = "OOF COMBAT"
 Config.GameSubtitle = "THE GREAT SERVER RESET"
-Config.Version = "1.2.0"
+Config.Version = "1.3.0"
 
 Config.TickRate = 60
 Config.TickDt = 1 / 60
@@ -3199,6 +3296,18 @@ Config.MeterMax = 300
 Config.SuperCost = 200
 Config.BreakerCost = 100
 Config.BreakerMinHits = 2
+
+-- Powers (keys 1-4): each fighter's four ground specials. Using one, by its key
+-- or by its motion input, puts it on cooldown (frames). No cooldowns in Practice.
+Config.PowerSlots = { "SN", "SF", "SB", "SD" }
+Config.PowerCooldowns = true
+Config.PowerCooldown = {
+	default = 96,
+	projectile = 78,
+	teleport = 120,
+	parry = 140,
+	reversal = 150, -- invulnerable starts
+}
 
 -- Echo (assist) cooldown, frames
 Config.EchoCooldown = 60 * 11
@@ -5967,10 +6076,15 @@ return Stages
 -- and fights. Camera shots are authored as presets relative to the actors so the
 -- CutscenePlayer can frame them on any stage.
 
-export type Line = { speaker: string, text: string, voice: string? }
+-- Lines may also carry editing beats (Cutscene.luau): gesture, cam / a / b (cut to
+-- a specific angle), whip, crash, impact, pop (+ popX / popY), freeze
+-- (+ freezeName / freezeSub), holdGesture.
+export type Line = { speaker: string, text: string, voice: string?, [string]: any }
 
 export type Shot = {
-	cam: string, -- wide | two | close | over | sky | low | pan
+	cam: string, -- wide | two | close | over | sky | low | crash | dutch | orbit | dolly | track
+	auto: boolean?, -- false disables automatic dialogue coverage cuts
+	whip: boolean?, -- whip-pan into this shot
 	a: number?,
 	b: number?,
 	duration: number?,
@@ -6023,15 +6137,21 @@ Story.chapters = {
 						b = 2,
 						lines = {
 							{ speaker = "bacon", text = "Your guard drops every time you check your phone, Noob." },
-							{ speaker = "noob", text = "I'm not checking my phone. I'm AFK. I fight better AFK." },
-							{ speaker = "bacon", text = "The chat's been weird all day. People keep typing 'it's happening'." },
-							{ speaker = "noob", text = "Probably another free Robux scam. ...Probably." },
+							{ speaker = "noob", text = "I'm not checking my phone. I'm AFK. I fight better AFK.", gesture = "cross", pop = "SKILL ISSUE?", popX = 0.72, popY = 0.32 },
+							{ speaker = "bacon", text = "The chat's been weird all day. People keep typing 'it's happening'.", gesture = "think" },
+							{ speaker = "noob", text = "Probably another free Robux scam. ...Probably.", gesture = "nervous" },
 						},
 					},
 					{
 						cam = "sky",
 						duration = 3.4,
-						events = { { t = 0.4, type = "vfx", kind = "rift" }, { t = 0.4, type = "sfx", key = "lightning_crack" } },
+						whip = true,
+						events = {
+							{ t = 0.4, type = "vfx", kind = "rift" },
+							{ t = 0.4, type = "sfx", key = "lightning_crack" },
+							{ t = 0.4, type = "boom" },
+							{ t = 1.5, type = "pop", text = "ERROR 277", x = 0.5, y = 0.3, color = "#FF4A4A" },
+						},
 						lines = { { speaker = "bacon", text = "Uh. Why is the sky... buffering?" } },
 					},
 					{
@@ -6040,19 +6160,22 @@ Story.chapters = {
 							{ t = 0.2, type = "show", actor = 3 },
 							{ t = 0.2, type = "vfx", kind = "teleport", actor = 3 },
 							{ t = 0.2, type = "sfx", key = "teleport" },
+							{ t = 0.25, type = "impact", count = 2 },
+							{ t = 0.9, type = "cam", cam = "dolly", a = 3 },
+							{ t = 1.3, type = "freeze", actor = 3 },
 						},
 						lines = { { speaker = "system", text = "Guest 666 has joined the game." } },
 					},
 					{
 						cam = "close",
 						a = 1,
-						lines = { { speaker = "noob", text = "Guests were removed years ago. How are you even here?" } },
+						lines = { { speaker = "noob", text = "Guests were removed years ago. How are you even here?", pop = "???", popX = 0.3, popY = 0.3 } },
 					},
 					{
-						cam = "close",
+						cam = "dutch",
 						a = 3,
 						lines = {
-							{ speaker = "guest", text = "The Admin sends his regards. He's shutting the server down. And he wants your sword." },
+							{ speaker = "guest", text = "The Admin sends his regards. He's shutting the server down. And he wants your sword.", gesture = "point" },
 						},
 					},
 					{
@@ -6060,8 +6183,8 @@ Story.chapters = {
 						a = 1,
 						b = 3,
 						lines = {
-							{ speaker = "noob", text = "It's a free gear. He can literally just get one." },
-							{ speaker = "guest", text = "He wants YOURS." },
+							{ speaker = "noob", text = "It's a free gear. He can literally just get one.", gesture = "shrug" },
+							{ speaker = "guest", text = "He wants YOURS.", cam = "crash", a = 3, crash = true, impact = true, gesture = "point" },
 						},
 					},
 				},
@@ -6102,8 +6225,8 @@ Story.chapters = {
 						b = 1,
 						lines = {
 							{ speaker = "bacon", text = "It glitched into the forest map. The one nobody finished building." },
-							{ speaker = "bacon", text = "If the Admin shuts the server down, I lose my wings. My four hundred Robux wings." },
-							{ speaker = "noob", text = "Then we stop him before the timer hits zero. Let's go." },
+							{ speaker = "bacon", text = "If the Admin shuts the server down, I lose my wings. My four hundred Robux wings.", gesture = "sad", pop = "-400 ROBUX", popX = 0.3, popY = 0.3 },
+							{ speaker = "noob", text = "Then we stop him before the timer hits zero. Let's go.", gesture = "fist", cam = "dolly", a = 2 },
 						},
 					},
 				},
@@ -6124,26 +6247,36 @@ Story.chapters = {
 							{ t = 0.3, type = "show", actor = 3 },
 							{ t = 0.3, type = "vfx", kind = "roots", actor = 3 },
 							{ t = 0.3, type = "sfx", key = "ground_slam" },
+							{ t = 0.35, type = "impact", count = 3 },
 							{ t = 0.4, type = "shake", amount = 0.6 },
 						},
-						lines = { { speaker = "studzilla", text = "WHO. DARES. ENTER. MY. UNFINISHED. MAP." } },
+						lines = {
+							{ speaker = "studzilla", text = "WHO. DARES. ENTER. MY. UNFINISHED. MAP.", cam = "low", a = 3, crash = true, freeze = true },
+						},
 					},
 					{
 						cam = "close",
 						a = 1,
-						lines = { { speaker = "bacon", text = "Whoa, big guy! We're not here to grief your build!" } },
+						lines = { { speaker = "bacon", text = "Whoa, big guy! We're not here to grief your build!", gesture = "nervous" } },
 					},
 					{
 						cam = "low",
 						a = 3,
+						events = {
+							{ t = 1.6, type = "act", actor = 3, anim = "ground_pound", time = 0.9 },
+							{ t = 2.05, type = "vfx", kind = "slam", actor = 3 },
+							{ t = 2.05, type = "boom" },
+							{ t = 2.05, type = "speedlines", time = 0.5 },
+						},
 						lines = { { speaker = "studzilla", text = "EVERYONE. SAYS. THAT. THEN. THEY. DELETE. MY. BRICKS." } },
 					},
 					{
 						cam = "two",
 						a = 2,
 						b = 1,
+						events = { { t = 2.2, type = "walk", actor = 1, to = -0.8, time = 0.8 } },
 						lines = {
-							{ speaker = "bacon", text = "Stand back, Noob. I speak fluent block." },
+							{ speaker = "bacon", text = "Stand back, Noob. I speak fluent block.", gesture = "cross" },
 						},
 					},
 				},
@@ -6171,7 +6304,7 @@ Story.chapters = {
 						cam = "close",
 						a = 2,
 						lines = {
-							{ speaker = "studzilla", text = "...YOU. DID. NOT. DELETE. ME. RESPECT." },
+							{ speaker = "studzilla", text = "...YOU. DID. NOT. DELETE. ME. RESPECT.", gesture = "fist", pop = "+RESPECT", popX = 0.7, popY = 0.32 },
 							{ speaker = "studzilla", text = "THE ADMIN. ANCHORED. MY FRIENDS. THEN. HE. DELETED. THEM. ALL." },
 						},
 					},
@@ -6180,7 +6313,7 @@ Story.chapters = {
 						a = 1,
 						b = 2,
 						lines = {
-							{ speaker = "bacon", text = "That monster. Who deletes builds?!" },
+							{ speaker = "bacon", text = "That monster. Who deletes builds?!", gesture = "facepalm" },
 							{ speaker = "studzilla", text = "PATH. TO. ADMIN. THROUGH. FLOOD. MAP. I. COME. WITH. YOU." },
 						},
 					},
@@ -6201,8 +6334,11 @@ Story.chapters = {
 						events = {
 							{ t = 0.5, type = "sfx", key = "crossbow" },
 							{ t = 0.7, type = "vfx", kind = "bolt_impact", actor = 1 },
+							{ t = 0.7, type = "slowmo", scale = 0.25, time = 0.6 },
 							{ t = 0.9, type = "show", actor = 2 },
 							{ t = 0.9, type = "vfx", kind = "smoke", actor = 2 },
+							{ t = 1.1, type = "pop", text = "SUS", x = 0.72, y = 0.42 },
+							{ t = 1.6, type = "freeze", actor = 2 },
 						},
 						lines = {
 							{ speaker = "camper", text = "Don't mind me. Just a bush. A completely normal bush with a crossbow." },
@@ -6211,12 +6347,16 @@ Story.chapters = {
 					{
 						cam = "close",
 						a = 2,
-						lines = { { speaker = "camper", text = "The Admin promised me VIP if I camp this spot. I've been here six days." } },
+						lines = { { speaker = "camper", text = "The Admin promised me VIP if I camp this spot. I've been here six days.", gesture = "think" } },
 					},
 					{
 						cam = "low",
 						a = 1,
-						lines = { { speaker = "studzilla", text = "NOOB. GO. AHEAD. I. WILL. UN-BUSH. HER." } },
+						events = {
+							{ t = 0.6, type = "face", actor = 3, facing = -1 },
+							{ t = 0.6, type = "walk", actor = 3, to = -14, time = 2.2 },
+						},
+						lines = { { speaker = "studzilla", text = "NOOB. GO. AHEAD. I. WILL. UN-BUSH. HER.", crash = true } },
 					},
 				},
 			},
@@ -6242,15 +6382,15 @@ Story.chapters = {
 						cam = "close",
 						a = 2,
 						lines = {
-							{ speaker = "camper", text = "...Okay, okay. The VIP was fake anyway. He literally said 'trust me bro'." },
-							{ speaker = "camper", text = "His throne's past the lava. The floor is lava. He typed it. Like, actually." },
+							{ speaker = "camper", text = "...Okay, okay. The VIP was fake anyway. He literally said 'trust me bro'.", pop = "TRUST ME BRO", popX = 0.68, popY = 0.3 },
+							{ speaker = "camper", text = "His throne's past the lava. The floor is lava. He typed it. Like, actually.", gesture = "point" },
 						},
 					},
 					{
 						cam = "two",
 						a = 1,
 						b = 2,
-						lines = { { speaker = "studzilla", text = "WE. CAMP. TOGETHER. NOW. FRIEND." } },
+						lines = { { speaker = "studzilla", text = "WE. CAMP. TOGETHER. NOW. FRIEND.", gesture = "flex" } },
 					},
 				},
 			},
@@ -6259,7 +6399,7 @@ Story.chapters = {
 				stage = "emberthrone",
 				actors = {
 					{ id = "noob", x = -3.4, facing = 1, anim = "stance" },
-					{ id = "admin", x = 3.6, facing = -1, anim = "stance" },
+					{ id = "admin", x = 3.6, facing = -1, anim = "cross" },
 				},
 				shots = {
 					{ cam = "sky", duration = 4.4, caption = "THE ADMIN'S LAVA THRONE  \u{2014}  SERVER SHUTDOWN IN 99 SECONDS" },
@@ -6270,21 +6410,23 @@ Story.chapters = {
 							{
 								speaker = "admin",
 								text = "A Noob. A Bacon Hair. A bush. And... is that a pile of bricks? I've seen better lobbies on a Tuesday.",
+								gesture = "laugh",
+								freeze = true,
 							},
 						},
 					},
 					{
 						cam = "close",
 						a = 1,
-						lines = { { speaker = "noob", text = "Cancel the shutdown. Some of us have tycoons running." } },
+						lines = { { speaker = "noob", text = "Cancel the shutdown. Some of us have tycoons running.", gesture = "point" } },
 					},
 					{
 						cam = "over",
 						a = 1,
 						b = 2,
 						lines = {
-							{ speaker = "admin", text = "I have admin. You have a default avatar. Do the math." },
-							{ speaker = "noob", text = "Never been good at math. Pretty good at this though." },
+							{ speaker = "admin", text = "I have admin. You have a default avatar. Do the math.", gesture = "think" },
+							{ speaker = "noob", text = "Never been good at math. Pretty good at this though.", gesture = "fist", cam = "crash", a = 1, impact = true },
 						},
 					},
 				},
@@ -6307,12 +6449,13 @@ Story.chapters = {
 					{ id = "noob", x = -2.4, facing = 1, anim = "stance" },
 					{ id = "admin", x = 2.4, facing = -1, anim = "kneel" },
 					{ id = "bacon", x = -6.0, facing = 1, anim = "stance" },
+					{ id = "guest", x = 6.5, facing = -1, anim = "stance", hidden = true },
 				},
 				shots = {
 					{
 						cam = "close",
 						a = 2,
-						lines = { { speaker = "admin", text = "No... my commands... why isn't ;kill WORKING?!" } },
+						lines = { { speaker = "admin", text = "No... my commands... why isn't ;kill WORKING?!", gesture = "nervous" } },
 						events = { { t = 0.5, type = "vfx", kind = "souls", actor = 2 } },
 					},
 					{
@@ -6320,14 +6463,15 @@ Story.chapters = {
 						a = 3,
 						b = 1,
 						lines = {
-							{ speaker = "bacon", text = "His admin's expiring! It was a free trial! Noob, NOW!" },
-							{ speaker = "noob", text = "Hey Admin. ;unadmin." },
+							{ speaker = "bacon", text = "His admin's expiring! It was a free trial! Noob, NOW!", gesture = "point", crash = true },
+							{ speaker = "noob", text = "Hey Admin. ;unadmin.", gesture = "wave", pop = ";unadmin", popX = 0.5, popY = 0.3 },
 						},
 					},
 					{
 						cam = "sky",
 						duration = 4.0,
 						events = {
+							{ t = 0.3, type = "impact", count = 4 },
 							{ t = 0.4, type = "vfx", kind = "flash" },
 							{ t = 0.4, type = "sfx", key = "lightning_crack" },
 							{ t = 0.4, type = "shake", amount = 1.0 },
@@ -6338,9 +6482,22 @@ Story.chapters = {
 					{
 						cam = "wide",
 						duration = 5.0,
+						events = {
+							{ t = 0.3, type = "show", actor = 4 },
+							{ t = 0.3, type = "vfx", kind = "teleport", actor = 4 },
+							{ t = 0.3, type = "sfx", key = "teleport" },
+						},
 						lines = {
 							{ speaker = "system", text = "Guest 666 has joined the game." },
-							{ speaker = "guest", text = "...see you in Chapter 2." },
+							{
+								speaker = "guest",
+								text = "...see you in Chapter 2.",
+								cam = "dolly",
+								a = 4,
+								freeze = true,
+								freezeName = "TO BE CONTINUED...",
+								freezeSub = "Guest 666 will return",
+							},
 						},
 					},
 				},
@@ -6434,6 +6591,7 @@ local DEFAULT = {
 		voice = 0.85,
 		subtitles = true,
 		shake = true,
+		flashes = true,
 		difficulty = 2,
 		touch = "auto",
 	},
@@ -6862,6 +7020,15 @@ local KEY_FIGHT = {
 	[Enum.KeyCode.R] = "E",
 	[Enum.KeyCode.G] = "THROW",
 	[Enum.KeyCode.Z] = "X",
+	-- powers
+	[Enum.KeyCode.One] = "P1",
+	[Enum.KeyCode.Two] = "P2",
+	[Enum.KeyCode.Three] = "P3",
+	[Enum.KeyCode.Four] = "P4",
+	[Enum.KeyCode.KeypadOne] = "P1",
+	[Enum.KeyCode.KeypadTwo] = "P2",
+	[Enum.KeyCode.KeypadThree] = "P3",
+	[Enum.KeyCode.KeypadFour] = "P4",
 	[Enum.KeyCode.A] = "left",
 	[Enum.KeyCode.Left] = "left",
 	[Enum.KeyCode.D] = "right",
@@ -7110,6 +7277,10 @@ function Input.fightState()
 		B = false,
 		E = false,
 		X = false,
+		P1 = false,
+		P2 = false,
+		P3 = false,
+		P4 = false,
 	}
 	for k in s do
 		if held[k] or touchHeld[k] then
@@ -7146,9 +7317,9 @@ end
 
 -- Button glyphs for prompts
 local GLYPHS = {
-	keyboard = { L = "LMB", H = "RMB", K = "E", S = "F", B = "Q", E = "R", X = "Z", THROW = "G", down = "S", up = "W", left = "A", right = "D", confirm = "ENTER", back = "BKSP", start = "TAB", tabL = "Q", tabR = "E", alt = "T" },
-	gamepad = { L = "X", H = "Y", K = "A", S = "B", B = "RB", E = "LB", X = "RT", THROW = "LT", down = "\u{2193}", up = "\u{2191}", left = "\u{2190}", right = "\u{2192}", confirm = "A", back = "B", start = "START", tabL = "LB", tabR = "RB", alt = "Y" },
-	touch = { L = "LIGHT", H = "HEAVY", K = "KICK", S = "SPECIAL", B = "BLOCK", E = "FRIEND", X = "SUPER", THROW = "THROW", down = "\u{2193}", up = "\u{2191}", left = "\u{2190}", right = "\u{2192}", confirm = "TAP", back = "BACK", start = "II", tabL = "\u{25C0}", tabR = "\u{25B6}", alt = "" },
+	keyboard = { L = "LMB", H = "RMB", K = "E", S = "F", B = "Q", E = "R", X = "Z", THROW = "G", P1 = "1", P2 = "2", P3 = "3", P4 = "4", down = "S", up = "W", left = "A", right = "D", confirm = "ENTER", back = "BKSP", start = "TAB", tabL = "Q", tabR = "E", alt = "T" },
+	gamepad = { L = "X", H = "Y", K = "A", S = "B", B = "RB", E = "LB", X = "RT", THROW = "LT", P1 = "B", P2 = "\u{2192}B", P3 = "\u{2190}B", P4 = "\u{2193}B", down = "\u{2193}", up = "\u{2191}", left = "\u{2190}", right = "\u{2192}", confirm = "A", back = "B", start = "START", tabL = "LB", tabR = "RB", alt = "Y" },
+	touch = { L = "LIGHT", H = "HEAVY", K = "KICK", S = "SPECIAL", B = "BLOCK", E = "FRIEND", X = "SUPER", THROW = "THROW", P1 = "1", P2 = "2", P3 = "3", P4 = "4", down = "\u{2193}", up = "\u{2191}", left = "\u{2190}", right = "\u{2192}", confirm = "TAP", back = "BACK", start = "II", tabL = "\u{25C0}", tabR = "\u{25B6}", alt = "" },
 }
 function Input.glyph(action: string): string
 	local set = GLYPHS[Input.mode] or GLYPHS.keyboard
@@ -7203,6 +7374,7 @@ local FightView = require(Client.Render.FightView)
 local Cutscene = require(Client.Render.Cutscene)
 local StageBuilder = require(Client.Render.StageBuilder)
 local FightCamera = require(Client.Render.FightCamera)
+local CineFX = require(Client.Render.CineFX)
 
 -------------------------------------------------------------------------------
 -- Boot
@@ -7240,7 +7412,7 @@ Lighting.ClockTime = 0.5
 -------------------------------------------------------------------------------
 
 local profile = {
-	settings = { music = 0.6, sfx = 0.8, voice = 0.85, subtitles = true, shake = true, difficulty = 2, touch = "auto" },
+	settings = { music = 0.6, sfx = 0.8, voice = 0.85, subtitles = true, shake = true, flashes = true, difficulty = 2, touch = "auto" },
 	stats = { wins = 0, losses = 0, ascents = 0, finishers = 0, storyDone = false },
 }
 local remotes = ReplicatedStorage:WaitForChild("VeilRemotes", 10)
@@ -7276,6 +7448,7 @@ local function applySettings()
 	Audio.setVolumes(profile.settings)
 	Subtitles.enabled = profile.settings.subtitles ~= false
 	FightCamera.setShakeScale(profile.settings.shake == false and 0 or 1)
+	CineFX.flashesEnabled = profile.settings.flashes ~= false
 end
 applySettings()
 
@@ -7749,10 +7922,432 @@ return AnimSpring
           </Item>
           <Item class="ModuleScript" referent="31">
             <Properties>
+              <string name="Name">CineFX</string>
+              <string name="Source"><![CDATA[--!nonstrict
+-- Editing effects for cinematics, in the style of Roblox animation channels:
+--
+--   impact frames   2-4 stark black/white frames with the actors as silhouettes
+--   speed lines     anime radial lines (texture if uploaded, otherwise procedural)
+--   freeze frame    the shot freezes and desaturates, a tilted name card slams in
+--   pop captions    meme text that bounces in next to the action
+--   whip pan blur   motion blur for fast camera whips between shots
+--   flash / vignette
+--
+-- One instance per cinematic; destroy() removes everything it created, including
+-- the post effects it parented to Lighting. Flashing effects respect the player's
+-- "flashes" setting (CineFX.flashesEnabled), falling back to gentle versions.
+
+local Lighting = game:GetService("Lighting")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+
+local Veil = game:GetService("ReplicatedStorage"):WaitForChild("Veil")
+local Assets = require(Veil.Assets)
+
+local Client = script.Parent.Parent
+local Audio = require(Client.Core.Audio)
+local Theme = require(Client.UI.Theme)
+
+local CineFX = {}
+CineFX.__index = CineFX
+
+-- Set from the player's settings (Main.client applySettings).
+CineFX.flashesEnabled = true
+
+local MEME_FONT = Font.fromEnum(Enum.Font.Bangers)
+local CARD_FONT = Font.fromEnum(Enum.Font.LuckiestGuy)
+
+local function frame(parent: Instance, props)
+	local f = Instance.new("Frame")
+	f.BorderSizePixel = 0
+	f.BackgroundTransparency = 1
+	for k, v in props do
+		(f :: any)[k] = v
+	end
+	f.Parent = parent
+	return f
+end
+
+function CineFX.new(uiRoot: Instance, zBase: number?)
+	local self = setmetatable({}, CineFX)
+	self.z = zBase or 40
+	self.ui = frame(uiRoot, { Name = "CineFX", Size = UDim2.fromScale(1, 1), ZIndex = self.z })
+	self.made = {}
+	self.conns = {}
+	self.highlights = {}
+	self.destroyed = false
+	-- dedicated grade for impact / freeze frames (sits on top of the stage grade)
+	local cc = Instance.new("ColorCorrectionEffect")
+	cc.Name = "CineFXGrade"
+	cc.Enabled = false
+	cc.Parent = Lighting
+	self.grade = cc
+	table.insert(self.made, cc)
+	local blur = Instance.new("BlurEffect")
+	blur.Name = "CineFXBlur"
+	blur.Size = 0
+	blur.Parent = Lighting
+	self.blur = blur
+	table.insert(self.made, blur)
+	-- soft vignette
+	local vig = frame(self.ui, {
+		Name = "Vignette",
+		Size = UDim2.fromScale(1, 1),
+		BackgroundColor3 = Color3.new(0, 0, 0),
+		BackgroundTransparency = 0,
+		ZIndex = self.z,
+	})
+	local g = Instance.new("UIGradient")
+	g.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.35),
+		NumberSequenceKeypoint.new(0.22, 1),
+		NumberSequenceKeypoint.new(0.78, 1),
+		NumberSequenceKeypoint.new(1, 0.35),
+	})
+	g.Parent = vig
+	self.vignette = vig
+	return self
+end
+
+-------------------------------------------------------------------------------
+-- Speed lines
+-------------------------------------------------------------------------------
+
+-- Radial anime lines over the whole screen for `duration` seconds.
+function CineFX:speedLines(duration: number, color: Color3?, density: number?)
+	if self.destroyed then
+		return
+	end
+	local col = color or Color3.new(1, 1, 1)
+	local holder = frame(self.ui, { Name = "SpeedLines", Size = UDim2.fromScale(1, 1), ZIndex = self.z + 2, ClipsDescendants = true })
+	local tex = Assets.image("FX_SpeedLines")
+	local lines = {}
+	if tex ~= "" then
+		local img = Instance.new("ImageLabel")
+		img.BackgroundTransparency = 1
+		img.Image = tex
+		img.ImageColor3 = col
+		img.Size = UDim2.fromScale(1.6, 1.6)
+		img.SizeConstraint = Enum.SizeConstraint.RelativeXX
+		img.AnchorPoint = Vector2.new(0.5, 0.5)
+		img.Position = UDim2.fromScale(0.5, 0.5)
+		img.ZIndex = self.z + 2
+		img.Parent = holder
+		lines.image = img
+	else
+		local n = density or 46
+		for i = 1, n do
+			local l = frame(holder, {
+				AnchorPoint = Vector2.new(0, 0.5),
+				Position = UDim2.fromScale(0.5, 0.5),
+				BackgroundColor3 = col,
+				BackgroundTransparency = 0.15,
+				ZIndex = self.z + 2,
+			})
+			lines[i] = l
+		end
+	end
+	local t0 = os.clock()
+	local lastJitter = -1
+	local conn
+	conn = RunService.RenderStepped:Connect(function()
+		local t = os.clock() - t0
+		if t >= duration or self.destroyed then
+			conn:Disconnect()
+			holder:Destroy()
+			return
+		end
+		-- re-roll at ~30 fps for the flickery hand-drawn feel
+		if t - lastJitter < 1 / 30 then
+			return
+		end
+		lastJitter = t
+		local fadeOut = math.clamp((duration - t) / 0.15, 0, 1)
+		if lines.image then
+			lines.image.Rotation = math.random() * 360
+			lines.image.ImageTransparency = 1 - 0.85 * fadeOut
+		else
+			for _, l in lines do
+				local ang = math.random() * 360
+				local r0 = 0.32 + math.random() * 0.22
+				local len = 0.5 + math.random() * 0.4
+				local a = math.rad(ang)
+				l.Rotation = ang
+				l.Size = UDim2.new(len, 0, 0, 2 + math.random() * 5)
+				l.Position = UDim2.fromScale(0.5 + math.cos(a) * r0 * 0.6, 0.5 + math.sin(a) * r0)
+				l.BackgroundTransparency = 1 - (0.85 * fadeOut)
+			end
+		end
+	end)
+	table.insert(self.conns, conn)
+end
+
+-------------------------------------------------------------------------------
+-- Impact frames
+-------------------------------------------------------------------------------
+
+local function silhouette(self, rigs, fill: Color3, outline: Color3)
+	for _, rig in rigs do
+		local hl = self.highlights[rig]
+		if not hl then
+			hl = Instance.new("Highlight")
+			hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+			hl.Parent = rig.model
+			self.highlights[rig] = hl
+		end
+		hl.Enabled = true
+		hl.FillColor = fill
+		hl.FillTransparency = 0
+		hl.OutlineColor = outline
+		hl.OutlineTransparency = 0
+	end
+end
+
+local function clearSilhouettes(self)
+	for _, hl in self.highlights do
+		hl.Enabled = false
+	end
+end
+
+-- 2-4 alternating stark frames: white world / black silhouettes, then inverted.
+-- `rigs` are the actors to silhouette (Rig objects). Yields for its duration.
+function CineFX:impactFrames(rigs, count: number?, sound: string?)
+	if self.destroyed then
+		return
+	end
+	Audio.play(sound or "impact_frame", { volume = 1 })
+	if not CineFX.flashesEnabled then
+		-- gentle version: one contrast punch, no strobing
+		self.grade.Enabled = true
+		self.grade.Contrast = 0.4
+		self.grade.Saturation = -0.4
+		TweenService:Create(self.grade, TweenInfo.new(0.35), { Contrast = 0, Saturation = 0 }):Play()
+		task.wait(0.35)
+		self.grade.Enabled = false
+		return
+	end
+	local n = count or 3
+	local g = self.grade
+	g.Enabled = true
+	self:speedLines(0.08 * n + 0.1, Color3.new(0, 0, 0), 60)
+	for i = 1, n do
+		if self.destroyed then
+			return
+		end
+		local light = i % 2 == 1
+		g.Saturation = -1
+		g.Contrast = 2.2
+		g.Brightness = light and 0.55 or -0.55
+		g.TintColor = Color3.new(1, 1, 1)
+		if light then
+			silhouette(self, rigs, Color3.new(0, 0, 0), Color3.new(0, 0, 0))
+		else
+			silhouette(self, rigs, Color3.new(1, 1, 1), Color3.fromHex("#FF2A2A"))
+		end
+		task.wait(0.07)
+	end
+	g.Enabled = false
+	g.Brightness, g.Contrast, g.Saturation = 0, 0, 0
+	clearSilhouettes(self)
+end
+
+-------------------------------------------------------------------------------
+-- Freeze frame name card
+-------------------------------------------------------------------------------
+
+-- Desaturate, slam in a tilted name card, hold, then release. Yields for `hold`.
+-- The caller freezes its own animation clock while this runs.
+function CineFX:freezeFrame(name: string, sub: string?, accent: Color3?, side: number?, hold: number?)
+	if self.destroyed then
+		return
+	end
+	local col = accent or Theme.Colors.gold
+	local left = (side or 1) == 1
+	Audio.play("scratch", { volume = 0.9 })
+	local g = self.grade
+	g.Enabled = true
+	g.Saturation = -0.75
+	g.Contrast = 0.25
+	g.Brightness = -0.04
+	g.TintColor = Color3.fromHex("#FFF2DA")
+	local card = frame(self.ui, {
+		Name = "FreezeCard",
+		Size = UDim2.fromOffset(760, 170),
+		Position = UDim2.new(left and 0.06 or 0.94, 0, 0.6, 0),
+		AnchorPoint = Vector2.new(left and 0 or 1, 0.5),
+		Rotation = left and -6 or 6,
+		ZIndex = self.z + 5,
+	})
+	local scale = Instance.new("UIScale")
+	scale.Scale = 2.2
+	scale.Parent = card
+	local plate = frame(card, {
+		Size = UDim2.new(1, 0, 0, 104),
+		BackgroundColor3 = col,
+		BackgroundTransparency = 0,
+		ZIndex = self.z + 5,
+	})
+	local nameLabel = Instance.new("TextLabel")
+	nameLabel.BackgroundTransparency = 1
+	nameLabel.Size = UDim2.new(1, -40, 1, 0)
+	nameLabel.Position = UDim2.fromOffset(20, 0)
+	nameLabel.Text = name
+	nameLabel.TextScaled = true
+	nameLabel.FontFace = CARD_FONT
+	nameLabel.TextColor3 = Color3.new(1, 1, 1)
+	nameLabel.TextXAlignment = left and Enum.TextXAlignment.Left or Enum.TextXAlignment.Right
+	nameLabel.ZIndex = self.z + 6
+	nameLabel.Parent = plate
+	local st = Instance.new("UIStroke")
+	st.Thickness = 4
+	st.Color = Color3.new(0, 0, 0)
+	st.Parent = nameLabel
+	if sub and sub ~= "" then
+		local strip = frame(card, {
+			Size = UDim2.new(0.86, 0, 0, 52),
+			Position = UDim2.new(left and 0.08 or 0.06, 0, 0, 98),
+			BackgroundColor3 = Color3.new(0, 0, 0),
+			BackgroundTransparency = 0,
+			ZIndex = self.z + 5,
+		})
+		local subLabel = Instance.new("TextLabel")
+		subLabel.BackgroundTransparency = 1
+		subLabel.Size = UDim2.new(1, -24, 1, -10)
+		subLabel.Position = UDim2.fromOffset(12, 5)
+		subLabel.Text = string.upper(sub)
+		subLabel.TextScaled = true
+		subLabel.FontFace = MEME_FONT
+		subLabel.TextColor3 = Color3.new(1, 1, 1)
+		subLabel.TextXAlignment = left and Enum.TextXAlignment.Left or Enum.TextXAlignment.Right
+		subLabel.ZIndex = self.z + 6
+		subLabel.Parent = strip
+	end
+	TweenService:Create(scale, TweenInfo.new(0.18, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+	task.wait(hold or 1.8)
+	if self.destroyed then
+		return
+	end
+	TweenService:Create(card, TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {
+		Position = UDim2.new(left and -0.8 or 1.8, 0, 0.6, 0),
+	}):Play()
+	TweenService:Create(g, TweenInfo.new(0.2), { Saturation = 0, Contrast = 0, Brightness = 0 }):Play()
+	task.delay(0.22, function()
+		card:Destroy()
+		if not self.destroyed then
+			g.Enabled = false
+			g.TintColor = Color3.new(1, 1, 1)
+		end
+	end)
+end
+
+-------------------------------------------------------------------------------
+-- Pop captions, flashes, whip blur
+-------------------------------------------------------------------------------
+
+-- Meme caption that bounces in at a screen position (scale coords), then fades.
+function CineFX:pop(text: string, pos: Vector2?, color: Color3?, size: number?, life: number?)
+	if self.destroyed then
+		return
+	end
+	local p = pos or Vector2.new(0.5, 0.35)
+	Audio.play("pop", { volume = 0.8, pitchVar = 0.08 })
+	local label = Instance.new("TextLabel")
+	label.BackgroundTransparency = 1
+	label.AnchorPoint = Vector2.new(0.5, 0.5)
+	label.Position = UDim2.fromScale(p.X, p.Y)
+	label.Size = UDim2.fromOffset(700, size or 110)
+	label.Text = text
+	label.TextScaled = true
+	label.FontFace = MEME_FONT
+	label.TextColor3 = color or Color3.fromHex("#FFE14A")
+	label.Rotation = math.random(-10, 10)
+	label.ZIndex = self.z + 4
+	label.Parent = self.ui
+	local st = Instance.new("UIStroke")
+	st.Thickness = 5
+	st.Color = Color3.new(0, 0, 0)
+	st.Parent = label
+	local sc = Instance.new("UIScale")
+	sc.Scale = 0.2
+	sc.Parent = label
+	TweenService:Create(sc, TweenInfo.new(0.22, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Scale = 1 }):Play()
+	local l = life or 1.3
+	task.delay(l, function()
+		if label.Parent then
+			TweenService:Create(label, TweenInfo.new(0.25), { TextTransparency = 1 }):Play()
+			TweenService:Create(st, TweenInfo.new(0.25), { Transparency = 1 }):Play()
+			task.delay(0.26, function()
+				label:Destroy()
+			end)
+		end
+	end)
+	return label
+end
+
+function CineFX:flash(color: Color3?, time: number?)
+	if self.destroyed then
+		return
+	end
+	local f = frame(self.ui, {
+		Size = UDim2.fromScale(1, 1),
+		BackgroundColor3 = color or Color3.new(1, 1, 1),
+		BackgroundTransparency = CineFX.flashesEnabled and 0 or 0.6,
+		ZIndex = self.z + 6,
+	})
+	TweenService:Create(f, TweenInfo.new(time or 0.5), { BackgroundTransparency = 1 }):Play()
+	task.delay((time or 0.5) + 0.05, function()
+		f:Destroy()
+	end)
+end
+
+-- Motion blur pulse for whip pans.
+function CineFX:whip()
+	if self.destroyed then
+		return
+	end
+	Audio.play("whoosh_light", { volume = 0.7, pitch = 1.3 })
+	self.blur.Size = 26
+	TweenService:Create(self.blur, TweenInfo.new(0.28, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Size = 0 }):Play()
+end
+
+function CineFX:destroy()
+	if self.destroyed then
+		return
+	end
+	self.destroyed = true
+	for _, c in self.conns do
+		c:Disconnect()
+	end
+	for _, hl in self.highlights do
+		hl:Destroy()
+	end
+	for _, inst in self.made do
+		inst:Destroy()
+	end
+	self.ui:Destroy()
+end
+
+return CineFX
+]]></string>
+            </Properties>
+          </Item>
+          <Item class="ModuleScript" referent="32">
+            <Properties>
               <string name="Name">Cutscene</string>
               <string name="Source"><![CDATA[--!nonstrict
--- In-engine story cinematics: letterboxed camera shots over the real stages with
--- posed actors, subtitles, location captions and scripted effects.
+-- In-engine story cinematics, edited the way Roblox animation channels cut theirs:
+--
+--   * Acting: every actor runs through the spring layer (eased, overshooting motion),
+--     talks with head nods and beat gestures picked from the line (shrug on a question,
+--     shout on CAPS, point on an exclamation...), and listeners turn to the speaker.
+--     Actors can walk into frame, hop, and play attack animations.
+--   * Coverage: multi-line dialogue shots cut between a two-shot, over-the-shoulder
+--     angles and close-ups on whoever is talking; shouted lines get a crash zoom.
+--   * Camera: handheld drift, push-ins, orbits, dutch angles, whip pans with blur.
+--   * Editing beats (CineFX): freeze-frame name cards, impact frames, pop captions,
+--     speed lines, slow motion, booms.
+--
+-- Scene data lives in Data/Story.luau; see the event list in runEvent below.
 
 local RunService = game:GetService("RunService")
 
@@ -7764,6 +8359,8 @@ local Story = require(Veil.Data.Story)
 local Client = script.Parent.Parent
 local Rig = require(script.Parent.Rig)
 local Poses = require(script.Parent.Poses)
+local AnimSpring = require(script.Parent.AnimSpring)
+local CineFX = require(script.Parent.CineFX)
 local StageBuilder = require(script.Parent.StageBuilder)
 local FightCamera = require(script.Parent.FightCamera)
 local VFX = require(script.Parent.VFX)
@@ -7778,95 +8375,195 @@ local F = Theme.Fonts
 local Cutscene = {}
 
 local YAW = math.rad(25)
+local V = Vector3.new
 
-local function rootCF(x: number, facing: number)
-	local pos = Vector3.new(x, 0, 0)
-	return CFrame.lookAt(pos, pos + Vector3.new(facing * math.cos(YAW), 0, math.sin(YAW)))
+local function rootCF(x: number, facing: number, y: number?)
+	local pos = V(x, y or 0, 0)
+	return CFrame.lookAt(pos, pos + V(facing * math.cos(YAW), 0, math.sin(YAW)))
 end
 
-local function poseFor(anim: string?, style: string, t: number)
-	if anim == "dazed" then
-		local p = table.clone(Poses.States.dazed())
-		local r = p.root
-		p.root = { r[1], r[2], r[3], math.sin(t * 1.7) * 5, math.sin(t * 1.1) * 6, math.sin(t * 2.3) * 5 }
-		return p
-	elseif anim == "kneel" then
-		return Poses.States.kneel()
-	elseif anim == "win" then
-		return Poses.WIN[style] or Poses.WIN.unarmed
+-------------------------------------------------------------------------------
+-- Acting: gestures layered over the base pose
+-------------------------------------------------------------------------------
+
+-- Arm keys are absolute targets; UT / H / LT are added to the base pose.
+local GESTURES = {
+	talk = { RUA = { 48, 0, 16 }, RLA = { 72, 0, 0 }, RH = { -20, 0, 0 } },
+	point = { RUA = { 88, 0, 6 }, RLA = { 6, 0, 0 }, RH = { 0, 0, 0 }, UT = { -5, 6, 0 }, H = { 3, 0, 0 } },
+	shrug = { RUA = { 12, 0, 44 }, RLA = { 92, 0, 0 }, LUA = { 12, 0, -44 }, LLA = { 92, 0, 0 }, H = { 0, 0, 14 }, UT = { 3, 0, 0 } },
+	facepalm = { RUA = { 142, 0, -24 }, RLA = { 128, 0, 0 }, H = { -22, 0, 0 }, UT = { -8, 0, 0 } },
+	cross = { RUA = { 70, 0, -46 }, RLA = { 100, 0, 0 }, RH = { 60, 0, 0 }, LUA = { 70, 0, 46 }, LLA = { 100, 0, 0 }, H = { 8, 0, 0 } },
+	shout = { RUA = { -18, 0, 34 }, RLA = { 28, 0, 0 }, LUA = { -18, 0, -34 }, LLA = { 28, 0, 0 }, UT = { -14, 0, 0 }, H = { 12, 0, 0 } },
+	fist = { RUA = { 104, 0, 10 }, RLA = { 112, 0, 0 }, UT = { -6, 0, 0 } },
+	think = { RUA = { 112, 0, -18 }, RLA = { 148, 0, 0 }, LUA = { 38, 0, 28 }, LLA = { 96, 0, 0 }, H = { -6, 0, 12 } },
+	nervous = { RUA = { 165, 0, 36 }, RLA = { 122, 0, 0 }, H = { -6, 0, -10 } },
+	wave = { RUA = { 165, 0, 24 }, RLA = { 18, 0, 0 } },
+	laugh = { RUA = { 18, 0, 28 }, LUA = { 18, 0, -28 }, H = { 20, 0, 0 }, UT = { 8, 0, 0 } },
+	sad = { RUA = { 4, 0, 4 }, RLA = { 6, 0, 0 }, LUA = { 4, 0, -4 }, LLA = { 6, 0, 0 }, H = { -26, 0, 0 }, UT = { -12, 0, 0 } },
+	flex = { RUA = { 92, 0, 80 }, RLA = { 125, 0, 0 }, LUA = { 92, 0, -80 }, LLA = { 125, 0, 0 }, UT = { 6, 0, 0 }, H = { 14, 0, 0 } },
+}
+Cutscene.GESTURES = GESTURES
+
+local ADDITIVE = { UT = true, H = true, LT = true }
+
+local function applyGesture(base, g, w: number)
+	local out = table.clone(base)
+	for k, v in g do
+		local b = base[k] or { 0, 0, 0 }
+		if ADDITIVE[k] then
+			out[k] = { (b[1] or 0) + v[1] * w, (b[2] or 0) + v[2] * w, (b[3] or 0) + v[3] * w }
+		else
+			out[k] = { (b[1] or 0) + (v[1] - (b[1] or 0)) * w, (b[2] or 0) + (v[2] - (b[2] or 0)) * w, (b[3] or 0) + (v[3] - (b[3] or 0)) * w }
+		end
 	end
-	return Poses.idle(style, t)
+	return out
 end
 
--- Camera presets -> function(t) returning CFrame, fov
-local function shotCamera(shot, actors)
-	local function head(i)
-		local a = actors[i]
-		if not a then
-			return Vector3.new(0, 4, 0)
-		end
-		return Vector3.new(a.x, 4.4 * a.rig.scale, 0)
-	end
-	local function visibleMid()
-		local sum, n = Vector3.zero, 0
-		for _, a in actors do
-			if not a.hidden then
-				sum += Vector3.new(a.x, 3.2, 0)
-				n += 1
-			end
-		end
-		return n > 0 and sum / n or Vector3.new(0, 3.2, 0)
-	end
-	local cam = shot.cam
-	if cam == "sky" then
-		return function(t)
-			local pos = Vector3.new(-8 + t * 1.6, 7 + t * 0.4, 30)
-			local look = Vector3.new(-2 + t * 1.2, 18, -60)
-			return CFrame.lookAt(pos, look), 50
-		end
-	elseif cam == "wide" then
-		return function(t)
-			local mid = visibleMid()
-			local pos = mid + Vector3.new(-3 + t * 0.6, 2.2, 21 - t * 0.5)
-			return CFrame.lookAt(pos, mid), 40
-		end
-	elseif cam == "two" then
-		return function(t)
-			local a, b = head(shot.a or 1), head(shot.b or 2)
-			local mid = (a + b) / 2 - Vector3.new(0, 0.6, 0)
-			local sep = (a - b).Magnitude
-			local pos = mid + Vector3.new(t * 0.3, 0.6, 7 + sep * 0.9 - t * 0.2)
-			return CFrame.lookAt(pos, mid), 38
-		end
-	elseif cam == "close" then
-		return function(t)
-			local a = actors[shot.a or 1]
-			local h = head(shot.a or 1) - Vector3.new(0, 0.2, 0)
-			local facing = a and a.facing or 1
-			local pos = h + Vector3.new(facing * 3.2, 0.2, 5.4 - t * 0.18)
-			return CFrame.lookAt(pos, h), 30
-		end
-	elseif cam == "over" then
-		return function(t)
-			local a, b = head(shot.a or 1), head(shot.b or 2)
-			local dir = (b - a).Unit
-			local pos = a - dir * 3.2 + Vector3.new(0, 0.8, 2.8 + t * 0.1)
-			return CFrame.lookAt(pos, b - Vector3.new(0, 0.4, 0)), 36
-		end
-	elseif cam == "low" then
-		return function(t)
-			local a = actors[shot.a or 1]
-			local h = head(shot.a or 1)
-			local facing = a and a.facing or 1
-			local pos = Vector3.new(h.X + facing * 4.5, 0.8 + t * 0.1, 6.5)
-			return CFrame.lookAt(pos, h + Vector3.new(0, 0.6, 0)), 42
-		end
-	end
-	return function(_t)
-		local mid = visibleMid()
-		return CFrame.lookAt(mid + Vector3.new(0, 3, 18), mid), 40
-	end
+local function addTo(pose, key: string, a: number, b: number, c: number)
+	local v = pose[key] or { 0, 0, 0 }
+	pose[key] = { (v[1] or 0) + a, (v[2] or 0) + b, (v[3] or 0) + c }
 end
+
+-- Pick a gesture from how the line reads.
+function Cutscene.autoGesture(text: string, speakerId: string?): string?
+	if speakerId == "system" then
+		return nil
+	end
+	local letters, caps = 0, 0
+	for ch in string.gmatch(text, "%a") do
+		letters += 1
+		if string.match(ch, "%u") then
+			caps += 1
+		end
+	end
+	if letters >= 6 and caps / letters > 0.7 then
+		return "shout"
+	end
+	local lower = string.lower(text)
+	if string.find(lower, "^%.%.%.") then
+		return "sad"
+	elseif string.find(lower, "^hey") or string.find(lower, "^hi[%s,!.]") then
+		return "wave"
+	elseif string.find(lower, "haha") or string.find(lower, "lol") then
+		return "laugh"
+	elseif string.find(text, "%?%s*$") or string.find(text, "%?\"?%s*$") then
+		return "shrug"
+	elseif string.find(text, "!%s*$") then
+		return "point"
+	end
+	return "talk"
+end
+
+-------------------------------------------------------------------------------
+-- Camera shots: function(shot, actors, t) -> CFrame, fov
+-------------------------------------------------------------------------------
+
+local function headPos(actors, i: number?)
+	local a = i and actors[i]
+	if not a then
+		return V(0, 4, 0)
+	end
+	return V(a.x, (a.y or 0) + 4.4 * a.rig.scale, 0)
+end
+
+local function visibleMid(actors)
+	local sum, n = Vector3.zero, 0
+	for _, a in actors do
+		if not a.hidden then
+			sum += V(a.x, 3.2, 0)
+			n += 1
+		end
+	end
+	return n > 0 and sum / n or V(0, 3.2, 0)
+end
+
+local SHOTS = {}
+SHOTS.sky = function(_shot, _actors, t)
+	local pos = V(-8 + t * 1.6, 7 + t * 0.4, 30)
+	local look = V(-2 + t * 1.2, 18, -60)
+	return CFrame.lookAt(pos, look), 50
+end
+SHOTS.wide = function(_shot, actors, t)
+	local mid = visibleMid(actors)
+	local pos = mid + V(-3 + t * 0.6, 2.2, 21 - t * 0.5)
+	return CFrame.lookAt(pos, mid), 40
+end
+SHOTS.two = function(shot, actors, t)
+	local a, b = headPos(actors, shot.a or 1), headPos(actors, shot.b or 2)
+	local mid = (a + b) / 2 - V(0, 0.6, 0)
+	local sep = (a - b).Magnitude
+	local pos = mid + V(t * 0.3, 0.6, 7 + sep * 0.9 - t * 0.2)
+	return CFrame.lookAt(pos, mid), 38
+end
+SHOTS.close = function(shot, actors, t)
+	local a = actors[shot.a or 1]
+	local h = headPos(actors, shot.a or 1) - V(0, 0.2, 0)
+	local facing = a and a.facing or 1
+	local pos = h + V(facing * 3.2, 0.2, 5.4 - t * 0.18)
+	return CFrame.lookAt(pos, h), 30
+end
+-- over the shoulder of `a`, looking at `b`
+SHOTS.over = function(shot, actors, t)
+	local a, b = headPos(actors, shot.a or 1), headPos(actors, shot.b or 2)
+	local d = b - a
+	local dir = d.Magnitude > 0.01 and d.Unit or V(1, 0, 0)
+	local pos = a - dir * 3.2 + V(0, 0.8, 2.8 + t * 0.1)
+	return CFrame.lookAt(pos, b - V(0, 0.4, 0)), 36
+end
+SHOTS.low = function(shot, actors, t)
+	local a = actors[shot.a or 1]
+	local h = headPos(actors, shot.a or 1)
+	local facing = a and a.facing or 1
+	local pos = V(h.X + facing * 4.5, 0.8 + t * 0.1, 6.5)
+	return CFrame.lookAt(pos, h + V(0, 0.6, 0)), 42
+end
+-- crash zoom: snaps from a medium to a tight close-up with a dutch tilt
+SHOTS.crash = function(shot, actors, t)
+	local a = actors[shot.a or 1]
+	local h = headPos(actors, shot.a or 1) - V(0, 0.15, 0)
+	local facing = a and a.facing or 1
+	local k = math.clamp(t / 0.22, 0, 1)
+	k = 1 - (1 - k) ^ 3
+	local fov = 44 + (20 - 44) * k
+	local pos = h + V(facing * 2.6, 0.1, 5.8)
+	return CFrame.lookAt(pos, h) * CFrame.Angles(0, 0, math.rad(8) * facing), fov
+end
+SHOTS.dutch = function(shot, actors, t)
+	local a = actors[shot.a or 1]
+	local h = headPos(actors, shot.a or 1)
+	local facing = a and a.facing or 1
+	local pos = h + V(facing * 3.6, -0.6, 5.2 - t * 0.25)
+	return CFrame.lookAt(pos, h) * CFrame.Angles(0, 0, math.rad(-14) * facing), 34
+end
+SHOTS.orbit = function(shot, actors, t)
+	local h = headPos(actors, shot.a or 1) - V(0, 0.5, 0)
+	local ang = math.rad(-30 + t * 18)
+	local pos = h + V(math.sin(ang) * 7, 0.8, math.cos(ang) * 7)
+	return CFrame.lookAt(pos, h), 34
+end
+SHOTS.dolly = function(shot, actors, t)
+	local a = actors[shot.a or 1]
+	local h = headPos(actors, shot.a or 1) - V(0, 0.3, 0)
+	local facing = a and a.facing or 1
+	local dist = math.max(4.2, 11 - t * 1.6)
+	local pos = h + V(facing * dist * 0.45, 0.3, dist)
+	return CFrame.lookAt(pos, h), 34
+end
+SHOTS.track = function(shot, actors, t)
+	local h = headPos(actors, shot.a or 1) - V(0, 1.2, 0)
+	local pos = h + V(-2, 1.4, 13)
+	local _ = t
+	return CFrame.lookAt(pos, h + V(0, 0.4, 0)), 38
+end
+
+local function shotCF(shot, actors, t)
+	local fn = SHOTS[shot.cam] or SHOTS.wide
+	return fn(shot, actors, t)
+end
+
+-------------------------------------------------------------------------------
+-- Player
+-------------------------------------------------------------------------------
 
 -- Plays a scene beat. Yields until finished (or skipped). Returns "done" | "skipped".
 function Cutscene.play(scene, uiRoot: Instance)
@@ -7879,6 +8576,7 @@ function Cutscene.play(scene, uiRoot: Instance)
 	folder.Parent = workspace
 
 	local actors = {}
+	local byId = {}
 	for i, a in scene.actors or {} do
 		local def = Fighters.get(a.id)
 		local rig = Rig.build(def.look, { name = def.name, world = workspace })
@@ -7888,23 +8586,30 @@ function Cutscene.play(scene, uiRoot: Instance)
 			def = def,
 			rig = rig,
 			x = a.x,
+			y = 0,
 			facing = a.facing,
 			anim = a.anim or "stance",
 			hidden = a.hidden == true,
 			style = Poses.STYLE_OF[def.stance] or "unarmed",
+			spring = AnimSpring.new(),
+			gesture = nil,
+			talking = false,
+			lookAt = nil,
+			phase = i * 1.37,
 		}
+		byId[a.id] = byId[a.id] or i
 	end
 
 	-- letterbox + caption + skip hint
 	local ui = Theme.frame(uiRoot, { Name = "Cutscene", Size = UDim2.fromScale(1, 1), ZIndex = 35 })
-	local barT = Theme.frame(ui, { Size = UDim2.new(1, 0, 0, 0), BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0, ZIndex = 36 })
+	local barT = Theme.frame(ui, { Size = UDim2.new(1, 0, 0, 0), BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0, ZIndex = 50 })
 	local barB = Theme.frame(ui, {
 		Size = UDim2.new(1, 0, 0, 0),
 		Position = UDim2.fromScale(0, 1),
 		AnchorPoint = Vector2.new(0, 1),
 		BackgroundColor3 = Color3.new(0, 0, 0),
 		BackgroundTransparency = 0,
-		ZIndex = 36,
+		ZIndex = 50,
 	})
 	Theme.tween(barT, 0.6, { Size = UDim2.new(1, 0, 0, 96) })
 	Theme.tween(barB, 0.6, { Size = UDim2.new(1, 0, 0, 96) })
@@ -7917,7 +8622,7 @@ function Cutscene.play(scene, uiRoot: Instance)
 		TextSize = 40,
 		TextColor3 = C.ivory,
 		TextTransparency = 1,
-		ZIndex = 37,
+		ZIndex = 51,
 	})
 	Theme.textStroke(caption, 2, 0.2)
 	local skip = Theme.label(ui, "", {
@@ -7928,23 +8633,171 @@ function Cutscene.play(scene, uiRoot: Instance)
 		FontFace = F.label,
 		TextSize = 16,
 		TextColor3 = C.textDim,
-		ZIndex = 37,
+		ZIndex = 51,
 	})
 	skip.Text = "[" .. Input.glyph("confirm") .. "] NEXT    [" .. Input.glyph("back") .. "] SKIP SCENE"
-	local fade = Theme.frame(ui, { Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0, ZIndex = 45 })
+	local fade = Theme.frame(ui, { Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.new(0, 0, 0), BackgroundTransparency = 0, ZIndex = 60 })
 	Theme.tween(fade, 0.8, { BackgroundTransparency = 1 })
+	local fx = CineFX.new(ui, 40)
+
+	-- clocks: `shotClock` drives lines and events (stops during freeze frames),
+	-- `animClock` drives acting (stops when frozen, slows in slow motion),
+	-- `camClock` drives camera moves.
+	local paused = 0
+	local timeScale = 1
+	local slowUntil = 0
+	local shotClock = 0
+	local animClock = 0
+	local camClock = 0
+	local realClock = 0
+	local current = { cam = "wide" }
+	local camT0 = 0
+	local whipT = -1
+	local whipDir = 1
+
+	local function cutTo(spec, whip: boolean?)
+		current = spec
+		camT0 = camClock
+		if whip then
+			whipT = realClock
+			whipDir = -whipDir
+			fx:whip()
+		end
+	end
 
 	FightCamera.enable()
-	local t0 = os.clock()
-	local renderConn = RunService.RenderStepped:Connect(function(dt)
-		local t = os.clock() - t0
-		for _, a in actors do
-			if not a.hidden then
-				Rig.apply(a.rig, rootCF(a.x, a.facing), poseFor(a.anim, a.style, t + a.x), { time = t })
+	FightCamera.cinematic(function(_t)
+		local cf, fov = shotCF(current, actors, camClock - camT0)
+		-- handheld drift
+		local n1 = math.sin(realClock * 1.3) * 0.6 + math.sin(realClock * 2.9) * 0.25
+		local n2 = math.sin(realClock * 1.7 + 1.2) * 0.5 + math.sin(realClock * 3.7) * 0.2
+		cf = cf * CFrame.Angles(math.rad(n1 * 0.35), math.rad(n2 * 0.35), 0)
+		-- whip pan: fast yaw that settles into the new shot
+		if whipT >= 0 then
+			local k = (realClock - whipT) / 0.2
+			if k < 1 then
+				cf = cf * CFrame.Angles(0, math.rad(35 * whipDir * (1 - k) ^ 2), 0)
 			end
 		end
+		return cf, fov
+	end)
+
+	local function lookYaw(a, target)
+		local f = V(a.facing * math.cos(YAW), 0, math.sin(YAW))
+		local d = V(target.x - a.x, 0, 0.0001)
+		if d.Magnitude < 0.01 then
+			return 0
+		end
+		d = d.Unit
+		local yaw = math.deg(math.atan2(f.Z * d.X - f.X * d.Z, f.X * d.X + f.Z * d.Z))
+		return math.clamp(yaw, -75, 75)
+	end
+
+	local function basePose(a, t: number)
+		local style = a.style
+		if a.act then
+			local act = a.act
+			local frames = math.max(12, act.dur * 60)
+			local ft = (t - act.t0) * 60
+			if ft >= frames then
+				a.act = nil
+			else
+				local startup = math.floor(frames * 0.35)
+				local active = math.max(2, math.floor(frames * 0.15))
+				return Poses.attack(act.anim, style, ft, startup, active, frames - startup - active), 1
+			end
+		end
+		if a.walk then
+			local w = a.walk
+			local k = math.clamp((t - w.t0) / w.dur, 0, 1)
+			a.x = w.from + (w.to - w.from) * k
+			if k >= 1 then
+				a.walk = nil
+			else
+				local dir = (w.to > w.from) and 1 or -1
+				return Poses.walk(style, (t - w.t0) * 13.2, dir * a.facing), 0
+			end
+		end
+		local anim = a.anim
+		if anim == "kneel" then
+			return Poses.States.kneel(), 0
+		elseif anim == "dazed" then
+			local p = table.clone(Poses.States.dazed())
+			local r = p.root
+			p.root = { r[1], r[2], r[3], math.sin(t * 1.7) * 5, math.sin(t * 1.1) * 6, math.sin(t * 2.3) * 5 }
+			return p, 0
+		elseif anim == "win" then
+			return Poses.victoryFor(a.id, style, t), 0
+		end
+		local idle = Poses.idleFor(style, a.def.personality, t + a.phase)
+		if GESTURES[anim] then
+			return applyGesture(idle, GESTURES[anim], 1), 0
+		end
+		return idle, 0
+	end
+
+	local renderConn = RunService.RenderStepped:Connect(function(dt)
+		dt = math.min(dt, 0.1)
+		realClock += dt
+		if realClock > slowUntil then
+			timeScale = 1
+		end
+		local frozen = paused > 0
+		local adt = frozen and 0 or dt * timeScale
+		animClock += adt
+		camClock += frozen and dt * 0.04 or dt * timeScale
+		local t = animClock
+		for i, a in actors do
+			if a.hidden then
+				continue
+			end
+			local pose, snap = basePose(a, t)
+			if a.gesture and not a.act and not a.walk then
+				local g = GESTURES[a.gesture]
+				if g then
+					pose = applyGesture(pose, g, 1)
+					if a.gesture == "wave" then
+						addTo(pose, "RUA", 0, 0, math.sin(t * 9) * 22)
+					elseif a.gesture == "laugh" then
+						addTo(pose, "UT", math.abs(math.sin(t * 11)) * 5, 0, 0)
+						addTo(pose, "H", math.abs(math.sin(t * 11)) * 6, 0, 0)
+					end
+				end
+			else
+				pose = table.clone(pose)
+			end
+			-- talking: nods, beats, a little torso sway
+			if a.talking then
+				addTo(pose, "H", math.sin(t * 8.5) * 2.2 + math.max(0, math.sin(t * 3.1)) * 4, math.sin(t * 1.9) * 3, 0)
+				addTo(pose, "UT", 0, math.sin(t * 2.2) * 3, math.sin(t * 1.6) * 1.5)
+				if a.gesture == "talk" or a.gesture == "point" then
+					addTo(pose, "RLA", math.sin(t * 5.2) * 12, 0, 0)
+				end
+			end
+			-- look at whoever is talking
+			local target = a.lookAt and actors[a.lookAt]
+			if target and target ~= a and not target.hidden then
+				local yaw = lookYaw(a, target)
+				addTo(pose, "H", 0, yaw * 0.65, 0)
+				addTo(pose, "UT", 0, yaw * 0.25, 0)
+			end
+			-- hop
+			local y = 0
+			if a.jumpT then
+				local k = (t - a.jumpT) / 0.5
+				if k >= 0 and k < 1 then
+					y = 4 * k * (1 - k) * 2.2
+				else
+					a.jumpT = nil
+				end
+			end
+			a.y = y
+			local final = a.spring:step(pose, adt, snap)
+			Rig.apply(a.rig, rootCF(a.x, a.facing, y), final, { time = t })
+			local _ = i
+		end
 		FightCamera.update(dt, -2, 0, 2, 0)
-		StageBuilder.update(t, 0)
+		StageBuilder.update(realClock, 0, dt)
 	end)
 
 	local skipShot, skipScene = false, false
@@ -7962,33 +8815,112 @@ function Cutscene.play(scene, uiRoot: Instance)
 		end)
 	end
 
+	-- pause-aware wait on the shot clock
 	local function wait(sec: number)
-		local start = os.clock()
-		while os.clock() - start < sec do
+		local target = shotClock + sec
+		while shotClock < target do
 			if skipShot or skipScene then
 				return false
 			end
-			RunService.Heartbeat:Wait()
+			local dt = RunService.Heartbeat:Wait()
+			if paused == 0 then
+				shotClock += dt
+			end
 		end
 		return true
 	end
 
-	local function runEvent(ev)
+	local function visibleRigs()
+		local list = {}
+		for _, a in actors do
+			if not a.hidden then
+				table.insert(list, a.rig)
+			end
+		end
+		return list
+	end
+
+	local function freeze(a, name: string?, sub: string?, hold: number?)
+		paused += 1
+		FightCamera.punch(5)
+		local nm = name or (a and (Story.speakerNames[a.id] or a.def.name)) or ""
+		local sb = sub or (a and a.def.title) or ""
+		local side = (a and a.x < 0) and 1 or 2
+		fx:freezeFrame(nm, sb, a and Color3.fromHex(a.def.accent) or nil, side, hold or 1.7)
+		paused = math.max(0, paused - 1)
+	end
+
+	-- Cosmetic events are dropped when a shot is skipped; state events always run.
+	local COSMETIC = { freeze = true, impact = true, pop = true, crash = true, boom = true, slowmo = true, speedlines = true, whip = true, sfx = true, shake = true, vfx = true }
+
+	local function runEvent(ev, flushing: boolean?)
+		-- (the rift is kept even when skipping: later shots show it)
+		if flushing and COSMETIC[ev.type] and not (ev.type == "vfx" and ev.kind == "rift") then
+			return
+		end
 		local a = ev.actor and actors[ev.actor]
-		if ev.type == "show" and a then
+		local typ = ev.type
+		if typ == "show" and a then
 			a.hidden = false
 			a.rig.model.Parent = folder
-		elseif ev.type == "hide" and a then
+		elseif typ == "hide" and a then
 			a.hidden = true
 			a.rig.model.Parent = nil
-		elseif ev.type == "anim" and a then
+		elseif typ == "anim" and a then
 			a.anim = ev.anim
-		elseif ev.type == "sfx" then
-			Audio.play(ev.key, { volume = 0.9 })
-		elseif ev.type == "shake" then
+		elseif typ == "gesture" and a then
+			a.gesture = ev.gesture
+		elseif typ == "face" and a then
+			a.facing = ev.facing
+		elseif typ == "walk" and a then
+			if flushing then
+				a.x = ev.to
+			else
+				a.walk = { from = a.x, to = ev.to, t0 = animClock, dur = ev.time or 1.2 }
+			end
+		elseif typ == "act" and a then
+			a.act = { anim = ev.anim, t0 = animClock, dur = ev.time or 0.8 }
+		elseif typ == "jump" and a then
+			a.jumpT = animClock
+			Audio.play("jump", { volume = 0.5 })
+		elseif typ == "sfx" then
+			Audio.play(ev.key, { volume = ev.volume or 0.9 })
+		elseif typ == "shake" then
 			FightCamera.shake(ev.amount or 0.6)
-		elseif ev.type == "vfx" then
-			local pos = a and Vector3.new(a.x, 0, 0) or Vector3.new(0, 0, 0)
+		elseif typ == "freeze" then
+			task.spawn(freeze, a, ev.name, ev.sub, ev.hold)
+		elseif typ == "impact" then
+			local rigs = visibleRigs()
+			task.spawn(function()
+				paused += 1
+				fx:impactFrames(rigs, ev.count or 3)
+				paused = math.max(0, paused - 1)
+				FightCamera.shake(ev.shake or 0.9)
+			end)
+		elseif typ == "pop" then
+			local pos = nil
+			if ev.x then
+				pos = Vector2.new(ev.x, ev.y or 0.35)
+			end
+			fx:pop(ev.text, pos, ev.color and Color3.fromHex(ev.color) or nil, ev.size)
+		elseif typ == "crash" then
+			FightCamera.punch(ev.amount or 6)
+			Audio.play("boom", { volume = 0.9 })
+			FightCamera.shake(0.4)
+		elseif typ == "boom" then
+			Audio.play("boom", { volume = ev.volume or 1 })
+			FightCamera.shake(ev.amount or 0.7)
+		elseif typ == "slowmo" then
+			timeScale = ev.scale or 0.3
+			slowUntil = realClock + (ev.time or 1.2)
+		elseif typ == "speedlines" then
+			fx:speedLines(ev.time or 0.6, ev.color and Color3.fromHex(ev.color) or nil)
+		elseif typ == "whip" then
+			fx:whip()
+		elseif typ == "cam" then
+			cutTo({ cam = ev.cam, a = ev.a, b = ev.b }, ev.whip)
+		elseif typ == "vfx" then
+			local pos = a and V(a.x, 0, 0) or V(0, 0, 0)
 			if ev.kind == "rift" then
 				for k = 0, 8 do
 					local p = Instance.new("Part")
@@ -7998,27 +8930,63 @@ function Cutscene.play(scene, uiRoot: Instance)
 					p.CanTouch = false
 					p.Material = Enum.Material.Neon
 					p.Color = k % 3 == 0 and Color3.fromHex("#FF3B4E") or Color3.fromHex("#63FF8A")
-					p.Size = Vector3.new(1.2, 8 - math.abs(k - 4), 0.5)
+					p.Size = V(1.2, 8 - math.abs(k - 4), 0.5)
 					p.CFrame = CFrame.new(-6 + k * 1.6, 30 + math.sin(k * 1.9) * 2.5, -50) * CFrame.Angles(0, 0, math.rad(k % 2 == 0 and 24 or -24))
 					p.Parent = folder
 				end
-				VFX.burstShockwave(Vector3.new(0, 30, -48), Color3.fromHex("#63FF8A"))
+				if not flushing then
+					VFX.burstShockwave(V(0, 30, -48), Color3.fromHex("#63FF8A"))
+				end
 			elseif ev.kind == "teleport" then
 				VFX.teleport(pos, a and Color3.fromHex(a.def.accent) or Color3.new(1, 1, 1))
 			elseif ev.kind == "roots" then
 				VFX.groundEruption(pos, "nature", 4)
 			elseif ev.kind == "bolt_impact" then
-				VFX.hit(pos + Vector3.new(0.8, 3.5, 0.4), "heavy", "ash", 1, false)
+				VFX.hit(pos + V(0.8, 3.5, 0.4), "heavy", "ash", 1, false)
 			elseif ev.kind == "smoke" then
 				VFX.teleport(pos, Color3.fromHex("#8A8478"))
 			elseif ev.kind == "souls" then
-				VFX.elementBurst(pos + Vector3.new(0, 3, 0), "soulfire", true)
-				VFX.burstShockwave(pos + Vector3.new(0, 3, 0), Color3.fromHex("#63FF8A"))
+				VFX.elementBurst(pos + V(0, 3, 0), "soulfire", true)
+				VFX.burstShockwave(pos + V(0, 3, 0), Color3.fromHex("#63FF8A"))
+			elseif ev.kind == "slam" then
+				VFX.burstShockwave(pos + V(0, 0.5, 0), a and Color3.fromHex(a.def.accent) or Color3.new(1, 1, 1))
+				VFX.dust(pos, true)
 			elseif ev.kind == "flash" then
-				local fl = Theme.frame(ui, { Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = 0, ZIndex = 44 })
-				Theme.tween(fl, 1.2, { BackgroundTransparency = 1 })
+				fx:flash(Color3.new(1, 1, 1), 1.2)
 			end
 		end
+	end
+
+	-- Coverage for one line of dialogue in a multi-line shot.
+	local function coverageFor(shot, line, idx: number, prevSpeaker: number?)
+		if line.cam then
+			return { cam = line.cam, a = line.a or byId[line.speaker], b = line.b }, line.whip
+		end
+		if shot.auto == false or not shot.lines or #shot.lines < 2 then
+			return nil
+		end
+		if shot.cam ~= "two" and shot.cam ~= "over" then
+			return nil
+		end
+		if idx == 1 then
+			return nil
+		end
+		local sp = byId[line.speaker]
+		if not sp then
+			return nil
+		end
+		local listener = prevSpeaker ~= sp and prevSpeaker or nil
+		if not listener then
+			local a, b = shot.a or 1, shot.b or 2
+			listener = (a == sp) and b or a
+		end
+		if Cutscene.autoGesture(line.text, line.speaker) == "shout" then
+			return { cam = "crash", a = sp }, false
+		end
+		if idx % 2 == 0 then
+			return { cam = "over", a = listener, b = sp }, false
+		end
+		return { cam = "close", a = sp }, false
 	end
 
 	for _, shot in scene.shots or {} do
@@ -8026,21 +8994,21 @@ function Cutscene.play(scene, uiRoot: Instance)
 			break
 		end
 		skipShot = false
-		FightCamera.cinematic(shotCamera(shot, actors))
+		cutTo({ cam = shot.cam, a = shot.a, b = shot.b }, shot.whip)
 		local lineTotal = 0
 		for _, line in shot.lines or {} do
 			lineTotal += Story.lineDuration(line.text)
 		end
 		local duration = shot.duration or (lineTotal + 0.6)
-		-- schedule events
+		-- schedule events on the (pause-aware) shot clock
 		local evs = table.clone(shot.events or {})
 		table.sort(evs, function(x, y)
 			return (x.t or 0) < (y.t or 0)
 		end)
-		local shotStart = os.clock()
+		local shotStart = shotClock
 		local evIdx = 1
 		local evConn = RunService.Heartbeat:Connect(function()
-			local el = os.clock() - shotStart
+			local el = shotClock - shotStart
 			while evs[evIdx] and (evs[evIdx].t or 0) <= el do
 				runEvent(evs[evIdx])
 				evIdx += 1
@@ -8055,18 +9023,58 @@ function Cutscene.play(scene, uiRoot: Instance)
 		task.wait(0)
 		if shot.lines and #shot.lines > 0 then
 			wait(lineStart)
-			for _, line in shot.lines do
+			local prevSpeaker = nil
+			for idx, line in shot.lines do
 				if skipShot or skipScene then
 					break
 				end
 				local d = Story.lineDuration(line.text)
 				local spk = Fighters.byId[line.speaker]
 				local col = spk and Color3.fromHex(spk.accent) or C.goldBright
+				local si = byId[line.speaker]
+				-- coverage cut
+				local cov, whip = coverageFor(shot, line, idx, prevSpeaker)
+				if cov then
+					cutTo(cov, whip)
+				end
+				-- acting: speaker talks + gestures, everyone else looks at them
+				for ai, a in actors do
+					a.talking = ai == si
+					if si and ai ~= si then
+						a.lookAt = si
+					end
+				end
+				local sa = si and actors[si]
+				if sa then
+					sa.lookAt = prevSpeaker ~= si and prevSpeaker or sa.lookAt
+					sa.gesture = line.gesture or Cutscene.autoGesture(line.text, line.speaker)
+				end
+				-- per-line editing beats
+				if line.freeze and sa then
+					task.spawn(freeze, sa, line.freezeName, line.freezeSub)
+				end
+				if line.crash then
+					runEvent({ type = "crash" })
+				end
+				if line.impact then
+					runEvent({ type = "impact" })
+				end
+				if line.pop then
+					runEvent({ type = "pop", text = line.pop, x = line.popX, y = line.popY })
+				end
 				Subtitles.show(Story.speakerNames[line.speaker] or line.speaker, line.text, d - 0.15, col)
 				if spk then
 					Audio.voice(spk.voice, "attack")
 				end
-				if not wait(d) then
+				local ok = wait(d)
+				if sa then
+					sa.talking = false
+					if not line.holdGesture then
+						sa.gesture = nil
+					end
+				end
+				prevSpeaker = si or prevSpeaker
+				if not ok then
 					break
 				end
 			end
@@ -8078,10 +9086,13 @@ function Cutscene.play(scene, uiRoot: Instance)
 		end
 		-- flush remaining events so visibility stays consistent when skipping
 		while evs[evIdx] do
-			runEvent(evs[evIdx])
+			runEvent(evs[evIdx], true)
 			evIdx += 1
 		end
 		evConn:Disconnect()
+		for _, a in actors do
+			a.talking = false
+		end
 		if shot.caption then
 			Theme.tween(caption, 0.4, { TextTransparency = 1 })
 		end
@@ -8097,6 +9108,7 @@ function Cutscene.play(scene, uiRoot: Instance)
 	end
 	renderConn:Disconnect()
 	FightCamera.clearCinematic()
+	fx:destroy()
 	for _, a in actors do
 		Rig.destroy(a.rig)
 	end
@@ -8111,7 +9123,7 @@ return Cutscene
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="32">
+          <Item class="ModuleScript" referent="33">
             <Properties>
               <string name="Name">FightCamera</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -8276,7 +9288,7 @@ return FightCamera
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="33">
+          <Item class="ModuleScript" referent="34">
             <Properties>
               <string name="Name">FightView</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -8302,6 +9314,7 @@ local AnimSpring = require(script.Parent.AnimSpring)
 local StageBuilder = require(script.Parent.StageBuilder)
 local FightCamera = require(script.Parent.FightCamera)
 local VFX = require(script.Parent.VFX)
+local CineFX = require(script.Parent.CineFX)
 local Audio = require(Client.Core.Audio)
 local Input = require(Client.Core.Input)
 local HUD = require(Client.UI.HUD)
@@ -8450,8 +9463,26 @@ function FightView.new(opts)
 	end
 
 	-- UI
-	self.hud = HUD.new(opts.root, p1Def, p1Echo, p2Def, p2Echo, { training = opts.training, tags = self.tags })
-	if (Input.mode == "touch" or opts.forceTouch) and not opts.noTouch then
+	-- power hotbar (keys 1-4) for the human player
+	local useTouch = (Input.mode == "touch" or opts.forceTouch) and not opts.noTouch
+	local powers = nil
+	if not opts.p1.cpu or opts.showPowers then
+		powers = {}
+		local f1 = self.match.fighters[1]
+		for slot = 1, 4 do
+			local id = Engine.powerSlotId(f1, slot)
+			local mv = id and p1Def.moves[id]
+			if mv then
+				local cols = VFX.colors(mv.element)
+				table.insert(powers, { id = id, name = mv.name, key = Input.glyph("P" .. slot), color = cols[2] })
+			end
+		end
+	end
+	self.hud = HUD.new(opts.root, p1Def, p1Echo, p2Def, p2Echo, { training = opts.training, tags = self.tags, powers = powers, touchHotbar = useTouch })
+	-- editing effects for supers / finishers (impact frames, speed lines)
+	self.cine = CineFX.new(self.hud.root, 22)
+	self.cine.vignette.Visible = false
+	if useTouch then
 		self.touch = MobileControls.new(self.hud.root, {
 			onPause = function()
 				if opts.onPause then
@@ -8459,6 +9490,12 @@ function FightView.new(opts)
 				end
 			end,
 		})
+	end
+	if self.touch and self.hud.hotbar then
+		-- tap a hotbar slot to fire that power
+		for i, sl in self.hud.hotbar.slots do
+			self.touch:bind(sl.button, "P" .. i, sl.stroke, sl.color)
+		end
 	end
 	if self.touch and opts.training then
 		-- touch players cycle the practice dummy with an on-screen button
@@ -8815,6 +9852,13 @@ function FightView:render(dt: number)
 		if rig.trailOn ~= trailOn then
 			rig.trailOn = trailOn
 			Rig.setTrails(rig, trailOn)
+			-- slash arc as a weapon strike comes out
+			if trailOn and f.state == "attack" and f.move and f.move.trail then
+				local mv = f.move
+				local big = mv.strength == "heavy" or mv.kind == "special"
+				local cols = VFX.colors(mv.element)
+				VFX.slash(v3(x, y + 2.6 * rig.scale, 0), f.facing, cols[2], big)
+			end
 		end
 		-- invulnerability shimmer during teleports
 		local fade = 0
@@ -9078,6 +10122,7 @@ function FightView:onEvent(ev)
 			end
 			if ev.fighter == 1 then
 				self.lastMove = mv
+				self.hud:powerUsed(ev.move)
 			end
 			if mv.kind == "special" and mv.element then
 				local cols = VFX.colors(mv.element)
@@ -9241,6 +10286,9 @@ function FightView:onEvent(ev)
 		self.hud:announce("OOF!", ev.perfect and "NO DAMAGE TAKEN. EMBARRASSING." or nil, { punch = true, color = Theme.Colors.crimsonBright, size = 150, hold = 2.0 })
 		Audio.play("ko", { volume = 1 })
 		StageBuilder.react("ko")
+		task.spawn(function()
+			self.cine:impactFrames({ self.rigs[1], self.rigs[2] }, 2, "impact_frame")
+		end)
 		Audio.play("oof", { group = "voice", volume = 1 })
 		Audio.duck(0.35, 2.5)
 		FightCamera.shake(1.4)
@@ -9275,6 +10323,10 @@ function FightView:onEvent(ev)
 		local loser = self.rigs[ev.loser]
 		local wf = m.fighters[ev.winner]
 		local col = Color3.fromHex(wf.def.accent)
+		task.spawn(function()
+			self.cine:impactFrames({ self.rigs[ev.winner], loser }, 4)
+		end)
+		self.cine:speedLines(0.8, Color3.new(1, 1, 1))
 		VFX.elementBurst(v3(m.fighters[ev.loser].x, 3), ev.style, true)
 		VFX.oofBreak(loser, col)
 		loser.shattered = true
@@ -9330,6 +10382,7 @@ function FightView:startSuperCinematic(ev)
 		self.savedGrade = { grade.Brightness, grade.Saturation, grade.TintColor }
 		Theme.tween(grade, 0.3, { Brightness = -0.18, Saturation = -0.4, TintColor = col:Lerp(Color3.new(1, 1, 1), 0.6) })
 	end
+	self.cine:speedLines(1.6, col:Lerp(Color3.new(1, 1, 1), 0.5))
 	local strikeFrames = { 26, 46, 66, 86, 106 }
 	for k, fr in strikeFrames do
 		task.delay(fr / 60, function()
@@ -9346,10 +10399,14 @@ function FightView:startSuperCinematic(ev)
 		if self.destroyed then
 			return
 		end
-		self.hud:flash(Color3.new(1, 1, 1), 0.85)
 		VFX.burstShockwave(v3(v.x, 3), col)
 		VFX.elementBurst(v3(v.x, 3), ev.style, true)
 		FightCamera.shake(1.6)
+		FightCamera.punch(6)
+		self.cine:impactFrames({ self.rigs[ev.attacker], self.rigs[ev.victim] }, 3)
+		if not self.destroyed then
+			self.hud:flash(Color3.new(1, 1, 1), 0.6)
+		end
 	end)
 	FightCamera.cinematic(function(t)
 		local mid = v3((a.x + v.x) / 2, 3.2, 0)
@@ -9441,6 +10498,7 @@ function FightView:destroy()
 	if self.touch then
 		self.touch:destroy()
 	end
+	self.cine:destroy()
 	self.hud:destroy()
 	self.folder:Destroy()
 	VFX.clear()
@@ -9452,7 +10510,7 @@ return FightView
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="34">
+          <Item class="ModuleScript" referent="35">
             <Properties>
               <string name="Name">Looks</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -10296,7 +11354,7 @@ return Looks
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="35">
+          <Item class="ModuleScript" referent="36">
             <Properties>
               <string name="Name">Poses</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -11494,7 +12552,7 @@ return Poses
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="36">
+          <Item class="ModuleScript" referent="37">
             <Properties>
               <string name="Name">Rig</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -11784,7 +12842,7 @@ return Rig
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="37">
+          <Item class="ModuleScript" referent="38">
             <Properties>
               <string name="Name">RigMath</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -11954,7 +13012,7 @@ return RigMath
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="38">
+          <Item class="ModuleScript" referent="39">
             <Properties>
               <string name="Name">StageBuilder</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -12897,7 +13955,7 @@ return StageBuilder
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="39">
+          <Item class="ModuleScript" referent="40">
             <Properties>
               <string name="Name">StageLife</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -13647,7 +14705,7 @@ return StageLife
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="40">
+          <Item class="ModuleScript" referent="41">
             <Properties>
               <string name="Name">VFX</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -13657,6 +14715,7 @@ return StageLife
 
 local Debris = game:GetService("Debris")
 local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
 
 local Veil = game:GetService("ReplicatedStorage"):WaitForChild("Veil")
 local Assets = require(Veil.Assets)
@@ -13888,6 +14947,20 @@ function VFX.hit(pos: Vector3, strength: string, element: string?, dir: number, 
 	end
 	flashBall(pos, cols[1], tune.flash, tune.streak and 0.16 or 0.09)
 	impactLight(a, cols[2], tune.light[1], tune.light[2], tune.light[3])
+	-- comic hit burst (custom texture, when uploaded)
+	local burstTex = Assets.image("FX_HitBurst")
+	if burstTex ~= "" then
+		burst(a, 1, {
+			texture = burstTex,
+			color = ColorSequence.new(cols[1]),
+			speed = NumberRange.new(0, 0),
+			size = NumberSequence.new(tune.core[1] * 0.9, tune.core[2]),
+			lifetime = NumberRange.new(0.08, 0.12),
+			transparency = NumberSequence.new(0, 1),
+			rotSpeed = NumberRange.new(-90, 90),
+			zoffset = 2,
+		})
+	end
 	if tune.streak then
 		streak(pos, dir, cols[1], tune.streak, 0.12)
 	end
@@ -14075,7 +15148,85 @@ function VFX.teleport(pos: Vector3, color: Color3)
 	flashBall(pos + V(0, 2.6, 0), color, 4, 0.22)
 end
 
+-- Anime slash arc across the swing (screen plane). dir = facing (+1 / -1).
+-- Uses the FX_Slash texture on a card when uploaded, else a bowed neon beam.
+function VFX.slash(pos: Vector3, dir: number, color: Color3, big: boolean?)
+	local scale = big and 1.35 or 1
+	local tex = Assets.image("FX_Slash")
+	if tex ~= "" then
+		local card = Instance.new("Part")
+		card.Anchored = true
+		card.CanCollide = false
+		card.CanQuery = false
+		card.CanTouch = false
+		card.CastShadow = false
+		card.Transparency = 1
+		card.Size = V(4.4 * scale, 2.2 * scale, 0.05)
+		card.CFrame = C(pos + V(dir * 0.6, 0.4, 0.9)) * A(0, dir > 0 and 0 or math.pi, rad(-28))
+		card.Parent = container()
+		local d = Instance.new("Decal")
+		d.Texture = tex
+		d.Color3 = color
+		d.Face = Enum.NormalId.Back
+		d.Parent = card
+		local d2 = d:Clone()
+		d2.Face = Enum.NormalId.Front
+		d2.Parent = card
+		TweenService:Create(d, TweenInfo.new(0.18), { Transparency = 1 }):Play()
+		TweenService:Create(d2, TweenInfo.new(0.18), { Transparency = 1 }):Play()
+		TweenService:Create(card, TweenInfo.new(0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Size = card.Size * 1.25 }):Play()
+		Debris:AddItem(card, 0.25)
+		return
+	end
+	local holder = anchorAt(pos, 0.3)
+	local a0 = Instance.new("Attachment")
+	-- attachment X axes point up so both control points bow the beam upward
+	a0.CFrame = C(-dir * 1.4 * scale, 1.9 * scale, 0.8) * A(0, 0, rad(90))
+	a0.Parent = holder
+	local a1 = Instance.new("Attachment")
+	a1.CFrame = C(dir * 2.0 * scale, -0.3 * scale, 0.8) * A(0, 0, rad(90))
+	a1.Parent = holder
+	local b = Instance.new("Beam")
+	b.Attachment0 = a0
+	b.Attachment1 = a1
+	b.CurveSize0 = 1.6 * scale
+	b.CurveSize1 = -1.2 * scale
+	b.Width0 = 0.05
+	b.Width1 = 0.75 * scale
+	b.FaceCamera = true
+	b.Segments = 16
+	b.LightEmission = 1
+	b.LightInfluence = 0
+	b.Color = ColorSequence.new(Color3.new(1, 1, 1), color)
+	b.Transparency = NumberSequence.new(0.6, 0)
+	b.Parent = holder
+	-- fade the arc out from the tail
+	local t0 = os.clock()
+	local conn
+	conn = RunService.Heartbeat:Connect(function()
+		local k = (os.clock() - t0) / 0.16
+		if k >= 1 or not b.Parent then
+			conn:Disconnect()
+			return
+		end
+		b.Transparency = NumberSequence.new(math.min(1, 0.6 + k), math.min(1, k * 1.1))
+	end)
+end
+
 function VFX.burstShockwave(pos: Vector3, color: Color3)
+	local swTex = Assets.image("FX_Shockwave")
+	if swTex ~= "" then
+		local a = anchorAt(pos, 1)
+		burst(a, 1, {
+			texture = swTex,
+			color = ColorSequence.new(color),
+			speed = NumberRange.new(0, 0),
+			size = NumberSequence.new(2, 18),
+			lifetime = NumberRange.new(0.4, 0.4),
+			transparency = NumberSequence.new(0, 1),
+			rotSpeed = NumberRange.new(0, 0),
+		})
+	end
 	ring(pos, color, 16, 0.45)
 	ring(pos, Color3.new(1, 1, 1), 9, 0.3)
 	flashBall(pos, color, 6, 0.3)
@@ -14670,11 +15821,11 @@ return VFX
             </Properties>
           </Item>
         </Item>
-        <Item class="Folder" referent="41">
+        <Item class="Folder" referent="42">
           <Properties>
             <string name="Name">UI</string>
           </Properties>
-          <Item class="ModuleScript" referent="42">
+          <Item class="ModuleScript" referent="43">
             <Properties>
               <string name="Name">HUD</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -15221,6 +16372,11 @@ function HUD.new(parentRoot: Instance, p1Def, p1Echo, p2Def, p2Echo, opts)
 		self.cards[side] = { frame = card, stripe = stripe, name = cname, title = ctitle, realm = crealm, token = 0 }
 	end
 
+	-- power hotbar (keys 1-4) for the human player
+	if opts.powers and #opts.powers > 0 then
+		self.hotbar = self:buildHotbar(root, opts.powers, opts.touchHotbar == true)
+	end
+
 	-- low health vignette
 	self.lowVig = Theme.frame(root, {
 		Size = UDim2.fromScale(1, 1),
@@ -15419,6 +16575,9 @@ function HUD:update(match, dt: number)
 		self.roundText.Text = "ROUND " .. tostring(match.round)
 	end
 	self:setRoundPips(match.fighters[1].roundWins, match.fighters[2].roundWins)
+	if self.hotbar then
+		self:updateHotbar(match.fighters[self.hotbar.side])
+	end
 	-- low health vignette for the human player
 	local p1 = match.fighters[1]
 	local low = (p1.hp / p1.maxHp) < 0.25 and match.phase == "fight"
@@ -15431,6 +16590,147 @@ function HUD:trainingInfo(lines: { string })
 	end
 	for i, l in self.training.lines do
 		l.Text = lines[i] or ""
+	end
+end
+
+-- Power hotbar: one slot per power with its key, name, element colour, a cooldown
+-- sweep with seconds left, and a flash when it comes back up.
+function HUD:buildHotbar(root: Instance, powers, touch: boolean)
+	local slotW = touch and 120 or 132
+	local slotH = touch and 92 or 70
+	local gap = 8
+	local total = #powers * slotW + (#powers - 1) * gap
+	local bar = Theme.frame(root, {
+		Name = "Hotbar",
+		Size = UDim2.fromOffset(total, slotH),
+		Position = UDim2.new(0.5, 0, 1, touch and -150 or -22),
+		AnchorPoint = Vector2.new(0.5, 1),
+		ZIndex = 6,
+	})
+	local slots = {}
+	for i, pw in powers do
+		local b = Instance.new("TextButton")
+		b.Name = "Power" .. i
+		b.AutoButtonColor = false
+		b.Text = ""
+		b.Size = UDim2.fromOffset(slotW, slotH)
+		b.Position = UDim2.fromOffset((i - 1) * (slotW + gap), 0)
+		b.BackgroundColor3 = Color3.fromHex("#0C0D10")
+		b.BackgroundTransparency = 0.18
+		b.ZIndex = 6
+		b.Parent = bar
+		Theme.corner(b, 8)
+		local stroke = Theme.stroke(b, C.goldDim, 1.6)
+		local accent = pw.color or C.gold
+		-- element stripe along the bottom
+		Theme.frame(b, {
+			Size = UDim2.new(1, -16, 0, 4),
+			Position = UDim2.new(0, 8, 1, -8),
+			BackgroundColor3 = accent,
+			BackgroundTransparency = 0,
+			ZIndex = 7,
+		})
+		-- key badge
+		local badge = Theme.frame(b, {
+			Size = UDim2.fromOffset(26, 26),
+			Position = UDim2.fromOffset(6, 6),
+			BackgroundColor3 = accent,
+			BackgroundTransparency = 0,
+			ZIndex = 8,
+		})
+		Theme.corner(badge, 6)
+		Theme.label(badge, pw.key or tostring(i), {
+			Size = UDim2.fromScale(1, 1),
+			TextXAlignment = Enum.TextXAlignment.Center,
+			FontFace = F.labelBold,
+			TextSize = (#(pw.key or "") > 1) and 11 or 17,
+			TextColor3 = Color3.fromHex("#0A0A0C"),
+			ZIndex = 9,
+		})
+		local name = Theme.label(b, string.upper(pw.name or ""), {
+			Size = UDim2.new(1, -12, 1, -42),
+			Position = UDim2.fromOffset(6, 32),
+			TextXAlignment = Enum.TextXAlignment.Left,
+			TextYAlignment = Enum.TextYAlignment.Top,
+			FontFace = F.labelBold,
+			TextSize = 13,
+			TextWrapped = true,
+			TextColor3 = C.ivory,
+			ZIndex = 8,
+		})
+		Theme.textStroke(name, 1, 0.4)
+		-- cooldown sweep (drains downward as the power recharges)
+		local cover = Theme.frame(b, {
+			Name = "Cooldown",
+			Size = UDim2.fromScale(1, 0),
+			BackgroundColor3 = Color3.new(0, 0, 0),
+			BackgroundTransparency = 0.35,
+			ZIndex = 10,
+		})
+		Theme.corner(cover, 8)
+		local secs = Theme.label(b, "", {
+			Size = UDim2.fromScale(1, 1),
+			TextXAlignment = Enum.TextXAlignment.Center,
+			FontFace = F.display,
+			TextSize = 30,
+			TextColor3 = C.ivory,
+			ZIndex = 11,
+		})
+		Theme.textStroke(secs, 2, 0.1)
+		slots[i] = { button = b, stroke = stroke, cover = cover, secs = secs, id = pw.id, color = accent, wasReady = true }
+	end
+	return { frame = bar, slots = slots, pos = bar.Position, side = 1 }
+end
+
+-- Pop the slot when its power fires.
+function HUD:powerUsed(moveId: string)
+	local hb = self.hotbar
+	if not hb then
+		return
+	end
+	for _, sl in hb.slots do
+		if sl.id == moveId then
+			local sc = sl.button:FindFirstChildOfClass("UIScale") or new("UIScale", {}, sl.button)
+			sc.Scale = 1.14
+			Theme.tween(sc, 0.25, { Scale = 1 }, Enum.EasingStyle.Back)
+			sl.stroke.Color = sl.color
+			sl.stroke.Thickness = 3
+		end
+	end
+end
+
+function HUD:updateHotbar(fighter)
+	local hb = self.hotbar
+	if not hb then
+		return
+	end
+	for _, sl in hb.slots do
+		local cd = (fighter.powerCD and fighter.powerCD[sl.id]) or 0
+		local max = (fighter.powerCDMax and fighter.powerCDMax[sl.id]) or 1
+		local k = math.clamp(cd / math.max(1, max), 0, 1)
+		sl.cover.Size = UDim2.fromScale(1, k)
+		if cd > 0 then
+			sl.secs.Text = string.format("%.1f", cd / Config.TickRate)
+			sl.stroke.Color = C.goldDim
+			sl.stroke.Thickness = 1.6
+			sl.wasReady = false
+		else
+			sl.secs.Text = ""
+			if not sl.wasReady then
+				-- ready again: flash the slot in its element colour
+				sl.wasReady = true
+				sl.stroke.Color = sl.color
+				sl.stroke.Thickness = 3
+				sl.button.BackgroundColor3 = sl.color:Lerp(Color3.fromHex("#0C0D10"), 0.55)
+				Theme.tween(sl.button, 0.35, { BackgroundColor3 = Color3.fromHex("#0C0D10") })
+				task.delay(0.35, function()
+					if not self.destroyed and sl.wasReady then
+						sl.stroke.Color = C.goldDim
+						sl.stroke.Thickness = 1.6
+					end
+				end)
+			end
+		end
 	end
 end
 
@@ -15452,6 +16752,9 @@ function HUD:cinema(on: boolean, time: number?)
 	end
 	if self.timerFrame and self.timerPos then
 		Theme.tween(self.timerFrame, t, { Position = on and (self.timerPos + UDim2.fromOffset(0, -260)) or self.timerPos }, style)
+	end
+	if self.hotbar then
+		Theme.tween(self.hotbar.frame, t, { Position = on and (self.hotbar.pos + UDim2.fromOffset(0, 260)) or self.hotbar.pos }, style)
 	end
 	if not on then
 		-- leaving the cinematic: no name card may linger into the fight
@@ -15513,7 +16816,7 @@ return HUD
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="43">
+          <Item class="ModuleScript" referent="44">
             <Properties>
               <string name="Name">MobileControls</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -15776,7 +17079,7 @@ return MobileControls
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="44">
+          <Item class="ModuleScript" referent="45">
             <Properties>
               <string name="Name">Portrait</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -15852,7 +17155,7 @@ return Portrait
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="45">
+          <Item class="ModuleScript" referent="46">
             <Properties>
               <string name="Name">Screens</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -15869,6 +17172,7 @@ local Fighters = require(Veil.Data.Fighters)
 local Echoes = require(Veil.Data.Echoes)
 local Stages = require(Veil.Data.Stages)
 local MoveKit = require(Veil.Data.MoveKit)
+local Engine = require(Veil.Combat.Engine)
 
 local Client = script.Parent.Parent
 local Theme = require(script.Parent.Theme)
@@ -16357,7 +17661,7 @@ local MAIN_ITEMS = {
 	{ id = "versus", text = "VERSUS", desc = "Pick a fighter, a friend, a server and a victim. The CPU has been practicing." },
 	{ id = "practice", text = "PRACTICE", desc = "Beat up a dummy that can't fight back. Or can it? (It can. Press F.)" },
 	{ id = "movelist", text = "MOVE LIST", desc = "Every combo, special, super and finisher. Reading is a skill too." },
-	{ id = "settings", text = "SETTINGS", desc = "Volume, subtitles, camera shake, CPU difficulty and touch controls." },
+	{ id = "settings", text = "SETTINGS", desc = "Volume, subtitles, camera shake, screen flashes, CPU difficulty and touch controls." },
 }
 
 function Screens.mainMenu(root: Instance, profile)
@@ -17606,11 +18910,22 @@ function Screens.moveList(root: Instance, startFighter: string?)
 			order += 1
 			return order
 		end
-		section("SPECIALS", nextOrder())
+		section("POWERS  \u{00B7}  KEYS 1-4 OR MOTION + " .. Input.glyph("S"), nextOrder())
+		local slots = def.powers or Config.PowerSlots
 		for _, id in { "SN", "SF", "SB", "SD", "SA" } do
 			local m = def.moves[id]
 			if m then
-				row(m.name, Input.formatNotation(m.input), MoveKit.describe(m), nextOrder())
+				local slot = table.find(slots, id)
+				local keys = Input.formatNotation(m.input)
+				local desc = MoveKit.describe(m)
+				if slot then
+					keys = "[" .. Input.glyph("P" .. slot) .. "]   or   " .. keys
+					if Config.PowerCooldowns then
+						local cd = Engine.powerCooldownFor(m)
+						desc = desc .. "  \u{00B7}  Cooldown " .. string.format("%.1f", cd / 60) .. "s"
+					end
+				end
+				row(m.name, keys, desc, nextOrder())
 			end
 		end
 		section("SUPER  \u{00B7}  2 RAGE BARS", nextOrder())
@@ -17692,6 +19007,7 @@ function Screens.settings(root: Instance, settings)
 		{ key = "voice", label = "VOICE VOLUME", kind = "slider" },
 		{ key = "subtitles", label = "SUBTITLES", kind = "toggle" },
 		{ key = "shake", label = "CAMERA SHAKE", kind = "toggle" },
+		{ key = "flashes", label = "SCREEN FLASHES / IMPACT FRAMES", kind = "toggle" },
 		{ key = "difficulty", label = "DEFAULT CPU DIFFICULTY", kind = "choice", choices = { 1, 2, 3, 4 } },
 		{ key = "touch", label = "TOUCH CONTROLS", kind = "choice", choices = { "auto", "on", "off" } },
 	}
@@ -17768,7 +19084,7 @@ return Screens
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="46">
+          <Item class="ModuleScript" referent="47">
             <Properties>
               <string name="Name">Subtitles</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -17854,7 +19170,7 @@ return Subtitles
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="47">
+          <Item class="ModuleScript" referent="48">
             <Properties>
               <string name="Name">Theme</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -18069,7 +19385,7 @@ return Theme
       </Item>
     </Item>
   </Item>
-  <Item class="Workspace" referent="48">
+  <Item class="Workspace" referent="49">
     <Properties>
       <string name="Name">Workspace</string>
       <float name="Gravity">196.2</float>

@@ -376,6 +376,14 @@ def sfx():
     S["footstep"] = mix(thump(140, 70, 0.07) * 0.7, bp(noise(0.06), 400, 2200) * env_exp(int(0.06 * SR), 0.012) * 0.5)
     S["body_fall"] = reverb(mix(thump(70, 30, 0.42) * 1.2, lp(noise(0.3), 500) * env_exp(int(0.3 * SR), 0.06) * 0.8, np.concatenate([np.zeros(int(0.11 * SR)), thump(110, 50, 0.16) * 0.6])), 0.12, 0.5)
     # sub-bass layer that sits under heavy / special / super impacts
+    # cinematic editing sounds (all original synthesis)
+    boom_body = sine_sweep(1.6, 62, 30, 2.0) * env_ad(int(1.6 * SR), 0.004, 0.55)
+    S["boom"] = reverb(drive(mix(boom_body * 1.5, lp(noise(0.5), 300) * env_exp(int(0.5 * SR), 0.12) * 0.9, thump(120, 40, 0.25) * 0.8), 1.8), 0.35, 1.4)
+    sc_t = t_axis(0.55)
+    sc_f = 900 + 1800 * np.abs(np.sin(2 * np.pi * 2.2 * sc_t)) * (1 - sc_t / 0.55)
+    S["scratch"] = mix(sweep_filter(noise(0.55), 2400, 300, 0.35) * env_ad(int(0.55 * SR), 0.01, 0.2) * 0.9, bp(osc(220, 0.55, "saw") * (sc_f / 2700), 500, 3000) * env_ad(int(0.55 * SR), 0.01, 0.18) * 0.5)
+    S["pop"] = mix(sine_sweep(0.12, 380, 1300, 1.5) * env_exp(int(0.12 * SR), 0.03), click(0.006, 2500) * 0.6)
+    S["impact_frame"] = reverb(drive(mix(hp(noise(0.08), 2500) * env_exp(int(0.08 * SR), 0.012) * 1.4, thump(90, 30, 0.5) * 1.3, metal(1400, 0.4, 4) * 0.25), 2.2), 0.2, 0.9)
     S["impact_sub"] = drive(mix(sine_sweep(0.45, 70, 26, 2.5) * env_exp(int(0.45 * SR), 0.14) * 1.4, lp(noise(0.12), 250) * env_exp(int(0.12 * SR), 0.03) * 0.6), 1.5)
     S["ui_move"] = mix(bp(noise(0.03), 1500, 4000) * env_exp(int(0.03 * SR), 0.006) * 0.6, partials([2200], [0.3], [0.03], 0.05))
     S["ui_select"] = S["ui_move"]

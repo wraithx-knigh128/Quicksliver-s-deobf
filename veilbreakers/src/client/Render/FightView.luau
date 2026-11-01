@@ -21,6 +21,7 @@ local AnimSpring = require(script.Parent.AnimSpring)
 local StageBuilder = require(script.Parent.StageBuilder)
 local FightCamera = require(script.Parent.FightCamera)
 local VFX = require(script.Parent.VFX)
+local CineFX = require(script.Parent.CineFX)
 local Audio = require(Client.Core.Audio)
 local Input = require(Client.Core.Input)
 local HUD = require(Client.UI.HUD)
@@ -169,8 +170,26 @@ function FightView.new(opts)
 	end
 
 	-- UI
-	self.hud = HUD.new(opts.root, p1Def, p1Echo, p2Def, p2Echo, { training = opts.training, tags = self.tags })
-	if (Input.mode == "touch" or opts.forceTouch) and not opts.noTouch then
+	-- power hotbar (keys 1-4) for the human player
+	local useTouch = (Input.mode == "touch" or opts.forceTouch) and not opts.noTouch
+	local powers = nil
+	if not opts.p1.cpu or opts.showPowers then
+		powers = {}
+		local f1 = self.match.fighters[1]
+		for slot = 1, 4 do
+			local id = Engine.powerSlotId(f1, slot)
+			local mv = id and p1Def.moves[id]
+			if mv then
+				local cols = VFX.colors(mv.element)
+				table.insert(powers, { id = id, name = mv.name, key = Input.glyph("P" .. slot), color = cols[2] })
+			end
+		end
+	end
+	self.hud = HUD.new(opts.root, p1Def, p1Echo, p2Def, p2Echo, { training = opts.training, tags = self.tags, powers = powers, touchHotbar = useTouch })
+	-- editing effects for supers / finishers (impact frames, speed lines)
+	self.cine = CineFX.new(self.hud.root, 22)
+	self.cine.vignette.Visible = false
+	if useTouch then
 		self.touch = MobileControls.new(self.hud.root, {
 			onPause = function()
 				if opts.onPause then
@@ -178,6 +197,12 @@ function FightView.new(opts)
 				end
 			end,
 		})
+	end
+	if self.touch and self.hud.hotbar then
+		-- tap a hotbar slot to fire that power
+		for i, sl in self.hud.hotbar.slots do
+			self.touch:bind(sl.button, "P" .. i, sl.stroke, sl.color)
+		end
 	end
 	if self.touch and opts.training then
 		-- touch players cycle the practice dummy with an on-screen button
@@ -534,6 +559,13 @@ function FightView:render(dt: number)
 		if rig.trailOn ~= trailOn then
 			rig.trailOn = trailOn
 			Rig.setTrails(rig, trailOn)
+			-- slash arc as a weapon strike comes out
+			if trailOn and f.state == "attack" and f.move and f.move.trail then
+				local mv = f.move
+				local big = mv.strength == "heavy" or mv.kind == "special"
+				local cols = VFX.colors(mv.element)
+				VFX.slash(v3(x, y + 2.6 * rig.scale, 0), f.facing, cols[2], big)
+			end
 		end
 		-- invulnerability shimmer during teleports
 		local fade = 0
@@ -797,6 +829,7 @@ function FightView:onEvent(ev)
 			end
 			if ev.fighter == 1 then
 				self.lastMove = mv
+				self.hud:powerUsed(ev.move)
 			end
 			if mv.kind == "special" and mv.element then
 				local cols = VFX.colors(mv.element)
@@ -960,6 +993,9 @@ function FightView:onEvent(ev)
 		self.hud:announce("OOF!", ev.perfect and "NO DAMAGE TAKEN. EMBARRASSING." or nil, { punch = true, color = Theme.Colors.crimsonBright, size = 150, hold = 2.0 })
 		Audio.play("ko", { volume = 1 })
 		StageBuilder.react("ko")
+		task.spawn(function()
+			self.cine:impactFrames({ self.rigs[1], self.rigs[2] }, 2, "impact_frame")
+		end)
 		Audio.play("oof", { group = "voice", volume = 1 })
 		Audio.duck(0.35, 2.5)
 		FightCamera.shake(1.4)
@@ -994,6 +1030,10 @@ function FightView:onEvent(ev)
 		local loser = self.rigs[ev.loser]
 		local wf = m.fighters[ev.winner]
 		local col = Color3.fromHex(wf.def.accent)
+		task.spawn(function()
+			self.cine:impactFrames({ self.rigs[ev.winner], loser }, 4)
+		end)
+		self.cine:speedLines(0.8, Color3.new(1, 1, 1))
 		VFX.elementBurst(v3(m.fighters[ev.loser].x, 3), ev.style, true)
 		VFX.oofBreak(loser, col)
 		loser.shattered = true
@@ -1049,6 +1089,7 @@ function FightView:startSuperCinematic(ev)
 		self.savedGrade = { grade.Brightness, grade.Saturation, grade.TintColor }
 		Theme.tween(grade, 0.3, { Brightness = -0.18, Saturation = -0.4, TintColor = col:Lerp(Color3.new(1, 1, 1), 0.6) })
 	end
+	self.cine:speedLines(1.6, col:Lerp(Color3.new(1, 1, 1), 0.5))
 	local strikeFrames = { 26, 46, 66, 86, 106 }
 	for k, fr in strikeFrames do
 		task.delay(fr / 60, function()
@@ -1065,10 +1106,14 @@ function FightView:startSuperCinematic(ev)
 		if self.destroyed then
 			return
 		end
-		self.hud:flash(Color3.new(1, 1, 1), 0.85)
 		VFX.burstShockwave(v3(v.x, 3), col)
 		VFX.elementBurst(v3(v.x, 3), ev.style, true)
 		FightCamera.shake(1.6)
+		FightCamera.punch(6)
+		self.cine:impactFrames({ self.rigs[ev.attacker], self.rigs[ev.victim] }, 3)
+		if not self.destroyed then
+			self.hud:flash(Color3.new(1, 1, 1), 0.6)
+		end
 	end)
 	FightCamera.cinematic(function(t)
 		local mid = v3((a.x + v.x) / 2, 3.2, 0)
@@ -1160,6 +1205,7 @@ function FightView:destroy()
 	if self.touch then
 		self.touch:destroy()
 	end
+	self.cine:destroy()
 	self.hud:destroy()
 	self.folder:Destroy()
 	VFX.clear()

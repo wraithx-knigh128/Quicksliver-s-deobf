@@ -542,6 +542,11 @@ function HUD.new(parentRoot: Instance, p1Def, p1Echo, p2Def, p2Echo, opts)
 		self.cards[side] = { frame = card, stripe = stripe, name = cname, title = ctitle, realm = crealm, token = 0 }
 	end
 
+	-- power hotbar (keys 1-4) for the human player
+	if opts.powers and #opts.powers > 0 then
+		self.hotbar = self:buildHotbar(root, opts.powers, opts.touchHotbar == true)
+	end
+
 	-- low health vignette
 	self.lowVig = Theme.frame(root, {
 		Size = UDim2.fromScale(1, 1),
@@ -740,6 +745,9 @@ function HUD:update(match, dt: number)
 		self.roundText.Text = "ROUND " .. tostring(match.round)
 	end
 	self:setRoundPips(match.fighters[1].roundWins, match.fighters[2].roundWins)
+	if self.hotbar then
+		self:updateHotbar(match.fighters[self.hotbar.side])
+	end
 	-- low health vignette for the human player
 	local p1 = match.fighters[1]
 	local low = (p1.hp / p1.maxHp) < 0.25 and match.phase == "fight"
@@ -752,6 +760,147 @@ function HUD:trainingInfo(lines: { string })
 	end
 	for i, l in self.training.lines do
 		l.Text = lines[i] or ""
+	end
+end
+
+-- Power hotbar: one slot per power with its key, name, element colour, a cooldown
+-- sweep with seconds left, and a flash when it comes back up.
+function HUD:buildHotbar(root: Instance, powers, touch: boolean)
+	local slotW = touch and 120 or 132
+	local slotH = touch and 92 or 70
+	local gap = 8
+	local total = #powers * slotW + (#powers - 1) * gap
+	local bar = Theme.frame(root, {
+		Name = "Hotbar",
+		Size = UDim2.fromOffset(total, slotH),
+		Position = UDim2.new(0.5, 0, 1, touch and -150 or -22),
+		AnchorPoint = Vector2.new(0.5, 1),
+		ZIndex = 6,
+	})
+	local slots = {}
+	for i, pw in powers do
+		local b = Instance.new("TextButton")
+		b.Name = "Power" .. i
+		b.AutoButtonColor = false
+		b.Text = ""
+		b.Size = UDim2.fromOffset(slotW, slotH)
+		b.Position = UDim2.fromOffset((i - 1) * (slotW + gap), 0)
+		b.BackgroundColor3 = Color3.fromHex("#0C0D10")
+		b.BackgroundTransparency = 0.18
+		b.ZIndex = 6
+		b.Parent = bar
+		Theme.corner(b, 8)
+		local stroke = Theme.stroke(b, C.goldDim, 1.6)
+		local accent = pw.color or C.gold
+		-- element stripe along the bottom
+		Theme.frame(b, {
+			Size = UDim2.new(1, -16, 0, 4),
+			Position = UDim2.new(0, 8, 1, -8),
+			BackgroundColor3 = accent,
+			BackgroundTransparency = 0,
+			ZIndex = 7,
+		})
+		-- key badge
+		local badge = Theme.frame(b, {
+			Size = UDim2.fromOffset(26, 26),
+			Position = UDim2.fromOffset(6, 6),
+			BackgroundColor3 = accent,
+			BackgroundTransparency = 0,
+			ZIndex = 8,
+		})
+		Theme.corner(badge, 6)
+		Theme.label(badge, pw.key or tostring(i), {
+			Size = UDim2.fromScale(1, 1),
+			TextXAlignment = Enum.TextXAlignment.Center,
+			FontFace = F.labelBold,
+			TextSize = (#(pw.key or "") > 1) and 11 or 17,
+			TextColor3 = Color3.fromHex("#0A0A0C"),
+			ZIndex = 9,
+		})
+		local name = Theme.label(b, string.upper(pw.name or ""), {
+			Size = UDim2.new(1, -12, 1, -42),
+			Position = UDim2.fromOffset(6, 32),
+			TextXAlignment = Enum.TextXAlignment.Left,
+			TextYAlignment = Enum.TextYAlignment.Top,
+			FontFace = F.labelBold,
+			TextSize = 13,
+			TextWrapped = true,
+			TextColor3 = C.ivory,
+			ZIndex = 8,
+		})
+		Theme.textStroke(name, 1, 0.4)
+		-- cooldown sweep (drains downward as the power recharges)
+		local cover = Theme.frame(b, {
+			Name = "Cooldown",
+			Size = UDim2.fromScale(1, 0),
+			BackgroundColor3 = Color3.new(0, 0, 0),
+			BackgroundTransparency = 0.35,
+			ZIndex = 10,
+		})
+		Theme.corner(cover, 8)
+		local secs = Theme.label(b, "", {
+			Size = UDim2.fromScale(1, 1),
+			TextXAlignment = Enum.TextXAlignment.Center,
+			FontFace = F.display,
+			TextSize = 30,
+			TextColor3 = C.ivory,
+			ZIndex = 11,
+		})
+		Theme.textStroke(secs, 2, 0.1)
+		slots[i] = { button = b, stroke = stroke, cover = cover, secs = secs, id = pw.id, color = accent, wasReady = true }
+	end
+	return { frame = bar, slots = slots, pos = bar.Position, side = 1 }
+end
+
+-- Pop the slot when its power fires.
+function HUD:powerUsed(moveId: string)
+	local hb = self.hotbar
+	if not hb then
+		return
+	end
+	for _, sl in hb.slots do
+		if sl.id == moveId then
+			local sc = sl.button:FindFirstChildOfClass("UIScale") or new("UIScale", {}, sl.button)
+			sc.Scale = 1.14
+			Theme.tween(sc, 0.25, { Scale = 1 }, Enum.EasingStyle.Back)
+			sl.stroke.Color = sl.color
+			sl.stroke.Thickness = 3
+		end
+	end
+end
+
+function HUD:updateHotbar(fighter)
+	local hb = self.hotbar
+	if not hb then
+		return
+	end
+	for _, sl in hb.slots do
+		local cd = (fighter.powerCD and fighter.powerCD[sl.id]) or 0
+		local max = (fighter.powerCDMax and fighter.powerCDMax[sl.id]) or 1
+		local k = math.clamp(cd / math.max(1, max), 0, 1)
+		sl.cover.Size = UDim2.fromScale(1, k)
+		if cd > 0 then
+			sl.secs.Text = string.format("%.1f", cd / Config.TickRate)
+			sl.stroke.Color = C.goldDim
+			sl.stroke.Thickness = 1.6
+			sl.wasReady = false
+		else
+			sl.secs.Text = ""
+			if not sl.wasReady then
+				-- ready again: flash the slot in its element colour
+				sl.wasReady = true
+				sl.stroke.Color = sl.color
+				sl.stroke.Thickness = 3
+				sl.button.BackgroundColor3 = sl.color:Lerp(Color3.fromHex("#0C0D10"), 0.55)
+				Theme.tween(sl.button, 0.35, { BackgroundColor3 = Color3.fromHex("#0C0D10") })
+				task.delay(0.35, function()
+					if not self.destroyed and sl.wasReady then
+						sl.stroke.Color = C.goldDim
+						sl.stroke.Thickness = 1.6
+					end
+				end)
+			end
+		end
 	end
 end
 
@@ -773,6 +922,9 @@ function HUD:cinema(on: boolean, time: number?)
 	end
 	if self.timerFrame and self.timerPos then
 		Theme.tween(self.timerFrame, t, { Position = on and (self.timerPos + UDim2.fromOffset(0, -260)) or self.timerPos }, style)
+	end
+	if self.hotbar then
+		Theme.tween(self.hotbar.frame, t, { Position = on and (self.hotbar.pos + UDim2.fromOffset(0, 260)) or self.hotbar.pos }, style)
 	end
 	if not on then
 		-- leaving the cinematic: no name card may linger into the fight

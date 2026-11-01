@@ -116,7 +116,7 @@ function AI:startCombo(route: { string })
 	end
 	local valid = {}
 	for _, id in route do
-		if self.f.def.moves[id] then
+		if self.f.def.moves[id] and Engine.powerCooldown(self.f, id) == 0 then
 			table.insert(valid, id)
 		end
 	end
@@ -136,6 +136,10 @@ end
 function AI:pressMoveInput(id: string): boolean
 	local spec = BTN_FOR[id]
 	if not spec then
+		return false
+	end
+	-- powers on cooldown can't come out; don't waste the press
+	if Engine.powerCooldown(self.f, id) > 0 then
 		return false
 	end
 	if not self:press(spec.btn, 2) then

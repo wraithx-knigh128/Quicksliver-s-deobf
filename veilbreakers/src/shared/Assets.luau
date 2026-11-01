@@ -21,6 +21,13 @@ Assets.Images = {
 	Backdrop_emberthrone = "",
 	Backdrop_proving = "",
 	Backdrop_baseplate = "",
+	-- Original VFX textures in /art/vfx (tools/make_vfx_textures.py). Upload them in
+	-- Studio (Asset Manager > Bulk Import) and paste the image ids here; until then the
+	-- game draws speed lines procedurally and uses the built-in particle textures.
+	FX_SpeedLines = "",
+	FX_Slash = "",
+	FX_HitBurst = "",
+	FX_Shockwave = "",
 }
 
 -- Built-in particle textures that ship with every Roblox client.

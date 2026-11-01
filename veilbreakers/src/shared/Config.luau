@@ -6,7 +6,7 @@ local Config = {}
 
 Config.GameTitle = "OOF COMBAT"
 Config.GameSubtitle = "THE GREAT SERVER RESET"
-Config.Version = "1.2.0"
+Config.Version = "1.3.0"
 
 Config.TickRate = 60
 Config.TickDt = 1 / 60
@@ -23,6 +23,18 @@ Config.MeterMax = 300
 Config.SuperCost = 200
 Config.BreakerCost = 100
 Config.BreakerMinHits = 2
+
+-- Powers (keys 1-4): each fighter's four ground specials. Using one, by its key
+-- or by its motion input, puts it on cooldown (frames). No cooldowns in Practice.
+Config.PowerSlots = { "SN", "SF", "SB", "SD" }
+Config.PowerCooldowns = true
+Config.PowerCooldown = {
+	default = 96,
+	projectile = 78,
+	teleport = 120,
+	parry = 140,
+	reversal = 150, -- invulnerable starts
+}
 
 -- Echo (assist) cooldown, frames
 Config.EchoCooldown = 60 * 11

@@ -4,10 +4,15 @@
 -- and fights. Camera shots are authored as presets relative to the actors so the
 -- CutscenePlayer can frame them on any stage.
 
-export type Line = { speaker: string, text: string, voice: string? }
+-- Lines may also carry editing beats (Cutscene.luau): gesture, cam / a / b (cut to
+-- a specific angle), whip, crash, impact, pop (+ popX / popY), freeze
+-- (+ freezeName / freezeSub), holdGesture.
+export type Line = { speaker: string, text: string, voice: string?, [string]: any }
 
 export type Shot = {
-	cam: string, -- wide | two | close | over | sky | low | pan
+	cam: string, -- wide | two | close | over | sky | low | crash | dutch | orbit | dolly | track
+	auto: boolean?, -- false disables automatic dialogue coverage cuts
+	whip: boolean?, -- whip-pan into this shot
 	a: number?,
 	b: number?,
 	duration: number?,
@@ -60,15 +65,21 @@ Story.chapters = {
 						b = 2,
 						lines = {
 							{ speaker = "bacon", text = "Your guard drops every time you check your phone, Noob." },
-							{ speaker = "noob", text = "I'm not checking my phone. I'm AFK. I fight better AFK." },
-							{ speaker = "bacon", text = "The chat's been weird all day. People keep typing 'it's happening'." },
-							{ speaker = "noob", text = "Probably another free Robux scam. ...Probably." },
+							{ speaker = "noob", text = "I'm not checking my phone. I'm AFK. I fight better AFK.", gesture = "cross", pop = "SKILL ISSUE?", popX = 0.72, popY = 0.32 },
+							{ speaker = "bacon", text = "The chat's been weird all day. People keep typing 'it's happening'.", gesture = "think" },
+							{ speaker = "noob", text = "Probably another free Robux scam. ...Probably.", gesture = "nervous" },
 						},
 					},
 					{
 						cam = "sky",
 						duration = 3.4,
-						events = { { t = 0.4, type = "vfx", kind = "rift" }, { t = 0.4, type = "sfx", key = "lightning_crack" } },
+						whip = true,
+						events = {
+							{ t = 0.4, type = "vfx", kind = "rift" },
+							{ t = 0.4, type = "sfx", key = "lightning_crack" },
+							{ t = 0.4, type = "boom" },
+							{ t = 1.5, type = "pop", text = "ERROR 277", x = 0.5, y = 0.3, color = "#FF4A4A" },
+						},
 						lines = { { speaker = "bacon", text = "Uh. Why is the sky... buffering?" } },
 					},
 					{
@@ -77,19 +88,22 @@ Story.chapters = {
 							{ t = 0.2, type = "show", actor = 3 },
 							{ t = 0.2, type = "vfx", kind = "teleport", actor = 3 },
 							{ t = 0.2, type = "sfx", key = "teleport" },
+							{ t = 0.25, type = "impact", count = 2 },
+							{ t = 0.9, type = "cam", cam = "dolly", a = 3 },
+							{ t = 1.3, type = "freeze", actor = 3 },
 						},
 						lines = { { speaker = "system", text = "Guest 666 has joined the game." } },
 					},
 					{
 						cam = "close",
 						a = 1,
-						lines = { { speaker = "noob", text = "Guests were removed years ago. How are you even here?" } },
+						lines = { { speaker = "noob", text = "Guests were removed years ago. How are you even here?", pop = "???", popX = 0.3, popY = 0.3 } },
 					},
 					{
-						cam = "close",
+						cam = "dutch",
 						a = 3,
 						lines = {
-							{ speaker = "guest", text = "The Admin sends his regards. He's shutting the server down. And he wants your sword." },
+							{ speaker = "guest", text = "The Admin sends his regards. He's shutting the server down. And he wants your sword.", gesture = "point" },
 						},
 					},
 					{
@@ -97,8 +111,8 @@ Story.chapters = {
 						a = 1,
 						b = 3,
 						lines = {
-							{ speaker = "noob", text = "It's a free gear. He can literally just get one." },
-							{ speaker = "guest", text = "He wants YOURS." },
+							{ speaker = "noob", text = "It's a free gear. He can literally just get one.", gesture = "shrug" },
+							{ speaker = "guest", text = "He wants YOURS.", cam = "crash", a = 3, crash = true, impact = true, gesture = "point" },
 						},
 					},
 				},
@@ -139,8 +153,8 @@ Story.chapters = {
 						b = 1,
 						lines = {
 							{ speaker = "bacon", text = "It glitched into the forest map. The one nobody finished building." },
-							{ speaker = "bacon", text = "If the Admin shuts the server down, I lose my wings. My four hundred Robux wings." },
-							{ speaker = "noob", text = "Then we stop him before the timer hits zero. Let's go." },
+							{ speaker = "bacon", text = "If the Admin shuts the server down, I lose my wings. My four hundred Robux wings.", gesture = "sad", pop = "-400 ROBUX", popX = 0.3, popY = 0.3 },
+							{ speaker = "noob", text = "Then we stop him before the timer hits zero. Let's go.", gesture = "fist", cam = "dolly", a = 2 },
 						},
 					},
 				},
@@ -161,26 +175,36 @@ Story.chapters = {
 							{ t = 0.3, type = "show", actor = 3 },
 							{ t = 0.3, type = "vfx", kind = "roots", actor = 3 },
 							{ t = 0.3, type = "sfx", key = "ground_slam" },
+							{ t = 0.35, type = "impact", count = 3 },
 							{ t = 0.4, type = "shake", amount = 0.6 },
 						},
-						lines = { { speaker = "studzilla", text = "WHO. DARES. ENTER. MY. UNFINISHED. MAP." } },
+						lines = {
+							{ speaker = "studzilla", text = "WHO. DARES. ENTER. MY. UNFINISHED. MAP.", cam = "low", a = 3, crash = true, freeze = true },
+						},
 					},
 					{
 						cam = "close",
 						a = 1,
-						lines = { { speaker = "bacon", text = "Whoa, big guy! We're not here to grief your build!" } },
+						lines = { { speaker = "bacon", text = "Whoa, big guy! We're not here to grief your build!", gesture = "nervous" } },
 					},
 					{
 						cam = "low",
 						a = 3,
+						events = {
+							{ t = 1.6, type = "act", actor = 3, anim = "ground_pound", time = 0.9 },
+							{ t = 2.05, type = "vfx", kind = "slam", actor = 3 },
+							{ t = 2.05, type = "boom" },
+							{ t = 2.05, type = "speedlines", time = 0.5 },
+						},
 						lines = { { speaker = "studzilla", text = "EVERYONE. SAYS. THAT. THEN. THEY. DELETE. MY. BRICKS." } },
 					},
 					{
 						cam = "two",
 						a = 2,
 						b = 1,
+						events = { { t = 2.2, type = "walk", actor = 1, to = -0.8, time = 0.8 } },
 						lines = {
-							{ speaker = "bacon", text = "Stand back, Noob. I speak fluent block." },
+							{ speaker = "bacon", text = "Stand back, Noob. I speak fluent block.", gesture = "cross" },
 						},
 					},
 				},
@@ -208,7 +232,7 @@ Story.chapters = {
 						cam = "close",
 						a = 2,
 						lines = {
-							{ speaker = "studzilla", text = "...YOU. DID. NOT. DELETE. ME. RESPECT." },
+							{ speaker = "studzilla", text = "...YOU. DID. NOT. DELETE. ME. RESPECT.", gesture = "fist", pop = "+RESPECT", popX = 0.7, popY = 0.32 },
 							{ speaker = "studzilla", text = "THE ADMIN. ANCHORED. MY FRIENDS. THEN. HE. DELETED. THEM. ALL." },
 						},
 					},
@@ -217,7 +241,7 @@ Story.chapters = {
 						a = 1,
 						b = 2,
 						lines = {
-							{ speaker = "bacon", text = "That monster. Who deletes builds?!" },
+							{ speaker = "bacon", text = "That monster. Who deletes builds?!", gesture = "facepalm" },
 							{ speaker = "studzilla", text = "PATH. TO. ADMIN. THROUGH. FLOOD. MAP. I. COME. WITH. YOU." },
 						},
 					},
@@ -238,8 +262,11 @@ Story.chapters = {
 						events = {
 							{ t = 0.5, type = "sfx", key = "crossbow" },
 							{ t = 0.7, type = "vfx", kind = "bolt_impact", actor = 1 },
+							{ t = 0.7, type = "slowmo", scale = 0.25, time = 0.6 },
 							{ t = 0.9, type = "show", actor = 2 },
 							{ t = 0.9, type = "vfx", kind = "smoke", actor = 2 },
+							{ t = 1.1, type = "pop", text = "SUS", x = 0.72, y = 0.42 },
+							{ t = 1.6, type = "freeze", actor = 2 },
 						},
 						lines = {
 							{ speaker = "camper", text = "Don't mind me. Just a bush. A completely normal bush with a crossbow." },
@@ -248,12 +275,16 @@ Story.chapters = {
 					{
 						cam = "close",
 						a = 2,
-						lines = { { speaker = "camper", text = "The Admin promised me VIP if I camp this spot. I've been here six days." } },
+						lines = { { speaker = "camper", text = "The Admin promised me VIP if I camp this spot. I've been here six days.", gesture = "think" } },
 					},
 					{
 						cam = "low",
 						a = 1,
-						lines = { { speaker = "studzilla", text = "NOOB. GO. AHEAD. I. WILL. UN-BUSH. HER." } },
+						events = {
+							{ t = 0.6, type = "face", actor = 3, facing = -1 },
+							{ t = 0.6, type = "walk", actor = 3, to = -14, time = 2.2 },
+						},
+						lines = { { speaker = "studzilla", text = "NOOB. GO. AHEAD. I. WILL. UN-BUSH. HER.", crash = true } },
 					},
 				},
 			},
@@ -279,15 +310,15 @@ Story.chapters = {
 						cam = "close",
 						a = 2,
 						lines = {
-							{ speaker = "camper", text = "...Okay, okay. The VIP was fake anyway. He literally said 'trust me bro'." },
-							{ speaker = "camper", text = "His throne's past the lava. The floor is lava. He typed it. Like, actually." },
+							{ speaker = "camper", text = "...Okay, okay. The VIP was fake anyway. He literally said 'trust me bro'.", pop = "TRUST ME BRO", popX = 0.68, popY = 0.3 },
+							{ speaker = "camper", text = "His throne's past the lava. The floor is lava. He typed it. Like, actually.", gesture = "point" },
 						},
 					},
 					{
 						cam = "two",
 						a = 1,
 						b = 2,
-						lines = { { speaker = "studzilla", text = "WE. CAMP. TOGETHER. NOW. FRIEND." } },
+						lines = { { speaker = "studzilla", text = "WE. CAMP. TOGETHER. NOW. FRIEND.", gesture = "flex" } },
 					},
 				},
 			},
@@ -296,7 +327,7 @@ Story.chapters = {
 				stage = "emberthrone",
 				actors = {
 					{ id = "noob", x = -3.4, facing = 1, anim = "stance" },
-					{ id = "admin", x = 3.6, facing = -1, anim = "stance" },
+					{ id = "admin", x = 3.6, facing = -1, anim = "cross" },
 				},
 				shots = {
 					{ cam = "sky", duration = 4.4, caption = "THE ADMIN'S LAVA THRONE  \u{2014}  SERVER SHUTDOWN IN 99 SECONDS" },
@@ -307,21 +338,23 @@ Story.chapters = {
 							{
 								speaker = "admin",
 								text = "A Noob. A Bacon Hair. A bush. And... is that a pile of bricks? I've seen better lobbies on a Tuesday.",
+								gesture = "laugh",
+								freeze = true,
 							},
 						},
 					},
 					{
 						cam = "close",
 						a = 1,
-						lines = { { speaker = "noob", text = "Cancel the shutdown. Some of us have tycoons running." } },
+						lines = { { speaker = "noob", text = "Cancel the shutdown. Some of us have tycoons running.", gesture = "point" } },
 					},
 					{
 						cam = "over",
 						a = 1,
 						b = 2,
 						lines = {
-							{ speaker = "admin", text = "I have admin. You have a default avatar. Do the math." },
-							{ speaker = "noob", text = "Never been good at math. Pretty good at this though." },
+							{ speaker = "admin", text = "I have admin. You have a default avatar. Do the math.", gesture = "think" },
+							{ speaker = "noob", text = "Never been good at math. Pretty good at this though.", gesture = "fist", cam = "crash", a = 1, impact = true },
 						},
 					},
 				},
@@ -344,12 +377,13 @@ Story.chapters = {
 					{ id = "noob", x = -2.4, facing = 1, anim = "stance" },
 					{ id = "admin", x = 2.4, facing = -1, anim = "kneel" },
 					{ id = "bacon", x = -6.0, facing = 1, anim = "stance" },
+					{ id = "guest", x = 6.5, facing = -1, anim = "stance", hidden = true },
 				},
 				shots = {
 					{
 						cam = "close",
 						a = 2,
-						lines = { { speaker = "admin", text = "No... my commands... why isn't ;kill WORKING?!" } },
+						lines = { { speaker = "admin", text = "No... my commands... why isn't ;kill WORKING?!", gesture = "nervous" } },
 						events = { { t = 0.5, type = "vfx", kind = "souls", actor = 2 } },
 					},
 					{
@@ -357,14 +391,15 @@ Story.chapters = {
 						a = 3,
 						b = 1,
 						lines = {
-							{ speaker = "bacon", text = "His admin's expiring! It was a free trial! Noob, NOW!" },
-							{ speaker = "noob", text = "Hey Admin. ;unadmin." },
+							{ speaker = "bacon", text = "His admin's expiring! It was a free trial! Noob, NOW!", gesture = "point", crash = true },
+							{ speaker = "noob", text = "Hey Admin. ;unadmin.", gesture = "wave", pop = ";unadmin", popX = 0.5, popY = 0.3 },
 						},
 					},
 					{
 						cam = "sky",
 						duration = 4.0,
 						events = {
+							{ t = 0.3, type = "impact", count = 4 },
 							{ t = 0.4, type = "vfx", kind = "flash" },
 							{ t = 0.4, type = "sfx", key = "lightning_crack" },
 							{ t = 0.4, type = "shake", amount = 1.0 },
@@ -375,9 +410,22 @@ Story.chapters = {
 					{
 						cam = "wide",
 						duration = 5.0,
+						events = {
+							{ t = 0.3, type = "show", actor = 4 },
+							{ t = 0.3, type = "vfx", kind = "teleport", actor = 4 },
+							{ t = 0.3, type = "sfx", key = "teleport" },
+						},
 						lines = {
 							{ speaker = "system", text = "Guest 666 has joined the game." },
-							{ speaker = "guest", text = "...see you in Chapter 2." },
+							{
+								speaker = "guest",
+								text = "...see you in Chapter 2.",
+								cam = "dolly",
+								a = 4,
+								freeze = true,
+								freezeName = "TO BE CONTINUED...",
+								freezeSub = "Guest 666 will return",
+							},
 						},
 					},
 				},

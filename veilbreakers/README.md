@@ -69,8 +69,18 @@ Assets.AudioAtlas = {
 }
 ```
 
-If you uploaded the atlases before version 1.2.0, re-upload `veil_sfx.ogg`. It gained
-footsteps, body falls and an impact sub-layer, and its region table changed.
+If you uploaded the atlases before version 1.3.0, re-upload `veil_sfx.ogg`. It gained
+footsteps, body falls, an impact sub-layer and the cutscene sounds (boom, record
+scratch, pop, impact frame), and its region table changed.
+
+## VFX textures (optional, 4 uploads)
+
+`art/vfx/` holds four original textures made by `tools/make_vfx_textures.py`:
+anime speed lines, a sword-slash arc, a comic hit burst and a shockwave ring. Upload
+them as images (Asset Manager → Bulk Import) and paste the ids into
+`Assets.Images.FX_SpeedLines / FX_Slash / FX_HitBurst / FX_Shockwave`. Without them
+the game draws speed lines and slash arcs procedurally and uses the built-in
+particle textures, so nothing breaks.
 
 Every sound then plays from its region of the atlas
 (`src/shared/AudioAtlas.luau`, generated). Uploading 4 files instead of 80 keeps you
@@ -97,6 +107,7 @@ well inside Roblox's monthly audio upload limit.
 | Block (hold, + S to block low) | **Q** (or Left Shift) | RB | **BLOCK** |
 | Kick | **E** | A | **K** |
 | Special (+ direction) | **F** | B | **SP** |
+| Powers (your four specials, with cooldowns) | **1 2 3 4** | B / →B / ←B / ↓B | tap the hotbar |
 | Call a Friend (+ S for variant) | **R** | LB | **FRIEND** |
 | Throw (or Block + Light) | **G** | LT | **THROW** |
 | Super (2 bars) / Rage Quit (in a combo) | **Z** | RT | **SUPER** |
@@ -107,6 +118,16 @@ well inside Roblox's monthly audio upload limit.
 
 Menus: arrows / WASD to move, Enter or Space to confirm, Backspace or Escape to go back.
 The old J K L I U O P H layout still works as an alternate.
+
+## Powers (keys 1-4)
+
+Every fighter's four ground specials sit on a hotbar at the bottom of the screen:
+press **1-4** to fire them, or use the classic motion + **F** inputs. Each power
+goes on a short cooldown after use, by either input; the hotbar shows the sweep
+and the seconds left, and flashes when the power is back. Projectiles recharge
+fastest (1.3 s), rushes in 1.6 s, teleports in 2 s, and parries and invincible
+reversals in 2.3-2.5 s. The CPU plays by the same cooldowns. Practice mode has
+none. Tune them in `Config.PowerCooldown`, or per move with a `cooldown` field.
 
 ## Combat system
 
@@ -155,6 +176,18 @@ The old J K L I U O P H layout still works as an alternate.
   logs for +1 STRENGTH, players stranded on the church balcony during lightning
   storms, banned players caged behind the lava throne during eruptions. The colour
   grade pulses on heavy hits and drains on a KO.
+- **Story cutscenes** (`Render/Cutscene.luau` + `Render/CineFX.luau`), edited like a
+  Roblox animation channel:
+  - Characters act. They nod and gesture while talking: a shrug on questions, a
+    shout on CAPS, a point on "!", a wave on "hey". Listeners turn to face the
+    speaker. Characters also walk into frame, hop, and throw attacks.
+  - Dialogue is covered automatically with two-shots, over-the-shoulder angles and
+    close-ups, and shouted lines get a crash zoom.
+  - Editing beats: freeze-frame name cards with a record scratch, impact frames
+    (stark black/white flashes), pop captions, speed lines, slow motion, whip pans
+    with motion blur, and a "TO BE CONTINUED" freeze to close the chapter.
+  - Supers and finishers in fights use the same speed lines and impact frames.
+  - **Settings → Screen flashes** swaps the strobing for a gentle version.
 - **Cinematics:** letterboxed intros with lower-third name cards, and letterboxing for
   supers, finishers and victories. The gameplay HUD slides away while the bars are in.
   P1 / CPU markers float over the fighters at FIGHT, and screens change with a
@@ -182,11 +215,12 @@ src/client/                  StarterPlayerScripts.VeilClient
   Main.client                game flow
   Core/   Input, Audio
   Render/ RigMath (FK + leg IK), Poses (60+ animations), AnimSpring, Looks, Rig,
-          StageBuilder, StageLife, VFX, FightCamera, FightView, Cutscene
+          StageBuilder, StageLife, VFX, FightCamera, FightView, Cutscene, CineFX
   UI/     Theme, Screens, HUD, Portrait, Subtitles, MobileControls
 src/server/Main.server        DataStore profiles (settings + stats), validated remotes
 tests/                       Lune test-suites + headless Roblox runtime mock
-tools/                       audio synth, atlas packer, pose / rig / UI layout preview renderers
+tools/                       audio synth, atlas packer, VFX texture maker, pose / rig / UI previews
+art/vfx/                     optional VFX textures to upload
 audio/atlas/                 the four audio files to upload
 ```
 

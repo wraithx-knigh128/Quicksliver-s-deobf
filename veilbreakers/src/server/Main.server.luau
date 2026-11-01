@@ -43,6 +43,7 @@ local DEFAULT = {
 		voice = 0.85,
 		subtitles = true,
 		shake = true,
+		flashes = true,
 		difficulty = 2,
 		touch = "auto",
 	},

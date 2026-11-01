@@ -24,6 +24,7 @@ local FightView = require(Client.Render.FightView)
 local Cutscene = require(Client.Render.Cutscene)
 local StageBuilder = require(Client.Render.StageBuilder)
 local FightCamera = require(Client.Render.FightCamera)
+local CineFX = require(Client.Render.CineFX)
 
 -------------------------------------------------------------------------------
 -- Boot
@@ -61,7 +62,7 @@ Lighting.ClockTime = 0.5
 -------------------------------------------------------------------------------
 
 local profile = {
-	settings = { music = 0.6, sfx = 0.8, voice = 0.85, subtitles = true, shake = true, difficulty = 2, touch = "auto" },
+	settings = { music = 0.6, sfx = 0.8, voice = 0.85, subtitles = true, shake = true, flashes = true, difficulty = 2, touch = "auto" },
 	stats = { wins = 0, losses = 0, ascents = 0, finishers = 0, storyDone = false },
 }
 local remotes = ReplicatedStorage:WaitForChild("VeilRemotes", 10)
@@ -97,6 +98,7 @@ local function applySettings()
 	Audio.setVolumes(profile.settings)
 	Subtitles.enabled = profile.settings.subtitles ~= false
 	FightCamera.setShakeScale(profile.settings.shake == false and 0 or 1)
+	CineFX.flashesEnabled = profile.settings.flashes ~= false
 end
 applySettings()
 

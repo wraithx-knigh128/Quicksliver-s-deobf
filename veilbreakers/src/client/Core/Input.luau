@@ -22,6 +22,15 @@ local KEY_FIGHT = {
 	[Enum.KeyCode.R] = "E",
 	[Enum.KeyCode.G] = "THROW",
 	[Enum.KeyCode.Z] = "X",
+	-- powers
+	[Enum.KeyCode.One] = "P1",
+	[Enum.KeyCode.Two] = "P2",
+	[Enum.KeyCode.Three] = "P3",
+	[Enum.KeyCode.Four] = "P4",
+	[Enum.KeyCode.KeypadOne] = "P1",
+	[Enum.KeyCode.KeypadTwo] = "P2",
+	[Enum.KeyCode.KeypadThree] = "P3",
+	[Enum.KeyCode.KeypadFour] = "P4",
 	[Enum.KeyCode.A] = "left",
 	[Enum.KeyCode.Left] = "left",
 	[Enum.KeyCode.D] = "right",
@@ -270,6 +279,10 @@ function Input.fightState()
 		B = false,
 		E = false,
 		X = false,
+		P1 = false,
+		P2 = false,
+		P3 = false,
+		P4 = false,
 	}
 	for k in s do
 		if held[k] or touchHeld[k] then
@@ -306,9 +319,9 @@ end
 
 -- Button glyphs for prompts
 local GLYPHS = {
-	keyboard = { L = "LMB", H = "RMB", K = "E", S = "F", B = "Q", E = "R", X = "Z", THROW = "G", down = "S", up = "W", left = "A", right = "D", confirm = "ENTER", back = "BKSP", start = "TAB", tabL = "Q", tabR = "E", alt = "T" },
-	gamepad = { L = "X", H = "Y", K = "A", S = "B", B = "RB", E = "LB", X = "RT", THROW = "LT", down = "\u{2193}", up = "\u{2191}", left = "\u{2190}", right = "\u{2192}", confirm = "A", back = "B", start = "START", tabL = "LB", tabR = "RB", alt = "Y" },
-	touch = { L = "LIGHT", H = "HEAVY", K = "KICK", S = "SPECIAL", B = "BLOCK", E = "FRIEND", X = "SUPER", THROW = "THROW", down = "\u{2193}", up = "\u{2191}", left = "\u{2190}", right = "\u{2192}", confirm = "TAP", back = "BACK", start = "II", tabL = "\u{25C0}", tabR = "\u{25B6}", alt = "" },
+	keyboard = { L = "LMB", H = "RMB", K = "E", S = "F", B = "Q", E = "R", X = "Z", THROW = "G", P1 = "1", P2 = "2", P3 = "3", P4 = "4", down = "S", up = "W", left = "A", right = "D", confirm = "ENTER", back = "BKSP", start = "TAB", tabL = "Q", tabR = "E", alt = "T" },
+	gamepad = { L = "X", H = "Y", K = "A", S = "B", B = "RB", E = "LB", X = "RT", THROW = "LT", P1 = "B", P2 = "\u{2192}B", P3 = "\u{2190}B", P4 = "\u{2193}B", down = "\u{2193}", up = "\u{2191}", left = "\u{2190}", right = "\u{2192}", confirm = "A", back = "B", start = "START", tabL = "LB", tabR = "RB", alt = "Y" },
+	touch = { L = "LIGHT", H = "HEAVY", K = "KICK", S = "SPECIAL", B = "BLOCK", E = "FRIEND", X = "SUPER", THROW = "THROW", P1 = "1", P2 = "2", P3 = "3", P4 = "4", down = "\u{2193}", up = "\u{2191}", left = "\u{2190}", right = "\u{2192}", confirm = "TAP", back = "BACK", start = "II", tabL = "\u{25C0}", tabR = "\u{25B6}", alt = "" },
 }
 function Input.glyph(action: string): string
 	local set = GLYPHS[Input.mode] or GLYPHS.keyboard
