@@ -87,7 +87,60 @@ local function hosts(rig)
 	return out
 end
 
--- cosmetic = { item = weaponSkinId, ench = enchantId? }
+-- Rarity aura around the fighter: epic motes, legendary haze + light, mythic embers
+-- + a pulsing light; a sparkle crown at max weapon level.
+local function aura(rig, def, level: number, color: Color3, state)
+	local torso = rig.parts and rig.parts.LowerTorso
+	if not torso then
+		return
+	end
+	local order = Items.RARITY[def.rarity].order
+	local tier = math.max(order >= 6 and 3 or (order >= 5 and 2 or (order >= 4 and 1 or 0)), level >= 8 and 1 or 0)
+	if tier <= 0 and level < 10 then
+		return
+	end
+	local function add(parent, preset, col, rate, size)
+		local e = emitter(parent, preset, col)
+		e.Name = "RarityAura"
+		e.Rate = rate
+		if size then
+			e.Size = NumberSequence.new(size, 0)
+		end
+		table.insert(state.emitters, e)
+		return e
+	end
+	if tier >= 1 then
+		local motes = add(torso, "sparkle", color, 8, 0.3)
+		motes.Acceleration = Vector3.new(0, 5, 0)
+		motes.Speed = NumberRange.new(0.5, 1.5)
+		motes.Lifetime = NumberRange.new(0.8, 1.4)
+	end
+	if tier >= 2 then
+		local haze = add(torso, "bubbles", color, 3, 1.6)
+		haze.Transparency = NumberSequence.new(0.75, 1)
+		haze.LightEmission = 1
+		local l = Instance.new("PointLight")
+		l.Name = "RarityGlow"
+		l.Color = color
+		l.Brightness = 1.2
+		l.Range = 9
+		l.Shadows = false
+		l.Parent = torso
+		table.insert(state.auraLights, l)
+	end
+	if tier >= 3 then
+		local embers = add(torso, "embers", Color3.fromHex("#FF4A6A"), 12, 0.35)
+		embers.Color = ColorSequence.new(Color3.fromHex("#FF4A6A"), color)
+		state.pulseAura = true
+	end
+	if level >= 10 and rig.parts.Head then
+		local crown = add(rig.parts.Head, "sparkle", Color3.fromHex("#FFE27A"), 7, 0.28)
+		crown.Acceleration = Vector3.new(0, 3, 0)
+		crown.Speed = NumberRange.new(0.2, 0.6)
+	end
+end
+
+-- cosmetic = { item = weaponSkinId, ench = enchantId?, lvl = 1..10 }
 function Cosmetics.apply(rig, cosmetic)
 	if not cosmetic or not rig.weapon then
 		return false
@@ -124,10 +177,16 @@ function Cosmetics.apply(rig, cosmetic)
 	for _, tr in rig.weapon.trails do
 		tr.Color = ColorSequence.new(Color3.new(1, 1, 1), trailColor)
 	end
-	local state = { glowParts = glowParts, trails = rig.weapon.trails, lights = {}, emitters = {}, anim = fx.animated, glow = glow }
+	local level = math.clamp(cosmetic.lvl or 1, 1, Items.MaxLevel)
+	local state = { glowParts = glowParts, trails = rig.weapon.trails, lights = {}, emitters = {}, auraLights = {}, anim = fx.animated, glow = glow, level = level }
+	-- weapon level makes the trail longer and brighter
+	for _, tr in rig.weapon.trails do
+		tr.Lifetime = 0.24 + 0.015 * (level - 1)
+	end
 	if ench then
 		for _, host in hosts(rig) do
-			table.insert(state.emitters, emitter(host, fx.particles, hex(fx.color)))
+			local main = emitter(host, fx.particles, hex(fx.color))
+			table.insert(state.emitters, main)
 			local l = Instance.new("PointLight")
 			l.Name = "EnchantGlow"
 			l.Color = hex(fx.light or fx.color)
@@ -136,8 +195,17 @@ function Cosmetics.apply(rig, cosmetic)
 			l.Shadows = false
 			l.Parent = host
 			table.insert(state.lights, l)
+			-- level 5+: the enchantment runs hotter and throws a second sparkle layer
+			if level >= 5 then
+				main.Rate = main.Rate * (1 + 0.12 * (level - 4))
+				local extra = emitter(host, "sparkle", hex(fx.light or fx.color))
+				extra.Rate = 4 + level
+				table.insert(state.emitters, extra)
+				l.Brightness = 1.6 + 0.15 * (level - 4)
+			end
 		end
 	end
+	aura(rig, def, level, glow, state)
 	rig.cosmetic = state
 	return true
 end
@@ -145,7 +213,16 @@ end
 -- Per-frame animated enchantments (rainbow, glitch, pulse).
 function Cosmetics.update(rig, t: number)
 	local st = rig.cosmetic
-	if not st or not st.anim then
+	if not st then
+		return
+	end
+	if st.pulseAura then
+		local k = 0.5 + 0.5 * math.sin(t * 4)
+		for _, l in st.auraLights do
+			l.Brightness = 0.8 + k * 1.8
+		end
+	end
+	if not st.anim then
 		return
 	end
 	if st.anim == "rainbow" then

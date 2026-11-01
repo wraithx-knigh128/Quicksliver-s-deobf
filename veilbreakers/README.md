@@ -44,7 +44,7 @@ The images (key art, emblem, stage backdrops) are already uploaded and approved 
 Roblox. To hear the full soundtrack and SFX, follow the **Audio** step below.
 Until then the game uses a handful of built-in Roblox sounds and is otherwise silent.
 
-## Audio (one-time, 4 uploads)
+## Audio (one-time, 4 uploads + 1 optional)
 
 The complete sound pack (≈80 SFX, footsteps and body falls, voice grunts and an "oof", 4 ambience beds and 7 music tracks)
 is synthesised by `tools/synth_audio.py` and packed into four "atlas" files:
@@ -54,7 +54,30 @@ audio/atlas/veil_sfx.ogg        SFX + voices
 audio/atlas/veil_ambience.ogg   looping ambience beds
 audio/atlas/veil_music_a.ogg    menu / select / story / victory themes
 audio/atlas/veil_music_b.ogg    battle themes
+audio/atlas/veil_announcer.ogg  optional: your imported announcer lines
 ```
+
+**Your sound pack** lives in `audio/user/` and is processed by
+`python3 tools/import_user_sounds.py`. The tool trims and levels each file and splits
+the announcer file on its pauses, then `tools/build_atlas.py` packs the results.
+
+- **SFX** (in `veil_sfx.ogg`):
+  - `bass_hit`: a sub-bass punch under every big hit.
+  - `crack`: specials, supers and finishers.
+  - `slam`: knockdowns and heavy landings.
+  - `swell`: under the finisher prompt and supers.
+- **Announcer** (`veil_announcer.ogg`, its own upload):
+  - "Choose…": character select.
+  - "Round one": first round.
+  - "Fight!": fight start.
+  - "Finish him": the finisher prompt, for male-voiced losers; everyone else gets
+    "Delete them!".
+  - "Fatality": the finisher.
+  - "Flawless victory": a perfect round.
+- **Heads-up:** that announcer file was made with a fish.audio voice imitating Mortal
+  Kombat's announcer, and it uses MK catchphrases. Roblox moderation may reject it,
+  or it may draw a takedown later. It's a separate upload for that reason. Leave
+  `Assets.AudioAtlas.announcer` empty and the game uses its own announcer instead.
 
 1. In Studio open **Window → Asset Manager → Bulk Import**, or use the Creator
    Dashboard (Development Items → Audio), and upload those four files.
@@ -70,9 +93,8 @@ Assets.AudioAtlas = {
 }
 ```
 
-If you uploaded the atlases before version 1.3.0, re-upload `veil_sfx.ogg`. It gained
-footsteps, body falls, an impact sub-layer and the cutscene sounds (boom, record
-scratch, pop, impact frame), and its region table changed.
+If you uploaded the atlases before version 1.5.0, re-upload `veil_sfx.ogg`. Your
+imported SFX were added to it, so its region table changed.
 
 ## VFX textures (optional, 4 uploads)
 
@@ -155,6 +177,15 @@ The old J K L I U O P H layout still works as an alternate.
     records in one step. Both profiles save immediately.
   - Profiles are session-locked in the DataStore, so a player can't duplicate items
     by hopping servers.
+- **Rarity pays (an economy buff, never a combat one):**
+  - The weapon equipped on the fighter you play boosts every resource you earn from
+    that fight: skin rarity (common +5% up to mythic +60%), plus its enchantment's
+    rarity (+3% to +25%), plus +4% per upgrade level. The bonus caps at +150%.
+  - **Upgrade** weapons up to level 10 with Studs and Scrap; Glitch Shards from level
+    4, and an Admin Token from level 8. Higher levels earn more, and their
+    enchantments glow and spark harder.
+  - **Salvage** weapons you don't want. Rarer and more-upgraded weapons pay more,
+    and mythics pay Oof Essence.
 - **Rewards:**
   - Online fights pay resources, with a chance at weapons.
   - CPU fights run on your own device, so the server can't verify them. They pay a
@@ -227,6 +258,20 @@ none. Tune them in `Config.PowerCooldown`, or per move with a `cooldown` field.
   bring streaks, rings and a flash of light on the set. Sparks fly the way the blow
   travelled. The camera jolts in the direction of the hit (upward on launchers) and
   punches in on big ones. Heavies get a layered sub-thump, and knockdowns a body fall.
+- **Battlegrounds-style impacts** (`Render/Impacts.luau`):
+  - Craters of rock chunks punch open under knockdowns from big hits and under
+    heavy landings.
+  - Debris flies on bezier arcs and lands.
+  - Glass afterimages trail dashes, teleports and super flurries.
+  - Anime impact lines burst from big hits, and lightning-element hits throw forked
+    lightning.
+  - Supers and finishers end in a force-field dome.
+  - Pieces come from a pool and are capped, so spam can't tank the frame rate.
+  - These follow common community techniques (raycast craters, bezier debris,
+    glass-clone afterimages); the code is original.
+- **Rarity auras:** epic skins (or level 8+) give the fighter rising motes. Legendary
+  adds a glow haze and light, mythic adds embers and a pulsing light, and max-level
+  weapons add a sparkle crown.
 - **Arenas** (`Render/StageLife.luau`): key and rim lights follow each fighter, and
   light shafts come through the trees and church windows. Each stage has a background
   crowd of classic blocky players with bubble chat who react to heavy hits and KOs.
@@ -298,7 +343,7 @@ lune run tests/run                       # engine + AI: every input, 128 CPU mat
 lune run tests/server                    # inventory, trading (dupe checks), online matches + replay
 lune run tests/client_smoke              # whole client in a mock Roblox runtime
 selene src                               # lint (custom std: veil.yml)
-python3 tools/synth_audio.py && python3 tools/build_atlas.py   # regenerate audio
+python3 tools/synth_audio.py && python3 tools/import_user_sounds.py && python3 tools/build_atlas.py   # regenerate audio
 ```
 
 `tests/client_smoke` loads the real client modules inside a headless Roblox

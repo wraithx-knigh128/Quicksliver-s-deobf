@@ -52,6 +52,8 @@ Assets.AudioAtlas = {
 	ambience = "",
 	music_a = "",
 	music_b = "",
+	-- optional: the imported announcer lines (audio/atlas/veil_announcer.ogg)
+	announcer = "",
 }
 
 -- Optional per-sound overrides. Leave "" to use the atlas / fallback.
@@ -169,6 +171,11 @@ local function normalise(id: string): string
 end
 
 -- Returns (soundId, region?) where region = { start, length } inside an atlas.
+-- True when a sound will actually play (has an uploaded id or a built-in fallback).
+function Assets.hasSound(key: string): boolean
+	return (Assets.sound(key)) ~= ""
+end
+
 function Assets.sound(key: string): (string, { start: number, length: number }?)
 	local id = (Assets.Sounds :: any)[key]
 	if id and id ~= "" then

@@ -8,6 +8,7 @@ Sound.PlaybackRegion / Sound.LoopRegion:
     audio/atlas/veil_ambience.ogg  the four looping ambience beds
     audio/atlas/veil_music_a.ogg   menu, select, story, victory themes
     audio/atlas/veil_music_b.ogg   the three battle themes
+    audio/atlas/veil_announcer.ogg the imported announcer lines (optional upload)
 
 It also writes src/shared/AudioAtlas.luau with the region table.
 
@@ -26,10 +27,12 @@ LUAU = os.path.normpath(os.path.join(HERE, "..", "src", "shared", "AudioAtlas.lu
 GAP = 0.35
 
 GROUPS = {
-    "sfx": lambda n: not n.startswith(("music_", "amb_")),
+    "sfx": lambda n: not n.startswith(("music_", "amb_", "ann_")),
     "ambience": lambda n: n.startswith("amb_"),
     "music_a": lambda n: n in ("music_menu", "music_select", "music_story", "music_victory"),
     "music_b": lambda n: n in ("music_battle_a", "music_battle_b", "music_boss"),
+    # user-supplied announcer pack (tools/import_user_sounds.py): its own upload
+    "announcer": lambda n: n.startswith("ann_"),
 }
 
 
@@ -69,6 +72,8 @@ def main():
             gap = np.zeros((int(GAP * SR), 2), dtype=np.float32)
             chunks.append(gap)
             cursor += dur + GAP
+        if not chunks:
+            continue
         atlas = np.concatenate(chunks)
         encode(os.path.join(OUT, f"veil_{group}.ogg"), atlas)
         print(f"{group}: {len(atlas) / SR:.1f}s")

@@ -290,6 +290,49 @@ local function playScene(label: string, beat)
 	end
 	StageBuilder.clear()
 end
+step("impacts: craters, debris, afterimages, lines, lightning, domes (capped, pooled, cleaned up)", function()
+	local Impacts = Loader.require(client.Render.Impacts)
+	local Rig = mods.Rig
+	local V3 = roblox.Vector3.new
+	local grey = roblox.Color3.new(0.4, 0.38, 0.35)
+	local rig = Rig.build(Fighters.get("noob").look, { world = Mock.workspace })
+	rig.model.Parent = Mock.workspace
+	Rig.apply(rig, roblox.CFrame.new(0, 0, 0), mods.Poses.stance("blade"), { time = 0 })
+	for k = 1, 8 do
+		Impacts.crater(V3(k * 2, 0, 0), 4, grey, roblox.Enum.Material.Slate)
+	end
+	Impacts.debris(V3(0, 0.5, 0), 500, grey, roblox.Enum.Material.Slate, 1)
+	local st = Impacts.stats()
+	assert(st.rocks <= 90 and st.rocks > 0, "rock cap: " .. st.rocks)
+	assert(st.debris <= 60 and st.debris > 0, "debris cap: " .. st.debris)
+	Impacts.afterimage(rig, roblox.Color3.new(1, 1, 1), 0.2)
+	Impacts.impactLines(V3(0, 3, 0), roblox.Color3.new(1, 1, 0), 12, 5)
+	Impacts.forkLightning(V3(0, 8, 0), V3(0, 2, 0), roblox.Color3.new(0.6, 0.8, 1))
+	Impacts.dome(V3(0, 2, 0), roblox.Color3.new(1, 0.5, 0), 16)
+	local t0 = os.clock()
+	while os.clock() - t0 < 3.2 do
+		Mock.frame(1 / 60)
+		task.wait(0.02)
+	end
+	st = Impacts.stats()
+	assert(st.rocks == 0 and st.debris == 0 and st.movers == 0, string.format("pieces left behind: rocks %d debris %d movers %d", st.rocks, st.debris, st.movers))
+	assert(st.pooled > 0, "parts were not returned to the pool")
+	Impacts.clear()
+	assert(Mock.workspace:FindFirstChild("VeilImpacts") == nil, "impacts folder not cleaned")
+	-- a max-level mythic weapon: hotter enchant, rarity aura, crown
+	local Cosmetics = Loader.require(client.Render.Cosmetics)
+	local rig2 = Rig.build(Fighters.get("admin").look, { world = Mock.workspace })
+	assert(Cosmetics.apply(rig2, { item = "great_cosmic", ench = "oof", lvl = 10 }), "cosmetic not applied")
+	assert(rig2.cosmetic.pulseAura == true and #rig2.cosmetic.auraLights >= 1, "mythic aura missing")
+	assert(#rig2.cosmetic.emitters >= 5, "expected enchant + level + aura + crown emitters, got " .. #rig2.cosmetic.emitters)
+	Cosmetics.update(rig2, 1.3)
+	local rig3 = Rig.build(Fighters.get("noob").look, { world = Mock.workspace })
+	Cosmetics.apply(rig3, { item = "katana_starter", lvl = 1 })
+	assert(#rig3.cosmetic.emitters == 0 and not rig3.cosmetic.pulseAura, "a plain common skin should stay plain")
+	Rig.destroy(rig)
+	Rig.destroy(rig2)
+	Rig.destroy(rig3)
+end)
 if only == "cine" or only == nil then
 	print("[1c] Cinematics: autoGesture, full scene playback")
 	step("autoGesture reads the line", function()

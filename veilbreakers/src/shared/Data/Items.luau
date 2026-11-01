@@ -154,6 +154,74 @@ Items.TradeMaxWeapons = 8
 Items.TradeConfirmSeconds = 3
 
 -------------------------------------------------------------------------------
+-- Rarity pays: the reward bonus (an economy buff, never a combat one)
+-------------------------------------------------------------------------------
+
+-- The weapon you fight with boosts every resource you earn from that fight:
+-- its skin rarity + its enchantment rarity + its upgrade level.
+Items.RarityBonus = { common = 0.05, uncommon = 0.10, rare = 0.18, epic = 0.28, legendary = 0.40, mythic = 0.60 }
+Items.EnchantBonus = { common = 0.03, uncommon = 0.05, rare = 0.08, epic = 0.12, legendary = 0.18, mythic = 0.25 }
+Items.LevelBonus = 0.04 -- per upgrade level above 1
+Items.MaxLevel = 10
+Items.MaxBonus = 1.5 -- +150% at most
+
+-- Fraction (0.28 = +28%) a weapon record adds to rewards.
+function Items.rewardBonus(rec): number
+	if not rec then
+		return 0
+	end
+	local def = Items.WeaponById[rec.item]
+	if not def then
+		return 0
+	end
+	local b = Items.RarityBonus[def.rarity] or 0
+	local e = rec.ench and Items.EnchantById[rec.ench]
+	if e then
+		b += Items.EnchantBonus[e.rarity] or 0
+	end
+	b += Items.LevelBonus * (math.clamp(rec.lvl or 1, 1, Items.MaxLevel) - 1)
+	return math.min(b, Items.MaxBonus)
+end
+
+-- Cost to raise a weapon from `level` to `level + 1`.
+function Items.upgradeCost(level: number)
+	local c = { studs = math.floor(30 * level ^ 1.6 + 0.5), scrap = 6 * level }
+	if level >= 4 then
+		c.glitch = level - 3
+	end
+	if level >= 8 then
+		c.token = 1
+	end
+	return c
+end
+
+-- What salvaging a weapon pays: by skin rarity, plus half the studs and scrap
+-- spent upgrading it.
+Items.SalvageByRarity = {
+	common = { studs = 15, scrap = 5 },
+	uncommon = { studs = 30, scrap = 10, glitch = 1 },
+	rare = { studs = 60, scrap = 18, glitch = 2 },
+	epic = { studs = 120, scrap = 30, glitch = 4, relic = 1 },
+	legendary = { studs = 250, scrap = 60, glitch = 8, relic = 2, token = 1 },
+	mythic = { studs = 500, scrap = 120, glitch = 15, relic = 4, token = 2, essence = 1 },
+}
+function Items.salvageValue(rec)
+	local def = Items.WeaponById[rec.item]
+	local out = table.clone(Items.SalvageByRarity[def and def.rarity or "common"] or Items.SalvageByRarity.common)
+	for lv = 1, math.clamp(rec.lvl or 1, 1, Items.MaxLevel) - 1 do
+		local c = Items.upgradeCost(lv)
+		out.studs = (out.studs or 0) + math.floor(c.studs * 0.5)
+		out.scrap = (out.scrap or 0) + math.floor(c.scrap * 0.5)
+	end
+	if rec.ench then
+		local e = Items.EnchantById[rec.ench]
+		local order = e and Items.RARITY[e.rarity].order or 1
+		out.glitch = (out.glitch or 0) + order
+	end
+	return out
+end
+
+-------------------------------------------------------------------------------
 -- Helpers
 -------------------------------------------------------------------------------
 
@@ -187,10 +255,13 @@ function Items.weaponsOfType(weaponType: string)
 	return out
 end
 
--- Readable name for a weapon record: "Neon Katana (Blazing)".
+-- Readable name for a weapon record: "Neon Katana +3  ·  Blazing".
 function Items.weaponLabel(rec): string
 	local def = Items.WeaponById[rec.item]
 	local name = def and def.name or rec.item
+	if (rec.lvl or 1) > 1 then
+		name ..= " +" .. tostring(rec.lvl - 1)
+	end
 	local e = rec.ench and Items.EnchantById[rec.ench]
 	if e then
 		return name .. "  \u{00B7}  " .. e.name

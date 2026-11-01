@@ -271,7 +271,7 @@ local function recordResult(result)
 	-- a small resource reward for finishing a CPU fight (the server rate-limits it)
 	if Net.available then
 		task.spawn(function()
-			local res = Net.request("claim")
+			local res = Net.request("claim", { fighter = result.p1 and result.p1.fighter })
 			if res.ok and res.rewards then
 				local parts = {}
 				for _, r in Items.Resources do
@@ -281,7 +281,8 @@ local function recordResult(result)
 					end
 				end
 				if #parts > 0 then
-					Toast.show("REWARD", table.concat(parts, "   "), Theme.Colors.goldBright)
+					local b = res.bonus and res.bonus > 0 and ("  (+" .. math.floor(res.bonus * 100 + 0.5) .. "% WEAPON BONUS)") or ""
+					Toast.show("REWARD" .. b, table.concat(parts, "   "), Theme.Colors.goldBright)
 				end
 			end
 		end)
@@ -621,7 +622,7 @@ while true do
 				ch:Destroy()
 			end
 		end
-		for _, name in { "VeilFight", "VeilCutscene", "VeilVFX" } do
+		for _, name in { "VeilFight", "VeilCutscene", "VeilVFX", "VeilImpacts" } do
 			local inst = workspace:FindFirstChild(name)
 			if inst then
 				inst:Destroy()

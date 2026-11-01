@@ -237,6 +237,24 @@ invFn.OnServerInvoke = function(player: Player, op, arg)
 			Profiles.markDirty(player)
 		end
 		return { ok = rec ~= nil, err = err, weapon = rec and { uid = rec.uid, item = rec.item } or nil, inv = Inventory.snapshot(inv) }
+	elseif op == "upgrade" then
+		if type(arg) ~= "string" then
+			return { ok = false, err = "bad request" }
+		end
+		local ok, res = Inventory.upgrade(inv, arg)
+		if ok then
+			Profiles.markDirty(player)
+		end
+		return { ok = ok, err = (not ok) and res or nil, level = ok and res or nil, inv = Inventory.snapshot(inv) }
+	elseif op == "salvage" then
+		if type(arg) ~= "string" then
+			return { ok = false, err = "bad request" }
+		end
+		local value, err = Inventory.salvage(inv, arg)
+		if value then
+			Profiles.markDirty(player)
+		end
+		return { ok = value ~= nil, err = err, rewards = value, inv = Inventory.snapshot(inv) }
 	elseif op == "claim" then
 		-- reward for finishing a CPU fight (unverifiable): small and rate-limited
 		local now = os.time()
@@ -249,10 +267,11 @@ invFn.OnServerInvoke = function(player: Player, op, arg)
 		end
 		p.lastClaim = now
 		p.daily.claims += 1
-		local rewards = Inventory.rollRewards(Items.Rewards.offline, rand)
+		local fighterId = type(arg) == "table" and type(arg.fighter) == "string" and Fighters.byId[arg.fighter] and arg.fighter or nil
+		local rewards = Inventory.rollRewards(Items.Rewards.offline, rand, Inventory.bonusFor(inv, fighterId))
 		Inventory.applyRewards(inv, player.UserId, rewards)
 		Profiles.markDirty(player)
-		return { ok = true, rewards = rewards.res, inv = Inventory.snapshot(inv) }
+		return { ok = true, rewards = rewards.res, bonus = rewards.bonus, inv = Inventory.snapshot(inv) }
 	end
 	return { ok = false, err = "unknown request" }
 end
@@ -330,5 +349,3 @@ inputEv.OnServerEvent:Connect(function(player: Player, held, pressed)
 	online:input(player, held, pressed)
 end)
 
--- keep the lints honest about used modules
-local _ = Fighters

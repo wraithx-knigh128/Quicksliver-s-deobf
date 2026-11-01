@@ -1026,6 +1026,10 @@ end
 function Screens.characterSelect(root: Instance, opts)
 	opts = opts or {}
 	Audio.music("music_select")
+	-- imported announcer line, when its pack is uploaded
+	if Assets.hasSound("ann_choose") then
+		Audio.play("ann_choose", { group = "voice", volume = 1 })
+	end
 	local step = 1
 	local result = {}
 	while true do

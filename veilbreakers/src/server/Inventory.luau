@@ -51,8 +51,9 @@ function Inventory.sanitize(raw)
 			end
 			if type(w) == "table" and type(w.uid) == "string" and #w.uid <= 40 and not seen[w.uid] and Items.WeaponById[w.item] then
 				local ench = (type(w.ench) == "string" and Items.EnchantById[w.ench]) and w.ench or nil
+				local lvl = (type(w.lvl) == "number" and w.lvl == w.lvl) and math.clamp(math.floor(w.lvl), 1, Items.MaxLevel) or 1
 				seen[w.uid] = true
-				table.insert(inv.weapons, { uid = w.uid, item = w.item, ench = ench })
+				table.insert(inv.weapons, { uid = w.uid, item = w.item, ench = ench, lvl = lvl })
 			end
 		end
 	end
@@ -116,7 +117,7 @@ function Inventory.addWeapon(inv, ownerId: number, item: string, ench: string?)
 	end
 	local uid = string.format("w%d-%d", ownerId, inv.nextUid)
 	inv.nextUid += 1
-	local rec = { uid = uid, item = item, ench = (ench and Items.EnchantById[ench]) and ench or nil }
+	local rec = { uid = uid, item = item, ench = (ench and Items.EnchantById[ench]) and ench or nil, lvl = 1 }
 	table.insert(inv.weapons, rec)
 	return rec
 end
@@ -215,17 +216,60 @@ function Inventory.forge(inv, ownerId: number, weaponType: string, rand: () -> n
 	return Inventory.addWeapon(inv, ownerId, skin.id, nil)
 end
 
+-- Upgrade a weapon one level (raises its reward bonus and its visual tier).
+function Inventory.upgrade(inv, uid: string): (boolean, any)
+	local w = Inventory.findWeapon(inv, uid)
+	if not w then
+		return false, "you don't own that weapon"
+	end
+	local lvl = w.lvl or 1
+	if lvl >= Items.MaxLevel then
+		return false, "already max level"
+	end
+	if not Inventory.spend(inv, Items.upgradeCost(lvl)) then
+		return false, "not enough resources"
+	end
+	w.lvl = lvl + 1
+	return true, w.lvl
+end
+
+-- Break a weapon down into resources (pays more for rarer / upgraded weapons).
+function Inventory.salvage(inv, uid: string)
+	local w = Inventory.findWeapon(inv, uid)
+	if not w then
+		return nil, "you don't own that weapon"
+	end
+	local value = Items.salvageValue(w)
+	Inventory.takeWeapon(inv, uid)
+	Inventory.addResources(inv, value)
+	return value
+end
+
+-- Reward bonus from the weapon equipped on the fighter you played.
+function Inventory.bonusFor(inv, fighterId: string?): number
+	if not fighterId then
+		return 0
+	end
+	local uid = inv.equipped[fighterId]
+	local w = uid and Inventory.findWeapon(inv, uid)
+	return w and Items.rewardBonus(w) or 0
+end
+
 -- Roll a reward table ({ min, max } ranges or a 0..1 chance) into concrete amounts.
-function Inventory.rollRewards(spec, rand: () -> number)
-	local out = { res = {}, weapon = nil }
+-- `bonus` (0.28 = +28%) scales resource amounts and nudges the rare-drop chances.
+function Inventory.rollRewards(spec, rand: () -> number, bonus: number?)
+	local b = math.clamp(bonus or 0, 0, Items.MaxBonus)
+	local out = { res = {}, weapon = nil, bonus = b }
 	for _, r in Items.Resources do
 		local v = spec[r.id]
 		if type(v) == "table" then
 			local n = v[1] + math.floor(rand() * (v[2] - v[1] + 1))
+			-- stochastic rounding keeps small bonuses meaningful
+			n = math.floor(n * (1 + b) + rand())
 			if n > 0 then
 				out.res[r.id] = n
 			end
-		elseif type(v) == "number" and v > 0 and rand() < v then
+		elseif type(v) == "number" and v > 0 and rand() < math.min(0.9, v * (1 + b * 0.5)) then
 			out.res[r.id] = 1
 		end
 	end
@@ -256,14 +300,14 @@ function Inventory.cosmeticFor(inv, fighterId: string)
 	if not w then
 		return nil
 	end
-	return { item = w.item, ench = w.ench }
+	return { item = w.item, ench = w.ench, lvl = w.lvl or 1 }
 end
 
 -- Copy for the client.
 function Inventory.snapshot(inv)
 	local out = { res = table.clone(inv.res), weapons = {}, equipped = table.clone(inv.equipped) }
 	for _, w in inv.weapons do
-		table.insert(out.weapons, { uid = w.uid, item = w.item, ench = w.ench })
+		table.insert(out.weapons, { uid = w.uid, item = w.item, ench = w.ench, lvl = w.lvl or 1 })
 	end
 	return out
 end

@@ -312,7 +312,8 @@ function OnlineMatch:finish(m, winnerSide: number?, reason: string)
 				prof.stats.onlineLosses = (prof.stats.onlineLosses or 0) + 1
 			end
 			if rewarded and winnerSide then
-				rewards = Inventory.rollRewards(won and Items.Rewards.onlineWin or Items.Rewards.onlineLoss, self.deps.rand)
+				local fighterId = side == 1 and m.spec.p1.fighter or m.spec.p2.fighter
+				rewards = Inventory.rollRewards(won and Items.Rewards.onlineWin or Items.Rewards.onlineLoss, self.deps.rand, Inventory.bonusFor(prof.inv, fighterId))
 				newWeapon = Inventory.applyRewards(prof.inv, p.UserId, rewards)
 			end
 		end
@@ -327,6 +328,7 @@ function OnlineMatch:finish(m, winnerSide: number?, reason: string)
 				rounds = { f[1].roundWins, f[2].roundWins },
 				stats = { f[1].stats, f[2].stats },
 				rewards = rewards.res,
+				bonus = rewards.bonus,
 				weapon = newWeapon and { uid = newWeapon.uid, item = newWeapon.item } or nil,
 				rewarded = rewarded,
 				inv = prof and Inventory.snapshot(prof.inv) or nil,

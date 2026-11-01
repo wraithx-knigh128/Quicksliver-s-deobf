@@ -20,10 +20,12 @@ local Poses = require(script.Parent.Poses)
 local AnimSpring = require(script.Parent.AnimSpring)
 local Cosmetics = require(script.Parent.Cosmetics)
 local NetInput = require(Veil.Combat.NetInput)
+local Assets = require(Veil.Assets)
 local StageBuilder = require(script.Parent.StageBuilder)
 local FightCamera = require(script.Parent.FightCamera)
 local VFX = require(script.Parent.VFX)
 local CineFX = require(script.Parent.CineFX)
+local Impacts = require(script.Parent.Impacts)
 local Audio = require(Client.Core.Audio)
 local Input = require(Client.Core.Input)
 local Voice = require(Client.Core.Voice)
@@ -659,6 +661,29 @@ function FightView:finisherPose(_i: number, f, style: string)
 	return Poses.victoryFor(f.def.id, style, self.time), "fin:win"
 end
 
+-- Announcer line: the imported announcer pack when it's uploaded, otherwise the
+-- text-to-speech announcer reading the fallback text.
+local function announcer(key: string, fallback: string?)
+	if Assets.hasSound(key) then
+		Audio.play(key, { group = "voice", volume = 1 })
+		return true
+	end
+	if fallback then
+		Voice.say(fallback, "announcer", { channel = "announcer" })
+	end
+	return false
+end
+FightView.announcer = announcer
+
+-- The arena floor's look, for craters and debris.
+function FightView:groundLook()
+	local cur = StageBuilder.current()
+	local st = cur and cur.stage
+	local col = st and st.floorColor and Color3.fromHex(st.floorColor) or Color3.fromHex("#5A5048")
+	local mat = st and st.floorMaterial and (Enum.Material :: any)[st.floorMaterial] or Enum.Material.Slate
+	return col, mat
+end
+
 -- Face for a fighter's current state.
 local EXPRESSION_OF = {
 	attack = "angry",
@@ -1002,7 +1027,11 @@ function FightView:onEvent(ev)
 		self.hud:cinema(false)
 		local final = m.fighters[1].roundWins == m.roundsToWin - 1 and m.fighters[2].roundWins == m.roundsToWin - 1
 		self.hud:announce(final and "FINAL ROUND (NO PRESSURE)" or ("ROUND " .. tostring(ev.round)), nil, { hold = 1.1 })
-		Voice.say(final and "Final round. No pressure." or ("Round " .. tostring(ev.round)), "announcer", { channel = "announcer" })
+		if ev.round == 1 and not final then
+			announcer("ann_round1", "Round one")
+		else
+			Voice.say(final and "Final round. No pressure." or ("Round " .. tostring(ev.round)), "announcer", { channel = "announcer" })
+		end
 		StageBuilder.react("round")
 		Audio.play("round_gong", { volume = 0.9 })
 		Audio.play("countdown", { volume = 0.6 })
@@ -1010,7 +1039,7 @@ function FightView:onEvent(ev)
 		self.hud:announce("FIGHT", nil, { punch = true, color = Theme.Colors.goldBright, hold = 0.7 })
 		self:showWorldTags(2.2)
 		Audio.play("fight", { volume = 1 })
-		Voice.say("Fight!", "announcer", { channel = "announcer", volume = 1.2 })
+		announcer("ann_fight", "Fight!")
 		FightCamera.shake(0.5)
 	elseif typ == "move" then
 		local f = m.fighters[ev.fighter]
@@ -1035,6 +1064,7 @@ function FightView:onEvent(ev)
 		local f = m.fighters[ev.fighter]
 		self.hud:flash(Color3.fromHex(f.def.accent), 0.45)
 		Audio.play("super_start", { volume = 1 })
+		Audio.play("user_swell", { volume = 0.55, pitch = 1.15 })
 		StageBuilder.react("super")
 		FightCamera.shake(0.6)
 		VFX.burstShockwave(self:fighterWorldPos(ev.fighter, 3), Color3.fromHex(f.def.accent))
@@ -1055,7 +1085,28 @@ function FightView:onEvent(ev)
 		if big then
 			StageBuilder.react("heavy")
 			Audio.play("impact_sub", { volume = strength == "super" and 1 or 0.75, pitchVar = 0.05 })
+			-- imported sub-bass punch under every big hit, the crack on specials / supers
+			Audio.play("user_bass_hit", { volume = strength == "super" and 1 or 0.8, pitchVar = 0.06 })
+			if strength ~= "heavy" or ev.result == "launch" then
+				Audio.play("user_crack", { volume = 0.7, pitchVar = 0.05 })
+			end
 			FightCamera.punch(strength == "super" and 5 or 2.5)
+		end
+		if big then
+			local victimF = m.fighters[ev.victim]
+			local cols = VFX.colors(ev.element)
+			Impacts.impactLines(pos, cols[1], strength == "super" and 14 or 10, strength == "super" and 7 or 5)
+			local gc, gm = self:groundLook()
+			if victimF.y < 2 then
+				Impacts.debris(v3(victimF.x, 0.4, 0), strength == "super" and 12 or 6, gc, gm, dir)
+			end
+			if ev.element == "lightning" or ev.element == "storm" then
+				Impacts.forkLightning(pos + v3(-dir * 1.5, 7, 0), pos, cols[2])
+			end
+			if ev.result == "knockdown" or ev.result == "launch" then
+				self.pendingCrater = self.pendingCrater or {}
+				self.pendingCrater[ev.victim] = strength == "super" and 4.5 or 3
+			end
 		end
 		-- the camera jolts the way the blow travelled (launchers kick upward)
 		local upward = ev.result == "launch" and 0.8 or -0.25
@@ -1126,11 +1177,21 @@ function FightView:onEvent(ev)
 	elseif typ == "teleport" then
 		local f = m.fighters[ev.fighter]
 		local col = Color3.fromHex(f.def.accent)
+		Impacts.afterimage(self.rigs[ev.fighter], col, 0.45)
 		VFX.teleport(v3(ev.fromX, ev.fromY or 0), col)
 		VFX.teleport(v3(ev.toX, 0), col)
 		Audio.play("teleport", { volume = 0.8 })
 	elseif typ == "dash" then
 		local f = m.fighters[ev.fighter]
+		local rig = self.rigs[ev.fighter]
+		local ghost = Color3.fromHex(f.def.accent):Lerp(Color3.new(1, 1, 1), 0.35)
+		for k = 0, 2 do
+			task.delay(k * 0.05, function()
+				if not self.destroyed and not rig.shattered then
+					Impacts.afterimage(rig, ghost, 0.28)
+				end
+			end)
+		end
 		VFX.footDust(v3(f.x, 0), -f.facing * (ev.dir or 1))
 		Audio.play("dash", { volume = 0.5 })
 		-- lean into a dash, rock back on a backdash
@@ -1149,13 +1210,24 @@ function FightView:onEvent(ev)
 			sp:kick("LUA", 1, -160)
 		end
 		if ev.heavy then
+			Audio.play("user_slam", { volume = 0.8 })
+			local gc, gm = self:groundLook()
+			Impacts.crater(v3(ev.x, 0, 0), 3, gc, gm)
+			Impacts.debris(v3(ev.x, 0.4, 0), 8, gc, gm, 0)
 			FightCamera.shake(0.6)
 			VFX.groundEruption(v3(ev.x, 0), m.fighters[ev.fighter].def.moves.SB and m.fighters[ev.fighter].def.moves.SB.element or "ice", 2.5)
 		end
 	elseif typ == "knockdown" then
 		VFX.dust(v3(ev.x, 0), true)
+		local cr = self.pendingCrater and self.pendingCrater[ev.fighter]
+		if cr then
+			self.pendingCrater[ev.fighter] = nil
+			local gc, gm = self:groundLook()
+			Impacts.crater(v3(ev.x, 0, 0), cr, gc, gm)
+		end
 		Audio.play("knockdown", { volume = 0.9 })
-		Audio.play("body_fall", { volume = 0.8, pitchVar = 0.06 })
+		Audio.play("body_fall", { volume = 0.6, pitchVar = 0.06 })
+		Audio.play("user_slam", { volume = 0.75, pitchVar = 0.05 })
 		FightCamera.shake(0.5, 0, -1)
 		local sp = self.springs[ev.fighter]
 		if sp then
@@ -1201,6 +1273,13 @@ function FightView:onEvent(ev)
 	elseif typ == "round_win" then
 		if ev.winner and ev.winner > 0 then
 			local wf = m.fighters[ev.winner]
+			if ev.perfect then
+				task.delay(0.5, function()
+					if not self.destroyed then
+						announcer("ann_flawless", "Not even close.")
+					end
+				end)
+			end
 			self.hud:announce(wf.def.name .. " WINS", ev.perfect and "NOT EVEN CLOSE" or (ev.timeOver and "TIME (SERVER LAG)" or nil), {
 				size = 84,
 				hold = 1.8,
@@ -1216,7 +1295,14 @@ function FightView:onEvent(ev)
 		self.hud:cinema(false)
 		self.hud:showFinisherPrompt(true)
 		Audio.play("finisher_ready", { volume = 1 })
+		Audio.play("user_swell", { volume = 0.9 })
 		Audio.duck(0.4, 6)
+		-- "finish him" only fits some of the cast; everyone else gets the parody line
+		local loser = m.fighters[3 - (ev.winner or 1)]
+		local himVoice = loser and (loser.def.voice == "male" or loser.def.voice == "deep" or loser.def.voice == "hollow")
+		if not (himVoice and announcer("ann_finish_him", nil)) then
+			Voice.say("Delete them!", "announcer", { channel = "announcer" })
+		end
 	elseif typ == "finisher_start" then
 		self.hud:showFinisherPrompt(false)
 		self.hud:cinema(true)
@@ -1228,11 +1314,22 @@ function FightView:onEvent(ev)
 		task.spawn(function()
 			self.cine:impactFrames({ self.rigs[ev.winner], loser }, 4)
 		end)
+		local lf = m.fighters[ev.loser]
+		Impacts.dome(v3(lf.x, 3, 0), col, 22)
+		local gcol, gmat = self:groundLook()
+		Impacts.debris(v3(lf.x, 0.6, 0), 14, gcol, gmat, 0)
 		self.cine:speedLines(0.8, Color3.new(1, 1, 1))
 		VFX.elementBurst(v3(m.fighters[ev.loser].x, 3), ev.style, true)
 		VFX.oofBreak(loser, col)
 		loser.shattered = true
 		Audio.play("shatter", { volume = 1 })
+		Audio.play("user_crack", { volume = 1 })
+		Audio.play("user_bass_hit", { volume = 1 })
+		task.delay(0.7, function()
+			if not self.destroyed then
+				announcer("ann_fatality", "Account deleted.")
+			end
+		end)
 		Audio.play("oof", { group = "voice", volume = 1 })
 		self.hud:flash(col, 0.8)
 		FightCamera.shake(1.5)
@@ -1295,6 +1392,7 @@ function FightView:startSuperCinematic(ev)
 			end
 			local pos = v3(v.x, 3.2 + (k % 2) * 0.6, 0.4)
 			VFX.hit(pos, "heavy", ev.style, a.facing, true)
+			Impacts.afterimage(self.rigs[ev.attacker], col, 0.3)
 			Audio.play("hit_heavy", { volume = 0.8, pitchVar = 0.1 })
 			FightCamera.shake(0.7)
 		end)
@@ -1305,6 +1403,11 @@ function FightView:startSuperCinematic(ev)
 		end
 		VFX.burstShockwave(v3(v.x, 3), col)
 		VFX.elementBurst(v3(v.x, 3), ev.style, true)
+		Impacts.dome(v3(v.x, 2.5, 0), col, 18)
+		local gc, gm = self:groundLook()
+		Impacts.crater(v3(v.x, 0, 0), 5, gc, gm)
+		Impacts.debris(v3(v.x, 0.6, 0), 16, gc, gm, a.facing)
+		Impacts.impactLines(v3(v.x, 3, 0), col, 16, 8)
 		FightCamera.shake(1.6)
 		FightCamera.punch(6)
 		self.cine:impactFrames({ self.rigs[ev.attacker], self.rigs[ev.victim] }, 3)
@@ -1381,6 +1484,7 @@ function FightView:result()
 			winner = e.winner or m.winner,
 			reason = e.reason,
 			rewards = e.rewards,
+			bonus = e.bonus,
 			weapon = e.weapon,
 			rewarded = e.rewarded,
 			rounds = { m.fighters[1].roundWins, m.fighters[2].roundWins },
@@ -1423,6 +1527,7 @@ function FightView:destroy()
 	self.cine:destroy()
 	self.hud:destroy()
 	self.folder:Destroy()
+	Impacts.clear()
 	VFX.clear()
 	Subtitles.hide()
 	FightCamera.disable()

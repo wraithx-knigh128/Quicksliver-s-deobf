@@ -125,6 +125,72 @@ do
 end
 
 ---------------------------------------------------------------------------
+print("[2b] Rarity pays: reward bonus, upgrades, salvage")
+---------------------------------------------------------------------------
+do
+	local inv = Inventory.new()
+	local c = Inventory.addWeapon(inv, 5, "katana_starter") -- common
+	check(math.abs(Items.rewardBonus(c) - Items.RarityBonus.common) < 1e-9, "common skin bonus")
+	local m = Inventory.addWeapon(inv, 5, "great_cosmic", "oof") -- mythic + mythic enchant
+	check(math.abs(Items.rewardBonus(m) - (Items.RarityBonus.mythic + Items.EnchantBonus.mythic)) < 1e-9, "mythic + mythic enchant bonus")
+	check(Items.rewardBonus(m) > Items.rewardBonus(c), "rarer weapons pay more")
+	-- upgrades
+	inv.res.studs, inv.res.scrap, inv.res.glitch, inv.res.token = 99999, 99999, 999, 99
+	local before = Items.rewardBonus(c)
+	for _ = 1, Items.MaxLevel - 1 do
+		local ok = Inventory.upgrade(inv, c.uid)
+		check(ok == true, "upgrade step")
+	end
+	check(c.lvl == Items.MaxLevel, "reached max level")
+	check(Items.rewardBonus(c) > before, "levels raise the bonus")
+	local okMax, whyMax = Inventory.upgrade(inv, c.uid)
+	check(okMax == false and whyMax == "already max level", "no upgrades past max")
+	for lv = 1, Items.MaxLevel - 1 do
+		local cost = Items.upgradeCost(lv)
+		check(cost.studs > 0 and cost.scrap > 0, "upgrade cost at level " .. lv)
+		if lv > 1 then
+			check(cost.studs > Items.upgradeCost(lv - 1).studs, "upgrade costs rise")
+		end
+	end
+	for _, w in Items.Weapons do
+		for _, e in Items.Enchantments do
+			check(Items.rewardBonus({ item = w.id, ench = e.id, lvl = Items.MaxLevel }) <= Items.MaxBonus + 1e-9, "bonus capped")
+		end
+	end
+	local poor = Inventory.new()
+	local pw = Inventory.addWeapon(poor, 6, "katana_neon")
+	poor.res.studs = 0
+	check(Inventory.upgrade(poor, pw.uid) == false, "upgrade refuses without resources")
+	-- salvage
+	Inventory.equip(inv, "admin", m.uid)
+	local studsBefore = inv.res.studs
+	local value = Inventory.salvage(inv, m.uid)
+	check(value ~= nil and value.essence == 1, "mythic salvage pays essence")
+	check(Inventory.findWeapon(inv, m.uid) == nil and inv.equipped.admin == nil, "salvaged weapon removed and unequipped")
+	check(inv.res.studs == studsBefore + value.studs, "salvage adds the studs")
+	check(Items.salvageValue({ item = "katana_starter", lvl = 10 }).studs > Items.salvageValue({ item = "katana_starter", lvl = 1 }).studs, "upgraded weapons salvage for more")
+	-- the bonus really scales payouts
+	local function average(bonus)
+		local total = 0
+		for _ = 1, 4000 do
+			local r = Inventory.rollRewards(Items.Rewards.onlineWin, rand, bonus)
+			total += r.res.studs or 0
+		end
+		return total / 4000
+	end
+	local base, boosted = average(0), average(0.5)
+	check(boosted > base * 1.42 and boosted < base * 1.58, string.format("+50%% bonus pays ~1.5x studs (%.1f vs %.1f)", boosted, base))
+	-- bonusFor only counts the weapon on the fighter you played
+	local inv2 = Inventory.new()
+	local k = Inventory.addWeapon(inv2, 7, "katana_neon", "golden")
+	Inventory.equip(inv2, "noob", k.uid)
+	check(Inventory.bonusFor(inv2, "noob") > 0 and Inventory.bonusFor(inv2, "frosty") == 0, "bonus follows the fighter you played")
+	-- sanitize keeps levels in range
+	local clean = Inventory.sanitize({ weapons = { { uid = "x", item = "katana_neon", lvl = 99 }, { uid = "y", item = "katana_neon", lvl = -3 } } })
+	check(clean.weapons[1].lvl == Items.MaxLevel and clean.weapons[2].lvl == 1, "levels clamped on load")
+end
+
+---------------------------------------------------------------------------
 print("[3] Trading: offers, ready reset, countdown, atomic swap, no dupes")
 ---------------------------------------------------------------------------
 do
@@ -328,6 +394,17 @@ do
 		got += n
 	end
 	check(endMsg.rewarded == true and got > 0, "rewards granted from the server's result")
+	if endMsg.winner == 1 or endMsg.winner == 2 then
+		check(type(endMsg.bonus) == "number", "reward bonus reported")
+	end
+	-- P1 fought with an equipped Neon Katana + Blazing: its bonus applies
+	local p1End
+	for _, msg in r.inbox[r.P1] do
+		if msg.op == "end" then
+			p1End = msg
+		end
+	end
+	check(p1End and math.abs(p1End.bonus - Items.rewardBonus({ item = "katana_neon", ench = "blazing", lvl = 1 })) < 1e-9, "the equipped weapon's bonus pays out online")
 	print(string.format("  online match: %d frames, winner P%d, %d sync checks", r.frames, endMsg.winner, syncCount))
 end
 

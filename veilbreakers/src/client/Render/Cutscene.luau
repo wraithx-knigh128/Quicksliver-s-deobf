@@ -25,6 +25,7 @@ local Rig = require(script.Parent.Rig)
 local Poses = require(script.Parent.Poses)
 local AnimSpring = require(script.Parent.AnimSpring)
 local CineFX = require(script.Parent.CineFX)
+local Impacts = require(script.Parent.Impacts)
 local StageBuilder = require(script.Parent.StageBuilder)
 local FightCamera = require(script.Parent.FightCamera)
 local VFX = require(script.Parent.VFX)
@@ -639,6 +640,9 @@ function Cutscene.play(scene, uiRoot: Instance)
 				VFX.teleport(pos, a and Color3.fromHex(a.def.accent) or Color3.new(1, 1, 1))
 			elseif ev.kind == "roots" then
 				VFX.groundEruption(pos, "nature", 4)
+				local gc = stageDef.floorColor and Color3.fromHex(stageDef.floorColor) or Color3.fromHex("#3A3020")
+				Impacts.crater(pos, 4, gc, Enum.Material.Ground)
+				Impacts.debris(pos + V(0, 0.4, 0), 12, gc, Enum.Material.Ground, 0)
 			elseif ev.kind == "bolt_impact" then
 				VFX.hit(pos + V(0.8, 3.5, 0.4), "heavy", "ash", 1, false)
 			elseif ev.kind == "smoke" then
@@ -649,6 +653,11 @@ function Cutscene.play(scene, uiRoot: Instance)
 			elseif ev.kind == "slam" then
 				VFX.burstShockwave(pos + V(0, 0.5, 0), a and Color3.fromHex(a.def.accent) or Color3.new(1, 1, 1))
 				VFX.dust(pos, true)
+				local st = stageDef
+				local gc = st.floorColor and Color3.fromHex(st.floorColor) or Color3.fromHex("#5A5048")
+				local gm = st.floorMaterial and (Enum.Material :: any)[st.floorMaterial] or Enum.Material.Slate
+				Impacts.crater(pos, 3.5, gc, gm)
+				Impacts.debris(pos + V(0, 0.4, 0), 10, gc, gm, 0)
 			elseif ev.kind == "flash" then
 				fx:flash(Color3.new(1, 1, 1), 1.2)
 			end
@@ -814,6 +823,7 @@ function Cutscene.play(scene, uiRoot: Instance)
 	folder:Destroy()
 	ui:Destroy()
 	VFX.clear()
+	Impacts.clear()
 	local _ = stage
 	return skipScene and "skipped" or "done"
 end

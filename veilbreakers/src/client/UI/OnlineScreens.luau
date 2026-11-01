@@ -289,15 +289,17 @@ local function weaponEntries(filterType: string?)
 			for _, fd in fightersFor(def.type) do
 				table.insert(fitNames, fd.name)
 			end
+			local bonus = math.floor(Items.rewardBonus(rec) * 100 + 0.5)
 			table.insert(entries, {
 				id = rec.uid,
 				rec = rec,
 				text = string.upper(Items.weaponLabel(rec)),
-				tag = Items.RARITY[def.rarity].name .. (e and ("  \u{00B7}  " .. Items.RARITY[e.rarity].name .. " ENCHANT") or ""),
+				tag = Items.RARITY[def.rarity].name .. "  \u{00B7}  LV " .. (rec.lvl or 1) .. "  \u{00B7}  +" .. bonus .. "%",
 				tagColor = rarityColor(def.rarity),
 				desc = (Items.WeaponTypeById[def.type] and Items.WeaponTypeById[def.type].name or def.type)
 					.. " skin for " .. table.concat(fitNames, ", ")
-					.. (e and (".  " .. e.name .. ": " .. e.desc) or ".  No enchantment.")
+					.. (e and (".  " .. e.name .. " (" .. Items.RARITY[e.rarity].name .. "): " .. e.desc) or ".  No enchantment.")
+					.. "  Earns +" .. bonus .. "% resources when you fight with it."
 					.. (on and ("  EQUIPPED ON " .. string.upper(on) .. ".") or ""),
 			})
 		end
@@ -313,7 +315,7 @@ function OnlineScreens.pickWeapon(root: Instance, heading: string, sub: string?)
 			table.remove(entries, i)
 		end
 	end
-	return choose(root, "PickWeapon", heading, sub, entries, { emptyText = "No weapons yet. Win online fights or forge one." })
+	return choose(root, "PickWeapon", heading, sub, entries, { emptyText = "No weapons yet. Win online fights or forge one.", size = 29 })
 end
 
 function OnlineScreens.inventory(root: Instance)
@@ -329,8 +331,13 @@ function OnlineScreens.inventory(root: Instance)
 			table.insert(entries, all[i])
 		end
 		local turned = nil
-		local uid = choose(root, "Inventory", "INVENTORY & LOADOUT", string.format("%d WEAPONS  \u{00B7}  PAGE %d / %d", #all, page, pages), entries, {
+		local best = 0
+		for _, w in Net.inv.weapons or {} do
+			best = math.max(best, Items.rewardBonus(w))
+		end
+		local uid = choose(root, "Inventory", "INVENTORY & LOADOUT", string.format("%d WEAPONS  \u{00B7}  BEST REWARD BONUS +%d%%  \u{00B7}  PAGE %d / %d", #all, math.floor(best * 100 + 0.5), page, pages), entries, {
 			emptyText = "No weapons yet. Win online fights or visit the Forge.",
+			size = 29,
 			hints = { { "left", "" }, { "right", "PAGE" }, { "confirm", "OPTIONS" }, { "back", "BACK" } },
 			onAction = function(a)
 				if a == "left" and page > 1 then
@@ -365,6 +372,19 @@ function OnlineScreens.inventory(root: Instance)
 				table.insert(actions, { id = "unequip", text = "UNEQUIP", desc = "Back to the default look." })
 			end
 			table.insert(actions, { id = "enchant", text = "ENCHANT", desc = "Roll a new enchantment at the altar (" .. costText(Items.EnchantCost) .. ")." })
+			local lvl = rec.lvl or 1
+			if lvl < Items.MaxLevel then
+				local nextRec = table.clone(rec)
+				nextRec.lvl = lvl + 1
+				table.insert(actions, {
+					id = "upgrade",
+					text = "UPGRADE TO LV " .. (lvl + 1),
+					tag = "+" .. math.floor(Items.rewardBonus(rec) * 100 + 0.5) .. "% \u{2192} +" .. math.floor(Items.rewardBonus(nextRec) * 100 + 0.5) .. "%",
+					desc = "Cost: " .. costText(Items.upgradeCost(lvl)) .. ".  Higher levels earn more resources and glow harder in fights.",
+				})
+			end
+			local value = Items.salvageValue(rec)
+			table.insert(actions, { id = "salvage", text = "SALVAGE", tag = "+" .. (value.studs or 0) .. " STUDS", tagColor = C.crimsonBright, desc = "Break it down for " .. costText(value) .. ". This can't be undone." })
 			local act = choose(root, "WeaponActions", string.upper(Items.weaponLabel(rec)), Items.RARITY[def.rarity].name, actions)
 			if act and string.sub(act, 1, 6) == "equip:" then
 				local res = Net.request("equip", { fighter = string.sub(act, 7), uid = uid })
@@ -377,6 +397,23 @@ function OnlineScreens.inventory(root: Instance)
 				end
 			elseif act == "enchant" then
 				OnlineScreens.altar(root, uid)
+			elseif act == "upgrade" then
+				local res = Net.request("upgrade", uid)
+				if res.ok then
+					Audio.ui("ui_lock")
+					Toast.show("UPGRADED TO LV " .. tostring(res.level), Items.weaponLabel({ item = rec.item, ench = rec.ench, lvl = res.level }), Color3.fromHex("#FFB02E"))
+				else
+					Toast.show("CAN'T UPGRADE", res.err, C.crimsonBright)
+				end
+			elseif act == "salvage" then
+				local sure = choose(root, "ConfirmSalvage", "SALVAGE " .. string.upper(Items.weaponLabel(rec)) .. "?", nil, {
+					{ id = "yes", text = "YES, SALVAGE IT", desc = "You get " .. costText(Items.salvageValue(rec)) .. "." },
+					{ id = "no", text = "KEEP IT" },
+				})
+				if sure == "yes" then
+					local res = Net.request("salvage", uid)
+					Toast.show(res.ok and "SALVAGED" or "COULDN'T SALVAGE", res.ok and costText(res.rewards or {}) or res.err, res.ok and C.goldBright or C.crimsonBright)
+				end
 			end
 		end
 	end
@@ -746,6 +783,9 @@ function OnlineScreens.results(root: Instance, result)
 	if result.rewarded == false then
 		table.insert(lines, "No rewards this match (rematch limit or an early forfeit).")
 	elseif result.rewards then
+		if result.bonus and result.bonus > 0 then
+			table.insert(lines, "WEAPON REWARD BONUS  +" .. math.floor(result.bonus * 100 + 0.5) .. "%")
+		end
 		for _, r in Items.Resources do
 			local n = result.rewards[r.id]
 			if n and n > 0 then

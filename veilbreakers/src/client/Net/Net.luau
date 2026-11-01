@@ -107,7 +107,7 @@ function Net.cosmeticFor(fighterId: string)
 	end
 	for _, w in Net.inv.weapons do
 		if w.uid == uid then
-			return { item = w.item, ench = w.ench }
+			return { item = w.item, ench = w.ench, lvl = w.lvl or 1 }
 		end
 	end
 	return nil

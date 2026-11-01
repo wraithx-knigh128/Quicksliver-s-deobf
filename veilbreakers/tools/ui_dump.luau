@@ -34,7 +34,7 @@ if which == "hub" or which == "trade" or which == "inv" then
 	local OnlineScreens = Loader.require(client.UI.OnlineScreens)
 	Net.inv = {
 		res = { studs = 120, scrap = 40, glitch = 5, relic = 2, token = 1 },
-		weapons = { { uid = "w1-1", item = "katana_neon", ench = "blazing" }, { uid = "w1-2", item = "hammer_ban", ench = "rainbow" }, { uid = "w1-3", item = "great_cosmic" }, { uid = "w1-4", item = "bow_camo", ench = "toxic" } },
+		weapons = { { uid = "w1-1", item = "katana_neon", ench = "blazing", lvl = 4 }, { uid = "w1-2", item = "hammer_ban", ench = "rainbow", lvl = 10 }, { uid = "w1-3", item = "great_cosmic", lvl = 1 }, { uid = "w1-4", item = "bow_camo", ench = "toxic", lvl = 2 } },
 		equipped = { noob = "w1-1" },
 	}
 	task.spawn(function()

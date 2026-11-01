@@ -81,6 +81,8 @@ Assets.AudioAtlas = {
 	ambience = "",
 	music_a = "",
 	music_b = "",
+	-- optional: the imported announcer lines (audio/atlas/veil_announcer.ogg)
+	announcer = "",
 }
 
 -- Optional per-sound overrides. Leave "" to use the atlas / fallback.
@@ -198,6 +200,11 @@ local function normalise(id: string): string
 end
 
 -- Returns (soundId, region?) where region = { start, length } inside an atlas.
+-- True when a sound will actually play (has an uploaded id or a built-in fallback).
+function Assets.hasSound(key: string): boolean
+	return (Assets.sound(key)) ~= ""
+end
+
 function Assets.sound(key: string): (string, { start: number, length: number }?)
 	local id = (Assets.Sounds :: any)[key]
 	if id and id ~= "" then
@@ -229,6 +236,12 @@ return {
 	amb_forest = { atlas = "ambience", start = 24.35, length = 24.0 },
 	amb_lava = { atlas = "ambience", start = 48.7, length = 24.0 },
 	amb_wind = { atlas = "ambience", start = 73.05, length = 24.0 },
+	ann_choose = { atlas = "announcer", start = 0.0, length = 2.66 },
+	ann_fatality = { atlas = "announcer", start = 3.01, length = 1.84 },
+	ann_fight = { atlas = "announcer", start = 5.2, length = 0.9371 },
+	ann_finish_him = { atlas = "announcer", start = 6.4871, length = 1.56 },
+	ann_flawless = { atlas = "announcer", start = 8.3971, length = 2.48 },
+	ann_round1 = { atlas = "announcer", start = 11.2271, length = 1.62 },
 	block = { atlas = "sfx", start = 0.0, length = 1.35 },
 	body_fall = { atlas = "sfx", start = 1.7, length = 1.17 },
 	boom = { atlas = "sfx", start = 3.22, length = 3.7 },
@@ -301,18 +314,22 @@ return {
 	ui_move = { atlas = "sfx", start = 117.7261, length = 0.0624 },
 	ui_select = { atlas = "sfx", start = 118.1385, length = 0.0471 },
 	ui_versus = { atlas = "sfx", start = 118.5356, length = 2.85 },
-	voice_d_attack = { atlas = "sfx", start = 121.7356, length = 1.74 },
-	voice_d_hurt = { atlas = "sfx", start = 123.8256, length = 1.82 },
-	voice_f_attack = { atlas = "sfx", start = 125.9956, length = 0.2371 },
-	voice_f_hurt = { atlas = "sfx", start = 126.5827, length = 0.3171 },
-	voice_h_attack = { atlas = "sfx", start = 127.2498, length = 2.19 },
-	voice_h_hurt = { atlas = "sfx", start = 129.7898, length = 2.27 },
-	voice_m_attack = { atlas = "sfx", start = 132.4098, length = 0.2371 },
-	voice_m_hurt = { atlas = "sfx", start = 132.9969, length = 0.3171 },
-	whoosh_heavy = { atlas = "sfx", start = 133.664, length = 0.3371 },
-	whoosh_light = { atlas = "sfx", start = 134.3511, length = 0.1971 },
-	wing_flap = { atlas = "sfx", start = 134.8982, length = 0.4971 },
-	wolf_howl = { atlas = "sfx", start = 135.7453, length = 3.6 },
+	user_bass_hit = { atlas = "sfx", start = 121.7356, length = 0.5171 },
+	user_crack = { atlas = "sfx", start = 122.6027, length = 1.46 },
+	user_slam = { atlas = "sfx", start = 124.4127, length = 1.44 },
+	user_swell = { atlas = "sfx", start = 126.2027, length = 4.9216 },
+	voice_d_attack = { atlas = "sfx", start = 131.4744, length = 1.74 },
+	voice_d_hurt = { atlas = "sfx", start = 133.5644, length = 1.82 },
+	voice_f_attack = { atlas = "sfx", start = 135.7344, length = 0.2371 },
+	voice_f_hurt = { atlas = "sfx", start = 136.3215, length = 0.3171 },
+	voice_h_attack = { atlas = "sfx", start = 136.9885, length = 2.19 },
+	voice_h_hurt = { atlas = "sfx", start = 139.5285, length = 2.27 },
+	voice_m_attack = { atlas = "sfx", start = 142.1485, length = 0.2371 },
+	voice_m_hurt = { atlas = "sfx", start = 142.7356, length = 0.3171 },
+	whoosh_heavy = { atlas = "sfx", start = 143.4027, length = 0.3371 },
+	whoosh_light = { atlas = "sfx", start = 144.0898, length = 0.1971 },
+	wing_flap = { atlas = "sfx", start = 144.6369, length = 0.4971 },
+	wolf_howl = { atlas = "sfx", start = 145.484, length = 3.6 },
 }
 ]]></string>
         </Properties>
@@ -3333,7 +3350,7 @@ local Config = {}
 
 Config.GameTitle = "OOF COMBAT"
 Config.GameSubtitle = "THE GREAT SERVER RESET"
-Config.Version = "1.4.0"
+Config.Version = "1.5.0"
 
 Config.TickRate = 60
 Config.TickDt = 1 / 60
@@ -5964,6 +5981,74 @@ Items.TradeMaxWeapons = 8
 Items.TradeConfirmSeconds = 3
 
 -------------------------------------------------------------------------------
+-- Rarity pays: the reward bonus (an economy buff, never a combat one)
+-------------------------------------------------------------------------------
+
+-- The weapon you fight with boosts every resource you earn from that fight:
+-- its skin rarity + its enchantment rarity + its upgrade level.
+Items.RarityBonus = { common = 0.05, uncommon = 0.10, rare = 0.18, epic = 0.28, legendary = 0.40, mythic = 0.60 }
+Items.EnchantBonus = { common = 0.03, uncommon = 0.05, rare = 0.08, epic = 0.12, legendary = 0.18, mythic = 0.25 }
+Items.LevelBonus = 0.04 -- per upgrade level above 1
+Items.MaxLevel = 10
+Items.MaxBonus = 1.5 -- +150% at most
+
+-- Fraction (0.28 = +28%) a weapon record adds to rewards.
+function Items.rewardBonus(rec): number
+	if not rec then
+		return 0
+	end
+	local def = Items.WeaponById[rec.item]
+	if not def then
+		return 0
+	end
+	local b = Items.RarityBonus[def.rarity] or 0
+	local e = rec.ench and Items.EnchantById[rec.ench]
+	if e then
+		b += Items.EnchantBonus[e.rarity] or 0
+	end
+	b += Items.LevelBonus * (math.clamp(rec.lvl or 1, 1, Items.MaxLevel) - 1)
+	return math.min(b, Items.MaxBonus)
+end
+
+-- Cost to raise a weapon from `level` to `level + 1`.
+function Items.upgradeCost(level: number)
+	local c = { studs = math.floor(30 * level ^ 1.6 + 0.5), scrap = 6 * level }
+	if level >= 4 then
+		c.glitch = level - 3
+	end
+	if level >= 8 then
+		c.token = 1
+	end
+	return c
+end
+
+-- What salvaging a weapon pays: by skin rarity, plus half the studs and scrap
+-- spent upgrading it.
+Items.SalvageByRarity = {
+	common = { studs = 15, scrap = 5 },
+	uncommon = { studs = 30, scrap = 10, glitch = 1 },
+	rare = { studs = 60, scrap = 18, glitch = 2 },
+	epic = { studs = 120, scrap = 30, glitch = 4, relic = 1 },
+	legendary = { studs = 250, scrap = 60, glitch = 8, relic = 2, token = 1 },
+	mythic = { studs = 500, scrap = 120, glitch = 15, relic = 4, token = 2, essence = 1 },
+}
+function Items.salvageValue(rec)
+	local def = Items.WeaponById[rec.item]
+	local out = table.clone(Items.SalvageByRarity[def and def.rarity or "common"] or Items.SalvageByRarity.common)
+	for lv = 1, math.clamp(rec.lvl or 1, 1, Items.MaxLevel) - 1 do
+		local c = Items.upgradeCost(lv)
+		out.studs = (out.studs or 0) + math.floor(c.studs * 0.5)
+		out.scrap = (out.scrap or 0) + math.floor(c.scrap * 0.5)
+	end
+	if rec.ench then
+		local e = Items.EnchantById[rec.ench]
+		local order = e and Items.RARITY[e.rarity].order or 1
+		out.glitch = (out.glitch or 0) + order
+	end
+	return out
+end
+
+-------------------------------------------------------------------------------
 -- Helpers
 -------------------------------------------------------------------------------
 
@@ -5997,10 +6082,13 @@ function Items.weaponsOfType(weaponType: string)
 	return out
 end
 
--- Readable name for a weapon record: "Neon Katana (Blazing)".
+-- Readable name for a weapon record: "Neon Katana +3  ·  Blazing".
 function Items.weaponLabel(rec): string
 	local def = Items.WeaponById[rec.item]
 	local name = def and def.name or rec.item
+	if (rec.lvl or 1) > 1 then
+		name ..= " +" .. tostring(rec.lvl - 1)
+	end
 	local e = rec.ench and Items.EnchantById[rec.ench]
 	if e then
 		return name .. "  \u{00B7}  " .. e.name
@@ -6952,8 +7040,9 @@ function Inventory.sanitize(raw)
 			end
 			if type(w) == "table" and type(w.uid) == "string" and #w.uid <= 40 and not seen[w.uid] and Items.WeaponById[w.item] then
 				local ench = (type(w.ench) == "string" and Items.EnchantById[w.ench]) and w.ench or nil
+				local lvl = (type(w.lvl) == "number" and w.lvl == w.lvl) and math.clamp(math.floor(w.lvl), 1, Items.MaxLevel) or 1
 				seen[w.uid] = true
-				table.insert(inv.weapons, { uid = w.uid, item = w.item, ench = ench })
+				table.insert(inv.weapons, { uid = w.uid, item = w.item, ench = ench, lvl = lvl })
 			end
 		end
 	end
@@ -7017,7 +7106,7 @@ function Inventory.addWeapon(inv, ownerId: number, item: string, ench: string?)
 	end
 	local uid = string.format("w%d-%d", ownerId, inv.nextUid)
 	inv.nextUid += 1
-	local rec = { uid = uid, item = item, ench = (ench and Items.EnchantById[ench]) and ench or nil }
+	local rec = { uid = uid, item = item, ench = (ench and Items.EnchantById[ench]) and ench or nil, lvl = 1 }
 	table.insert(inv.weapons, rec)
 	return rec
 end
@@ -7116,17 +7205,60 @@ function Inventory.forge(inv, ownerId: number, weaponType: string, rand: () -> n
 	return Inventory.addWeapon(inv, ownerId, skin.id, nil)
 end
 
+-- Upgrade a weapon one level (raises its reward bonus and its visual tier).
+function Inventory.upgrade(inv, uid: string): (boolean, any)
+	local w = Inventory.findWeapon(inv, uid)
+	if not w then
+		return false, "you don't own that weapon"
+	end
+	local lvl = w.lvl or 1
+	if lvl >= Items.MaxLevel then
+		return false, "already max level"
+	end
+	if not Inventory.spend(inv, Items.upgradeCost(lvl)) then
+		return false, "not enough resources"
+	end
+	w.lvl = lvl + 1
+	return true, w.lvl
+end
+
+-- Break a weapon down into resources (pays more for rarer / upgraded weapons).
+function Inventory.salvage(inv, uid: string)
+	local w = Inventory.findWeapon(inv, uid)
+	if not w then
+		return nil, "you don't own that weapon"
+	end
+	local value = Items.salvageValue(w)
+	Inventory.takeWeapon(inv, uid)
+	Inventory.addResources(inv, value)
+	return value
+end
+
+-- Reward bonus from the weapon equipped on the fighter you played.
+function Inventory.bonusFor(inv, fighterId: string?): number
+	if not fighterId then
+		return 0
+	end
+	local uid = inv.equipped[fighterId]
+	local w = uid and Inventory.findWeapon(inv, uid)
+	return w and Items.rewardBonus(w) or 0
+end
+
 -- Roll a reward table ({ min, max } ranges or a 0..1 chance) into concrete amounts.
-function Inventory.rollRewards(spec, rand: () -> number)
-	local out = { res = {}, weapon = nil }
+-- `bonus` (0.28 = +28%) scales resource amounts and nudges the rare-drop chances.
+function Inventory.rollRewards(spec, rand: () -> number, bonus: number?)
+	local b = math.clamp(bonus or 0, 0, Items.MaxBonus)
+	local out = { res = {}, weapon = nil, bonus = b }
 	for _, r in Items.Resources do
 		local v = spec[r.id]
 		if type(v) == "table" then
 			local n = v[1] + math.floor(rand() * (v[2] - v[1] + 1))
+			-- stochastic rounding keeps small bonuses meaningful
+			n = math.floor(n * (1 + b) + rand())
 			if n > 0 then
 				out.res[r.id] = n
 			end
-		elseif type(v) == "number" and v > 0 and rand() < v then
+		elseif type(v) == "number" and v > 0 and rand() < math.min(0.9, v * (1 + b * 0.5)) then
 			out.res[r.id] = 1
 		end
 	end
@@ -7157,14 +7289,14 @@ function Inventory.cosmeticFor(inv, fighterId: string)
 	if not w then
 		return nil
 	end
-	return { item = w.item, ench = w.ench }
+	return { item = w.item, ench = w.ench, lvl = w.lvl or 1 }
 end
 
 -- Copy for the client.
 function Inventory.snapshot(inv)
 	local out = { res = table.clone(inv.res), weapons = {}, equipped = table.clone(inv.equipped) }
 	for _, w in inv.weapons do
-		table.insert(out.weapons, { uid = w.uid, item = w.item, ench = w.ench })
+		table.insert(out.weapons, { uid = w.uid, item = w.item, ench = w.ench, lvl = w.lvl or 1 })
 	end
 	return out
 end
@@ -7416,6 +7548,24 @@ invFn.OnServerInvoke = function(player: Player, op, arg)
 			Profiles.markDirty(player)
 		end
 		return { ok = rec ~= nil, err = err, weapon = rec and { uid = rec.uid, item = rec.item } or nil, inv = Inventory.snapshot(inv) }
+	elseif op == "upgrade" then
+		if type(arg) ~= "string" then
+			return { ok = false, err = "bad request" }
+		end
+		local ok, res = Inventory.upgrade(inv, arg)
+		if ok then
+			Profiles.markDirty(player)
+		end
+		return { ok = ok, err = (not ok) and res or nil, level = ok and res or nil, inv = Inventory.snapshot(inv) }
+	elseif op == "salvage" then
+		if type(arg) ~= "string" then
+			return { ok = false, err = "bad request" }
+		end
+		local value, err = Inventory.salvage(inv, arg)
+		if value then
+			Profiles.markDirty(player)
+		end
+		return { ok = value ~= nil, err = err, rewards = value, inv = Inventory.snapshot(inv) }
 	elseif op == "claim" then
 		-- reward for finishing a CPU fight (unverifiable): small and rate-limited
 		local now = os.time()
@@ -7428,10 +7578,11 @@ invFn.OnServerInvoke = function(player: Player, op, arg)
 		end
 		p.lastClaim = now
 		p.daily.claims += 1
-		local rewards = Inventory.rollRewards(Items.Rewards.offline, rand)
+		local fighterId = type(arg) == "table" and type(arg.fighter) == "string" and Fighters.byId[arg.fighter] and arg.fighter or nil
+		local rewards = Inventory.rollRewards(Items.Rewards.offline, rand, Inventory.bonusFor(inv, fighterId))
 		Inventory.applyRewards(inv, player.UserId, rewards)
 		Profiles.markDirty(player)
-		return { ok = true, rewards = rewards.res, inv = Inventory.snapshot(inv) }
+		return { ok = true, rewards = rewards.res, bonus = rewards.bonus, inv = Inventory.snapshot(inv) }
 	end
 	return { ok = false, err = "unknown request" }
 end
@@ -7509,8 +7660,6 @@ inputEv.OnServerEvent:Connect(function(player: Player, held, pressed)
 	online:input(player, held, pressed)
 end)
 
--- keep the lints honest about used modules
-local _ = Fighters
 ]]></string>
         </Properties>
       </Item>
@@ -7831,7 +7980,8 @@ function OnlineMatch:finish(m, winnerSide: number?, reason: string)
 				prof.stats.onlineLosses = (prof.stats.onlineLosses or 0) + 1
 			end
 			if rewarded and winnerSide then
-				rewards = Inventory.rollRewards(won and Items.Rewards.onlineWin or Items.Rewards.onlineLoss, self.deps.rand)
+				local fighterId = side == 1 and m.spec.p1.fighter or m.spec.p2.fighter
+				rewards = Inventory.rollRewards(won and Items.Rewards.onlineWin or Items.Rewards.onlineLoss, self.deps.rand, Inventory.bonusFor(prof.inv, fighterId))
 				newWeapon = Inventory.applyRewards(prof.inv, p.UserId, rewards)
 			end
 		end
@@ -7846,6 +7996,7 @@ function OnlineMatch:finish(m, winnerSide: number?, reason: string)
 				rounds = { f[1].roundWins, f[2].roundWins },
 				stats = { f[1].stats, f[2].stats },
 				rewards = rewards.res,
+				bonus = rewards.bonus,
 				weapon = newWeapon and { uid = newWeapon.uid, item = newWeapon.item } or nil,
 				rewarded = rewarded,
 				inv = prof and Inventory.snapshot(prof.inv) or nil,
@@ -8337,7 +8488,7 @@ local function describe(inv, offer)
 	for _, uid in offer.weapons do
 		local w = Inventory.findWeapon(inv, uid)
 		if w then
-			table.insert(out.weapons, { uid = w.uid, item = w.item, ench = w.ench })
+			table.insert(out.weapons, { uid = w.uid, item = w.item, ench = w.ench, lvl = w.lvl })
 		end
 	end
 	return out
@@ -9528,7 +9679,7 @@ local function recordResult(result)
 	-- a small resource reward for finishing a CPU fight (the server rate-limits it)
 	if Net.available then
 		task.spawn(function()
-			local res = Net.request("claim")
+			local res = Net.request("claim", { fighter = result.p1 and result.p1.fighter })
 			if res.ok and res.rewards then
 				local parts = {}
 				for _, r in Items.Resources do
@@ -9538,7 +9689,8 @@ local function recordResult(result)
 					end
 				end
 				if #parts > 0 then
-					Toast.show("REWARD", table.concat(parts, "   "), Theme.Colors.goldBright)
+					local b = res.bonus and res.bonus > 0 and ("  (+" .. math.floor(res.bonus * 100 + 0.5) .. "% WEAPON BONUS)") or ""
+					Toast.show("REWARD" .. b, table.concat(parts, "   "), Theme.Colors.goldBright)
 				end
 			end
 		end)
@@ -9878,7 +10030,7 @@ while true do
 				ch:Destroy()
 			end
 		end
-		for _, name in { "VeilFight", "VeilCutscene", "VeilVFX" } do
+		for _, name in { "VeilFight", "VeilCutscene", "VeilVFX", "VeilImpacts" } do
 			local inst = workspace:FindFirstChild(name)
 			if inst then
 				inst:Destroy()
@@ -10007,7 +10159,7 @@ function Net.cosmeticFor(fighterId: string)
 	end
 	for _, w in Net.inv.weapons do
 		if w.uid == uid then
-			return { item = w.item, ench = w.ench }
+			return { item = w.item, ench = w.ench, lvl = w.lvl or 1 }
 		end
 	end
 	return nil
@@ -10679,7 +10831,60 @@ local function hosts(rig)
 	return out
 end
 
--- cosmetic = { item = weaponSkinId, ench = enchantId? }
+-- Rarity aura around the fighter: epic motes, legendary haze + light, mythic embers
+-- + a pulsing light; a sparkle crown at max weapon level.
+local function aura(rig, def, level: number, color: Color3, state)
+	local torso = rig.parts and rig.parts.LowerTorso
+	if not torso then
+		return
+	end
+	local order = Items.RARITY[def.rarity].order
+	local tier = math.max(order >= 6 and 3 or (order >= 5 and 2 or (order >= 4 and 1 or 0)), level >= 8 and 1 or 0)
+	if tier <= 0 and level < 10 then
+		return
+	end
+	local function add(parent, preset, col, rate, size)
+		local e = emitter(parent, preset, col)
+		e.Name = "RarityAura"
+		e.Rate = rate
+		if size then
+			e.Size = NumberSequence.new(size, 0)
+		end
+		table.insert(state.emitters, e)
+		return e
+	end
+	if tier >= 1 then
+		local motes = add(torso, "sparkle", color, 8, 0.3)
+		motes.Acceleration = Vector3.new(0, 5, 0)
+		motes.Speed = NumberRange.new(0.5, 1.5)
+		motes.Lifetime = NumberRange.new(0.8, 1.4)
+	end
+	if tier >= 2 then
+		local haze = add(torso, "bubbles", color, 3, 1.6)
+		haze.Transparency = NumberSequence.new(0.75, 1)
+		haze.LightEmission = 1
+		local l = Instance.new("PointLight")
+		l.Name = "RarityGlow"
+		l.Color = color
+		l.Brightness = 1.2
+		l.Range = 9
+		l.Shadows = false
+		l.Parent = torso
+		table.insert(state.auraLights, l)
+	end
+	if tier >= 3 then
+		local embers = add(torso, "embers", Color3.fromHex("#FF4A6A"), 12, 0.35)
+		embers.Color = ColorSequence.new(Color3.fromHex("#FF4A6A"), color)
+		state.pulseAura = true
+	end
+	if level >= 10 and rig.parts.Head then
+		local crown = add(rig.parts.Head, "sparkle", Color3.fromHex("#FFE27A"), 7, 0.28)
+		crown.Acceleration = Vector3.new(0, 3, 0)
+		crown.Speed = NumberRange.new(0.2, 0.6)
+	end
+end
+
+-- cosmetic = { item = weaponSkinId, ench = enchantId?, lvl = 1..10 }
 function Cosmetics.apply(rig, cosmetic)
 	if not cosmetic or not rig.weapon then
 		return false
@@ -10716,10 +10921,16 @@ function Cosmetics.apply(rig, cosmetic)
 	for _, tr in rig.weapon.trails do
 		tr.Color = ColorSequence.new(Color3.new(1, 1, 1), trailColor)
 	end
-	local state = { glowParts = glowParts, trails = rig.weapon.trails, lights = {}, emitters = {}, anim = fx.animated, glow = glow }
+	local level = math.clamp(cosmetic.lvl or 1, 1, Items.MaxLevel)
+	local state = { glowParts = glowParts, trails = rig.weapon.trails, lights = {}, emitters = {}, auraLights = {}, anim = fx.animated, glow = glow, level = level }
+	-- weapon level makes the trail longer and brighter
+	for _, tr in rig.weapon.trails do
+		tr.Lifetime = 0.24 + 0.015 * (level - 1)
+	end
 	if ench then
 		for _, host in hosts(rig) do
-			table.insert(state.emitters, emitter(host, fx.particles, hex(fx.color)))
+			local main = emitter(host, fx.particles, hex(fx.color))
+			table.insert(state.emitters, main)
 			local l = Instance.new("PointLight")
 			l.Name = "EnchantGlow"
 			l.Color = hex(fx.light or fx.color)
@@ -10728,8 +10939,17 @@ function Cosmetics.apply(rig, cosmetic)
 			l.Shadows = false
 			l.Parent = host
 			table.insert(state.lights, l)
+			-- level 5+: the enchantment runs hotter and throws a second sparkle layer
+			if level >= 5 then
+				main.Rate = main.Rate * (1 + 0.12 * (level - 4))
+				local extra = emitter(host, "sparkle", hex(fx.light or fx.color))
+				extra.Rate = 4 + level
+				table.insert(state.emitters, extra)
+				l.Brightness = 1.6 + 0.15 * (level - 4)
+			end
 		end
 	end
+	aura(rig, def, level, glow, state)
 	rig.cosmetic = state
 	return true
 end
@@ -10737,7 +10957,16 @@ end
 -- Per-frame animated enchantments (rainbow, glitch, pulse).
 function Cosmetics.update(rig, t: number)
 	local st = rig.cosmetic
-	if not st or not st.anim then
+	if not st then
+		return
+	end
+	if st.pulseAura then
+		local k = 0.5 + 0.5 * math.sin(t * 4)
+		for _, l in st.auraLights do
+			l.Brightness = 0.8 + k * 1.8
+		end
+	end
+	if not st.anim then
 		return
 	end
 	if st.anim == "rainbow" then
@@ -10811,6 +11040,7 @@ local Rig = require(script.Parent.Rig)
 local Poses = require(script.Parent.Poses)
 local AnimSpring = require(script.Parent.AnimSpring)
 local CineFX = require(script.Parent.CineFX)
+local Impacts = require(script.Parent.Impacts)
 local StageBuilder = require(script.Parent.StageBuilder)
 local FightCamera = require(script.Parent.FightCamera)
 local VFX = require(script.Parent.VFX)
@@ -11425,6 +11655,9 @@ function Cutscene.play(scene, uiRoot: Instance)
 				VFX.teleport(pos, a and Color3.fromHex(a.def.accent) or Color3.new(1, 1, 1))
 			elseif ev.kind == "roots" then
 				VFX.groundEruption(pos, "nature", 4)
+				local gc = stageDef.floorColor and Color3.fromHex(stageDef.floorColor) or Color3.fromHex("#3A3020")
+				Impacts.crater(pos, 4, gc, Enum.Material.Ground)
+				Impacts.debris(pos + V(0, 0.4, 0), 12, gc, Enum.Material.Ground, 0)
 			elseif ev.kind == "bolt_impact" then
 				VFX.hit(pos + V(0.8, 3.5, 0.4), "heavy", "ash", 1, false)
 			elseif ev.kind == "smoke" then
@@ -11435,6 +11668,11 @@ function Cutscene.play(scene, uiRoot: Instance)
 			elseif ev.kind == "slam" then
 				VFX.burstShockwave(pos + V(0, 0.5, 0), a and Color3.fromHex(a.def.accent) or Color3.new(1, 1, 1))
 				VFX.dust(pos, true)
+				local st = stageDef
+				local gc = st.floorColor and Color3.fromHex(st.floorColor) or Color3.fromHex("#5A5048")
+				local gm = st.floorMaterial and (Enum.Material :: any)[st.floorMaterial] or Enum.Material.Slate
+				Impacts.crater(pos, 3.5, gc, gm)
+				Impacts.debris(pos + V(0, 0.4, 0), 10, gc, gm, 0)
 			elseif ev.kind == "flash" then
 				fx:flash(Color3.new(1, 1, 1), 1.2)
 			end
@@ -11600,6 +11838,7 @@ function Cutscene.play(scene, uiRoot: Instance)
 	folder:Destroy()
 	ui:Destroy()
 	VFX.clear()
+	Impacts.clear()
 	local _ = stage
 	return skipScene and "skipped" or "done"
 end
@@ -11798,10 +12037,12 @@ local Poses = require(script.Parent.Poses)
 local AnimSpring = require(script.Parent.AnimSpring)
 local Cosmetics = require(script.Parent.Cosmetics)
 local NetInput = require(Veil.Combat.NetInput)
+local Assets = require(Veil.Assets)
 local StageBuilder = require(script.Parent.StageBuilder)
 local FightCamera = require(script.Parent.FightCamera)
 local VFX = require(script.Parent.VFX)
 local CineFX = require(script.Parent.CineFX)
+local Impacts = require(script.Parent.Impacts)
 local Audio = require(Client.Core.Audio)
 local Input = require(Client.Core.Input)
 local Voice = require(Client.Core.Voice)
@@ -12437,6 +12678,29 @@ function FightView:finisherPose(_i: number, f, style: string)
 	return Poses.victoryFor(f.def.id, style, self.time), "fin:win"
 end
 
+-- Announcer line: the imported announcer pack when it's uploaded, otherwise the
+-- text-to-speech announcer reading the fallback text.
+local function announcer(key: string, fallback: string?)
+	if Assets.hasSound(key) then
+		Audio.play(key, { group = "voice", volume = 1 })
+		return true
+	end
+	if fallback then
+		Voice.say(fallback, "announcer", { channel = "announcer" })
+	end
+	return false
+end
+FightView.announcer = announcer
+
+-- The arena floor's look, for craters and debris.
+function FightView:groundLook()
+	local cur = StageBuilder.current()
+	local st = cur and cur.stage
+	local col = st and st.floorColor and Color3.fromHex(st.floorColor) or Color3.fromHex("#5A5048")
+	local mat = st and st.floorMaterial and (Enum.Material :: any)[st.floorMaterial] or Enum.Material.Slate
+	return col, mat
+end
+
 -- Face for a fighter's current state.
 local EXPRESSION_OF = {
 	attack = "angry",
@@ -12780,7 +13044,11 @@ function FightView:onEvent(ev)
 		self.hud:cinema(false)
 		local final = m.fighters[1].roundWins == m.roundsToWin - 1 and m.fighters[2].roundWins == m.roundsToWin - 1
 		self.hud:announce(final and "FINAL ROUND (NO PRESSURE)" or ("ROUND " .. tostring(ev.round)), nil, { hold = 1.1 })
-		Voice.say(final and "Final round. No pressure." or ("Round " .. tostring(ev.round)), "announcer", { channel = "announcer" })
+		if ev.round == 1 and not final then
+			announcer("ann_round1", "Round one")
+		else
+			Voice.say(final and "Final round. No pressure." or ("Round " .. tostring(ev.round)), "announcer", { channel = "announcer" })
+		end
 		StageBuilder.react("round")
 		Audio.play("round_gong", { volume = 0.9 })
 		Audio.play("countdown", { volume = 0.6 })
@@ -12788,7 +13056,7 @@ function FightView:onEvent(ev)
 		self.hud:announce("FIGHT", nil, { punch = true, color = Theme.Colors.goldBright, hold = 0.7 })
 		self:showWorldTags(2.2)
 		Audio.play("fight", { volume = 1 })
-		Voice.say("Fight!", "announcer", { channel = "announcer", volume = 1.2 })
+		announcer("ann_fight", "Fight!")
 		FightCamera.shake(0.5)
 	elseif typ == "move" then
 		local f = m.fighters[ev.fighter]
@@ -12813,6 +13081,7 @@ function FightView:onEvent(ev)
 		local f = m.fighters[ev.fighter]
 		self.hud:flash(Color3.fromHex(f.def.accent), 0.45)
 		Audio.play("super_start", { volume = 1 })
+		Audio.play("user_swell", { volume = 0.55, pitch = 1.15 })
 		StageBuilder.react("super")
 		FightCamera.shake(0.6)
 		VFX.burstShockwave(self:fighterWorldPos(ev.fighter, 3), Color3.fromHex(f.def.accent))
@@ -12833,7 +13102,28 @@ function FightView:onEvent(ev)
 		if big then
 			StageBuilder.react("heavy")
 			Audio.play("impact_sub", { volume = strength == "super" and 1 or 0.75, pitchVar = 0.05 })
+			-- imported sub-bass punch under every big hit, the crack on specials / supers
+			Audio.play("user_bass_hit", { volume = strength == "super" and 1 or 0.8, pitchVar = 0.06 })
+			if strength ~= "heavy" or ev.result == "launch" then
+				Audio.play("user_crack", { volume = 0.7, pitchVar = 0.05 })
+			end
 			FightCamera.punch(strength == "super" and 5 or 2.5)
+		end
+		if big then
+			local victimF = m.fighters[ev.victim]
+			local cols = VFX.colors(ev.element)
+			Impacts.impactLines(pos, cols[1], strength == "super" and 14 or 10, strength == "super" and 7 or 5)
+			local gc, gm = self:groundLook()
+			if victimF.y < 2 then
+				Impacts.debris(v3(victimF.x, 0.4, 0), strength == "super" and 12 or 6, gc, gm, dir)
+			end
+			if ev.element == "lightning" or ev.element == "storm" then
+				Impacts.forkLightning(pos + v3(-dir * 1.5, 7, 0), pos, cols[2])
+			end
+			if ev.result == "knockdown" or ev.result == "launch" then
+				self.pendingCrater = self.pendingCrater or {}
+				self.pendingCrater[ev.victim] = strength == "super" and 4.5 or 3
+			end
 		end
 		-- the camera jolts the way the blow travelled (launchers kick upward)
 		local upward = ev.result == "launch" and 0.8 or -0.25
@@ -12904,11 +13194,21 @@ function FightView:onEvent(ev)
 	elseif typ == "teleport" then
 		local f = m.fighters[ev.fighter]
 		local col = Color3.fromHex(f.def.accent)
+		Impacts.afterimage(self.rigs[ev.fighter], col, 0.45)
 		VFX.teleport(v3(ev.fromX, ev.fromY or 0), col)
 		VFX.teleport(v3(ev.toX, 0), col)
 		Audio.play("teleport", { volume = 0.8 })
 	elseif typ == "dash" then
 		local f = m.fighters[ev.fighter]
+		local rig = self.rigs[ev.fighter]
+		local ghost = Color3.fromHex(f.def.accent):Lerp(Color3.new(1, 1, 1), 0.35)
+		for k = 0, 2 do
+			task.delay(k * 0.05, function()
+				if not self.destroyed and not rig.shattered then
+					Impacts.afterimage(rig, ghost, 0.28)
+				end
+			end)
+		end
 		VFX.footDust(v3(f.x, 0), -f.facing * (ev.dir or 1))
 		Audio.play("dash", { volume = 0.5 })
 		-- lean into a dash, rock back on a backdash
@@ -12927,13 +13227,24 @@ function FightView:onEvent(ev)
 			sp:kick("LUA", 1, -160)
 		end
 		if ev.heavy then
+			Audio.play("user_slam", { volume = 0.8 })
+			local gc, gm = self:groundLook()
+			Impacts.crater(v3(ev.x, 0, 0), 3, gc, gm)
+			Impacts.debris(v3(ev.x, 0.4, 0), 8, gc, gm, 0)
 			FightCamera.shake(0.6)
 			VFX.groundEruption(v3(ev.x, 0), m.fighters[ev.fighter].def.moves.SB and m.fighters[ev.fighter].def.moves.SB.element or "ice", 2.5)
 		end
 	elseif typ == "knockdown" then
 		VFX.dust(v3(ev.x, 0), true)
+		local cr = self.pendingCrater and self.pendingCrater[ev.fighter]
+		if cr then
+			self.pendingCrater[ev.fighter] = nil
+			local gc, gm = self:groundLook()
+			Impacts.crater(v3(ev.x, 0, 0), cr, gc, gm)
+		end
 		Audio.play("knockdown", { volume = 0.9 })
-		Audio.play("body_fall", { volume = 0.8, pitchVar = 0.06 })
+		Audio.play("body_fall", { volume = 0.6, pitchVar = 0.06 })
+		Audio.play("user_slam", { volume = 0.75, pitchVar = 0.05 })
 		FightCamera.shake(0.5, 0, -1)
 		local sp = self.springs[ev.fighter]
 		if sp then
@@ -12979,6 +13290,13 @@ function FightView:onEvent(ev)
 	elseif typ == "round_win" then
 		if ev.winner and ev.winner > 0 then
 			local wf = m.fighters[ev.winner]
+			if ev.perfect then
+				task.delay(0.5, function()
+					if not self.destroyed then
+						announcer("ann_flawless", "Not even close.")
+					end
+				end)
+			end
 			self.hud:announce(wf.def.name .. " WINS", ev.perfect and "NOT EVEN CLOSE" or (ev.timeOver and "TIME (SERVER LAG)" or nil), {
 				size = 84,
 				hold = 1.8,
@@ -12994,7 +13312,14 @@ function FightView:onEvent(ev)
 		self.hud:cinema(false)
 		self.hud:showFinisherPrompt(true)
 		Audio.play("finisher_ready", { volume = 1 })
+		Audio.play("user_swell", { volume = 0.9 })
 		Audio.duck(0.4, 6)
+		-- "finish him" only fits some of the cast; everyone else gets the parody line
+		local loser = m.fighters[3 - (ev.winner or 1)]
+		local himVoice = loser and (loser.def.voice == "male" or loser.def.voice == "deep" or loser.def.voice == "hollow")
+		if not (himVoice and announcer("ann_finish_him", nil)) then
+			Voice.say("Delete them!", "announcer", { channel = "announcer" })
+		end
 	elseif typ == "finisher_start" then
 		self.hud:showFinisherPrompt(false)
 		self.hud:cinema(true)
@@ -13006,11 +13331,22 @@ function FightView:onEvent(ev)
 		task.spawn(function()
 			self.cine:impactFrames({ self.rigs[ev.winner], loser }, 4)
 		end)
+		local lf = m.fighters[ev.loser]
+		Impacts.dome(v3(lf.x, 3, 0), col, 22)
+		local gcol, gmat = self:groundLook()
+		Impacts.debris(v3(lf.x, 0.6, 0), 14, gcol, gmat, 0)
 		self.cine:speedLines(0.8, Color3.new(1, 1, 1))
 		VFX.elementBurst(v3(m.fighters[ev.loser].x, 3), ev.style, true)
 		VFX.oofBreak(loser, col)
 		loser.shattered = true
 		Audio.play("shatter", { volume = 1 })
+		Audio.play("user_crack", { volume = 1 })
+		Audio.play("user_bass_hit", { volume = 1 })
+		task.delay(0.7, function()
+			if not self.destroyed then
+				announcer("ann_fatality", "Account deleted.")
+			end
+		end)
 		Audio.play("oof", { group = "voice", volume = 1 })
 		self.hud:flash(col, 0.8)
 		FightCamera.shake(1.5)
@@ -13073,6 +13409,7 @@ function FightView:startSuperCinematic(ev)
 			end
 			local pos = v3(v.x, 3.2 + (k % 2) * 0.6, 0.4)
 			VFX.hit(pos, "heavy", ev.style, a.facing, true)
+			Impacts.afterimage(self.rigs[ev.attacker], col, 0.3)
 			Audio.play("hit_heavy", { volume = 0.8, pitchVar = 0.1 })
 			FightCamera.shake(0.7)
 		end)
@@ -13083,6 +13420,11 @@ function FightView:startSuperCinematic(ev)
 		end
 		VFX.burstShockwave(v3(v.x, 3), col)
 		VFX.elementBurst(v3(v.x, 3), ev.style, true)
+		Impacts.dome(v3(v.x, 2.5, 0), col, 18)
+		local gc, gm = self:groundLook()
+		Impacts.crater(v3(v.x, 0, 0), 5, gc, gm)
+		Impacts.debris(v3(v.x, 0.6, 0), 16, gc, gm, a.facing)
+		Impacts.impactLines(v3(v.x, 3, 0), col, 16, 8)
 		FightCamera.shake(1.6)
 		FightCamera.punch(6)
 		self.cine:impactFrames({ self.rigs[ev.attacker], self.rigs[ev.victim] }, 3)
@@ -13159,6 +13501,7 @@ function FightView:result()
 			winner = e.winner or m.winner,
 			reason = e.reason,
 			rewards = e.rewards,
+			bonus = e.bonus,
 			weapon = e.weapon,
 			rewarded = e.rewarded,
 			rounds = { m.fighters[1].roundWins, m.fighters[2].roundWins },
@@ -13201,6 +13544,7 @@ function FightView:destroy()
 	self.cine:destroy()
 	self.hud:destroy()
 	self.folder:Destroy()
+	Impacts.clear()
 	VFX.clear()
 	Subtitles.hide()
 	FightCamera.disable()
@@ -13211,6 +13555,382 @@ return FightView
             </Properties>
           </Item>
           <Item class="ModuleScript" referent="46">
+            <Properties>
+              <string name="Name">Impacts</string>
+              <string name="Source"><![CDATA[--!nonstrict
+-- Battlegrounds-style impact effects (original implementations of common Roblox
+-- VFX techniques):
+--
+--   crater        ring of rock chunks that bursts up around an impact and sinks away
+--   debris        rock chunks thrown along bezier arcs that tumble and land
+--   afterimage    fading glass copies of a fighter's body (dashes, teleports, supers)
+--   impactLines   anime-style streaks bursting out of a big hit
+--   forkLightning a jagged bolt with side branches
+--   dome          an expanding force-field shell for supers and finishers
+--
+-- Parts come from a small pool and every moving piece is driven by one Heartbeat
+-- loop (no physics, no per-effect connections), with hard caps on live pieces.
+
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local Debris = game:GetService("Debris")
+
+local Impacts = {}
+
+local V = Vector3.new
+local C = CFrame.new
+local A = CFrame.Angles
+local rad = math.rad
+
+local MAX_DEBRIS = 60
+local MAX_ROCKS = 90
+
+local folder = nil
+local function container(): Instance
+	if folder and folder.Parent then
+		return folder
+	end
+	folder = Instance.new("Folder")
+	folder.Name = "VeilImpacts"
+	folder.Parent = workspace
+	return folder
+end
+
+-------------------------------------------------------------------------------
+-- Part pool
+-------------------------------------------------------------------------------
+
+local pool = {}
+local live = { rocks = 0, debris = 0 }
+
+local function getPart(): BasePart
+	local p = table.remove(pool)
+	if not p or not p.Parent then
+		p = Instance.new("Part")
+		p.Anchored = true
+		p.CanCollide = false
+		p.CanQuery = false
+		p.CanTouch = false
+		p.TopSurface = Enum.SurfaceType.Smooth
+		p.BottomSurface = Enum.SurfaceType.Smooth
+		p.Name = "Rock"
+	end
+	p.Transparency = 0
+	p.CastShadow = true
+	p.Parent = container()
+	return p
+end
+
+local function releasePart(p: BasePart)
+	p.CFrame = C(0, -500, 0)
+	if #pool < 160 then
+		table.insert(pool, p)
+	else
+		p:Destroy()
+	end
+end
+
+-------------------------------------------------------------------------------
+-- One loop drives every moving piece
+-------------------------------------------------------------------------------
+
+local movers = {}
+local loop = nil
+
+local function ensureLoop()
+	if loop then
+		return
+	end
+	loop = RunService.Heartbeat:Connect(function(dt)
+		local now = os.clock()
+		for i = #movers, 1, -1 do
+			local mv = movers[i]
+			local k = (now - mv.t0) / mv.dur
+			if k >= 1 then
+				local keep = mv.finish and mv.finish(mv)
+				if not keep then
+					table.remove(movers, i)
+				end
+			else
+				mv.step(mv, k, dt)
+			end
+		end
+		if #movers == 0 then
+			loop:Disconnect()
+			loop = nil
+		end
+	end)
+end
+
+local function addMover(mv)
+	mv.t0 = os.clock()
+	table.insert(movers, mv)
+	ensureLoop()
+end
+
+-------------------------------------------------------------------------------
+-- Crater
+-------------------------------------------------------------------------------
+
+-- pos on the floor; radius in studs; colour / material of the ground
+function Impacts.crater(pos: Vector3, radius: number, color: Color3, material: Enum.Material?, count: number?)
+	local n = math.min(count or math.floor(8 + radius * 2.4), MAX_ROCKS - live.rocks)
+	if n <= 0 then
+		return
+	end
+	local base = V(pos.X, 0, pos.Z)
+	for i = 1, n do
+		local ang = (i / n) * math.pi * 2 + (math.random() - 0.5) * 0.35
+		local r = radius * (0.85 + math.random() * 0.3)
+		local s = (0.55 + math.random() * 0.9) * math.max(0.7, radius / 3.5)
+		local p = getPart()
+		p.Size = V(s * (1 + math.random() * 0.6), s * (0.6 + math.random() * 0.6), s * (0.8 + math.random() * 0.5))
+		p.Color = color:Lerp(Color3.new(0, 0, 0), math.random() * 0.25)
+		p.Material = material or Enum.Material.Slate
+		local out = V(math.cos(ang), 0, math.sin(ang))
+		-- tilted outward like the floor was punched open
+		local tilt = rad(28 + math.random() * 30)
+		local spot = base + out * r
+		local final = CFrame.lookAt(spot, spot + out) * A(-tilt, 0, rad((math.random() - 0.5) * 40)) * C(0, s * 0.15, 0)
+		local below = final * C(0, -s * 1.2, 0)
+		live.rocks += 1
+		addMover({
+			dur = 1.9 + math.random() * 0.4,
+			step = function(_, k)
+				if k < 0.06 then
+					p.CFrame = below:Lerp(final, k / 0.06)
+				elseif k > 0.78 then
+					local f = (k - 0.78) / 0.22
+					p.CFrame = final:Lerp(below, f)
+					p.Transparency = f * 0.6
+				else
+					p.CFrame = final
+				end
+			end,
+			finish = function()
+				live.rocks -= 1
+				releasePart(p)
+			end,
+		})
+	end
+	-- a dark scorch in the middle
+	local scorch = Instance.new("Part")
+	scorch.Anchored = true
+	scorch.CanCollide = false
+	scorch.CanQuery = false
+	scorch.CanTouch = false
+	scorch.CastShadow = false
+	scorch.Shape = Enum.PartType.Cylinder
+	scorch.Material = Enum.Material.Slate
+	scorch.Color = color:Lerp(Color3.new(0, 0, 0), 0.6)
+	scorch.Size = V(0.05, radius * 1.7, radius * 1.7)
+	scorch.CFrame = C(base + V(0, 0.03, 0)) * A(0, 0, rad(90))
+	scorch.Transparency = 0.15
+	scorch.Parent = container()
+	TweenService:Create(scorch, TweenInfo.new(2.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Transparency = 1 }):Play()
+	Debris:AddItem(scorch, 2.3)
+end
+
+-------------------------------------------------------------------------------
+-- Bezier debris
+-------------------------------------------------------------------------------
+
+local function bezier(p0: Vector3, p1: Vector3, p2: Vector3, t: number): Vector3
+	local u = 1 - t
+	return p0 * (u * u) + p1 * (2 * u * t) + p2 * (t * t)
+end
+
+-- dir: +1 / -1 bias along X (the way the blow travelled), or 0 for a radial burst
+function Impacts.debris(pos: Vector3, count: number, color: Color3, material: Enum.Material?, dir: number?)
+	local n = math.min(count, MAX_DEBRIS - live.debris)
+	for _ = 1, n do
+		local p = getPart()
+		local s = 0.25 + math.random() * 0.55
+		p.Size = V(s, s * (0.6 + math.random() * 0.6), s)
+		p.Color = color:Lerp(Color3.new(0, 0, 0), math.random() * 0.3)
+		p.Material = material or Enum.Material.Slate
+		p.CastShadow = false
+		local ang = math.random() * math.pi * 2
+		local reach = 2.5 + math.random() * 5
+		local bias = (dir or 0) * (1.5 + math.random() * 2.5)
+		local start = V(pos.X, math.max(0.2, pos.Y), pos.Z)
+		local land = V(pos.X + math.cos(ang) * reach + bias, s * 0.4, pos.Z + math.sin(ang) * reach * 0.6)
+		local apex = (start + land) / 2 + V(0, 2.5 + math.random() * 4, 0)
+		local spin = V(math.random() * 14 - 7, math.random() * 14 - 7, math.random() * 14 - 7)
+		local landed = false
+		live.debris += 1
+		addMover({
+			dur = 0.55 + math.random() * 0.35,
+			step = function(_, k)
+				local at = bezier(start, apex, land, k)
+				p.CFrame = C(at) * A(spin.X * k, spin.Y * k, spin.Z * k)
+			end,
+			finish = function(mv)
+				if not landed then
+					-- rest on the floor a moment, then fade
+					landed = true
+					mv.t0 = os.clock()
+					mv.dur = 0.9
+					local rest = p.CFrame
+					mv.step = function(_, k)
+						p.CFrame = rest
+						if k > 0.5 then
+							p.Transparency = (k - 0.5) * 2
+						end
+					end
+					return true
+				end
+				live.debris -= 1
+				releasePart(p)
+				return false
+			end,
+		})
+	end
+end
+
+-------------------------------------------------------------------------------
+-- Afterimage
+-------------------------------------------------------------------------------
+
+local BODY = { "Head", "UpperTorso", "LowerTorso", "RightUpperArm", "RightLowerArm", "RightHand", "LeftUpperArm", "LeftLowerArm", "LeftHand", "RightUpperLeg", "RightLowerLeg", "RightFoot", "LeftUpperLeg", "LeftLowerLeg", "LeftFoot" }
+
+function Impacts.afterimage(rig, color: Color3, life: number?)
+	local t = life or 0.32
+	local holder = Instance.new("Model")
+	holder.Name = "Afterimage"
+	for _, name in BODY do
+		local src = rig.parts and rig.parts[name]
+		if src then
+			local g = Instance.new("Part")
+			g.Anchored = true
+			g.CanCollide = false
+			g.CanQuery = false
+			g.CanTouch = false
+			g.CastShadow = false
+			g.Material = Enum.Material.Glass
+			g.Color = color
+			g.Size = src.Size * 1.02
+			g.CFrame = src.CFrame
+			g.Transparency = 0.45
+			g.Parent = holder
+			TweenService:Create(g, TweenInfo.new(t, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Transparency = 1, Size = src.Size * 1.12 }):Play()
+		end
+	end
+	holder.Parent = container()
+	Debris:AddItem(holder, t + 0.05)
+end
+
+-------------------------------------------------------------------------------
+-- Impact lines, forked lightning, dome
+-------------------------------------------------------------------------------
+
+local function neon(size: Vector3, cf: CFrame, color: Color3, life: number, goal)
+	local p = Instance.new("Part")
+	p.Anchored = true
+	p.CanCollide = false
+	p.CanQuery = false
+	p.CanTouch = false
+	p.CastShadow = false
+	p.Material = Enum.Material.Neon
+	p.Color = color
+	p.Size = size
+	p.CFrame = cf
+	p.Parent = container()
+	TweenService:Create(p, TweenInfo.new(life, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), goal):Play()
+	Debris:AddItem(p, life + 0.05)
+	return p
+end
+
+-- Streaks bursting outward in the screen plane from a big hit.
+function Impacts.impactLines(pos: Vector3, color: Color3, count: number?, length: number?)
+	local n = count or 10
+	local len = length or 5
+	for i = 1, n do
+		local ang = (i / n) * math.pi * 2 + (math.random() - 0.5) * 0.4
+		local dir = V(math.cos(ang), math.sin(ang), 0)
+		local l = len * (0.6 + math.random() * 0.6)
+		local mid = pos + dir * (0.8 + l * 0.5) + V(0, 0, 0.9)
+		local cf = CFrame.lookAt(mid, mid + dir) * A(0, rad(90), 0)
+		neon(V(l * 0.3, 0.09, 0.09), cf, color, 0.18, { Size = V(l, 0.02, 0.02), Transparency = 1, CFrame = cf + dir * (l * 0.4) })
+	end
+end
+
+-- Jagged bolt with two side branches (a -> b).
+function Impacts.forkLightning(a: Vector3, b: Vector3, color: Color3, life: number?)
+	local t = life or 0.16
+	local function bolt(p0: Vector3, p1: Vector3, segs: number, jitter: number, width: number)
+		local prev = p0
+		local points = {}
+		for i = 1, segs do
+			local k = i / segs
+			local p = p0:Lerp(p1, k)
+			if i < segs then
+				p += V((math.random() - 0.5) * jitter, (math.random() - 0.5) * jitter, (math.random() - 0.5) * jitter * 0.3)
+			end
+			local mid = (prev + p) / 2
+			local len = (p - prev).Magnitude
+			neon(V(width, width, len), CFrame.lookAt(mid, p), color, t, { Transparency = 1 })
+			table.insert(points, p)
+			prev = p
+		end
+		return points
+	end
+	local main = bolt(a, b, 7, 1.1, 0.14)
+	for k = 1, 2 do
+		local from = main[math.clamp(2 + k * 2, 1, #main)]
+		if from then
+			local off = V((math.random() - 0.5) * 3, -1 - math.random() * 2, 0)
+			bolt(from, from + off, 3, 0.6, 0.07)
+		end
+	end
+end
+
+-- Expanding force-field shell + neon ring (supers, finishers).
+function Impacts.dome(pos: Vector3, color: Color3, size: number?)
+	local s = size or 16
+	local shell = Instance.new("Part")
+	shell.Anchored = true
+	shell.CanCollide = false
+	shell.CanQuery = false
+	shell.CanTouch = false
+	shell.CastShadow = false
+	shell.Shape = Enum.PartType.Ball
+	shell.Material = Enum.Material.ForceField
+	shell.Color = color
+	shell.Size = V(1, 1, 1)
+	shell.CFrame = C(pos)
+	shell.Transparency = 0
+	shell.Parent = container()
+	TweenService:Create(shell, TweenInfo.new(0.55, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), { Size = V(s, s, s), Transparency = 1 }):Play()
+	Debris:AddItem(shell, 0.6)
+	local ringCF = C(V(pos.X, 0.12, pos.Z)) * A(0, 0, rad(90))
+	neon(V(0.06, 1, 1), ringCF, color, 0.5, { Size = V(0.04, s * 1.4, s * 1.4), Transparency = 1 })
+end
+
+-- Tear everything down (stage change / fight end).
+function Impacts.clear()
+	table.clear(movers)
+	live.rocks, live.debris = 0, 0
+	if loop then
+		loop:Disconnect()
+		loop = nil
+	end
+	if folder then
+		folder:Destroy()
+		folder = nil
+	end
+	table.clear(pool)
+end
+
+function Impacts.stats()
+	return { rocks = live.rocks, debris = live.debris, pooled = #pool, movers = #movers }
+end
+
+return Impacts
+]]></string>
+            </Properties>
+          </Item>
+          <Item class="ModuleScript" referent="47">
             <Properties>
               <string name="Name">Looks</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -14132,7 +14852,7 @@ return Looks
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="47">
+          <Item class="ModuleScript" referent="48">
             <Properties>
               <string name="Name">Poses</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -15330,7 +16050,7 @@ return Poses
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="48">
+          <Item class="ModuleScript" referent="49">
             <Properties>
               <string name="Name">Rig</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -15675,7 +16395,7 @@ return Rig
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="49">
+          <Item class="ModuleScript" referent="50">
             <Properties>
               <string name="Name">RigMath</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -15845,7 +16565,7 @@ return RigMath
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="50">
+          <Item class="ModuleScript" referent="51">
             <Properties>
               <string name="Name">StageBuilder</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -16873,7 +17593,7 @@ return StageBuilder
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="51">
+          <Item class="ModuleScript" referent="52">
             <Properties>
               <string name="Name">StageLife</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -17623,7 +18343,7 @@ return StageLife
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="52">
+          <Item class="ModuleScript" referent="53">
             <Properties>
               <string name="Name">VFX</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -18757,11 +19477,11 @@ return VFX
             </Properties>
           </Item>
         </Item>
-        <Item class="Folder" referent="53">
+        <Item class="Folder" referent="54">
           <Properties>
             <string name="Name">UI</string>
           </Properties>
-          <Item class="ModuleScript" referent="54">
+          <Item class="ModuleScript" referent="55">
             <Properties>
               <string name="Name">HUD</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -19753,7 +20473,7 @@ return HUD
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="55">
+          <Item class="ModuleScript" referent="56">
             <Properties>
               <string name="Name">MobileControls</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -20016,7 +20736,7 @@ return MobileControls
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="56">
+          <Item class="ModuleScript" referent="57">
             <Properties>
               <string name="Name">OnlineScreens</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -20310,15 +21030,17 @@ local function weaponEntries(filterType: string?)
 			for _, fd in fightersFor(def.type) do
 				table.insert(fitNames, fd.name)
 			end
+			local bonus = math.floor(Items.rewardBonus(rec) * 100 + 0.5)
 			table.insert(entries, {
 				id = rec.uid,
 				rec = rec,
 				text = string.upper(Items.weaponLabel(rec)),
-				tag = Items.RARITY[def.rarity].name .. (e and ("  \u{00B7}  " .. Items.RARITY[e.rarity].name .. " ENCHANT") or ""),
+				tag = Items.RARITY[def.rarity].name .. "  \u{00B7}  LV " .. (rec.lvl or 1) .. "  \u{00B7}  +" .. bonus .. "%",
 				tagColor = rarityColor(def.rarity),
 				desc = (Items.WeaponTypeById[def.type] and Items.WeaponTypeById[def.type].name or def.type)
 					.. " skin for " .. table.concat(fitNames, ", ")
-					.. (e and (".  " .. e.name .. ": " .. e.desc) or ".  No enchantment.")
+					.. (e and (".  " .. e.name .. " (" .. Items.RARITY[e.rarity].name .. "): " .. e.desc) or ".  No enchantment.")
+					.. "  Earns +" .. bonus .. "% resources when you fight with it."
 					.. (on and ("  EQUIPPED ON " .. string.upper(on) .. ".") or ""),
 			})
 		end
@@ -20334,7 +21056,7 @@ function OnlineScreens.pickWeapon(root: Instance, heading: string, sub: string?)
 			table.remove(entries, i)
 		end
 	end
-	return choose(root, "PickWeapon", heading, sub, entries, { emptyText = "No weapons yet. Win online fights or forge one." })
+	return choose(root, "PickWeapon", heading, sub, entries, { emptyText = "No weapons yet. Win online fights or forge one.", size = 29 })
 end
 
 function OnlineScreens.inventory(root: Instance)
@@ -20350,8 +21072,13 @@ function OnlineScreens.inventory(root: Instance)
 			table.insert(entries, all[i])
 		end
 		local turned = nil
-		local uid = choose(root, "Inventory", "INVENTORY & LOADOUT", string.format("%d WEAPONS  \u{00B7}  PAGE %d / %d", #all, page, pages), entries, {
+		local best = 0
+		for _, w in Net.inv.weapons or {} do
+			best = math.max(best, Items.rewardBonus(w))
+		end
+		local uid = choose(root, "Inventory", "INVENTORY & LOADOUT", string.format("%d WEAPONS  \u{00B7}  BEST REWARD BONUS +%d%%  \u{00B7}  PAGE %d / %d", #all, math.floor(best * 100 + 0.5), page, pages), entries, {
 			emptyText = "No weapons yet. Win online fights or visit the Forge.",
+			size = 29,
 			hints = { { "left", "" }, { "right", "PAGE" }, { "confirm", "OPTIONS" }, { "back", "BACK" } },
 			onAction = function(a)
 				if a == "left" and page > 1 then
@@ -20386,6 +21113,19 @@ function OnlineScreens.inventory(root: Instance)
 				table.insert(actions, { id = "unequip", text = "UNEQUIP", desc = "Back to the default look." })
 			end
 			table.insert(actions, { id = "enchant", text = "ENCHANT", desc = "Roll a new enchantment at the altar (" .. costText(Items.EnchantCost) .. ")." })
+			local lvl = rec.lvl or 1
+			if lvl < Items.MaxLevel then
+				local nextRec = table.clone(rec)
+				nextRec.lvl = lvl + 1
+				table.insert(actions, {
+					id = "upgrade",
+					text = "UPGRADE TO LV " .. (lvl + 1),
+					tag = "+" .. math.floor(Items.rewardBonus(rec) * 100 + 0.5) .. "% \u{2192} +" .. math.floor(Items.rewardBonus(nextRec) * 100 + 0.5) .. "%",
+					desc = "Cost: " .. costText(Items.upgradeCost(lvl)) .. ".  Higher levels earn more resources and glow harder in fights.",
+				})
+			end
+			local value = Items.salvageValue(rec)
+			table.insert(actions, { id = "salvage", text = "SALVAGE", tag = "+" .. (value.studs or 0) .. " STUDS", tagColor = C.crimsonBright, desc = "Break it down for " .. costText(value) .. ". This can't be undone." })
 			local act = choose(root, "WeaponActions", string.upper(Items.weaponLabel(rec)), Items.RARITY[def.rarity].name, actions)
 			if act and string.sub(act, 1, 6) == "equip:" then
 				local res = Net.request("equip", { fighter = string.sub(act, 7), uid = uid })
@@ -20398,6 +21138,23 @@ function OnlineScreens.inventory(root: Instance)
 				end
 			elseif act == "enchant" then
 				OnlineScreens.altar(root, uid)
+			elseif act == "upgrade" then
+				local res = Net.request("upgrade", uid)
+				if res.ok then
+					Audio.ui("ui_lock")
+					Toast.show("UPGRADED TO LV " .. tostring(res.level), Items.weaponLabel({ item = rec.item, ench = rec.ench, lvl = res.level }), Color3.fromHex("#FFB02E"))
+				else
+					Toast.show("CAN'T UPGRADE", res.err, C.crimsonBright)
+				end
+			elseif act == "salvage" then
+				local sure = choose(root, "ConfirmSalvage", "SALVAGE " .. string.upper(Items.weaponLabel(rec)) .. "?", nil, {
+					{ id = "yes", text = "YES, SALVAGE IT", desc = "You get " .. costText(Items.salvageValue(rec)) .. "." },
+					{ id = "no", text = "KEEP IT" },
+				})
+				if sure == "yes" then
+					local res = Net.request("salvage", uid)
+					Toast.show(res.ok and "SALVAGED" or "COULDN'T SALVAGE", res.ok and costText(res.rewards or {}) or res.err, res.ok and C.goldBright or C.crimsonBright)
+				end
 			end
 		end
 	end
@@ -20767,6 +21524,9 @@ function OnlineScreens.results(root: Instance, result)
 	if result.rewarded == false then
 		table.insert(lines, "No rewards this match (rematch limit or an early forfeit).")
 	elseif result.rewards then
+		if result.bonus and result.bonus > 0 then
+			table.insert(lines, "WEAPON REWARD BONUS  +" .. math.floor(result.bonus * 100 + 0.5) .. "%")
+		end
 		for _, r in Items.Resources do
 			local n = result.rewards[r.id]
 			if n and n > 0 then
@@ -20810,7 +21570,7 @@ return OnlineScreens
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="57">
+          <Item class="ModuleScript" referent="58">
             <Properties>
               <string name="Name">Portrait</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -20886,7 +21646,7 @@ return Portrait
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="58">
+          <Item class="ModuleScript" referent="59">
             <Properties>
               <string name="Name">Screens</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -21917,6 +22677,10 @@ end
 function Screens.characterSelect(root: Instance, opts)
 	opts = opts or {}
 	Audio.music("music_select")
+	-- imported announcer line, when its pack is uploaded
+	if Assets.hasSound("ann_choose") then
+		Audio.play("ann_choose", { group = "voice", volume = 1 })
+	end
 	local step = 1
 	local result = {}
 	while true do
@@ -22838,7 +23602,7 @@ return Screens
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="59">
+          <Item class="ModuleScript" referent="60">
             <Properties>
               <string name="Name">Subtitles</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -22924,7 +23688,7 @@ return Subtitles
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="60">
+          <Item class="ModuleScript" referent="61">
             <Properties>
               <string name="Name">Theme</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -23135,7 +23899,7 @@ return Theme
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="61">
+          <Item class="ModuleScript" referent="62">
             <Properties>
               <string name="Name">Toast</string>
               <string name="Source"><![CDATA[--!nonstrict
@@ -23220,7 +23984,7 @@ return Toast
       </Item>
     </Item>
   </Item>
-  <Item class="Workspace" referent="62">
+  <Item class="Workspace" referent="63">
     <Properties>
       <string name="Name">Workspace</string>
       <float name="Gravity">196.2</float>

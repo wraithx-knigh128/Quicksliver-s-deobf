@@ -101,7 +101,7 @@ local function describe(inv, offer)
 	for _, uid in offer.weapons do
 		local w = Inventory.findWeapon(inv, uid)
 		if w then
-			table.insert(out.weapons, { uid = w.uid, item = w.item, ench = w.ench })
+			table.insert(out.weapons, { uid = w.uid, item = w.item, ench = w.ench, lvl = w.lvl })
 		end
 	end
 	return out
