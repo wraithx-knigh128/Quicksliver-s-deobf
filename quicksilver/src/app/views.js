@@ -7,13 +7,13 @@ export const STATUS_LABEL = { supported: 'Supported', partial: 'Partially suppor
 const STATUS_BADGE = { supported: 'ok', partial: 'warn', experimental: 'info', unsupported: 'bad' };
 export const statusBadge = (s) => h('span.badge.' + STATUS_BADGE[s], STATUS_LABEL[s] || s);
 
-const levelBadge = (level) => h('span.badge.' + ({ high: 'ok', medium: 'warn', low: 'bad', minimal: 'bad', none: 'bad' }[level] || ''), level);
+export const levelBadge = (level) => h('span.badge.' + ({ high: 'ok', medium: 'warn', low: 'bad', minimal: 'bad', none: 'bad' }[level] || ''), level);
 
-function meter(x) { return h('div.meter', h('i', { style: { width: `${Math.round(x * 100)}%` } })); }
+export function meter(x) { return h('div.meter', h('i', { style: { width: `${Math.round(x * 100)}%` } })); }
 
-const section = (title, body, aside) => h('section.section', h('h3', h('span', title), aside || null), h('div.body', body));
-const kv = (rows) => h('dl.kv', rows.filter(Boolean).flatMap(([k, v]) => [h('dt', k), h('dd', v == null ? '—' : v)]));
-const note = (kind, text) => h('p.note' + (kind ? '.' + kind : ''), text);
+export const section = (title, body, aside) => h('section.section', h('h3', h('span', title), aside || null), h('div.body', body));
+export const kv = (rows) => h('dl.kv', rows.filter(Boolean).flatMap(([k, v]) => [h('dt', k), h('dd', v == null ? '—' : v)]));
+export const note = (kind, text) => h('p.note' + (kind ? '.' + kind : ''), text);
 
 // ---- detection -------------------------------------------------------------------------------------------------------
 

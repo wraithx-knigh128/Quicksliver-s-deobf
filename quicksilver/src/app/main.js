@@ -20,6 +20,9 @@ import { detectionView, analysisView, recoverySummary, detectionSummary, statusB
 import { makeZip } from './zip.js';
 import { showHelp } from './help.js';
 import { originView } from './origin-view.js';
+import { loadResearch, researchView } from './research-view.js';
+import { buildMarkdownReport } from './report-md.js';
+import { planOptions } from '../research/plans.js';
 import { mergeOnline, originAnalysis } from '../origin/index.js';
 import { readFileBytes, download, baseName, FileRejected, ACCEPTED } from './files.js';
 import { bytesToBinary, binaryToBytes, binaryToText, textToBinary } from '../core/bytes.js';
@@ -64,6 +67,8 @@ const S = {
   busy: null,
   lastError: null,
   notes: [],          // transient inspector notes
+  advice: null,       // the advisor's answer for the current input (src/research/advisor.js)
+  observed: null,
 };
 
 const TABS = [
@@ -75,6 +80,7 @@ const TABS = [
   { id: 'luast', label: 'Luast' },
   { id: 'examples', label: 'Examples' },
   { id: 'compat', label: 'Obfuscators' },
+  { id: 'research', label: 'Research' },
 ];
 
 // ---- elements ------------------------------------------------------------------------------------------------------------------------
@@ -340,6 +346,8 @@ views.luast = h('div.view', { id: 'view-luast' },
     h('button.btn.small', { type: 'button', onclick: () => tree.collapseAll() }, 'Collapse')),
   h('div#luast-body.view', tree.root), h('div#luast-empty.view'));
 views.compat = h('div.view', { id: 'view-compat' }, emptyState('Loading', 'Reading data/compat.json'));
+views.research = h('div.view', { id: 'view-research' }, emptyState('Loading', 'Reading data/research'));
+let research = null;      // { summary, knowledge, families } from data/research, once loaded
 // Examples: every bundled script with an offline check and a timer (wired to the engine further down, once the helpers exist)
 const board = new ExamplesBoard({
   samples: () => loadSamples(),
@@ -390,6 +398,7 @@ function switchTab(id) {
   if (id === 'compare') diffView.render();
   if (id === 'luast') ensureLuast();
   if (id === 'examples') board.show();
+  if (id === 'research') renderResearch();
   if (id === 'detection' && !S.detection && inputPresent()) runDetect({ quiet: true });
   if (id === 'analysis' && !S.analysis && inputPresent()) runAnalyze({ quiet: true });
 }
@@ -443,7 +452,7 @@ function getInputBytes() {
 function clearResults() {
   S.version++;
   S.inspected = null;
-  S.detection = null; S.analysis = null; S.luast = null; S.trace = null; S.traceConsent = false; S.beautified = null; S.recovered = null; S.verify = null; S.diff = null;
+  S.advice = null; S.observed = null; S.detection = null; S.analysis = null; S.luast = null; S.trace = null; S.traceConsent = false; S.beautified = null; S.recovered = null; S.verify = null; S.diff = null;
   S.dump = null; S.origin = null; S.originOnline = null; S.originSubject = 'auto';
   S.outputs = {}; S.show = null; S.output = null;
   S.notes = [];
@@ -587,6 +596,15 @@ const PHASES = {
 let progressAt = 0;
 function showProgress(e) {
   if (!S.busy) return;
+  if (e.phase === 'nexus') {
+    // the ten NEXUS stages: the bar moves as each one finishes, and the status line names the one that just did
+    progressBox.hidden = false;
+    progressBox.classList.remove('indeterminate');
+    progressAt = Math.max(progressAt, Math.round((e.done / e.total) * 100));
+    progressBar.style.width = `${progressAt}%`;
+    el.stState.textContent = `${runLabel}: NEXUS \u00b7 ${e.label} (${e.done}/${e.total})`;
+    return;
+  }
   const phase = PHASES[e.phase];
   if (!phase) return;
   const [label, from, to] = phase;
@@ -690,7 +708,22 @@ async function runRecover({ quiet = false } = {}) {
   if (!lic.allow('recover')) { toast('Recovery is not part of this licence.'); return null; }
   const version = S.version;
   const allowSandbox = lic.allow('sandbox');
-  const r = await run('recover', { ...recoverOptions(settings, { allowSandbox }), format: { indent: indentString(settings), width: settings.width } }, 'Recovering', { limits: { timeoutMs: 180_000 } });
+  let options = { ...recoverOptions(settings, { allowSandbox }), format: { indent: indentString(settings), width: settings.width } };
+  S.advice = null; S.observed = null;
+  // which plan the laboratory's verified experiments support for what this input shows (never runs the script; failure here only means the default plan is used)
+  if (settings.nexus && settings.advisor && settings.adaptive) {   // switching a technique off is an instruction, and it wins over a recommendation
+    await ensureResearch();
+    if (research) {
+      const a = await run('advise', { summary: research.summary, families: research.families, allowSandbox: allowSandbox && settings.sandbox, nexus: true }, 'Choosing a plan', { limits: { timeoutMs: 30_000 } });
+      if (a && version === S.version) {
+        S.advice = a.advice; S.observed = a.observed;
+        // only the plan's technique switches are taken from it; the person's own settings (formatting, rename mode, limits) stay
+        const planned = planOptions(a.advice.applied, options);
+        options = { ...options, adaptive: planned.adaptive, nexus: planned.nexus, sandbox: { ...options.sandbox, enabled: planned.sandbox.enabled && allowSandbox && settings.sandbox } };
+      }
+    }
+  }
+  const r = await run('recover', options, 'Recovering', { limits: { timeoutMs: 180_000 } });
   if (!r || version !== S.version) return null;
   S.recovered = r;
   S.verify = null;
@@ -1114,6 +1147,7 @@ async function buildReport() {
       validation: S.recovered.validation || null,
       steps: (S.recovered.steps || []).map((s) => ({ id: s.id, label: s.label, status: s.status, changed: s.changed, rounds: s.rounds })),
       warnings: S.recovered.warnings || [],
+      advice: S.advice ? { plan: S.advice.plan.id, applied: S.advice.applied.id, basis: S.advice.basis, trials: S.advice.trials, reason: S.advice.reason, signature: S.advice.signature, alternatives: S.advice.alternatives } : null,
       nexus: S.recovered.nexus && !S.recovered.nexus.fallback ? {
         version: S.recovered.nexus.version,
         passes: S.recovered.nexus.passes,
@@ -1146,6 +1180,7 @@ function exportItems() {
     { label: 'Trace listing (.lua)', sub: `${base}.trace.lua`, disabled: !S.trace, run: () => save(`${base}.trace.lua`, S.trace.script) },
     '-',
     { label: 'Report (.json)', sub: 'detection, confidence, passes', disabled: !S.detection && !S.recovered, run: async () => { if (ensureExport()) download(`${base}.report.json`, JSON.stringify(await buildReport(), null, 2), 'application/json'); } },
+    { label: 'Analysis report (.md)', sub: 'verification, evidence, names, dependencies', disabled: !S.recovered, run: async () => { if (ensureExport()) download(`${base}.analysis.md`, new TextEncoder().encode(buildMarkdownReport({ name: S.name, bytes: getInputBytes().length, sha256: await sha256Hex(getInputBytes()), detection: S.detection, recovered: S.recovered, advice: S.advice, observed: S.observed, engine: ENGINE_VERSION })), 'text/markdown'); } },
     { label: 'Bundle (.zip)', sub: 'original + recovered + report', disabled: !inputPresent(), run: exportBundle },
   ];
 }
@@ -1361,6 +1396,9 @@ async function showSettings() {
   const nexusBox = h('input', { type: 'checkbox', checked: draft.nexus });
   nexusBox.addEventListener('change', () => { draft.nexus = nexusBox.checked; });
   const nexusSwitch = h('label.switch', nexusBox, h('i'));
+  const advisorBox = h('input', { type: 'checkbox', checked: draft.advisor });
+  advisorBox.addEventListener('change', () => { draft.advisor = advisorBox.checked; });
+  const advisorSwitch = h('label.switch', advisorBox, h('i'));
   const field = (label, control, hint) => h('div.field', h('span', label), control, hint ? h('span.hint', hint) : null);
   const r = await modal({
     title: 'Settings',
@@ -1377,6 +1415,7 @@ async function showSettings() {
         field('Literal style', select('stringStyle', [['normalize', 'Normalise strings and numbers'], ['preserve', 'Keep as written']])),
         field('Maximum rounds', number('maxRounds', 1, 20)),
         field('NEXUS analysis', nexusSwitch, 'On by default. Reads comments and the relations between variables and functions before recovery, repeats recovery while it still changes the text, and lists every claim as verified, inferred or unresolved.'),
+        field('Choose the plan from lab evidence', advisorSwitch, 'On by default (needs NEXUS and the structure reader). Looks up what the laboratory\u2019s verified experiments say works on inputs that show the same signs, and uses that plan. With it off, the settings below decide.'),
         field('Read the structure', adaptiveSwitch, 'On by default. After the known-obfuscator steps, looks at what the code is made of (flattened control flow, call proxies, opaque conditions, decoder functions) and undoes what it can prove.'),
         field('Compare against', select('compareAgainst', [['formatted', 'Re-formatted input'], ['raw', 'Input as opened']]), 'A re-formatted input lines up with the output even when the original is minified.'),
       ]),
@@ -1609,6 +1648,23 @@ document.addEventListener('keydown', (e) => {
 
 lic.onchange = () => { renderStatus(); renderInspector(); renderResultBar(); };
 
+function renderResearch() {
+  if (!research) return;
+  replace(views.research, researchView(research, { advice: S.advice, observed: S.observed }));
+}
+
+async function ensureResearch() {
+  if (research) return research;
+  try {
+    research = await loadResearch();
+    setCount('research', String(research.summary.counts.experiments));
+    renderResearch();
+  } catch (e) {
+    replace(views.research, emptyState('Research data unavailable', String(e.message || e)));
+  }
+  return research;
+}
+
 async function start() {
   setWrap(settings.wrap);
   applyLayout();
@@ -1616,6 +1672,7 @@ async function start() {
   renderAll();
   paintGutter(true);
   lic.refresh().catch(() => {});
+  ensureResearch();
   try {
     compat = await loadCompat();
     compatById = new Map(compat.families.map((f) => [f.id, f]));

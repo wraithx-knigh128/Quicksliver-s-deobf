@@ -11,6 +11,9 @@ import { analyzeScript } from './analyze/report.js';
 import { toLuast } from './analyze/luast.js';
 import { recover } from './recover/pipeline.js';
 import { nexusRecover } from './nexus/pipeline.js';
+import { observe } from './research/signature.js';
+import { advise } from './research/advisor.js';
+import { registryFromData } from './research/families.js';
 import { diffLines, toRows } from './core/diff.js';
 import { traceScript } from './trace/trace.js';
 import { renamePass } from './passes/rename.js';
@@ -82,7 +85,21 @@ export function analyzeSource(source) {
 export function recoverSource(source, options = {}) {
   const { nexus, nexusPasses, nexusRuntime, ...rest } = options;
   if (!nexus) return timed(() => recover(source, rest));
-  return timed(() => nexusRecover(source, { passes: nexusPasses || undefined, runtime: !!nexusRuntime, recover: rest }));
+  const onStage = typeof rest.onProgress === 'function' ? (st) => rest.onProgress({ phase: 'nexus', label: st.title, done: st.index, total: st.total }) : undefined;
+  return timed(() => nexusRecover(source, { passes: nexusPasses || undefined, runtime: !!nexusRuntime, onStage, recover: rest }));
+}
+
+/**
+ * What this input shows from the outside, and which reconstruction plan the laboratory's verified experiments support for it.
+ * `options.summary` is data/research/summary.json and `options.families` is data/research/custom-families.json (both fetched by the page).
+ * Nothing is run: the script is parsed and measured, not executed.
+ */
+export function adviseSource(source, options = {}) {
+  return timed(() => {
+    const registry = options.families ? registryFromData(options.families) : null;
+    const seen = observe(source, { registry });
+    return { ok: true, observed: seen, advice: advise(seen.tokens, options.summary || null, { allowSandbox: !!options.allowSandbox, nexus: options.nexus ?? null }) };
+  });
 }
 
 /** The NEXUS pipeline on its own, with its own options (see src/nexus/pipeline.js). */

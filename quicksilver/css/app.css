@@ -592,3 +592,19 @@ textarea.form { height: 92px; padding: 6px 8px; width: 100%; font: 12px var(--mo
   #docname, #st-license, #st-sandbox { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+/* ---------- Research tab ---------- */
+.research { padding: 4px 0 24px; }
+.research .matrix-wrap { overflow-x: auto; }
+.research table.matrix { border-collapse: collapse; width: 100%; font-size: 12px; }
+.research table.matrix th, .research table.matrix td { border: 1px solid var(--line); padding: 4px 8px; text-align: center; white-space: nowrap; }
+.research table.matrix th:first-child, .research table.matrix td:first-child { text-align: left; white-space: normal; min-width: 220px; }
+.research table.matrix th { background: var(--panel-2); font-weight: 600; }
+.research table.matrix tr.group td { background: var(--panel-3); text-align: left; font-weight: 600; color: var(--dim); }
+.research td.m-high { background: var(--ok-bg); color: var(--ok); }
+.research td.m-mid { background: var(--warn-bg); color: var(--warn); }
+.research td.m-low { background: var(--bad-bg); color: var(--bad); }
+.research td.m-zero { background: var(--bad-bg); color: var(--bad); font-weight: 600; }
+.research td.m-none { color: var(--faint); }
+.research details { margin: 6px 0; }
+.research summary { cursor: pointer; }

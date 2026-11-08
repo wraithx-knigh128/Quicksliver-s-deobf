@@ -773,3 +773,62 @@ test('NEXUS can be switched off in the settings, and the older recovery runs unc
   assert.match(await page.textContent('#out-body'), /print\(num\)/);
   await ctx.close();
 });
+
+test('Research tab: the laboratory\'s measurements, the techniques evaluated (with what got worse), the unfamiliar systems studied, and graded outside research', { skip }, async () => {
+  const { page, ctx, problems } = await newPage();
+  await page.click('#tab-research');
+  await page.waitForSelector('#view-research .matrix');
+  const text = await page.textContent('#view-research');
+  assert.match(text, /What the laboratory measured/);
+  assert.match(text, /\d{4} experiments/);
+  assert.match(text, /lab custom: stream-cipher strings/);
+  assert.match(text, /Techniques evaluated/);
+  assert.match(text, /1-functions-lift: \d+ improved, [1-9]\d* regressed/, 'a first version that made things worse says so');
+  assert.match(text, /3-phase3-total: \d+ improved, 0 regressed/);
+  assert.match(text, /Unfamiliar systems studied/);
+  assert.match(text, /flatten-chain[\s\S]*rejected/, 'attempts that failed are kept');
+  assert.match(text, /Outside research/);
+  assert.match(text, /Luraph[\s\S]*unreachable[\s\S]*lab: untested/, 'Luraph is not claimed');
+  assert.ok((await page.locator('#view-research table.matrix td.m-high').count()) > 20);
+  assert.deepEqual(problems, []);
+  await ctx.close();
+});
+
+test('the advisor chooses the plan the experiments support for what the input shows, says how many trials stand behind it, and the report carries it', { skip }, async () => {
+  const { transformById } = await import('../../tools/lab/transforms.mjs');
+  const { generateProgram } = await import('../../tools/lab/generate.mjs');
+  const renamed = transformById('rename').apply(generateProgram(5).source, 5);
+  const { page, ctx, problems } = await newPage();
+  await page.fill('textarea.editor', renamed);
+  await page.click('#act-recover'); await idle(page);
+  await page.click('#tab-research');
+  await page.waitForSelector('#view-research .matrix');
+  const text = await page.textContent('#view-research');
+  assert.match(text, /This input/);
+  assert.match(text, /Matched on\s*experiments (with|that show) (the same|similar) signs/);
+  assert.match(text, /Trials behind it\s*\d+/);
+  assert.match(text, /Experiments on inputs that show the same signs put .* first: \d+ of \d+ verified/);
+  // the recovered code is the plan's work, and it is still the same program
+  const out = await page.textContent('#out-body');
+  assert.match(out, /print\(/);
+  const [dl] = await Promise.all([page.waitForEvent('download'), (async () => { await page.click('#act-export'); await page.click('.menu button:has-text("Analysis report")'); })()]);
+  const body = fs.readFileSync(await dl.path(), 'utf8');
+  assert.match(body, /^# Analysis report:/);
+  assert.match(body, /## Plan chosen and the evidence for it/);
+  assert.match(body, /## Verification/);
+  assert.deepEqual(problems, []);
+  await ctx.close();
+});
+
+test('the advisor can be switched off, and the page then recovers with the settings alone', { skip }, async () => {
+  const { page, ctx } = await newPage();
+  await page.fill('textarea.editor', 'local a = 1\nprint(a)');
+  await page.click('#btn-settings');
+  await page.waitForSelector('.modal');
+  await page.locator('.modal .field:has-text("Choose the plan from lab evidence") label.switch').click();
+  await page.click('.modal button:has-text("Save")');
+  await page.click('#act-recover'); await idle(page);
+  await page.click('#tab-research');
+  assert.match(await page.textContent('#view-research'), /Press Deobfuscate/);
+  await ctx.close();
+});

@@ -9,6 +9,7 @@ export const DEFAULTS = Object.freeze({
   foldCalls: 'obfuscation',
   stringStyle: 'normalize',
   maxRounds: 8,
+  advisor: true,          // choose the reconstruction plan from the laboratory's verified experiments (src/research/advisor.js)
   nexus: true,            // run recovery inside the NEXUS pipeline (src/nexus/): comment and relation analysis before, a verification ledger after
   adaptive: true,         // read the structure of what the family steps leave (src/adaptive/) and recover what it can
   sandbox: false,         // opt-in: evaluate string decoders in the interpreter sandbox
