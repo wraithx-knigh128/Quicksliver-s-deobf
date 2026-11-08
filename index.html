@@ -4,7 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Quicksilver's Territory</title>
-<meta name="description" content="Decode string layers, unpack constants, beautify obfuscated Lua & bypass key systems (Polsec, Luarmor, Junkie, Fluxus & more)." />
+<meta name="description" content="Decode string layers, unpack constants, beautify obfuscated Lua, unwrap loadstring layers and export a ZIP." />
 <script>
 /*!
 
@@ -87,17 +87,6 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   }
 
   /* ---------- Mode tabs ---------- */
-  .mode-tabs {
-    display: flex; gap: 4px; justify-content: center; margin: 20px 0 24px;
-    border-bottom: 1px solid var(--border); padding-bottom: 0;
-  }
-  .mode-tab {
-    background: none; border: none; border-bottom: 2px solid transparent;
-    color: var(--muted); padding: 10px 22px; font-size: 14px; font-weight: 700;
-    font-family: inherit; cursor: pointer; transition: color .25s cubic-bezier(.4,0,.2,1), border-color .25s cubic-bezier(.4,0,.2,1);
-  }
-  .mode-tab:hover { color: var(--text); }
-  .mode-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
   .mode-panel { display: none; }
   .mode-panel.active { display: block; animation: qs-fadein .35s cubic-bezier(.4,0,.2,1); }
   @keyframes qs-fadein {
@@ -169,49 +158,9 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   .zip-info code { font-family: ui-monospace, monospace; color: #7dd3fc; }
   footer.page-footer { margin-top: 26px; text-align: center; font-size: 12px; color: var(--muted); }
 
-  /* ---------- Key bypass styles ---------- */
-  .bypass-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
-  @media (max-width: 600px) { .bypass-grid { grid-template-columns: 1fr; } }
-  .bypass-chip {
-    display: flex; align-items: center; gap: 8px;
-    background: var(--panel); border: 1px solid var(--border);
-    border-radius: 10px; padding: 10px 14px; font-size: 13px; font-weight: 500;
-    transition: border-color .25s cubic-bezier(.4,0,.2,1), background .25s cubic-bezier(.4,0,.2,1), transform .25s cubic-bezier(.4,0,.2,1);
-  }
-  .bypass-chip.detected { border-color: var(--accent); background: rgba(163,174,189,0.08); transform: translateY(-1px); }
-  .bypass-chip .chip-dot {
-    width: 8px; height: 8px; border-radius: 50%;
-    background: var(--muted); flex-shrink: 0;
-    transition: background .25s ease, box-shadow .25s ease;
-  }
-  .bypass-chip.detected .chip-dot { background: var(--green); box-shadow: 0 0 6px rgba(52,211,153,0.5); }
-  .bypass-chip .chip-label { flex: 1; }
-  .bypass-chip .chip-tag {
-    font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px;
-    background: rgba(163,174,189,0.12); color: var(--accent); text-transform: uppercase;
-    transition: background .25s ease, color .25s ease;
-  }
-  .bypass-chip.detected .chip-tag { background: rgba(52,211,153,0.15); color: var(--green); }
-  .bypass-log {
-    background: var(--panel-2); border: 1px solid var(--border); border-radius: 10px;
-    padding: 14px; font-family: ui-monospace, monospace; font-size: 12px;
-    line-height: 1.6; max-height: 200px; overflow-y: auto; margin-top: 12px;
-    white-space: pre-wrap; color: var(--muted);
-  }
-  .bypass-log .log-ok { color: var(--green); }
-  .bypass-log .log-warn { color: var(--amber); }
-  .bypass-log .log-info { color: var(--accent); }
-  .bypass-info {
-    display: flex; align-items: flex-start; gap: 10px;
-    border: 1px solid var(--border); background: var(--panel);
-    border-radius: 14px; padding: 16px; margin-top: 16px;
-  }
-  .bypass-info p { margin: 0; font-size: 12.5px; color: var(--muted); line-height: 1.6; }
-  .bypass-info svg { width: 20px; height: 20px; flex-shrink: 0; color: var(--accent); margin-top: 1px; }
-
+  
   @media (max-width: 480px) {
     .wrap { padding: 20px 14px 48px; }
-    .mode-tab { padding: 8px 14px; font-size: 13px; }
   }
 </style>
 </head>
@@ -219,15 +168,9 @@ https://github.com/nodeca/pako/blob/main/LICENSE
   <div class="wrap">
     <header>
       <h1 class="title" id="title" aria-label="Quicksilver's Territory"></h1>
-      <p class="tagline">Decode string layers, unwrap loadstrings, pull remote Roblox loaders, bypass key systems &amp; export a ZIP for your bot.</p>
+      <p class="tagline">Decode string layers, unwrap loadstrings, pull remote Roblox loaders &amp; export a ZIP for your bot.</p>
       <div class="byline">Made by <b>Wraith</b></div>
     </header>
-
-    <!-- ========== MODE TABS ========== -->
-    <nav class="mode-tabs">
-      <button class="mode-tab active" data-mode="deobf">Deobfuscator</button>
-      <button class="mode-tab" data-mode="bypass">Key Bypass</button>
-    </nav>
 
     <!-- =================== MODE: DEOBFUSCATOR =================== -->
     <div class="mode-panel active" id="mode-deobf">
@@ -261,57 +204,8 @@ https://github.com/nodeca/pako/blob/main/LICENSE
       </section>
     </div>
 
-    <!-- =================== MODE: KEY BYPASS =================== -->
-    <div class="mode-panel" id="mode-bypass">
-      <div class="field">
-        <div class="row"><label>Detected key systems</label><span class="hint" id="detectCount">Paste code to scan</span></div>
-        <div class="bypass-grid" id="bypassGrid">
-          <div class="bypass-chip" data-sys="polsec"><span class="chip-dot"></span><span class="chip-label">Polsec</span><span class="chip-tag">—</span></div>
-          <div class="bypass-chip" data-sys="luarmor"><span class="chip-dot"></span><span class="chip-label">Luarmor</span><span class="chip-tag">—</span></div>
-          <div class="bypass-chip" data-sys="junkie"><span class="chip-dot"></span><span class="chip-label">Junkie / JNKIE</span><span class="chip-tag">—</span></div>
-          <div class="bypass-chip" data-sys="fluxus"><span class="chip-dot"></span><span class="chip-label">Fluxus</span><span class="chip-tag">—</span></div>
-          <div class="bypass-chip" data-sys="linkvertise"><span class="chip-dot"></span><span class="chip-label">Linkvertise</span><span class="chip-tag">—</span></div>
-          <div class="bypass-chip" data-sys="rekonise"><span class="chip-dot"></span><span class="chip-label">Rekonise</span><span class="chip-tag">—</span></div>
-          <div class="bypass-chip" data-sys="hydrogen"><span class="chip-dot"></span><span class="chip-label">Hydrogen</span><span class="chip-tag">—</span></div>
-          <div class="bypass-chip" data-sys="arceus"><span class="chip-dot"></span><span class="chip-label">Arceus X</span><span class="chip-tag">—</span></div>
-          <div class="bypass-chip" data-sys="delta"><span class="chip-dot"></span><span class="chip-label">Delta</span><span class="chip-tag">—</span></div>
-          <div class="bypass-chip" data-sys="codex"><span class="chip-dot"></span><span class="chip-label">Codex</span><span class="chip-tag">—</span></div>
-          <div class="bypass-chip" data-sys="trigon"><span class="chip-dot"></span><span class="chip-label">Trigon</span><span class="chip-tag">—</span></div>
-          <div class="bypass-chip" data-sys="vegax"><span class="chip-dot"></span><span class="chip-label">VegaX</span><span class="chip-tag">—</span></div>
-          <div class="bypass-chip" data-sys="generic_key"><span class="chip-dot"></span><span class="chip-label">Generic key check</span><span class="chip-tag">—</span></div>
-          <div class="bypass-chip" data-sys="generic_hwid"><span class="chip-dot"></span><span class="chip-label">HWID lock</span><span class="chip-tag">—</span></div>
-          <div class="bypass-chip" data-sys="generic_webhook"><span class="chip-dot"></span><span class="chip-label">Webhook logging</span><span class="chip-tag">—</span></div>
-          <div class="bypass-chip" data-sys="generic_whitelist"><span class="chip-dot"></span><span class="chip-label">Whitelist / auth</span><span class="chip-tag">—</span></div>
-          <div class="bypass-chip" data-sys="generic_antitamper"><span class="chip-dot"></span><span class="chip-label">Anti-tamper / integrity</span><span class="chip-tag">—</span></div>
-          <div class="bypass-chip" data-sys="generic_heartbeat"><span class="chip-dot"></span><span class="chip-label">Periodic re-validation</span><span class="chip-tag">—</span></div>
-        </div>
-      </div>
-      <div class="field">
-        <div class="row">
-          <label for="bypassInput">Script with key system</label>
-          <button class="link-btn" id="bypassExample">Load example</button>
-        </div>
-        <textarea id="bypassInput" spellcheck="false" placeholder='Paste a Roblox Lua script that has a key system (Polsec, Luarmor, Junkie, Fluxus, etc.)...'></textarea>
-      </div>
-      <div class="actions">
-        <button class="primary" id="bypassBtn">Bypass Keys</button>
-        <button id="bypassCopy">Copy Result</button>
-        <button id="bypassDownload">Download .lua</button>
-      </div>
-      <div class="field">
-        <div class="row"><label for="bypassOutput">Bypassed result</label></div>
-        <textarea id="bypassOutput" spellcheck="false" readonly placeholder="Key-free script will appear here after you click Bypass Keys."></textarea>
-      </div>
-      <ul class="steps-pills" id="bypassPills" style="display:none;"></ul>
-      <div class="bypass-log" id="bypassLog" style="display:none;"></div>
-      <div class="bypass-info">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-        <p>Strips key validation, HWID locks, whitelist auth, webhook logging, ad/linkvertise gates <strong>and anti-tamper / integrity re-checks</strong> from Lua scripts — so the key system can't detect it was removed. Supports Polsec, Luarmor, Junkie, Fluxus, Linkvertise, Rekonise, Hydrogen, Arceus X, Delta, Codex, Trigon, VegaX and generic key patterns. Works best on deobfuscated scripts — run through the Deobfuscator tab first if needed.</p>
-      </div>
-    </div>
-
     <footer class="page-footer">
-      Best-effort literal decoding, beautifying &amp; key bypass. VM/bytecode obfuscation cannot be fully reversed client-side.
+      Best-effort literal decoding and beautifying. VM/bytecode obfuscation cannot be fully reversed client-side.
     </footer>
   </div>
 
@@ -591,217 +485,6 @@ async function resolveRemoteLoaders(source) {
 }
 
 /* =========================================================================
-   KEY BYPASS ENGINE
-   ========================================================================= */
-
-const KEY_SYSTEMS = [
-  { id: "polsec", name: "Polsec",
-    patterns: [/getpolsec\.com/i, /polsec[\._]?api/i, /polsec\.auth/i, /polsec[\._]?check/i, /polsec[\._]?validate/i, /polsec[\._]?whitelist/i, /polsec\.net/i],
-    strip: [
-      /(?:local\s+\w+\s*=\s*)?(?:syn\.request|request|http_request|game:GetService\s*\(\s*["']HttpService["']\s*\)\s*:\s*(?:RequestAsync|GetAsync|PostAsync))\s*\(\s*\{[^}]*polsec[^}]*\}\s*\)[^\n]*/gi,
-      /(?:local\s+)?\w+\s*=\s*["'][^"']*polsec[^"']*["'][^\n]*/gi,
-      /if[^t]*polsec[^t]*then[\s\S]*?(?:end|return)/gi,
-    ]},
-  { id: "luarmor", name: "Luarmor",
-    patterns: [/luarmor\.net/i, /luarmor[\._]?api/i, /luarmor\.check/i, /luarmor[\._]?validate/i, /api\.luarmor/i],
-    strip: [
-      /(?:local\s+\w+\s*=\s*)?(?:syn\.request|request|http_request|game:GetService\s*\(\s*["']HttpService["']\s*\)\s*:\s*(?:RequestAsync|GetAsync|PostAsync))\s*\(\s*\{[^}]*luarmor[^}]*\}\s*\)[^\n]*/gi,
-      /(?:local\s+)?\w+\s*=\s*["'][^"']*luarmor[^"']*["'][^\n]*/gi,
-      /if[^t]*luarmor[^t]*then[\s\S]*?(?:end|return)/gi,
-    ]},
-  { id: "junkie", name: "Junkie / JNKIE",
-    patterns: [/jnkie\.com/i, /junkie[\._]?api/i, /Junkie\.check_key/i, /Junkie\.get_key_link/i, /junkie[\._]?auth/i],
-    strip: [
-      /(?:local\s+\w+\s*=\s*)?(?:syn\.request|request|http_request|game:GetService\s*\(\s*["']HttpService["']\s*\)\s*:\s*(?:RequestAsync|GetAsync|PostAsync))\s*\(\s*\{[^}]*jnkie[^}]*\}\s*\)[^\n]*/gi,
-      /(?:local\s+)?\w+\s*=\s*["'][^"']*jnkie[^"']*["'][^\n]*/gi,
-      /Junkie\.\w+\s*\([^)]*\)[^\n]*/gi,
-    ]},
-  { id: "fluxus", name: "Fluxus",
-    patterns: [/flux\.li/i, /fluxus[\._]?key/i, /fluxus[\._]?api/i, /getfluxus/i],
-    strip: [
-      /(?:local\s+\w+\s*=\s*)?(?:syn\.request|request|http_request|game:GetService\s*\(\s*["']HttpService["']\s*\)\s*:\s*(?:RequestAsync|GetAsync|PostAsync))\s*\(\s*\{[^}]*flux[^}]*\}\s*\)[^\n]*/gi,
-      /(?:local\s+)?\w+\s*=\s*["'][^"']*flux\.li[^"']*["'][^\n]*/gi,
-    ]},
-  { id: "linkvertise", name: "Linkvertise",
-    patterns: [/linkvertise\.com/i, /loot-?link/i, /lootdest\.org/i, /link-to\.net/i],
-    strip: [
-      /(?:local\s+)?\w+\s*=\s*["'][^"']*linkvertise[^"']*["'][^\n]*/gi,
-      /(?:local\s+)?\w+\s*=\s*["'][^"']*loot-?link[^"']*["'][^\n]*/gi,
-      /(?:local\s+)?\w+\s*=\s*["'][^"']*lootdest[^"']*["'][^\n]*/gi,
-    ]},
-  { id: "rekonise", name: "Rekonise",
-    patterns: [/rekonise\.com/i, /rekonise[\._]?api/i, /rekonise[\._]?key/i],
-    strip: [
-      /(?:local\s+\w+\s*=\s*)?(?:syn\.request|request|http_request|game:GetService\s*\(\s*["']HttpService["']\s*\)\s*:\s*(?:RequestAsync|GetAsync|PostAsync))\s*\(\s*\{[^}]*rekonise[^}]*\}\s*\)[^\n]*/gi,
-      /(?:local\s+)?\w+\s*=\s*["'][^"']*rekonise[^"']*["'][^\n]*/gi,
-    ]},
-  { id: "hydrogen", name: "Hydrogen",
-    patterns: [/hydrogen[\._]?key/i, /hydrogen[\._]?api/i, /gethydrogen/i],
-    strip: [/(?:local\s+)?\w+\s*=\s*["'][^"']*hydrogen[^"']*["'][^\n]*/gi] },
-  { id: "arceus", name: "Arceus X",
-    patterns: [/arceusx/i, /arceus[\._]?key/i, /arceus[\._]?api/i],
-    strip: [/(?:local\s+)?\w+\s*=\s*["'][^"']*arceus[^"']*["'][^\n]*/gi] },
-  { id: "delta", name: "Delta",
-    patterns: [/delta[\._]?key[\._]?system/i, /delta[\._]?executor[\._]?key/i, /getdelta\.net/i],
-    strip: [/(?:local\s+)?\w+\s*=\s*["'][^"']*getdelta[^"']*["'][^\n]*/gi] },
-  { id: "codex", name: "Codex",
-    patterns: [/codex[\._]?key/i, /codex[\._]?api/i, /usecodex/i],
-    strip: [/(?:local\s+)?\w+\s*=\s*["'][^"']*codex[^"']*["'][^\n]*/gi] },
-  { id: "trigon", name: "Trigon",
-    patterns: [/trigon[\._]?key/i, /trigon[\._]?api/i, /gettrigon/i],
-    strip: [/(?:local\s+)?\w+\s*=\s*["'][^"']*trigon[^"']*["'][^\n]*/gi] },
-  { id: "vegax", name: "VegaX",
-    patterns: [/vegax[\._]?key/i, /vegax[\._]?api/i, /getvegax/i],
-    strip: [/(?:local\s+)?\w+\s*=\s*["'][^"']*vegax[^"']*["'][^\n]*/gi] },
-];
-
-const GENERIC_PATTERNS = {
-  generic_key: {
-    name: "Generic key check",
-    detect: [/(?:script_?key|SCRIPT_KEY|key_?system|KEY_SYSTEM)/i, /getgenv\(\)\s*\.\s*(?:Key|key|KEY|script_?key)/i, /["']Enter\s+(?:your\s+)?key["']/i, /["']Invalid\s+key["']/i, /["']Wrong\s+key["']/i, /["']Key\s+expired["']/i, /check_?key|validate_?key|verify_?key/i],
-    strip: [
-      /getgenv\(\)\s*\.\s*(?:Key|key|KEY|script_?key)\s*=\s*["'][^"']*["'][^\n]*/gi,
-      /if\s+\w*[Kk]ey\w*\s*[~=]=\s*["'][^"']*["']\s*then\s*[\s\S]*?(?:\breturn\b[^\n]*|end)/gi,
-      /(?:local\s+\w+\s*=\s*)?[\w.:]+\s*\(\s*["'][^"']*(?:[Ee]nter|[Ii]nput|[Pp]aste)\s+(?:your\s+)?[Kk]ey[^"']*["']\s*\)[^\n]*/gi,
-    ]},
-  generic_hwid: {
-    name: "HWID lock",
-    detect: [/RbxAnalyticsService.*GetClientId/i, /HWID|hwid|HardwareId|hardware_id/i, /GetClientId\(\)/i, /hwid_?lock|hwid_?check|hwid_?ban/i],
-    strip: [
-      /(?:local\s+\w+\s*=\s*)?\w*[Hh][Ww][Ii][Dd]\w*\s*=\s*game:GetService\s*\(\s*["']RbxAnalyticsService["']\s*\)\s*:\s*GetClientId\s*\(\s*\)[^\n]*/gi,
-      /if\s+\w*[Hh][Ww][Ii][Dd]\w*\s*[~=]=\s*[^\n]*then\s*[\s\S]*?(?:\breturn\b[^\n]*|end)/gi,
-    ]},
-  generic_webhook: {
-    name: "Webhook logging",
-    detect: [/discord\.com\/api\/webhooks/i, /discordapp\.com\/api\/webhooks/i, /webhook/i],
-    strip: [
-      /(?:local\s+)?\w*[Ww]ebhook\w*\s*=\s*["']https?:\/\/(?:discord|discordapp)\.com\/api\/webhooks\/[^"']*["'][^\n]*/gi,
-      /(?:local\s+)?function\s+\w*[Ww]ebhook\w*\s*\([^)]*\)[\s\S]*?end/gi,
-      /(?:syn\.request|request|http_request)\s*\(\s*\{[^}]*(?:discord|discordapp)\.com\/api\/webhooks[^}]*\}\s*\)[^\n]*/gi,
-    ]},
-  generic_whitelist: {
-    name: "Whitelist / auth",
-    detect: [/whitelist/i, /white_?list/i, /is_?whitelisted/i, /check_?whitelist/i, /auth_?check|authenticate/i],
-    strip: [
-      /if\s+not\s+\w*[Ww]hite[Ll]ist\w*[^\n]*then\s*[\s\S]*?(?:\breturn\b[^\n]*|end)/gi,
-      /if\s+\w*[Ww]hite[Ll]ist\w*\s*==\s*false[^\n]*then\s*[\s\S]*?(?:\breturn\b[^\n]*|end)/gi,
-    ]},
-  generic_antitamper: {
-    name: "Anti-tamper / integrity check",
-    detect: [
-      /debug\.getinfo/i, /debug\.getconstants/i, /debug\.getupvalue(s)?/i, /debug\.getproto(s)?/i,
-      /checksum/i, /integrity/i, /script_?hash|scripthash|GetScriptHash/i, /\btamper(ed|ing)?\b/i,
-      /anti[-_]?bypass|anti[-_]?spoof|anti[-_]?patch/i, /is(l|c)closure/i, /getrawmetatable/i,
-      /hookfunction|hookmetamethod/i, /iskeybypassed|is_?key_?bypassed/i,
-    ],
-    strip: [
-      // static integrity/tamper checks that branch on a hash/debug comparison
-      /if\s+[^\n]*\b(?:debug\.getinfo|debug\.getconstants|debug\.getupvalue|checksum|integrity|scripthash|tamper)\b[^\n]*then\s*[\s\S]*?(?:\bend\b)/gi,
-      // hash/checksum computation assignments
-      /(?:local\s+)?\w*(?:[Cc]hecksum|[Ii]ntegrity|[Ss]criptHash)\w*\s*=\s*[^\n]*/gi,
-      // hookfunction/hookmetamethod based tamper-detection setup
-      /(?:hookfunction|hookmetamethod)\s*\([^)]*\)[^\n]*/gi,
-      // anti-bypass/anti-spoof guard functions
-      /(?:local\s+)?function\s+\w*(?:[Aa]nti[-_]?[Bb]ypass|[Aa]nti[-_]?[Tt]amper|[Aa]nti[-_]?[Ss]poof)\w*\s*\([^)]*\)[\s\S]*?end/gi,
-      // isKeyBypassed style flags
-      /(?:local\s+)?\w*(?:[Ii]s[Kk]ey[Bb]ypassed|is_key_bypassed)\w*\s*=\s*[^\n]*/gi,
-    ]},
-  generic_heartbeat: {
-    name: "Periodic re-validation",
-    detect: [
-      /RunService\.?\s*Heartbeat\s*:\s*Connect/i,
-      /task\.spawn\s*\(\s*function[\s\S]{0,200}[Kk]ey/i,
-      /coroutine\.wrap\s*\(\s*function[\s\S]{0,200}[Kk]ey/i,
-      /while\s+true\s+do[\s\S]{0,200}(?:[Kk]ey|[Hh][Ww][Ii][Dd])[\s\S]{0,200}wait/i,
-    ],
-    strip: [
-      // RunService.Heartbeat re-validation connections
-      /game:GetService\s*\(\s*["']RunService["']\s*\)\s*\.\s*Heartbeat\s*:\s*Connect\s*\(\s*function\s*\([^)]*\)[\s\S]*?(?:[Kk]ey|[Hh][Ww][Ii][Dd])[\s\S]*?end\s*\)/gi,
-      // task.spawn / coroutine.wrap polling loops that re-check the key
-      /task\.spawn\s*\(\s*function\s*\(\s*\)[\s\S]*?(?:[Kk]ey|[Hh][Ww][Ii][Dd])[\s\S]*?end\s*\)/gi,
-      /coroutine\.wrap\s*\(\s*function\s*\(\s*\)[\s\S]*?(?:[Kk]ey|[Hh][Ww][Ii][Dd])[\s\S]*?end\s*\)\s*\(\s*\)/gi,
-      // self-destruct on failed re-check
-      /script\s*:\s*Destroy\s*\(\s*\)[^\n]*/gi,
-    ]},
-};
-
-function detectKeySystems(src) {
-  const found = [];
-  for (const sys of KEY_SYSTEMS) {
-    if (sys.patterns.some(p => p.test(src))) found.push({ id: sys.id, name: sys.name, type: "service" });
-  }
-  for (const [id, gen] of Object.entries(GENERIC_PATTERNS)) {
-    if (gen.detect.some(p => p.test(src))) found.push({ id, name: gen.name, type: "generic" });
-  }
-  return found;
-}
-
-function bypassKeySystems(src) {
-  let out = src;
-  const log = [];
-  const steps = [];
-  const detected = detectKeySystems(src);
-
-  if (detected.length === 0) {
-    log.push({ level: "warn", msg: "No key systems detected in this script." });
-    return { code: src, log, steps, detected };
-  }
-
-  log.push({ level: "info", msg: "Detected " + detected.length + " key system(s): " + detected.map(d => d.name).join(", ") });
-
-  // Strip named key systems
-  for (const sys of KEY_SYSTEMS) {
-    if (!detected.find(d => d.id === sys.id)) continue;
-    let count = 0;
-    for (const pat of sys.strip) { out = out.replace(pat, () => { count++; return "--[[ " + sys.name + " key check removed by Quicksilver ]]"; }); }
-    if (count > 0) { log.push({ level: "ok", msg: "Stripped " + count + " " + sys.name + " reference(s)" }); steps.push("Stripped " + sys.name); }
-  }
-
-  // Strip generic patterns
-  for (const [id, gen] of Object.entries(GENERIC_PATTERNS)) {
-    if (!detected.find(d => d.id === id)) continue;
-    let count = 0;
-    for (const pat of gen.strip) { out = out.replace(pat, () => { count++; return "--[[ " + gen.name + " removed by Quicksilver ]]"; }); }
-    if (count > 0) { log.push({ level: "ok", msg: "Stripped " + count + " " + gen.name + " pattern(s)" }); steps.push("Stripped " + gen.name); }
-  }
-
-  // Neutralize Player:Kick() calls related to keys/auth
-  const kickPatterns = [
-    /game:GetService\s*\(\s*["']Players["']\s*\)\s*\.LocalPlayer\s*:\s*Kick\s*\(\s*["'][^"']*(?:[Kk]ey|[Ww]hitelist|HWID|[Ee]xpir|[Ii]nvalid|[Uu]nauthori|[Bb]an)[^"']*["']\s*\)[^\n]*/gi,
-    /game\.Players\.LocalPlayer\s*:\s*Kick\s*\(\s*["'][^"']*(?:[Kk]ey|[Ww]hitelist|HWID|[Ee]xpir|[Ii]nvalid|[Uu]nauthori|[Bb]an)[^"']*["']\s*\)[^\n]*/gi,
-  ];
-  let kickCount = 0;
-  for (const p of kickPatterns) { out = out.replace(p, () => { kickCount++; return "--[[ kick removed by Quicksilver ]]"; }); }
-  if (kickCount > 0) { log.push({ level: "ok", msg: "Neutralized " + kickCount + " Player:Kick() call(s)" }); steps.push("Neutralized Kick calls"); }
-
-  // Remove key wait loops
-  const waitLoops = [
-    /while\s+not\s+\w*[Kk]ey\w*\s+do\s*[\s\S]*?end/gi,
-    /repeat\s*[\s\S]*?\buntil\s+\w*[Kk]ey\w*/gi,
-    /while\s+\w*[Kk]ey\w*\s*==\s*(?:nil|false|"")\s*do\s*[\s\S]*?end/gi,
-  ];
-  let loopCount = 0;
-  for (const p of waitLoops) { out = out.replace(p, () => { loopCount++; return "--[[ key wait loop removed by Quicksilver ]]"; }); }
-  if (loopCount > 0) { log.push({ level: "ok", msg: "Removed " + loopCount + " key wait loop(s)" }); steps.push("Removed key wait loops"); }
-
-  // Strip ad gate functions
-  const adGates = [
-    /(?:local\s+)?function\s+\w*[Cc]heckpoint\w*\s*\([^)]*\)[\s\S]*?end/gi,
-    /(?:local\s+)?function\s+\w*[Aa]d[Gg]ate\w*\s*\([^)]*\)[\s\S]*?end/gi,
-    /(?:local\s+)?function\s+\w*[Ll]ink[Vv]ertise\w*\s*\([^)]*\)[\s\S]*?end/gi,
-  ];
-  let adCount = 0;
-  for (const p of adGates) { out = out.replace(p, () => { adCount++; return "--[[ ad gate removed by Quicksilver ]]"; }); }
-  if (adCount > 0) { log.push({ level: "ok", msg: "Removed " + adCount + " ad gate function(s)" }); steps.push("Removed ad gates"); }
-
-  // Cleanup
-  out = out.replace(/if\s+true\s+then\s*\n?\s*end/gi, "").replace(/if\s+false\s+then\s*[\s\S]*?end/gi, "").replace(/\n{4,}/g, "\n\n");
-
-  log.push({ level: "info", msg: "Bypass complete — " + steps.length + " pass(es) applied" });
-  return { code: out.trim() + "\n", log, steps, detected };
-}
-
-/* =========================================================================
    UI wiring
    ========================================================================= */
 const $ = (id) => document.getElementById(id);
@@ -826,16 +509,6 @@ const toastEl = $("toast");
     el.appendChild(span);
   });
 })();
-
-// Mode tabs
-document.querySelectorAll(".mode-tab").forEach(btn => {
-  btn.addEventListener("click", () => {
-    document.querySelectorAll(".mode-tab").forEach(b => b.classList.remove("active"));
-    document.querySelectorAll(".mode-panel").forEach(p => p.classList.remove("active"));
-    btn.classList.add("active");
-    $("mode-" + btn.dataset.mode).classList.add("active");
-  });
-});
 
 PRESETS.forEach((p) => {
   const opt = document.createElement("option");
@@ -937,140 +610,8 @@ $("copy").addEventListener("click", async () => {
   catch { outputEl.select(); document.execCommand("copy"); toast("Copied."); }
 });
 
-/* =========================================================================
-   KEY BYPASS UI
-   ========================================================================= */
-const bypassInputEl = $("bypassInput");
-const bypassOutputEl = $("bypassOutput");
-const bypassPillsEl = $("bypassPills");
-const bypassLogEl = $("bypassLog");
-const bypassGridEl = $("bypassGrid");
-
-bypassInputEl.addEventListener("input", () => {
-  const src = bypassInputEl.value;
-  const detected = detectKeySystems(src);
-  const detectedIds = new Set(detected.map(d => d.id));
-  bypassGridEl.querySelectorAll(".bypass-chip").forEach(chip => {
-    const sys = chip.dataset.sys;
-    const tag = chip.querySelector(".chip-tag");
-    if (detectedIds.has(sys)) { chip.classList.add("detected"); tag.textContent = "FOUND"; }
-    else { chip.classList.remove("detected"); tag.textContent = "\u2014"; }
-  });
-  $("detectCount").textContent = detected.length > 0
-    ? detected.length + " system(s) detected"
-    : (src.trim() ? "No key systems found" : "Paste code to scan");
-});
-
-const BYPASS_EXAMPLE = "-- Example script with key systems (for testing)\nlocal HttpService = game:GetService(\"HttpService\")\nlocal Players = game:GetService(\"Players\")\nlocal player = Players.LocalPlayer\n\n-- Polsec key check\nlocal polsec_url = \"https://getpolsec.com/api/v1/validate\"\nlocal polsec_response = syn.request({\n  Url = polsec_url,\n  Method = \"POST\",\n  Headers = {[\"Content-Type\"] = \"application/json\"},\n  Body = HttpService:JSONEncode({key = getgenv().Key, hwid = game:GetService(\"RbxAnalyticsService\"):GetClientId()})\n})\n\nif polsec_response.StatusCode ~= 200 then\n  game:GetService(\"Players\").LocalPlayer:Kick(\"Invalid key! Get one at getpolsec.com\")\n  return\nend\n\n-- HWID Lock\nlocal hwid = game:GetService(\"RbxAnalyticsService\"):GetClientId()\nif hwid ~= \"expected_hwid_here\" then\n  game:GetService(\"Players\").LocalPlayer:Kick(\"HWID mismatch - unauthorized device\")\n  return\nend\n\n-- Discord webhook logging\nlocal webhook_url = \"https://discord.com/api/webhooks/123456789/abcdefg\"\nfunction sendWebhook(msg)\n  syn.request({\n    Url = webhook_url,\n    Method = \"POST\",\n    Headers = {[\"Content-Type\"] = \"application/json\"},\n    Body = HttpService:JSONEncode({content = msg})\n  })\nend\n\nsendWebhook(\"Key used by \" .. player.Name)\n\n-- Key wait loop\nwhile not keyValidated do\n  wait(0.5)\nend\n\n-- Anti-tamper integrity check\nlocal scriptHash = game:GetService(\"HttpService\"):GetHashCode(getfenv())\nif debug.getinfo(sendWebhook).source ~= \"expected_source\" then\n  script:Destroy()\nend\n\n-- Periodic re-validation heartbeat\ntask.spawn(function()\n  while true do\n    wait(5)\n    if not keyValidated then\n      script:Destroy()\n    end\n  end\nend)\n\n-- ============ MAIN SCRIPT (survives bypass) ============\nprint(\"Script loaded successfully!\")\nlocal function createESP()\n  for _, v in pairs(Players:GetPlayers()) do\n    if v ~= player then\n      print(\"ESP created for \" .. v.Name)\n    end\n  end\nend\n\ncreateESP()\nPlayers.PlayerAdded:Connect(function(p)\n  createESP()\nend)\n";
-
-$("bypassExample").addEventListener("click", () => {
-  bypassInputEl.value = BYPASS_EXAMPLE;
-  bypassInputEl.dispatchEvent(new Event("input"));
-  bypassOutputEl.value = "";
-  bypassPillsEl.style.display = "none";
-  bypassLogEl.style.display = "none";
-});
-
-$("bypassBtn").addEventListener("click", () => {
-  const src = bypassInputEl.value.trim();
-  if (!src) { toast("Paste a script with a key system first."); return; }
-  const result = bypassKeySystems(src);
-  bypassOutputEl.value = result.code;
-  if (result.steps.length > 0) {
-    bypassPillsEl.innerHTML = result.steps.map(s => "<li>" + s.replace(/</g, "&lt;") + "</li>").join("");
-    bypassPillsEl.style.display = "flex";
-  } else { bypassPillsEl.style.display = "none"; }
-  if (result.log.length > 0) {
-    bypassLogEl.innerHTML = result.log.map(l => {
-      const cls = l.level === "ok" ? "log-ok" : l.level === "warn" ? "log-warn" : "log-info";
-      const prefix = l.level === "ok" ? "\u2713" : l.level === "warn" ? "\u26A0" : "\u2192";
-      return '<span class="' + cls + '">' + prefix + " " + l.msg.replace(/</g, "&lt;") + "</span>";
-    }).join("\n");
-    bypassLogEl.style.display = "block";
-  }
-  const detectedIds = new Set(result.detected.map(d => d.id));
-  bypassGridEl.querySelectorAll(".bypass-chip").forEach(chip => {
-    const tag = chip.querySelector(".chip-tag");
-    if (detectedIds.has(chip.dataset.sys)) { chip.classList.add("detected"); tag.textContent = "STRIPPED"; }
-  });
-  toast(result.steps.length > 0 ? "Key system bypassed — " + result.steps.length + " pass(es)" : "No key patterns matched to strip.");
-});
-
-$("bypassCopy").addEventListener("click", async () => {
-  if (!bypassOutputEl.value) { toast("Nothing to copy yet."); return; }
-  try { await navigator.clipboard.writeText(bypassOutputEl.value); toast("Copied to clipboard."); }
-  catch { bypassOutputEl.select(); document.execCommand("copy"); toast("Copied."); }
-});
-
-$("bypassDownload").addEventListener("click", () => {
-  const code = bypassOutputEl.value;
-  if (!code) { toast("Run the bypass first."); return; }
-  downloadBlob(new Blob([code], { type: "text/plain" }), "bypassed.lua");
-});
-
 // Preload deobf example
 inputEl.value = PRESETS[0].example;
 </script>
 </body>
-</html>
-
-<body>
-    <div class="wrap">
-        <p class="eyebrow">// Open-source project</p>
-        <h1><span class="brand">BypassLinks</span> — free auto link bypasser</h1>
-        <p class="lead">
-            BypassLinks is a free tool that bypasses
-            <a href="https://bypass-links.com/bypass/linkvertise">Linkvertise</a>,
-            <a href="https://bypass-links.com/bypass/lootlabs">LootLabs</a>,
-            <a href="https://bypass-links.com/bypass/work-ink">Work.ink</a>,
-            <a href="https://bypass-links.com/bypass/lockr">Lockr</a>,
-            <a href="https://bypass-links.com/bypass/rekonise">Rekonise</a> and 40+ ad-link and
-            key-system gates — resolving them server-side and returning the real destination in seconds.
-            No surveys, no timers, no sign-up.
-        </p>
-
-        <a class="cta" href="https://bypass-links.com/">Open the bypasser →</a>
-
-        <h2>How it works</h2>
-        <p>
-            Ad-link services like Linkvertise validate links on their own servers, which is why
-            browser extensions that "solve" the page locally break constantly. BypassLinks completes
-            the flow <strong>server-side</strong> instead, so there's nothing to fingerprint on your
-            machine and fixes ship centrally. Read the full explainer:
-            <a href="https://bypass-links.com/blog/how-to-bypass-linkvertise">How to Bypass Linkvertise in 2026</a>.
-        </p>
-
-        <h2>Features</h2>
-        <ul>
-            <li>One-click bypass for 40+ services — no surveys, no fake tasks, no waiting.</li>
-            <li>Free web tool at <a href="https://bypass-links.com/">bypass-links.com</a> — no account required.</li>
-            <li>Optional <a href="https://bypass-links.com/userscript">browser userscript</a> for auto-bypass.</li>
-            <li>Server-side resolving — private, no browser permissions.</li>
-        </ul>
-
-        <h2>Popular guides</h2>
-        <ul>
-            <li><a href="https://bypass-links.com/blog/how-to-bypass-linkvertise">How to Bypass Linkvertise (2026)</a></li>
-            <li><a href="https://bypass-links.com/blog/delta-executor-key-system">Bypass the Delta Executor Key System</a></li>
-            <li><a href="https://bypass-links.com/blog/how-to-bypass-work-ink-lootlabs-2026">Bypass Work.ink &amp; LootLabs</a></li>
-            <li><a href="https://bypass-links.com/blog/bypassing-linkvertise-safe-and-legal">Is bypassing safe &amp; legal?</a></li>
-        </ul>
-
-        <h2>Links</h2>
-        <ul>
-            <li>Website: <a href="https://bypass-links.com/">bypass-links.com</a></li>
-            <li>Supported services: <a href="https://bypass-links.com/supported">bypass-links.com/supported</a></li>
-            <li>Userscript: <a href="https://bypass-links.com/userscript">bypass-links.com/userscript</a></li>
-            <li>Source code: <a href="https://github.com/bypasslinks5-del/bypass-linkvertise-lootlabs-lockr">GitHub</a></li>
-        </ul>
-
-        <footer>
-            <p class="muted">
-                &copy; 2026 <a href="https://bypass-links.com/">BypassLinks</a> · Free &amp; open-source (MIT).
-                The fastest way past Linkvertise, LootLabs, Work.ink and 40+ ad-link gates.
-            </p>
-        </footer>
-    </div>
-</body>
-
 </html>
