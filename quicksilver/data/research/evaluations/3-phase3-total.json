@@ -1,0 +1,196 @@
+{
+ "schema": 1,
+ "label": "3-phase3-total",
+ "note": "Both changes against the baseline at d509bbc.",
+ "matched": 2240,
+ "base": {
+  "rev": "base-d509bbc",
+  "experiments": 2240
+ },
+ "current": {
+  "rev": "d509bbc+edb020aa",
+  "experiments": 2240
+ },
+ "improvedExperiments": 184,
+ "regressedExperiments": 0,
+ "cellsImproved": [
+  {
+   "transform": "rename",
+   "plan": "adaptive",
+   "n": 16,
+   "baseSuccess": 6,
+   "currentSuccess": 16,
+   "baseRecovery": 6,
+   "currentRecovery": 16,
+   "baseWorse": 10,
+   "currentWorse": 0
+  },
+  {
+   "transform": "rename",
+   "plan": "adaptive+sandbox",
+   "n": 16,
+   "baseSuccess": 6,
+   "currentSuccess": 16,
+   "baseRecovery": 6,
+   "currentRecovery": 16,
+   "baseWorse": 10,
+   "currentWorse": 0
+  },
+  {
+   "transform": "rename",
+   "plan": "nexus",
+   "n": 16,
+   "baseSuccess": 6,
+   "currentSuccess": 16,
+   "baseRecovery": 6,
+   "currentRecovery": 16,
+   "baseWorse": 10,
+   "currentWorse": 0
+  },
+  {
+   "transform": "rename",
+   "plan": "nexus+sandbox",
+   "n": 16,
+   "baseSuccess": 6,
+   "currentSuccess": 16,
+   "baseRecovery": 6,
+   "currentRecovery": 16,
+   "baseWorse": 10,
+   "currentWorse": 0
+  },
+  {
+   "transform": "stack-confetti-rename-strings",
+   "plan": "adaptive+sandbox",
+   "n": 16,
+   "baseSuccess": 16,
+   "currentSuccess": 16,
+   "baseRecovery": 7,
+   "currentRecovery": 16,
+   "baseWorse": 0,
+   "currentWorse": 0
+  },
+  {
+   "transform": "stack-confetti-rename-strings",
+   "plan": "nexus+sandbox",
+   "n": 16,
+   "baseSuccess": 16,
+   "currentSuccess": 16,
+   "baseRecovery": 7,
+   "currentRecovery": 16,
+   "baseWorse": 0,
+   "currentWorse": 0
+  },
+  {
+   "transform": "stack-rename-strings",
+   "plan": "adaptive+sandbox",
+   "n": 16,
+   "baseSuccess": 16,
+   "currentSuccess": 16,
+   "baseRecovery": 7,
+   "currentRecovery": 16,
+   "baseWorse": 0,
+   "currentWorse": 0
+  },
+  {
+   "transform": "stack-rename-strings",
+   "plan": "nexus+sandbox",
+   "n": 16,
+   "baseSuccess": 16,
+   "currentSuccess": 16,
+   "baseRecovery": 7,
+   "currentRecovery": 16,
+   "baseWorse": 0,
+   "currentWorse": 0
+  },
+  {
+   "transform": "stack-tabledispatch-rename-proxies",
+   "plan": "adaptive",
+   "n": 16,
+   "baseSuccess": 16,
+   "currentSuccess": 16,
+   "baseRecovery": 0,
+   "currentRecovery": 11,
+   "baseWorse": 0,
+   "currentWorse": 0
+  },
+  {
+   "transform": "stack-tabledispatch-rename-proxies",
+   "plan": "adaptive+sandbox",
+   "n": 16,
+   "baseSuccess": 16,
+   "currentSuccess": 16,
+   "baseRecovery": 0,
+   "currentRecovery": 11,
+   "baseWorse": 0,
+   "currentWorse": 0
+  },
+  {
+   "transform": "stack-tabledispatch-rename-proxies",
+   "plan": "nexus",
+   "n": 16,
+   "baseSuccess": 16,
+   "currentSuccess": 16,
+   "baseRecovery": 0,
+   "currentRecovery": 11,
+   "baseWorse": 0,
+   "currentWorse": 0
+  },
+  {
+   "transform": "stack-tabledispatch-rename-proxies",
+   "plan": "nexus+sandbox",
+   "n": 16,
+   "baseSuccess": 16,
+   "currentSuccess": 16,
+   "baseRecovery": 0,
+   "currentRecovery": 11,
+   "baseWorse": 0,
+   "currentWorse": 0
+  },
+  {
+   "transform": "tabledispatch",
+   "plan": "adaptive",
+   "n": 16,
+   "baseSuccess": 16,
+   "currentSuccess": 16,
+   "baseRecovery": 0,
+   "currentRecovery": 16,
+   "baseWorse": 0,
+   "currentWorse": 0
+  },
+  {
+   "transform": "tabledispatch",
+   "plan": "adaptive+sandbox",
+   "n": 16,
+   "baseSuccess": 16,
+   "currentSuccess": 16,
+   "baseRecovery": 0,
+   "currentRecovery": 16,
+   "baseWorse": 0,
+   "currentWorse": 0
+  },
+  {
+   "transform": "tabledispatch",
+   "plan": "nexus",
+   "n": 16,
+   "baseSuccess": 16,
+   "currentSuccess": 16,
+   "baseRecovery": 0,
+   "currentRecovery": 16,
+   "baseWorse": 0,
+   "currentWorse": 0
+  },
+  {
+   "transform": "tabledispatch",
+   "plan": "nexus+sandbox",
+   "n": 16,
+   "baseSuccess": 16,
+   "currentSuccess": 16,
+   "baseRecovery": 0,
+   "currentRecovery": 16,
+   "baseWorse": 0,
+   "currentWorse": 0
+  }
+ ],
+ "cellsRegressed": [],
+ "regressions": []
+}

@@ -1,0 +1,4610 @@
+{
+ "schema": 1,
+ "generatedAt": "2026-11-08T19:35:36.648Z",
+ "engine": "1.0.0",
+ "revisions": [
+  "d509bbc+edb020aa"
+ ],
+ "minTrials": 12,
+ "counts": {
+  "experiments": 2576,
+  "valid": 2576,
+  "toolBroken": 0,
+  "transforms": 20,
+  "signatures": 38,
+  "programs": 64
+ },
+ "discoveries": [
+  {
+   "id": "works:flatten-tree:adaptive",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "adaptive recovers \"control-flow flattening (search tree)\": 16/16 verified (0 to near-original), 81%–100% at 95%.",
+   "transform": "flatten-tree",
+   "plan": "adaptive",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 0,
+    "partial": 16,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:flatten-tree:nexus+sandbox",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus+sandbox recovers \"control-flow flattening (search tree)\": 16/16 verified (0 to near-original), 81%–100% at 95%.",
+   "transform": "flatten-tree",
+   "plan": "nexus+sandbox",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 0,
+    "partial": 16,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:flatten-tree:adaptive+sandbox",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "adaptive+sandbox recovers \"control-flow flattening (search tree)\": 16/16 verified (0 to near-original), 81%–100% at 95%.",
+   "transform": "flatten-tree",
+   "plan": "adaptive+sandbox",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 0,
+    "partial": 16,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:flatten-tree:nexus",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus recovers \"control-flow flattening (search tree)\": 16/16 verified (0 to near-original), 81%–100% at 95%.",
+   "transform": "flatten-tree",
+   "plan": "nexus",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 0,
+    "partial": 16,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "improves:flatten-tree:adaptive>nexus-generic",
+   "kind": "improves",
+   "transform": "flatten-tree",
+   "plan": "adaptive",
+   "trials": 16,
+   "rule": "non-overlapping 95% intervals",
+   "statement": "On \"control-flow flattening (search tree)\", adaptive (16/16) beats nexus-generic (3/16).",
+   "evidence": {
+    "winner": "16/16",
+    "loser": "3/16"
+   }
+  },
+  {
+   "id": "improves:flatten-tree:adaptive>generic",
+   "kind": "improves",
+   "transform": "flatten-tree",
+   "plan": "adaptive",
+   "trials": 16,
+   "rule": "non-overlapping 95% intervals",
+   "statement": "On \"control-flow flattening (search tree)\", adaptive (16/16) beats generic (3/16).",
+   "evidence": {
+    "winner": "16/16",
+    "loser": "3/16"
+   }
+  },
+  {
+   "id": "improves:flatten-tree:nexus+sandbox>nexus-generic+sandbox",
+   "kind": "improves",
+   "transform": "flatten-tree",
+   "plan": "nexus+sandbox",
+   "trials": 16,
+   "rule": "non-overlapping 95% intervals",
+   "statement": "On \"control-flow flattening (search tree)\", nexus+sandbox (16/16) beats nexus-generic+sandbox (3/16).",
+   "evidence": {
+    "winner": "16/16",
+    "loser": "3/16"
+   }
+  },
+  {
+   "id": "improves:flatten-tree:adaptive+sandbox>nexus-generic+sandbox",
+   "kind": "improves",
+   "transform": "flatten-tree",
+   "plan": "adaptive+sandbox",
+   "trials": 16,
+   "rule": "non-overlapping 95% intervals",
+   "statement": "On \"control-flow flattening (search tree)\", adaptive+sandbox (16/16) beats nexus-generic+sandbox (3/16).",
+   "evidence": {
+    "winner": "16/16",
+    "loser": "3/16"
+   }
+  },
+  {
+   "id": "improves:flatten-tree:nexus>nexus-generic",
+   "kind": "improves",
+   "transform": "flatten-tree",
+   "plan": "nexus",
+   "trials": 16,
+   "rule": "non-overlapping 95% intervals",
+   "statement": "On \"control-flow flattening (search tree)\", nexus (16/16) beats nexus-generic (3/16).",
+   "evidence": {
+    "winner": "16/16",
+    "loser": "3/16"
+   }
+  },
+  {
+   "id": "improves:flatten-tree:nexus>generic",
+   "kind": "improves",
+   "transform": "flatten-tree",
+   "plan": "nexus",
+   "trials": 16,
+   "rule": "non-overlapping 95% intervals",
+   "statement": "On \"control-flow flattening (search tree)\", nexus (16/16) beats generic (3/16).",
+   "evidence": {
+    "winner": "16/16",
+    "loser": "3/16"
+   }
+  },
+  {
+   "id": "works:stack-tabledispatch-rename-proxies:nexus+sandbox",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus+sandbox recovers \"lab custom: table dispatch + renamed locals + proxies\": 16/16 verified (11 to near-original), 81%–100% at 95%.",
+   "transform": "stack-tabledispatch-rename-proxies",
+   "plan": "nexus+sandbox",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 11,
+    "partial": 5,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:stack-tabledispatch-rename-proxies:adaptive",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "adaptive recovers \"lab custom: table dispatch + renamed locals + proxies\": 16/16 verified (11 to near-original), 81%–100% at 95%.",
+   "transform": "stack-tabledispatch-rename-proxies",
+   "plan": "adaptive",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 11,
+    "partial": 5,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:stack-tabledispatch-rename-proxies:nexus-generic+sandbox",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus-generic+sandbox recovers \"lab custom: table dispatch + renamed locals + proxies\": 16/16 verified (0 to near-original), 81%–100% at 95%.",
+   "transform": "stack-tabledispatch-rename-proxies",
+   "plan": "nexus-generic+sandbox",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 0,
+    "partial": 16,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:stack-tabledispatch-rename-proxies:generic",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "generic recovers \"lab custom: table dispatch + renamed locals + proxies\": 16/16 verified (0 to near-original), 81%–100% at 95%.",
+   "transform": "stack-tabledispatch-rename-proxies",
+   "plan": "generic",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 0,
+    "partial": 16,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:stack-tabledispatch-rename-proxies:nexus",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus recovers \"lab custom: table dispatch + renamed locals + proxies\": 16/16 verified (11 to near-original), 81%–100% at 95%.",
+   "transform": "stack-tabledispatch-rename-proxies",
+   "plan": "nexus",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 11,
+    "partial": 5,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:stack-tabledispatch-rename-proxies:nexus-generic",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus-generic recovers \"lab custom: table dispatch + renamed locals + proxies\": 16/16 verified (0 to near-original), 81%–100% at 95%.",
+   "transform": "stack-tabledispatch-rename-proxies",
+   "plan": "nexus-generic",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 0,
+    "partial": 16,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:stack-tabledispatch-rename-proxies:adaptive+sandbox",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "adaptive+sandbox recovers \"lab custom: table dispatch + renamed locals + proxies\": 16/16 verified (11 to near-original), 81%–100% at 95%.",
+   "transform": "stack-tabledispatch-rename-proxies",
+   "plan": "adaptive+sandbox",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 11,
+    "partial": 5,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:tabledispatch:nexus-generic",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus-generic recovers \"lab custom: functions called through a table\": 16/16 verified (0 to near-original), 81%–100% at 95%.",
+   "transform": "tabledispatch",
+   "plan": "nexus-generic",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 0,
+    "partial": 16,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:tabledispatch:nexus",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus recovers \"lab custom: functions called through a table\": 16/16 verified (16 to near-original), 81%–100% at 95%.",
+   "transform": "tabledispatch",
+   "plan": "nexus",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 16,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:tabledispatch:nexus+sandbox",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus+sandbox recovers \"lab custom: functions called through a table\": 16/16 verified (16 to near-original), 81%–100% at 95%.",
+   "transform": "tabledispatch",
+   "plan": "nexus+sandbox",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 16,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:tabledispatch:nexus-generic+sandbox",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus-generic+sandbox recovers \"lab custom: functions called through a table\": 16/16 verified (0 to near-original), 81%–100% at 95%.",
+   "transform": "tabledispatch",
+   "plan": "nexus-generic+sandbox",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 0,
+    "partial": 16,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:tabledispatch:generic",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "generic recovers \"lab custom: functions called through a table\": 16/16 verified (0 to near-original), 81%–100% at 95%.",
+   "transform": "tabledispatch",
+   "plan": "generic",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 0,
+    "partial": 16,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:tabledispatch:adaptive+sandbox",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "adaptive+sandbox recovers \"lab custom: functions called through a table\": 16/16 verified (16 to near-original), 81%–100% at 95%.",
+   "transform": "tabledispatch",
+   "plan": "adaptive+sandbox",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 16,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:tabledispatch:adaptive",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "adaptive recovers \"lab custom: functions called through a table\": 16/16 verified (16 to near-original), 81%–100% at 95%.",
+   "transform": "tabledispatch",
+   "plan": "adaptive",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 16,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "fails:xorpack:nexus",
+   "kind": "fails",
+   "rule": "interval upper bound at most 25%",
+   "statement": "nexus does not recover \"lab custom: stream-cipher strings\": 0/16 verified.",
+   "transform": "xorpack",
+   "plan": "nexus",
+   "trials": 16,
+   "evidence": {
+    "success": 0,
+    "recovery": 0,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0,
+     0.194
+    ]
+   }
+  },
+  {
+   "id": "works:xorpack:adaptive+sandbox",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "adaptive+sandbox recovers \"lab custom: stream-cipher strings\": 16/16 verified (16 to near-original), 81%–100% at 95%.",
+   "transform": "xorpack",
+   "plan": "adaptive+sandbox",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 16,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "fails:xorpack:adaptive",
+   "kind": "fails",
+   "rule": "interval upper bound at most 25%",
+   "statement": "adaptive does not recover \"lab custom: stream-cipher strings\": 0/16 verified.",
+   "transform": "xorpack",
+   "plan": "adaptive",
+   "trials": 16,
+   "evidence": {
+    "success": 0,
+    "recovery": 0,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0,
+     0.194
+    ]
+   }
+  },
+  {
+   "id": "works:xorpack:nexus+sandbox",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus+sandbox recovers \"lab custom: stream-cipher strings\": 16/16 verified (16 to near-original), 81%–100% at 95%.",
+   "transform": "xorpack",
+   "plan": "nexus+sandbox",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 16,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "fails:xorpack:nexus-generic",
+   "kind": "fails",
+   "rule": "interval upper bound at most 25%",
+   "statement": "nexus-generic does not recover \"lab custom: stream-cipher strings\": 0/16 verified.",
+   "transform": "xorpack",
+   "plan": "nexus-generic",
+   "trials": 16,
+   "evidence": {
+    "success": 0,
+    "recovery": 0,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0,
+     0.194
+    ]
+   }
+  },
+  {
+   "id": "fails:xorpack:generic",
+   "kind": "fails",
+   "rule": "interval upper bound at most 25%",
+   "statement": "generic does not recover \"lab custom: stream-cipher strings\": 0/16 verified.",
+   "transform": "xorpack",
+   "plan": "generic",
+   "trials": 16,
+   "evidence": {
+    "success": 0,
+    "recovery": 0,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0,
+     0.194
+    ]
+   }
+  },
+  {
+   "id": "needs-sandbox:xorpack:adaptive",
+   "kind": "needs-sandbox",
+   "transform": "xorpack",
+   "plan": "adaptive",
+   "trials": 16,
+   "rule": "plan fails with the sandbox off and works with it on",
+   "statement": "\"lab custom: stream-cipher strings\" needs the sandbox: adaptive 0/16 without it, 16/16 with it.",
+   "evidence": {
+    "off": "0/16",
+    "on": "16/16"
+   }
+  },
+  {
+   "id": "needs-sandbox:xorpack:nexus",
+   "kind": "needs-sandbox",
+   "transform": "xorpack",
+   "plan": "nexus",
+   "trials": 16,
+   "rule": "plan fails with the sandbox off and works with it on",
+   "statement": "\"lab custom: stream-cipher strings\" needs the sandbox: nexus 0/16 without it, 16/16 with it.",
+   "evidence": {
+    "off": "0/16",
+    "on": "16/16"
+   }
+  },
+  {
+   "id": "improves:xorpack:adaptive+sandbox>nexus-generic+sandbox",
+   "kind": "improves",
+   "transform": "xorpack",
+   "plan": "adaptive+sandbox",
+   "trials": 16,
+   "rule": "non-overlapping 95% intervals",
+   "statement": "On \"lab custom: stream-cipher strings\", adaptive+sandbox (16/16) beats nexus-generic+sandbox (1/16).",
+   "evidence": {
+    "winner": "16/16",
+    "loser": "1/16"
+   }
+  },
+  {
+   "id": "improves:xorpack:nexus+sandbox>nexus-generic+sandbox",
+   "kind": "improves",
+   "transform": "xorpack",
+   "plan": "nexus+sandbox",
+   "trials": 16,
+   "rule": "non-overlapping 95% intervals",
+   "statement": "On \"lab custom: stream-cipher strings\", nexus+sandbox (16/16) beats nexus-generic+sandbox (1/16).",
+   "evidence": {
+    "winner": "16/16",
+    "loser": "1/16"
+   }
+  },
+  {
+   "id": "works:strings-inline:adaptive+sandbox",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "adaptive+sandbox recovers \"inline byte-list strings\": 16/16 verified (16 to near-original), 81%–100% at 95%.",
+   "transform": "strings-inline",
+   "plan": "adaptive+sandbox",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 16,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:strings-inline:nexus+sandbox",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus+sandbox recovers \"inline byte-list strings\": 16/16 verified (16 to near-original), 81%–100% at 95%.",
+   "transform": "strings-inline",
+   "plan": "nexus+sandbox",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 16,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "fails:strings-inline:adaptive",
+   "kind": "fails",
+   "rule": "interval upper bound at most 25%",
+   "statement": "adaptive does not recover \"inline byte-list strings\": 0/16 verified.",
+   "transform": "strings-inline",
+   "plan": "adaptive",
+   "trials": 16,
+   "evidence": {
+    "success": 0,
+    "recovery": 0,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0,
+     0.194
+    ]
+   }
+  },
+  {
+   "id": "fails:strings-inline:generic",
+   "kind": "fails",
+   "rule": "interval upper bound at most 25%",
+   "statement": "generic does not recover \"inline byte-list strings\": 0/16 verified.",
+   "transform": "strings-inline",
+   "plan": "generic",
+   "trials": 16,
+   "evidence": {
+    "success": 0,
+    "recovery": 0,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0,
+     0.194
+    ]
+   }
+  },
+  {
+   "id": "fails:strings-inline:nexus",
+   "kind": "fails",
+   "rule": "interval upper bound at most 25%",
+   "statement": "nexus does not recover \"inline byte-list strings\": 0/16 verified.",
+   "transform": "strings-inline",
+   "plan": "nexus",
+   "trials": 16,
+   "evidence": {
+    "success": 0,
+    "recovery": 0,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0,
+     0.194
+    ]
+   }
+  },
+  {
+   "id": "fails:strings-inline:nexus-generic",
+   "kind": "fails",
+   "rule": "interval upper bound at most 25%",
+   "statement": "nexus-generic does not recover \"inline byte-list strings\": 0/16 verified.",
+   "transform": "strings-inline",
+   "plan": "nexus-generic",
+   "trials": 16,
+   "evidence": {
+    "success": 0,
+    "recovery": 0,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0,
+     0.194
+    ]
+   }
+  },
+  {
+   "id": "fails:strings-inline:nexus-generic+sandbox",
+   "kind": "fails",
+   "rule": "interval upper bound at most 25%",
+   "statement": "nexus-generic+sandbox does not recover \"inline byte-list strings\": 0/16 verified.",
+   "transform": "strings-inline",
+   "plan": "nexus-generic+sandbox",
+   "trials": 16,
+   "evidence": {
+    "success": 0,
+    "recovery": 0,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0,
+     0.194
+    ]
+   }
+  },
+  {
+   "id": "needs-sandbox:strings-inline:adaptive",
+   "kind": "needs-sandbox",
+   "transform": "strings-inline",
+   "plan": "adaptive",
+   "trials": 16,
+   "rule": "plan fails with the sandbox off and works with it on",
+   "statement": "\"inline byte-list strings\" needs the sandbox: adaptive 0/16 without it, 16/16 with it.",
+   "evidence": {
+    "off": "0/16",
+    "on": "16/16"
+   }
+  },
+  {
+   "id": "needs-sandbox:strings-inline:nexus",
+   "kind": "needs-sandbox",
+   "transform": "strings-inline",
+   "plan": "nexus",
+   "trials": 16,
+   "rule": "plan fails with the sandbox off and works with it on",
+   "statement": "\"inline byte-list strings\" needs the sandbox: nexus 0/16 without it, 16/16 with it.",
+   "evidence": {
+    "off": "0/16",
+    "on": "16/16"
+   }
+  },
+  {
+   "id": "improves:strings-inline:adaptive+sandbox>nexus-generic+sandbox",
+   "kind": "improves",
+   "transform": "strings-inline",
+   "plan": "adaptive+sandbox",
+   "trials": 16,
+   "rule": "non-overlapping 95% intervals",
+   "statement": "On \"inline byte-list strings\", adaptive+sandbox (16/16) beats nexus-generic+sandbox (0/16).",
+   "evidence": {
+    "winner": "16/16",
+    "loser": "0/16"
+   }
+  },
+  {
+   "id": "improves:strings-inline:nexus+sandbox>nexus-generic+sandbox",
+   "kind": "improves",
+   "transform": "strings-inline",
+   "plan": "nexus+sandbox",
+   "trials": 16,
+   "rule": "non-overlapping 95% intervals",
+   "statement": "On \"inline byte-list strings\", nexus+sandbox (16/16) beats nexus-generic+sandbox (0/16).",
+   "evidence": {
+    "winner": "16/16",
+    "loser": "0/16"
+   }
+  },
+  {
+   "id": "works:wrap:adaptive+sandbox",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "adaptive+sandbox recovers \"wrapper function\": 16/16 verified (16 to near-original), 81%–100% at 95%.",
+   "transform": "wrap",
+   "plan": "adaptive+sandbox",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 16,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:wrap:nexus+sandbox",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus+sandbox recovers \"wrapper function\": 16/16 verified (16 to near-original), 81%–100% at 95%.",
+   "transform": "wrap",
+   "plan": "nexus+sandbox",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 16,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:wrap:nexus-generic+sandbox",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus-generic+sandbox recovers \"wrapper function\": 16/16 verified (16 to near-original), 81%–100% at 95%.",
+   "transform": "wrap",
+   "plan": "nexus-generic+sandbox",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 16,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:wrap:adaptive",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "adaptive recovers \"wrapper function\": 16/16 verified (16 to near-original), 81%–100% at 95%.",
+   "transform": "wrap",
+   "plan": "adaptive",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 16,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:wrap:nexus",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus recovers \"wrapper function\": 16/16 verified (16 to near-original), 81%–100% at 95%.",
+   "transform": "wrap",
+   "plan": "nexus",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 16,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:wrap:nexus-generic",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus-generic recovers \"wrapper function\": 16/16 verified (16 to near-original), 81%–100% at 95%.",
+   "transform": "wrap",
+   "plan": "nexus-generic",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 16,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:wrap:generic",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "generic recovers \"wrapper function\": 16/16 verified (16 to near-original), 81%–100% at 95%.",
+   "transform": "wrap",
+   "plan": "generic",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 16,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:strings-indexed:nexus+sandbox",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus+sandbox recovers \"string table behind a decoder\": 16/16 verified (16 to near-original), 81%–100% at 95%.",
+   "transform": "strings-indexed",
+   "plan": "nexus+sandbox",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 16,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "fails:strings-indexed:nexus-generic",
+   "kind": "fails",
+   "rule": "interval upper bound at most 25%",
+   "statement": "nexus-generic does not recover \"string table behind a decoder\": 0/16 verified.",
+   "transform": "strings-indexed",
+   "plan": "nexus-generic",
+   "trials": 16,
+   "evidence": {
+    "success": 0,
+    "recovery": 0,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0,
+     0.194
+    ]
+   }
+  },
+  {
+   "id": "works:strings-indexed:adaptive+sandbox",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "adaptive+sandbox recovers \"string table behind a decoder\": 16/16 verified (16 to near-original), 81%–100% at 95%.",
+   "transform": "strings-indexed",
+   "plan": "adaptive+sandbox",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 16,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "fails:strings-indexed:nexus",
+   "kind": "fails",
+   "rule": "interval upper bound at most 25%",
+   "statement": "nexus does not recover \"string table behind a decoder\": 0/16 verified.",
+   "transform": "strings-indexed",
+   "plan": "nexus",
+   "trials": 16,
+   "evidence": {
+    "success": 0,
+    "recovery": 0,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0,
+     0.194
+    ]
+   }
+  },
+  {
+   "id": "fails:strings-indexed:nexus-generic+sandbox",
+   "kind": "fails",
+   "rule": "interval upper bound at most 25%",
+   "statement": "nexus-generic+sandbox does not recover \"string table behind a decoder\": 0/16 verified.",
+   "transform": "strings-indexed",
+   "plan": "nexus-generic+sandbox",
+   "trials": 16,
+   "evidence": {
+    "success": 0,
+    "recovery": 0,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0,
+     0.194
+    ]
+   }
+  },
+  {
+   "id": "fails:strings-indexed:adaptive",
+   "kind": "fails",
+   "rule": "interval upper bound at most 25%",
+   "statement": "adaptive does not recover \"string table behind a decoder\": 0/16 verified.",
+   "transform": "strings-indexed",
+   "plan": "adaptive",
+   "trials": 16,
+   "evidence": {
+    "success": 0,
+    "recovery": 0,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0,
+     0.194
+    ]
+   }
+  },
+  {
+   "id": "fails:strings-indexed:generic",
+   "kind": "fails",
+   "rule": "interval upper bound at most 25%",
+   "statement": "generic does not recover \"string table behind a decoder\": 0/16 verified.",
+   "transform": "strings-indexed",
+   "plan": "generic",
+   "trials": 16,
+   "evidence": {
+    "success": 0,
+    "recovery": 0,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0,
+     0.194
+    ]
+   }
+  },
+  {
+   "id": "needs-sandbox:strings-indexed:adaptive",
+   "kind": "needs-sandbox",
+   "transform": "strings-indexed",
+   "plan": "adaptive",
+   "trials": 16,
+   "rule": "plan fails with the sandbox off and works with it on",
+   "statement": "\"string table behind a decoder\" needs the sandbox: adaptive 0/16 without it, 16/16 with it.",
+   "evidence": {
+    "off": "0/16",
+    "on": "16/16"
+   }
+  },
+  {
+   "id": "needs-sandbox:strings-indexed:nexus",
+   "kind": "needs-sandbox",
+   "transform": "strings-indexed",
+   "plan": "nexus",
+   "trials": 16,
+   "rule": "plan fails with the sandbox off and works with it on",
+   "statement": "\"string table behind a decoder\" needs the sandbox: nexus 0/16 without it, 16/16 with it.",
+   "evidence": {
+    "off": "0/16",
+    "on": "16/16"
+   }
+  },
+  {
+   "id": "improves:strings-indexed:nexus+sandbox>nexus-generic+sandbox",
+   "kind": "improves",
+   "transform": "strings-indexed",
+   "plan": "nexus+sandbox",
+   "trials": 16,
+   "rule": "non-overlapping 95% intervals",
+   "statement": "On \"string table behind a decoder\", nexus+sandbox (16/16) beats nexus-generic+sandbox (0/16).",
+   "evidence": {
+    "winner": "16/16",
+    "loser": "0/16"
+   }
+  },
+  {
+   "id": "improves:strings-indexed:adaptive+sandbox>nexus-generic+sandbox",
+   "kind": "improves",
+   "transform": "strings-indexed",
+   "plan": "adaptive+sandbox",
+   "trials": 16,
+   "rule": "non-overlapping 95% intervals",
+   "statement": "On \"string table behind a decoder\", adaptive+sandbox (16/16) beats nexus-generic+sandbox (0/16).",
+   "evidence": {
+    "winner": "16/16",
+    "loser": "0/16"
+   }
+  },
+  {
+   "id": "fails:stack-xorpack-loadwrap:generic",
+   "kind": "fails",
+   "rule": "interval upper bound at most 25%",
+   "statement": "generic does not recover \"lab custom: stream-cipher strings inside a loadstring wrapper\": 0/16 verified.",
+   "transform": "stack-xorpack-loadwrap",
+   "plan": "generic",
+   "trials": 16,
+   "evidence": {
+    "success": 0,
+    "recovery": 0,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0,
+     0.194
+    ]
+   }
+  },
+  {
+   "id": "works:stack-xorpack-loadwrap:nexus-generic+sandbox",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus-generic+sandbox recovers \"lab custom: stream-cipher strings inside a loadstring wrapper\": 16/16 verified (1 to near-original), 81%–100% at 95%.",
+   "transform": "stack-xorpack-loadwrap",
+   "plan": "nexus-generic+sandbox",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 1,
+    "partial": 15,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "fails:stack-xorpack-loadwrap:nexus",
+   "kind": "fails",
+   "rule": "interval upper bound at most 25%",
+   "statement": "nexus does not recover \"lab custom: stream-cipher strings inside a loadstring wrapper\": 0/16 verified.",
+   "transform": "stack-xorpack-loadwrap",
+   "plan": "nexus",
+   "trials": 16,
+   "evidence": {
+    "success": 0,
+    "recovery": 0,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0,
+     0.194
+    ]
+   }
+  },
+  {
+   "id": "fails:stack-xorpack-loadwrap:adaptive",
+   "kind": "fails",
+   "rule": "interval upper bound at most 25%",
+   "statement": "adaptive does not recover \"lab custom: stream-cipher strings inside a loadstring wrapper\": 0/16 verified.",
+   "transform": "stack-xorpack-loadwrap",
+   "plan": "adaptive",
+   "trials": 16,
+   "evidence": {
+    "success": 0,
+    "recovery": 0,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0,
+     0.194
+    ]
+   }
+  },
+  {
+   "id": "works:stack-xorpack-loadwrap:nexus+sandbox",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus+sandbox recovers \"lab custom: stream-cipher strings inside a loadstring wrapper\": 16/16 verified (16 to near-original), 81%–100% at 95%.",
+   "transform": "stack-xorpack-loadwrap",
+   "plan": "nexus+sandbox",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 16,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "fails:stack-xorpack-loadwrap:nexus-generic",
+   "kind": "fails",
+   "rule": "interval upper bound at most 25%",
+   "statement": "nexus-generic does not recover \"lab custom: stream-cipher strings inside a loadstring wrapper\": 0/16 verified.",
+   "transform": "stack-xorpack-loadwrap",
+   "plan": "nexus-generic",
+   "trials": 16,
+   "evidence": {
+    "success": 0,
+    "recovery": 0,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0,
+     0.194
+    ]
+   }
+  },
+  {
+   "id": "works:stack-xorpack-loadwrap:adaptive+sandbox",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "adaptive+sandbox recovers \"lab custom: stream-cipher strings inside a loadstring wrapper\": 16/16 verified (16 to near-original), 81%–100% at 95%.",
+   "transform": "stack-xorpack-loadwrap",
+   "plan": "adaptive+sandbox",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 16,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "needs-sandbox:stack-xorpack-loadwrap:adaptive",
+   "kind": "needs-sandbox",
+   "transform": "stack-xorpack-loadwrap",
+   "plan": "adaptive",
+   "trials": 16,
+   "rule": "plan fails with the sandbox off and works with it on",
+   "statement": "\"lab custom: stream-cipher strings inside a loadstring wrapper\" needs the sandbox: adaptive 0/16 without it, 16/16 with it.",
+   "evidence": {
+    "off": "0/16",
+    "on": "16/16"
+   }
+  },
+  {
+   "id": "needs-sandbox:stack-xorpack-loadwrap:nexus",
+   "kind": "needs-sandbox",
+   "transform": "stack-xorpack-loadwrap",
+   "plan": "nexus",
+   "trials": 16,
+   "rule": "plan fails with the sandbox off and works with it on",
+   "statement": "\"lab custom: stream-cipher strings inside a loadstring wrapper\" needs the sandbox: nexus 0/16 without it, 16/16 with it.",
+   "evidence": {
+    "off": "0/16",
+    "on": "16/16"
+   }
+  },
+  {
+   "id": "fails:loadwrap:adaptive",
+   "kind": "fails",
+   "rule": "interval upper bound at most 25%",
+   "statement": "adaptive does not recover \"lab custom: program as bytes behind loadstring\": 0/16 verified.",
+   "transform": "loadwrap",
+   "plan": "adaptive",
+   "trials": 16,
+   "evidence": {
+    "success": 0,
+    "recovery": 0,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0,
+     0.194
+    ]
+   }
+  },
+  {
+   "id": "fails:loadwrap:generic",
+   "kind": "fails",
+   "rule": "interval upper bound at most 25%",
+   "statement": "generic does not recover \"lab custom: program as bytes behind loadstring\": 0/16 verified.",
+   "transform": "loadwrap",
+   "plan": "generic",
+   "trials": 16,
+   "evidence": {
+    "success": 0,
+    "recovery": 0,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0,
+     0.194
+    ]
+   }
+  },
+  {
+   "id": "works:loadwrap:nexus+sandbox",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus+sandbox recovers \"lab custom: program as bytes behind loadstring\": 16/16 verified (16 to near-original), 81%–100% at 95%.",
+   "transform": "loadwrap",
+   "plan": "nexus+sandbox",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 16,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "fails:loadwrap:nexus",
+   "kind": "fails",
+   "rule": "interval upper bound at most 25%",
+   "statement": "nexus does not recover \"lab custom: program as bytes behind loadstring\": 0/16 verified.",
+   "transform": "loadwrap",
+   "plan": "nexus",
+   "trials": 16,
+   "evidence": {
+    "success": 0,
+    "recovery": 0,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0,
+     0.194
+    ]
+   }
+  },
+  {
+   "id": "fails:loadwrap:nexus-generic",
+   "kind": "fails",
+   "rule": "interval upper bound at most 25%",
+   "statement": "nexus-generic does not recover \"lab custom: program as bytes behind loadstring\": 0/16 verified.",
+   "transform": "loadwrap",
+   "plan": "nexus-generic",
+   "trials": 16,
+   "evidence": {
+    "success": 0,
+    "recovery": 0,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0,
+     0.194
+    ]
+   }
+  },
+  {
+   "id": "works:loadwrap:nexus-generic+sandbox",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus-generic+sandbox recovers \"lab custom: program as bytes behind loadstring\": 16/16 verified (16 to near-original), 81%–100% at 95%.",
+   "transform": "loadwrap",
+   "plan": "nexus-generic+sandbox",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 16,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:loadwrap:adaptive+sandbox",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "adaptive+sandbox recovers \"lab custom: program as bytes behind loadstring\": 16/16 verified (16 to near-original), 81%–100% at 95%.",
+   "transform": "loadwrap",
+   "plan": "adaptive+sandbox",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 16,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "needs-sandbox:loadwrap:adaptive",
+   "kind": "needs-sandbox",
+   "transform": "loadwrap",
+   "plan": "adaptive",
+   "trials": 16,
+   "rule": "plan fails with the sandbox off and works with it on",
+   "statement": "\"lab custom: program as bytes behind loadstring\" needs the sandbox: adaptive 0/16 without it, 16/16 with it.",
+   "evidence": {
+    "off": "0/16",
+    "on": "16/16"
+   }
+  },
+  {
+   "id": "needs-sandbox:loadwrap:nexus",
+   "kind": "needs-sandbox",
+   "transform": "loadwrap",
+   "plan": "nexus",
+   "trials": 16,
+   "rule": "plan fails with the sandbox off and works with it on",
+   "statement": "\"lab custom: program as bytes behind loadstring\" needs the sandbox: nexus 0/16 without it, 16/16 with it.",
+   "evidence": {
+    "off": "0/16",
+    "on": "16/16"
+   }
+  },
+  {
+   "id": "works:junk:generic",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "generic recovers \"junk statements\": 16/16 verified (16 to near-original), 81%–100% at 95%.",
+   "transform": "junk",
+   "plan": "generic",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 16,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:junk:nexus-generic+sandbox",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus-generic+sandbox recovers \"junk statements\": 16/16 verified (16 to near-original), 81%–100% at 95%.",
+   "transform": "junk",
+   "plan": "nexus-generic+sandbox",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 16,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:junk:nexus+sandbox",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus+sandbox recovers \"junk statements\": 16/16 verified (16 to near-original), 81%–100% at 95%.",
+   "transform": "junk",
+   "plan": "nexus+sandbox",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 16,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:junk:adaptive+sandbox",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "adaptive+sandbox recovers \"junk statements\": 16/16 verified (16 to near-original), 81%–100% at 95%.",
+   "transform": "junk",
+   "plan": "adaptive+sandbox",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 16,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:junk:adaptive",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "adaptive recovers \"junk statements\": 16/16 verified (16 to near-original), 81%–100% at 95%.",
+   "transform": "junk",
+   "plan": "adaptive",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 16,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:junk:nexus-generic",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus-generic recovers \"junk statements\": 16/16 verified (16 to near-original), 81%–100% at 95%.",
+   "transform": "junk",
+   "plan": "nexus-generic",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 16,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:junk:nexus",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus recovers \"junk statements\": 16/16 verified (16 to near-original), 81%–100% at 95%.",
+   "transform": "junk",
+   "plan": "nexus",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 16,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:stack-wrap-flatten-junk:adaptive+sandbox",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "adaptive+sandbox recovers \"wrapper + flattening + junk\": 16/16 verified (0 to near-original), 81%–100% at 95%.",
+   "transform": "stack-wrap-flatten-junk",
+   "plan": "adaptive+sandbox",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 0,
+    "partial": 16,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:stack-wrap-flatten-junk:nexus",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus recovers \"wrapper + flattening + junk\": 16/16 verified (0 to near-original), 81%–100% at 95%.",
+   "transform": "stack-wrap-flatten-junk",
+   "plan": "nexus",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 0,
+    "partial": 16,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:stack-wrap-flatten-junk:nexus+sandbox",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus+sandbox recovers \"wrapper + flattening + junk\": 16/16 verified (0 to near-original), 81%–100% at 95%.",
+   "transform": "stack-wrap-flatten-junk",
+   "plan": "nexus+sandbox",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 0,
+    "partial": 16,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:stack-wrap-flatten-junk:adaptive",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "adaptive recovers \"wrapper + flattening + junk\": 16/16 verified (0 to near-original), 81%–100% at 95%.",
+   "transform": "stack-wrap-flatten-junk",
+   "plan": "adaptive",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 0,
+    "partial": 16,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:confetti:adaptive+sandbox",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "adaptive+sandbox recovers \"comment confetti\": 47/64 verified (47 to near-original), 62%–83% at 95%.",
+   "transform": "confetti",
+   "plan": "adaptive+sandbox",
+   "trials": 64,
+   "evidence": {
+    "success": 47,
+    "recovery": 47,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0.615,
+     0.827
+    ]
+   }
+  },
+  {
+   "id": "works:confetti:nexus-generic+sandbox",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus-generic+sandbox recovers \"comment confetti\": 64/64 verified (64 to near-original), 94%–100% at 95%.",
+   "transform": "confetti",
+   "plan": "nexus-generic+sandbox",
+   "trials": 64,
+   "evidence": {
+    "success": 64,
+    "recovery": 64,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0.943,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:confetti:generic",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "generic recovers \"comment confetti\": 47/64 verified (47 to near-original), 62%–83% at 95%.",
+   "transform": "confetti",
+   "plan": "generic",
+   "trials": 64,
+   "evidence": {
+    "success": 47,
+    "recovery": 47,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0.615,
+     0.827
+    ]
+   }
+  },
+  {
+   "id": "works:confetti:nexus+sandbox",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus+sandbox recovers \"comment confetti\": 64/64 verified (64 to near-original), 94%–100% at 95%.",
+   "transform": "confetti",
+   "plan": "nexus+sandbox",
+   "trials": 64,
+   "evidence": {
+    "success": 64,
+    "recovery": 64,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0.943,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:confetti:nexus",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus recovers \"comment confetti\": 64/64 verified (64 to near-original), 94%–100% at 95%.",
+   "transform": "confetti",
+   "plan": "nexus",
+   "trials": 64,
+   "evidence": {
+    "success": 64,
+    "recovery": 64,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0.943,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:confetti:nexus-generic",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus-generic recovers \"comment confetti\": 64/64 verified (64 to near-original), 94%–100% at 95%.",
+   "transform": "confetti",
+   "plan": "nexus-generic",
+   "trials": 64,
+   "evidence": {
+    "success": 64,
+    "recovery": 64,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0.943,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:confetti:adaptive",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "adaptive recovers \"comment confetti\": 47/64 verified (47 to near-original), 62%–83% at 95%.",
+   "transform": "confetti",
+   "plan": "adaptive",
+   "trials": 64,
+   "evidence": {
+    "success": 47,
+    "recovery": 47,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0.615,
+     0.827
+    ]
+   }
+  },
+  {
+   "id": "improves:confetti:nexus-generic+sandbox>adaptive+sandbox",
+   "kind": "improves",
+   "transform": "confetti",
+   "plan": "nexus-generic+sandbox",
+   "trials": 64,
+   "rule": "non-overlapping 95% intervals",
+   "statement": "On \"comment confetti\", nexus-generic+sandbox (64/64) beats adaptive+sandbox (47/64).",
+   "evidence": {
+    "winner": "64/64",
+    "loser": "47/64"
+   }
+  },
+  {
+   "id": "improves:confetti:nexus+sandbox>adaptive+sandbox",
+   "kind": "improves",
+   "transform": "confetti",
+   "plan": "nexus+sandbox",
+   "trials": 64,
+   "rule": "non-overlapping 95% intervals",
+   "statement": "On \"comment confetti\", nexus+sandbox (64/64) beats adaptive+sandbox (47/64).",
+   "evidence": {
+    "winner": "64/64",
+    "loser": "47/64"
+   }
+  },
+  {
+   "id": "improves:confetti:nexus>generic",
+   "kind": "improves",
+   "transform": "confetti",
+   "plan": "nexus",
+   "trials": 64,
+   "rule": "non-overlapping 95% intervals",
+   "statement": "On \"comment confetti\", nexus (64/64) beats generic (47/64).",
+   "evidence": {
+    "winner": "64/64",
+    "loser": "47/64"
+   }
+  },
+  {
+   "id": "improves:confetti:nexus-generic>generic",
+   "kind": "improves",
+   "transform": "confetti",
+   "plan": "nexus-generic",
+   "trials": 64,
+   "rule": "non-overlapping 95% intervals",
+   "statement": "On \"comment confetti\", nexus-generic (64/64) beats generic (47/64).",
+   "evidence": {
+    "winner": "64/64",
+    "loser": "47/64"
+   }
+  },
+  {
+   "id": "improves:confetti:nexus>adaptive",
+   "kind": "improves",
+   "transform": "confetti",
+   "plan": "nexus",
+   "trials": 64,
+   "rule": "non-overlapping 95% intervals",
+   "statement": "On \"comment confetti\", nexus (64/64) beats adaptive (47/64).",
+   "evidence": {
+    "winner": "64/64",
+    "loser": "47/64"
+   }
+  },
+  {
+   "id": "improves:confetti:nexus-generic>adaptive",
+   "kind": "improves",
+   "transform": "confetti",
+   "plan": "nexus-generic",
+   "trials": 64,
+   "rule": "non-overlapping 95% intervals",
+   "statement": "On \"comment confetti\", nexus-generic (64/64) beats adaptive (47/64).",
+   "evidence": {
+    "winner": "64/64",
+    "loser": "47/64"
+   }
+  },
+  {
+   "id": "works:flatten-seq:adaptive+sandbox",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "adaptive+sandbox recovers \"control-flow flattening (sequential ifs)\": 16/16 verified (0 to near-original), 81%–100% at 95%.",
+   "transform": "flatten-seq",
+   "plan": "adaptive+sandbox",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 0,
+    "partial": 16,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:flatten-seq:nexus+sandbox",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus+sandbox recovers \"control-flow flattening (sequential ifs)\": 16/16 verified (0 to near-original), 81%–100% at 95%.",
+   "transform": "flatten-seq",
+   "plan": "nexus+sandbox",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 0,
+    "partial": 16,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "fails:flatten-seq:nexus-generic",
+   "kind": "fails",
+   "rule": "interval upper bound at most 25%",
+   "statement": "nexus-generic does not recover \"control-flow flattening (sequential ifs)\": 0/16 verified.",
+   "transform": "flatten-seq",
+   "plan": "nexus-generic",
+   "trials": 16,
+   "evidence": {
+    "success": 0,
+    "recovery": 0,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0,
+     0.194
+    ]
+   }
+  },
+  {
+   "id": "fails:flatten-seq:generic",
+   "kind": "fails",
+   "rule": "interval upper bound at most 25%",
+   "statement": "generic does not recover \"control-flow flattening (sequential ifs)\": 0/16 verified.",
+   "transform": "flatten-seq",
+   "plan": "generic",
+   "trials": 16,
+   "evidence": {
+    "success": 0,
+    "recovery": 0,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0,
+     0.194
+    ]
+   }
+  },
+  {
+   "id": "works:flatten-seq:nexus",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus recovers \"control-flow flattening (sequential ifs)\": 16/16 verified (0 to near-original), 81%–100% at 95%.",
+   "transform": "flatten-seq",
+   "plan": "nexus",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 0,
+    "partial": 16,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "fails:flatten-seq:nexus-generic+sandbox",
+   "kind": "fails",
+   "rule": "interval upper bound at most 25%",
+   "statement": "nexus-generic+sandbox does not recover \"control-flow flattening (sequential ifs)\": 0/16 verified.",
+   "transform": "flatten-seq",
+   "plan": "nexus-generic+sandbox",
+   "trials": 16,
+   "evidence": {
+    "success": 0,
+    "recovery": 0,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0,
+     0.194
+    ]
+   }
+  },
+  {
+   "id": "works:flatten-seq:adaptive",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "adaptive recovers \"control-flow flattening (sequential ifs)\": 16/16 verified (0 to near-original), 81%–100% at 95%.",
+   "transform": "flatten-seq",
+   "plan": "adaptive",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 0,
+    "partial": 16,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "improves:flatten-seq:adaptive+sandbox>nexus-generic+sandbox",
+   "kind": "improves",
+   "transform": "flatten-seq",
+   "plan": "adaptive+sandbox",
+   "trials": 16,
+   "rule": "non-overlapping 95% intervals",
+   "statement": "On \"control-flow flattening (sequential ifs)\", adaptive+sandbox (16/16) beats nexus-generic+sandbox (0/16).",
+   "evidence": {
+    "winner": "16/16",
+    "loser": "0/16"
+   }
+  },
+  {
+   "id": "improves:flatten-seq:nexus+sandbox>nexus-generic+sandbox",
+   "kind": "improves",
+   "transform": "flatten-seq",
+   "plan": "nexus+sandbox",
+   "trials": 16,
+   "rule": "non-overlapping 95% intervals",
+   "statement": "On \"control-flow flattening (sequential ifs)\", nexus+sandbox (16/16) beats nexus-generic+sandbox (0/16).",
+   "evidence": {
+    "winner": "16/16",
+    "loser": "0/16"
+   }
+  },
+  {
+   "id": "improves:flatten-seq:nexus>generic",
+   "kind": "improves",
+   "transform": "flatten-seq",
+   "plan": "nexus",
+   "trials": 16,
+   "rule": "non-overlapping 95% intervals",
+   "statement": "On \"control-flow flattening (sequential ifs)\", nexus (16/16) beats generic (0/16).",
+   "evidence": {
+    "winner": "16/16",
+    "loser": "0/16"
+   }
+  },
+  {
+   "id": "improves:flatten-seq:nexus>nexus-generic",
+   "kind": "improves",
+   "transform": "flatten-seq",
+   "plan": "nexus",
+   "trials": 16,
+   "rule": "non-overlapping 95% intervals",
+   "statement": "On \"control-flow flattening (sequential ifs)\", nexus (16/16) beats nexus-generic (0/16).",
+   "evidence": {
+    "winner": "16/16",
+    "loser": "0/16"
+   }
+  },
+  {
+   "id": "improves:flatten-seq:adaptive>nexus-generic",
+   "kind": "improves",
+   "transform": "flatten-seq",
+   "plan": "adaptive",
+   "trials": 16,
+   "rule": "non-overlapping 95% intervals",
+   "statement": "On \"control-flow flattening (sequential ifs)\", adaptive (16/16) beats nexus-generic (0/16).",
+   "evidence": {
+    "winner": "16/16",
+    "loser": "0/16"
+   }
+  },
+  {
+   "id": "improves:flatten-seq:adaptive>generic",
+   "kind": "improves",
+   "transform": "flatten-seq",
+   "plan": "adaptive",
+   "trials": 16,
+   "rule": "non-overlapping 95% intervals",
+   "statement": "On \"control-flow flattening (sequential ifs)\", adaptive (16/16) beats generic (0/16).",
+   "evidence": {
+    "winner": "16/16",
+    "loser": "0/16"
+   }
+  },
+  {
+   "id": "fails:proxies:nexus-generic",
+   "kind": "fails",
+   "rule": "interval upper bound at most 25%",
+   "statement": "nexus-generic does not recover \"operator and call proxies\": 0/16 verified.",
+   "transform": "proxies",
+   "plan": "nexus-generic",
+   "trials": 16,
+   "evidence": {
+    "success": 0,
+    "recovery": 0,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0,
+     0.194
+    ]
+   }
+  },
+  {
+   "id": "works:proxies:nexus+sandbox",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus+sandbox recovers \"operator and call proxies\": 16/16 verified (11 to near-original), 81%–100% at 95%.",
+   "transform": "proxies",
+   "plan": "nexus+sandbox",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 11,
+    "partial": 5,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:proxies:adaptive",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "adaptive recovers \"operator and call proxies\": 16/16 verified (11 to near-original), 81%–100% at 95%.",
+   "transform": "proxies",
+   "plan": "adaptive",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 11,
+    "partial": 5,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "fails:proxies:nexus-generic+sandbox",
+   "kind": "fails",
+   "rule": "interval upper bound at most 25%",
+   "statement": "nexus-generic+sandbox does not recover \"operator and call proxies\": 0/16 verified.",
+   "transform": "proxies",
+   "plan": "nexus-generic+sandbox",
+   "trials": 16,
+   "evidence": {
+    "success": 0,
+    "recovery": 0,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0,
+     0.194
+    ]
+   }
+  },
+  {
+   "id": "works:proxies:nexus",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus recovers \"operator and call proxies\": 16/16 verified (11 to near-original), 81%–100% at 95%.",
+   "transform": "proxies",
+   "plan": "nexus",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 11,
+    "partial": 5,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "fails:proxies:generic",
+   "kind": "fails",
+   "rule": "interval upper bound at most 25%",
+   "statement": "generic does not recover \"operator and call proxies\": 0/16 verified.",
+   "transform": "proxies",
+   "plan": "generic",
+   "trials": 16,
+   "evidence": {
+    "success": 0,
+    "recovery": 0,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0,
+     0.194
+    ]
+   }
+  },
+  {
+   "id": "works:proxies:adaptive+sandbox",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "adaptive+sandbox recovers \"operator and call proxies\": 16/16 verified (11 to near-original), 81%–100% at 95%.",
+   "transform": "proxies",
+   "plan": "adaptive+sandbox",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 11,
+    "partial": 5,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "improves:proxies:nexus+sandbox>nexus-generic+sandbox",
+   "kind": "improves",
+   "transform": "proxies",
+   "plan": "nexus+sandbox",
+   "trials": 16,
+   "rule": "non-overlapping 95% intervals",
+   "statement": "On \"operator and call proxies\", nexus+sandbox (16/16) beats nexus-generic+sandbox (0/16).",
+   "evidence": {
+    "winner": "16/16",
+    "loser": "0/16"
+   }
+  },
+  {
+   "id": "improves:proxies:adaptive>nexus-generic",
+   "kind": "improves",
+   "transform": "proxies",
+   "plan": "adaptive",
+   "trials": 16,
+   "rule": "non-overlapping 95% intervals",
+   "statement": "On \"operator and call proxies\", adaptive (16/16) beats nexus-generic (0/16).",
+   "evidence": {
+    "winner": "16/16",
+    "loser": "0/16"
+   }
+  },
+  {
+   "id": "improves:proxies:adaptive>generic",
+   "kind": "improves",
+   "transform": "proxies",
+   "plan": "adaptive",
+   "trials": 16,
+   "rule": "non-overlapping 95% intervals",
+   "statement": "On \"operator and call proxies\", adaptive (16/16) beats generic (0/16).",
+   "evidence": {
+    "winner": "16/16",
+    "loser": "0/16"
+   }
+  },
+  {
+   "id": "improves:proxies:nexus>nexus-generic",
+   "kind": "improves",
+   "transform": "proxies",
+   "plan": "nexus",
+   "trials": 16,
+   "rule": "non-overlapping 95% intervals",
+   "statement": "On \"operator and call proxies\", nexus (16/16) beats nexus-generic (0/16).",
+   "evidence": {
+    "winner": "16/16",
+    "loser": "0/16"
+   }
+  },
+  {
+   "id": "improves:proxies:nexus>generic",
+   "kind": "improves",
+   "transform": "proxies",
+   "plan": "nexus",
+   "trials": 16,
+   "rule": "non-overlapping 95% intervals",
+   "statement": "On \"operator and call proxies\", nexus (16/16) beats generic (0/16).",
+   "evidence": {
+    "winner": "16/16",
+    "loser": "0/16"
+   }
+  },
+  {
+   "id": "improves:proxies:adaptive+sandbox>nexus-generic+sandbox",
+   "kind": "improves",
+   "transform": "proxies",
+   "plan": "adaptive+sandbox",
+   "trials": 16,
+   "rule": "non-overlapping 95% intervals",
+   "statement": "On \"operator and call proxies\", adaptive+sandbox (16/16) beats nexus-generic+sandbox (0/16).",
+   "evidence": {
+    "winner": "16/16",
+    "loser": "0/16"
+   }
+  },
+  {
+   "id": "works:stack-flatten-opaque:nexus",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus recovers \"flattening + opaque predicates\": 16/16 verified (0 to near-original), 81%–100% at 95%.",
+   "transform": "stack-flatten-opaque",
+   "plan": "nexus",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 0,
+    "partial": 16,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:stack-flatten-opaque:nexus+sandbox",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus+sandbox recovers \"flattening + opaque predicates\": 16/16 verified (0 to near-original), 81%–100% at 95%.",
+   "transform": "stack-flatten-opaque",
+   "plan": "nexus+sandbox",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 0,
+    "partial": 16,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:stack-flatten-opaque:adaptive",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "adaptive recovers \"flattening + opaque predicates\": 16/16 verified (0 to near-original), 81%–100% at 95%.",
+   "transform": "stack-flatten-opaque",
+   "plan": "adaptive",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 0,
+    "partial": 16,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:stack-flatten-opaque:adaptive+sandbox",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "adaptive+sandbox recovers \"flattening + opaque predicates\": 16/16 verified (0 to near-original), 81%–100% at 95%.",
+   "transform": "stack-flatten-opaque",
+   "plan": "adaptive+sandbox",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 0,
+    "partial": 16,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "improves:stack-flatten-opaque:nexus>nexus-generic",
+   "kind": "improves",
+   "transform": "stack-flatten-opaque",
+   "plan": "nexus",
+   "trials": 16,
+   "rule": "non-overlapping 95% intervals",
+   "statement": "On \"flattening + opaque predicates\", nexus (16/16) beats nexus-generic (2/16).",
+   "evidence": {
+    "winner": "16/16",
+    "loser": "2/16"
+   }
+  },
+  {
+   "id": "improves:stack-flatten-opaque:nexus+sandbox>nexus-generic+sandbox",
+   "kind": "improves",
+   "transform": "stack-flatten-opaque",
+   "plan": "nexus+sandbox",
+   "trials": 16,
+   "rule": "non-overlapping 95% intervals",
+   "statement": "On \"flattening + opaque predicates\", nexus+sandbox (16/16) beats nexus-generic+sandbox (2/16).",
+   "evidence": {
+    "winner": "16/16",
+    "loser": "2/16"
+   }
+  },
+  {
+   "id": "improves:stack-flatten-opaque:nexus>generic",
+   "kind": "improves",
+   "transform": "stack-flatten-opaque",
+   "plan": "nexus",
+   "trials": 16,
+   "rule": "non-overlapping 95% intervals",
+   "statement": "On \"flattening + opaque predicates\", nexus (16/16) beats generic (2/16).",
+   "evidence": {
+    "winner": "16/16",
+    "loser": "2/16"
+   }
+  },
+  {
+   "id": "improves:stack-flatten-opaque:adaptive>nexus-generic",
+   "kind": "improves",
+   "transform": "stack-flatten-opaque",
+   "plan": "adaptive",
+   "trials": 16,
+   "rule": "non-overlapping 95% intervals",
+   "statement": "On \"flattening + opaque predicates\", adaptive (16/16) beats nexus-generic (2/16).",
+   "evidence": {
+    "winner": "16/16",
+    "loser": "2/16"
+   }
+  },
+  {
+   "id": "improves:stack-flatten-opaque:adaptive>generic",
+   "kind": "improves",
+   "transform": "stack-flatten-opaque",
+   "plan": "adaptive",
+   "trials": 16,
+   "rule": "non-overlapping 95% intervals",
+   "statement": "On \"flattening + opaque predicates\", adaptive (16/16) beats generic (2/16).",
+   "evidence": {
+    "winner": "16/16",
+    "loser": "2/16"
+   }
+  },
+  {
+   "id": "improves:stack-flatten-opaque:adaptive+sandbox>nexus-generic+sandbox",
+   "kind": "improves",
+   "transform": "stack-flatten-opaque",
+   "plan": "adaptive+sandbox",
+   "trials": 16,
+   "rule": "non-overlapping 95% intervals",
+   "statement": "On \"flattening + opaque predicates\", adaptive+sandbox (16/16) beats nexus-generic+sandbox (2/16).",
+   "evidence": {
+    "winner": "16/16",
+    "loser": "2/16"
+   }
+  },
+  {
+   "id": "works:rename:adaptive+sandbox",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "adaptive+sandbox recovers \"machine-made local names\": 16/16 verified (16 to near-original), 81%–100% at 95%.",
+   "transform": "rename",
+   "plan": "adaptive+sandbox",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 16,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:rename:adaptive",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "adaptive recovers \"machine-made local names\": 16/16 verified (16 to near-original), 81%–100% at 95%.",
+   "transform": "rename",
+   "plan": "adaptive",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 16,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:rename:nexus-generic",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus-generic recovers \"machine-made local names\": 16/16 verified (16 to near-original), 81%–100% at 95%.",
+   "transform": "rename",
+   "plan": "nexus-generic",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 16,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:rename:nexus",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus recovers \"machine-made local names\": 16/16 verified (16 to near-original), 81%–100% at 95%.",
+   "transform": "rename",
+   "plan": "nexus",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 16,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:rename:generic",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "generic recovers \"machine-made local names\": 16/16 verified (16 to near-original), 81%–100% at 95%.",
+   "transform": "rename",
+   "plan": "generic",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 16,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:rename:nexus+sandbox",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus+sandbox recovers \"machine-made local names\": 16/16 verified (16 to near-original), 81%–100% at 95%.",
+   "transform": "rename",
+   "plan": "nexus+sandbox",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 16,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:rename:nexus-generic+sandbox",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus-generic+sandbox recovers \"machine-made local names\": 16/16 verified (16 to near-original), 81%–100% at 95%.",
+   "transform": "rename",
+   "plan": "nexus-generic+sandbox",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 16,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:stack-rename-strings:adaptive+sandbox",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "adaptive+sandbox recovers \"renamed locals + string table\": 16/16 verified (16 to near-original), 81%–100% at 95%.",
+   "transform": "stack-rename-strings",
+   "plan": "adaptive+sandbox",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 16,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:stack-rename-strings:nexus-generic",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus-generic recovers \"renamed locals + string table\": 16/16 verified (0 to near-original), 81%–100% at 95%.",
+   "transform": "stack-rename-strings",
+   "plan": "nexus-generic",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 0,
+    "partial": 16,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:stack-rename-strings:nexus+sandbox",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus+sandbox recovers \"renamed locals + string table\": 16/16 verified (16 to near-original), 81%–100% at 95%.",
+   "transform": "stack-rename-strings",
+   "plan": "nexus+sandbox",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 16,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:stack-rename-strings:generic",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "generic recovers \"renamed locals + string table\": 16/16 verified (0 to near-original), 81%–100% at 95%.",
+   "transform": "stack-rename-strings",
+   "plan": "generic",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 0,
+    "partial": 16,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:stack-rename-strings:nexus",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus recovers \"renamed locals + string table\": 16/16 verified (0 to near-original), 81%–100% at 95%.",
+   "transform": "stack-rename-strings",
+   "plan": "nexus",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 0,
+    "partial": 16,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:stack-rename-strings:adaptive",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "adaptive recovers \"renamed locals + string table\": 16/16 verified (0 to near-original), 81%–100% at 95%.",
+   "transform": "stack-rename-strings",
+   "plan": "adaptive",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 0,
+    "partial": 16,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:stack-rename-strings:nexus-generic+sandbox",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus-generic+sandbox recovers \"renamed locals + string table\": 16/16 verified (0 to near-original), 81%–100% at 95%.",
+   "transform": "stack-rename-strings",
+   "plan": "nexus-generic+sandbox",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 0,
+    "partial": 16,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:stack-confetti-rename-strings:adaptive+sandbox",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "adaptive+sandbox recovers \"confetti over renamed locals and a string table\": 16/16 verified (16 to near-original), 81%–100% at 95%.",
+   "transform": "stack-confetti-rename-strings",
+   "plan": "adaptive+sandbox",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 16,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:stack-confetti-rename-strings:nexus+sandbox",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus+sandbox recovers \"confetti over renamed locals and a string table\": 16/16 verified (16 to near-original), 81%–100% at 95%.",
+   "transform": "stack-confetti-rename-strings",
+   "plan": "nexus+sandbox",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 16,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:stack-confetti-rename-strings:generic",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "generic recovers \"confetti over renamed locals and a string table\": 16/16 verified (0 to near-original), 81%–100% at 95%.",
+   "transform": "stack-confetti-rename-strings",
+   "plan": "generic",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 0,
+    "partial": 16,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:stack-confetti-rename-strings:nexus-generic+sandbox",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus-generic+sandbox recovers \"confetti over renamed locals and a string table\": 16/16 verified (0 to near-original), 81%–100% at 95%.",
+   "transform": "stack-confetti-rename-strings",
+   "plan": "nexus-generic+sandbox",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 0,
+    "partial": 16,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:stack-confetti-rename-strings:adaptive",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "adaptive recovers \"confetti over renamed locals and a string table\": 16/16 verified (0 to near-original), 81%–100% at 95%.",
+   "transform": "stack-confetti-rename-strings",
+   "plan": "adaptive",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 0,
+    "partial": 16,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:stack-confetti-rename-strings:nexus",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus recovers \"confetti over renamed locals and a string table\": 16/16 verified (0 to near-original), 81%–100% at 95%.",
+   "transform": "stack-confetti-rename-strings",
+   "plan": "nexus",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 0,
+    "partial": 16,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:stack-confetti-rename-strings:nexus-generic",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus-generic recovers \"confetti over renamed locals and a string table\": 16/16 verified (0 to near-original), 81%–100% at 95%.",
+   "transform": "stack-confetti-rename-strings",
+   "plan": "nexus-generic",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 0,
+    "partial": 16,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:flatten-chain:nexus",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus recovers \"control-flow flattening (if chain)\": 16/16 verified (0 to near-original), 81%–100% at 95%.",
+   "transform": "flatten-chain",
+   "plan": "nexus",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 0,
+    "partial": 16,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:flatten-chain:adaptive",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "adaptive recovers \"control-flow flattening (if chain)\": 16/16 verified (0 to near-original), 81%–100% at 95%.",
+   "transform": "flatten-chain",
+   "plan": "adaptive",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 0,
+    "partial": 16,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:flatten-chain:adaptive+sandbox",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "adaptive+sandbox recovers \"control-flow flattening (if chain)\": 16/16 verified (0 to near-original), 81%–100% at 95%.",
+   "transform": "flatten-chain",
+   "plan": "adaptive+sandbox",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 0,
+    "partial": 16,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:flatten-chain:nexus+sandbox",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus+sandbox recovers \"control-flow flattening (if chain)\": 16/16 verified (0 to near-original), 81%–100% at 95%.",
+   "transform": "flatten-chain",
+   "plan": "nexus+sandbox",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 0,
+    "partial": 16,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "improves:flatten-chain:nexus>nexus-generic",
+   "kind": "improves",
+   "transform": "flatten-chain",
+   "plan": "nexus",
+   "trials": 16,
+   "rule": "non-overlapping 95% intervals",
+   "statement": "On \"control-flow flattening (if chain)\", nexus (16/16) beats nexus-generic (2/16).",
+   "evidence": {
+    "winner": "16/16",
+    "loser": "2/16"
+   }
+  },
+  {
+   "id": "improves:flatten-chain:adaptive>nexus-generic",
+   "kind": "improves",
+   "transform": "flatten-chain",
+   "plan": "adaptive",
+   "trials": 16,
+   "rule": "non-overlapping 95% intervals",
+   "statement": "On \"control-flow flattening (if chain)\", adaptive (16/16) beats nexus-generic (2/16).",
+   "evidence": {
+    "winner": "16/16",
+    "loser": "2/16"
+   }
+  },
+  {
+   "id": "improves:flatten-chain:adaptive>generic",
+   "kind": "improves",
+   "transform": "flatten-chain",
+   "plan": "adaptive",
+   "trials": 16,
+   "rule": "non-overlapping 95% intervals",
+   "statement": "On \"control-flow flattening (if chain)\", adaptive (16/16) beats generic (2/16).",
+   "evidence": {
+    "winner": "16/16",
+    "loser": "2/16"
+   }
+  },
+  {
+   "id": "improves:flatten-chain:nexus>generic",
+   "kind": "improves",
+   "transform": "flatten-chain",
+   "plan": "nexus",
+   "trials": 16,
+   "rule": "non-overlapping 95% intervals",
+   "statement": "On \"control-flow flattening (if chain)\", nexus (16/16) beats generic (2/16).",
+   "evidence": {
+    "winner": "16/16",
+    "loser": "2/16"
+   }
+  },
+  {
+   "id": "improves:flatten-chain:adaptive+sandbox>nexus-generic+sandbox",
+   "kind": "improves",
+   "transform": "flatten-chain",
+   "plan": "adaptive+sandbox",
+   "trials": 16,
+   "rule": "non-overlapping 95% intervals",
+   "statement": "On \"control-flow flattening (if chain)\", adaptive+sandbox (16/16) beats nexus-generic+sandbox (2/16).",
+   "evidence": {
+    "winner": "16/16",
+    "loser": "2/16"
+   }
+  },
+  {
+   "id": "improves:flatten-chain:nexus+sandbox>nexus-generic+sandbox",
+   "kind": "improves",
+   "transform": "flatten-chain",
+   "plan": "nexus+sandbox",
+   "trials": 16,
+   "rule": "non-overlapping 95% intervals",
+   "statement": "On \"control-flow flattening (if chain)\", nexus+sandbox (16/16) beats nexus-generic+sandbox (2/16).",
+   "evidence": {
+    "winner": "16/16",
+    "loser": "2/16"
+   }
+  },
+  {
+   "id": "works:opaque:nexus+sandbox",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus+sandbox recovers \"opaque predicates\": 16/16 verified (16 to near-original), 81%–100% at 95%.",
+   "transform": "opaque",
+   "plan": "nexus+sandbox",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 16,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:opaque:nexus",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "nexus recovers \"opaque predicates\": 16/16 verified (16 to near-original), 81%–100% at 95%.",
+   "transform": "opaque",
+   "plan": "nexus",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 16,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:opaque:adaptive+sandbox",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "adaptive+sandbox recovers \"opaque predicates\": 16/16 verified (16 to near-original), 81%–100% at 95%.",
+   "transform": "opaque",
+   "plan": "adaptive+sandbox",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 16,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "works:opaque:adaptive",
+   "kind": "works",
+   "rule": "success rate at least 70% with interval lower bound at least 60%",
+   "statement": "adaptive recovers \"opaque predicates\": 16/16 verified (16 to near-original), 81%–100% at 95%.",
+   "transform": "opaque",
+   "plan": "adaptive",
+   "trials": 16,
+   "evidence": {
+    "success": 16,
+    "recovery": 16,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0.806,
+     1
+    ]
+   }
+  },
+  {
+   "id": "fails:opaque:nexus-generic+sandbox",
+   "kind": "fails",
+   "rule": "interval upper bound at most 25%",
+   "statement": "nexus-generic+sandbox does not recover \"opaque predicates\": 0/16 verified.",
+   "transform": "opaque",
+   "plan": "nexus-generic+sandbox",
+   "trials": 16,
+   "evidence": {
+    "success": 0,
+    "recovery": 0,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0,
+     0.194
+    ]
+   }
+  },
+  {
+   "id": "fails:opaque:nexus-generic",
+   "kind": "fails",
+   "rule": "interval upper bound at most 25%",
+   "statement": "nexus-generic does not recover \"opaque predicates\": 0/16 verified.",
+   "transform": "opaque",
+   "plan": "nexus-generic",
+   "trials": 16,
+   "evidence": {
+    "success": 0,
+    "recovery": 0,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0,
+     0.194
+    ]
+   }
+  },
+  {
+   "id": "fails:opaque:generic",
+   "kind": "fails",
+   "rule": "interval upper bound at most 25%",
+   "statement": "generic does not recover \"opaque predicates\": 0/16 verified.",
+   "transform": "opaque",
+   "plan": "generic",
+   "trials": 16,
+   "evidence": {
+    "success": 0,
+    "recovery": 0,
+    "partial": 0,
+    "worse": 0,
+    "interval": [
+     0,
+     0.194
+    ]
+   }
+  },
+  {
+   "id": "improves:opaque:nexus+sandbox>nexus-generic+sandbox",
+   "kind": "improves",
+   "transform": "opaque",
+   "plan": "nexus+sandbox",
+   "trials": 16,
+   "rule": "non-overlapping 95% intervals",
+   "statement": "On \"opaque predicates\", nexus+sandbox (16/16) beats nexus-generic+sandbox (0/16).",
+   "evidence": {
+    "winner": "16/16",
+    "loser": "0/16"
+   }
+  },
+  {
+   "id": "improves:opaque:nexus>nexus-generic",
+   "kind": "improves",
+   "transform": "opaque",
+   "plan": "nexus",
+   "trials": 16,
+   "rule": "non-overlapping 95% intervals",
+   "statement": "On \"opaque predicates\", nexus (16/16) beats nexus-generic (0/16).",
+   "evidence": {
+    "winner": "16/16",
+    "loser": "0/16"
+   }
+  },
+  {
+   "id": "improves:opaque:adaptive+sandbox>nexus-generic+sandbox",
+   "kind": "improves",
+   "transform": "opaque",
+   "plan": "adaptive+sandbox",
+   "trials": 16,
+   "rule": "non-overlapping 95% intervals",
+   "statement": "On \"opaque predicates\", adaptive+sandbox (16/16) beats nexus-generic+sandbox (0/16).",
+   "evidence": {
+    "winner": "16/16",
+    "loser": "0/16"
+   }
+  },
+  {
+   "id": "improves:opaque:adaptive>nexus-generic",
+   "kind": "improves",
+   "transform": "opaque",
+   "plan": "adaptive",
+   "trials": 16,
+   "rule": "non-overlapping 95% intervals",
+   "statement": "On \"opaque predicates\", adaptive (16/16) beats nexus-generic (0/16).",
+   "evidence": {
+    "winner": "16/16",
+    "loser": "0/16"
+   }
+  },
+  {
+   "id": "improves:opaque:adaptive>generic",
+   "kind": "improves",
+   "transform": "opaque",
+   "plan": "adaptive",
+   "trials": 16,
+   "rule": "non-overlapping 95% intervals",
+   "statement": "On \"opaque predicates\", adaptive (16/16) beats generic (0/16).",
+   "evidence": {
+    "winner": "16/16",
+    "loser": "0/16"
+   }
+  },
+  {
+   "id": "improves:opaque:nexus>generic",
+   "kind": "improves",
+   "transform": "opaque",
+   "plan": "nexus",
+   "trials": 16,
+   "rule": "non-overlapping 95% intervals",
+   "statement": "On \"opaque predicates\", nexus (16/16) beats generic (0/16).",
+   "evidence": {
+    "winner": "16/16",
+    "loser": "0/16"
+   }
+  }
+ ],
+ "gaps": [],
+ "defects": [],
+ "study": [
+  {
+   "transform": "confetti",
+   "kind": "known",
+   "outcome": "accepted",
+   "signature": {
+    "all": [
+     "comments:dense"
+    ],
+    "none": []
+   },
+   "heldout": {
+    "tp": 16,
+    "fp": 0,
+    "fn": 0,
+    "tn": 224,
+    "precision": 1,
+    "recall": 1,
+    "positives": 16,
+    "negatives": 224
+   },
+   "reasons": [],
+   "onStacks": [
+    {
+     "stack": "stack-rename-strings",
+     "fires": 0
+    },
+    {
+     "stack": "stack-flatten-opaque",
+     "fires": 0
+    },
+    {
+     "stack": "stack-wrap-flatten-junk",
+     "fires": 0
+    },
+    {
+     "stack": "stack-confetti-rename-strings",
+     "fires": 1
+    },
+    {
+     "stack": "stack-xorpack-loadwrap",
+     "fires": 0
+    },
+    {
+     "stack": "stack-tabledispatch-rename-proxies",
+     "fires": 0
+    }
+   ]
+  },
+  {
+   "transform": "flatten-chain",
+   "kind": "known",
+   "outcome": "rejected",
+   "signature": {
+    "all": [
+     "shape:state-loop"
+    ],
+    "none": []
+   },
+   "heldout": {
+    "tp": 16,
+    "fp": 32,
+    "fn": 0,
+    "tn": 192,
+    "precision": 0.3333333333333333,
+    "recall": 1,
+    "positives": 16,
+    "negatives": 224
+   },
+   "reasons": [
+    "precision 0.33 is below 0.95"
+   ],
+   "onStacks": [
+    {
+     "stack": "stack-rename-strings",
+     "fires": 0
+    },
+    {
+     "stack": "stack-flatten-opaque",
+     "fires": 1
+    },
+    {
+     "stack": "stack-wrap-flatten-junk",
+     "fires": 1
+    },
+    {
+     "stack": "stack-confetti-rename-strings",
+     "fires": 0
+    },
+    {
+     "stack": "stack-xorpack-loadwrap",
+     "fires": 0
+    },
+    {
+     "stack": "stack-tabledispatch-rename-proxies",
+     "fires": 0
+    }
+   ]
+  },
+  {
+   "transform": "flatten-tree",
+   "kind": "known",
+   "outcome": "rejected",
+   "signature": {
+    "all": [
+     "shape:state-loop"
+    ],
+    "none": []
+   },
+   "heldout": {
+    "tp": 16,
+    "fp": 32,
+    "fn": 0,
+    "tn": 192,
+    "precision": 0.3333333333333333,
+    "recall": 1,
+    "positives": 16,
+    "negatives": 224
+   },
+   "reasons": [
+    "precision 0.33 is below 0.95"
+   ],
+   "onStacks": [
+    {
+     "stack": "stack-rename-strings",
+     "fires": 0
+    },
+    {
+     "stack": "stack-flatten-opaque",
+     "fires": 1
+    },
+    {
+     "stack": "stack-wrap-flatten-junk",
+     "fires": 1
+    },
+    {
+     "stack": "stack-confetti-rename-strings",
+     "fires": 0
+    },
+    {
+     "stack": "stack-xorpack-loadwrap",
+     "fires": 0
+    },
+    {
+     "stack": "stack-tabledispatch-rename-proxies",
+     "fires": 0
+    }
+   ]
+  },
+  {
+   "transform": "flatten-seq",
+   "kind": "known",
+   "outcome": "rejected",
+   "signature": {
+    "all": [
+     "shape:state-loop"
+    ],
+    "none": []
+   },
+   "heldout": {
+    "tp": 16,
+    "fp": 32,
+    "fn": 0,
+    "tn": 192,
+    "precision": 0.3333333333333333,
+    "recall": 1,
+    "positives": 16,
+    "negatives": 224
+   },
+   "reasons": [
+    "precision 0.33 is below 0.95"
+   ],
+   "onStacks": [
+    {
+     "stack": "stack-rename-strings",
+     "fires": 0
+    },
+    {
+     "stack": "stack-flatten-opaque",
+     "fires": 1
+    },
+    {
+     "stack": "stack-wrap-flatten-junk",
+     "fires": 1
+    },
+    {
+     "stack": "stack-confetti-rename-strings",
+     "fires": 0
+    },
+    {
+     "stack": "stack-xorpack-loadwrap",
+     "fires": 0
+    },
+    {
+     "stack": "stack-tabledispatch-rename-proxies",
+     "fires": 0
+    }
+   ]
+  },
+  {
+   "transform": "strings-indexed",
+   "kind": "known",
+   "outcome": "accepted",
+   "signature": {
+    "all": [
+     "strings:escaped"
+    ],
+    "none": []
+   },
+   "heldout": {
+    "tp": 16,
+    "fp": 0,
+    "fn": 0,
+    "tn": 224,
+    "precision": 1,
+    "recall": 1,
+    "positives": 16,
+    "negatives": 224
+   },
+   "reasons": [],
+   "onStacks": [
+    {
+     "stack": "stack-rename-strings",
+     "fires": 1
+    },
+    {
+     "stack": "stack-flatten-opaque",
+     "fires": 0
+    },
+    {
+     "stack": "stack-wrap-flatten-junk",
+     "fires": 0
+    },
+    {
+     "stack": "stack-confetti-rename-strings",
+     "fires": 0
+    },
+    {
+     "stack": "stack-xorpack-loadwrap",
+     "fires": 0
+    },
+    {
+     "stack": "stack-tabledispatch-rename-proxies",
+     "fires": 0
+    }
+   ]
+  },
+  {
+   "transform": "strings-inline",
+   "kind": "known",
+   "outcome": "rejected",
+   "signature": {
+    "all": [
+     "shape:decoder-loop",
+     "call:string.char"
+    ],
+    "none": [
+     "shape:state-loop",
+     "layout:minified",
+     "strings:escaped"
+    ]
+   },
+   "heldout": {
+    "tp": 16,
+    "fp": 16,
+    "fn": 0,
+    "tn": 208,
+    "precision": 0.5,
+    "recall": 1,
+    "positives": 16,
+    "negatives": 224
+   },
+   "reasons": [
+    "precision 0.50 is below 0.95"
+   ],
+   "onStacks": [
+    {
+     "stack": "stack-rename-strings",
+     "fires": 0
+    },
+    {
+     "stack": "stack-flatten-opaque",
+     "fires": 0
+    },
+    {
+     "stack": "stack-wrap-flatten-junk",
+     "fires": 0
+    },
+    {
+     "stack": "stack-confetti-rename-strings",
+     "fires": 0
+    },
+    {
+     "stack": "stack-xorpack-loadwrap",
+     "fires": 0
+    },
+    {
+     "stack": "stack-tabledispatch-rename-proxies",
+     "fires": 0
+    }
+   ]
+  },
+  {
+   "transform": "opaque",
+   "kind": "known",
+   "outcome": "no-signature",
+   "signature": null,
+   "heldout": null,
+   "reasons": [],
+   "onStacks": []
+  },
+  {
+   "transform": "proxies",
+   "kind": "known",
+   "outcome": "no-signature",
+   "signature": null,
+   "heldout": null,
+   "reasons": [],
+   "onStacks": []
+  },
+  {
+   "transform": "junk",
+   "kind": "known",
+   "outcome": "no-signature",
+   "signature": null,
+   "heldout": null,
+   "reasons": [],
+   "onStacks": []
+  },
+  {
+   "transform": "rename",
+   "kind": "known",
+   "outcome": "accepted",
+   "signature": {
+    "all": [
+     "names:machine"
+    ],
+    "none": []
+   },
+   "heldout": {
+    "tp": 16,
+    "fp": 0,
+    "fn": 0,
+    "tn": 224,
+    "precision": 1,
+    "recall": 1,
+    "positives": 16,
+    "negatives": 224
+   },
+   "reasons": [],
+   "onStacks": [
+    {
+     "stack": "stack-rename-strings",
+     "fires": 1
+    },
+    {
+     "stack": "stack-flatten-opaque",
+     "fires": 0
+    },
+    {
+     "stack": "stack-wrap-flatten-junk",
+     "fires": 0
+    },
+    {
+     "stack": "stack-confetti-rename-strings",
+     "fires": 1
+    },
+    {
+     "stack": "stack-xorpack-loadwrap",
+     "fires": 0
+    },
+    {
+     "stack": "stack-tabledispatch-rename-proxies",
+     "fires": 1
+    }
+   ]
+  },
+  {
+   "transform": "wrap",
+   "kind": "known",
+   "outcome": "accepted",
+   "signature": {
+    "all": [
+     "shape:vararg-wrapper"
+    ],
+    "none": []
+   },
+   "heldout": {
+    "tp": 16,
+    "fp": 0,
+    "fn": 0,
+    "tn": 224,
+    "precision": 1,
+    "recall": 1,
+    "positives": 16,
+    "negatives": 224
+   },
+   "reasons": [],
+   "onStacks": [
+    {
+     "stack": "stack-rename-strings",
+     "fires": 0
+    },
+    {
+     "stack": "stack-flatten-opaque",
+     "fires": 0
+    },
+    {
+     "stack": "stack-wrap-flatten-junk",
+     "fires": 0.6875
+    },
+    {
+     "stack": "stack-confetti-rename-strings",
+     "fires": 0
+    },
+    {
+     "stack": "stack-xorpack-loadwrap",
+     "fires": 0
+    },
+    {
+     "stack": "stack-tabledispatch-rename-proxies",
+     "fires": 0
+    }
+   ]
+  },
+  {
+   "transform": "xorpack",
+   "kind": "custom",
+   "outcome": "accepted",
+   "signature": {
+    "all": [
+     "strings:none",
+     "shape:decoder-loop",
+     "shape:stream-arithmetic"
+    ],
+    "none": []
+   },
+   "heldout": {
+    "tp": 16,
+    "fp": 0,
+    "fn": 0,
+    "tn": 224,
+    "precision": 1,
+    "recall": 1,
+    "positives": 16,
+    "negatives": 224
+   },
+   "reasons": [],
+   "onStacks": [
+    {
+     "stack": "stack-rename-strings",
+     "fires": 0
+    },
+    {
+     "stack": "stack-flatten-opaque",
+     "fires": 0
+    },
+    {
+     "stack": "stack-wrap-flatten-junk",
+     "fires": 0
+    },
+    {
+     "stack": "stack-confetti-rename-strings",
+     "fires": 0
+    },
+    {
+     "stack": "stack-xorpack-loadwrap",
+     "fires": 0
+    },
+    {
+     "stack": "stack-tabledispatch-rename-proxies",
+     "fires": 0
+    }
+   ]
+  },
+  {
+   "transform": "loadwrap",
+   "kind": "custom",
+   "outcome": "accepted",
+   "signature": {
+    "all": [
+     "call:loadstring"
+    ],
+    "none": []
+   },
+   "heldout": {
+    "tp": 16,
+    "fp": 0,
+    "fn": 0,
+    "tn": 224,
+    "precision": 1,
+    "recall": 1,
+    "positives": 16,
+    "negatives": 224
+   },
+   "reasons": [],
+   "onStacks": [
+    {
+     "stack": "stack-rename-strings",
+     "fires": 0
+    },
+    {
+     "stack": "stack-flatten-opaque",
+     "fires": 0
+    },
+    {
+     "stack": "stack-wrap-flatten-junk",
+     "fires": 0
+    },
+    {
+     "stack": "stack-confetti-rename-strings",
+     "fires": 0
+    },
+    {
+     "stack": "stack-xorpack-loadwrap",
+     "fires": 1
+    },
+    {
+     "stack": "stack-tabledispatch-rename-proxies",
+     "fires": 0
+    }
+   ]
+  },
+  {
+   "transform": "tabledispatch",
+   "kind": "custom",
+   "outcome": "accepted",
+   "signature": {
+    "all": [
+     "shape:function-table"
+    ],
+    "none": []
+   },
+   "heldout": {
+    "tp": 16,
+    "fp": 0,
+    "fn": 0,
+    "tn": 224,
+    "precision": 1,
+    "recall": 1,
+    "positives": 16,
+    "negatives": 224
+   },
+   "reasons": [],
+   "onStacks": [
+    {
+     "stack": "stack-rename-strings",
+     "fires": 0
+    },
+    {
+     "stack": "stack-flatten-opaque",
+     "fires": 0
+    },
+    {
+     "stack": "stack-wrap-flatten-junk",
+     "fires": 0
+    },
+    {
+     "stack": "stack-confetti-rename-strings",
+     "fires": 0
+    },
+    {
+     "stack": "stack-xorpack-loadwrap",
+     "fires": 0
+    },
+    {
+     "stack": "stack-tabledispatch-rename-proxies",
+     "fires": 0
+    }
+   ]
+  }
+ ],
+ "families": [
+  {
+   "id": "lab-xorpack",
+   "name": "Lab custom system: stream-cipher strings",
+   "origin": "lab-learned",
+   "versions": [
+    {
+     "id": "lab-1",
+     "label": "lab generator 1"
+    }
+   ],
+   "signature": {
+    "all": [
+     "strings:none",
+     "shape:decoder-loop",
+     "shape:stream-arithmetic"
+    ],
+    "none": []
+   },
+   "learned": {
+    "trainPrograms": 16,
+    "heldoutPrograms": 16,
+    "heldout": {
+     "tp": 16,
+     "fp": 0,
+     "fn": 0,
+     "tn": 224,
+     "precision": 1,
+     "recall": 1,
+     "positives": 16,
+     "negatives": 224
+    },
+    "thresholds": {
+     "minSupport": 0.9,
+     "maxNegativeRate": 0.05,
+     "precision": 0.95,
+     "recall": 0.9,
+     "minPositives": 8,
+     "minNegatives": 16
+    }
+   }
+  },
+  {
+   "id": "lab-loadwrap",
+   "name": "Lab custom system: program as bytes behind loadstring",
+   "origin": "lab-learned",
+   "versions": [
+    {
+     "id": "lab-1",
+     "label": "lab generator 1"
+    }
+   ],
+   "signature": {
+    "all": [
+     "call:loadstring"
+    ],
+    "none": []
+   },
+   "learned": {
+    "trainPrograms": 16,
+    "heldoutPrograms": 16,
+    "heldout": {
+     "tp": 16,
+     "fp": 0,
+     "fn": 0,
+     "tn": 224,
+     "precision": 1,
+     "recall": 1,
+     "positives": 16,
+     "negatives": 224
+    },
+    "thresholds": {
+     "minSupport": 0.9,
+     "maxNegativeRate": 0.05,
+     "precision": 0.95,
+     "recall": 0.9,
+     "minPositives": 8,
+     "minNegatives": 16
+    }
+   }
+  },
+  {
+   "id": "lab-tabledispatch",
+   "name": "Lab custom system: functions called through a table",
+   "origin": "lab-learned",
+   "versions": [
+    {
+     "id": "lab-1",
+     "label": "lab generator 1"
+    }
+   ],
+   "signature": {
+    "all": [
+     "shape:function-table"
+    ],
+    "none": []
+   },
+   "learned": {
+    "trainPrograms": 16,
+    "heldoutPrograms": 16,
+    "heldout": {
+     "tp": 16,
+     "fp": 0,
+     "fn": 0,
+     "tn": 224,
+     "precision": 1,
+     "recall": 1,
+     "positives": 16,
+     "negatives": 224
+    },
+    "thresholds": {
+     "minSupport": 0.9,
+     "maxNegativeRate": 0.05,
+     "precision": 0.95,
+     "recall": 0.9,
+     "minPositives": 8,
+     "minNegatives": 16
+    }
+   }
+  }
+ ],
+ "evaluations": [
+  {
+   "schema": 1,
+   "label": "1-functions-lift",
+   "note": "functions.lift added alone. Baseline: the engine at d509bbc. Same lab code, same 16 programs.",
+   "matched": 2240,
+   "base": {
+    "rev": "base-d509bbc",
+    "experiments": 2240
+   },
+   "current": {
+    "rev": "stateA-lift-only",
+    "experiments": 2240
+   },
+   "improvedExperiments": 44,
+   "regressedExperiments": 12,
+   "cellsImproved": [
+    {
+     "transform": "stack-tabledispatch-rename-proxies",
+     "plan": "adaptive",
+     "n": 16,
+     "baseSuccess": 16,
+     "currentSuccess": 16,
+     "baseRecovery": 0,
+     "currentRecovery": 4,
+     "baseWorse": 0,
+     "currentWorse": 0
+    },
+    {
+     "transform": "stack-tabledispatch-rename-proxies",
+     "plan": "adaptive+sandbox",
+     "n": 16,
+     "baseSuccess": 16,
+     "currentSuccess": 16,
+     "baseRecovery": 0,
+     "currentRecovery": 4,
+     "baseWorse": 0,
+     "currentWorse": 0
+    },
+    {
+     "transform": "stack-tabledispatch-rename-proxies",
+     "plan": "nexus",
+     "n": 16,
+     "baseSuccess": 16,
+     "currentSuccess": 16,
+     "baseRecovery": 0,
+     "currentRecovery": 4,
+     "baseWorse": 0,
+     "currentWorse": 0
+    },
+    {
+     "transform": "stack-tabledispatch-rename-proxies",
+     "plan": "nexus+sandbox",
+     "n": 16,
+     "baseSuccess": 16,
+     "currentSuccess": 16,
+     "baseRecovery": 0,
+     "currentRecovery": 4,
+     "baseWorse": 0,
+     "currentWorse": 0
+    },
+    {
+     "transform": "tabledispatch",
+     "plan": "adaptive",
+     "n": 16,
+     "baseSuccess": 16,
+     "currentSuccess": 13,
+     "baseRecovery": 0,
+     "currentRecovery": 7,
+     "baseWorse": 0,
+     "currentWorse": 3
+    },
+    {
+     "transform": "tabledispatch",
+     "plan": "adaptive+sandbox",
+     "n": 16,
+     "baseSuccess": 16,
+     "currentSuccess": 13,
+     "baseRecovery": 0,
+     "currentRecovery": 7,
+     "baseWorse": 0,
+     "currentWorse": 3
+    },
+    {
+     "transform": "tabledispatch",
+     "plan": "nexus",
+     "n": 16,
+     "baseSuccess": 16,
+     "currentSuccess": 13,
+     "baseRecovery": 0,
+     "currentRecovery": 7,
+     "baseWorse": 0,
+     "currentWorse": 3
+    },
+    {
+     "transform": "tabledispatch",
+     "plan": "nexus+sandbox",
+     "n": 16,
+     "baseSuccess": 16,
+     "currentSuccess": 13,
+     "baseRecovery": 0,
+     "currentRecovery": 7,
+     "baseWorse": 0,
+     "currentWorse": 3
+    }
+   ],
+   "cellsRegressed": [
+    {
+     "transform": "tabledispatch",
+     "plan": "adaptive",
+     "n": 16,
+     "baseSuccess": 16,
+     "currentSuccess": 13,
+     "baseRecovery": 0,
+     "currentRecovery": 7,
+     "baseWorse": 0,
+     "currentWorse": 3
+    },
+    {
+     "transform": "tabledispatch",
+     "plan": "adaptive+sandbox",
+     "n": 16,
+     "baseSuccess": 16,
+     "currentSuccess": 13,
+     "baseRecovery": 0,
+     "currentRecovery": 7,
+     "baseWorse": 0,
+     "currentWorse": 3
+    },
+    {
+     "transform": "tabledispatch",
+     "plan": "nexus",
+     "n": 16,
+     "baseSuccess": 16,
+     "currentSuccess": 13,
+     "baseRecovery": 0,
+     "currentRecovery": 7,
+     "baseWorse": 0,
+     "currentWorse": 3
+    },
+    {
+     "transform": "tabledispatch",
+     "plan": "nexus+sandbox",
+     "n": 16,
+     "baseSuccess": 16,
+     "currentSuccess": 13,
+     "baseRecovery": 0,
+     "currentRecovery": 7,
+     "baseWorse": 0,
+     "currentWorse": 3
+    }
+   ],
+   "regressions": [
+    {
+     "id": "exp_19c4141b9cb7dc",
+     "program": 16,
+     "transform": "tabledispatch",
+     "plan": "nexus+sandbox",
+     "from": "verified-partial",
+     "to": "behaviour-kept-worse"
+    },
+    {
+     "id": "exp_2e01c2fe397aac",
+     "program": 13,
+     "transform": "tabledispatch",
+     "plan": "nexus+sandbox",
+     "from": "verified-partial",
+     "to": "behaviour-kept-worse"
+    },
+    {
+     "id": "exp_4eb297a10d91e2",
+     "program": 13,
+     "transform": "tabledispatch",
+     "plan": "adaptive+sandbox",
+     "from": "verified-partial",
+     "to": "behaviour-kept-worse"
+    },
+    {
+     "id": "exp_6eb7cb1edb7324",
+     "program": 1,
+     "transform": "tabledispatch",
+     "plan": "nexus",
+     "from": "verified-partial",
+     "to": "behaviour-kept-worse"
+    },
+    {
+     "id": "exp_7b16f395bcb8c6",
+     "program": 1,
+     "transform": "tabledispatch",
+     "plan": "nexus+sandbox",
+     "from": "verified-partial",
+     "to": "behaviour-kept-worse"
+    },
+    {
+     "id": "exp_981e8cf8d595d2",
+     "program": 1,
+     "transform": "tabledispatch",
+     "plan": "adaptive",
+     "from": "verified-partial",
+     "to": "behaviour-kept-worse"
+    },
+    {
+     "id": "exp_9d8496712c560b",
+     "program": 13,
+     "transform": "tabledispatch",
+     "plan": "nexus",
+     "from": "verified-partial",
+     "to": "behaviour-kept-worse"
+    },
+    {
+     "id": "exp_9de391a3f09a8a",
+     "program": 13,
+     "transform": "tabledispatch",
+     "plan": "adaptive",
+     "from": "verified-partial",
+     "to": "behaviour-kept-worse"
+    },
+    {
+     "id": "exp_9f771bdfb0efb5",
+     "program": 16,
+     "transform": "tabledispatch",
+     "plan": "nexus",
+     "from": "verified-partial",
+     "to": "behaviour-kept-worse"
+    },
+    {
+     "id": "exp_b24f95f67fa68f",
+     "program": 16,
+     "transform": "tabledispatch",
+     "plan": "adaptive",
+     "from": "verified-partial",
+     "to": "behaviour-kept-worse"
+    },
+    {
+     "id": "exp_cd85e886f4981e",
+     "program": 1,
+     "transform": "tabledispatch",
+     "plan": "adaptive+sandbox",
+     "from": "verified-partial",
+     "to": "behaviour-kept-worse"
+    },
+    {
+     "id": "exp_cfb0c81c1a2b77",
+     "program": 16,
+     "transform": "tabledispatch",
+     "plan": "adaptive+sandbox",
+     "from": "verified-partial",
+     "to": "behaviour-kept-worse"
+    }
+   ]
+  },
+  {
+   "schema": 1,
+   "label": "2-proxies-one-operation",
+   "note": "The proxy inliner now requires a body that performs at most one operation. Found from the regressions in comparison 1: after functions.lift exposed a helper, the inliner folded a three-operation helper into its call site.",
+   "matched": 2240,
+   "base": {
+    "rev": "stateA-lift-only",
+    "experiments": 2240
+   },
+   "current": {
+    "rev": "d509bbc+edb020aa",
+    "experiments": 2240
+   },
+   "improvedExperiments": 140,
+   "regressedExperiments": 0,
+   "cellsImproved": [
+    {
+     "transform": "rename",
+     "plan": "adaptive",
+     "n": 16,
+     "baseSuccess": 6,
+     "currentSuccess": 16,
+     "baseRecovery": 6,
+     "currentRecovery": 16,
+     "baseWorse": 10,
+     "currentWorse": 0
+    },
+    {
+     "transform": "rename",
+     "plan": "adaptive+sandbox",
+     "n": 16,
+     "baseSuccess": 6,
+     "currentSuccess": 16,
+     "baseRecovery": 6,
+     "currentRecovery": 16,
+     "baseWorse": 10,
+     "currentWorse": 0
+    },
+    {
+     "transform": "rename",
+     "plan": "nexus",
+     "n": 16,
+     "baseSuccess": 6,
+     "currentSuccess": 16,
+     "baseRecovery": 6,
+     "currentRecovery": 16,
+     "baseWorse": 10,
+     "currentWorse": 0
+    },
+    {
+     "transform": "rename",
+     "plan": "nexus+sandbox",
+     "n": 16,
+     "baseSuccess": 6,
+     "currentSuccess": 16,
+     "baseRecovery": 6,
+     "currentRecovery": 16,
+     "baseWorse": 10,
+     "currentWorse": 0
+    },
+    {
+     "transform": "stack-confetti-rename-strings",
+     "plan": "adaptive+sandbox",
+     "n": 16,
+     "baseSuccess": 16,
+     "currentSuccess": 16,
+     "baseRecovery": 7,
+     "currentRecovery": 16,
+     "baseWorse": 0,
+     "currentWorse": 0
+    },
+    {
+     "transform": "stack-confetti-rename-strings",
+     "plan": "nexus+sandbox",
+     "n": 16,
+     "baseSuccess": 16,
+     "currentSuccess": 16,
+     "baseRecovery": 7,
+     "currentRecovery": 16,
+     "baseWorse": 0,
+     "currentWorse": 0
+    },
+    {
+     "transform": "stack-rename-strings",
+     "plan": "adaptive+sandbox",
+     "n": 16,
+     "baseSuccess": 16,
+     "currentSuccess": 16,
+     "baseRecovery": 7,
+     "currentRecovery": 16,
+     "baseWorse": 0,
+     "currentWorse": 0
+    },
+    {
+     "transform": "stack-rename-strings",
+     "plan": "nexus+sandbox",
+     "n": 16,
+     "baseSuccess": 16,
+     "currentSuccess": 16,
+     "baseRecovery": 7,
+     "currentRecovery": 16,
+     "baseWorse": 0,
+     "currentWorse": 0
+    },
+    {
+     "transform": "stack-tabledispatch-rename-proxies",
+     "plan": "adaptive",
+     "n": 16,
+     "baseSuccess": 16,
+     "currentSuccess": 16,
+     "baseRecovery": 4,
+     "currentRecovery": 11,
+     "baseWorse": 0,
+     "currentWorse": 0
+    },
+    {
+     "transform": "stack-tabledispatch-rename-proxies",
+     "plan": "adaptive+sandbox",
+     "n": 16,
+     "baseSuccess": 16,
+     "currentSuccess": 16,
+     "baseRecovery": 4,
+     "currentRecovery": 11,
+     "baseWorse": 0,
+     "currentWorse": 0
+    },
+    {
+     "transform": "stack-tabledispatch-rename-proxies",
+     "plan": "nexus",
+     "n": 16,
+     "baseSuccess": 16,
+     "currentSuccess": 16,
+     "baseRecovery": 4,
+     "currentRecovery": 11,
+     "baseWorse": 0,
+     "currentWorse": 0
+    },
+    {
+     "transform": "stack-tabledispatch-rename-proxies",
+     "plan": "nexus+sandbox",
+     "n": 16,
+     "baseSuccess": 16,
+     "currentSuccess": 16,
+     "baseRecovery": 4,
+     "currentRecovery": 11,
+     "baseWorse": 0,
+     "currentWorse": 0
+    },
+    {
+     "transform": "tabledispatch",
+     "plan": "adaptive",
+     "n": 16,
+     "baseSuccess": 13,
+     "currentSuccess": 16,
+     "baseRecovery": 7,
+     "currentRecovery": 16,
+     "baseWorse": 3,
+     "currentWorse": 0
+    },
+    {
+     "transform": "tabledispatch",
+     "plan": "adaptive+sandbox",
+     "n": 16,
+     "baseSuccess": 13,
+     "currentSuccess": 16,
+     "baseRecovery": 7,
+     "currentRecovery": 16,
+     "baseWorse": 3,
+     "currentWorse": 0
+    },
+    {
+     "transform": "tabledispatch",
+     "plan": "nexus",
+     "n": 16,
+     "baseSuccess": 13,
+     "currentSuccess": 16,
+     "baseRecovery": 7,
+     "currentRecovery": 16,
+     "baseWorse": 3,
+     "currentWorse": 0
+    },
+    {
+     "transform": "tabledispatch",
+     "plan": "nexus+sandbox",
+     "n": 16,
+     "baseSuccess": 13,
+     "currentSuccess": 16,
+     "baseRecovery": 7,
+     "currentRecovery": 16,
+     "baseWorse": 3,
+     "currentWorse": 0
+    }
+   ],
+   "cellsRegressed": [],
+   "regressions": []
+  },
+  {
+   "schema": 1,
+   "label": "3-phase3-total",
+   "note": "Both changes against the baseline at d509bbc.",
+   "matched": 2240,
+   "base": {
+    "rev": "base-d509bbc",
+    "experiments": 2240
+   },
+   "current": {
+    "rev": "d509bbc+edb020aa",
+    "experiments": 2240
+   },
+   "improvedExperiments": 184,
+   "regressedExperiments": 0,
+   "cellsImproved": [
+    {
+     "transform": "rename",
+     "plan": "adaptive",
+     "n": 16,
+     "baseSuccess": 6,
+     "currentSuccess": 16,
+     "baseRecovery": 6,
+     "currentRecovery": 16,
+     "baseWorse": 10,
+     "currentWorse": 0
+    },
+    {
+     "transform": "rename",
+     "plan": "adaptive+sandbox",
+     "n": 16,
+     "baseSuccess": 6,
+     "currentSuccess": 16,
+     "baseRecovery": 6,
+     "currentRecovery": 16,
+     "baseWorse": 10,
+     "currentWorse": 0
+    },
+    {
+     "transform": "rename",
+     "plan": "nexus",
+     "n": 16,
+     "baseSuccess": 6,
+     "currentSuccess": 16,
+     "baseRecovery": 6,
+     "currentRecovery": 16,
+     "baseWorse": 10,
+     "currentWorse": 0
+    },
+    {
+     "transform": "rename",
+     "plan": "nexus+sandbox",
+     "n": 16,
+     "baseSuccess": 6,
+     "currentSuccess": 16,
+     "baseRecovery": 6,
+     "currentRecovery": 16,
+     "baseWorse": 10,
+     "currentWorse": 0
+    },
+    {
+     "transform": "stack-confetti-rename-strings",
+     "plan": "adaptive+sandbox",
+     "n": 16,
+     "baseSuccess": 16,
+     "currentSuccess": 16,
+     "baseRecovery": 7,
+     "currentRecovery": 16,
+     "baseWorse": 0,
+     "currentWorse": 0
+    },
+    {
+     "transform": "stack-confetti-rename-strings",
+     "plan": "nexus+sandbox",
+     "n": 16,
+     "baseSuccess": 16,
+     "currentSuccess": 16,
+     "baseRecovery": 7,
+     "currentRecovery": 16,
+     "baseWorse": 0,
+     "currentWorse": 0
+    },
+    {
+     "transform": "stack-rename-strings",
+     "plan": "adaptive+sandbox",
+     "n": 16,
+     "baseSuccess": 16,
+     "currentSuccess": 16,
+     "baseRecovery": 7,
+     "currentRecovery": 16,
+     "baseWorse": 0,
+     "currentWorse": 0
+    },
+    {
+     "transform": "stack-rename-strings",
+     "plan": "nexus+sandbox",
+     "n": 16,
+     "baseSuccess": 16,
+     "currentSuccess": 16,
+     "baseRecovery": 7,
+     "currentRecovery": 16,
+     "baseWorse": 0,
+     "currentWorse": 0
+    },
+    {
+     "transform": "stack-tabledispatch-rename-proxies",
+     "plan": "adaptive",
+     "n": 16,
+     "baseSuccess": 16,
+     "currentSuccess": 16,
+     "baseRecovery": 0,
+     "currentRecovery": 11,
+     "baseWorse": 0,
+     "currentWorse": 0
+    },
+    {
+     "transform": "stack-tabledispatch-rename-proxies",
+     "plan": "adaptive+sandbox",
+     "n": 16,
+     "baseSuccess": 16,
+     "currentSuccess": 16,
+     "baseRecovery": 0,
+     "currentRecovery": 11,
+     "baseWorse": 0,
+     "currentWorse": 0
+    },
+    {
+     "transform": "stack-tabledispatch-rename-proxies",
+     "plan": "nexus",
+     "n": 16,
+     "baseSuccess": 16,
+     "currentSuccess": 16,
+     "baseRecovery": 0,
+     "currentRecovery": 11,
+     "baseWorse": 0,
+     "currentWorse": 0
+    },
+    {
+     "transform": "stack-tabledispatch-rename-proxies",
+     "plan": "nexus+sandbox",
+     "n": 16,
+     "baseSuccess": 16,
+     "currentSuccess": 16,
+     "baseRecovery": 0,
+     "currentRecovery": 11,
+     "baseWorse": 0,
+     "currentWorse": 0
+    },
+    {
+     "transform": "tabledispatch",
+     "plan": "adaptive",
+     "n": 16,
+     "baseSuccess": 16,
+     "currentSuccess": 16,
+     "baseRecovery": 0,
+     "currentRecovery": 16,
+     "baseWorse": 0,
+     "currentWorse": 0
+    },
+    {
+     "transform": "tabledispatch",
+     "plan": "adaptive+sandbox",
+     "n": 16,
+     "baseSuccess": 16,
+     "currentSuccess": 16,
+     "baseRecovery": 0,
+     "currentRecovery": 16,
+     "baseWorse": 0,
+     "currentWorse": 0
+    },
+    {
+     "transform": "tabledispatch",
+     "plan": "nexus",
+     "n": 16,
+     "baseSuccess": 16,
+     "currentSuccess": 16,
+     "baseRecovery": 0,
+     "currentRecovery": 16,
+     "baseWorse": 0,
+     "currentWorse": 0
+    },
+    {
+     "transform": "tabledispatch",
+     "plan": "nexus+sandbox",
+     "n": 16,
+     "baseSuccess": 16,
+     "currentSuccess": 16,
+     "baseRecovery": 0,
+     "currentRecovery": 16,
+     "baseWorse": 0,
+     "currentWorse": 0
+    }
+   ],
+   "cellsRegressed": [],
+   "regressions": []
+  }
+ ],
+ "sources": [
+  {
+   "id": "luaxen",
+   "title": "LuaXen (ByteXenon)",
+   "url": "https://github.com/ByteXenon/LuaXen",
+   "retrieved": "2026-11-08",
+   "grade": "source",
+   "claims": [
+    "MIT licence; a single commit, dated 2024-09-29 in the clone; 174 files.",
+    "A toolkit in pure Lua: lexer, parser, compiler, decompiler, minifier, interpreter, assembler, packer.",
+    "Its obfuscator example runs two stages in order: Obfuscator.IronBrikked.ObfuscateScript, then Obfuscator.ASTObfuscator.ObfuscateScript on the result: a nested, multi-stage case."
+   ],
+   "labStatus": "not-run",
+   "labReason": "Needs a real Lua runtime (package.path, debug.getinfo, require of its own modules). None is available in the research environment, so no sample output was produced and no compatibility claim exists."
+  },
+  {
+   "id": "luraph",
+   "title": "Luraph (lura.ph)",
+   "url": "https://lura.ph/",
+   "retrieved": "2026-11-08",
+   "grade": "unreachable",
+   "claims": [
+    "The vendor site could not be reached from the research environment (the egress proxy refused the connection).",
+    "A web search found no official changelog. Third-party pages label obfuscated files v13.6.x, v14.3 and v14.4.1; none of them is a reliable source for how the versions differ, and no source found mentioned v15."
+   ],
+   "labStatus": "untested",
+   "labReason": "No sample output of any Luraph version was available. The laboratory cannot generate Luraph output (commercial service). A person who owns Luraph output can add it as a supplied sample; until then nothing is claimed beyond what the detector's signatures already say."
+  },
+  {
+   "id": "prometheus-docs",
+   "title": "Prometheus documentation and issue tracker",
+   "url": "https://github.com/prometheus-lua/Prometheus/issues",
+   "retrieved": "2026-11-08",
+   "grade": "search-snippet",
+   "claims": [
+    "Upstream documentation has moved to prometheus-lua.github.io/Prometheus/docs; the GitBook copy labels itself a legacy mirror.",
+    "The issue tracker lists Vmify bugs, among them one where Vmify applied to the AntiTamper step's code can produce failing code (issue 155, reported Nov 2023)."
+   ],
+   "labStatus": "covered-elsewhere",
+   "labReason": "Prometheus is measured with real tool output in data/compat.json (docs/COMPATIBILITY.md), not by this laboratory."
+  },
+  {
+   "id": "hercules-luau",
+   "title": "Hercules (zeusssz)",
+   "url": "https://github.com/zeusssz/hercules-obfuscator",
+   "retrieved": "2026-11-08",
+   "grade": "search-snippet",
+   "claims": [
+    "Its README says the VirtualMachine and bytecode_encoding modules are disabled automatically for Luau output."
+   ],
+   "labStatus": "covered-elsewhere",
+   "labReason": "Measured with real tool output in data/compat.json."
+  },
+  {
+   "id": "closed-discord-tools",
+   "title": "Baza Obfuscator; EVIL AXE Studios",
+   "url": "https://devforum.roblox.com/t/evil-axe-studios-%E2%80%93-free-lua-obfuscation-tool/4763090",
+   "retrieved": "2026-11-08",
+   "grade": "search-snippet",
+   "claims": [
+    "Baza Obfuscator is advertised as a Discord bot with a ChaCha20-encrypted VM; its code is not published.",
+    "EVIL AXE Studios is described as a wrapper around Prometheus."
+   ],
+   "labStatus": "untested",
+   "labReason": "No code and no sample output."
+  },
+  {
+   "id": "bytelua",
+   "title": "ByteLuaObfuscator (kosuke14)",
+   "url": "https://github.com/kosuke14/ByteLuaObfuscator",
+   "retrieved": "2026-11-08",
+   "grade": "unreachable",
+   "claims": [
+    "A search listing describes a bytecode-method obfuscator without Luau support. A clone attempt was refused (the repository asked for credentials), so its code was not read."
+   ],
+   "labStatus": "untested",
+   "labReason": "Could not be cloned."
+  }
+ ],
+ "sourceGrades": {
+  "source": "the code was cloned or fetched and read",
+  "third-party": "a write-up by someone else; not checked against the tool",
+  "search-snippet": "only a search-result summary was available",
+  "unreachable": "the host could not be reached from the research environment"
+ }
+}

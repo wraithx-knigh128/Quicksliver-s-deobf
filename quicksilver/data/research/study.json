@@ -1,0 +1,684 @@
+{
+ "schema": 1,
+ "thresholds": {
+  "minSupport": 0.9,
+  "maxNegativeRate": 0.05,
+  "precision": 0.95,
+  "recall": 0.9,
+  "minPositives": 8,
+  "minNegatives": 16
+ },
+ "attempts": [
+  {
+   "transform": "confetti",
+   "kind": "known",
+   "outcome": "accepted",
+   "signature": {
+    "all": [
+     "comments:dense"
+    ],
+    "none": []
+   },
+   "train": {
+    "tp": 16,
+    "fp": 0,
+    "fn": 0,
+    "tn": 224,
+    "precision": 1,
+    "recall": 1,
+    "positives": 16,
+    "negatives": 224
+   },
+   "heldout": {
+    "tp": 16,
+    "fp": 0,
+    "fn": 0,
+    "tn": 224,
+    "precision": 1,
+    "recall": 1,
+    "positives": 16,
+    "negatives": 224
+   },
+   "reasons": [],
+   "onStacks": [
+    {
+     "stack": "stack-rename-strings",
+     "fires": 0
+    },
+    {
+     "stack": "stack-flatten-opaque",
+     "fires": 0
+    },
+    {
+     "stack": "stack-wrap-flatten-junk",
+     "fires": 0
+    },
+    {
+     "stack": "stack-confetti-rename-strings",
+     "fires": 1
+    },
+    {
+     "stack": "stack-xorpack-loadwrap",
+     "fires": 0
+    },
+    {
+     "stack": "stack-tabledispatch-rename-proxies",
+     "fires": 0
+    }
+   ]
+  },
+  {
+   "transform": "flatten-chain",
+   "kind": "known",
+   "outcome": "rejected",
+   "signature": {
+    "all": [
+     "shape:state-loop"
+    ],
+    "none": []
+   },
+   "train": {
+    "tp": 16,
+    "fp": 32,
+    "fn": 0,
+    "tn": 192,
+    "precision": 0.3333333333333333,
+    "recall": 1,
+    "positives": 16,
+    "negatives": 224
+   },
+   "heldout": {
+    "tp": 16,
+    "fp": 32,
+    "fn": 0,
+    "tn": 192,
+    "precision": 0.3333333333333333,
+    "recall": 1,
+    "positives": 16,
+    "negatives": 224
+   },
+   "reasons": [
+    "precision 0.33 is below 0.95"
+   ],
+   "onStacks": [
+    {
+     "stack": "stack-rename-strings",
+     "fires": 0
+    },
+    {
+     "stack": "stack-flatten-opaque",
+     "fires": 1
+    },
+    {
+     "stack": "stack-wrap-flatten-junk",
+     "fires": 1
+    },
+    {
+     "stack": "stack-confetti-rename-strings",
+     "fires": 0
+    },
+    {
+     "stack": "stack-xorpack-loadwrap",
+     "fires": 0
+    },
+    {
+     "stack": "stack-tabledispatch-rename-proxies",
+     "fires": 0
+    }
+   ]
+  },
+  {
+   "transform": "flatten-tree",
+   "kind": "known",
+   "outcome": "rejected",
+   "signature": {
+    "all": [
+     "shape:state-loop"
+    ],
+    "none": []
+   },
+   "train": {
+    "tp": 16,
+    "fp": 32,
+    "fn": 0,
+    "tn": 192,
+    "precision": 0.3333333333333333,
+    "recall": 1,
+    "positives": 16,
+    "negatives": 224
+   },
+   "heldout": {
+    "tp": 16,
+    "fp": 32,
+    "fn": 0,
+    "tn": 192,
+    "precision": 0.3333333333333333,
+    "recall": 1,
+    "positives": 16,
+    "negatives": 224
+   },
+   "reasons": [
+    "precision 0.33 is below 0.95"
+   ],
+   "onStacks": [
+    {
+     "stack": "stack-rename-strings",
+     "fires": 0
+    },
+    {
+     "stack": "stack-flatten-opaque",
+     "fires": 1
+    },
+    {
+     "stack": "stack-wrap-flatten-junk",
+     "fires": 1
+    },
+    {
+     "stack": "stack-confetti-rename-strings",
+     "fires": 0
+    },
+    {
+     "stack": "stack-xorpack-loadwrap",
+     "fires": 0
+    },
+    {
+     "stack": "stack-tabledispatch-rename-proxies",
+     "fires": 0
+    }
+   ]
+  },
+  {
+   "transform": "flatten-seq",
+   "kind": "known",
+   "outcome": "rejected",
+   "signature": {
+    "all": [
+     "shape:state-loop"
+    ],
+    "none": []
+   },
+   "train": {
+    "tp": 16,
+    "fp": 32,
+    "fn": 0,
+    "tn": 192,
+    "precision": 0.3333333333333333,
+    "recall": 1,
+    "positives": 16,
+    "negatives": 224
+   },
+   "heldout": {
+    "tp": 16,
+    "fp": 32,
+    "fn": 0,
+    "tn": 192,
+    "precision": 0.3333333333333333,
+    "recall": 1,
+    "positives": 16,
+    "negatives": 224
+   },
+   "reasons": [
+    "precision 0.33 is below 0.95"
+   ],
+   "onStacks": [
+    {
+     "stack": "stack-rename-strings",
+     "fires": 0
+    },
+    {
+     "stack": "stack-flatten-opaque",
+     "fires": 1
+    },
+    {
+     "stack": "stack-wrap-flatten-junk",
+     "fires": 1
+    },
+    {
+     "stack": "stack-confetti-rename-strings",
+     "fires": 0
+    },
+    {
+     "stack": "stack-xorpack-loadwrap",
+     "fires": 0
+    },
+    {
+     "stack": "stack-tabledispatch-rename-proxies",
+     "fires": 0
+    }
+   ]
+  },
+  {
+   "transform": "strings-indexed",
+   "kind": "known",
+   "outcome": "accepted",
+   "signature": {
+    "all": [
+     "strings:escaped"
+    ],
+    "none": []
+   },
+   "train": {
+    "tp": 15,
+    "fp": 0,
+    "fn": 1,
+    "tn": 224,
+    "precision": 1,
+    "recall": 0.9375,
+    "positives": 16,
+    "negatives": 224
+   },
+   "heldout": {
+    "tp": 16,
+    "fp": 0,
+    "fn": 0,
+    "tn": 224,
+    "precision": 1,
+    "recall": 1,
+    "positives": 16,
+    "negatives": 224
+   },
+   "reasons": [],
+   "onStacks": [
+    {
+     "stack": "stack-rename-strings",
+     "fires": 1
+    },
+    {
+     "stack": "stack-flatten-opaque",
+     "fires": 0
+    },
+    {
+     "stack": "stack-wrap-flatten-junk",
+     "fires": 0
+    },
+    {
+     "stack": "stack-confetti-rename-strings",
+     "fires": 0
+    },
+    {
+     "stack": "stack-xorpack-loadwrap",
+     "fires": 0
+    },
+    {
+     "stack": "stack-tabledispatch-rename-proxies",
+     "fires": 0
+    }
+   ]
+  },
+  {
+   "transform": "strings-inline",
+   "kind": "known",
+   "outcome": "rejected",
+   "signature": {
+    "all": [
+     "shape:decoder-loop",
+     "call:string.char"
+    ],
+    "none": [
+     "shape:state-loop",
+     "layout:minified",
+     "strings:escaped"
+    ]
+   },
+   "train": {
+    "tp": 16,
+    "fp": 17,
+    "fn": 0,
+    "tn": 207,
+    "precision": 0.48484848484848486,
+    "recall": 1,
+    "positives": 16,
+    "negatives": 224
+   },
+   "heldout": {
+    "tp": 16,
+    "fp": 16,
+    "fn": 0,
+    "tn": 208,
+    "precision": 0.5,
+    "recall": 1,
+    "positives": 16,
+    "negatives": 224
+   },
+   "reasons": [
+    "precision 0.50 is below 0.95"
+   ],
+   "onStacks": [
+    {
+     "stack": "stack-rename-strings",
+     "fires": 0
+    },
+    {
+     "stack": "stack-flatten-opaque",
+     "fires": 0
+    },
+    {
+     "stack": "stack-wrap-flatten-junk",
+     "fires": 0
+    },
+    {
+     "stack": "stack-confetti-rename-strings",
+     "fires": 0
+    },
+    {
+     "stack": "stack-xorpack-loadwrap",
+     "fires": 0
+    },
+    {
+     "stack": "stack-tabledispatch-rename-proxies",
+     "fires": 0
+    }
+   ]
+  },
+  {
+   "transform": "opaque",
+   "kind": "known",
+   "outcome": "no-signature",
+   "reason": "nothing in the samples separates this system from the others"
+  },
+  {
+   "transform": "proxies",
+   "kind": "known",
+   "outcome": "no-signature",
+   "reason": "nothing in the samples separates this system from the others"
+  },
+  {
+   "transform": "junk",
+   "kind": "known",
+   "outcome": "no-signature",
+   "reason": "nothing in the samples separates this system from the others"
+  },
+  {
+   "transform": "rename",
+   "kind": "known",
+   "outcome": "accepted",
+   "signature": {
+    "all": [
+     "names:machine"
+    ],
+    "none": []
+   },
+   "train": {
+    "tp": 16,
+    "fp": 0,
+    "fn": 0,
+    "tn": 224,
+    "precision": 1,
+    "recall": 1,
+    "positives": 16,
+    "negatives": 224
+   },
+   "heldout": {
+    "tp": 16,
+    "fp": 0,
+    "fn": 0,
+    "tn": 224,
+    "precision": 1,
+    "recall": 1,
+    "positives": 16,
+    "negatives": 224
+   },
+   "reasons": [],
+   "onStacks": [
+    {
+     "stack": "stack-rename-strings",
+     "fires": 1
+    },
+    {
+     "stack": "stack-flatten-opaque",
+     "fires": 0
+    },
+    {
+     "stack": "stack-wrap-flatten-junk",
+     "fires": 0
+    },
+    {
+     "stack": "stack-confetti-rename-strings",
+     "fires": 1
+    },
+    {
+     "stack": "stack-xorpack-loadwrap",
+     "fires": 0
+    },
+    {
+     "stack": "stack-tabledispatch-rename-proxies",
+     "fires": 1
+    }
+   ]
+  },
+  {
+   "transform": "wrap",
+   "kind": "known",
+   "outcome": "accepted",
+   "signature": {
+    "all": [
+     "shape:vararg-wrapper"
+    ],
+    "none": []
+   },
+   "train": {
+    "tp": 16,
+    "fp": 0,
+    "fn": 0,
+    "tn": 224,
+    "precision": 1,
+    "recall": 1,
+    "positives": 16,
+    "negatives": 224
+   },
+   "heldout": {
+    "tp": 16,
+    "fp": 0,
+    "fn": 0,
+    "tn": 224,
+    "precision": 1,
+    "recall": 1,
+    "positives": 16,
+    "negatives": 224
+   },
+   "reasons": [],
+   "onStacks": [
+    {
+     "stack": "stack-rename-strings",
+     "fires": 0
+    },
+    {
+     "stack": "stack-flatten-opaque",
+     "fires": 0
+    },
+    {
+     "stack": "stack-wrap-flatten-junk",
+     "fires": 0.6875
+    },
+    {
+     "stack": "stack-confetti-rename-strings",
+     "fires": 0
+    },
+    {
+     "stack": "stack-xorpack-loadwrap",
+     "fires": 0
+    },
+    {
+     "stack": "stack-tabledispatch-rename-proxies",
+     "fires": 0
+    }
+   ]
+  },
+  {
+   "transform": "xorpack",
+   "kind": "custom",
+   "outcome": "accepted",
+   "signature": {
+    "all": [
+     "strings:none",
+     "shape:decoder-loop",
+     "shape:stream-arithmetic"
+    ],
+    "none": []
+   },
+   "train": {
+    "tp": 16,
+    "fp": 0,
+    "fn": 0,
+    "tn": 224,
+    "precision": 1,
+    "recall": 1,
+    "positives": 16,
+    "negatives": 224
+   },
+   "heldout": {
+    "tp": 16,
+    "fp": 0,
+    "fn": 0,
+    "tn": 224,
+    "precision": 1,
+    "recall": 1,
+    "positives": 16,
+    "negatives": 224
+   },
+   "reasons": [],
+   "onStacks": [
+    {
+     "stack": "stack-rename-strings",
+     "fires": 0
+    },
+    {
+     "stack": "stack-flatten-opaque",
+     "fires": 0
+    },
+    {
+     "stack": "stack-wrap-flatten-junk",
+     "fires": 0
+    },
+    {
+     "stack": "stack-confetti-rename-strings",
+     "fires": 0
+    },
+    {
+     "stack": "stack-xorpack-loadwrap",
+     "fires": 0
+    },
+    {
+     "stack": "stack-tabledispatch-rename-proxies",
+     "fires": 0
+    }
+   ]
+  },
+  {
+   "transform": "loadwrap",
+   "kind": "custom",
+   "outcome": "accepted",
+   "signature": {
+    "all": [
+     "call:loadstring"
+    ],
+    "none": []
+   },
+   "train": {
+    "tp": 16,
+    "fp": 0,
+    "fn": 0,
+    "tn": 224,
+    "precision": 1,
+    "recall": 1,
+    "positives": 16,
+    "negatives": 224
+   },
+   "heldout": {
+    "tp": 16,
+    "fp": 0,
+    "fn": 0,
+    "tn": 224,
+    "precision": 1,
+    "recall": 1,
+    "positives": 16,
+    "negatives": 224
+   },
+   "reasons": [],
+   "onStacks": [
+    {
+     "stack": "stack-rename-strings",
+     "fires": 0
+    },
+    {
+     "stack": "stack-flatten-opaque",
+     "fires": 0
+    },
+    {
+     "stack": "stack-wrap-flatten-junk",
+     "fires": 0
+    },
+    {
+     "stack": "stack-confetti-rename-strings",
+     "fires": 0
+    },
+    {
+     "stack": "stack-xorpack-loadwrap",
+     "fires": 1
+    },
+    {
+     "stack": "stack-tabledispatch-rename-proxies",
+     "fires": 0
+    }
+   ]
+  },
+  {
+   "transform": "tabledispatch",
+   "kind": "custom",
+   "outcome": "accepted",
+   "signature": {
+    "all": [
+     "shape:function-table"
+    ],
+    "none": []
+   },
+   "train": {
+    "tp": 16,
+    "fp": 0,
+    "fn": 0,
+    "tn": 224,
+    "precision": 1,
+    "recall": 1,
+    "positives": 16,
+    "negatives": 224
+   },
+   "heldout": {
+    "tp": 16,
+    "fp": 0,
+    "fn": 0,
+    "tn": 224,
+    "precision": 1,
+    "recall": 1,
+    "positives": 16,
+    "negatives": 224
+   },
+   "reasons": [],
+   "onStacks": [
+    {
+     "stack": "stack-rename-strings",
+     "fires": 0
+    },
+    {
+     "stack": "stack-flatten-opaque",
+     "fires": 0
+    },
+    {
+     "stack": "stack-wrap-flatten-junk",
+     "fires": 0
+    },
+    {
+     "stack": "stack-confetti-rename-strings",
+     "fires": 0
+    },
+    {
+     "stack": "stack-xorpack-loadwrap",
+     "fires": 0
+    },
+    {
+     "stack": "stack-tabledispatch-rename-proxies",
+     "fires": 0
+    }
+   ]
+  }
+ ]
+}

@@ -55,6 +55,10 @@ Numbers are measured on output of the real tools (Prometheus, Hercules, IronBrew
 
 On by default (Settings → NEXUS analysis; `recoverSource(src, { nexus: true })`). Before recovery it reads the comments as data (a sentence cut into pieces and spread between the tokens is recognised, shown as text and removed after the program is shown to be the same without it; text in it that addresses AI tools is reported and never followed or copied into the output) and maps how variables and functions relate (names from what a value is assigned from, what is called on it, which URL a library came from, what a function returns); recovery then repeats while it still changes the text. After recovery every claim goes in a ledger as **verified** (a named check ran: same syntax tree without the comments, naming changed only names, no new globals, optional sandbox comparison), **inferred** (a rule concluded it, with its evidence) or **unresolved** (fetched code, control-flow shapes that are not rebuilt). It never removes a licence-key check; it describes it. See `docs/NEXUS.md` for the assessment, design, measured cost and limits.
 
+### Research laboratory
+
+`docs/RESEARCH-LAB.md`. A laboratory (`tools/lab/`, `npm run lab`) generates original test programs from seeds, applies 20 controlled transformations (existing mutators, comment confetti, three custom systems written for the laboratory, six nested combinations), runs seven reconstruction plans, and compares the result with the original by behaviour (in this project's own interpreter) and by closeness. One judge names every outcome; a technique cannot call itself successful. From the experiment records it derives the statements the **Research** tab shows (each with its rule and counts), evaluates new techniques by running the same experiments before and after (regressions are kept in the record), learns signatures for systems the engine has no rule for and registers them only if they hold on programs they were not learned from, and feeds the **advisor**: on Deobfuscate the page looks up what the verified experiments say works on inputs that show the same signs, and uses that plan (a plan that needs the sandbox is recommended, never applied until the sandbox is allowed). Export → *Analysis report (.md)* carries the plan, its evidence, and the verification ledger. Nothing is claimed for Luraph or any other tool the laboratory could not obtain output of.
+
 ### AI check
 
 A strip under the editors reads the script by itself (nothing leaves the page) and shows how likely it is to be AI-written or vibe-coded, and how likely it is to be copied (skidded). The AI percentage comes from style signals;
@@ -111,15 +115,16 @@ src/core/                      lexer, parser, printer, scopes, diff, fidelity
 src/passes/                    folding, simplification, dataflow, idioms, renaming, sandboxed decoder evaluation
 src/detect/                    obfuscator signatures and dialect detection
 src/recover/                   per-family recovery (Prometheus, Vmify, Hercules, IronBrew 2) and the pipeline
+src/research/                  laboratory logic shared with the page: plans, judge, knowledge base, advisor, feature extraction, family registry, study
 src/nexus/                     NEXUS: comment and relation analysis, transformation profile, claims ledger, the 10-stage pipeline (docs/NEXUS.md)
 src/adaptive/                  the structure reader: findings, strategies (dispatch loops, opaque predicates, call proxies, constant tables, decoders), the acceptance rules, the behaviour check
 src/decompile/                 Lua bytecode lifting, control-flow structuring
 src/sandbox/, src/trace/       a Lua interpreter written for this tool (with the Lua 5.4 features obfuscator output uses), and the behavioural trace
 src/origin/                    the style reading behind the origin check
 api/                           Vercel functions
-data/                          samples and compat.json (generated)
+data/                          samples and compat.json (generated); research/ is the laboratory's records and the knowledge base built from them
 tests/                         unit, integration, e2e, and the fixture corpus
-docs/                          RESEARCH.md, ARCHITECTURE.md, NEXUS.md, COMPATIBILITY.md (generated), LICENSING.md
+docs/                          RESEARCH.md, ARCHITECTURE.md, NEXUS.md, RESEARCH-LAB.md, COMPATIBILITY.md (generated), LICENSING.md
 ```
 
 ## Notices

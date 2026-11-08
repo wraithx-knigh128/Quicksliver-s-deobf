@@ -1,0 +1,196 @@
+{
+ "schema": 1,
+ "label": "2-proxies-one-operation",
+ "note": "The proxy inliner now requires a body that performs at most one operation. Found from the regressions in comparison 1: after functions.lift exposed a helper, the inliner folded a three-operation helper into its call site.",
+ "matched": 2240,
+ "base": {
+  "rev": "stateA-lift-only",
+  "experiments": 2240
+ },
+ "current": {
+  "rev": "d509bbc+edb020aa",
+  "experiments": 2240
+ },
+ "improvedExperiments": 140,
+ "regressedExperiments": 0,
+ "cellsImproved": [
+  {
+   "transform": "rename",
+   "plan": "adaptive",
+   "n": 16,
+   "baseSuccess": 6,
+   "currentSuccess": 16,
+   "baseRecovery": 6,
+   "currentRecovery": 16,
+   "baseWorse": 10,
+   "currentWorse": 0
+  },
+  {
+   "transform": "rename",
+   "plan": "adaptive+sandbox",
+   "n": 16,
+   "baseSuccess": 6,
+   "currentSuccess": 16,
+   "baseRecovery": 6,
+   "currentRecovery": 16,
+   "baseWorse": 10,
+   "currentWorse": 0
+  },
+  {
+   "transform": "rename",
+   "plan": "nexus",
+   "n": 16,
+   "baseSuccess": 6,
+   "currentSuccess": 16,
+   "baseRecovery": 6,
+   "currentRecovery": 16,
+   "baseWorse": 10,
+   "currentWorse": 0
+  },
+  {
+   "transform": "rename",
+   "plan": "nexus+sandbox",
+   "n": 16,
+   "baseSuccess": 6,
+   "currentSuccess": 16,
+   "baseRecovery": 6,
+   "currentRecovery": 16,
+   "baseWorse": 10,
+   "currentWorse": 0
+  },
+  {
+   "transform": "stack-confetti-rename-strings",
+   "plan": "adaptive+sandbox",
+   "n": 16,
+   "baseSuccess": 16,
+   "currentSuccess": 16,
+   "baseRecovery": 7,
+   "currentRecovery": 16,
+   "baseWorse": 0,
+   "currentWorse": 0
+  },
+  {
+   "transform": "stack-confetti-rename-strings",
+   "plan": "nexus+sandbox",
+   "n": 16,
+   "baseSuccess": 16,
+   "currentSuccess": 16,
+   "baseRecovery": 7,
+   "currentRecovery": 16,
+   "baseWorse": 0,
+   "currentWorse": 0
+  },
+  {
+   "transform": "stack-rename-strings",
+   "plan": "adaptive+sandbox",
+   "n": 16,
+   "baseSuccess": 16,
+   "currentSuccess": 16,
+   "baseRecovery": 7,
+   "currentRecovery": 16,
+   "baseWorse": 0,
+   "currentWorse": 0
+  },
+  {
+   "transform": "stack-rename-strings",
+   "plan": "nexus+sandbox",
+   "n": 16,
+   "baseSuccess": 16,
+   "currentSuccess": 16,
+   "baseRecovery": 7,
+   "currentRecovery": 16,
+   "baseWorse": 0,
+   "currentWorse": 0
+  },
+  {
+   "transform": "stack-tabledispatch-rename-proxies",
+   "plan": "adaptive",
+   "n": 16,
+   "baseSuccess": 16,
+   "currentSuccess": 16,
+   "baseRecovery": 4,
+   "currentRecovery": 11,
+   "baseWorse": 0,
+   "currentWorse": 0
+  },
+  {
+   "transform": "stack-tabledispatch-rename-proxies",
+   "plan": "adaptive+sandbox",
+   "n": 16,
+   "baseSuccess": 16,
+   "currentSuccess": 16,
+   "baseRecovery": 4,
+   "currentRecovery": 11,
+   "baseWorse": 0,
+   "currentWorse": 0
+  },
+  {
+   "transform": "stack-tabledispatch-rename-proxies",
+   "plan": "nexus",
+   "n": 16,
+   "baseSuccess": 16,
+   "currentSuccess": 16,
+   "baseRecovery": 4,
+   "currentRecovery": 11,
+   "baseWorse": 0,
+   "currentWorse": 0
+  },
+  {
+   "transform": "stack-tabledispatch-rename-proxies",
+   "plan": "nexus+sandbox",
+   "n": 16,
+   "baseSuccess": 16,
+   "currentSuccess": 16,
+   "baseRecovery": 4,
+   "currentRecovery": 11,
+   "baseWorse": 0,
+   "currentWorse": 0
+  },
+  {
+   "transform": "tabledispatch",
+   "plan": "adaptive",
+   "n": 16,
+   "baseSuccess": 13,
+   "currentSuccess": 16,
+   "baseRecovery": 7,
+   "currentRecovery": 16,
+   "baseWorse": 3,
+   "currentWorse": 0
+  },
+  {
+   "transform": "tabledispatch",
+   "plan": "adaptive+sandbox",
+   "n": 16,
+   "baseSuccess": 13,
+   "currentSuccess": 16,
+   "baseRecovery": 7,
+   "currentRecovery": 16,
+   "baseWorse": 3,
+   "currentWorse": 0
+  },
+  {
+   "transform": "tabledispatch",
+   "plan": "nexus",
+   "n": 16,
+   "baseSuccess": 13,
+   "currentSuccess": 16,
+   "baseRecovery": 7,
+   "currentRecovery": 16,
+   "baseWorse": 3,
+   "currentWorse": 0
+  },
+  {
+   "transform": "tabledispatch",
+   "plan": "nexus+sandbox",
+   "n": 16,
+   "baseSuccess": 13,
+   "currentSuccess": 16,
+   "baseRecovery": 7,
+   "currentRecovery": 16,
+   "baseWorse": 3,
+   "currentWorse": 0
+  }
+ ],
+ "cellsRegressed": [],
+ "regressions": []
+}

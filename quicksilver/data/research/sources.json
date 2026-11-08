@@ -1,0 +1,85 @@
+{
+  "schema": 1,
+  "note": "Research notes from outside the laboratory. Each says how it is known. None of these is a discovery: only experiments (knowledge.json) can make one. labStatus says what the laboratory has done with it.",
+  "grades": {
+    "source": "the code was cloned or fetched and read",
+    "third-party": "a write-up by someone else; not checked against the tool",
+    "search-snippet": "only a search-result summary was available",
+    "unreachable": "the host could not be reached from the research environment"
+  },
+  "sources": [
+    {
+      "id": "luaxen",
+      "title": "LuaXen (ByteXenon)",
+      "url": "https://github.com/ByteXenon/LuaXen",
+      "retrieved": "2026-11-08",
+      "grade": "source",
+      "claims": [
+        "MIT licence; a single commit, dated 2024-09-29 in the clone; 174 files.",
+        "A toolkit in pure Lua: lexer, parser, compiler, decompiler, minifier, interpreter, assembler, packer.",
+        "Its obfuscator example runs two stages in order: Obfuscator.IronBrikked.ObfuscateScript, then Obfuscator.ASTObfuscator.ObfuscateScript on the result: a nested, multi-stage case."
+      ],
+      "labStatus": "not-run",
+      "labReason": "Needs a real Lua runtime (package.path, debug.getinfo, require of its own modules). None is available in the research environment, so no sample output was produced and no compatibility claim exists."
+    },
+    {
+      "id": "luraph",
+      "title": "Luraph (lura.ph)",
+      "url": "https://lura.ph/",
+      "retrieved": "2026-11-08",
+      "grade": "unreachable",
+      "claims": [
+        "The vendor site could not be reached from the research environment (the egress proxy refused the connection).",
+        "A web search found no official changelog. Third-party pages label obfuscated files v13.6.x, v14.3 and v14.4.1; none of them is a reliable source for how the versions differ, and no source found mentioned v15."
+      ],
+      "labStatus": "untested",
+      "labReason": "No sample output of any Luraph version was available. The laboratory cannot generate Luraph output (commercial service). A person who owns Luraph output can add it as a supplied sample; until then nothing is claimed beyond what the detector's signatures already say."
+    },
+    {
+      "id": "prometheus-docs",
+      "title": "Prometheus documentation and issue tracker",
+      "url": "https://github.com/prometheus-lua/Prometheus/issues",
+      "retrieved": "2026-11-08",
+      "grade": "search-snippet",
+      "claims": [
+        "Upstream documentation has moved to prometheus-lua.github.io/Prometheus/docs; the GitBook copy labels itself a legacy mirror.",
+        "The issue tracker lists Vmify bugs, among them one where Vmify applied to the AntiTamper step's code can produce failing code (issue 155, reported Nov 2023)."
+      ],
+      "labStatus": "covered-elsewhere",
+      "labReason": "Prometheus is measured with real tool output in data/compat.json (docs/COMPATIBILITY.md), not by this laboratory."
+    },
+    {
+      "id": "hercules-luau",
+      "title": "Hercules (zeusssz)",
+      "url": "https://github.com/zeusssz/hercules-obfuscator",
+      "retrieved": "2026-11-08",
+      "grade": "search-snippet",
+      "claims": ["Its README says the VirtualMachine and bytecode_encoding modules are disabled automatically for Luau output."],
+      "labStatus": "covered-elsewhere",
+      "labReason": "Measured with real tool output in data/compat.json."
+    },
+    {
+      "id": "closed-discord-tools",
+      "title": "Baza Obfuscator; EVIL AXE Studios",
+      "url": "https://devforum.roblox.com/t/evil-axe-studios-%E2%80%93-free-lua-obfuscation-tool/4763090",
+      "retrieved": "2026-11-08",
+      "grade": "search-snippet",
+      "claims": [
+        "Baza Obfuscator is advertised as a Discord bot with a ChaCha20-encrypted VM; its code is not published.",
+        "EVIL AXE Studios is described as a wrapper around Prometheus."
+      ],
+      "labStatus": "untested",
+      "labReason": "No code and no sample output."
+    },
+    {
+      "id": "bytelua",
+      "title": "ByteLuaObfuscator (kosuke14)",
+      "url": "https://github.com/kosuke14/ByteLuaObfuscator",
+      "retrieved": "2026-11-08",
+      "grade": "unreachable",
+      "claims": ["A search listing describes a bytecode-method obfuscator without Luau support. A clone attempt was refused (the repository asked for credentials), so its code was not read."],
+      "labStatus": "untested",
+      "labReason": "Could not be cloned."
+    }
+  ]
+}

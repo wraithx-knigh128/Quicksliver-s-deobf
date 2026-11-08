@@ -42,6 +42,8 @@ const parseSrc = (src) => parse(src);
 const printAst = (ast) => print(ast, { indent: '  ', width: 120, strings: 'preserve', numbers: 'preserve' });
 
 let uid = 0;
+/** Start the fresh-name counter again, so that applying the same transformation to the same text gives the same text wherever in a process it runs. */
+export function resetNames() { uid = 0; }
 const fresh = (stem) => `${stem}__${++uid}`;
 
 // ---- unique names ------------------------------------------------------------------------------------------------------------
@@ -496,6 +498,7 @@ export const MUTATORS = { flatten, strings, opaque, proxies, junk, rename, wrap 
  * @returns {{code: string, applied: string[]}}
  */
 export function obfuscate(source, steps, seed = 1) {
+  resetNames();
   let code = source;
   const applied = [];
   steps.forEach((step, i) => {

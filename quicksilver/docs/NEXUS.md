@@ -71,7 +71,7 @@ Each stage reports `requests` (what would help: the sandbox, a manual look at a 
 
 ## 6. Verification
 
-`npm test`: 691 tests, 0 failed (the 348 skipped need a real Lua through `QS_LUA_PYTHON`; they were skipped before this work too). `npm run test:e2e`: 37 of 37 in Chromium.
+`npm test`: 727 tests, 0 failed at the time of Phase III (the 348 skipped need a real Lua through `QS_LUA_PYTHON`; they were skipped before this work too). `npm run test:e2e`: 40 of 40 in Chromium. What the laboratory measured about NEXUS, and how it chooses plans, is in `RESEARCH-LAB.md`.
 
 `tests/nexus.test.mjs` (35 tests): trivia recognition and its refusals (documentation is kept, ordinary mentions of AI are not flagged); relation naming on a synthetic loader, with every name carrying a rule and evidence; the alpha-renaming proof and the capture test (a suggested `url` does not capture a global `url`); control-flow shapes; the ledger rules; ten stages in order; reports replace rather than repeat; failures are refused with a position; remote code and unrebuilt shapes lower confidence and are named; shallow runs are not called verified; parity with the plain engine over 12 real Prometheus/Hercules fixtures (NEXUS never fails where the engine succeeds, and any lowered level has a reason); cost.
 

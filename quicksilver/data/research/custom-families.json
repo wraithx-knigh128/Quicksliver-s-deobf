@@ -1,0 +1,130 @@
+{
+ "schema": 1,
+ "families": [
+  {
+   "id": "lab-xorpack",
+   "name": "Lab custom system: stream-cipher strings",
+   "origin": "lab-learned",
+   "kind": "custom",
+   "summary": "Signature learned from controlled samples of a protector written for this laboratory; not a third-party tool.",
+   "versions": [
+    {
+     "id": "lab-1",
+     "label": "lab generator 1"
+    }
+   ],
+   "signature": {
+    "all": [
+     "strings:none",
+     "shape:decoder-loop",
+     "shape:stream-arithmetic"
+    ],
+    "none": []
+   },
+   "learned": {
+    "trainPrograms": 16,
+    "heldoutPrograms": 16,
+    "heldout": {
+     "tp": 16,
+     "fp": 0,
+     "fn": 0,
+     "tn": 224,
+     "precision": 1,
+     "recall": 1,
+     "positives": 16,
+     "negatives": 224
+    },
+    "thresholds": {
+     "minSupport": 0.9,
+     "maxNegativeRate": 0.05,
+     "precision": 0.95,
+     "recall": 0.9,
+     "minPositives": 8,
+     "minNegatives": 16
+    }
+   }
+  },
+  {
+   "id": "lab-loadwrap",
+   "name": "Lab custom system: program as bytes behind loadstring",
+   "origin": "lab-learned",
+   "kind": "custom",
+   "summary": "Signature learned from controlled samples of a protector written for this laboratory; not a third-party tool.",
+   "versions": [
+    {
+     "id": "lab-1",
+     "label": "lab generator 1"
+    }
+   ],
+   "signature": {
+    "all": [
+     "call:loadstring"
+    ],
+    "none": []
+   },
+   "learned": {
+    "trainPrograms": 16,
+    "heldoutPrograms": 16,
+    "heldout": {
+     "tp": 16,
+     "fp": 0,
+     "fn": 0,
+     "tn": 224,
+     "precision": 1,
+     "recall": 1,
+     "positives": 16,
+     "negatives": 224
+    },
+    "thresholds": {
+     "minSupport": 0.9,
+     "maxNegativeRate": 0.05,
+     "precision": 0.95,
+     "recall": 0.9,
+     "minPositives": 8,
+     "minNegatives": 16
+    }
+   }
+  },
+  {
+   "id": "lab-tabledispatch",
+   "name": "Lab custom system: functions called through a table",
+   "origin": "lab-learned",
+   "kind": "custom",
+   "summary": "Signature learned from controlled samples of a protector written for this laboratory; not a third-party tool.",
+   "versions": [
+    {
+     "id": "lab-1",
+     "label": "lab generator 1"
+    }
+   ],
+   "signature": {
+    "all": [
+     "shape:function-table"
+    ],
+    "none": []
+   },
+   "learned": {
+    "trainPrograms": 16,
+    "heldoutPrograms": 16,
+    "heldout": {
+     "tp": 16,
+     "fp": 0,
+     "fn": 0,
+     "tn": 224,
+     "precision": 1,
+     "recall": 1,
+     "positives": 16,
+     "negatives": 224
+    },
+    "thresholds": {
+     "minSupport": 0.9,
+     "maxNegativeRate": 0.05,
+     "precision": 0.95,
+     "recall": 0.9,
+     "minPositives": 8,
+     "minNegatives": 16
+    }
+   }
+  }
+ ]
+}

@@ -1,0 +1,250 @@
+{
+ "schema": 1,
+ "label": "1-functions-lift",
+ "note": "functions.lift added alone. Baseline: the engine at d509bbc. Same lab code, same 16 programs.",
+ "matched": 2240,
+ "base": {
+  "rev": "base-d509bbc",
+  "experiments": 2240
+ },
+ "current": {
+  "rev": "stateA-lift-only",
+  "experiments": 2240
+ },
+ "improvedExperiments": 44,
+ "regressedExperiments": 12,
+ "cellsImproved": [
+  {
+   "transform": "stack-tabledispatch-rename-proxies",
+   "plan": "adaptive",
+   "n": 16,
+   "baseSuccess": 16,
+   "currentSuccess": 16,
+   "baseRecovery": 0,
+   "currentRecovery": 4,
+   "baseWorse": 0,
+   "currentWorse": 0
+  },
+  {
+   "transform": "stack-tabledispatch-rename-proxies",
+   "plan": "adaptive+sandbox",
+   "n": 16,
+   "baseSuccess": 16,
+   "currentSuccess": 16,
+   "baseRecovery": 0,
+   "currentRecovery": 4,
+   "baseWorse": 0,
+   "currentWorse": 0
+  },
+  {
+   "transform": "stack-tabledispatch-rename-proxies",
+   "plan": "nexus",
+   "n": 16,
+   "baseSuccess": 16,
+   "currentSuccess": 16,
+   "baseRecovery": 0,
+   "currentRecovery": 4,
+   "baseWorse": 0,
+   "currentWorse": 0
+  },
+  {
+   "transform": "stack-tabledispatch-rename-proxies",
+   "plan": "nexus+sandbox",
+   "n": 16,
+   "baseSuccess": 16,
+   "currentSuccess": 16,
+   "baseRecovery": 0,
+   "currentRecovery": 4,
+   "baseWorse": 0,
+   "currentWorse": 0
+  },
+  {
+   "transform": "tabledispatch",
+   "plan": "adaptive",
+   "n": 16,
+   "baseSuccess": 16,
+   "currentSuccess": 13,
+   "baseRecovery": 0,
+   "currentRecovery": 7,
+   "baseWorse": 0,
+   "currentWorse": 3
+  },
+  {
+   "transform": "tabledispatch",
+   "plan": "adaptive+sandbox",
+   "n": 16,
+   "baseSuccess": 16,
+   "currentSuccess": 13,
+   "baseRecovery": 0,
+   "currentRecovery": 7,
+   "baseWorse": 0,
+   "currentWorse": 3
+  },
+  {
+   "transform": "tabledispatch",
+   "plan": "nexus",
+   "n": 16,
+   "baseSuccess": 16,
+   "currentSuccess": 13,
+   "baseRecovery": 0,
+   "currentRecovery": 7,
+   "baseWorse": 0,
+   "currentWorse": 3
+  },
+  {
+   "transform": "tabledispatch",
+   "plan": "nexus+sandbox",
+   "n": 16,
+   "baseSuccess": 16,
+   "currentSuccess": 13,
+   "baseRecovery": 0,
+   "currentRecovery": 7,
+   "baseWorse": 0,
+   "currentWorse": 3
+  }
+ ],
+ "cellsRegressed": [
+  {
+   "transform": "tabledispatch",
+   "plan": "adaptive",
+   "n": 16,
+   "baseSuccess": 16,
+   "currentSuccess": 13,
+   "baseRecovery": 0,
+   "currentRecovery": 7,
+   "baseWorse": 0,
+   "currentWorse": 3
+  },
+  {
+   "transform": "tabledispatch",
+   "plan": "adaptive+sandbox",
+   "n": 16,
+   "baseSuccess": 16,
+   "currentSuccess": 13,
+   "baseRecovery": 0,
+   "currentRecovery": 7,
+   "baseWorse": 0,
+   "currentWorse": 3
+  },
+  {
+   "transform": "tabledispatch",
+   "plan": "nexus",
+   "n": 16,
+   "baseSuccess": 16,
+   "currentSuccess": 13,
+   "baseRecovery": 0,
+   "currentRecovery": 7,
+   "baseWorse": 0,
+   "currentWorse": 3
+  },
+  {
+   "transform": "tabledispatch",
+   "plan": "nexus+sandbox",
+   "n": 16,
+   "baseSuccess": 16,
+   "currentSuccess": 13,
+   "baseRecovery": 0,
+   "currentRecovery": 7,
+   "baseWorse": 0,
+   "currentWorse": 3
+  }
+ ],
+ "regressions": [
+  {
+   "id": "exp_19c4141b9cb7dc",
+   "program": 16,
+   "transform": "tabledispatch",
+   "plan": "nexus+sandbox",
+   "from": "verified-partial",
+   "to": "behaviour-kept-worse"
+  },
+  {
+   "id": "exp_2e01c2fe397aac",
+   "program": 13,
+   "transform": "tabledispatch",
+   "plan": "nexus+sandbox",
+   "from": "verified-partial",
+   "to": "behaviour-kept-worse"
+  },
+  {
+   "id": "exp_4eb297a10d91e2",
+   "program": 13,
+   "transform": "tabledispatch",
+   "plan": "adaptive+sandbox",
+   "from": "verified-partial",
+   "to": "behaviour-kept-worse"
+  },
+  {
+   "id": "exp_6eb7cb1edb7324",
+   "program": 1,
+   "transform": "tabledispatch",
+   "plan": "nexus",
+   "from": "verified-partial",
+   "to": "behaviour-kept-worse"
+  },
+  {
+   "id": "exp_7b16f395bcb8c6",
+   "program": 1,
+   "transform": "tabledispatch",
+   "plan": "nexus+sandbox",
+   "from": "verified-partial",
+   "to": "behaviour-kept-worse"
+  },
+  {
+   "id": "exp_981e8cf8d595d2",
+   "program": 1,
+   "transform": "tabledispatch",
+   "plan": "adaptive",
+   "from": "verified-partial",
+   "to": "behaviour-kept-worse"
+  },
+  {
+   "id": "exp_9d8496712c560b",
+   "program": 13,
+   "transform": "tabledispatch",
+   "plan": "nexus",
+   "from": "verified-partial",
+   "to": "behaviour-kept-worse"
+  },
+  {
+   "id": "exp_9de391a3f09a8a",
+   "program": 13,
+   "transform": "tabledispatch",
+   "plan": "adaptive",
+   "from": "verified-partial",
+   "to": "behaviour-kept-worse"
+  },
+  {
+   "id": "exp_9f771bdfb0efb5",
+   "program": 16,
+   "transform": "tabledispatch",
+   "plan": "nexus",
+   "from": "verified-partial",
+   "to": "behaviour-kept-worse"
+  },
+  {
+   "id": "exp_b24f95f67fa68f",
+   "program": 16,
+   "transform": "tabledispatch",
+   "plan": "adaptive",
+   "from": "verified-partial",
+   "to": "behaviour-kept-worse"
+  },
+  {
+   "id": "exp_cd85e886f4981e",
+   "program": 1,
+   "transform": "tabledispatch",
+   "plan": "adaptive+sandbox",
+   "from": "verified-partial",
+   "to": "behaviour-kept-worse"
+  },
+  {
+   "id": "exp_cfb0c81c1a2b77",
+   "program": 16,
+   "transform": "tabledispatch",
+   "plan": "adaptive+sandbox",
+   "from": "verified-partial",
+   "to": "behaviour-kept-worse"
+  }
+ ]
+}
