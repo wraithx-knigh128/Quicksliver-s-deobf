@@ -1114,6 +1114,15 @@ async function buildReport() {
       validation: S.recovered.validation || null,
       steps: (S.recovered.steps || []).map((s) => ({ id: s.id, label: s.label, status: s.status, changed: s.changed, rounds: s.rounds })),
       warnings: S.recovered.warnings || [],
+      nexus: S.recovered.nexus && !S.recovered.nexus.fallback ? {
+        version: S.recovered.nexus.version,
+        passes: S.recovered.nexus.passes,
+        transformations: S.recovered.nexus.transformations,
+        dependencies: S.recovered.nexus.relations ? S.recovered.nexus.relations.dependencies : [],
+        names: S.recovered.nexus.roles,
+        ledger: S.recovered.nexus.ledger,
+        needs: S.recovered.nexus.needs,
+      } : null,
       sandbox: !!(settings.sandbox && lic.allow('sandbox')),
     } : null,
   };
@@ -1349,6 +1358,9 @@ async function showSettings() {
   const adaptiveBox = h('input', { type: 'checkbox', checked: draft.adaptive });
   adaptiveBox.addEventListener('change', () => { draft.adaptive = adaptiveBox.checked; });
   const adaptiveSwitch = h('label.switch', adaptiveBox, h('i'));
+  const nexusBox = h('input', { type: 'checkbox', checked: draft.nexus });
+  nexusBox.addEventListener('change', () => { draft.nexus = nexusBox.checked; });
+  const nexusSwitch = h('label.switch', nexusBox, h('i'));
   const field = (label, control, hint) => h('div.field', h('span', label), control, hint ? h('span.hint', hint) : null);
   const r = await modal({
     title: 'Settings',
@@ -1364,6 +1376,7 @@ async function showSettings() {
         field('Constant folding', select('foldCalls', [['obfuscation', 'Obfuscator-typical calls'], ['all', 'All pure library calls']])),
         field('Literal style', select('stringStyle', [['normalize', 'Normalise strings and numbers'], ['preserve', 'Keep as written']])),
         field('Maximum rounds', number('maxRounds', 1, 20)),
+        field('NEXUS analysis', nexusSwitch, 'On by default. Reads comments and the relations between variables and functions before recovery, repeats recovery while it still changes the text, and lists every claim as verified, inferred or unresolved.'),
         field('Read the structure', adaptiveSwitch, 'On by default. After the known-obfuscator steps, looks at what the code is made of (flattened control flow, call proxies, opaque conditions, decoder functions) and undoes what it can prove.'),
         field('Compare against', select('compareAgainst', [['formatted', 'Re-formatted input'], ['raw', 'Input as opened']]), 'A re-formatted input lines up with the output even when the original is minified.'),
       ]),

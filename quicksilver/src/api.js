@@ -10,6 +10,7 @@ import { FAMILIES } from './detect/families.js';
 import { analyzeScript } from './analyze/report.js';
 import { toLuast } from './analyze/luast.js';
 import { recover } from './recover/pipeline.js';
+import { nexusRecover } from './nexus/pipeline.js';
 import { diffLines, toRows } from './core/diff.js';
 import { traceScript } from './trace/trace.js';
 import { renamePass } from './passes/rename.js';
@@ -74,8 +75,19 @@ export function analyzeSource(source) {
   return timed(() => analyzeScript(source));
 }
 
+/**
+ * Recover readable source. With `options.nexus` the recovery runs inside the NEXUS pipeline (src/nexus/): the same recovery steps, preceded by
+ * trivia and relation analysis and followed by a verification ledger; everything else in `options` is handed to recover() unchanged.
+ */
 export function recoverSource(source, options = {}) {
-  return timed(() => recover(source, options));
+  const { nexus, nexusPasses, nexusRuntime, ...rest } = options;
+  if (!nexus) return timed(() => recover(source, rest));
+  return timed(() => nexusRecover(source, { passes: nexusPasses || undefined, runtime: !!nexusRuntime, recover: rest }));
+}
+
+/** The NEXUS pipeline on its own, with its own options (see src/nexus/pipeline.js). */
+export function nexusSource(source, options = {}) {
+  return timed(() => nexusRecover(source, options));
 }
 
 export function luast(source, options = {}) {

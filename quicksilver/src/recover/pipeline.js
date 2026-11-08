@@ -44,6 +44,7 @@ export const DEFAULT_OPTIONS = Object.freeze({
   adaptiveBudgetMs: 12000,
   // put a short report in front of the output when the recovery is not complete (what was done, what is left); off keeps the code alone
   annotate: true,
+  roleHints: null,            // (ast) => Map<Id node, {name}>: names inferred from relations (src/nexus/roles.js); consulted by the renamer before the initialiser
   moonveilVm: true,           // read a MoonVeil VM program back out of its data (static; falls back to the general passes when the script does not fit)
   reuseInstructions: true,    // lift an instruction once per kind and reuse it (false lifts every one: slower, same result)
   onProgress: null,           // called with { phase, done?, total? } while long steps run
@@ -267,7 +268,7 @@ export function recover(source, userOptions = {}) {
   if (vmified) run.step('prometheus.environment', 'Declare the environment the script still reads', (a) => envToGlobals(a, true), { quiet: true });
   if (!vmLifted) run.step('varargs', 'Remove unused vararg parameters', (a) => removeUnusedVararg(a), { quiet: true });
   // the rebuilt program is already named and laid out; the later passes would only rename what was named on purpose
-  if (options.rename !== 'off' && !vmLifted) run.step('rename', 'Give obfuscated locals readable names', (a) => renamePass(a, { mode: options.rename }), { quiet: true });
+  if (options.rename !== 'off' && !vmLifted) run.step('rename', 'Give obfuscated locals readable names', (a) => renamePass(a, { mode: options.rename, roleHints: options.roleHints ? options.roleHints(a) : null }), { quiet: true });
   if (decompiled && !vmLifted) run.step('idioms.functions', 'Use function and method declarations', (a) => functionForms(a), { quiet: true });
 
   // ---- output and validation --------------------------------------------------------------------------------

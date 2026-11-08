@@ -9,6 +9,7 @@ const OPS = {
   beautify: api.beautifyScript,
   analyze: api.analyzeSource,
   recover: api.recoverSource,
+  nexus: api.nexusSource,
   luast: api.luast,
   trace: api.traceSource,
   rename: api.renameScript,

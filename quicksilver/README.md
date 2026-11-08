@@ -51,6 +51,10 @@ Numbers are measured on output of the real tools (Prometheus, Hercules, IronBrew
   beyond detection signatures.
 * A trace or a dump describes one run. It is not the original source.
 
+### NEXUS (analysis above the recovery steps)
+
+On by default (Settings → NEXUS analysis; `recoverSource(src, { nexus: true })`). Before recovery it reads the comments as data (a sentence cut into pieces and spread between the tokens is recognised, shown as text and removed after the program is shown to be the same without it; text in it that addresses AI tools is reported and never followed or copied into the output) and maps how variables and functions relate (names from what a value is assigned from, what is called on it, which URL a library came from, what a function returns); recovery then repeats while it still changes the text. After recovery every claim goes in a ledger as **verified** (a named check ran: same syntax tree without the comments, naming changed only names, no new globals, optional sandbox comparison), **inferred** (a rule concluded it, with its evidence) or **unresolved** (fetched code, control-flow shapes that are not rebuilt). It never removes a licence-key check; it describes it. See `docs/NEXUS.md` for the assessment, design, measured cost and limits.
+
 ### AI check
 
 A strip under the editors reads the script by itself (nothing leaves the page) and shows how likely it is to be AI-written or vibe-coded, and how likely it is to be copied (skidded). The AI percentage comes from style signals;
@@ -107,6 +111,7 @@ src/core/                      lexer, parser, printer, scopes, diff, fidelity
 src/passes/                    folding, simplification, dataflow, idioms, renaming, sandboxed decoder evaluation
 src/detect/                    obfuscator signatures and dialect detection
 src/recover/                   per-family recovery (Prometheus, Vmify, Hercules, IronBrew 2) and the pipeline
+src/nexus/                     NEXUS: comment and relation analysis, transformation profile, claims ledger, the 10-stage pipeline (docs/NEXUS.md)
 src/adaptive/                  the structure reader: findings, strategies (dispatch loops, opaque predicates, call proxies, constant tables, decoders), the acceptance rules, the behaviour check
 src/decompile/                 Lua bytecode lifting, control-flow structuring
 src/sandbox/, src/trace/       a Lua interpreter written for this tool (with the Lua 5.4 features obfuscator output uses), and the behavioural trace
@@ -114,7 +119,7 @@ src/origin/                    the style reading behind the origin check
 api/                           Vercel functions
 data/                          samples and compat.json (generated)
 tests/                         unit, integration, e2e, and the fixture corpus
-docs/                          RESEARCH.md, ARCHITECTURE.md, COMPATIBILITY.md (generated), LICENSING.md
+docs/                          RESEARCH.md, ARCHITECTURE.md, NEXUS.md, COMPATIBILITY.md (generated), LICENSING.md
 ```
 
 ## Notices

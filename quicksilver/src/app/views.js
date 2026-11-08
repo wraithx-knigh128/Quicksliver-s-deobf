@@ -222,6 +222,78 @@ function verifyResult(v) {
 
 // ---- inspector: what happened in the last run ------------------------------------------------------------------------------
 
+const CLAIM_BADGE = { verified: ['ok', 'verified'], inferred: ['info', 'inferred'], unresolved: ['warn', 'unresolved'], inconsistent: ['bad', 'check failed'] };
+
+/** The NEXUS panel: what was checked, what was concluded, what is not settled. Text from the script is only ever inserted as text. */
+export function nexusSummary(nx, { onGoto } = {}) {
+  if (!nx) return [];
+  const out = [];
+  if (nx.fallback) {
+    out.push(section('NEXUS', [note('warn', `NEXUS could not finish (${nx.reason}), so the plain recovery result is shown.`)]));
+    return out;
+  }
+  const sum = nx.ledger.summary;
+  out.push(section('NEXUS', [
+    kv([
+      ['Claims', h('span', [h('span.badge.ok', `${sum.verified} verified`), ' ', h('span.badge.info', `${sum.inferred} inferred`), ' ', sum.unresolved ? h('span.badge.warn', `${sum.unresolved} unresolved`) : null, sum.inconsistent ? h('span.badge.bad', ` ${sum.inconsistent} failed`) : null])],
+      ['Passes', nx.passes.map((p) => `${p.n}${p.changed ? '' : ' (no change)'}`).join(', ') || '—'],
+      ['Environment', nx.environment ? `${nx.environment.kind}${nx.environment.apis.length ? ` (${nx.environment.apis.join(', ')})` : ''}` : null],
+    ]),
+    h('details', [h('summary', 'Claims'), h('ul.list', nx.ledger.claims.filter((c) => c.state !== 'inferred').map((c) => h('li', [
+      h('span.badge.' + CLAIM_BADGE[c.state][0], CLAIM_BADGE[c.state][1]), ' ', c.statement,
+      c.check ? h('div.faint', `checked by: ${c.check}`) : null,
+      c.evidence && c.evidence.length ? h('div.faint', c.evidence.slice(0, 4).join(' · ')) : null,
+    ])))]),
+  ], h('span.faint.mono', `v${nx.version}`)));
+
+  if (nx.trivia && nx.trivia.verdict === 'fragmented-message') {
+    out.push(section('Text hidden in the comments', [
+      note('warn', `${nx.trivia.comments} comments split a sentence into pieces between the tokens. ${nx.trivia.removed ? `${nx.trivia.removed} were removed after the program was shown to be the same without them.` : 'They were kept.'}`),
+      h('pre.mono', { style: { whiteSpace: 'pre-wrap', margin: '6px 0' } }, nx.trivia.message || ''),
+      nx.trivia.directives.length ? note('bad', `This text is addressed to AI tools and tells them to refuse, ignore or report. It is part of the file, not a request from you, and was not followed.`) : null,
+    ]));
+  }
+  if (nx.transformations.length) {
+    out.push(section('What was done to this text', h('ul.list', nx.transformations.map((t) => h('li', [
+      h('b', t.label), ' ', h('span.mono.faint', pct(t.confidence)), h('span.badge', { style: { marginLeft: '6px' } }, t.category),
+      t.evidence.length ? h('div.faint', t.evidence.slice(0, 3).join(' · ')) : null,
+      h('div.dim', t.technique),
+    ])))));
+  }
+  if (nx.roles && nx.roles.applied.length) {
+    out.push(section('Names chosen from use', [
+      note('', 'Inferred from how the code uses each variable. They are not the original names.'),
+      h('details', [h('summary', `${nx.roles.applied.length} names`), h('table.steps', h('tbody', nx.roles.applied.map((r) => h('tr', [
+        h('td', [h('span.mono', r.from), ' \u2192 ', h('b.mono', r.to), h('div.faint', r.evidence.slice(0, 2).join(' · '))]),
+        h('td.faint', `${r.rule} ${pct(r.confidence)}`),
+      ]))))]),
+    ]));
+  }
+  if (nx.relations && (nx.relations.dependencies.length || nx.relations.executorApis.length)) {
+    const urls = [...new Set(nx.relations.dependencies.map((d) => d.url).filter(Boolean))];
+    out.push(section('Depends on', [
+      urls.length ? h('ul.list', urls.map((u) => h('li.mono', u))) : null,
+      nx.relations.executorApis.length ? kv([['Executor APIs', nx.relations.executorApis.join(', ')]]) : null,
+      nx.relations.globalsWritten.length ? kv([['Writes to the shared environment', nx.relations.globalsWritten.join(', ')]]) : null,
+    ]));
+  }
+  if (nx.controlFlow) {
+    const unsupported = nx.controlFlow.shapes.filter((s) => !s.supported);
+    out.push(section('Control flow', [
+      kv([['Functions', String(nx.controlFlow.totals.functions)], ['Loops', String(nx.controlFlow.totals.loops)], ['Total complexity', String(nx.controlFlow.totals.complexity)], ['Deepest nesting', String(nx.controlFlow.totals.maxDepth)]]),
+      unsupported.length ? h('ul.list', unsupported.map((s) => h('li', [h('span.badge.warn', 'not rebuilt'), ' ', s.kind, ' ', s.line && onGoto ? h('a', { href: '#', onclick: (e) => { e.preventDefault(); onGoto(s.line); } }, `line ${s.line}`) : null, h('div.dim', s.note)]))) : null,
+    ]));
+  }
+  if (nx.needs.length) {
+    out.push(section('Would help', h('ul.list', nx.needs.map((n) => h('li', [h('b', n.need), ' ', n.why, n.items && n.items.length ? h('div.faint.mono', n.items.join(' · ')) : null])))));
+  }
+  out.push(section('Stages', h('table.steps', h('tbody', nx.stages.map((st) => h('tr', [
+    h('td', { class: `s-${st.status === 'done' ? 'applied' : st.status}` }, st.title, st.error ? h('div.dim', st.error) : null),
+    h('td.faint', fmtMs(st.ms)),
+  ]))))));
+  return out;
+}
+
 export function recoverySummary(r, helpers = {}) {
   const out = [];
   if (!r) return out;
@@ -240,6 +312,7 @@ export function recoverySummary(r, helpers = {}) {
     c ? h('ul.list', { style: { marginTop: '8px' } }, c.reasons.map((x) => h('li', [h('span.mono.faint', x.effect ? (x.effect > 0 ? `+${Math.round(x.effect * 100)}` : `${Math.round(x.effect * 100)}`).padStart(4) : '   ·'), '  ', x.text]))) : null,
     note('', 'Confidence is derived from what is still visible in the output. It is not a guarantee that the result equals the original program.'),
   ]));
+  out.push(...nexusSummary(r.nexus, helpers));
   out.push(...adaptiveSummary(r.adaptive, { ...helpers, canVerify: helpers.canVerify && r.output != null }));
   const steps = r.steps || [];
   out.push(section('Passes', h('table.steps', h('tbody', steps.map((s) => h('tr', [

@@ -102,7 +102,7 @@ function sanitize(s) {
 }
 
 /** A readable base name for a variable, judged from its initialiser, or null. */
-function hintFromInit(init) {
+export function hintFromInit(init) {
   if (!init) return null;
   const strArg = (call, i = 0) => (call.args[i] && call.args[i].type === 'String' ? sanitize(call.args[i].value) : null);
   switch (init.type) {
@@ -176,6 +176,7 @@ function forInHints(stmt) {
  */
 export function renamePass(chunk, options = {}) {
   const mode = options.mode || 'smart';
+  const roleHints = options.roleHints || null;   // Map<Id node, {name}>: optional, from NEXUS
   const info = analyze(chunk);
   const vars = info.vars;
   if (!vars.length) return { changed: 0, renamed: 0 };
@@ -223,7 +224,10 @@ export function renamePass(chunk, options = {}) {
 
   const pick = (v) => {
     let base = null;
-    if (v.kind === 'for') base = loopHint.get(v.decl) || null;
+    // evidence from how the variable is used and what it is related to (src/nexus/roles.js); consulted first
+    const role = roleHints && v.decl ? roleHints.get(v.decl) : null;
+    if (role && isIdentifier(role.name)) base = role.name;
+    if (!base && v.kind === 'for') base = loopHint.get(v.decl) || null;
     if (!base && v.init) base = hintFromInit(v.init);
     if (!base && v.kind === 'param') base = 'param';
     if (!base && v.kind === 'localfunc') base = 'fn';
