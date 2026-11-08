@@ -7,7 +7,8 @@
 // Wrapping every operator and library call in such a function hides what a program does behind names that mean nothing. A call of one is
 // replaced by its body with the arguments put in place of the parameters, when that cannot change what the program does:
 //
-//   * the function is a local that is never assigned again, and its body is one `return <expression>`;
+//   * the function is a local that is never assigned again, and its body is one `return <expression>` that performs at most one operation
+//     (one operator, one call or one index): a function that stands in for an operation, not a short computation the author wrote;
 //   * the expression uses only its parameters, literals and global names that nothing in the script declares as a local;
 //   * the call has exactly as many arguments as there are parameters, none of them a call that could return several values;
 //   * either every argument is simple (a literal, or a variable that is never reassigned), or each parameter is used exactly once,
@@ -30,6 +31,13 @@ function simple(e, info) {
   }
 }
 
+/** Operators, calls and index operations in an expression. A proxy stands in for one of them. */
+function operations(e) {
+  let n = 0;
+  walk(e, (x) => { if (['Binary', 'Unary', 'Call', 'MethodCall', 'Index', 'IfExpr'].includes(x.type)) n++; });
+  return n;
+}
+
 /** Description of a function that qualifies as a proxy, or null. */
 function proxyBody(fn, name, an) {
   const { info } = an;
@@ -38,6 +46,7 @@ function proxyBody(fn, name, an) {
   if (ret.values.length !== 1) return null;
   const expr = ret.values[0];
   if (sizeOf(expr) > MAX_BODY) return null;
+  if (operations(expr) > 1) return null;
   const params = fn.params.map((p) => info.varOf.get(p));
   if (params.some((p) => !p)) return null;
   // global names are fine when nothing in the script declares a local of the same name (so they mean the same at every call site)

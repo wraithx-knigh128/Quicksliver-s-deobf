@@ -5,10 +5,11 @@
 import { layers, decoders, cleanups } from './classic.js';
 import { proxies } from './proxies.js';
 import { tables } from './tables.js';
+import { functions } from './functions.js';
 import { opaque } from './opaque.js';
 import { dispatch } from './dispatch.js';
 import { interpreter, payload, remote } from './residual.js';
 
 export function defaultStrategies() {
-  return [layers, proxies, tables, opaque, decoders, dispatch, interpreter, payload, remote, ...cleanups];
+  return [layers, proxies, tables, functions, opaque, decoders, dispatch, interpreter, payload, remote, ...cleanups];
 }

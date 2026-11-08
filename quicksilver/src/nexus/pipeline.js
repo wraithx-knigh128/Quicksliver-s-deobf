@@ -31,6 +31,7 @@ import { Ledger, newGlobals, sameBindings } from './ledger.js';
 import { clone } from '../core/walk.js';
 
 export const NEXUS_VERSION = '1.0.0';
+export const STAGE_COUNT = 10;
 export const NEXUS_DEFAULTS = Object.freeze({
   passes: 3,            // upper bound on reconstruction passes; a pass runs only while there is something left to do
   runtime: false,       // run the original and the result in the sandbox and compare (the page asks first)
@@ -86,6 +87,9 @@ export function nexusRecover(source, userOptions = {}) {
     }
     s.ms = now() - t;
     stages.push(s);
+    if (typeof options.onStage === 'function') {
+      try { options.onStage({ index: stages.length, total: STAGE_COUNT, id: s.id, title: s.title, status: s.status, ms: Math.round(s.ms) }); } catch { /* a listener must not stop the analysis */ }
+    }
     return s;
   };
   const fallback = (why) => {
