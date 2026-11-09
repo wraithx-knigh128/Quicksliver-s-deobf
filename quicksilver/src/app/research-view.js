@@ -4,7 +4,10 @@
 // Text that came from a script (the observed signature of the current input) is only inserted as text.
 
 import { h, pct, fmtMs } from './dom.js';
-import { section, kv, note, meter } from './views.js';
+import { section, kv, note, meter, identificationSection } from './views.js';
+import { supportClaim } from '../research/profiles.js';
+import { buildPackage, pairFiles } from '../research/samples.js';
+import { download } from './files.js';
 
 export async function loadResearch() {
   const get = async (f) => {
@@ -13,7 +16,9 @@ export async function loadResearch() {
     return res.json();
   };
   const [summary, knowledge, families] = await Promise.all([get('summary.json'), get('knowledge.json'), get('custom-families.json')]);
-  return { summary, knowledge, families };
+  // compatibility profiles, the verified capabilities and the pipeline position of each system: optional, the lab results above do not depend on them
+  const [profiles, capabilities, pipeline] = await Promise.all(['profiles.json', 'capabilities.json', 'pipeline.json'].map((f) => get(f).catch(() => null)));
+  return { summary, knowledge, families, profiles, capabilities: capabilities ? capabilities.capabilities : null, pipeline: pipeline ? pipeline.report : null };
 }
 
 const VERDICT_TEXT = {
@@ -61,7 +66,7 @@ function matrixSection(summary) {
     })]));
   }
   return section('What the laboratory measured', [
-    note('', `Each cell is verified successes over trials: the reconstruction behaves exactly like the original program and is measurably closer to it, or shows fewer signs of obfuscation. ${summary.counts.experiments} experiments on ${summary.counts.programs} generated programs. Behaviour is compared in this project's own Lua interpreter, not a reference Lua. Hover a cell for the breakdown.`),
+    note('', `Each cell is verified successes over trials: the reconstruction behaves exactly like the original program and is measurably closer to it, or shows fewer signs of obfuscation. ${summary.counts.experiments} experiments on ${summary.counts.programs} generated programs. Behaviour was decided as stated under "Behaviour checked in" above (a reference Lua runtime when it says so; this project's own interpreter otherwise). Hover a cell for the breakdown.`),
     h('div.matrix-wrap', h('table.matrix', h('thead', h('tr', [h('th', 'Transformation'), ...plans.map((p) => h('th', { title: p.text }, p.label))])), h('tbody', body))),
   ]);
 }
@@ -118,6 +123,63 @@ function sourcesSection(kb) {
   ]);
 }
 
+const CLAIM_BADGE = { supported: 'ok', partial: 'warn', 'identification-only': 'info', unknown: '' };
+const CLAIM_LABEL = { supported: 'reconstruction verified', partial: 'reconstruction partly verified', 'identification-only': 'recognised only', unknown: 'researched only' };
+
+function systemsSection(data) {
+  const { profiles, pipeline } = data;
+  if (!profiles) return null;
+  const stage = (id, v) => { const r = pipeline && pipeline.find((x) => x.system === id && x.version === v); return r ? (r.reached || 'none') : '—'; };
+  const rows = profiles.profiles.flatMap((p) => p.versions.map((v) => ({ p, v })));
+  const luraph = profiles.profiles.find((p) => p.id === 'luraph');
+  return section('Systems and versions', [
+    note('', `What is known about each transformation system, version by version. "Reconstruction verified" needs output of the real tool (open-source tools only) or authorised pairs, behaviour decided on a reference Lua runtime, on at least ${profiles.gates.real.minBehaviourChecked} samples with a 95% lower bound of ${Math.round(profiles.gates.supportedRateLo * 100)}%. Recognising a system's output is a different and weaker claim, and is labelled so.`),
+    h('table.steps', h('thead', h('tr', ['System', 'Version', 'Kind', 'Status', 'May be claimed', 'Pipeline', 'Samples'].map((x) => h('th', x)))), h('tbody', rows.map(({ p, v }) => {
+      const c = supportClaim(p, v.id);
+      return h('tr', { title: c.why }, [
+        h('td', p.name), h('td', v.id === 'unversioned' ? '—' : v.label || v.id), h('td', p.kind), h('td', v.verification.status),
+        h('td', h('span.badge.' + CLAIM_BADGE[c.claim], CLAIM_LABEL[c.claim])), h('td', stage(p.id, v.id)),
+        h('td', v.samples.authorizedPairs ? `${v.samples.authorizedPairs} authorised` : v.samples.realOutput ? `${v.samples.realOutput} real output` : 'none'),
+      ]);
+    }))),
+    luraph ? h('details', [
+      h('summary', 'Luraph: what was found, version by version'),
+      note('warn', 'No Luraph output could be obtained from a source the laboratory may use, so the engine has never been run on any, and nothing is claimed about reconstructing it. What follows is identification and documentation, each item with how it is known.'),
+      ...luraph.versions.map((v) => h('details', [
+        h('summary', `${v.label} (${v.period.since}${v.period.until ? ` to ${v.period.until}` : ' on'}): ${v.macros.all.length} macros`),
+        h('ul.list', v.characteristics.map((c) => h('li', [c.text, h('div.faint', `${c.knownAs}${c.note ? `: ${c.note}` : c.basis ? `: ${c.basis}` : ''}`)]))),
+        h('div', h('b', 'Not known or not done:')),
+        h('ul', { style: { margin: '2px 0', paddingLeft: '16px' } }, v.limitations.map((l) => h('li', { style: { border: 0, padding: '1px 0' } }, l))),
+      ])),
+    ]) : null,
+  ]);
+}
+
+function samplesSection() {
+  const status = h('div');
+  const file = h('input', { type: 'file', multiple: true, accept: '.lua,.luau,.txt' });
+  const system = h('input', { type: 'text', placeholder: 'system, e.g. Luraph or my-tool' });
+  const version = h('input', { type: 'text', placeholder: 'version the files claim, if any' });
+  const who = h('input', { type: 'text', placeholder: 'who is supplying them' });
+  const attest = h('textarea', { rows: 2, placeholder: 'In your own words: you wrote the originals and produced the protected files yourself, or you have the owner\'s permission to use both for this.' });
+  const go = h('button.btn', { type: 'button', onclick: async () => {
+    status.replaceChildren();
+    try {
+      const files = await Promise.all([...file.files].map(async (f) => ({ name: f.name, text: Array.from(new Uint8Array(await f.arrayBuffer()), (b) => String.fromCharCode(b)).join('') })));
+      const { pairs, unpaired } = pairFiles(files);
+      const built = await buildPackage({ system: system.value.trim(), claimedVersion: version.value.trim() || null, supplier: who.value.trim(), attestation: attest.value.trim(), pairs });
+      if (!built.ok) { status.append(note('bad', built.problems.join(' '))); return; }
+      download(`samples-${built.package.system.replace(/[^\w.-]+/g, '_')}.package.json`, JSON.stringify(built.package, null, 2), 'application/json');
+      status.append(note('ok', `Package of ${pairs.length} pair${pairs.length === 1 ? '' : 's'} saved to your downloads. Nothing was uploaded.${unpaired.length ? ` Not paired and left out: ${unpaired.join(', ')}.` : ''}`));
+    } catch (e) { status.append(note('bad', String(e.message || e))); }
+  } }, 'Build package');
+  return section('Your authorised samples', [
+    note('', 'If you own a protected script and its original (or have the owner\'s permission), you can make them evidence. Name the files `<name>.original.lua` and `<name>.protected.lua`. This builds a package (hashes, your statement of permission) in your downloads; nothing leaves your machine. The package is then differential-tested on a real Lua runtime with `node tools/research/differential.mjs <package>`, because a browser cannot run one: a version can only be called verified once at least 8 pairs pass there.'),
+    h('div.form-grid', [system, version, who, attest, file, go]),
+    status,
+  ]);
+}
+
 /** @param {{summary: object, knowledge: object}} data @param {{advice?: object, observed?: object}} [now] */
 export function researchView(data, now = {}) {
   const { summary, knowledge } = data;
@@ -134,11 +196,14 @@ export function researchView(data, now = {}) {
       knowledge.gaps.length ? note('warn', `No plan handles: ${knowledge.gaps.map((g) => g.label).join(', ')}.`) : note('ok', 'Every transformation in the catalogue is handled by at least one plan.'),
     ], h('span.faint.mono', 'data/research')),
     adviceSection(now.advice, now.observed),
+    now.identification ? identificationSection(now.identification) : null,
+    systemsSection(data),
     matrixSection(summary),
     evaluationSection(knowledge),
     statementsSection(knowledge),
     studySection(knowledge),
     sourcesSection(knowledge),
+    samplesSection(),
   );
   if (knowledge.defects.length) root.append(section('Defects', h('ul.list', knowledge.defects.map((d) => h('li', `${d.verdict}: ${d.transform} · ${d.plan} · program ${d.programSeed}${d.difference ? ` (expected ${JSON.stringify(d.difference.reference)}, got ${JSON.stringify(d.difference.got)})` : ''}`)))));
   void fmtMs; void meter;

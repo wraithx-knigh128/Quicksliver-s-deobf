@@ -48,6 +48,7 @@ const S = {
   version: 0,         // bumped whenever the input changes; results carry the version they belong to
   inspected: null,    // { version, result }
   detection: null,
+  identification: null, // which system/version the input shows (src/research/identify.js), from the compatibility profiles
   analysis: null,
   luast: null,
   trace: null,
@@ -452,7 +453,7 @@ function getInputBytes() {
 function clearResults() {
   S.version++;
   S.inspected = null;
-  S.advice = null; S.observed = null; S.detection = null; S.analysis = null; S.luast = null; S.trace = null; S.traceConsent = false; S.beautified = null; S.recovered = null; S.verify = null; S.diff = null;
+  S.advice = null; S.observed = null; S.detection = null; S.identification = null; S.analysis = null; S.luast = null; S.trace = null; S.traceConsent = false; S.beautified = null; S.recovered = null; S.verify = null; S.diff = null;
   S.dump = null; S.origin = null; S.originOnline = null; S.originSubject = 'auto';
   S.outputs = {}; S.show = null; S.output = null;
   S.notes = [];
@@ -671,9 +672,19 @@ async function runDetect({ quiet = false } = {}) {
   if (!r || version !== S.version) return null;
   S.detection = r.detection;
   autoOrigin();
+  await identifyInput(version);
   renderAll();
   if (!quiet) switchTab('detection');
   return r;
+}
+
+/** Which system and version the input shows, from the compatibility profiles. Reads the text; never runs it. A failure here only means no identification is shown. */
+async function identifyInput(version) {
+  if (!S.detection) return;
+  await ensureResearch();
+  if (!research || !research.profiles || version !== S.version) return;
+  const r = await run('identify', { profiles: research.profiles, capabilities: research.capabilities, detection: S.detection }, 'Identifying', { limits: { timeoutMs: 30_000 }, needsText: true });
+  if (r && r.ok && version === S.version) S.identification = { systems: r.systems, notes: r.notes };
 }
 
 async function runBeautify() {
@@ -728,6 +739,7 @@ async function runRecover({ quiet = false } = {}) {
   S.recovered = r;
   S.verify = null;
   S.detection = r.detection || S.detection;
+  if (!S.identification) await identifyInput(version);
   S.notes = [];
   if (r.output != null) {
     setOutput('recover', { text: r.output, label: 'Recovered', kind: 'recover' });
@@ -1180,7 +1192,7 @@ function exportItems() {
     { label: 'Trace listing (.lua)', sub: `${base}.trace.lua`, disabled: !S.trace, run: () => save(`${base}.trace.lua`, S.trace.script) },
     '-',
     { label: 'Report (.json)', sub: 'detection, confidence, passes', disabled: !S.detection && !S.recovered, run: async () => { if (ensureExport()) download(`${base}.report.json`, JSON.stringify(await buildReport(), null, 2), 'application/json'); } },
-    { label: 'Analysis report (.md)', sub: 'verification, evidence, names, dependencies', disabled: !S.recovered, run: async () => { if (ensureExport()) download(`${base}.analysis.md`, new TextEncoder().encode(buildMarkdownReport({ name: S.name, bytes: getInputBytes().length, sha256: await sha256Hex(getInputBytes()), detection: S.detection, recovered: S.recovered, advice: S.advice, observed: S.observed, engine: ENGINE_VERSION })), 'text/markdown'); } },
+    { label: 'Analysis report (.md)', sub: 'verification, evidence, names, dependencies', disabled: !S.recovered, run: async () => { if (ensureExport()) download(`${base}.analysis.md`, new TextEncoder().encode(buildMarkdownReport({ name: S.name, bytes: getInputBytes().length, sha256: await sha256Hex(getInputBytes()), detection: S.detection, recovered: S.recovered, advice: S.advice, observed: S.observed, identification: S.identification, engine: ENGINE_VERSION })), 'text/markdown'); } },
     { label: 'Bundle (.zip)', sub: 'original + recovered + report', disabled: !inputPresent(), run: exportBundle },
   ];
 }
@@ -1534,7 +1546,7 @@ function renderCompare() {
 function renderDetection() {
   const v = views.detection;
   if (!S.detection) { replace(v, emptyState('Not run yet', 'Detect names the obfuscator, the language dialect and the structural traits of the script.', inputPresent() ? { label: 'Detect now', run: () => runDetect() } : null)); setCount('detection', ''); return; }
-  replace(v, detectionView(S.detection, compatById));
+  replace(v, detectionView(S.detection, compatById, S.identification));
   const top = S.detection.families.find((f) => f.confidence >= 0.5);
   setCount('detection', top ? top.name : S.detection.dialect.label);
 }
@@ -1650,7 +1662,7 @@ lic.onchange = () => { renderStatus(); renderInspector(); renderResultBar(); };
 
 function renderResearch() {
   if (!research) return;
-  replace(views.research, researchView(research, { advice: S.advice, observed: S.observed }));
+  replace(views.research, researchView(research, { advice: S.advice, observed: S.observed, identification: S.identification }));
 }
 
 async function ensureResearch() {

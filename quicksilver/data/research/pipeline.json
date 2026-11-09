@@ -1,0 +1,2160 @@
+{
+  "schema": 1,
+  "stages": [
+    "research",
+    "classification",
+    "experimental-analysis",
+    "verification",
+    "compatibility-profile",
+    "integration"
+  ],
+  "generatedAt": "2026-11-09T02:36:56.556Z",
+  "report": [
+    {
+      "system": "luraph",
+      "version": "v13-era",
+      "stages": [
+        {
+          "stage": "research",
+          "reached": true,
+          "evidence": [
+            "1 characteristics with sources"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "classification",
+          "reached": true,
+          "evidence": [
+            "banner (0.7)",
+            "macro-set (0.8)",
+            "verified capability luraph.banner-version",
+            "verified capability luraph.macro-generation"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "experimental-analysis",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "no output of this version has been run through the engine"
+          ]
+        },
+        {
+          "stage": "verification",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "needs a reference-runtime behaviour check on at least 8 authorised pairs"
+          ]
+        },
+        {
+          "stage": "compatibility-profile",
+          "reached": false,
+          "evidence": [
+            "status identified"
+          ],
+          "missing": [
+            "an earlier stage is not reached"
+          ]
+        },
+        {
+          "stage": "integration",
+          "reached": false,
+          "evidence": [
+            "identification wired to the page"
+          ],
+          "missing": [
+            "an earlier stage is not reached"
+          ]
+        }
+      ],
+      "reached": "classification",
+      "integration": {
+        "identify": true,
+        "reconstruct": false
+      }
+    },
+    {
+      "system": "luraph",
+      "version": "v14",
+      "stages": [
+        {
+          "stage": "research",
+          "reached": true,
+          "evidence": [
+            "3 characteristics with sources"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "classification",
+          "reached": true,
+          "evidence": [
+            "banner (0.7)",
+            "macro-set (0.8)",
+            "verified capability luraph.banner-version",
+            "verified capability luraph.macro-generation"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "experimental-analysis",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "no output of this version has been run through the engine"
+          ]
+        },
+        {
+          "stage": "verification",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "needs a reference-runtime behaviour check on at least 8 authorised pairs"
+          ]
+        },
+        {
+          "stage": "compatibility-profile",
+          "reached": false,
+          "evidence": [
+            "status identified"
+          ],
+          "missing": [
+            "an earlier stage is not reached"
+          ]
+        },
+        {
+          "stage": "integration",
+          "reached": false,
+          "evidence": [
+            "identification wired to the page"
+          ],
+          "missing": [
+            "an earlier stage is not reached"
+          ]
+        }
+      ],
+      "reached": "classification",
+      "integration": {
+        "identify": true,
+        "reconstruct": false
+      }
+    },
+    {
+      "system": "luraph",
+      "version": "v15",
+      "stages": [
+        {
+          "stage": "research",
+          "reached": true,
+          "evidence": [
+            "4 characteristics with sources"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "classification",
+          "reached": true,
+          "evidence": [
+            "banner (0.7)",
+            "macro-set (0.8)",
+            "verified capability luraph.banner-version",
+            "verified capability luraph.macro-generation"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "experimental-analysis",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "no output of this version has been run through the engine"
+          ]
+        },
+        {
+          "stage": "verification",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "needs a reference-runtime behaviour check on at least 8 authorised pairs"
+          ]
+        },
+        {
+          "stage": "compatibility-profile",
+          "reached": false,
+          "evidence": [
+            "status identified"
+          ],
+          "missing": [
+            "an earlier stage is not reached"
+          ]
+        },
+        {
+          "stage": "integration",
+          "reached": false,
+          "evidence": [
+            "identification wired to the page"
+          ],
+          "missing": [
+            "an earlier stage is not reached"
+          ]
+        }
+      ],
+      "reached": "classification",
+      "integration": {
+        "identify": true,
+        "reconstruct": false
+      }
+    },
+    {
+      "system": "luraph",
+      "version": "v15.1",
+      "stages": [
+        {
+          "stage": "research",
+          "reached": true,
+          "evidence": [
+            "3 characteristics with sources"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "classification",
+          "reached": true,
+          "evidence": [
+            "banner (0.7)",
+            "macro-set (0.8)",
+            "verified capability luraph.banner-version",
+            "verified capability luraph.macro-generation"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "experimental-analysis",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "no output of this version has been run through the engine"
+          ]
+        },
+        {
+          "stage": "verification",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "needs a reference-runtime behaviour check on at least 8 authorised pairs"
+          ]
+        },
+        {
+          "stage": "compatibility-profile",
+          "reached": false,
+          "evidence": [
+            "status identified"
+          ],
+          "missing": [
+            "an earlier stage is not reached"
+          ]
+        },
+        {
+          "stage": "integration",
+          "reached": false,
+          "evidence": [
+            "identification wired to the page"
+          ],
+          "missing": [
+            "an earlier stage is not reached"
+          ]
+        }
+      ],
+      "reached": "classification",
+      "integration": {
+        "identify": true,
+        "reconstruct": false
+      }
+    },
+    {
+      "system": "prometheus",
+      "version": "unversioned",
+      "stages": [
+        {
+          "stage": "research",
+          "reached": true,
+          "evidence": [
+            "9 characteristics with sources"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "classification",
+          "reached": true,
+          "evidence": [
+            "signature (0.8)",
+            "verified capability prometheus.reconstruct"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "experimental-analysis",
+          "reached": true,
+          "evidence": [
+            "91 fixtures, 0 authorised pairs, 0 failures recorded"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "verification",
+          "reached": true,
+          "evidence": [
+            "reference runtime: 91 real-output fixtures"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "compatibility-profile",
+          "reached": true,
+          "evidence": [
+            "status real-output-verified"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "integration",
+          "reached": true,
+          "evidence": [
+            "reconstruction claim allowed"
+          ],
+          "missing": []
+        }
+      ],
+      "reached": "integration",
+      "integration": {
+        "identify": false,
+        "reconstruct": true
+      }
+    },
+    {
+      "system": "hercules",
+      "version": "unversioned",
+      "stages": [
+        {
+          "stage": "research",
+          "reached": true,
+          "evidence": [
+            "13 characteristics with sources"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "classification",
+          "reached": true,
+          "evidence": [
+            "signature (0.8)",
+            "verified capability hercules.identify",
+            "verified capability hercules.reconstruct"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "experimental-analysis",
+          "reached": true,
+          "evidence": [
+            "115 fixtures, 0 authorised pairs, 0 failures recorded"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "verification",
+          "reached": true,
+          "evidence": [
+            "reference runtime: 111 real-output fixtures"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "compatibility-profile",
+          "reached": true,
+          "evidence": [
+            "status real-output-verified"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "integration",
+          "reached": true,
+          "evidence": [
+            "identification wired to the page",
+            "reconstruction claim allowed"
+          ],
+          "missing": []
+        }
+      ],
+      "reached": "integration",
+      "integration": {
+        "identify": true,
+        "reconstruct": true
+      }
+    },
+    {
+      "system": "moonsec_v3",
+      "version": "unversioned",
+      "stages": [
+        {
+          "stage": "research",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "no characteristic names a source"
+          ]
+        },
+        {
+          "stage": "classification",
+          "reached": false,
+          "evidence": [
+            "banner (0.7)"
+          ],
+          "missing": [
+            "no verified capability for this system (tools/research/capabilities.mjs)"
+          ]
+        },
+        {
+          "stage": "experimental-analysis",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "no output of this version has been run through the engine"
+          ]
+        },
+        {
+          "stage": "verification",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "needs a reference-runtime behaviour check on at least 8 authorised pairs"
+          ]
+        },
+        {
+          "stage": "compatibility-profile",
+          "reached": false,
+          "evidence": [
+            "status identified"
+          ],
+          "missing": [
+            "an earlier stage is not reached"
+          ]
+        },
+        {
+          "stage": "integration",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "nothing verified to integrate"
+          ]
+        }
+      ],
+      "reached": null,
+      "integration": {
+        "identify": false,
+        "reconstruct": false
+      }
+    },
+    {
+      "system": "moonveil",
+      "version": "unversioned",
+      "stages": [
+        {
+          "stage": "research",
+          "reached": true,
+          "evidence": [
+            "6 characteristics with sources"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "classification",
+          "reached": false,
+          "evidence": [
+            "banner (0.7)"
+          ],
+          "missing": [
+            "no verified capability for this system (tools/research/capabilities.mjs)"
+          ]
+        },
+        {
+          "stage": "experimental-analysis",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "no output of this version has been run through the engine"
+          ]
+        },
+        {
+          "stage": "verification",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "needs a reference-runtime behaviour check on at least 8 authorised pairs"
+          ]
+        },
+        {
+          "stage": "compatibility-profile",
+          "reached": false,
+          "evidence": [
+            "status internally-tested"
+          ],
+          "missing": [
+            "an earlier stage is not reached"
+          ]
+        },
+        {
+          "stage": "integration",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "nothing verified to integrate"
+          ]
+        }
+      ],
+      "reached": "research",
+      "integration": {
+        "identify": false,
+        "reconstruct": false
+      }
+    },
+    {
+      "system": "kirus",
+      "version": "unversioned",
+      "stages": [
+        {
+          "stage": "research",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "no characteristic names a source"
+          ]
+        },
+        {
+          "stage": "classification",
+          "reached": false,
+          "evidence": [
+            "banner (0.7)"
+          ],
+          "missing": [
+            "no verified capability for this system (tools/research/capabilities.mjs)"
+          ]
+        },
+        {
+          "stage": "experimental-analysis",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "no output of this version has been run through the engine"
+          ]
+        },
+        {
+          "stage": "verification",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "needs a reference-runtime behaviour check on at least 8 real-output fixtures"
+          ]
+        },
+        {
+          "stage": "compatibility-profile",
+          "reached": false,
+          "evidence": [
+            "status identified"
+          ],
+          "missing": [
+            "an earlier stage is not reached"
+          ]
+        },
+        {
+          "stage": "integration",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "nothing verified to integrate"
+          ]
+        }
+      ],
+      "reached": null,
+      "integration": {
+        "identify": false,
+        "reconstruct": false
+      }
+    },
+    {
+      "system": "ironbrew2",
+      "version": "unversioned",
+      "stages": [
+        {
+          "stage": "research",
+          "reached": true,
+          "evidence": [
+            "6 characteristics with sources"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "classification",
+          "reached": true,
+          "evidence": [
+            "signature (0.8)",
+            "verified capability ironbrew2.identify",
+            "verified capability ironbrew2.reconstruct"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "experimental-analysis",
+          "reached": true,
+          "evidence": [
+            "64 fixtures, 0 authorised pairs, 0 failures recorded"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "verification",
+          "reached": true,
+          "evidence": [
+            "reference runtime: 64 real-output fixtures"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "compatibility-profile",
+          "reached": true,
+          "evidence": [
+            "status real-output-verified"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "integration",
+          "reached": true,
+          "evidence": [
+            "identification wired to the page",
+            "reconstruction claim allowed"
+          ],
+          "missing": []
+        }
+      ],
+      "reached": "integration",
+      "integration": {
+        "identify": true,
+        "reconstruct": true
+      }
+    },
+    {
+      "system": "luaobfuscator",
+      "version": "unversioned",
+      "stages": [
+        {
+          "stage": "research",
+          "reached": true,
+          "evidence": [
+            "3 characteristics with sources"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "classification",
+          "reached": false,
+          "evidence": [
+            "signature (0.4)"
+          ],
+          "missing": [
+            "no verified capability for this system (tools/research/capabilities.mjs)"
+          ]
+        },
+        {
+          "stage": "experimental-analysis",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "no output of this version has been run through the engine"
+          ]
+        },
+        {
+          "stage": "verification",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "needs a reference-runtime behaviour check on at least 8 real-output fixtures"
+          ]
+        },
+        {
+          "stage": "compatibility-profile",
+          "reached": false,
+          "evidence": [
+            "status identified"
+          ],
+          "missing": [
+            "an earlier stage is not reached"
+          ]
+        },
+        {
+          "stage": "integration",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "nothing verified to integrate"
+          ]
+        }
+      ],
+      "reached": "research",
+      "integration": {
+        "identify": false,
+        "reconstruct": false
+      }
+    },
+    {
+      "system": "fuscator77",
+      "version": "unversioned",
+      "stages": [
+        {
+          "stage": "research",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "no characteristic names a source"
+          ]
+        },
+        {
+          "stage": "classification",
+          "reached": false,
+          "evidence": [
+            "banner (0.7)"
+          ],
+          "missing": [
+            "no verified capability for this system (tools/research/capabilities.mjs)"
+          ]
+        },
+        {
+          "stage": "experimental-analysis",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "no output of this version has been run through the engine"
+          ]
+        },
+        {
+          "stage": "verification",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "needs a reference-runtime behaviour check on at least 8 real-output fixtures"
+          ]
+        },
+        {
+          "stage": "compatibility-profile",
+          "reached": false,
+          "evidence": [
+            "status identified"
+          ],
+          "missing": [
+            "an earlier stage is not reached"
+          ]
+        },
+        {
+          "stage": "integration",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "nothing verified to integrate"
+          ]
+        }
+      ],
+      "reached": null,
+      "integration": {
+        "identify": false,
+        "reconstruct": false
+      }
+    },
+    {
+      "system": "psu",
+      "version": "unversioned",
+      "stages": [
+        {
+          "stage": "research",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "no characteristic names a source"
+          ]
+        },
+        {
+          "stage": "classification",
+          "reached": false,
+          "evidence": [
+            "signature (0.3)"
+          ],
+          "missing": [
+            "no verified capability for this system (tools/research/capabilities.mjs)"
+          ]
+        },
+        {
+          "stage": "experimental-analysis",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "no output of this version has been run through the engine"
+          ]
+        },
+        {
+          "stage": "verification",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "needs a reference-runtime behaviour check on at least 8 authorised pairs"
+          ]
+        },
+        {
+          "stage": "compatibility-profile",
+          "reached": false,
+          "evidence": [
+            "status identified"
+          ],
+          "missing": [
+            "an earlier stage is not reached"
+          ]
+        },
+        {
+          "stage": "integration",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "nothing verified to integrate"
+          ]
+        }
+      ],
+      "reached": null,
+      "integration": {
+        "identify": false,
+        "reconstruct": false
+      }
+    },
+    {
+      "system": "loaders",
+      "version": "unversioned",
+      "stages": [
+        {
+          "stage": "research",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "no characteristic names a source"
+          ]
+        },
+        {
+          "stage": "classification",
+          "reached": false,
+          "evidence": [
+            "signature (0.3)"
+          ],
+          "missing": [
+            "no verified capability for this system (tools/research/capabilities.mjs)"
+          ]
+        },
+        {
+          "stage": "experimental-analysis",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "no output of this version has been run through the engine"
+          ]
+        },
+        {
+          "stage": "verification",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "needs a reference-runtime behaviour check on at least 8 real-output fixtures"
+          ]
+        },
+        {
+          "stage": "compatibility-profile",
+          "reached": false,
+          "evidence": [
+            "status internally-tested"
+          ],
+          "missing": [
+            "an earlier stage is not reached"
+          ]
+        },
+        {
+          "stage": "integration",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "nothing verified to integrate"
+          ]
+        }
+      ],
+      "reached": null,
+      "integration": {
+        "identify": false,
+        "reconstruct": false
+      }
+    },
+    {
+      "system": "colisseum",
+      "version": "unversioned",
+      "stages": [
+        {
+          "stage": "research",
+          "reached": true,
+          "evidence": [
+            "7 characteristics with sources"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "classification",
+          "reached": false,
+          "evidence": [
+            "signature (0.8)"
+          ],
+          "missing": [
+            "no verified capability for this system (tools/research/capabilities.mjs)"
+          ]
+        },
+        {
+          "stage": "experimental-analysis",
+          "reached": false,
+          "evidence": [
+            "48 fixtures, 0 authorised pairs, 0 failures recorded"
+          ],
+          "missing": [
+            "an earlier stage is not reached"
+          ]
+        },
+        {
+          "stage": "verification",
+          "reached": false,
+          "evidence": [
+            "reference runtime: 48 real-output fixtures"
+          ],
+          "missing": [
+            "an earlier stage is not reached"
+          ]
+        },
+        {
+          "stage": "compatibility-profile",
+          "reached": false,
+          "evidence": [
+            "status real-output-verified"
+          ],
+          "missing": [
+            "an earlier stage is not reached"
+          ]
+        },
+        {
+          "stage": "integration",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "nothing verified to integrate"
+          ]
+        }
+      ],
+      "reached": "research",
+      "integration": {
+        "identify": false,
+        "reconstruct": false
+      }
+    },
+    {
+      "system": "zenfus",
+      "version": "unversioned",
+      "stages": [
+        {
+          "stage": "research",
+          "reached": true,
+          "evidence": [
+            "6 characteristics with sources"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "classification",
+          "reached": true,
+          "evidence": [
+            "signature (0.8)",
+            "verified capability zenfus.identify"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "experimental-analysis",
+          "reached": true,
+          "evidence": [
+            "8 fixtures, 0 authorised pairs, 0 failures recorded"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "verification",
+          "reached": true,
+          "evidence": [
+            "reference runtime: 8 real-output fixtures"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "compatibility-profile",
+          "reached": true,
+          "evidence": [
+            "status real-output-verified"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "integration",
+          "reached": true,
+          "evidence": [
+            "identification wired to the page"
+          ],
+          "missing": []
+        }
+      ],
+      "reached": "integration",
+      "integration": {
+        "identify": true,
+        "reconstruct": false
+      }
+    },
+    {
+      "system": "simple_lua",
+      "version": "unversioned",
+      "stages": [
+        {
+          "stage": "research",
+          "reached": true,
+          "evidence": [
+            "4 characteristics with sources"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "classification",
+          "reached": false,
+          "evidence": [
+            "signature (0.8)"
+          ],
+          "missing": [
+            "no verified capability for this system (tools/research/capabilities.mjs)"
+          ]
+        },
+        {
+          "stage": "experimental-analysis",
+          "reached": false,
+          "evidence": [
+            "8 fixtures, 0 authorised pairs, 0 failures recorded"
+          ],
+          "missing": [
+            "an earlier stage is not reached"
+          ]
+        },
+        {
+          "stage": "verification",
+          "reached": false,
+          "evidence": [
+            "reference runtime: 8 real-output fixtures"
+          ],
+          "missing": [
+            "an earlier stage is not reached"
+          ]
+        },
+        {
+          "stage": "compatibility-profile",
+          "reached": false,
+          "evidence": [
+            "status real-output-verified"
+          ],
+          "missing": [
+            "an earlier stage is not reached"
+          ]
+        },
+        {
+          "stage": "integration",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "nothing verified to integrate"
+          ]
+        }
+      ],
+      "reached": "research",
+      "integration": {
+        "identify": false,
+        "reconstruct": false
+      }
+    },
+    {
+      "system": "aztupbrew",
+      "version": "unversioned",
+      "stages": [
+        {
+          "stage": "research",
+          "reached": true,
+          "evidence": [
+            "1 characteristics with sources"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "classification",
+          "reached": false,
+          "evidence": [
+            "banner (0.7)"
+          ],
+          "missing": [
+            "no verified capability for this system (tools/research/capabilities.mjs)"
+          ]
+        },
+        {
+          "stage": "experimental-analysis",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "no output of this version has been run through the engine"
+          ]
+        },
+        {
+          "stage": "verification",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "needs a reference-runtime behaviour check on at least 8 real-output fixtures"
+          ]
+        },
+        {
+          "stage": "compatibility-profile",
+          "reached": false,
+          "evidence": [
+            "status identified"
+          ],
+          "missing": [
+            "an earlier stage is not reached"
+          ]
+        },
+        {
+          "stage": "integration",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "nothing verified to integrate"
+          ]
+        }
+      ],
+      "reached": "research",
+      "integration": {
+        "identify": false,
+        "reconstruct": false
+      }
+    },
+    {
+      "system": "joker",
+      "version": "unversioned",
+      "stages": [
+        {
+          "stage": "research",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "no characteristic names a source"
+          ]
+        },
+        {
+          "stage": "classification",
+          "reached": false,
+          "evidence": [
+            "signature (0.3)"
+          ],
+          "missing": [
+            "no verified capability for this system (tools/research/capabilities.mjs)"
+          ]
+        },
+        {
+          "stage": "experimental-analysis",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "no output of this version has been run through the engine"
+          ]
+        },
+        {
+          "stage": "verification",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "needs a reference-runtime behaviour check on at least 8 real-output fixtures"
+          ]
+        },
+        {
+          "stage": "compatibility-profile",
+          "reached": false,
+          "evidence": [
+            "status identified"
+          ],
+          "missing": [
+            "an earlier stage is not reached"
+          ]
+        },
+        {
+          "stage": "integration",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "nothing verified to integrate"
+          ]
+        }
+      ],
+      "reached": null,
+      "integration": {
+        "identify": false,
+        "reconstruct": false
+      }
+    },
+    {
+      "system": "zerolua",
+      "version": "unversioned",
+      "stages": [
+        {
+          "stage": "research",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "no characteristic names a source"
+          ]
+        },
+        {
+          "stage": "classification",
+          "reached": false,
+          "evidence": [
+            "signature (0.3)"
+          ],
+          "missing": [
+            "no verified capability for this system (tools/research/capabilities.mjs)"
+          ]
+        },
+        {
+          "stage": "experimental-analysis",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "no output of this version has been run through the engine"
+          ]
+        },
+        {
+          "stage": "verification",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "needs a reference-runtime behaviour check on at least 8 real-output fixtures"
+          ]
+        },
+        {
+          "stage": "compatibility-profile",
+          "reached": false,
+          "evidence": [
+            "status identified"
+          ],
+          "missing": [
+            "an earlier stage is not reached"
+          ]
+        },
+        {
+          "stage": "integration",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "nothing verified to integrate"
+          ]
+        }
+      ],
+      "reached": null,
+      "integration": {
+        "identify": false,
+        "reconstruct": false
+      }
+    },
+    {
+      "system": "fivem_strong",
+      "version": "unversioned",
+      "stages": [
+        {
+          "stage": "research",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "no characteristic names a source"
+          ]
+        },
+        {
+          "stage": "classification",
+          "reached": false,
+          "evidence": [
+            "signature (0.3)"
+          ],
+          "missing": [
+            "no verified capability for this system (tools/research/capabilities.mjs)"
+          ]
+        },
+        {
+          "stage": "experimental-analysis",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "no output of this version has been run through the engine"
+          ]
+        },
+        {
+          "stage": "verification",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "needs a reference-runtime behaviour check on at least 8 real-output fixtures"
+          ]
+        },
+        {
+          "stage": "compatibility-profile",
+          "reached": false,
+          "evidence": [
+            "status identified"
+          ],
+          "missing": [
+            "an earlier stage is not reached"
+          ]
+        },
+        {
+          "stage": "integration",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "nothing verified to integrate"
+          ]
+        }
+      ],
+      "reached": null,
+      "integration": {
+        "identify": false,
+        "reconstruct": false
+      }
+    },
+    {
+      "system": "neuroforge",
+      "version": "unversioned",
+      "stages": [
+        {
+          "stage": "research",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "no characteristic names a source"
+          ]
+        },
+        {
+          "stage": "classification",
+          "reached": false,
+          "evidence": [
+            "signature (0.3)"
+          ],
+          "missing": [
+            "no verified capability for this system (tools/research/capabilities.mjs)"
+          ]
+        },
+        {
+          "stage": "experimental-analysis",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "no output of this version has been run through the engine"
+          ]
+        },
+        {
+          "stage": "verification",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "needs a reference-runtime behaviour check on at least 8 real-output fixtures"
+          ]
+        },
+        {
+          "stage": "compatibility-profile",
+          "reached": false,
+          "evidence": [
+            "status identified"
+          ],
+          "missing": [
+            "an earlier stage is not reached"
+          ]
+        },
+        {
+          "stage": "integration",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "nothing verified to integrate"
+          ]
+        }
+      ],
+      "reached": null,
+      "integration": {
+        "identify": false,
+        "reconstruct": false
+      }
+    },
+    {
+      "system": "stealthx",
+      "version": "unversioned",
+      "stages": [
+        {
+          "stage": "research",
+          "reached": true,
+          "evidence": [
+            "5 characteristics with sources"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "classification",
+          "reached": false,
+          "evidence": [
+            "banner (0.7)"
+          ],
+          "missing": [
+            "no verified capability for this system (tools/research/capabilities.mjs)"
+          ]
+        },
+        {
+          "stage": "experimental-analysis",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "no output of this version has been run through the engine"
+          ]
+        },
+        {
+          "stage": "verification",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "needs a reference-runtime behaviour check on at least 8 real-output fixtures"
+          ]
+        },
+        {
+          "stage": "compatibility-profile",
+          "reached": false,
+          "evidence": [
+            "status identified"
+          ],
+          "missing": [
+            "an earlier stage is not reached"
+          ]
+        },
+        {
+          "stage": "integration",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "nothing verified to integrate"
+          ]
+        }
+      ],
+      "reached": "research",
+      "integration": {
+        "identify": false,
+        "reconstruct": false
+      }
+    },
+    {
+      "system": "azurevm",
+      "version": "unversioned",
+      "stages": [
+        {
+          "stage": "research",
+          "reached": true,
+          "evidence": [
+            "9 characteristics with sources"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "classification",
+          "reached": true,
+          "evidence": [
+            "signature (0.8)",
+            "verified capability azurevm.identify",
+            "verified capability azurevm.reconstruct"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "experimental-analysis",
+          "reached": true,
+          "evidence": [
+            "48 fixtures, 0 authorised pairs, 0 failures recorded"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "verification",
+          "reached": true,
+          "evidence": [
+            "reference runtime: 48 real-output fixtures"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "compatibility-profile",
+          "reached": true,
+          "evidence": [
+            "status real-output-verified"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "integration",
+          "reached": true,
+          "evidence": [
+            "identification wired to the page",
+            "reconstruction claim allowed"
+          ],
+          "missing": []
+        }
+      ],
+      "reached": "integration",
+      "integration": {
+        "identify": true,
+        "reconstruct": true
+      }
+    },
+    {
+      "system": "simple_html",
+      "version": "unversioned",
+      "stages": [
+        {
+          "stage": "research",
+          "reached": true,
+          "evidence": [
+            "6 characteristics with sources"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "classification",
+          "reached": true,
+          "evidence": [
+            "signature (0.8)",
+            "verified capability simple_html.identify",
+            "verified capability simple_html.reconstruct"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "experimental-analysis",
+          "reached": true,
+          "evidence": [
+            "8 fixtures, 0 authorised pairs, 0 failures recorded"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "verification",
+          "reached": true,
+          "evidence": [
+            "reference runtime: 8 real-output fixtures"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "compatibility-profile",
+          "reached": true,
+          "evidence": [
+            "status real-output-verified"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "integration",
+          "reached": true,
+          "evidence": [
+            "identification wired to the page",
+            "reconstruction claim allowed"
+          ],
+          "missing": []
+        }
+      ],
+      "reached": "integration",
+      "integration": {
+        "identify": true,
+        "reconstruct": true
+      }
+    },
+    {
+      "system": "clyde",
+      "version": "unversioned",
+      "stages": [
+        {
+          "stage": "research",
+          "reached": true,
+          "evidence": [
+            "6 characteristics with sources"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "classification",
+          "reached": true,
+          "evidence": [
+            "signature (0.8)",
+            "verified capability clyde.reconstruct"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "experimental-analysis",
+          "reached": true,
+          "evidence": [
+            "25 fixtures, 0 authorised pairs, 0 failures recorded"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "verification",
+          "reached": true,
+          "evidence": [
+            "reference runtime: 25 real-output fixtures"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "compatibility-profile",
+          "reached": true,
+          "evidence": [
+            "status real-output-verified"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "integration",
+          "reached": true,
+          "evidence": [
+            "reconstruction claim allowed"
+          ],
+          "missing": []
+        }
+      ],
+      "reached": "integration",
+      "integration": {
+        "identify": false,
+        "reconstruct": true
+      }
+    },
+    {
+      "system": "ironveil",
+      "version": "unversioned",
+      "stages": [
+        {
+          "stage": "research",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "no characteristic names a source"
+          ]
+        },
+        {
+          "stage": "classification",
+          "reached": false,
+          "evidence": [
+            "signature (0.3)"
+          ],
+          "missing": [
+            "no verified capability for this system (tools/research/capabilities.mjs)"
+          ]
+        },
+        {
+          "stage": "experimental-analysis",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "no output of this version has been run through the engine"
+          ]
+        },
+        {
+          "stage": "verification",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "needs a reference-runtime behaviour check on at least 8 real-output fixtures"
+          ]
+        },
+        {
+          "stage": "compatibility-profile",
+          "reached": false,
+          "evidence": [
+            "status identified"
+          ],
+          "missing": [
+            "an earlier stage is not reached"
+          ]
+        },
+        {
+          "stage": "integration",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "nothing verified to integrate"
+          ]
+        }
+      ],
+      "reached": null,
+      "integration": {
+        "identify": false,
+        "reconstruct": false
+      }
+    },
+    {
+      "system": "goofyscator",
+      "version": "unversioned",
+      "stages": [
+        {
+          "stage": "research",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "no characteristic names a source"
+          ]
+        },
+        {
+          "stage": "classification",
+          "reached": false,
+          "evidence": [
+            "signature (0.3)"
+          ],
+          "missing": [
+            "no verified capability for this system (tools/research/capabilities.mjs)"
+          ]
+        },
+        {
+          "stage": "experimental-analysis",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "no output of this version has been run through the engine"
+          ]
+        },
+        {
+          "stage": "verification",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "needs a reference-runtime behaviour check on at least 8 real-output fixtures"
+          ]
+        },
+        {
+          "stage": "compatibility-profile",
+          "reached": false,
+          "evidence": [
+            "status identified"
+          ],
+          "missing": [
+            "an earlier stage is not reached"
+          ]
+        },
+        {
+          "stage": "integration",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "nothing verified to integrate"
+          ]
+        }
+      ],
+      "reached": null,
+      "integration": {
+        "identify": false,
+        "reconstruct": false
+      }
+    },
+    {
+      "system": "xhider",
+      "version": "unversioned",
+      "stages": [
+        {
+          "stage": "research",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "no characteristic names a source"
+          ]
+        },
+        {
+          "stage": "classification",
+          "reached": false,
+          "evidence": [
+            "signature (0.3)"
+          ],
+          "missing": [
+            "no verified capability for this system (tools/research/capabilities.mjs)"
+          ]
+        },
+        {
+          "stage": "experimental-analysis",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "no output of this version has been run through the engine"
+          ]
+        },
+        {
+          "stage": "verification",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "needs a reference-runtime behaviour check on at least 8 real-output fixtures"
+          ]
+        },
+        {
+          "stage": "compatibility-profile",
+          "reached": false,
+          "evidence": [
+            "status identified"
+          ],
+          "missing": [
+            "an earlier stage is not reached"
+          ]
+        },
+        {
+          "stage": "integration",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "nothing verified to integrate"
+          ]
+        }
+      ],
+      "reached": null,
+      "integration": {
+        "identify": false,
+        "reconstruct": false
+      }
+    },
+    {
+      "system": "synapse_xen",
+      "version": "unversioned",
+      "stages": [
+        {
+          "stage": "research",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "no characteristic names a source"
+          ]
+        },
+        {
+          "stage": "classification",
+          "reached": false,
+          "evidence": [
+            "signature (0.3)"
+          ],
+          "missing": [
+            "no verified capability for this system (tools/research/capabilities.mjs)"
+          ]
+        },
+        {
+          "stage": "experimental-analysis",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "no output of this version has been run through the engine"
+          ]
+        },
+        {
+          "stage": "verification",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "needs a reference-runtime behaviour check on at least 8 authorised pairs"
+          ]
+        },
+        {
+          "stage": "compatibility-profile",
+          "reached": false,
+          "evidence": [
+            "status identified"
+          ],
+          "missing": [
+            "an earlier stage is not reached"
+          ]
+        },
+        {
+          "stage": "integration",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "nothing verified to integrate"
+          ]
+        }
+      ],
+      "reached": null,
+      "integration": {
+        "identify": false,
+        "reconstruct": false
+      }
+    },
+    {
+      "system": "wearedevs",
+      "version": "unversioned",
+      "stages": [
+        {
+          "stage": "research",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "no characteristic names a source"
+          ]
+        },
+        {
+          "stage": "classification",
+          "reached": false,
+          "evidence": [
+            "signature (0.3)"
+          ],
+          "missing": [
+            "no verified capability for this system (tools/research/capabilities.mjs)"
+          ]
+        },
+        {
+          "stage": "experimental-analysis",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "no output of this version has been run through the engine"
+          ]
+        },
+        {
+          "stage": "verification",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "needs a reference-runtime behaviour check on at least 8 real-output fixtures"
+          ]
+        },
+        {
+          "stage": "compatibility-profile",
+          "reached": false,
+          "evidence": [
+            "status identified"
+          ],
+          "missing": [
+            "an earlier stage is not reached"
+          ]
+        },
+        {
+          "stage": "integration",
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "nothing verified to integrate"
+          ]
+        }
+      ],
+      "reached": null,
+      "integration": {
+        "identify": false,
+        "reconstruct": false
+      }
+    },
+    {
+      "system": "lab-xorpack",
+      "version": "lab-1",
+      "stages": [
+        {
+          "stage": "research",
+          "reached": true,
+          "evidence": [
+            "1 characteristics with sources"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "classification",
+          "reached": true,
+          "evidence": [
+            "signature (0.8)",
+            "verified capability lab-xorpack.identify",
+            "verified capability lab-xorpack.reconstruct"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "experimental-analysis",
+          "reached": true,
+          "evidence": [
+            "16 fixtures, 0 authorised pairs, 0 failures recorded"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "verification",
+          "reached": true,
+          "evidence": [
+            "reference runtime: 16 real-output fixtures"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "compatibility-profile",
+          "reached": true,
+          "evidence": [
+            "status real-output-verified"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "integration",
+          "reached": true,
+          "evidence": [
+            "identification wired to the page",
+            "reconstruction claim allowed"
+          ],
+          "missing": []
+        }
+      ],
+      "reached": "integration",
+      "integration": {
+        "identify": true,
+        "reconstruct": true
+      }
+    },
+    {
+      "system": "lab-loadwrap",
+      "version": "lab-1",
+      "stages": [
+        {
+          "stage": "research",
+          "reached": true,
+          "evidence": [
+            "1 characteristics with sources"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "classification",
+          "reached": true,
+          "evidence": [
+            "signature (0.8)",
+            "verified capability lab-loadwrap.identify",
+            "verified capability lab-loadwrap.reconstruct"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "experimental-analysis",
+          "reached": true,
+          "evidence": [
+            "16 fixtures, 0 authorised pairs, 0 failures recorded"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "verification",
+          "reached": true,
+          "evidence": [
+            "reference runtime: 16 real-output fixtures"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "compatibility-profile",
+          "reached": true,
+          "evidence": [
+            "status real-output-verified"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "integration",
+          "reached": true,
+          "evidence": [
+            "identification wired to the page",
+            "reconstruction claim allowed"
+          ],
+          "missing": []
+        }
+      ],
+      "reached": "integration",
+      "integration": {
+        "identify": true,
+        "reconstruct": true
+      }
+    },
+    {
+      "system": "lab-tabledispatch",
+      "version": "lab-1",
+      "stages": [
+        {
+          "stage": "research",
+          "reached": true,
+          "evidence": [
+            "1 characteristics with sources"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "classification",
+          "reached": true,
+          "evidence": [
+            "signature (0.8)",
+            "verified capability lab-tabledispatch.identify",
+            "verified capability lab-tabledispatch.reconstruct"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "experimental-analysis",
+          "reached": true,
+          "evidence": [
+            "16 fixtures, 0 authorised pairs, 0 failures recorded"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "verification",
+          "reached": true,
+          "evidence": [
+            "reference runtime: 16 real-output fixtures"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "compatibility-profile",
+          "reached": true,
+          "evidence": [
+            "status real-output-verified"
+          ],
+          "missing": []
+        },
+        {
+          "stage": "integration",
+          "reached": true,
+          "evidence": [
+            "identification wired to the page",
+            "reconstruction claim allowed"
+          ],
+          "missing": []
+        }
+      ],
+      "reached": "integration",
+      "integration": {
+        "identify": true,
+        "reconstruct": true
+      }
+    }
+  ]
+}

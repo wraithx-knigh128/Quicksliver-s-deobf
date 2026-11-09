@@ -40,7 +40,7 @@ Two measures that do not use what is known about how the input was made:
 | `inconclusive` | the original printed nothing, or a limit stopped a run |
 | `tool-broken` | the *transformation* changed behaviour; the experiment says nothing about the technique and is excluded |
 
-Behaviour is compared in **QuickSilver's own Lua interpreter**, not a reference Lua. Equal behaviour there is evidence, not proof, and every record names the interpreter.
+Behaviour is decided on a **reference Lua runtime** (PUC Lua 5.1 and LuaJIT, through `tools/runtime/`) when one is installed, with QuickSilver's own interpreter run alongside as a cross-check; every record names `behaviourSource` and the runtimes, and a disagreement between the two is recorded and counted (there were none in the shipped data). Without a reference runtime the sandbox decides and the record says so (`docs/COMPAT-RESEARCH.md` section 1). Equal behaviour on a run is evidence for that input, not proof for all inputs.
 
 **The judge was changed twice after seeing results, and both changes are recorded here:**
 
@@ -93,8 +93,8 @@ Nothing in the page, the advisor or the registry has to change for a new family.
 
 ## 6. Limits
 
-* **Everything measured here is on generated programs**, transformed by tools written for or used by this project, and behaviour is checked in this project's interpreter. It says how the plans behave on *kinds* of transformation. It does not say how any commercial tool's output behaves.
-* **Luraph and other closed-source tools: nothing is claimed.** The research environment could not reach the vendor's site, a web search found no official changelog, and no sample output exists. `sources.json` records exactly that. A person who owns output of such a tool can add it as samples; until then the laboratory has no experiment for it, so no statement can be made.
+* **Everything measured here is on generated programs**, transformed by tools written for or used by this project, and behaviour is checked on PUC Lua 5.1 and LuaJIT (with this project's interpreter as a cross-check; Luau is not available). It says how the plans behave on *kinds* of transformation. It does not say how any commercial tool's output behaves.
+* **Luraph and other closed-source tools: no reconstruction is claimed.** The research environment could not reach the vendor's site, a web search found no official changelog, and no sample output exists; version identification from the vendor's SDK history is documented in `COMPAT-RESEARCH.md`. `sources.json` records exactly that. A person who owns output of such a tool can add it as samples; until then the laboratory has no experiment for it, so no statement can be made.
 * **LuaXen** (MIT, one commit) was read: its obfuscator example runs two stages in a row, which makes it a nested case. It needs a real Lua runtime to run, which the research environment did not have, so no output was produced.
 * **No online research happens at run time.** The research in `sources.json` was done once, from this environment, with the grade of each source. The page does not browse. The advisor is a statistical lookup over verified experiments, not a language model, and it improves only when the laboratory is run again.
 * **Small matrices.** 16 programs per cell gives intervals of roughly ±15% at the top; the knowledge base makes no statement from fewer than 12 trials.

@@ -23,10 +23,44 @@ const EVIDENCE_NOTE = {
   none: 'No public signature exists; this is a generic heuristic.',
 };
 
-export function detectionView(det, compat) {
+const CLAIM_TEXT = {
+  supported: ['ok', 'Reconstruction verified'],
+  partial: ['warn', 'Reconstruction partly verified'],
+  'identification-only': ['info', 'Recognised only: no verified reconstruction'],
+  unknown: ['', 'Not profiled'],
+};
+const STAGE_TEXT = { 'researched': 'researched', 'identified': 'identified', 'traced': 'traced', 'internally-tested': 'internally tested', 'real-output-verified': 'verified on real tool output', 'authorized-sample-verified': 'verified on authorised samples' };
+
+/** Which system, which version, on what evidence, and what may be claimed. `ident` is the result of the `identify` operation. */
+export function identificationSection(ident) {
+  if (!ident) return null;
+  if (!ident.systems.length) return section('System and version', note('', (ident.notes && ident.notes[0]) || 'No known system was identified.'));
+  return section('System and version', [
+    ...ident.systems.map((sys) => h('div', { style: { marginBottom: '10px' } }, [
+      h('div', { style: { display: 'flex', gap: '8px', alignItems: 'baseline' } }, h('b', sys.name), h('span.faint.mono', sys.basis), h('span', { style: { flex: 1 } }), h('span.mono', pct(sys.confidence))),
+      sys.evidence.length ? h('ul', { style: { margin: '2px 0', paddingLeft: '16px' } }, sys.evidence.map((e) => h('li', { style: { border: 0, padding: '1px 0' } }, e))) : null,
+      sys.version ? kv([
+        ['Version', sys.version.claimed ? `${sys.version.claimed} claimed${sys.version.generation ? `, generation ${sys.version.generation}` : ''}` : sys.version.generation ? `generation ${sys.version.generation}` : sys.version.candidates && sys.version.candidates.length ? `one of: ${sys.version.candidates.join(', ')}` : 'cannot be estimated'],
+        ['Version confidence', `${pct(sys.version.confidence)} (${sys.version.basis})`],
+      ]) : null,
+      sys.version ? h('ul.list', sys.version.caveats.map((c) => h('li', { class: 'dim' }, c))) : null,
+      sys.profile ? h('div', [
+        h('span.badge.' + CLAIM_TEXT[sys.profile.claim.claim][0], CLAIM_TEXT[sys.profile.claim.claim][1]), ' ',
+        h('span.badge', STAGE_TEXT[sys.profile.status] || sys.profile.status),
+        h('div.dim', { style: { marginTop: '4px' } }, sys.profile.claim.why),
+        sys.profile.limitations.length ? h('ul', { style: { margin: '4px 0 0', paddingLeft: '16px' } }, sys.profile.limitations.map((l) => h('li', { style: { border: 0, padding: '1px 0' } }, l))) : null,
+      ]) : null,
+    ])),
+    note('', 'Recognising a system is not reconstructing it. "Reconstruction verified" appears only when the engine\'s output for that system was checked to behave like the original on a reference Lua runtime; see the Research tab.'),
+  ]);
+}
+
+export function detectionView(det, compat, ident = null) {
   const wrap = h('div.pane-body', { style: { padding: '0' } });
   if (!det) return wrap;
   const fams = det.families.filter((f) => f.confidence >= 0.2);
+  const idSection = identificationSection(ident);
+  if (idSection) wrap.append(idSection);
   wrap.append(section('Obfuscator', [
     fams.length ? h('ul.list', fams.map((f) => {
       const c = compat && compat.get(f.id);

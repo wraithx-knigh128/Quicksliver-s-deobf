@@ -1,0 +1,3504 @@
+{
+ "schema": 1,
+ "generatedAt": "2026-11-09T02:36:06.924Z",
+ "gates": {
+  "real": {
+   "minFixtures": 8,
+   "minBehaviourChecked": 8
+  },
+  "authorized": {
+   "minPairs": 8,
+   "minRuntimeVerified": 8
+  },
+  "supportedRateLo": 0.7,
+  "partialRateLo": 0.3
+ },
+ "profiles": [
+  {
+   "id": "luraph",
+   "name": "Luraph",
+   "kind": "commercial",
+   "summary": "Commercial virtualising obfuscator for Lua and Luau (lura.ph). Per-script VM; v14 and v15 are current.",
+   "vendor": {
+    "site": "https://lura.ph/",
+    "readable": "no: the site could not be reached from the research environment"
+   },
+   "versions": [
+    {
+     "id": "v13-era",
+     "label": "Luraph before v14",
+     "period": {
+      "since": "2024-02-02",
+      "until": "2024-04-23",
+      "basis": "the SDK as first uploaded (2024-02-02), the last state before the commit that updates it for v14"
+     },
+     "identification": {
+      "methods": [
+       {
+        "kind": "banner",
+        "confidence": 0.7,
+        "note": "a banner comment names the version, but anyone can write or remove one; it says what the file claims"
+       },
+       {
+        "kind": "macro-set",
+        "confidence": 0.8,
+        "note": "in an UNPROTECTED source script that uses Luraph macros, the set of macros narrows the generation it was written for; it does not apply to protected output, which no longer contains them"
+       }
+      ],
+      "confidence": 0.7
+     },
+     "macros": {
+      "all": [
+       "LPH_CRASH",
+       "LPH_ENCNUM",
+       "LPH_ENCSTR",
+       "LPH_JIT",
+       "LPH_JIT_MAX",
+       "LPH_NO_UPVALUES",
+       "LPH_NO_VIRTUALIZE"
+      ],
+      "added": [
+       "LPH_CRASH",
+       "LPH_ENCNUM",
+       "LPH_ENCSTR",
+       "LPH_JIT",
+       "LPH_JIT_MAX",
+       "LPH_NO_UPVALUES",
+       "LPH_NO_VIRTUALIZE"
+      ],
+      "removed": []
+     },
+     "characteristics": [
+      {
+       "text": "The vendor's SDK for this generation defines 7 macros: LPH_CRASH, LPH_ENCNUM, LPH_ENCSTR, LPH_JIT, LPH_JIT_MAX, LPH_NO_UPVALUES, LPH_NO_VIRTUALIZE.",
+       "knownAs": "documented",
+       "sources": [
+        "a2dd55ef0d90",
+        "histories/luraph-macrosdk.json"
+       ],
+       "note": "from commit 5da2d670be (2024-02-02)"
+      }
+     ],
+     "samples": {
+      "authorizedPairs": 0,
+      "realOutput": 0,
+      "publicObserved": 0,
+      "notes": "No output of this version has been obtained from a source the lab may use. Public pastes of protected scripts exist but belong to other people and have no originals to compare with, so none were collected."
+     },
+     "capabilities": {
+      "identify": {
+       "available": true,
+       "verified": "format-tested",
+       "note": "banner comment and macro-set estimates, tested against synthetic inputs built from the vendor data; never against real Luraph output"
+      },
+      "versionEstimate": {
+       "available": true,
+       "verified": "vendor-data-tested",
+       "note": "from the banner version and from the macro set of an unprotected script"
+      },
+      "trace": {
+       "available": true,
+       "verified": "unverified",
+       "note": "the sandbox can run a script against stand-in objects; it has not been run on Luraph output"
+      },
+      "recover": {
+       "available": false,
+       "verified": "none",
+       "note": "a per-script VM cannot be reconstructed without samples to study, and none are available"
+      }
+     },
+     "results": {
+      "fixtures": 0,
+      "behaviourChecked": 0,
+      "runtime": null
+     },
+     "limitations": [
+      "No output of this generation has been obtained, so the engine has never been run on any; nothing is claimed about reconstruction.",
+      "Version estimates from a banner depend on the file being what it says it is.",
+      "The SDK lists the macros the vendor documents; the service may accept more.",
+      "The start of this generation is not dated by a vendor statement: it is the state of the SDK before the v14 update."
+     ],
+     "verification": {
+      "status": "identified",
+      "basis": "banner and macro-set identification only; no reconstruction was attempted on any sample"
+     }
+    },
+    {
+     "id": "v14",
+     "label": "Luraph v14.x",
+     "period": {
+      "since": "2024-04-23",
+      "until": "2026-08-10",
+      "basis": "commit \"update sdk for luraph v14\" (2024-04-23)"
+     },
+     "identification": {
+      "methods": [
+       {
+        "kind": "banner",
+        "confidence": 0.7,
+        "note": "a banner comment names the version, but anyone can write or remove one; it says what the file claims"
+       },
+       {
+        "kind": "macro-set",
+        "confidence": 0.8,
+        "note": "in an UNPROTECTED source script that uses Luraph macros, the set of macros narrows the generation it was written for; it does not apply to protected output, which no longer contains them"
+       }
+      ],
+      "confidence": 0.7
+     },
+     "macros": {
+      "all": [
+       "LPH_CRASH",
+       "LPH_ENCFUNC",
+       "LPH_ENCNUM",
+       "LPH_ENCSTR",
+       "LPH_FUNCENC",
+       "LPH_JIT",
+       "LPH_JIT_MAX",
+       "LPH_NO_UPVALUES",
+       "LPH_NO_VIRTUALIZE",
+       "LPH_NUMENC",
+       "LPH_STRENC"
+      ],
+      "added": [
+       "LPH_ENCFUNC",
+       "LPH_FUNCENC",
+       "LPH_NUMENC",
+       "LPH_STRENC"
+      ],
+      "removed": []
+     },
+     "characteristics": [
+      {
+       "text": "The vendor's SDK for this generation defines 11 macros: LPH_CRASH, LPH_ENCFUNC, LPH_ENCNUM, LPH_ENCSTR, LPH_FUNCENC, LPH_JIT, LPH_JIT_MAX, LPH_NO_UPVALUES, LPH_NO_VIRTUALIZE, LPH_NUMENC, LPH_STRENC.",
+       "knownAs": "documented",
+       "sources": [
+        "a2dd55ef0d90",
+        "histories/luraph-macrosdk.json"
+       ],
+       "note": "from commit c475541ba5 (2024-04-23)"
+      },
+      {
+       "text": "Macros added relative to the previous generation: LPH_ENCFUNC, LPH_FUNCENC, LPH_NUMENC, LPH_STRENC.",
+       "knownAs": "documented",
+       "sources": [
+        "histories/luraph-macrosdk.json"
+       ]
+      },
+      {
+       "text": "VM compression returned in v14, with four settings added (Optimization Level, Enable FFI Library, Hardcode Globals, Static Environment) and an enforceSettings API option.",
+       "knownAs": "reported",
+       "sources": [
+        "luraph-v14-docs-snippet"
+       ],
+       "note": "from a search-result summary of the vendor's v14 page; the page itself could not be read from the research environment"
+      }
+     ],
+     "samples": {
+      "authorizedPairs": 0,
+      "realOutput": 0,
+      "publicObserved": 0,
+      "notes": "No output of this version has been obtained from a source the lab may use. Public pastes of protected scripts exist but belong to other people and have no originals to compare with, so none were collected."
+     },
+     "capabilities": {
+      "identify": {
+       "available": true,
+       "verified": "format-tested",
+       "note": "banner comment and macro-set estimates, tested against synthetic inputs built from the vendor data; never against real Luraph output"
+      },
+      "versionEstimate": {
+       "available": true,
+       "verified": "vendor-data-tested",
+       "note": "from the banner version and from the macro set of an unprotected script"
+      },
+      "trace": {
+       "available": true,
+       "verified": "unverified",
+       "note": "the sandbox can run a script against stand-in objects; it has not been run on Luraph output"
+      },
+      "recover": {
+       "available": false,
+       "verified": "none",
+       "note": "a per-script VM cannot be reconstructed without samples to study, and none are available"
+      }
+     },
+     "results": {
+      "fixtures": 0,
+      "behaviourChecked": 0,
+      "runtime": null
+     },
+     "limitations": [
+      "No output of this generation has been obtained, so the engine has never been run on any; nothing is claimed about reconstruction.",
+      "Version estimates from a banner depend on the file being what it says it is.",
+      "The SDK lists the macros the vendor documents; the service may accept more."
+     ],
+     "verification": {
+      "status": "identified",
+      "basis": "banner and macro-set identification only; no reconstruction was attempted on any sample"
+     }
+    },
+    {
+     "id": "v15",
+     "label": "Luraph v15",
+     "period": {
+      "since": "2026-08-10",
+      "until": "2026-10-03",
+      "basis": "commit \"update sdk for luraph v15\" (2026-08-10) through its last fix before v15.1"
+     },
+     "identification": {
+      "methods": [
+       {
+        "kind": "banner",
+        "confidence": 0.7,
+        "note": "a banner comment names the version, but anyone can write or remove one; it says what the file claims"
+       },
+       {
+        "kind": "macro-set",
+        "confidence": 0.8,
+        "note": "in an UNPROTECTED source script that uses Luraph macros, the set of macros narrows the generation it was written for; it does not apply to protected output, which no longer contains them"
+       }
+      ],
+      "confidence": 0.7
+     },
+     "macros": {
+      "all": [
+       "LPH_ATTRIBUTES",
+       "LPH_BUFENC",
+       "LPH_CRASH",
+       "LPH_ENCBUF",
+       "LPH_ENCNUM",
+       "LPH_ENCSTR",
+       "LPH_NUMENC",
+       "LPH_OBFUSCATED",
+       "LPH_PRECHECK",
+       "LPH_REWRITE",
+       "LPH_STACKALLOC",
+       "LPH_STRENC"
+      ],
+      "added": [
+       "LPH_ATTRIBUTES",
+       "LPH_BUFENC",
+       "LPH_ENCBUF",
+       "LPH_OBFUSCATED",
+       "LPH_PRECHECK",
+       "LPH_REWRITE",
+       "LPH_STACKALLOC"
+      ],
+      "removed": [
+       "LPH_ENCFUNC",
+       "LPH_FUNCENC",
+       "LPH_JIT",
+       "LPH_JIT_MAX",
+       "LPH_NO_UPVALUES",
+       "LPH_NO_VIRTUALIZE"
+      ]
+     },
+     "characteristics": [
+      {
+       "text": "The vendor's SDK for this generation defines 12 macros: LPH_ATTRIBUTES, LPH_BUFENC, LPH_CRASH, LPH_ENCBUF, LPH_ENCNUM, LPH_ENCSTR, LPH_NUMENC, LPH_OBFUSCATED, LPH_PRECHECK, LPH_REWRITE, LPH_STACKALLOC, LPH_STRENC.",
+       "knownAs": "documented",
+       "sources": [
+        "a2dd55ef0d90",
+        "histories/luraph-macrosdk.json"
+       ],
+       "note": "from commit cbb78f0c18 (2026-08-10)"
+      },
+      {
+       "text": "Macros added relative to the previous generation: LPH_ATTRIBUTES, LPH_BUFENC, LPH_ENCBUF, LPH_OBFUSCATED, LPH_PRECHECK, LPH_REWRITE, LPH_STACKALLOC.",
+       "knownAs": "documented",
+       "sources": [
+        "histories/luraph-macrosdk.json"
+       ]
+      },
+      {
+       "text": "Macros no longer in the SDK relative to the previous generation: LPH_ENCFUNC, LPH_FUNCENC, LPH_JIT, LPH_JIT_MAX, LPH_NO_UPVALUES, LPH_NO_VIRTUALIZE.",
+       "knownAs": "documented",
+       "sources": [
+        "histories/luraph-macrosdk.json"
+       ]
+      },
+      {
+       "text": "The function-level virtualisation macros of earlier generations (ENCFUNC, NO_VIRTUALIZE, JIT, JIT_MAX, NO_UPVALUES) are gone from the SDK and a macro for pre-checking, one for rewriting, one for stack allocation and an attributes macro appear.",
+       "knownAs": "inferred",
+       "basis": "the SDK stubs changed this way at the v15 update; why is not stated in what was read, and the removed macros may still be accepted by the service"
+      },
+      {
+       "text": "Third-party descriptions say v15 compiles Luau to an interpreted VM with flattened dispatch loops, encrypted memory buffers and crash traps.",
+       "knownAs": "reported",
+       "sources": [
+        "7fb82dfd40cb",
+        "b4ad3ae6a26e",
+        "b55440b9e92c"
+       ],
+       "note": "low-credibility sources; only the existence of the CRASH, ENCBUF and ENCSTR macros is corroborated by the vendor SDK"
+      }
+     ],
+     "samples": {
+      "authorizedPairs": 0,
+      "realOutput": 0,
+      "publicObserved": 0,
+      "notes": "No output of this version has been obtained from a source the lab may use. Public pastes of protected scripts exist but belong to other people and have no originals to compare with, so none were collected."
+     },
+     "capabilities": {
+      "identify": {
+       "available": true,
+       "verified": "format-tested",
+       "note": "banner comment and macro-set estimates, tested against synthetic inputs built from the vendor data; never against real Luraph output"
+      },
+      "versionEstimate": {
+       "available": true,
+       "verified": "vendor-data-tested",
+       "note": "from the banner version and from the macro set of an unprotected script"
+      },
+      "trace": {
+       "available": true,
+       "verified": "unverified",
+       "note": "the sandbox can run a script against stand-in objects; it has not been run on Luraph output"
+      },
+      "recover": {
+       "available": false,
+       "verified": "none",
+       "note": "a per-script VM cannot be reconstructed without samples to study, and none are available"
+      }
+     },
+     "results": {
+      "fixtures": 0,
+      "behaviourChecked": 0,
+      "runtime": null
+     },
+     "limitations": [
+      "No output of this generation has been obtained, so the engine has never been run on any; nothing is claimed about reconstruction.",
+      "Version estimates from a banner depend on the file being what it says it is.",
+      "The SDK lists the macros the vendor documents; the service may accept more."
+     ],
+     "verification": {
+      "status": "identified",
+      "basis": "banner and macro-set identification only; no reconstruction was attempted on any sample"
+     }
+    },
+    {
+     "id": "v15.1",
+     "label": "Luraph v15.1",
+     "period": {
+      "since": "2026-10-03",
+      "until": null,
+      "basis": "commit \"update sdk for luraph v15.1\" (2026-10-03) and the commit after it"
+     },
+     "identification": {
+      "methods": [
+       {
+        "kind": "banner",
+        "confidence": 0.7,
+        "note": "a banner comment names the version, but anyone can write or remove one; it says what the file claims"
+       },
+       {
+        "kind": "macro-set",
+        "confidence": 0.8,
+        "note": "in an UNPROTECTED source script that uses Luraph macros, the set of macros narrows the generation it was written for; it does not apply to protected output, which no longer contains them"
+       }
+      ],
+      "confidence": 0.7
+     },
+     "macros": {
+      "all": [
+       "LPH_ASSUME",
+       "LPH_ATTRIBUTES",
+       "LPH_BUFENC",
+       "LPH_CRASH",
+       "LPH_ENCBUF",
+       "LPH_ENCNUM",
+       "LPH_ENCSTR",
+       "LPH_NUMENC",
+       "LPH_OBFUSCATED",
+       "LPH_OPAQUE",
+       "LPH_PRECHECK",
+       "LPH_REWRITE",
+       "LPH_STACKALLOC",
+       "LPH_STRENC"
+      ],
+      "added": [
+       "LPH_ASSUME",
+       "LPH_OPAQUE"
+      ],
+      "removed": []
+     },
+     "characteristics": [
+      {
+       "text": "The vendor's SDK for this generation defines 14 macros: LPH_ASSUME, LPH_ATTRIBUTES, LPH_BUFENC, LPH_CRASH, LPH_ENCBUF, LPH_ENCNUM, LPH_ENCSTR, LPH_NUMENC, LPH_OBFUSCATED, LPH_OPAQUE, LPH_PRECHECK, LPH_REWRITE, LPH_STACKALLOC, LPH_STRENC.",
+       "knownAs": "documented",
+       "sources": [
+        "a2dd55ef0d90",
+        "histories/luraph-macrosdk.json"
+       ],
+       "note": "from commit 52f49951cc (2026-10-03)"
+      },
+      {
+       "text": "Macros added relative to the previous generation: LPH_ASSUME, LPH_OPAQUE.",
+       "knownAs": "documented",
+       "sources": [
+        "histories/luraph-macrosdk.json"
+       ]
+      },
+      {
+       "text": "An UNSAFE_ENVIRONMENT attribute was added to the SDK three days after the v15.1 update (2026-10-06).",
+       "knownAs": "documented",
+       "sources": [
+        "histories/luraph-macrosdk.json"
+       ]
+      }
+     ],
+     "samples": {
+      "authorizedPairs": 0,
+      "realOutput": 0,
+      "publicObserved": 0,
+      "notes": "No output of this version has been obtained from a source the lab may use. Public pastes of protected scripts exist but belong to other people and have no originals to compare with, so none were collected."
+     },
+     "capabilities": {
+      "identify": {
+       "available": true,
+       "verified": "format-tested",
+       "note": "banner comment and macro-set estimates, tested against synthetic inputs built from the vendor data; never against real Luraph output"
+      },
+      "versionEstimate": {
+       "available": true,
+       "verified": "vendor-data-tested",
+       "note": "from the banner version and from the macro set of an unprotected script"
+      },
+      "trace": {
+       "available": true,
+       "verified": "unverified",
+       "note": "the sandbox can run a script against stand-in objects; it has not been run on Luraph output"
+      },
+      "recover": {
+       "available": false,
+       "verified": "none",
+       "note": "a per-script VM cannot be reconstructed without samples to study, and none are available"
+      }
+     },
+     "results": {
+      "fixtures": 0,
+      "behaviourChecked": 0,
+      "runtime": null
+     },
+     "limitations": [
+      "No output of this generation has been obtained, so the engine has never been run on any; nothing is claimed about reconstruction.",
+      "Version estimates from a banner depend on the file being what it says it is.",
+      "The SDK lists the macros the vendor documents; the service may accept more."
+     ],
+     "verification": {
+      "status": "identified",
+      "basis": "banner and macro-set identification only; no reconstruction was attempted on any sample"
+     }
+    }
+   ],
+   "research": {
+    "sources": [
+     {
+      "id": "122cde1ca574",
+      "url": "https://raw.githubusercontent.com/Luraph/luraph-node/main/README.md",
+      "ok": true,
+      "class": "vendor-primary",
+      "score": 0.9
+     },
+     {
+      "id": "1daec132dd21",
+      "url": "https://lura.ph/dashboard/faq",
+      "ok": false,
+      "class": "vendor-primary",
+      "score": 0.9
+     },
+     {
+      "id": "61c60175f08f",
+      "url": "https://birk.blog/lua-virtualization-part-5",
+      "ok": false,
+      "class": "blog-writeup",
+      "score": 0.45
+     },
+     {
+      "id": "6957277bc070",
+      "url": "https://raw.githubusercontent.com/Luraph/luraph-vscode/main/README.md",
+      "ok": true,
+      "class": "vendor-primary",
+      "score": 0.9
+     },
+     {
+      "id": "69cb4b04b0c9",
+      "url": "https://github.com/Luraph/luraph-node",
+      "ok": false,
+      "class": "vendor-primary",
+      "score": 0.9
+     },
+     {
+      "id": "7fb82dfd40cb",
+      "url": "https://raw.githubusercontent.com/PhoenixZeng/LuraphDeobfuscator/master/README.md",
+      "ok": true,
+      "class": "unvetted-tool-repo",
+      "score": 0.2
+     },
+     {
+      "id": "8affe7bfab26",
+      "url": "https://raw.githubusercontent.com/PhoenixZeng/LuraphDeobfuscator/main/README.md",
+      "ok": false,
+      "class": "unvetted-tool-repo",
+      "score": 0.2
+     },
+     {
+      "id": "a2dd55ef0d90",
+      "url": "https://raw.githubusercontent.com/Luraph/macrosdk/main/luraphsdk.lua",
+      "ok": true,
+      "class": "vendor-primary",
+      "score": 0.9
+     },
+     {
+      "id": "b4ad3ae6a26e",
+      "url": "https://raw.githubusercontent.com/caomod2077/Deobfuscator-Luraph-V15/master/README.md",
+      "ok": true,
+      "class": "unvetted-tool-repo",
+      "score": 0.2
+     },
+     {
+      "id": "b55440b9e92c",
+      "url": "https://raw.githubusercontent.com/ludicious-claw/Deobfuscator-Luraph-V15-1/main/README.md",
+      "ok": true,
+      "class": "unvetted-tool-repo",
+      "score": 0.2
+     },
+     {
+      "id": "bb3149182dbb",
+      "url": "https://lura.ph/dashboard/documents/v14",
+      "ok": false,
+      "class": "vendor-primary",
+      "score": 0.9
+     },
+     {
+      "id": "bba454f17eba",
+      "url": "https://raw.githubusercontent.com/Luraph/macrosdk/main/README.md",
+      "ok": true,
+      "class": "vendor-primary",
+      "score": 0.9
+     },
+     {
+      "id": "bf626c1cf582",
+      "url": "https://raw.githubusercontent.com/larpcorrupt/luraph-v15-v14.x-deobfuscator/master/README.md",
+      "ok": false,
+      "class": "unvetted-tool-repo",
+      "score": 0.2
+     },
+     {
+      "id": "d06a03c606ea",
+      "url": "https://git.openpunk.com/CPunch/MoonVeil-Docs/raw/branch/main/content/docs/compatibility.md",
+      "ok": false,
+      "class": "documentation-other-vendor",
+      "score": 0.6
+     },
+     {
+      "id": "e9e6435880ee",
+      "url": "https://raw.githubusercontent.com/Luraph/macrosdk/master/README.md",
+      "ok": true,
+      "class": "vendor-primary",
+      "score": 0.9
+     },
+     {
+      "id": "f27d491201ea",
+      "url": "https://lura.ph/dashboard/documents/macros",
+      "ok": false,
+      "class": "vendor-primary",
+      "score": 0.9
+     },
+     {
+      "id": "f3b94d4b594f",
+      "url": "https://raw.githubusercontent.com/larpcorrupt/luraph-v15-v14.x-deobfuscator/main/README.md",
+      "ok": false,
+      "class": "unvetted-tool-repo",
+      "score": 0.2
+     },
+     {
+      "id": "fad4224448c3",
+      "url": "https://raw.githubusercontent.com/caomod2077/Deobfuscator-Luraph-V15/main/README.md",
+      "ok": false,
+      "class": "unvetted-tool-repo",
+      "score": 0.2
+     }
+    ],
+    "unreachable": [
+     "https://lura.ph/dashboard/faq",
+     "https://lura.ph/dashboard/documents/v14",
+     "https://lura.ph/dashboard/documents/macros"
+    ],
+    "history": "histories/luraph-macrosdk.json",
+    "sdkReadmeRead": true
+   },
+   "claims": {
+    "v13-era": {
+     "claim": "identification-only",
+     "why": "The output can be recognised. No reconstruction has been verified against real or authorised samples."
+    },
+    "v14": {
+     "claim": "identification-only",
+     "why": "The output can be recognised. No reconstruction has been verified against real or authorised samples."
+    },
+    "v15": {
+     "claim": "identification-only",
+     "why": "The output can be recognised. No reconstruction has been verified against real or authorised samples."
+    },
+    "v15.1": {
+     "claim": "identification-only",
+     "why": "The output can be recognised. No reconstruction has been verified against real or authorised samples."
+    }
+   }
+  },
+  {
+   "id": "prometheus",
+   "name": "Prometheus",
+   "kind": "open-source",
+   "summary": "Open-source Lua 5.1 / basic Luau obfuscator written in Lua (levno-710).",
+   "versions": [
+    {
+     "id": "unversioned",
+     "label": "as measured (no version split)",
+     "identification": {
+      "methods": [
+       {
+        "kind": "signature",
+        "confidence": 0.8,
+        "note": "structure matched against the tool's own source and its real output"
+       }
+      ],
+      "confidence": 0.8
+     },
+     "characteristics": [
+      {
+       "text": "Vmify (flattened register VM)",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/prometheus-lua/Prometheus"
+       ]
+      },
+      {
+       "text": "ConstantArray",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/prometheus-lua/Prometheus"
+       ]
+      },
+      {
+       "text": "EncryptStrings",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/prometheus-lua/Prometheus"
+       ]
+      },
+      {
+       "text": "SplitStrings",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/prometheus-lua/Prometheus"
+       ]
+      },
+      {
+       "text": "NumbersToExpressions",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/prometheus-lua/Prometheus"
+       ]
+      },
+      {
+       "text": "ProxifyLocals",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/prometheus-lua/Prometheus"
+       ]
+      },
+      {
+       "text": "AntiTamper",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/prometheus-lua/Prometheus"
+       ]
+      },
+      {
+       "text": "WrapInFunction",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/prometheus-lua/Prometheus"
+       ]
+      },
+      {
+       "text": "AddVararg",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/prometheus-lua/Prometheus"
+       ]
+      }
+     ],
+     "samples": {
+      "authorizedPairs": 0,
+      "realOutput": 91,
+      "publicObserved": 0,
+      "notes": "Fixtures were made by running the real tool on programs written for this project."
+     },
+     "capabilities": {
+      "identify": {
+       "available": true,
+       "verified": "real-output-tested"
+      },
+      "trace": {
+       "available": true,
+       "verified": "real-output-tested"
+      },
+      "recover": {
+       "available": true,
+       "verified": "real-output-tested"
+      }
+     },
+     "results": {
+      "fixtures": 91,
+      "syntheticFixtures": 0,
+      "behaviourChecked": 91,
+      "behaviourSame": 87,
+      "traceChecked": 87,
+      "traceIdentical": 87,
+      "toolBroken": 4,
+      "fidelityAfter": 0.819,
+      "runtime": {
+       "source": "reference",
+       "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
+       "measuredAt": "2026-10-25T11:32:40.868Z"
+      },
+      "reproduction": {
+       "rerunAt": "2026-11-09T02:11:15.970Z",
+       "note": "fixtures re-measured on a fresh machine; verdict changes: 0"
+      }
+     },
+     "limitations": [
+      "Vmify (the flattened register VM) is unflattened: the dispatcher is walked, every block is turned back into statements and the control flow is rebuilt (also for the two Vmify layers of the Strong preset). The output behaves like the obfuscated script on real Lua 5.1; the original variable and function names are not in the output and cannot be recovered.",
+      "The anti-tamper check that Medium and Strong compile into the VM is removed by taint analysis when it is separable from the program; if a script mixes the two it is left alone and the step reports why.",
+      "String decoders (EncryptStrings, ConstantArray) are evaluated only when sandboxed evaluation is switched on.",
+      "Recovery of the Strong preset takes several seconds in the browser (the two layers are rebuilt one after the other)."
+     ],
+     "verification": {
+      "status": "real-output-verified",
+      "basis": "fixtures made by the real tool, behaviour decided on reference runtimes"
+     }
+    }
+   ],
+   "claims": {
+    "unversioned": {
+     "claim": "supported",
+     "why": "87 of 91 real-tool fixtures reconstructed with identical behaviour on a reference runtime (lower bound 89%)."
+    }
+   }
+  },
+  {
+   "id": "hercules",
+   "name": "Hercules",
+   "kind": "open-source",
+   "summary": "Open-source Lua obfuscator with a module pipeline (zeusssz).",
+   "versions": [
+    {
+     "id": "unversioned",
+     "label": "as measured (no version split)",
+     "identification": {
+      "methods": [
+       {
+        "kind": "signature",
+        "confidence": 0.8,
+        "note": "structure matched against the tool's own source and its real output"
+       }
+      ],
+      "confidence": 0.8
+     },
+     "characteristics": [
+      {
+       "text": "variable renaming",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/zeusssz/hercules-obfuscator"
+       ]
+      },
+      {
+       "text": "control-flow wrapper",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/zeusssz/hercules-obfuscator"
+       ]
+      },
+      {
+       "text": "Caesar string encoding",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/zeusssz/hercules-obfuscator"
+       ]
+      },
+      {
+       "text": "string-to-expressions",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/zeusssz/hercules-obfuscator"
+       ]
+      },
+      {
+       "text": "opaque predicates",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/zeusssz/hercules-obfuscator"
+       ]
+      },
+      {
+       "text": "garbage code",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/zeusssz/hercules-obfuscator"
+       ]
+      },
+      {
+       "text": "function inlining",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/zeusssz/hercules-obfuscator"
+       ]
+      },
+      {
+       "text": "wrap in function",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/zeusssz/hercules-obfuscator"
+       ]
+      },
+      {
+       "text": "anti-tamper",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/zeusssz/hercules-obfuscator"
+       ]
+      },
+      {
+       "text": "dynamic code",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/zeusssz/hercules-obfuscator"
+       ]
+      },
+      {
+       "text": "bytecode encoding",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/zeusssz/hercules-obfuscator"
+       ]
+      },
+      {
+       "text": "virtual machine",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/zeusssz/hercules-obfuscator"
+       ]
+      },
+      {
+       "text": "compressor",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/zeusssz/hercules-obfuscator"
+       ]
+      }
+     ],
+     "samples": {
+      "authorizedPairs": 0,
+      "realOutput": 115,
+      "publicObserved": 0,
+      "notes": "Fixtures were made by running the real tool on programs written for this project."
+     },
+     "capabilities": {
+      "identify": {
+       "available": true,
+       "verified": "real-output-tested"
+      },
+      "trace": {
+       "available": true,
+       "verified": "real-output-tested"
+      },
+      "recover": {
+       "available": true,
+       "verified": "real-output-tested"
+      }
+     },
+     "results": {
+      "fixtures": 115,
+      "syntheticFixtures": 0,
+      "behaviourChecked": 111,
+      "behaviourSame": 103,
+      "traceChecked": 103,
+      "traceIdentical": 103,
+      "toolBroken": 12,
+      "fidelityAfter": 0.82,
+      "runtime": {
+       "source": "reference",
+       "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
+       "measuredAt": "2026-10-25T11:32:40.868Z"
+      },
+      "reproduction": {
+       "rerunAt": "2026-11-09T02:11:15.970Z",
+       "note": "fixtures re-measured on a fresh machine; verdict changes: 0"
+      }
+     },
+     "limitations": [
+      "The bytecode-encoding module hides a compiled Lua 5.4 chunk behind a hex string and an offset. With sandboxed evaluation on, the chunk is read out, decompiled and put in place of the script; without it the module is only detected. The chunk carries debug information, so the original local and function names come back.",
+      "The virtual-machine module embeds a Lua-in-Lua interpreter and its data. It is detected and flagged; its source is not recovered.",
+      "The tool itself produced non-equivalent output for some module/sample pairs (see the \"tool broken\" column); those cases are excluded from behaviour claims."
+     ],
+     "verification": {
+      "status": "real-output-verified",
+      "basis": "fixtures made by the real tool, behaviour decided on reference runtimes"
+     }
+    }
+   ],
+   "claims": {
+    "unversioned": {
+     "claim": "supported",
+     "why": "103 of 111 real-tool fixtures reconstructed with identical behaviour on a reference runtime (lower bound 86%)."
+    }
+   }
+  },
+  {
+   "id": "moonsec_v3",
+   "name": "MoonSec V3",
+   "kind": "commercial",
+   "summary": "Commercial Roblox-oriented Lua obfuscator with a VM loader.",
+   "versions": [
+    {
+     "id": "unversioned",
+     "label": "as measured (no version split)",
+     "identification": {
+      "methods": [
+       {
+        "kind": "banner",
+        "confidence": 0.7,
+        "note": "banner comment"
+       }
+      ],
+      "confidence": 0.7
+     },
+     "characteristics": [
+      {
+       "text": "VM loader",
+       "knownAs": "inferred",
+       "basis": "listed by the detector without a cited source"
+      },
+      {
+       "text": "constant encoding",
+       "knownAs": "inferred",
+       "basis": "listed by the detector without a cited source"
+      }
+     ],
+     "samples": {
+      "authorizedPairs": 0,
+      "realOutput": 0,
+      "publicObserved": 0,
+      "notes": "No real output of this tool was available."
+     },
+     "capabilities": {
+      "identify": {
+       "available": true,
+       "verified": "format-tested"
+      },
+      "trace": {
+       "available": true,
+       "verified": "unverified"
+      },
+      "recover": {
+       "available": false,
+       "verified": "none"
+      }
+     },
+     "results": {
+      "fixtures": 0,
+      "syntheticFixtures": 0,
+      "behaviourChecked": 0,
+      "behaviourSame": 0,
+      "traceChecked": 0,
+      "traceIdentical": 0,
+      "toolBroken": 0,
+      "fidelityAfter": null,
+      "runtime": null,
+      "reproduction": null
+     },
+     "limitations": [
+      "VM-based loader; not recoverable statically."
+     ],
+     "verification": {
+      "status": "identified",
+      "basis": "recognised from signatures; no reconstruction measured"
+     }
+    }
+   ],
+   "claims": {
+    "unversioned": {
+     "claim": "identification-only",
+     "why": "The output can be recognised. No reconstruction has been verified against real or authorised samples."
+    }
+   }
+  },
+  {
+   "id": "moonveil",
+   "name": "MoonVeil",
+   "kind": "commercial",
+   "summary": "Commercial obfuscator (moonveil.cc) with selectable virtualisation, function encryption and control-flow flattening (macros MV_VM, MV_ENC_FUNC, MV_CFF, MV_OMIT). One real output was read (banner \"generated using MoonVeil 2.0.25\"): functions lifted into a table, flattened bootstrap code, Z85 + XOR strings, bit32 expressions for numbers, and VM-compiled functions stored as one compressed Z85 text (read back from that data by the VM reader when the interpreter has the shape of the script that was studied).",
+   "versions": [
+    {
+     "id": "unversioned",
+     "label": "as measured (no version split)",
+     "identification": {
+      "methods": [
+       {
+        "kind": "banner",
+        "confidence": 0.7,
+        "note": "banner comment"
+       }
+      ],
+      "confidence": 0.7
+     },
+     "characteristics": [
+      {
+       "text": "optional VM",
+       "knownAs": "documented",
+       "sources": [
+        "https://git.openpunk.com/CPunch/MoonVeil-Docs"
+       ]
+      },
+      {
+       "text": "function encryption",
+       "knownAs": "documented",
+       "sources": [
+        "https://git.openpunk.com/CPunch/MoonVeil-Docs"
+       ]
+      },
+      {
+       "text": "control-flow flattening",
+       "knownAs": "documented",
+       "sources": [
+        "https://git.openpunk.com/CPunch/MoonVeil-Docs"
+       ]
+      },
+      {
+       "text": "closure table with cell variables",
+       "knownAs": "documented",
+       "sources": [
+        "https://git.openpunk.com/CPunch/MoonVeil-Docs"
+       ]
+      },
+      {
+       "text": "Z85 + XOR string encryption",
+       "knownAs": "documented",
+       "sources": [
+        "https://git.openpunk.com/CPunch/MoonVeil-Docs"
+       ]
+      },
+      {
+       "text": "bit32 arithmetic constants",
+       "knownAs": "documented",
+       "sources": [
+        "https://git.openpunk.com/CPunch/MoonVeil-Docs"
+       ]
+      }
+     ],
+     "samples": {
+      "authorizedPairs": 0,
+      "realOutput": 0,
+      "publicObserved": 0,
+      "notes": "No real output of this tool was available."
+     },
+     "capabilities": {
+      "identify": {
+       "available": true,
+       "verified": "format-tested"
+      },
+      "trace": {
+       "available": true,
+       "verified": "unverified"
+      },
+      "recover": {
+       "available": true,
+       "verified": "internally-tested"
+      }
+     },
+     "results": {
+      "fixtures": 0,
+      "syntheticFixtures": 0,
+      "behaviourChecked": 0,
+      "behaviourSame": 0,
+      "traceChecked": 0,
+      "traceIdentical": 0,
+      "toolBroken": 0,
+      "fidelityAfter": null,
+      "runtime": null,
+      "reproduction": null
+     },
+     "limitations": [
+      "Read back statically from the one script: the strings (Z85 text plus an XOR cipher), the numbers (bit32 expressions) and the table of cells, which makes the program’s plain Lua readable.",
+      "The function MoonVeil compiled to its own VM is read back too, without running anything. How its data is laid out (field ids, opcode table, instruction layouts), which cell of the interpreter is which builtin and what its helper methods do are all taken from the script’s own interpreter code, so they are not fixed in this tool. The data is decoded, the encrypted part of it is opened by searching for the one small number its key depends on, and every instruction is partially evaluated against the interpreter’s own handlers and structured back into Lua.",
+      "A build whose interpreter has a different shape is not guessed at: the step says which part did not fit and the general passes take over. Only version 2.0.25 and one script were looked at, so other builds and settings (MV_CFF, MV_ENC_FUNC) are unconfirmed.",
+      "Not compared with a run of the original: the report says so and keeps the confidence at medium. A generic for loop of a shape the reader does not know stays as a call to forgprep (the VM’s own step; none is left in the script that was studied), and register capture follows the VM’s model rather than Lua’s scoping, so a few locals are shared where the source had separate ones."
+     ],
+     "verification": {
+      "status": "internally-tested",
+      "basis": "recovery measured on examples that are not real tool output"
+     }
+    }
+   ],
+   "claims": {
+    "unversioned": {
+     "claim": "identification-only",
+     "why": "The output can be recognised. No reconstruction has been verified against real or authorised samples."
+    }
+   }
+  },
+  {
+   "id": "kirus",
+   "name": "Kirus",
+   "kind": "unknown",
+   "summary": "Obfuscator that stamps \"This file was protected by Kirus obfuscator v1.5\". No public source or documentation was found. One real output was read: a bytecode VM written in Lua with a custom base-85 blob, runtime-keyed constant pools and encrypted instruction regions.",
+   "versions": [
+    {
+     "id": "unversioned",
+     "label": "as measured (no version split)",
+     "identification": {
+      "methods": [
+       {
+        "kind": "banner",
+        "confidence": 0.7,
+        "note": "banner comment"
+       }
+      ],
+      "confidence": 0.7
+     },
+     "characteristics": [
+      {
+       "text": "bytecode VM",
+       "knownAs": "inferred",
+       "basis": "listed by the detector without a cited source"
+      },
+      {
+       "text": "custom base-85 encoding",
+       "knownAs": "inferred",
+       "basis": "listed by the detector without a cited source"
+      },
+      {
+       "text": "XOR-built identifier strings",
+       "knownAs": "inferred",
+       "basis": "listed by the detector without a cited source"
+      },
+      {
+       "text": "runtime-keyed constants",
+       "knownAs": "inferred",
+       "basis": "listed by the detector without a cited source"
+      },
+      {
+       "text": "integrity checks",
+       "knownAs": "inferred",
+       "basis": "listed by the detector without a cited source"
+      }
+     ],
+     "samples": {
+      "authorizedPairs": 0,
+      "realOutput": 0,
+      "publicObserved": 0,
+      "notes": "No real output of this tool was available."
+     },
+     "capabilities": {
+      "identify": {
+       "available": true,
+       "verified": "format-tested"
+      },
+      "trace": {
+       "available": true,
+       "verified": "unverified"
+      },
+      "recover": {
+       "available": false,
+       "verified": "none"
+      }
+     },
+     "results": {
+      "fixtures": 0,
+      "syntheticFixtures": 0,
+      "behaviourChecked": 0,
+      "behaviourSame": 0,
+      "traceChecked": 0,
+      "traceIdentical": 0,
+      "toolBroken": 0,
+      "fidelityAfter": null,
+      "runtime": null,
+      "reproduction": null
+     },
+     "limitations": [
+      "A bytecode VM with a custom base-85 container, a keystream and rotation, opaque-predicate dispatch and runtime-keyed constants. The container was cut into regions and measured, not decoded; the program is not recovered.",
+      "The identifiers the VM builds from XOR pairs are decoded by plain arithmetic on literals (loadstring, getgenv, setfenv, getrawmetatable, executor names). That shows what the runtime touches, not what the program does.",
+      "The behavioural trace can say what an authorised run of it does, but only when the user switches it on. Nothing was run for this project."
+     ],
+     "verification": {
+      "status": "identified",
+      "basis": "recognised from signatures; no reconstruction measured"
+     }
+    }
+   ],
+   "claims": {
+    "unversioned": {
+     "claim": "identification-only",
+     "why": "The output can be recognised. No reconstruction has been verified against real or authorised samples."
+    }
+   }
+  },
+  {
+   "id": "ironbrew2",
+   "name": "IronBrew 2",
+   "kind": "open-source",
+   "summary": "Open-source (MIT) Lua 5.1 obfuscator in C# that compiles a script with luac and re-emits it as a custom register VM plus a compressed, XOR-masked program string.",
+   "versions": [
+    {
+     "id": "unversioned",
+     "label": "as measured (no version split)",
+     "identification": {
+      "methods": [
+       {
+        "kind": "signature",
+        "confidence": 0.8,
+        "note": "structure matched against the tool's own source and its real output"
+       }
+      ],
+      "confidence": 0.8
+     },
+     "characteristics": [
+      {
+       "text": "custom bytecode VM",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/Trollicus/ironbrew-2"
+       ]
+      },
+      {
+       "text": "opcode mutation (duplicated handlers)",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/Trollicus/ironbrew-2"
+       ]
+      },
+      {
+       "text": "super operators (fused handlers)",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/Trollicus/ironbrew-2"
+       ]
+      },
+      {
+       "text": "LZW + XOR serialisation",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/Trollicus/ironbrew-2"
+       ]
+      },
+      {
+       "text": "control-flow macros (IB_MAX_CFLOW_START / IB_INLINING_START)",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/Trollicus/ironbrew-2"
+       ]
+      },
+      {
+       "text": "string encryption macro",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/Trollicus/ironbrew-2"
+       ]
+      }
+     ],
+     "samples": {
+      "authorizedPairs": 0,
+      "realOutput": 64,
+      "publicObserved": 0,
+      "notes": "Fixtures were made by running the real tool on programs written for this project."
+     },
+     "capabilities": {
+      "identify": {
+       "available": true,
+       "verified": "real-output-tested"
+      },
+      "trace": {
+       "available": true,
+       "verified": "real-output-tested"
+      },
+      "recover": {
+       "available": true,
+       "verified": "real-output-tested"
+      }
+     },
+     "results": {
+      "fixtures": 64,
+      "syntheticFixtures": 0,
+      "behaviourChecked": 64,
+      "behaviourSame": 64,
+      "traceChecked": 59,
+      "traceIdentical": 59,
+      "toolBroken": 5,
+      "fidelityAfter": 0.897,
+      "runtime": {
+       "source": "reference",
+       "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
+       "measuredAt": "2026-10-25T11:32:40.868Z"
+      },
+      "reproduction": {
+       "rerunAt": "2026-11-09T02:11:15.970Z",
+       "note": "fixtures re-measured on a fresh machine; verdict changes: 0"
+      }
+     },
+     "limitations": [
+      "Recovery reads the embedded chunk instead of running the VM: handlers are identified by shape, operand transforms are solved symbolically, the Lua 5.1 chunk is rebuilt and decompiled. A handler that matches no template stops the recovery with an error instead of guessing.",
+      "Local variable names, comments and the original function layout are not in the bytecode, so they are not recoverable (names are regenerated; some local functions come back as expressions).",
+      "The \"strings\" option decrypts every literal with a routine written out in place. Recovery finds those stretches (only constants, only pure standard functions, no closures) and replaces each by the text it computes, using the sandbox interpreter on that stretch alone; it needs no consent because nothing but the stretch is run. Other register-reuse noise remains, so the result is partial.",
+      "The \"flow\" option of the real tool produced output that does not run correctly on its own for five of eight samples (see the \"tool broken\" column); recovery there is judged against the original program, not against the broken output.",
+      "Only IronBrew 2 as built from the public MIT source is covered. Forks that change the VM template or the serialiser need their own templates."
+     ],
+     "verification": {
+      "status": "real-output-verified",
+      "basis": "fixtures made by the real tool, behaviour decided on reference runtimes"
+     }
+    }
+   ],
+   "claims": {
+    "unversioned": {
+     "claim": "supported",
+     "why": "64 of 64 real-tool fixtures reconstructed with identical behaviour on a reference runtime (lower bound 94%)."
+    }
+   }
+  },
+  {
+   "id": "luaobfuscator",
+   "name": "LuaObfuscator.com",
+   "kind": "unknown",
+   "summary": "Web obfuscation service with several protection levels.",
+   "versions": [
+    {
+     "id": "unversioned",
+     "label": "as measured (no version split)",
+     "identification": {
+      "methods": [
+       {
+        "kind": "signature",
+        "confidence": 0.4,
+        "note": "heuristic"
+       }
+      ],
+      "confidence": 0.4
+     },
+     "characteristics": [
+      {
+       "text": "string escaping",
+       "knownAs": "documented",
+       "sources": [
+        "https://luaobfuscator.com"
+       ]
+      },
+      {
+       "text": "constant tables",
+       "knownAs": "documented",
+       "sources": [
+        "https://luaobfuscator.com"
+       ]
+      },
+      {
+       "text": "optional VM",
+       "knownAs": "documented",
+       "sources": [
+        "https://luaobfuscator.com"
+       ]
+      }
+     ],
+     "samples": {
+      "authorizedPairs": 0,
+      "realOutput": 0,
+      "publicObserved": 0,
+      "notes": "No real output of this tool was available."
+     },
+     "capabilities": {
+      "identify": {
+       "available": true,
+       "verified": "format-tested"
+      },
+      "trace": {
+       "available": true,
+       "verified": "unverified"
+      },
+      "recover": {
+       "available": false,
+       "verified": "none"
+      }
+     },
+     "results": {
+      "fixtures": 0,
+      "syntheticFixtures": 0,
+      "behaviourChecked": 0,
+      "behaviourSame": 0,
+      "traceChecked": 0,
+      "traceIdentical": 0,
+      "toolBroken": 0,
+      "fidelityAfter": null,
+      "runtime": null,
+      "reproduction": null
+     },
+     "limitations": [
+      "No real output obtained to test against."
+     ],
+     "verification": {
+      "status": "identified",
+      "basis": "recognised from signatures; no reconstruction measured"
+     }
+    }
+   ],
+   "claims": {
+    "unversioned": {
+     "claim": "identification-only",
+     "why": "The output can be recognised. No reconstruction has been verified against real or authorised samples."
+    }
+   }
+  },
+  {
+   "id": "fuscator77",
+   "name": "77fuscator",
+   "kind": "unknown",
+   "summary": "Obfuscator seen only through its \"77fuscator <version>\" banner; no documentation was found.",
+   "versions": [
+    {
+     "id": "unversioned",
+     "label": "as measured (no version split)",
+     "identification": {
+      "methods": [
+       {
+        "kind": "banner",
+        "confidence": 0.7,
+        "note": "banner comment"
+       }
+      ],
+      "confidence": 0.7
+     },
+     "characteristics": [],
+     "samples": {
+      "authorizedPairs": 0,
+      "realOutput": 0,
+      "publicObserved": 0,
+      "notes": "No real output of this tool was available."
+     },
+     "capabilities": {
+      "identify": {
+       "available": true,
+       "verified": "format-tested"
+      },
+      "trace": {
+       "available": true,
+       "verified": "unverified"
+      },
+      "recover": {
+       "available": false,
+       "verified": "none"
+      }
+     },
+     "results": {
+      "fixtures": 0,
+      "syntheticFixtures": 0,
+      "behaviourChecked": 0,
+      "behaviourSame": 0,
+      "traceChecked": 0,
+      "traceIdentical": 0,
+      "toolBroken": 0,
+      "fidelityAfter": null,
+      "runtime": null,
+      "reproduction": null
+     },
+     "limitations": [
+      "Structure unknown."
+     ],
+     "verification": {
+      "status": "identified",
+      "basis": "recognised from signatures; no reconstruction measured"
+     }
+    }
+   ],
+   "claims": {
+    "unversioned": {
+     "claim": "identification-only",
+     "why": "The output can be recognised. No reconstruction has been verified against real or authorised samples."
+    }
+   }
+  },
+  {
+   "id": "psu",
+   "name": "PSU",
+   "kind": "commercial",
+   "summary": "Commercial obfuscator mentioned in community threads; no public signature or documentation was found.",
+   "versions": [
+    {
+     "id": "unversioned",
+     "label": "as measured (no version split)",
+     "identification": {
+      "methods": [
+       {
+        "kind": "signature",
+        "confidence": 0.3,
+        "note": "heuristic"
+       }
+      ],
+      "confidence": 0.3
+     },
+     "characteristics": [],
+     "samples": {
+      "authorizedPairs": 0,
+      "realOutput": 0,
+      "publicObserved": 0,
+      "notes": "No real output of this tool was available."
+     },
+     "capabilities": {
+      "identify": {
+       "available": true,
+       "verified": "format-tested"
+      },
+      "trace": {
+       "available": true,
+       "verified": "unverified"
+      },
+      "recover": {
+       "available": false,
+       "verified": "none"
+      }
+     },
+     "results": {
+      "fixtures": 0,
+      "syntheticFixtures": 0,
+      "behaviourChecked": 0,
+      "behaviourSame": 0,
+      "traceChecked": 0,
+      "traceIdentical": 0,
+      "toolBroken": 0,
+      "fidelityAfter": null,
+      "runtime": null,
+      "reproduction": null
+     },
+     "limitations": [
+      "Nothing public to verify against."
+     ],
+     "verification": {
+      "status": "identified",
+      "basis": "recognised from signatures; no reconstruction measured"
+     }
+    }
+   ],
+   "claims": {
+    "unversioned": {
+     "claim": "identification-only",
+     "why": "The output can be recognised. No reconstruction has been verified against real or authorised samples."
+    }
+   }
+  },
+  {
+   "id": "loaders",
+   "name": "Loadstring packers",
+   "kind": "unknown",
+   "summary": "A class of packers, not one tool: the program is encoded and handed to loadstring. The examples were written for this project from the documented encodings; they are not the output of any real obfuscator.",
+   "versions": [
+    {
+     "id": "unversioned",
+     "label": "as measured (no version split)",
+     "identification": {
+      "methods": [
+       {
+        "kind": "signature",
+        "confidence": 0.3,
+        "note": "heuristic"
+       }
+      ],
+      "confidence": 0.3
+     },
+     "characteristics": [
+      {
+       "text": "ASCII codes",
+       "knownAs": "inferred",
+       "basis": "listed by the detector without a cited source"
+      },
+      {
+       "text": "hexadecimal",
+       "knownAs": "inferred",
+       "basis": "listed by the detector without a cited source"
+      },
+      {
+       "text": "binary",
+       "knownAs": "inferred",
+       "basis": "listed by the detector without a cited source"
+      },
+      {
+       "text": "URL escapes",
+       "knownAs": "inferred",
+       "basis": "listed by the detector without a cited source"
+      },
+      {
+       "text": "base64",
+       "knownAs": "inferred",
+       "basis": "listed by the detector without a cited source"
+      },
+      {
+       "text": "XOR cipher",
+       "knownAs": "inferred",
+       "basis": "listed by the detector without a cited source"
+      },
+      {
+       "text": "reversed text",
+       "knownAs": "inferred",
+       "basis": "listed by the detector without a cited source"
+      },
+      {
+       "text": "decimal escapes",
+       "knownAs": "inferred",
+       "basis": "listed by the detector without a cited source"
+      },
+      {
+       "text": "string.char",
+       "knownAs": "inferred",
+       "basis": "listed by the detector without a cited source"
+      },
+      {
+       "text": "string pieces",
+       "knownAs": "inferred",
+       "basis": "listed by the detector without a cited source"
+      },
+      {
+       "text": "layered packers",
+       "knownAs": "inferred",
+       "basis": "listed by the detector without a cited source"
+      }
+     ],
+     "samples": {
+      "authorizedPairs": 0,
+      "realOutput": 0,
+      "publicObserved": 0,
+      "notes": "No real output of this tool was available."
+     },
+     "capabilities": {
+      "identify": {
+       "available": true,
+       "verified": "internally-tested"
+      },
+      "trace": {
+       "available": true,
+       "verified": "unverified"
+      },
+      "recover": {
+       "available": true,
+       "verified": "internally-tested"
+      }
+     },
+     "results": {
+      "fixtures": 0,
+      "syntheticFixtures": 66,
+      "behaviourChecked": 0,
+      "behaviourSame": 0,
+      "traceChecked": 0,
+      "traceIdentical": 0,
+      "toolBroken": 0,
+      "fidelityAfter": 0.998,
+      "runtime": {
+       "source": "reference",
+       "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
+       "measuredAt": "2026-10-25T11:32:40.868Z"
+      },
+      "reproduction": null
+     },
+     "limitations": [
+      "Literal, folded and string.char payloads are unwrapped without running anything. A payload computed by a decoder (hex, base64, XOR, URL escapes, ...) is read only when sandboxed evaluation is on, and only when the script is nothing but that loader: the other statements may use standard libraries and local variables, nothing else.",
+      "A script that does anything else around the loader (touches the game, writes globals, prints) is never replaced wholesale; Dump still shows the text it loads.",
+      "Payloads that read `...`, return values, or need the network (`HttpGet`) are left alone. Compiled Lua 5.1 and 5.4 payloads are decompiled.",
+      "These are generic packers I wrote from the encodings other tools document. Whether a real obfuscator that uses the same encodings is handled depends on its decoder staying within the standard libraries; none of them was run."
+     ],
+     "verification": {
+      "status": "internally-tested",
+      "basis": "recovery measured on examples that are not real tool output"
+     }
+    }
+   ],
+   "claims": {
+    "unversioned": {
+     "claim": "identification-only",
+     "why": "The output can be recognised. No reconstruction has been verified against real or authorised samples."
+    }
+   }
+  },
+  {
+   "id": "colisseum",
+   "name": "Colisseum",
+   "kind": "open-source",
+   "summary": "Open-source (AGPL-3.0) Lua / Luau obfuscator written in Lua (de-TourLLC). Presets easy, medium, hard and full are source-level; total and fortress compile the program for a VM.",
+   "versions": [
+    {
+     "id": "unversioned",
+     "label": "as measured (no version split)",
+     "identification": {
+      "methods": [
+       {
+        "kind": "signature",
+        "confidence": 0.8,
+        "note": "structure matched against the tool's own source and its real output"
+       }
+      ],
+      "confidence": 0.8
+     },
+     "characteristics": [
+      {
+       "text": "minify and rename (coli_ names)",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/de-TourLLC/colisseum"
+       ]
+      },
+      {
+       "text": "encrypted strings",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/de-TourLLC/colisseum"
+       ]
+      },
+      {
+       "text": "constant arrays / split strings",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/de-TourLLC/colisseum"
+       ]
+      },
+      {
+       "text": "control-flow flattening and opaque predicates",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/de-TourLLC/colisseum"
+       ]
+      },
+      {
+       "text": "tamper guard (debug hook, executor globals, replaced standard functions, line-number check)",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/de-TourLLC/colisseum"
+       ]
+      },
+      {
+       "text": "native VM (total)",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/de-TourLLC/colisseum"
+       ]
+      },
+      {
+       "text": "register VM with ChaCha20-encrypted bytecode (fortress)",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/de-TourLLC/colisseum"
+       ]
+      }
+     ],
+     "samples": {
+      "authorizedPairs": 0,
+      "realOutput": 48,
+      "publicObserved": 0,
+      "notes": "Fixtures were made by running the real tool on programs written for this project."
+     },
+     "capabilities": {
+      "identify": {
+       "available": true,
+       "verified": "real-output-tested"
+      },
+      "trace": {
+       "available": true,
+       "verified": "real-output-tested"
+      },
+      "recover": {
+       "available": true,
+       "verified": "real-output-tested"
+      }
+     },
+     "results": {
+      "fixtures": 48,
+      "syntheticFixtures": 0,
+      "behaviourChecked": 48,
+      "behaviourSame": 32,
+      "traceChecked": 48,
+      "traceIdentical": 8,
+      "toolBroken": 0,
+      "fidelityAfter": 0.676,
+      "runtime": {
+       "source": "reference",
+       "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
+       "measuredAt": "2026-10-25T11:32:40.868Z"
+      },
+      "reproduction": {
+       "rerunAt": "2026-11-09T02:11:15.970Z",
+       "note": "fixtures re-measured on a fresh machine; verdict changes: 0"
+      }
+     },
+     "limitations": [
+      "easy, medium, hard and full are source-level: the tamper guard is recognised by its strings and removed without being run, the string decryptor is evaluated in the sandbox, and the junk branches are dropped. The output prints what the original program prints; names are guesses from use.",
+      "The decryptor multiplies past 2^53 and was written for Lua 5.4 integers (it gives noise on Lua 5.1, LuaJIT and Luau doubles). The sandbox therefore evaluates it both ways and keeps the reading that is text; if neither is, the strings are left encoded and the report says so. Without the sandbox the strings stay encoded.",
+      "total (native VM) and fortress (register VM with an encrypted bytecode blob) are detected from the VM entry call and flagged as not recovered: the program exists only as data for an interpreter. Recovery is not attempted.",
+      "The behavioural trace is stopped by the tamper guard of every preset except easy, because the trace’s stand-in environment defines executor functions and the guard counts them (error 0x6B0C). Remove the guard first (medium, hard, full: Deobfuscate, then Trace the result). In the plain sandbox total runs to the end and fortress stops at 0x3E44 (the guard sees the sandbox’s debug library is not native).",
+      "The total and fortress fixtures only run without an instruction-count hook, on LuaJIT: their anti-tamper treats a hook as an attack, so they were verified with tests/corpus/tools/run_lua_nohook.py."
+     ],
+     "verification": {
+      "status": "real-output-verified",
+      "basis": "fixtures made by the real tool, behaviour decided on reference runtimes"
+     }
+    }
+   ],
+   "claims": {
+    "unversioned": {
+     "claim": "partial",
+     "why": "32 of 48 reconstructed with identical behaviour (lower bound 53%)."
+    }
+   }
+  },
+  {
+   "id": "zenfus",
+   "name": "Zenfus",
+   "kind": "open-source",
+   "summary": "Open-source (MIT) obfuscator based on IronBrew 2 (Zaenalos): the script is compiled with luac 5.4 and run by a generated VM.",
+   "versions": [
+    {
+     "id": "unversioned",
+     "label": "as measured (no version split)",
+     "identification": {
+      "methods": [
+       {
+        "kind": "signature",
+        "confidence": 0.8,
+        "note": "structure matched against the tool's own source and its real output"
+       }
+      ],
+      "confidence": 0.8
+     },
+     "characteristics": [
+      {
+       "text": "Lua 5.4 bytecode VM",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/Zaenalos/Zenfus"
+       ]
+      },
+      {
+       "text": "constant encryption",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/Zaenalos/Zenfus"
+       ]
+      },
+      {
+       "text": "dead instruction injection",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/Zaenalos/Zenfus"
+       ]
+      },
+      {
+       "text": "super-operator fusion",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/Zaenalos/Zenfus"
+       ]
+      },
+      {
+       "text": "control flow",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/Zaenalos/Zenfus"
+       ]
+      },
+      {
+       "text": "byte compression",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/Zaenalos/Zenfus"
+       ]
+      }
+     ],
+     "samples": {
+      "authorizedPairs": 0,
+      "realOutput": 8,
+      "publicObserved": 0,
+      "notes": "Fixtures were made by running the real tool on programs written for this project."
+     },
+     "capabilities": {
+      "identify": {
+       "available": true,
+       "verified": "real-output-tested"
+      },
+      "trace": {
+       "available": true,
+       "verified": "real-output-tested"
+      },
+      "recover": {
+       "available": false,
+       "verified": "none"
+      }
+     },
+     "results": {
+      "fixtures": 8,
+      "syntheticFixtures": 0,
+      "behaviourChecked": 8,
+      "behaviourSame": 2,
+      "traceChecked": 2,
+      "traceIdentical": 2,
+      "toolBroken": 6,
+      "fidelityAfter": 0.038,
+      "runtime": {
+       "source": "reference",
+       "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
+       "measuredAt": "2026-10-25T11:32:40.868Z"
+      },
+      "reproduction": {
+       "rerunAt": "2026-11-09T02:11:15.970Z",
+       "note": "fixtures re-measured on a fresh machine; verdict changes: 0"
+      }
+     },
+     "limitations": [
+      "The program is compiled with luac 5.4, its constants are encrypted, dead instructions and super-operators are added, and a generated VM runs the hex-encoded stream. It is detected and flagged as not recovered; no lifter for its instruction format was written.",
+      "The behavioural trace works (the sandbox gained Lua 5.4 bitwise operators, goto, string.unpack, _ENV and integer arithmetic for it) and reproduces what the original program does for every fixture where the tool’s own output is correct. A trace describes one run; it is not the original source.",
+      "Zenfus’s own output misbehaves for six of the eight programs (see the \"tool broken\" column); those fixtures are excluded from behaviour claims."
+     ],
+     "verification": {
+      "status": "real-output-verified",
+      "basis": "fixtures made by the real tool, behaviour decided on reference runtimes"
+     }
+    }
+   ],
+   "claims": {
+    "unversioned": {
+     "claim": "identification-only",
+     "why": "Verified, but only 2 of 8 reconstructed with identical behaviour."
+    }
+   }
+  },
+  {
+   "id": "simple_lua",
+   "name": "Simple-Lua-Obfuscator",
+   "kind": "open-source",
+   "summary": "Small obfuscator (CloudHub111, no licence file): the script is written as codes, base64-encoded, cut into five-character pieces and loaded at run time.",
+   "versions": [
+    {
+     "id": "unversioned",
+     "label": "as measured (no version split)",
+     "identification": {
+      "methods": [
+       {
+        "kind": "signature",
+        "confidence": 0.8,
+        "note": "structure matched against the tool's own source and its real output"
+       }
+      ],
+      "confidence": 0.8
+     },
+     "characteristics": [
+      {
+       "text": "decimal codes",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/CloudHub111/Simple-Lua-Obfuscator"
+       ]
+      },
+      {
+       "text": "base64",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/CloudHub111/Simple-Lua-Obfuscator"
+       ]
+      },
+      {
+       "text": "split into pieces",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/CloudHub111/Simple-Lua-Obfuscator"
+       ]
+      },
+      {
+       "text": "load()",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/CloudHub111/Simple-Lua-Obfuscator"
+       ]
+      }
+     ],
+     "samples": {
+      "authorizedPairs": 0,
+      "realOutput": 8,
+      "publicObserved": 0,
+      "notes": "Fixtures were made by running the real tool on programs written for this project."
+     },
+     "capabilities": {
+      "identify": {
+       "available": true,
+       "verified": "real-output-tested"
+      },
+      "trace": {
+       "available": true,
+       "verified": "real-output-tested"
+      },
+      "recover": {
+       "available": true,
+       "verified": "real-output-tested"
+      }
+     },
+     "results": {
+      "fixtures": 8,
+      "syntheticFixtures": 0,
+      "behaviourChecked": 8,
+      "behaviourSame": 8,
+      "traceChecked": 8,
+      "traceIdentical": 8,
+      "toolBroken": 0,
+      "fidelityAfter": 0.998,
+      "runtime": {
+       "source": "reference",
+       "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
+       "measuredAt": "2026-10-25T11:32:40.868Z"
+      },
+      "reproduction": {
+       "rerunAt": "2026-11-09T02:11:15.970Z",
+       "note": "fixtures re-measured on a fresh machine; verdict changes: 0"
+      }
+     },
+     "limitations": [
+      "The program is written as decimal escapes, base64-encoded, cut into five-character pieces and loaded at run time. With the sandbox on, the loader is run alone to read the text it hands to load, and that text replaces the script. Without the sandbox the layer is only detected.",
+      "This is a loader-style packer: anything the loader does besides decoding (touching other globals, printing) stops the replacement. Variable names of the original are kept because the payload is the original source."
+     ],
+     "verification": {
+      "status": "real-output-verified",
+      "basis": "fixtures made by the real tool, behaviour decided on reference runtimes"
+     }
+    }
+   ],
+   "claims": {
+    "unversioned": {
+     "claim": "partial",
+     "why": "8 of 8 reconstructed with identical behaviour (lower bound 68%)."
+    }
+   }
+  },
+  {
+   "id": "aztupbrew",
+   "name": "AztupBrew",
+   "kind": "unknown",
+   "summary": "A fork of IronBrew 2 (\"AztupBrew(Fork of IronBrew2): obfuscation; Version 2.7.2\" in its output). Only one public sample was found; its VM data layout differs from IronBrew 2, so the IronBrew 2 rebuild does not apply.",
+   "versions": [
+    {
+     "id": "unversioned",
+     "label": "as measured (no version split)",
+     "identification": {
+      "methods": [
+       {
+        "kind": "banner",
+        "confidence": 0.7,
+        "note": "banner comment"
+       }
+      ],
+      "confidence": 0.7
+     },
+     "characteristics": [
+      {
+       "text": "bytecode VM",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/noahcoolboy/bad-aztupbrew-deobfuscator"
+       ]
+      }
+     ],
+     "samples": {
+      "authorizedPairs": 0,
+      "realOutput": 0,
+      "publicObserved": 0,
+      "notes": "No real output of this tool was available."
+     },
+     "capabilities": {
+      "identify": {
+       "available": true,
+       "verified": "format-tested"
+      },
+      "trace": {
+       "available": true,
+       "verified": "unverified"
+      },
+      "recover": {
+       "available": false,
+       "verified": "none"
+      }
+     },
+     "results": {
+      "fixtures": 0,
+      "syntheticFixtures": 0,
+      "behaviourChecked": 0,
+      "behaviourSame": 0,
+      "traceChecked": 0,
+      "traceIdentical": 0,
+      "toolBroken": 0,
+      "fidelityAfter": null,
+      "runtime": null,
+      "reproduction": null
+     },
+     "limitations": [
+      "A fork of IronBrew 2 whose VM data layout differs from the one the IronBrew 2 rebuild reads. The rebuild is not attempted on it; a VM is reported as not recovered.",
+      "The trace of the one sample reproduces its output. With one sample, nothing is known about how other settings of the tool look."
+     ],
+     "verification": {
+      "status": "identified",
+      "basis": "recognised from signatures; no reconstruction measured"
+     }
+    }
+   ],
+   "claims": {
+    "unversioned": {
+     "claim": "identification-only",
+     "why": "The output can be recognised. No reconstruction has been verified against real or authorised samples."
+    }
+   }
+  },
+  {
+   "id": "joker",
+   "name": "Joker Obfuscator",
+   "kind": "unknown",
+   "summary": "Paid service (jokerobfuscator.com). Its GitHub repository holds only a README with screenshots: no code and no sample output.",
+   "versions": [
+    {
+     "id": "unversioned",
+     "label": "as measured (no version split)",
+     "identification": {
+      "methods": [
+       {
+        "kind": "signature",
+        "confidence": 0.3,
+        "note": "heuristic"
+       }
+      ],
+      "confidence": 0.3
+     },
+     "characteristics": [],
+     "samples": {
+      "authorizedPairs": 0,
+      "realOutput": 0,
+      "publicObserved": 0,
+      "notes": "No real output of this tool was available."
+     },
+     "capabilities": {
+      "identify": {
+       "available": true,
+       "verified": "format-tested"
+      },
+      "trace": {
+       "available": true,
+       "verified": "unverified"
+      },
+      "recover": {
+       "available": false,
+       "verified": "none"
+      }
+     },
+     "results": {
+      "fixtures": 0,
+      "syntheticFixtures": 0,
+      "behaviourChecked": 0,
+      "behaviourSame": 0,
+      "traceChecked": 0,
+      "traceIdentical": 0,
+      "toolBroken": 0,
+      "fidelityAfter": null,
+      "runtime": null,
+      "reproduction": null
+     },
+     "limitations": [
+      "The repository is a README with screenshots: no code and no sample output. Nothing to verify against."
+     ],
+     "verification": {
+      "status": "identified",
+      "basis": "recognised from signatures; no reconstruction measured"
+     }
+    }
+   ],
+   "claims": {
+    "unversioned": {
+     "claim": "identification-only",
+     "why": "The output can be recognised. No reconstruction has been verified against real or authorised samples."
+    }
+   }
+  },
+  {
+   "id": "zerolua",
+   "name": "Zero Lua",
+   "kind": "unknown",
+   "summary": "Hosted Roblox obfuscator (zerolua.pages.dev). Its GitHub repository holds only a README; no code and no sample output.",
+   "versions": [
+    {
+     "id": "unversioned",
+     "label": "as measured (no version split)",
+     "identification": {
+      "methods": [
+       {
+        "kind": "signature",
+        "confidence": 0.3,
+        "note": "heuristic"
+       }
+      ],
+      "confidence": 0.3
+     },
+     "characteristics": [],
+     "samples": {
+      "authorizedPairs": 0,
+      "realOutput": 0,
+      "publicObserved": 0,
+      "notes": "No real output of this tool was available."
+     },
+     "capabilities": {
+      "identify": {
+       "available": true,
+       "verified": "format-tested"
+      },
+      "trace": {
+       "available": true,
+       "verified": "unverified"
+      },
+      "recover": {
+       "available": false,
+       "verified": "none"
+      }
+     },
+     "results": {
+      "fixtures": 0,
+      "syntheticFixtures": 0,
+      "behaviourChecked": 0,
+      "behaviourSame": 0,
+      "traceChecked": 0,
+      "traceIdentical": 0,
+      "toolBroken": 0,
+      "fidelityAfter": null,
+      "runtime": null,
+      "reproduction": null
+     },
+     "limitations": [
+      "The repository is a README: no code and no sample output. The service is hosted; its output was not available."
+     ],
+     "verification": {
+      "status": "identified",
+      "basis": "recognised from signatures; no reconstruction measured"
+     }
+    }
+   ],
+   "claims": {
+    "unversioned": {
+     "claim": "identification-only",
+     "why": "The output can be recognised. No reconstruction has been verified against real or authorised samples."
+    }
+   }
+  },
+  {
+   "id": "fivem_strong",
+   "name": "Strong FiveM Lua Obfuscator",
+   "kind": "unknown",
+   "summary": "Paid service advertised through a Discord invite. Its GitHub repository holds a README and a file containing the invite: no code and no sample output.",
+   "versions": [
+    {
+     "id": "unversioned",
+     "label": "as measured (no version split)",
+     "identification": {
+      "methods": [
+       {
+        "kind": "signature",
+        "confidence": 0.3,
+        "note": "heuristic"
+       }
+      ],
+      "confidence": 0.3
+     },
+     "characteristics": [],
+     "samples": {
+      "authorizedPairs": 0,
+      "realOutput": 0,
+      "publicObserved": 0,
+      "notes": "No real output of this tool was available."
+     },
+     "capabilities": {
+      "identify": {
+       "available": true,
+       "verified": "format-tested"
+      },
+      "trace": {
+       "available": true,
+       "verified": "unverified"
+      },
+      "recover": {
+       "available": false,
+       "verified": "none"
+      }
+     },
+     "results": {
+      "fixtures": 0,
+      "syntheticFixtures": 0,
+      "behaviourChecked": 0,
+      "behaviourSame": 0,
+      "traceChecked": 0,
+      "traceIdentical": 0,
+      "toolBroken": 0,
+      "fidelityAfter": null,
+      "runtime": null,
+      "reproduction": null
+     },
+     "limitations": [
+      "The repository is an advertisement for a paid service: a README and a file holding a Discord invite."
+     ],
+     "verification": {
+      "status": "identified",
+      "basis": "recognised from signatures; no reconstruction measured"
+     }
+    }
+   ],
+   "claims": {
+    "unversioned": {
+     "claim": "identification-only",
+     "why": "The output can be recognised. No reconstruction has been verified against real or authorised samples."
+    }
+   }
+  },
+  {
+   "id": "neuroforge",
+   "name": "NeuroForge VM",
+   "kind": "unknown",
+   "summary": "The name used by the repository \"Lua-Polymorph-VM-Forge\". It contains no Lua code: a marketing README, images, and an obfuscated web page with a download button. Treat it as untrusted; nothing in it was run.",
+   "versions": [
+    {
+     "id": "unversioned",
+     "label": "as measured (no version split)",
+     "identification": {
+      "methods": [
+       {
+        "kind": "signature",
+        "confidence": 0.3,
+        "note": "heuristic"
+       }
+      ],
+      "confidence": 0.3
+     },
+     "characteristics": [],
+     "samples": {
+      "authorizedPairs": 0,
+      "realOutput": 0,
+      "publicObserved": 0,
+      "notes": "No real output of this tool was available."
+     },
+     "capabilities": {
+      "identify": {
+       "available": true,
+       "verified": "format-tested"
+      },
+      "trace": {
+       "available": true,
+       "verified": "unverified"
+      },
+      "recover": {
+       "available": false,
+       "verified": "none"
+      }
+     },
+     "results": {
+      "fixtures": 0,
+      "syntheticFixtures": 0,
+      "behaviourChecked": 0,
+      "behaviourSame": 0,
+      "traceChecked": 0,
+      "traceIdentical": 0,
+      "toolBroken": 0,
+      "fidelityAfter": null,
+      "runtime": null,
+      "reproduction": null
+     },
+     "limitations": [
+      "The repository (Lua-Polymorph-VM-Forge) contains no Lua: a README, images, an hourly workflow that rewrites a stamp file, and an obfuscated web page with a download button. It was read as text only and nothing from it was run. Treat it as untrusted."
+     ],
+     "verification": {
+      "status": "identified",
+      "basis": "recognised from signatures; no reconstruction measured"
+     }
+    }
+   ],
+   "claims": {
+    "unversioned": {
+     "claim": "identification-only",
+     "why": "The output can be recognised. No reconstruction has been verified against real or authorised samples."
+    }
+   }
+  },
+  {
+   "id": "stealthx",
+   "name": "Stealth-X",
+   "kind": "unknown",
+   "summary": "Hosted obfuscator for Lua 5.1 and Luau (Roblox) with a Beautify, Minify, Weak (no VM) and four VM presets. Its output starts with an ASCII-art header reading \"This file secured by StealthxProtect Gen3.2\". Only the five sample outputs in its public repository were read; the repository has no licence and no source.",
+   "versions": [
+    {
+     "id": "unversioned",
+     "label": "as measured (no version split)",
+     "identification": {
+      "methods": [
+       {
+        "kind": "banner",
+        "confidence": 0.7,
+        "note": "banner comment"
+       }
+      ],
+      "confidence": 0.7
+     },
+     "characteristics": [
+      {
+       "text": "constant array with swaps",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/naells/Stealth-X-Obfuscator"
+       ]
+      },
+      {
+       "text": "string encryption",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/naells/Stealth-X-Obfuscator"
+       ]
+      },
+      {
+       "text": "bytecode VM",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/naells/Stealth-X-Obfuscator"
+       ]
+      },
+      {
+       "text": "handler table keyed by 32-bit numbers",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/naells/Stealth-X-Obfuscator"
+       ]
+      },
+      {
+       "text": "per-handler operand offsets",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/naells/Stealth-X-Obfuscator"
+       ]
+      }
+     ],
+     "samples": {
+      "authorizedPairs": 0,
+      "realOutput": 0,
+      "publicObserved": 0,
+      "notes": "No real output of this tool was available."
+     },
+     "capabilities": {
+      "identify": {
+       "available": true,
+       "verified": "format-tested"
+      },
+      "trace": {
+       "available": true,
+       "verified": "unverified"
+      },
+      "recover": {
+       "available": false,
+       "verified": "none"
+      }
+     },
+     "results": {
+      "fixtures": 0,
+      "syntheticFixtures": 0,
+      "behaviourChecked": 0,
+      "behaviourSame": 0,
+      "traceChecked": 0,
+      "traceIdentical": 0,
+      "toolBroken": 0,
+      "fidelityAfter": null,
+      "runtime": null,
+      "reproduction": null
+     },
+     "limitations": [
+      "The four VM presets are detected and flagged as not recovered. Before this signature existed they were rated as plain minified code at 90% confidence, which was wrong.",
+      "The Weak preset has a constant array with swaps and a string cipher; its structure also matches the Prometheus rules (80%). Which of the two it resembles is not decided here.",
+      "Only one program was seen at each preset, so how the tool treats other code is unknown. The hosted tool was not used."
+     ],
+     "verification": {
+      "status": "identified",
+      "basis": "recognised from signatures; no reconstruction measured"
+     }
+    }
+   ],
+   "claims": {
+    "unversioned": {
+     "claim": "identification-only",
+     "why": "The output can be recognised. No reconstruction has been verified against real or authorised samples."
+    }
+   }
+  },
+  {
+   "id": "azurevm",
+   "name": "AzureVM",
+   "kind": "open-source",
+   "summary": "Open-source (MIT) Lua 5.1 VM obfuscator by LionHub-Pino, built on Prometheus. Reads Lua 5.1 bytecode and emits an interpreter with an encoded payload: seeded opcode map, rolling instruction encoding, per-prototype field layouts. Preset names with \"Luraph\" in them are its own labels (its README says it is not Luraph); its payload is tagged \"LPH\" like Luraph’s.",
+   "versions": [
+    {
+     "id": "unversioned",
+     "label": "as measured (no version split)",
+     "identification": {
+      "methods": [
+       {
+        "kind": "signature",
+        "confidence": 0.8,
+        "note": "structure matched against the tool's own source and its real output"
+       }
+      ],
+      "confidence": 0.8
+     },
+     "characteristics": [
+      {
+       "text": "Lua 5.1 bytecode VM",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/LionHub-Pino/AzureVM"
+       ]
+      },
+      {
+       "text": "seeded opcode mapping",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/LionHub-Pino/AzureVM"
+       ]
+      },
+      {
+       "text": "rolling instruction encoding",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/LionHub-Pino/AzureVM"
+       ]
+      },
+      {
+       "text": "per-prototype field layouts",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/LionHub-Pino/AzureVM"
+       ]
+      },
+      {
+       "text": "per-string nonce stream",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/LionHub-Pino/AzureVM"
+       ]
+      },
+      {
+       "text": "control-flow flattening",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/LionHub-Pino/AzureVM"
+       ]
+      },
+      {
+       "text": "opaque predicates",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/LionHub-Pino/AzureVM"
+       ]
+      },
+      {
+       "text": "MBA constants",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/LionHub-Pino/AzureVM"
+       ]
+      },
+      {
+       "text": "payload retry wrapper",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/LionHub-Pino/AzureVM"
+       ]
+      }
+     ],
+     "samples": {
+      "authorizedPairs": 0,
+      "realOutput": 48,
+      "publicObserved": 0,
+      "notes": "Fixtures were made by running the real tool on programs written for this project."
+     },
+     "capabilities": {
+      "identify": {
+       "available": true,
+       "verified": "real-output-tested"
+      },
+      "trace": {
+       "available": true,
+       "verified": "real-output-tested"
+      },
+      "recover": {
+       "available": false,
+       "verified": "none"
+      }
+     },
+     "results": {
+      "fixtures": 48,
+      "syntheticFixtures": 0,
+      "behaviourChecked": 48,
+      "behaviourSame": 47,
+      "traceChecked": 47,
+      "traceIdentical": 47,
+      "toolBroken": 1,
+      "fidelityAfter": 0.134,
+      "runtime": {
+       "source": "reference",
+       "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
+       "measuredAt": "2026-10-25T11:32:40.868Z"
+      },
+      "reproduction": {
+       "rerunAt": "2026-11-09T02:11:15.970Z",
+       "note": "fixtures re-measured on a fresh machine; verdict changes: 0"
+      }
+     },
+     "limitations": [
+      "The program is compiled to Lua 5.1 bytecode, its instructions are encoded with a seeded opcode map and a rolling cipher, and a generated interpreter runs it. The VM is detected and flagged as not recovered; no lifter for this format was written.",
+      "The Balanced preset is not a VM: its Prometheus-style transforms are partly reverted by the existing passes.",
+      "Presets named after Luraph are the tool’s own labels; its README says it is not Luraph. The payload tag LPH is the same three letters Luraph uses, which is a naming overlap, not evidence of shared code.",
+      "Fixtures were generated here by running the tool inside the isolated harness; its outputs are committed because the licence is MIT."
+     ],
+     "verification": {
+      "status": "real-output-verified",
+      "basis": "fixtures made by the real tool, behaviour decided on reference runtimes"
+     }
+    }
+   ],
+   "claims": {
+    "unversioned": {
+     "claim": "supported",
+     "why": "47 of 48 real-tool fixtures reconstructed with identical behaviour on a reference runtime (lower bound 89%)."
+    }
+   }
+  },
+  {
+   "id": "simple_html",
+   "name": "Simple Open source Lua Obfuscator (page)",
+   "kind": "open-source",
+   "summary": "A single HTML page (iamsopotatoe, MIT) that strips comments, renames locals with regular expressions, encodes strings for a _D decoder, writes numbers as sums, and adds junk statements and always-true wrappers. Its author says it gives no meaningful protection and may break code.",
+   "versions": [
+    {
+     "id": "unversioned",
+     "label": "as measured (no version split)",
+     "identification": {
+      "methods": [
+       {
+        "kind": "signature",
+        "confidence": 0.8,
+        "note": "structure matched against the tool's own source and its real output"
+       }
+      ],
+      "confidence": 0.8
+     },
+     "characteristics": [
+      {
+       "text": "comment stripping",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/iamsopotatoe-coder/simple-lua-obfuscator"
+       ]
+      },
+      {
+       "text": "local renaming",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/iamsopotatoe-coder/simple-lua-obfuscator"
+       ]
+      },
+      {
+       "text": "string codes with a key decoder",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/iamsopotatoe-coder/simple-lua-obfuscator"
+       ]
+      },
+      {
+       "text": "numbers as sums",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/iamsopotatoe-coder/simple-lua-obfuscator"
+       ]
+      },
+      {
+       "text": "junk statements",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/iamsopotatoe-coder/simple-lua-obfuscator"
+       ]
+      },
+      {
+       "text": "opaque predicates",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/iamsopotatoe-coder/simple-lua-obfuscator"
+       ]
+      }
+     ],
+     "samples": {
+      "authorizedPairs": 0,
+      "realOutput": 8,
+      "publicObserved": 0,
+      "notes": "Fixtures were made by running the real tool on programs written for this project."
+     },
+     "capabilities": {
+      "identify": {
+       "available": true,
+       "verified": "real-output-tested"
+      },
+      "trace": {
+       "available": true,
+       "verified": "real-output-tested"
+      },
+      "recover": {
+       "available": true,
+       "verified": "real-output-tested"
+      }
+     },
+     "results": {
+      "fixtures": 8,
+      "syntheticFixtures": 0,
+      "behaviourChecked": 8,
+      "behaviourSame": 5,
+      "traceChecked": 5,
+      "traceIdentical": 5,
+      "toolBroken": 3,
+      "fidelityAfter": 0.993,
+      "runtime": {
+       "source": "reference",
+       "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
+       "measuredAt": "2026-10-25T11:32:40.868Z"
+      },
+      "reproduction": {
+       "rerunAt": "2026-11-09T02:11:15.970Z",
+       "note": "fixtures re-measured on a fresh machine; verdict changes: 0"
+      }
+     },
+     "limitations": [
+      "The page renames locals by regular expression (so it can break code that its author did not test) and writes strings as number lists for the _D decoder. The decoder is a subtraction with wrap-around, recognised only in the exact form the page writes it and computed on the literal lists, so no sandbox is needed.",
+      "Three of the eight outputs of the page itself do not behave like their originals (its regular-expression renaming breaks some programs), so behaviour is only compared for the other five.",
+      "The author says in the page itself that it gives no meaningful protection. The numbers here measure how much of the original is recovered, not how strong the tool is."
+     ],
+     "verification": {
+      "status": "real-output-verified",
+      "basis": "fixtures made by the real tool, behaviour decided on reference runtimes"
+     }
+    }
+   ],
+   "claims": {
+    "unversioned": {
+     "claim": "partial",
+     "why": "5 of 8 reconstructed with identical behaviour (lower bound 31%)."
+    }
+   }
+  },
+  {
+   "id": "clyde",
+   "name": "Clyde",
+   "kind": "open-source",
+   "summary": "Open-source (MIT) Luau obfuscator written in TypeScript (sfr-development), also sold as a hosted service (\"Clyde V3\"): AST passes, then optional stack-VM output with an ASCII-art header. Its README warns of rebrands by others.",
+   "versions": [
+    {
+     "id": "unversioned",
+     "label": "as measured (no version split)",
+     "identification": {
+      "methods": [
+       {
+        "kind": "signature",
+        "confidence": 0.8,
+        "note": "structure matched against the tool's own source and its real output"
+       }
+      ],
+      "confidence": 0.8
+     },
+     "characteristics": [
+      {
+       "text": "local renaming",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/sfr-development/Lua-Obfuscator-Clyde-Protection"
+       ]
+      },
+      {
+       "text": "string encoding",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/sfr-development/Lua-Obfuscator-Clyde-Protection"
+       ]
+      },
+      {
+       "text": "control-flow scrambling",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/sfr-development/Lua-Obfuscator-Clyde-Protection"
+       ]
+      },
+      {
+       "text": "stack VM",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/sfr-development/Lua-Obfuscator-Clyde-Protection"
+       ]
+      },
+      {
+       "text": "register VM",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/sfr-development/Lua-Obfuscator-Clyde-Protection"
+       ]
+      },
+      {
+       "text": "LZSS compression and cipher layers (max)",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/sfr-development/Lua-Obfuscator-Clyde-Protection"
+       ]
+      }
+     ],
+     "samples": {
+      "authorizedPairs": 0,
+      "realOutput": 25,
+      "publicObserved": 0,
+      "notes": "Fixtures were made by running the real tool on programs written for this project."
+     },
+     "capabilities": {
+      "identify": {
+       "available": true,
+       "verified": "real-output-tested"
+      },
+      "trace": {
+       "available": true,
+       "verified": "real-output-tested"
+      },
+      "recover": {
+       "available": true,
+       "verified": "real-output-tested"
+      }
+     },
+     "results": {
+      "fixtures": 25,
+      "syntheticFixtures": 0,
+      "behaviourChecked": 25,
+      "behaviourSame": 24,
+      "traceChecked": 24,
+      "traceIdentical": 24,
+      "toolBroken": 1,
+      "fidelityAfter": 0.637,
+      "runtime": {
+       "source": "reference",
+       "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
+       "measuredAt": "2026-10-25T11:32:40.868Z"
+      },
+      "reproduction": {
+       "rerunAt": "2026-11-09T02:11:15.970Z",
+       "note": "fixtures re-measured on a fresh machine; verdict changes: 0"
+      }
+     },
+     "limitations": [
+      "The rename and string/flow modes are reverted statically. The VM modes (vm, vm-max) hide the program behind a stack or register VM and are detected and flagged as not recovered.",
+      "The repository’s README warns of rebrands and sellers using the name. The header seen in output is the hosted service’s, so a script with it may come from the service rather than from the open-source build; this is not a finding about who made a script.",
+      "vm-max (LZSS plus a cipher layer) could not be run on the reference interpreters here, so its behaviour was not compared."
+     ],
+     "verification": {
+      "status": "real-output-verified",
+      "basis": "fixtures made by the real tool, behaviour decided on reference runtimes"
+     }
+    }
+   ],
+   "claims": {
+    "unversioned": {
+     "claim": "supported",
+     "why": "24 of 25 real-tool fixtures reconstructed with identical behaviour on a reference runtime (lower bound 80%)."
+    }
+   }
+  },
+  {
+   "id": "ironveil",
+   "name": "IronVeil",
+   "kind": "unknown",
+   "summary": "No public documentation or sample output was found.",
+   "versions": [
+    {
+     "id": "unversioned",
+     "label": "as measured (no version split)",
+     "identification": {
+      "methods": [
+       {
+        "kind": "signature",
+        "confidence": 0.3,
+        "note": "heuristic"
+       }
+      ],
+      "confidence": 0.3
+     },
+     "characteristics": [],
+     "samples": {
+      "authorizedPairs": 0,
+      "realOutput": 0,
+      "publicObserved": 0,
+      "notes": "No real output of this tool was available."
+     },
+     "capabilities": {
+      "identify": {
+       "available": true,
+       "verified": "format-tested"
+      },
+      "trace": {
+       "available": true,
+       "verified": "unverified"
+      },
+      "recover": {
+       "available": false,
+       "verified": "none"
+      }
+     },
+     "results": {
+      "fixtures": 0,
+      "syntheticFixtures": 0,
+      "behaviourChecked": 0,
+      "behaviourSame": 0,
+      "traceChecked": 0,
+      "traceIdentical": 0,
+      "toolBroken": 0,
+      "fidelityAfter": null,
+      "runtime": null,
+      "reproduction": null
+     },
+     "limitations": [
+      "Nothing public to verify against."
+     ],
+     "verification": {
+      "status": "identified",
+      "basis": "recognised from signatures; no reconstruction measured"
+     }
+    }
+   ],
+   "claims": {
+    "unversioned": {
+     "claim": "identification-only",
+     "why": "The output can be recognised. No reconstruction has been verified against real or authorised samples."
+    }
+   }
+  },
+  {
+   "id": "goofyscator",
+   "name": "Goofyscator",
+   "kind": "unknown",
+   "summary": "No public documentation or sample output was found.",
+   "versions": [
+    {
+     "id": "unversioned",
+     "label": "as measured (no version split)",
+     "identification": {
+      "methods": [
+       {
+        "kind": "signature",
+        "confidence": 0.3,
+        "note": "heuristic"
+       }
+      ],
+      "confidence": 0.3
+     },
+     "characteristics": [],
+     "samples": {
+      "authorizedPairs": 0,
+      "realOutput": 0,
+      "publicObserved": 0,
+      "notes": "No real output of this tool was available."
+     },
+     "capabilities": {
+      "identify": {
+       "available": true,
+       "verified": "format-tested"
+      },
+      "trace": {
+       "available": true,
+       "verified": "unverified"
+      },
+      "recover": {
+       "available": false,
+       "verified": "none"
+      }
+     },
+     "results": {
+      "fixtures": 0,
+      "syntheticFixtures": 0,
+      "behaviourChecked": 0,
+      "behaviourSame": 0,
+      "traceChecked": 0,
+      "traceIdentical": 0,
+      "toolBroken": 0,
+      "fidelityAfter": null,
+      "runtime": null,
+      "reproduction": null
+     },
+     "limitations": [
+      "Nothing public to verify against."
+     ],
+     "verification": {
+      "status": "identified",
+      "basis": "recognised from signatures; no reconstruction measured"
+     }
+    }
+   ],
+   "claims": {
+    "unversioned": {
+     "claim": "identification-only",
+     "why": "The output can be recognised. No reconstruction has been verified against real or authorised samples."
+    }
+   }
+  },
+  {
+   "id": "xhider",
+   "name": "XHider",
+   "kind": "unknown",
+   "summary": "No public documentation or sample output was found.",
+   "versions": [
+    {
+     "id": "unversioned",
+     "label": "as measured (no version split)",
+     "identification": {
+      "methods": [
+       {
+        "kind": "signature",
+        "confidence": 0.3,
+        "note": "heuristic"
+       }
+      ],
+      "confidence": 0.3
+     },
+     "characteristics": [],
+     "samples": {
+      "authorizedPairs": 0,
+      "realOutput": 0,
+      "publicObserved": 0,
+      "notes": "No real output of this tool was available."
+     },
+     "capabilities": {
+      "identify": {
+       "available": true,
+       "verified": "format-tested"
+      },
+      "trace": {
+       "available": true,
+       "verified": "unverified"
+      },
+      "recover": {
+       "available": false,
+       "verified": "none"
+      }
+     },
+     "results": {
+      "fixtures": 0,
+      "syntheticFixtures": 0,
+      "behaviourChecked": 0,
+      "behaviourSame": 0,
+      "traceChecked": 0,
+      "traceIdentical": 0,
+      "toolBroken": 0,
+      "fidelityAfter": null,
+      "runtime": null,
+      "reproduction": null
+     },
+     "limitations": [
+      "Nothing public to verify against."
+     ],
+     "verification": {
+      "status": "identified",
+      "basis": "recognised from signatures; no reconstruction measured"
+     }
+    }
+   ],
+   "claims": {
+    "unversioned": {
+     "claim": "identification-only",
+     "why": "The output can be recognised. No reconstruction has been verified against real or authorised samples."
+    }
+   }
+  },
+  {
+   "id": "synapse_xen",
+   "name": "Synapse Xen",
+   "kind": "commercial",
+   "summary": "Historic commercial obfuscator bundled with an exploit executor; mentioned in community guides.",
+   "versions": [
+    {
+     "id": "unversioned",
+     "label": "as measured (no version split)",
+     "identification": {
+      "methods": [
+       {
+        "kind": "signature",
+        "confidence": 0.3,
+        "note": "heuristic"
+       }
+      ],
+      "confidence": 0.3
+     },
+     "characteristics": [],
+     "samples": {
+      "authorizedPairs": 0,
+      "realOutput": 0,
+      "publicObserved": 0,
+      "notes": "No real output of this tool was available."
+     },
+     "capabilities": {
+      "identify": {
+       "available": true,
+       "verified": "format-tested"
+      },
+      "trace": {
+       "available": true,
+       "verified": "unverified"
+      },
+      "recover": {
+       "available": false,
+       "verified": "none"
+      }
+     },
+     "results": {
+      "fixtures": 0,
+      "syntheticFixtures": 0,
+      "behaviourChecked": 0,
+      "behaviourSame": 0,
+      "traceChecked": 0,
+      "traceIdentical": 0,
+      "toolBroken": 0,
+      "fidelityAfter": null,
+      "runtime": null,
+      "reproduction": null
+     },
+     "limitations": [
+      "Nothing public to verify against."
+     ],
+     "verification": {
+      "status": "identified",
+      "basis": "recognised from signatures; no reconstruction measured"
+     }
+    }
+   ],
+   "claims": {
+    "unversioned": {
+     "claim": "identification-only",
+     "why": "The output can be recognised. No reconstruction has been verified against real or authorised samples."
+    }
+   }
+  },
+  {
+   "id": "wearedevs",
+   "name": "WeAreDevs Obfuscator",
+   "kind": "unknown",
+   "summary": "Web obfuscator referenced by community deobfuscation prompts; output format not verified.",
+   "versions": [
+    {
+     "id": "unversioned",
+     "label": "as measured (no version split)",
+     "identification": {
+      "methods": [
+       {
+        "kind": "signature",
+        "confidence": 0.3,
+        "note": "heuristic"
+       }
+      ],
+      "confidence": 0.3
+     },
+     "characteristics": [],
+     "samples": {
+      "authorizedPairs": 0,
+      "realOutput": 0,
+      "publicObserved": 0,
+      "notes": "No real output of this tool was available."
+     },
+     "capabilities": {
+      "identify": {
+       "available": true,
+       "verified": "format-tested"
+      },
+      "trace": {
+       "available": true,
+       "verified": "unverified"
+      },
+      "recover": {
+       "available": false,
+       "verified": "none"
+      }
+     },
+     "results": {
+      "fixtures": 0,
+      "syntheticFixtures": 0,
+      "behaviourChecked": 0,
+      "behaviourSame": 0,
+      "traceChecked": 0,
+      "traceIdentical": 0,
+      "toolBroken": 0,
+      "fidelityAfter": null,
+      "runtime": null,
+      "reproduction": null
+     },
+     "limitations": [
+      "Output format not verified."
+     ],
+     "verification": {
+      "status": "identified",
+      "basis": "recognised from signatures; no reconstruction measured"
+     }
+    }
+   ],
+   "claims": {
+    "unversioned": {
+     "claim": "identification-only",
+     "why": "The output can be recognised. No reconstruction has been verified against real or authorised samples."
+    }
+   }
+  },
+  {
+   "id": "lab-xorpack",
+   "name": "Lab custom system: stream-cipher strings",
+   "kind": "lab-made",
+   "summary": "Signature learned from controlled samples of a protector written for this laboratory; not a third-party tool.",
+   "versions": [
+    {
+     "id": "lab-1",
+     "label": "lab generator 1",
+     "identification": {
+      "methods": [
+       {
+        "kind": "signature",
+        "confidence": 0.8,
+        "note": "learned from 16 programs, measured on 16 held-out programs: precision 1, recall 1"
+       }
+      ],
+      "confidence": 0.8
+     },
+     "characteristics": [
+      {
+       "text": "signature: strings:none & shape:decoder-loop & shape:stream-arithmetic",
+       "knownAs": "observed",
+       "sources": [
+        "data/research/study.json"
+       ]
+      }
+     ],
+     "samples": {
+      "authorizedPairs": 0,
+      "realOutput": 16,
+      "publicObserved": 0,
+      "notes": "Output of a protector written for the laboratory, applied to generated programs."
+     },
+     "capabilities": {
+      "identify": {
+       "available": true,
+       "verified": "real-output-tested"
+      },
+      "trace": {
+       "available": false,
+       "verified": "none"
+      },
+      "recover": {
+       "available": true,
+       "verified": "real-output-tested"
+      }
+     },
+     "results": {
+      "fixtures": 16,
+      "syntheticFixtures": 0,
+      "behaviourChecked": 16,
+      "behaviourSame": 16,
+      "toolBroken": 0,
+      "fidelityBefore": 0.532,
+      "fidelityAfter": 0.991,
+      "runtime": {
+       "source": "reference",
+       "runtimes": "lua51+luajit (reference, decides); quicksilver-sandbox (cross-check)",
+       "measuredAt": "2026-11-09T02:26:16.755Z"
+      },
+      "plan": "nexus+sandbox",
+      "note": "behaviourSame counts verified successes: identical behaviour AND a reconstruction better than the input"
+     },
+     "limitations": [
+      "A system written for this laboratory: what it shows is how the engine handles that KIND of transformation, not how it handles any third-party tool.",
+      "Measured on generated programs only."
+     ],
+     "verification": {
+      "status": "real-output-verified",
+      "basis": "output of the lab's own tool, behaviour decided on reference runtimes"
+     }
+    }
+   ],
+   "claims": {
+    "lab-1": {
+     "claim": "supported",
+     "why": "16 of 16 real-tool fixtures reconstructed with identical behaviour on a reference runtime (lower bound 81%)."
+    }
+   }
+  },
+  {
+   "id": "lab-loadwrap",
+   "name": "Lab custom system: program as bytes behind loadstring",
+   "kind": "lab-made",
+   "summary": "Signature learned from controlled samples of a protector written for this laboratory; not a third-party tool.",
+   "versions": [
+    {
+     "id": "lab-1",
+     "label": "lab generator 1",
+     "identification": {
+      "methods": [
+       {
+        "kind": "signature",
+        "confidence": 0.8,
+        "note": "learned from 16 programs, measured on 16 held-out programs: precision 1, recall 1"
+       }
+      ],
+      "confidence": 0.8
+     },
+     "characteristics": [
+      {
+       "text": "signature: call:loadstring",
+       "knownAs": "observed",
+       "sources": [
+        "data/research/study.json"
+       ]
+      }
+     ],
+     "samples": {
+      "authorizedPairs": 0,
+      "realOutput": 16,
+      "publicObserved": 0,
+      "notes": "Output of a protector written for the laboratory, applied to generated programs."
+     },
+     "capabilities": {
+      "identify": {
+       "available": true,
+       "verified": "real-output-tested"
+      },
+      "trace": {
+       "available": false,
+       "verified": "none"
+      },
+      "recover": {
+       "available": true,
+       "verified": "real-output-tested"
+      }
+     },
+     "results": {
+      "fixtures": 16,
+      "syntheticFixtures": 0,
+      "behaviourChecked": 16,
+      "behaviourSame": 16,
+      "toolBroken": 0,
+      "fidelityBefore": 0.033,
+      "fidelityAfter": 0.991,
+      "runtime": {
+       "source": "reference",
+       "runtimes": "lua51+luajit (reference, decides); quicksilver-sandbox (cross-check)",
+       "measuredAt": "2026-11-09T02:26:16.755Z"
+      },
+      "plan": "nexus+sandbox",
+      "note": "behaviourSame counts verified successes: identical behaviour AND a reconstruction better than the input"
+     },
+     "limitations": [
+      "A system written for this laboratory: what it shows is how the engine handles that KIND of transformation, not how it handles any third-party tool.",
+      "Measured on generated programs only."
+     ],
+     "verification": {
+      "status": "real-output-verified",
+      "basis": "output of the lab's own tool, behaviour decided on reference runtimes"
+     }
+    }
+   ],
+   "claims": {
+    "lab-1": {
+     "claim": "supported",
+     "why": "16 of 16 real-tool fixtures reconstructed with identical behaviour on a reference runtime (lower bound 81%)."
+    }
+   }
+  },
+  {
+   "id": "lab-tabledispatch",
+   "name": "Lab custom system: functions called through a table",
+   "kind": "lab-made",
+   "summary": "Signature learned from controlled samples of a protector written for this laboratory; not a third-party tool.",
+   "versions": [
+    {
+     "id": "lab-1",
+     "label": "lab generator 1",
+     "identification": {
+      "methods": [
+       {
+        "kind": "signature",
+        "confidence": 0.8,
+        "note": "learned from 16 programs, measured on 16 held-out programs: precision 1, recall 1"
+       }
+      ],
+      "confidence": 0.8
+     },
+     "characteristics": [
+      {
+       "text": "signature: shape:function-table",
+       "knownAs": "observed",
+       "sources": [
+        "data/research/study.json"
+       ]
+      }
+     ],
+     "samples": {
+      "authorizedPairs": 0,
+      "realOutput": 16,
+      "publicObserved": 0,
+      "notes": "Output of a protector written for the laboratory, applied to generated programs."
+     },
+     "capabilities": {
+      "identify": {
+       "available": true,
+       "verified": "real-output-tested"
+      },
+      "trace": {
+       "available": false,
+       "verified": "none"
+      },
+      "recover": {
+       "available": true,
+       "verified": "real-output-tested"
+      }
+     },
+     "results": {
+      "fixtures": 16,
+      "syntheticFixtures": 0,
+      "behaviourChecked": 16,
+      "behaviourSame": 16,
+      "toolBroken": 0,
+      "fidelityBefore": 0.761,
+      "fidelityAfter": 0.991,
+      "runtime": {
+       "source": "reference",
+       "runtimes": "lua51+luajit (reference, decides); quicksilver-sandbox (cross-check)",
+       "measuredAt": "2026-11-09T02:26:16.755Z"
+      },
+      "plan": "nexus+sandbox",
+      "note": "behaviourSame counts verified successes: identical behaviour AND a reconstruction better than the input"
+     },
+     "limitations": [
+      "A system written for this laboratory: what it shows is how the engine handles that KIND of transformation, not how it handles any third-party tool.",
+      "Measured on generated programs only."
+     ],
+     "verification": {
+      "status": "real-output-verified",
+      "basis": "output of the lab's own tool, behaviour decided on reference runtimes"
+     }
+    }
+   ],
+   "claims": {
+    "lab-1": {
+     "claim": "supported",
+     "why": "16 of 16 real-tool fixtures reconstructed with identical behaviour on a reference runtime (lower bound 81%)."
+    }
+   }
+  }
+ ]
+}

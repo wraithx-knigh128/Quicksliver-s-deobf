@@ -1,0 +1,953 @@
+{
+  "schema": 1,
+  "generatedAt": "2026-11-09T02:36:37.248Z",
+  "capabilities": [
+    {
+      "id": "luraph.banner-version",
+      "system": "luraph",
+      "level": "format-tested",
+      "claim": "Reads the version a Luraph banner comment names and maps it to a profiled generation.",
+      "proves": "The banner text is parsed as written, versions are mapped to the generation whose period they fall in, versions outside the profile are not mapped, and the result is capped at 0.7 confidence with a caveat.",
+      "doesNotProve": "That the banner is true. A banner is a comment: anyone can add, edit or remove one. Nothing is claimed about reconstruction.",
+      "enabled": true,
+      "verifier": {
+        "ran": true,
+        "passed": true,
+        "skipped": null,
+        "inputsHash": "ee4f34d098286f2d504d8b0bdfc06cddb55f738b5cfad7374a0c3d7cca441154",
+        "runtimes": null,
+        "checks": [
+          {
+            "name": "banner v13.6.0 -> v13-era",
+            "ok": true
+          },
+          {
+            "name": "banner v14.3 -> v14",
+            "ok": true
+          },
+          {
+            "name": "banner v14.4.1 -> v14",
+            "ok": true
+          },
+          {
+            "name": "banner v15.0 -> v15",
+            "ok": true
+          },
+          {
+            "name": "banner v15.1.2 -> v15.1",
+            "ok": true
+          },
+          {
+            "name": "banner v16.0 -> no generation",
+            "ok": true
+          },
+          {
+            "name": "banner v12.9 -> no generation",
+            "ok": true
+          },
+          {
+            "name": "no banner -> no Luraph claim",
+            "ok": true
+          },
+          {
+            "name": "a forged banner is reported as claimed, not as established",
+            "ok": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "luraph.macro-generation",
+      "system": "luraph",
+      "level": "vendor-data-tested",
+      "claim": "Narrows the Luraph generation a source script was written for from the macros it uses.",
+      "proves": "For every generation, the macros the vendor SDK defines for it give a candidate set that includes it; macros introduced later narrow the set; a macro no generation defines gives none.",
+      "doesNotProve": "That a script using those macros has been, or will be, protected by that generation, or that the service rejects macros the SDK omits. It applies to unprotected source scripts only: protected output no longer contains macros. Nothing is claimed about reconstruction.",
+      "enabled": true,
+      "verifier": {
+        "ran": true,
+        "passed": true,
+        "skipped": null,
+        "inputsHash": "01b9a8576d5763cbc8d688023f2ae3ff28a84e9d52f84d991e26e5ce802d1aef",
+        "runtimes": null,
+        "checks": [
+          {
+            "name": "v13-era: its own 7 macros include v13-era among the candidates",
+            "ok": true
+          },
+          {
+            "name": "v14: its own 11 macros include v14 among the candidates",
+            "ok": true
+          },
+          {
+            "name": "v15: its own 12 macros include v15 among the candidates",
+            "ok": true
+          },
+          {
+            "name": "v15.1: its own 14 macros include v15.1 among the candidates",
+            "ok": true
+          },
+          {
+            "name": "macros first seen in v15.1 (LPH_ASSUME, LPH_OPAQUE) narrow to v15.1 alone",
+            "ok": true
+          },
+          {
+            "name": "a macro no generation defines gives no candidate and low confidence",
+            "ok": true
+          },
+          {
+            "name": "a script with no macros is not said to be Luraph",
+            "ok": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "profiles.claim-gates",
+      "system": null,
+      "level": "internally-tested",
+      "claim": "No profile can say \"supported\" without real or authorised evidence.",
+      "proves": "Every shipped profile validates, no commercial profile is above identification-only, and hand-made profiles that over-claim are rejected by the validator.",
+      "doesNotProve": "That the evidence the gates ask for is good: it proves the gates are enforced.",
+      "enabled": true,
+      "verifier": {
+        "ran": true,
+        "passed": true,
+        "skipped": null,
+        "inputsHash": "3f5aea27f6fdee349017a6089a0a120fd77d6d8903ed665829fdea6b134e4f97",
+        "runtimes": null,
+        "checks": [
+          {
+            "name": "luraph validates",
+            "ok": true,
+            "detail": []
+          },
+          {
+            "name": "prometheus validates",
+            "ok": true,
+            "detail": []
+          },
+          {
+            "name": "hercules validates",
+            "ok": true,
+            "detail": []
+          },
+          {
+            "name": "moonsec_v3 validates",
+            "ok": true,
+            "detail": []
+          },
+          {
+            "name": "moonveil validates",
+            "ok": true,
+            "detail": []
+          },
+          {
+            "name": "kirus validates",
+            "ok": true,
+            "detail": []
+          },
+          {
+            "name": "ironbrew2 validates",
+            "ok": true,
+            "detail": []
+          },
+          {
+            "name": "luaobfuscator validates",
+            "ok": true,
+            "detail": []
+          },
+          {
+            "name": "fuscator77 validates",
+            "ok": true,
+            "detail": []
+          },
+          {
+            "name": "psu validates",
+            "ok": true,
+            "detail": []
+          },
+          {
+            "name": "loaders validates",
+            "ok": true,
+            "detail": []
+          },
+          {
+            "name": "colisseum validates",
+            "ok": true,
+            "detail": []
+          },
+          {
+            "name": "zenfus validates",
+            "ok": true,
+            "detail": []
+          },
+          {
+            "name": "simple_lua validates",
+            "ok": true,
+            "detail": []
+          },
+          {
+            "name": "aztupbrew validates",
+            "ok": true,
+            "detail": []
+          },
+          {
+            "name": "joker validates",
+            "ok": true,
+            "detail": []
+          },
+          {
+            "name": "zerolua validates",
+            "ok": true,
+            "detail": []
+          },
+          {
+            "name": "fivem_strong validates",
+            "ok": true,
+            "detail": []
+          },
+          {
+            "name": "neuroforge validates",
+            "ok": true,
+            "detail": []
+          },
+          {
+            "name": "stealthx validates",
+            "ok": true,
+            "detail": []
+          },
+          {
+            "name": "azurevm validates",
+            "ok": true,
+            "detail": []
+          },
+          {
+            "name": "simple_html validates",
+            "ok": true,
+            "detail": []
+          },
+          {
+            "name": "clyde validates",
+            "ok": true,
+            "detail": []
+          },
+          {
+            "name": "ironveil validates",
+            "ok": true,
+            "detail": []
+          },
+          {
+            "name": "goofyscator validates",
+            "ok": true,
+            "detail": []
+          },
+          {
+            "name": "xhider validates",
+            "ok": true,
+            "detail": []
+          },
+          {
+            "name": "synapse_xen validates",
+            "ok": true,
+            "detail": []
+          },
+          {
+            "name": "wearedevs validates",
+            "ok": true,
+            "detail": []
+          },
+          {
+            "name": "lab-xorpack validates",
+            "ok": true,
+            "detail": []
+          },
+          {
+            "name": "lab-loadwrap validates",
+            "ok": true,
+            "detail": []
+          },
+          {
+            "name": "lab-tabledispatch validates",
+            "ok": true,
+            "detail": []
+          },
+          {
+            "name": "luraph@v13-era is not \"supported\"",
+            "ok": true
+          },
+          {
+            "name": "luraph@v14 is not \"supported\"",
+            "ok": true
+          },
+          {
+            "name": "luraph@v15 is not \"supported\"",
+            "ok": true
+          },
+          {
+            "name": "luraph@v15.1 is not \"supported\"",
+            "ok": true
+          },
+          {
+            "name": "moonsec_v3@unversioned is not \"supported\"",
+            "ok": true
+          },
+          {
+            "name": "moonveil@unversioned is not \"supported\"",
+            "ok": true
+          },
+          {
+            "name": "psu@unversioned is not \"supported\"",
+            "ok": true
+          },
+          {
+            "name": "synapse_xen@unversioned is not \"supported\"",
+            "ok": true
+          },
+          {
+            "name": "a commercial version cannot be marked real-output-verified",
+            "ok": true
+          },
+          {
+            "name": "authorised-sample status without pairs is rejected",
+            "ok": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "verify.runtime-differential",
+      "system": null,
+      "level": "internally-tested",
+      "claim": "Decides whether a reconstruction behaves like its original by running both on a reference Lua runtime.",
+      "proves": "Equal programs are reported identical, a changed program is reported different (a check that cannot fail would prove nothing), and a program that prints nothing is reported inconclusive.",
+      "doesNotProve": "Behaviour on inputs the program was not run with, or on Luau (not installed here).",
+      "enabled": true,
+      "verifier": {
+        "ran": true,
+        "passed": true,
+        "skipped": null,
+        "inputsHash": "6c4d931282339f91d967ca5d3501d08332e262e04f40c9aae1c8d9888c055b28",
+        "runtimes": [
+          "lua51",
+          "luajit"
+        ],
+        "checks": [
+          {
+            "name": "identical program -> runtime-identical",
+            "ok": true
+          },
+          {
+            "name": "changed program -> runtime-different",
+            "ok": true
+          },
+          {
+            "name": "program that prints nothing -> inconclusive",
+            "ok": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "prometheus.identify",
+      "system": "prometheus",
+      "level": "real-output-tested",
+      "claim": "Recognises output of Prometheus (signature).",
+      "proves": "On a spread sample of 6 fixtures made by the real tool, the detector names prometheus with confidence of at least 0.5 on at least 80%.",
+      "doesNotProve": "Recognition on output made with other settings, other versions, or after further processing.",
+      "enabled": false,
+      "verifier": {
+        "ran": true,
+        "passed": false,
+        "skipped": null,
+        "inputsHash": "8c8cf15734c5d167279ce1160c97d8c1435b9ab64af71252c8f7251c0970421e",
+        "runtimes": null,
+        "checks": [
+          {
+            "name": "3/6 fixtures recognised",
+            "ok": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "prometheus.reconstruct",
+      "system": "prometheus",
+      "level": "real-output-tested",
+      "claim": "Reconstructs output of Prometheus so that it behaves like the protected script.",
+      "proves": "On a spread sample of 6 real-tool fixtures, at least 4 are decided on a reference runtime and at least 70% of those behave identically to the original program.",
+      "doesNotProve": "Coverage of every setting or program. The full result and its interval are in the profile; this is a re-measurement of a sample.",
+      "enabled": true,
+      "verifier": {
+        "ran": true,
+        "passed": true,
+        "skipped": null,
+        "inputsHash": "8c8cf15734c5d167279ce1160c97d8c1435b9ab64af71252c8f7251c0970421e",
+        "runtimes": [
+          "lua51",
+          "luajit",
+          "lua54"
+        ],
+        "checks": [
+          {
+            "name": "6 of 6 decided on lua51+luajit+lua54",
+            "ok": true
+          },
+          {
+            "name": "6/6 identical",
+            "ok": true,
+            "detail": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "hercules.identify",
+      "system": "hercules",
+      "level": "real-output-tested",
+      "claim": "Recognises output of Hercules (signature).",
+      "proves": "On a spread sample of 6 fixtures made by the real tool, the detector names hercules with confidence of at least 0.5 on at least 80%.",
+      "doesNotProve": "Recognition on output made with other settings, other versions, or after further processing.",
+      "enabled": true,
+      "verifier": {
+        "ran": true,
+        "passed": true,
+        "skipped": null,
+        "inputsHash": "e8c2e328e5fb0f70277f7429c50da0b84f329dff08e5c3c08931234fe6d11503",
+        "runtimes": null,
+        "checks": [
+          {
+            "name": "6/6 fixtures recognised",
+            "ok": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "hercules.reconstruct",
+      "system": "hercules",
+      "level": "real-output-tested",
+      "claim": "Reconstructs output of Hercules so that it behaves like the protected script.",
+      "proves": "On a spread sample of 6 real-tool fixtures, at least 4 are decided on a reference runtime and at least 70% of those behave identically to the original program.",
+      "doesNotProve": "Coverage of every setting or program. The full result and its interval are in the profile; this is a re-measurement of a sample.",
+      "enabled": true,
+      "verifier": {
+        "ran": true,
+        "passed": true,
+        "skipped": null,
+        "inputsHash": "e8c2e328e5fb0f70277f7429c50da0b84f329dff08e5c3c08931234fe6d11503",
+        "runtimes": [
+          "lua51",
+          "luajit",
+          "lua54"
+        ],
+        "checks": [
+          {
+            "name": "6 of 6 decided on lua51+luajit+lua54",
+            "ok": true
+          },
+          {
+            "name": "6/6 identical",
+            "ok": true,
+            "detail": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "ironbrew2.identify",
+      "system": "ironbrew2",
+      "level": "real-output-tested",
+      "claim": "Recognises output of IronBrew 2 (signature).",
+      "proves": "On a spread sample of 6 fixtures made by the real tool, the detector names ironbrew2 with confidence of at least 0.5 on at least 80%.",
+      "doesNotProve": "Recognition on output made with other settings, other versions, or after further processing.",
+      "enabled": true,
+      "verifier": {
+        "ran": true,
+        "passed": true,
+        "skipped": null,
+        "inputsHash": "2175135af154fdb4fcbe7d204d36621ecf98305f220b250904296f31e39e8079",
+        "runtimes": null,
+        "checks": [
+          {
+            "name": "6/6 fixtures recognised",
+            "ok": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "ironbrew2.reconstruct",
+      "system": "ironbrew2",
+      "level": "real-output-tested",
+      "claim": "Reconstructs output of IronBrew 2 so that it behaves like the protected script.",
+      "proves": "On a spread sample of 6 real-tool fixtures, at least 4 are decided on a reference runtime and at least 70% of those behave identically to the original program.",
+      "doesNotProve": "Coverage of every setting or program. The full result and its interval are in the profile; this is a re-measurement of a sample.",
+      "enabled": true,
+      "verifier": {
+        "ran": true,
+        "passed": true,
+        "skipped": null,
+        "inputsHash": "2175135af154fdb4fcbe7d204d36621ecf98305f220b250904296f31e39e8079",
+        "runtimes": [
+          "lua51"
+        ],
+        "checks": [
+          {
+            "name": "6 of 6 decided on lua51",
+            "ok": true
+          },
+          {
+            "name": "6/6 identical",
+            "ok": true,
+            "detail": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "colisseum.identify",
+      "system": "colisseum",
+      "level": "real-output-tested",
+      "claim": "Recognises output of Colisseum (signature).",
+      "proves": "On a spread sample of 6 fixtures made by the real tool, the detector names colisseum with confidence of at least 0.5 on at least 80%.",
+      "doesNotProve": "Recognition on output made with other settings, other versions, or after further processing.",
+      "enabled": false,
+      "verifier": {
+        "ran": false,
+        "passed": false,
+        "skipped": "fixtures not present in this checkout (obfuscated-local/colisseum)",
+        "inputsHash": null,
+        "runtimes": null,
+        "checks": []
+      }
+    },
+    {
+      "id": "colisseum.reconstruct",
+      "system": "colisseum",
+      "level": "real-output-tested",
+      "claim": "Reconstructs output of Colisseum so that it behaves like the protected script.",
+      "proves": "On a spread sample of 6 real-tool fixtures, at least 4 are decided on a reference runtime and at least 70% of those behave identically to the original program.",
+      "doesNotProve": "Coverage of every setting or program. The full result and its interval are in the profile; this is a re-measurement of a sample.",
+      "enabled": false,
+      "verifier": {
+        "ran": false,
+        "passed": false,
+        "skipped": "fixtures not present in this checkout (obfuscated-local/colisseum)",
+        "inputsHash": null,
+        "runtimes": null,
+        "checks": []
+      }
+    },
+    {
+      "id": "zenfus.identify",
+      "system": "zenfus",
+      "level": "real-output-tested",
+      "claim": "Recognises output of Zenfus (signature).",
+      "proves": "On a spread sample of 6 fixtures made by the real tool, the detector names zenfus with confidence of at least 0.5 on at least 80%.",
+      "doesNotProve": "Recognition on output made with other settings, other versions, or after further processing.",
+      "enabled": true,
+      "verifier": {
+        "ran": true,
+        "passed": true,
+        "skipped": null,
+        "inputsHash": "05d7b4d9f87d70f0d6a6eea79d3f1181184f670c30c4e3e7d0f7142ca21fc8cb",
+        "runtimes": null,
+        "checks": [
+          {
+            "name": "2/2 fixtures recognised",
+            "ok": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "zenfus.reconstruct",
+      "system": "zenfus",
+      "level": "real-output-tested",
+      "claim": "Reconstructs output of Zenfus so that it behaves like the protected script.",
+      "proves": "On a spread sample of 6 real-tool fixtures, at least 4 are decided on a reference runtime and at least 70% of those behave identically to the original program.",
+      "doesNotProve": "Coverage of every setting or program. The full result and its interval are in the profile; this is a re-measurement of a sample.",
+      "enabled": false,
+      "verifier": {
+        "ran": true,
+        "passed": false,
+        "skipped": null,
+        "inputsHash": "05d7b4d9f87d70f0d6a6eea79d3f1181184f670c30c4e3e7d0f7142ca21fc8cb",
+        "runtimes": [
+          "lua54"
+        ],
+        "checks": [
+          {
+            "name": "2 of 2 decided on lua54",
+            "ok": false
+          },
+          {
+            "name": "2/2 identical",
+            "ok": true,
+            "detail": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "simple_lua.identify",
+      "system": "simple_lua",
+      "level": "real-output-tested",
+      "claim": "Recognises output of Simple-Lua-Obfuscator (signature).",
+      "proves": "On a spread sample of 6 fixtures made by the real tool, the detector names simple_lua with confidence of at least 0.5 on at least 80%.",
+      "doesNotProve": "Recognition on output made with other settings, other versions, or after further processing.",
+      "enabled": false,
+      "verifier": {
+        "ran": false,
+        "passed": false,
+        "skipped": "fixtures not present in this checkout (obfuscated-local/simple_lua)",
+        "inputsHash": null,
+        "runtimes": null,
+        "checks": []
+      }
+    },
+    {
+      "id": "simple_lua.reconstruct",
+      "system": "simple_lua",
+      "level": "real-output-tested",
+      "claim": "Reconstructs output of Simple-Lua-Obfuscator so that it behaves like the protected script.",
+      "proves": "On a spread sample of 6 real-tool fixtures, at least 4 are decided on a reference runtime and at least 70% of those behave identically to the original program.",
+      "doesNotProve": "Coverage of every setting or program. The full result and its interval are in the profile; this is a re-measurement of a sample.",
+      "enabled": false,
+      "verifier": {
+        "ran": false,
+        "passed": false,
+        "skipped": "fixtures not present in this checkout (obfuscated-local/simple_lua)",
+        "inputsHash": null,
+        "runtimes": null,
+        "checks": []
+      }
+    },
+    {
+      "id": "azurevm.identify",
+      "system": "azurevm",
+      "level": "real-output-tested",
+      "claim": "Recognises output of AzureVM (signature).",
+      "proves": "On a spread sample of 6 fixtures made by the real tool, the detector names azurevm with confidence of at least 0.5 on at least 80%.",
+      "doesNotProve": "Recognition on output made with other settings, other versions, or after further processing.",
+      "enabled": true,
+      "verifier": {
+        "ran": true,
+        "passed": true,
+        "skipped": null,
+        "inputsHash": "79b63704e34ca4b1e333e1a987dac3abf0cb58757f817caae90d0a9734365111",
+        "runtimes": null,
+        "checks": [
+          {
+            "name": "6/6 fixtures recognised",
+            "ok": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "azurevm.reconstruct",
+      "system": "azurevm",
+      "level": "real-output-tested",
+      "claim": "Reconstructs output of AzureVM so that it behaves like the protected script.",
+      "proves": "On a spread sample of 6 real-tool fixtures, at least 4 are decided on a reference runtime and at least 70% of those behave identically to the original program.",
+      "doesNotProve": "Coverage of every setting or program. The full result and its interval are in the profile; this is a re-measurement of a sample.",
+      "enabled": true,
+      "verifier": {
+        "ran": true,
+        "passed": true,
+        "skipped": null,
+        "inputsHash": "79b63704e34ca4b1e333e1a987dac3abf0cb58757f817caae90d0a9734365111",
+        "runtimes": [
+          "lua51",
+          "luajit",
+          "lua54"
+        ],
+        "checks": [
+          {
+            "name": "6 of 6 decided on lua51+luajit+lua54",
+            "ok": true
+          },
+          {
+            "name": "6/6 identical",
+            "ok": true,
+            "detail": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "simple_html.identify",
+      "system": "simple_html",
+      "level": "real-output-tested",
+      "claim": "Recognises output of Simple Open source Lua Obfuscator (page) (signature).",
+      "proves": "On a spread sample of 6 fixtures made by the real tool, the detector names simple_html with confidence of at least 0.5 on at least 80%.",
+      "doesNotProve": "Recognition on output made with other settings, other versions, or after further processing.",
+      "enabled": true,
+      "verifier": {
+        "ran": true,
+        "passed": true,
+        "skipped": null,
+        "inputsHash": "5f75fa420ce5690da54a7a212b94a3efc15802087f0779e5d4b71d7d19b6309d",
+        "runtimes": null,
+        "checks": [
+          {
+            "name": "5/5 fixtures recognised",
+            "ok": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "simple_html.reconstruct",
+      "system": "simple_html",
+      "level": "real-output-tested",
+      "claim": "Reconstructs output of Simple Open source Lua Obfuscator (page) so that it behaves like the protected script.",
+      "proves": "On a spread sample of 6 real-tool fixtures, at least 4 are decided on a reference runtime and at least 70% of those behave identically to the original program.",
+      "doesNotProve": "Coverage of every setting or program. The full result and its interval are in the profile; this is a re-measurement of a sample.",
+      "enabled": true,
+      "verifier": {
+        "ran": true,
+        "passed": true,
+        "skipped": null,
+        "inputsHash": "5f75fa420ce5690da54a7a212b94a3efc15802087f0779e5d4b71d7d19b6309d",
+        "runtimes": [
+          "lua51",
+          "luajit",
+          "lua54"
+        ],
+        "checks": [
+          {
+            "name": "5 of 5 decided on lua51+luajit+lua54",
+            "ok": true
+          },
+          {
+            "name": "5/5 identical",
+            "ok": true,
+            "detail": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "clyde.identify",
+      "system": "clyde",
+      "level": "real-output-tested",
+      "claim": "Recognises output of Clyde (signature).",
+      "proves": "On a spread sample of 6 fixtures made by the real tool, the detector names clyde with confidence of at least 0.5 on at least 80%.",
+      "doesNotProve": "Recognition on output made with other settings, other versions, or after further processing.",
+      "enabled": false,
+      "verifier": {
+        "ran": true,
+        "passed": false,
+        "skipped": null,
+        "inputsHash": "76d671674ad4416376316f664a0357b6d4612d50956fa12363eee1a96d2dd955",
+        "runtimes": null,
+        "checks": [
+          {
+            "name": "4/6 fixtures recognised",
+            "ok": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "clyde.reconstruct",
+      "system": "clyde",
+      "level": "real-output-tested",
+      "claim": "Reconstructs output of Clyde so that it behaves like the protected script.",
+      "proves": "On a spread sample of 6 real-tool fixtures, at least 4 are decided on a reference runtime and at least 70% of those behave identically to the original program.",
+      "doesNotProve": "Coverage of every setting or program. The full result and its interval are in the profile; this is a re-measurement of a sample.",
+      "enabled": true,
+      "verifier": {
+        "ran": true,
+        "passed": true,
+        "skipped": null,
+        "inputsHash": "76d671674ad4416376316f664a0357b6d4612d50956fa12363eee1a96d2dd955",
+        "runtimes": [
+          "lua52"
+        ],
+        "checks": [
+          {
+            "name": "6 of 6 decided on lua52",
+            "ok": true
+          },
+          {
+            "name": "6/6 identical",
+            "ok": true,
+            "detail": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "lab-xorpack.identify",
+      "system": "lab-xorpack",
+      "level": "real-output-tested",
+      "claim": "Recognises output of the laboratory's xorpack system by its learned signature.",
+      "proves": "The registered signature fires on 6 of 6 fresh transformed programs and on none of the same programs untransformed.",
+      "doesNotProve": "Anything about third-party tools: this system was written for the laboratory.",
+      "enabled": true,
+      "verifier": {
+        "ran": true,
+        "passed": true,
+        "skipped": null,
+        "inputsHash": "2ae56bc77979faea5dcfc2391de153ad8150d7ffafde74898fc3e7157af78c20",
+        "runtimes": null,
+        "checks": [
+          {
+            "name": "6/6 transformed programs recognised",
+            "ok": true
+          },
+          {
+            "name": "0/6 untransformed programs recognised",
+            "ok": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "lab-xorpack.reconstruct",
+      "system": "lab-xorpack",
+      "level": "real-output-tested",
+      "claim": "Reconstructs the laboratory's xorpack system with NEXUS and the sandbox.",
+      "proves": "On 6 fresh programs, at least 5 are decided on a reference runtime and every decided one behaves identically to its original.",
+      "doesNotProve": "Anything about third-party tools, or about programs unlike the generated ones.",
+      "enabled": true,
+      "verifier": {
+        "ran": true,
+        "passed": true,
+        "skipped": null,
+        "inputsHash": "2ae56bc77979faea5dcfc2391de153ad8150d7ffafde74898fc3e7157af78c20",
+        "runtimes": [
+          "lua51",
+          "luajit"
+        ],
+        "checks": [
+          {
+            "name": "6 of 6 decided on lua51+luajit",
+            "ok": true
+          },
+          {
+            "name": "6/6 identical",
+            "ok": true,
+            "detail": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "lab-loadwrap.identify",
+      "system": "lab-loadwrap",
+      "level": "real-output-tested",
+      "claim": "Recognises output of the laboratory's loadwrap system by its learned signature.",
+      "proves": "The registered signature fires on 6 of 6 fresh transformed programs and on none of the same programs untransformed.",
+      "doesNotProve": "Anything about third-party tools: this system was written for the laboratory.",
+      "enabled": true,
+      "verifier": {
+        "ran": true,
+        "passed": true,
+        "skipped": null,
+        "inputsHash": "8fa0bc2bf9f481efcb56bee8e94084243fb5d3830b8efcee1e7ae2401c776402",
+        "runtimes": null,
+        "checks": [
+          {
+            "name": "6/6 transformed programs recognised",
+            "ok": true
+          },
+          {
+            "name": "0/6 untransformed programs recognised",
+            "ok": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "lab-loadwrap.reconstruct",
+      "system": "lab-loadwrap",
+      "level": "real-output-tested",
+      "claim": "Reconstructs the laboratory's loadwrap system with NEXUS and the sandbox.",
+      "proves": "On 6 fresh programs, at least 5 are decided on a reference runtime and every decided one behaves identically to its original.",
+      "doesNotProve": "Anything about third-party tools, or about programs unlike the generated ones.",
+      "enabled": true,
+      "verifier": {
+        "ran": true,
+        "passed": true,
+        "skipped": null,
+        "inputsHash": "8fa0bc2bf9f481efcb56bee8e94084243fb5d3830b8efcee1e7ae2401c776402",
+        "runtimes": [
+          "lua51",
+          "luajit"
+        ],
+        "checks": [
+          {
+            "name": "6 of 6 decided on lua51+luajit",
+            "ok": true
+          },
+          {
+            "name": "6/6 identical",
+            "ok": true,
+            "detail": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "lab-tabledispatch.identify",
+      "system": "lab-tabledispatch",
+      "level": "real-output-tested",
+      "claim": "Recognises output of the laboratory's tabledispatch system by its learned signature.",
+      "proves": "The registered signature fires on 6 of 6 fresh transformed programs and on none of the same programs untransformed.",
+      "doesNotProve": "Anything about third-party tools: this system was written for the laboratory.",
+      "enabled": true,
+      "verifier": {
+        "ran": true,
+        "passed": true,
+        "skipped": null,
+        "inputsHash": "c64ee02929bdfa6a0766c91ae35dbccfb94ce7379176f89e4a50b2a43fd399b1",
+        "runtimes": null,
+        "checks": [
+          {
+            "name": "6/6 transformed programs recognised",
+            "ok": true
+          },
+          {
+            "name": "0/6 untransformed programs recognised",
+            "ok": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "lab-tabledispatch.reconstruct",
+      "system": "lab-tabledispatch",
+      "level": "real-output-tested",
+      "claim": "Reconstructs the laboratory's tabledispatch system with NEXUS and the sandbox.",
+      "proves": "On 6 fresh programs, at least 5 are decided on a reference runtime and every decided one behaves identically to its original.",
+      "doesNotProve": "Anything about third-party tools, or about programs unlike the generated ones.",
+      "enabled": true,
+      "verifier": {
+        "ran": true,
+        "passed": true,
+        "skipped": null,
+        "inputsHash": "c64ee02929bdfa6a0766c91ae35dbccfb94ce7379176f89e4a50b2a43fd399b1",
+        "runtimes": [
+          "lua51",
+          "luajit"
+        ],
+        "checks": [
+          {
+            "name": "6 of 6 decided on lua51+luajit",
+            "ok": true
+          },
+          {
+            "name": "6/6 identical",
+            "ok": true,
+            "detail": []
+          }
+        ]
+      }
+    }
+  ]
+}

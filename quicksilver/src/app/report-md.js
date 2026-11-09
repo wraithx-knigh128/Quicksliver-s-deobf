@@ -6,7 +6,7 @@ const pct = (x) => `${Math.round(x * 100)}%`;
 const fence = (s) => `\`\`\`\n${String(s).replace(/```/g, "'''")}\n\`\`\``;
 
 /**
- * @param {{name?: string, bytes?: number, sha256?: string, detection?: object, recovered?: object, advice?: object, observed?: object, engine?: string, generatedAt?: string}} r
+ * @param {{name?: string, bytes?: number, sha256?: string, detection?: object, recovered?: object, advice?: object, observed?: object, identification?: object, engine?: string, generatedAt?: string}} r
  */
 export function buildMarkdownReport(r) {
   const out = [];
@@ -19,6 +19,24 @@ export function buildMarkdownReport(r) {
   if (rec && rec.confidence) out.push(`| Confidence | ${rec.confidence.level} (${rec.confidence.score}) |`);
   out.push('');
 
+  if (r.identification && r.identification.systems.length) {
+    out.push('## System and version', '');
+    for (const sys of r.identification.systems) {
+      out.push(`### ${esc(sys.name)} (${pct(sys.confidence)}, by ${sys.basis})`, '');
+      for (const e of sys.evidence) out.push(`- ${esc(e)}`);
+      if (sys.version) {
+        out.push(`- Version: ${esc(sys.version.claimed ? `${sys.version.claimed} claimed` : sys.version.candidates && sys.version.candidates.length ? `one of ${sys.version.candidates.join(', ')}` : 'not estimated')}${sys.version.generation ? `, generation ${esc(sys.version.generation)}` : ''} (confidence ${pct(sys.version.confidence)}, ${sys.version.basis})`);
+        for (const c of sys.version.caveats) out.push(`  - ${esc(c)}`);
+      }
+      if (sys.profile) {
+        out.push(`- What may be claimed: **${sys.profile.claim.claim}**. ${esc(sys.profile.claim.why)} (profile status: ${sys.profile.status})`);
+        for (const l of sys.profile.limitations) out.push(`  - Limit: ${esc(l)}`);
+      }
+      out.push('');
+    }
+    out.push('Recognising a system is not reconstructing it: a reconstruction is only called verified for a system when the engine\'s output was checked to behave like the original on a reference Lua runtime.', '');
+  }
+
   if (r.advice) {
     out.push('## Plan chosen and the evidence for it', '');
     out.push(`${r.advice.reason}`, '');
@@ -28,7 +46,7 @@ export function buildMarkdownReport(r) {
       for (const a of r.advice.alternatives) out.push(`| ${esc(a.label)} | ${a.n} | ${a.success}/${a.n} | ${pct(a.lo)}–${pct(a.hi)} | ${a.fidelityAfter == null ? '—' : a.fidelityAfter.toFixed(2)} | ${a.worse + a.failed} |`);
       out.push('');
     }
-    out.push('The experiments are on generated programs, with behaviour compared in this project\'s own interpreter. They are evidence about kinds of input, not a guarantee about this one.', '');
+    out.push('The experiments are on generated programs, with behaviour decided on the runtime the Research tab names (a reference Lua when one was installed, this project\'s own interpreter otherwise). They are evidence about kinds of input, not a guarantee about this one.', '');
   }
 
   if (nx) {

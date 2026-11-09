@@ -788,9 +788,73 @@ test('Research tab: the laboratory\'s measurements, the techniques evaluated (wi
   assert.match(text, /Unfamiliar systems studied/);
   assert.match(text, /flatten-chain[\s\S]*rejected/, 'attempts that failed are kept');
   assert.match(text, /Outside research/);
-  assert.match(text, /Luraph[\s\S]*unreachable[\s\S]*lab: untested/, 'Luraph is not claimed');
+  assert.match(text, /Luraph[\s\S]*lab: identification-only/, 'Luraph is recognised and versioned, and nothing more is claimed');
   assert.ok((await page.locator('#view-research table.matrix td.m-high').count()) > 20);
   assert.deepEqual(problems, []);
+  await ctx.close();
+});
+
+test('Luraph: a banner gives a version estimate with its caveat and the label "recognised only"; no reconstruction is claimed anywhere', { skip }, async () => {
+  const { page, ctx, problems } = await newPage();
+  await page.fill('textarea.editor', '-- This file was protected using Luraph Obfuscator v14.4.1 [https://lura.ph/]\nlocal a = 1\nreturn a');
+  await page.click('#tab-detection');
+  await page.waitForSelector('#view-detection :text("System and version")');
+  const text = await page.textContent('#view-detection');
+  assert.match(text, /Luraph/);
+  assert.match(text, /v14\.4\.1 claimed, generation v14/);
+  assert.match(text, /Version confidence\s*70%/);
+  assert.match(text, /text the file.s owner controls|controls/);
+  assert.match(text, /Recognised only: no verified reconstruction/);
+  assert.match(text, /Recognising a system is not reconstructing it/);
+  assert.equal(await page.locator('#view-detection .badge:has-text("Reconstruction verified")').count(), 0, 'no badge claims a verified reconstruction (the note explains the label, so the text is not searched)');
+  await page.click('#tab-research');
+  await page.waitForSelector('#view-research :text("Systems and versions")');
+  const research = await page.textContent('#view-research');
+  assert.match(research, /Systems and versions/);
+  const rows = await page.locator('#view-research table.steps tr:has-text("Luraph")').allTextContents();
+  assert.equal(rows.length, 4, 'four generations');
+  for (const r of rows) { assert.match(r, /recognised only/); assert.doesNotMatch(r, /reconstruction verified/); }
+  assert.match(await page.locator('#view-research details:has-text("Luraph: what was found")').textContent(), /nothing is claimed about reconstructing it/);
+  assert.deepEqual(problems, []);
+  await ctx.close();
+});
+
+test('Luraph macros in an unprotected script narrow the generation; a macro no generation defines narrows nothing', { skip }, async () => {
+  const { page, ctx } = await newPage();
+  await page.fill('textarea.editor', 'local x = LPH_JIT(function() return 1 end)\nreturn x');
+  await page.click('#tab-detection');
+  await page.waitForSelector('#view-detection :text("not protected")');
+  const text = await page.textContent('#view-detection');
+  assert.match(text, /one of: v13-era, v14/);
+  assert.match(text, /More than one generation defines all of these macros/);
+  await ctx.close();
+});
+
+test('authorised samples: the page builds a package from named file pairs, refuses one without a statement of permission, and uploads nothing', { skip }, async () => {
+  const { page, ctx } = await newPage();
+  const requests = [];
+  page.on('request', (r) => { if (!/^(http:\/\/127\.0\.0\.1|data:|blob:)/.test(r.url())) requests.push(r.url()); });
+  await page.click('#tab-research');
+  await page.waitForSelector('#view-research :text("Your authorised samples")');
+  const form = page.locator('#view-research section:has-text("Your authorised samples")');
+  await form.locator('input[type=file]').setInputFiles([
+    { name: 'a.original.lua', mimeType: 'text/plain', buffer: Buffer.from('print(1)') },
+    { name: 'a.protected.lua', mimeType: 'text/plain', buffer: Buffer.from('local f=function() print(1) end f()') },
+  ]);
+  await form.locator('input[placeholder^="system"]').fill('my-tool');
+  await form.locator('input[placeholder^="who"]').fill('me');
+  await form.locator('button:has-text("Build package")').click();
+  await form.locator('.note.bad').waitFor();
+  assert.match(await form.textContent(), /attestation is required/);
+  await form.locator('textarea').fill('I wrote the originals and protected them myself.');
+  const [dl] = await Promise.all([page.waitForEvent('download'), form.locator('button:has-text("Build package")').click()]);
+  const pkg = JSON.parse(fs.readFileSync(await dl.path(), 'utf8'));
+  assert.equal(pkg.system, 'my-tool');
+  assert.equal(pkg.pairs.length, 1);
+  assert.match(pkg.pairs[0].originalSha256, /^[0-9a-f]{64}$/);
+  assert.match(pkg.attestation, /protected them myself/);
+  assert.match(await form.textContent(), /Nothing was uploaded/);
+  assert.deepEqual(requests, [], 'no request left the page');
   await ctx.close();
 });
 

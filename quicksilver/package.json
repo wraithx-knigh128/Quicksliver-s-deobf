@@ -5,7 +5,9 @@
   "type": "module",
   "description": "QuickSilver: analysis and recovery of obfuscated Lua / Luau source",
   "license": "UNLICENSED",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "test": "node --test --test-concurrency=1 \"tests/**/*.test.mjs\"",
     "scorecard": "node tests/tools-scorecard.mjs --write",
@@ -15,6 +17,16 @@
     "lab:study": "node tools/lab/study.mjs",
     "lab:run": "node tools/lab/run.mjs",
     "lab:kb": "node tools/lab/kb.mjs",
-    "lab": "node tools/lab/study.mjs && node tools/lab/run.mjs --seeds 16 && node tools/lab/kb.mjs"
+    "lab": "node tools/lab/study.mjs && node tools/lab/run.mjs --seeds 16 && node tools/lab/kb.mjs",
+    "runtime:setup": "sh tools/runtime/setup.sh",
+    "research:collect": "node tools/research/collect.mjs",
+    "research:profiles": "node tools/research/profiles-build.mjs",
+    "research:capabilities": "node tools/research/capabilities.mjs",
+    "research:pipeline": "node tools/research/pipeline.mjs --write",
+    "research:differential": "node tools/research/differential.mjs",
+    "research": "node tools/research/profiles-build.mjs && node tools/research/capabilities.mjs && node tools/research/pipeline.mjs --write"
+  },
+  "optionalDependencies": {
+    "@anthropic-ai/sdk": "^1.6.0"
   }
 }

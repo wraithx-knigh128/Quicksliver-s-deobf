@@ -48,7 +48,8 @@ Numbers are measured on output of the real tools (Prometheus, Hercules, IronBrew
   decoder is read in the sandbox when the script is nothing but that loader. Measured on 66 packers I wrote for this project (labelled synthetic: they are not the output of any real tool).
 * **Luraph (v14 / v15 / v15.1), MoonSec V3, PSU and the rest**: detected from banners and structure where that is possible. The original source of a Luraph script **cannot** be
   recovered statically and the tool does not pretend to; the sandbox dump and trace describe what one run does. No real output of these closed-source obfuscators was available, so nothing about them is tested
-  beyond detection signatures.
+  beyond detection signatures. For Luraph the page also **estimates the generation** (v13-era, v14, v15, v15.1) from a banner (confidence at most 0.7: a banner is a comment anyone can write) or, for an unprotected script, from the `LPH_*` macros it uses, using the
+  macro sets in the vendor's own SDK history; it says plainly that this is recognition, not reconstruction (`docs/COMPAT-RESEARCH.md`).
 * A trace or a dump describes one run. It is not the original source.
 
 ### NEXUS (analysis above the recovery steps)
@@ -58,6 +59,8 @@ On by default (Settings → NEXUS analysis; `recoverSource(src, { nexus: true })
 ### Research laboratory
 
 `docs/RESEARCH-LAB.md`. A laboratory (`tools/lab/`, `npm run lab`) generates original test programs from seeds, applies 20 controlled transformations (existing mutators, comment confetti, three custom systems written for the laboratory, six nested combinations), runs seven reconstruction plans, and compares the result with the original by behaviour (in this project's own interpreter) and by closeness. One judge names every outcome; a technique cannot call itself successful. From the experiment records it derives the statements the **Research** tab shows (each with its rule and counts), evaluates new techniques by running the same experiments before and after (regressions are kept in the record), learns signatures for systems the engine has no rule for and registers them only if they hold on programs they were not learned from, and feeds the **advisor**: on Deobfuscate the page looks up what the verified experiments say works on inputs that show the same signs, and uses that plan (a plan that needs the sandbox is recommended, never applied until the sandbox is allowed). Export → *Analysis report (.md)* carries the plan, its evidence, and the verification ledger. Nothing is claimed for Luraph or any other tool the laboratory could not obtain output of.
+
+**Commercial compatibility research** (`docs/COMPAT-RESEARCH.md`): behaviour is now decided on **real Lua runtimes** (PUC Lua 5.1–5.4, LuaJIT, through `lupa`; `npm run runtime:setup`; Luau needs a build named in `QS_LUAU_BIN` and is reported unavailable otherwise), kept apart from static checks and cross-checked against this project's interpreter. A **research service** reads permitted public sources under a host policy, keeps a record of each (failures included), extracts findings that quote their source, scores credibility, and optionally runs a grounded extraction through the Anthropic SDK (`api/research.js`, off unless `QS_RESEARCH_TOKEN` is set; never run against the real API in development). **Compatibility profiles** record what is known about each system version by version and enforce, in code, what may be claimed: nothing is "supported" because its output is recognised, a commercial tool cannot be marked verified from the lab's own tests, and authorised samples you supply (a package built in the page, differential-tested with `node tools/research/differential.mjs`) lift a version only past stated gates. `npm run research` rebuilds profiles, capabilities (each with a verifier) and each system's position in the research → classification → experiment → verification → profile → integration pipeline.
 
 ### AI check
 
@@ -115,7 +118,8 @@ src/core/                      lexer, parser, printer, scopes, diff, fidelity
 src/passes/                    folding, simplification, dataflow, idioms, renaming, sandboxed decoder evaluation
 src/detect/                    obfuscator signatures and dialect detection
 src/recover/                   per-family recovery (Prometheus, Vmify, Hercules, IronBrew 2) and the pipeline
-src/research/                  laboratory logic shared with the page: plans, judge, knowledge base, advisor, feature extraction, family registry, study
+src/research/                  laboratory logic shared with the page: plans, judge, knowledge base, advisor, feature extraction, family registry, study; compatibility profiles and their claim gates, identification, pipeline gates, sample packages, grouping of unfamiliar systems
+tools/runtime/, tools/research/ the real-Lua oracle, the source collector, the profile and capability builders, differential testing (Node only, not deployed)
 src/nexus/                     NEXUS: comment and relation analysis, transformation profile, claims ledger, the 10-stage pipeline (docs/NEXUS.md)
 src/adaptive/                  the structure reader: findings, strategies (dispatch loops, opaque predicates, call proxies, constant tables, decoders), the acceptance rules, the behaviour check
 src/decompile/                 Lua bytecode lifting, control-flow structuring

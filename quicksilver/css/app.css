@@ -608,3 +608,8 @@ textarea.form { height: 92px; padding: 6px 8px; width: 100%; font: 12px var(--mo
 .research td.m-none { color: var(--faint); }
 .research details { margin: 6px 0; }
 .research summary { cursor: pointer; }
+
+/* Research tab: authorised-sample form */
+.research .form-grid { display: grid; gap: 8px; max-width: 560px; }
+.research .form-grid input[type="text"], .research .form-grid textarea { width: 100%; box-sizing: border-box; background: var(--panel, transparent); color: var(--text); border: 1px solid var(--line, #444); border-radius: 4px; padding: 6px 8px; font: inherit; }
+.research .form-grid .btn { justify-self: start; }

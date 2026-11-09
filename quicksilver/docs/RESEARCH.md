@@ -82,6 +82,7 @@ If a family is not described here, it is because nothing reliable could be found
 * **Versions, including 15.1:** no public technical description of v14 or v15 was found, and no sample output could be generated. Banner comments of the form
   `This file was protected using Luraph Obfuscator vX.Y.Z [https://lura.ph/]` are used for detection only.
 * **What QuickSilver does:** banner detection, VM-shape heuristics, behavioural trace. It does **not** recover Luraph source and makes no claim to.
+* **Update (Phase V, `COMPAT-RESEARCH.md`):** the vendor's `Luraph/macrosdk` repository could be read and its git history gives dated macro sets for four generations (v13-era 7 macros, v14 11, v15 12, v15.1 14); that is the evidence behind the page's generation estimates. `lura.ph` itself is still unreachable from the research environment. Still no sample output, so still no reconstruction and no claim of one.
 
 ### MoonSec V3 **[unverified]**
 

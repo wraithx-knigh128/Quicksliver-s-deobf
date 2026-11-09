@@ -13,6 +13,7 @@ import { recover } from './recover/pipeline.js';
 import { nexusRecover } from './nexus/pipeline.js';
 import { observe } from './research/signature.js';
 import { advise } from './research/advisor.js';
+import { identify } from './research/identify.js';
 import { registryFromData } from './research/families.js';
 import { diffLines, toRows } from './core/diff.js';
 import { traceScript } from './trace/trace.js';
@@ -99,6 +100,19 @@ export function adviseSource(source, options = {}) {
     const registry = options.families ? registryFromData(options.families) : null;
     const seen = observe(source, { registry });
     return { ok: true, observed: seen, advice: advise(seen.tokens, options.summary || null, { allowSandbox: !!options.allowSandbox, nexus: options.nexus ?? null }) };
+  });
+}
+
+/**
+ * Which system (and, where the evidence supports it, which version) this input shows, and what the engine may claim about it.
+ * `options.profiles` is data/research/profiles.json and `options.capabilities` the `capabilities` array of data/research/capabilities.json.
+ * Nothing is run: the script is read, not executed.
+ */
+export function identifySource(source, options = {}) {
+  return timed(() => {
+    if (!options.profiles) return { ok: false, error: 'The compatibility profiles were not loaded.' };
+    const detection = options.detection || detect(source);
+    return { ok: true, ...identify(source, { detection, profiles: options.profiles, capabilities: options.capabilities || null }) };
   });
 }
 
