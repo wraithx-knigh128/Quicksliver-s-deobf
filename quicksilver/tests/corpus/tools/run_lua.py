@@ -23,7 +23,7 @@ import os
 import sys
 
 # lua52 is here for its bit32, which Luau scripts (Clyde's output, for one) expect and Lua 5.1 / LuaJIT / 5.4 do not have
-RUNTIMES = {"lua51": "lupa.lua51", "lua52": "lupa.lua52", "luajit": "lupa.luajit21", "lua54": "lupa.lua54", "lua54c": "lupa.lua54"}
+RUNTIMES = {"lua51": "lupa.lua51", "lua52": "lupa.lua52", "lua53": "lupa.lua53", "luajit": "lupa.luajit21", "lua54": "lupa.lua54", "lua54c": "lupa.lua54"}
 
 # "lua54c" = Lua 5.4 + the math.ldexp / math.frexp polyfills that Hercules' own CLI installs
 # (Lua 5.3+ dropped them unless built with LUA_COMPAT_MATHLIB). Some Hercules VM output needs them.
@@ -81,7 +81,20 @@ def run(code, runtime="lua51", budget=20_000_000):
         return {"ok": False, "stdout": "", "error": "harness: " + repr(exc)}
 
 
+def limit_memory():
+    """Cap the address space (QS_ORACLE_MEM_MB, default 3072). A Lua string.rep or table that tries to eat the machine dies with a memory error
+    inside the run instead; the instruction budget cannot see C-level allocation."""
+    try:
+        import resource
+        mb = int(os.environ.get("QS_ORACLE_MEM_MB", "3072"))
+        if mb > 0:
+            resource.setrlimit(resource.RLIMIT_AS, (mb << 20, mb << 20))
+    except Exception:
+        pass  # a platform without RLIMIT_AS: the caller's wall-clock kill is the remaining guard
+
+
 def main(argv):
+    limit_memory()
     if "--serve" in argv:
         for line in sys.stdin:
             line = line.strip()

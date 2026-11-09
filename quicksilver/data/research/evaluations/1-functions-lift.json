@@ -1,7 +1,7 @@
 {
  "schema": 1,
  "label": "1-functions-lift",
- "note": "functions.lift added alone. Baseline: the engine at d509bbc. Same lab code, same 16 programs.",
+ "note": "functions.lift added alone. Baseline: the engine at d509bbc. Same lab code, same 16 programs, behaviour decided on the reference runtimes.",
  "matched": 2240,
  "base": {
   "rev": "base-d509bbc",

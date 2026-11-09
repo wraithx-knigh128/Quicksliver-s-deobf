@@ -4,10 +4,10 @@
 // knowledge base is derived from experiment records and not typed in; that the advisor's advice follows the evidence and changes when the evidence
 // does; that a new family can be registered and tested without touching anything else.
 //
-// Behaviour is compared in QuickSilver's own interpreter (no reference Lua is needed). The quick laboratory run at the end is a regression test of the
+// Behaviour is decided on a reference Lua runtime when one is installed (QS_LUA_PYTHON, see tools/runtime/setup.sh) and in QuickSilver's own interpreter otherwise; each record says which. The quick laboratory run at the end is a regression test of the
 // whole engine: if any plan changes what a program does, it fails.
 
-import test from 'node:test';
+import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -15,7 +15,9 @@ import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { generateProgram, BLOCK_NAMES } from '../tools/lab/generate.mjs';
 import { TRANSFORMS, transformById } from '../tools/lab/transforms.mjs';
-import { runExperiment, runLab, behave } from '../tools/lab/run.mjs';
+import { runExperiment, runLab } from '../tools/lab/run.mjs';
+import { observeBehaviour, compareBehaviour, referenceRuntimes } from '../tools/lab/behaviour.mjs';
+import { stopOracle } from '../tools/runtime/oracle.mjs';
 import { experimentId, readExperiments, writeExperiments } from '../tools/lab/store.mjs';
 import { compare } from '../tools/lab/compare.mjs';
 import { buildKnowledge } from '../tools/lab/kb.mjs';
@@ -98,7 +100,7 @@ test('judge: the noise band is one band: what is too small to be a gain is too s
   assert.equal(judge({ ...base, fidelityBefore: 1.0, fidelityAfter: 0.94, opacityBefore: 3, opacityAfter: 0 }), 'behaviour-kept-worse');
 });
 
-test('judge: intervals are honest about small samples', () => {
+test('judge: intervals are honest about small samples', async () => {
   assert.deepEqual(wilson(0, 0), { p: 0, lo: 0, hi: 1 });
   const w = wilson(8, 8);
   assert.ok(w.p === 1 && w.lo < 0.7 && w.hi === 1, '8 of 8 does not prove 80%');
@@ -107,59 +109,60 @@ test('judge: intervals are honest about small samples', () => {
 });
 
 // ---- experiments: classification, reproducibility ------------------------------------------------------------------------------------------
-function experiment(plan, transformId = 'junk', seed = 3) {
+async function experiment(plan, transformId = 'junk', seed = 3) {
+  const runtimes = await referenceRuntimes();   // the installed reference runtimes decide; without any, the sandbox does and the record says so
   const program = generateProgram(seed);
-  const reference = behave(program.source);
+  const reference = await observeBehaviour(program.source, runtimes);
   const transform = transformById(transformId);
   const transformed = transform.apply(program.source, seed);
-  const tvalid = behave(transformed).output === reference.output;
-  return runExperiment({ program, reference, transform, transformSeed: seed, transformed, tvalid, plan, registry: null });
+  const tvalid = compareBehaviour(reference, await observeBehaviour(transformed, runtimes)).verdict === 'identical';
+  return runExperiment({ program, reference, transform, transformSeed: seed, transformed, tvalid, plan, registry: null, runtimes });
 }
 const fake = (id, run) => ({ id, label: id, run });
 
-test('experiment: a technique that returns the input unchanged gains nothing, a broken one is called broken, none is called a success', () => {
+test('experiment: a technique that returns the input unchanged gains nothing, a broken one is called broken, none is called a success', async () => {
   const src = generateProgram(3).source;
-  const same = experiment(fake('identity', (text) => ({ code: text })));
+  const same = await experiment(fake('identity', (text) => ({ code: text })));
   assert.ok(['behaviour-kept-no-gain', 'behaviour-kept-worse'].includes(same.verdict), same.verdict);
-  assert.equal(experiment(fake('empty', () => ({ code: '-- nothing\n' }))).verdict, 'failed-behaviour');
-  assert.equal(experiment(fake('wrong', () => ({ code: 'print("something else")\n' }))).verdict, 'failed-behaviour');
-  assert.equal(experiment(fake('garbage', () => ({ code: 'local = = = end end' }))).verdict, 'failed-parse');
-  assert.equal(experiment(fake('declines', () => ({ code: null }))).verdict, 'failed-parse');
-  assert.equal(experiment(fake('throws', () => { throw new Error('boom'); })).verdict, 'error');
-  assert.equal(experiment(fake('original', () => ({ code: src }))).verdict, 'verified-recovery', 'only handing back the original behaves like it and is as close as it can be');
+  assert.equal((await experiment(fake('empty', () => ({ code: '-- nothing\n' })))).verdict, 'failed-behaviour');
+  assert.equal((await experiment(fake('wrong', () => ({ code: 'print("something else")\n' })))).verdict, 'failed-behaviour');
+  assert.equal((await experiment(fake('garbage', () => ({ code: 'local = = = end end' })))).verdict, 'failed-parse');
+  assert.equal((await experiment(fake('declines', () => ({ code: null })))).verdict, 'failed-parse');
+  assert.equal((await experiment(fake('throws', () => { throw new Error('boom'); }))).verdict, 'error');
+  assert.equal((await experiment(fake('original', () => ({ code: src })))).verdict, 'verified-recovery', 'only handing back the original behaves like it and is as close as it can be');
 });
 
-test('experiment: a transformation that changes behaviour is excluded, not blamed on the technique', () => {
+test('experiment: a transformation that changes behaviour is excluded, not blamed on the technique', async () => {
   const program = generateProgram(3);
-  const reference = behave(program.source);
+  const reference = await observeBehaviour(program.source, []);
   const broken = { id: 'broken', kind: 'known', label: 'broken', apply: () => 'print("x")' };
-  const rec = runExperiment({ program, reference, transform: broken, transformSeed: 3, transformed: 'print("x")', tvalid: false, plan: planById('generic'), registry: null });
+  const rec = await runExperiment({ program, reference, transform: broken, transformSeed: 3, transformed: 'print("x")', tvalid: false, plan: planById('generic'), registry: null });
   assert.equal(rec.verdict, 'tool-broken');
   assert.equal(aggregate([rec]).counts.toolBroken, 1);
 });
 
-test('experiment: repeating an experiment gives the same record (reproducibility)', () => {
+test('experiment: repeating an experiment gives the same record (reproducibility)', async () => {
   const strip = ({ ms, ...r }) => r;
-  const a = experiment(planById('adaptive'), 'flatten-chain', 5);
-  const b = experiment(planById('adaptive'), 'flatten-chain', 5);
+  const a = await experiment(planById('adaptive'), 'flatten-chain', 5);
+  const b = await experiment(planById('adaptive'), 'flatten-chain', 5);
   assert.deepEqual(strip(a), strip(b));
   assert.equal(a.id, experimentId({ programSeed: 5, transformId: 'flatten-chain', transformSeed: 5, planId: 'adaptive', engine: `${a.env.engine}@${a.env.rev}` }));
   assert.match(a.id, /^exp_[0-9a-f]{14}$/);
   assert.ok(a.env.rev && a.env.node && a.env.interpreter);
-  assert.notEqual(a.id, experiment(planById('generic'), 'flatten-chain', 5).id);
+  assert.notEqual(a.id, (await experiment(planById('generic'), 'flatten-chain', 5)).id);
 });
 
-test('experiment: the observed signature does not depend on knowing the transformation', () => {
-  const rec = experiment(planById('generic'), 'xorpack', 4);
+test('experiment: the observed signature does not depend on knowing the transformation', async () => {
+  const rec = await experiment(planById('generic'), 'xorpack', 4);
   const p = generateProgram(4);
   assert.deepEqual(rec.observed, observe(transformById('xorpack').apply(p.source, 4)).tokens);
   assert.ok(rec.opacityBefore > 0 && rec.opacityBefore === opacity(rec.observed));
 });
 
-test('store: records are written and read back as they were', () => {
+test('store: records are written and read back as they were', async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'qs-lab-'));
   const file = path.join(dir, 'e.jsonl');
-  const recs = [experiment(planById('generic')), experiment(planById('nexus'))];
+  const recs = [await experiment(planById('generic')), await experiment(planById('nexus'))];
   writeExperiments(file, recs);
   assert.deepEqual(readExperiments(file), recs);
   assert.deepEqual(readExperiments(path.join(dir, 'nothing.jsonl')), []);
@@ -208,7 +211,8 @@ test('knowledge: outside research is graded, kept apart from discoveries, and cl
     assert.ok(!ids.includes(s.id), 'a source is not a discovery');
   }
   const luraph = knowledge.sources.find((s) => s.id === 'luraph');
-  assert.equal(luraph.labStatus, 'untested');
+  assert.equal(luraph.labStatus, 'identification-only', 'Luraph is recognised and versioned from vendor data; no reconstruction was ever tried');
+  assert.ok(!/reconstruct|supported|verified/i.test(luraph.labStatus), 'the lab status of Luraph claims no reconstruction');
   assert.ok(!knowledge.discoveries.some((d) => /luraph/i.test(d.statement)), 'nothing is claimed about Luraph');
 });
 
@@ -420,10 +424,12 @@ test('report: the Markdown report states the plan, the evidence, what was verifi
 });
 
 // ---- the whole engine, in the laboratory -------------------------------------------------------------------------------------------------
-test('regression: over programs the laboratory has not seen, no plan changes what a program does', { timeout: 600_000 }, () => {
-  const records = runLab({ seeds: 3, first: 401, transforms: null, plans: null, out: dataDir, families: path.join(dataDir, 'custom-families.json') });
+test('regression: over programs the laboratory has not seen, no plan changes what a program does', { timeout: 600_000 }, async () => {
+  const records = await runLab({ seeds: 3, first: 401, transforms: null, plans: null, out: dataDir, families: path.join(dataDir, 'custom-families.json') });
   assert.equal(records.length, 3 * TRANSFORMS.length * PLANS.length - records.skipped * PLANS.length);
   const bad = records.filter((r) => ['failed-behaviour', 'failed-parse', 'error', 'tool-broken'].includes(r.verdict));
   assert.deepEqual(bad.map((r) => `${r.transform.id}/${r.plan.id}/${r.program.seed}: ${r.verdict}`), []);
   assert.ok(records.filter((r) => isSuccess(r.verdict)).length > records.length * 0.5);
 });
+
+after(() => stopOracle());

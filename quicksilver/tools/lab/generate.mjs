@@ -101,7 +101,10 @@ end
 print("collatz", steps${i}(${n}), steps${i}(${n + 2}))`;
   },
   records(r, i) {
-    const a = r.pick(WORDS); const b = r.pick(WORDS);
+    // two different keys: a duplicate key in a table constructor is implementation-defined (PUC 5.1 keeps the last, LuaJIT does not when a value is a call),
+    // which the reference runtimes showed and the in-house interpreter could not
+    const a = r.pick(WORDS); let b = r.pick(WORDS);
+    while (b === a) b = r.pick(WORDS);
     return `local inventory${i} = { ${a} = ${r.int(1, 20)}, ${b} = ${r.int(1, 20)} }
 local keys${i} = {}
 for k in pairs(inventory${i}) do keys${i}[#keys${i} + 1] = k end

@@ -10,3 +10,9 @@ user-local/
 local/
 quicksilver/tools/build-reports.mjs
 quicksilver/tools/report-facts.mjs
+
+# local runtimes for the reference-Lua oracle (tools/runtime/setup.sh)
+quicksilver/.runtime/
+
+# fetched third-party text (re-fetchable; records keep its hash)
+quicksilver/data/research/cache/

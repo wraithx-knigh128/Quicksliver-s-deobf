@@ -1,0 +1,44 @@
+{
+ "schema": 1,
+ "programs": 64,
+ "first": 1,
+ "runs": 1344,
+ "runtimes": [
+  {
+   "id": "lua51",
+   "version": "Lua 5.1"
+  },
+  {
+   "id": "lua52",
+   "version": "Lua 5.2"
+  },
+  {
+   "id": "lua53",
+   "version": "Lua 5.3"
+  },
+  {
+   "id": "lua54",
+   "version": "Lua 5.4"
+  },
+  {
+   "id": "luajit",
+   "version": "Lua 5.1 LuaJIT 2.1.1774896198"
+  }
+ ],
+ "family51": [
+  "lua51",
+  "luajit"
+ ],
+ "other": [
+  "lua52",
+  "lua53",
+  "lua54"
+ ],
+ "disagreements5_1Family": [],
+ "differFrom51": {
+  "lua52": 717,
+  "lua53": 1059,
+  "lua54": 1059
+ },
+ "note": "disagreements5_1Family lists runs where the sandbox or another 5.1-family runtime printed something other than PUC Lua 5.1 did. differFrom51 counts runs where a newer Lua differed from 5.1, which is expected (number formatting, removed functions) and says nothing about the sandbox."
+}

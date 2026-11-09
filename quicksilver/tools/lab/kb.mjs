@@ -24,6 +24,7 @@ export function buildKnowledge(dir) {
   const study = read(path.join(dir, 'study.json'), { attempts: [] });
   const families = read(path.join(dir, 'custom-families.json'), { families: [] });
   const sources = read(path.join(dir, 'sources.json'), { sources: [] });
+  const cross = read(path.join(dir, 'crosscheck.json'), null);
   const evalDir = path.join(dir, 'evaluations');
   const evaluations = fs.existsSync(evalDir) ? fs.readdirSync(evalDir).filter((f) => f.endsWith('.json')).sort().map((f) => JSON.parse(fs.readFileSync(path.join(evalDir, f), 'utf8'))) : [];
   const revs = [...new Set(experiments.map((r) => r.env.rev))];
@@ -31,7 +32,7 @@ export function buildKnowledge(dir) {
 
   const summary = {
     schema: 1, generatedAt: new Date().toISOString(), engine: ENGINE_VERSION, revisions: revs,
-    interpreter: 'quicksilver-sandbox (this project\'s own Lua interpreter; not a reference Lua)',
+    interpreter: [...new Set(experiments.map((r) => r.env.interpreter))].join(' | '),
     counts: { ...agg.counts, programs },
     plans: PLANS.map(({ id, label, needsConsent, text }) => ({ id, label, needsConsent, text })),
     transforms: TRANSFORMS.map(({ id, kind, label }) => ({ id, kind, label })),
@@ -41,6 +42,12 @@ export function buildKnowledge(dir) {
   const knowledge = {
     schema: 1, generatedAt: summary.generatedAt, engine: ENGINE_VERSION, revisions: revs, minTrials: MIN_TRIALS,
     counts: summary.counts,
+    runtime: {
+      decidedBy: [...new Set(experiments.map((r) => (r.verification ? r.verification.runtime.source : 'sandbox')))],
+      runtimesUsed: [...new Set(experiments.flatMap((r) => (r.verification && r.verification.runtime.source === 'reference' ? r.verification.runtime.runtimes : [])))],
+      disagreements: experiments.filter((r) => r.disagreement).map((r) => ({ id: r.id, transform: r.transform.id, plan: r.plan.id, program: r.program.seed, checks: r.runtimeChecks })),
+      crosscheck: cross && { programs: cross.programs, runs: cross.runs, runtimes: cross.runtimes, disagreements5_1Family: cross.disagreements5_1Family.length, differFrom51: cross.differFrom51 },
+    },
     discoveries: deriveDiscoveries(agg, { labels }),
     gaps: gaps(agg).map((g) => ({ ...g, label: labels[g.transform] || g.transform })),
     defects: agg.defects,
