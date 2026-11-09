@@ -114,7 +114,9 @@ class handler(BaseHTTPRequestHandler):          # noqa: N801 - the name the Verc
             r = service.reconstruct(fixture.read_bytes(), "ironbrew1", timeout_s=60, allow_fallback=False)
             out = r.get("output") or ""
             selftest = {"ran": True, "fixture": fixture.name, "ok": bool(r.get("ok")) and r.get("kind") == "devirtualized" and "assert(n == 1 and tbl2[1] == 34)" in out,
-                        "kind": r.get("kind"), "seconds": round(time.time() - t, 1), "engine": (r.get("engine") or {}).get("used")}
+                        "kind": r.get("kind"), "seconds": round(time.time() - t, 1), "engine": (r.get("engine") or {}).get("used"),
+                        "attempts": (r.get("engine") or {}).get("attempts"), "diagnostics": [d["code"] for d in r.get("diagnostics", [])],
+                        "log": (r.get("log") or [])[-25:]}       # the engine's own progress lines for a bundled fixture: no user input in them
         self._send_json(200, {"ok": True, "capabilities": caps, "selfTest": selftest, "mode": os.environ.get("QS_RECONSTRUCT_MODE", "open")})
 
     # ---- POST: a reconstruction

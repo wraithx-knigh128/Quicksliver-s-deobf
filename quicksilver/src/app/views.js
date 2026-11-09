@@ -26,6 +26,7 @@ const EVIDENCE_NOTE = {
 const CLAIM_TEXT = {
   supported: ['ok', 'Reconstruction verified'],
   partial: ['warn', 'Reconstruction partly verified'],
+  experimental: ['warn', 'Reconstruction exists; below the verification gates'],
   'identification-only': ['info', 'Recognised only: no verified reconstruction'],
   unknown: ['', 'Not profiled'],
 };

@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "generatedAt": "2026-11-09T02:36:06.924Z",
+ "generatedAt": "2026-11-09T12:36:44.274Z",
  "gates": {
   "real": {
    "minFixtures": 8,
@@ -121,6 +121,22 @@
      "verification": {
       "status": "identified",
       "basis": "banner and macro-set identification only; no reconstruction was attempted on any sample"
+     },
+     "reconstruction": {
+      "registry": "luraph-compat.json",
+      "rows": [
+       {
+        "id": "luraph-13",
+        "status": "unsupported",
+        "reasons": [
+         "no engine exists for this version"
+        ]
+       }
+      ],
+      "runs": 0,
+      "lifted": 0,
+      "liftedIdentical": 0,
+      "traceOnly": 0
      }
     },
     {
@@ -213,8 +229,8 @@
       },
       "trace": {
        "available": true,
-       "verified": "unverified",
-       "note": "the sandbox can run a script against stand-in objects; it has not been run on Luraph output"
+       "verified": "internally-tested",
+       "note": "behaviour traces from the supplied engine; no lifted run"
       },
       "recover": {
        "available": false,
@@ -228,13 +244,57 @@
       "runtime": null
      },
      "limitations": [
-      "No output of this generation has been obtained, so the engine has never been run on any; nothing is claimed about reconstruction.",
       "Version estimates from a banner depend on the file being what it says it is.",
-      "The SDK lists the macros the vendor documents; the service may accept more."
+      "The SDK lists the macros the vendor documents; the service may accept more.",
+      "Reconstruction is measured on 3 fixtures (0 lifted, 3 ended as behaviour traces); see data/research/luraph-compat.json."
      ],
      "verification": {
       "status": "identified",
       "basis": "banner and macro-set identification only; no reconstruction was attempted on any sample"
+     },
+     "reconstruction": {
+      "registry": "luraph-compat.json",
+      "rows": [
+       {
+        "id": "luraph-14-early",
+        "status": "unsupported",
+        "reasons": [
+         "no engine exists for this version"
+        ]
+       },
+       {
+        "id": "luraph-14.7",
+        "status": "experimental",
+        "reasons": [
+         "1 input tried; the engine lifted none (1 ended as a behaviour trace)"
+        ]
+       },
+       {
+        "id": "luraph-14.8",
+        "status": "experimental",
+        "reasons": [
+         "1 input tried; the engine lifted none (1 ended as a behaviour trace)"
+        ]
+       },
+       {
+        "id": "luraph-14.9",
+        "status": "experimental",
+        "reasons": [
+         "1 input tried; the engine lifted none (1 ended as a behaviour trace)"
+        ]
+       },
+       {
+        "id": "luraph-14-late",
+        "status": "unsupported",
+        "reasons": [
+         "no engine exists for this version"
+        ]
+       }
+      ],
+      "runs": 3,
+      "lifted": 0,
+      "liftedIdentical": 0,
+      "traceOnly": 3
      }
     },
     {
@@ -356,9 +416,9 @@
        "note": "the sandbox can run a script against stand-in objects; it has not been run on Luraph output"
       },
       "recover": {
-       "available": false,
-       "verified": "none",
-       "note": "a per-script VM cannot be reconstructed without samples to study, and none are available"
+       "available": true,
+       "verified": "internally-tested",
+       "note": "the supplied engine, integrated in the Reconstruct tab"
       }
      },
      "results": {
@@ -367,13 +427,29 @@
       "runtime": null
      },
      "limitations": [
-      "No output of this generation has been obtained, so the engine has never been run on any; nothing is claimed about reconstruction.",
       "Version estimates from a banner depend on the file being what it says it is.",
-      "The SDK lists the macros the vendor documents; the service may accept more."
+      "The SDK lists the macros the vendor documents; the service may accept more.",
+      "Reconstruction is measured on 1 fixture (1 lifted, 0 ended as behaviour traces); see data/research/luraph-compat.json."
      ],
      "verification": {
-      "status": "identified",
-      "basis": "banner and macro-set identification only; no reconstruction was attempted on any sample"
+      "status": "internally-tested",
+      "basis": "1 lifted run compared identical with the original on a Luau runtime; below the 8 authorised pairs the gates ask for"
+     },
+     "reconstruction": {
+      "registry": "luraph-compat.json",
+      "rows": [
+       {
+        "id": "luraph-15.0",
+        "status": "partially-tested",
+        "reasons": [
+         "1 lifted run compared identical with the original; 8 are needed (with a lower bound of 70%) for \"fully tested\""
+        ]
+       }
+      ],
+      "runs": 1,
+      "lifted": 1,
+      "liftedIdentical": 1,
+      "traceOnly": 0
      }
     },
     {
@@ -488,6 +564,22 @@
      "verification": {
       "status": "identified",
       "basis": "banner and macro-set identification only; no reconstruction was attempted on any sample"
+     },
+     "reconstruction": {
+      "registry": "luraph-compat.json",
+      "rows": [
+       {
+        "id": "luraph-15.1",
+        "status": "unsupported",
+        "reasons": [
+         "no engine exists for this version"
+        ]
+       }
+      ],
+      "runs": 0,
+      "lifted": 0,
+      "liftedIdentical": 0,
+      "traceOnly": 0
      }
     }
    ],
@@ -638,8 +730,8 @@
      "why": "The output can be recognised. No reconstruction has been verified against real or authorised samples."
     },
     "v15": {
-     "claim": "identification-only",
-     "why": "The output can be recognised. No reconstruction has been verified against real or authorised samples."
+     "claim": "experimental",
+     "why": "An engine reconstructs this generation: 1 lifted run compared identical with its original on a Luau runtime. 8 authorised pairs are needed before that counts as verified."
     },
     "v15.1": {
      "claim": "identification-only",

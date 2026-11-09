@@ -123,8 +123,8 @@ function sourcesSection(kb) {
   ]);
 }
 
-const CLAIM_BADGE = { supported: 'ok', partial: 'warn', 'identification-only': 'info', unknown: '' };
-const CLAIM_LABEL = { supported: 'reconstruction verified', partial: 'reconstruction partly verified', 'identification-only': 'recognised only', unknown: 'researched only' };
+const CLAIM_BADGE = { supported: 'ok', partial: 'warn', experimental: 'warn', 'identification-only': 'info', unknown: '' };
+const CLAIM_LABEL = { supported: 'reconstruction verified', partial: 'reconstruction partly verified', experimental: 'reconstruction exists, not verified to the gates', 'identification-only': 'recognised only', unknown: 'researched only' };
 
 function systemsSection(data) {
   const { profiles, pipeline } = data;

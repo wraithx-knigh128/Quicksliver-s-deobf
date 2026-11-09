@@ -92,7 +92,7 @@ export function validateProfile(p) {
 
 /**
  * What the interface may say about a version. Derived, never stored.
- * @returns {{claim: 'supported'|'partial'|'identification-only'|'unknown', why: string}}
+ * @returns {{claim: 'supported'|'partial'|'experimental'|'identification-only'|'unknown', why: string}}
  */
 export function supportClaim(profile, versionId) {
   const v = profile.versions.find((x) => x.id === versionId);
@@ -106,6 +106,11 @@ export function supportClaim(profile, versionId) {
     if (lo >= GATES.supportedRateLo) return { claim: 'supported', why: `${ok} of ${n} ${st === 'authorized-sample-verified' ? 'authorised pairs' : 'real-tool fixtures'} reconstructed with identical behaviour on a reference runtime (lower bound ${Math.round(lo * 100)}%).` };
     if (lo >= GATES.partialRateLo) return { claim: 'partial', why: `${ok} of ${n} reconstructed with identical behaviour (lower bound ${Math.round(lo * 100)}%).` };
     return { claim: 'identification-only', why: `Verified, but only ${ok} of ${n} reconstructed with identical behaviour.` };
+  }
+  // an engine exists and some of its runs were compared with their originals, but fewer than the gates ask for: said as such, not as support
+  const rec = v.reconstruction;
+  if (rec && rec.liftedIdentical >= 1 && rank(st) >= rank('internally-tested')) {
+    return { claim: 'experimental', why: `An engine reconstructs this generation: ${rec.liftedIdentical} lifted run${rec.liftedIdentical === 1 ? '' : 's'} compared identical with ${rec.liftedIdentical === 1 ? 'its' : 'their'} original on a Luau runtime. ${GATES.authorized.minPairs} authorised pairs are needed before that counts as verified.` };
   }
   if (rank(st) >= rank('identified')) return { claim: 'identification-only', why: 'The output can be recognised. No reconstruction has been verified against real or authorised samples.' };
   return { claim: 'unknown', why: 'Researched only: the engine has no capability for it.' };

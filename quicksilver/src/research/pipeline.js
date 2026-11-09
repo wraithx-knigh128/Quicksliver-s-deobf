@@ -34,9 +34,10 @@ export function stagesFor(profile, versionId, capabilities = []) {
     [...methods.map((m) => `${m.kind} (${m.confidence})`), ...sys.map((c) => `verified capability ${c.id}`)],
     [...(methods.length ? [] : ['no identification method']), ...(sys.length ? [] : ['no verified capability for this system (tools/research/capabilities.mjs)'])]);
 
-  const haveEvidence = (samples.authorizedPairs || 0) + (samples.realOutput || 0) + (res.fixtures || 0) + (res.pairs || 0);
+  const engineRuns = (v.reconstruction && v.reconstruction.runs) || 0;
+  const haveEvidence = (samples.authorizedPairs || 0) + (samples.realOutput || 0) + (res.fixtures || 0) + (res.pairs || 0) + engineRuns;
   add('experimental-analysis',
-    haveEvidence ? [`${res.fixtures || 0} fixtures, ${samples.authorizedPairs || 0} authorised pairs, ${res.failed || 0} failures recorded`] : [],
+    haveEvidence ? [`${res.fixtures || 0} fixtures, ${samples.authorizedPairs || 0} authorised pairs, ${engineRuns} engine run${engineRuns === 1 ? '' : 's'} (${(v.reconstruction && v.reconstruction.traceOnly) || 0} ended as behaviour traces; failures are recorded)`] : [],
     haveEvidence ? [] : ['no output of this version has been run through the engine']);
 
   const realOk = v.verification.status === 'real-output-verified' && res.behaviourChecked >= GATES.real.minBehaviourChecked && res.runtime && res.runtime.source === 'reference';

@@ -215,6 +215,32 @@ function applyDifferential(profiles, dir, warn = console.warn) {
   }
 }
 
+// The reconstruction registry (tools/luraph/verify.mjs) is attached to the generation each of its version rows belongs to. A generation whose engine lifted a run that
+// compared identical with its original gets `reconstruction.liftedIdentical`, the status `internally-tested` and an available `recover` capability; no more than that:
+// the gates for "supported" (8 authorised pairs) are unchanged.
+const GENERATION_ROWS = { 'v13-era': ['luraph-13'], v14: ['luraph-14-early', 'luraph-14.7', 'luraph-14.8', 'luraph-14.9', 'luraph-14-late'], v15: ['luraph-15.0'], 'v15.1': ['luraph-15.1'] };
+
+function applyReconstruction(profiles, registry) {
+  const lu = profiles.find((p) => p.id === 'luraph');
+  if (!lu || !registry) return;
+  for (const v of lu.versions) {
+    const rows = GENERATION_ROWS[v.id] || [];
+    const recs = (registry.records || []).filter((r) => rows.includes(r.versionRow));
+    const summary = rows.map((id) => ({ id, status: registry.summary.versions[id] ? registry.summary.versions[id].status : 'unsupported', reasons: registry.summary.versions[id] ? registry.summary.versions[id].reasons : [] }));
+    const identical = recs.filter((r) => r.kind === 'devirtualized' && r.verification && r.verification.status === 'identical').length;
+    v.reconstruction = { registry: 'luraph-compat.json', rows: summary, runs: recs.length, lifted: recs.filter((r) => r.kind === 'devirtualized').length, liftedIdentical: identical, traceOnly: recs.filter((r) => r.kind !== 'devirtualized').length };
+    if (!recs.length) continue;
+    v.limitations = v.limitations.filter((l) => !/never been run|nothing is claimed about reconstruction/.test(l));
+    v.limitations.push(`Reconstruction is measured on ${recs.length} fixture${recs.length === 1 ? '' : 's'} (${v.reconstruction.lifted} lifted, ${v.reconstruction.traceOnly} ended as behaviour traces); see data/research/luraph-compat.json.`);
+    if (identical >= 1) {
+      v.verification = { status: 'internally-tested', basis: `${identical} lifted run${identical === 1 ? '' : 's'} compared identical with the original on a Luau runtime; below the ${GATES.authorized.minPairs} authorised pairs the gates ask for` };
+      v.capabilities.recover = { available: true, verified: 'internally-tested', note: 'the supplied engine, integrated in the Reconstruct tab' };
+    } else {
+      v.capabilities.trace = { available: true, verified: 'internally-tested', note: 'behaviour traces from the supplied engine; no lifted run' };
+    }
+  }
+}
+
 export function buildProfiles({ dir = data } = {}) {
   const research = path.join(dir, 'research');
   const records = fs.existsSync(path.join(research, 'records')) ? fs.readdirSync(path.join(research, 'records')).map((f) => read(path.join(research, 'records', f))) : [];
@@ -229,6 +255,7 @@ export function buildProfiles({ dir = data } = {}) {
     profiles.push(familyProfile(id, fam, compat, rerun));
   }
   profiles.push(...labProfiles(read(path.join(research, 'summary.json'), null), read(path.join(research, 'custom-families.json'), null)));
+  applyReconstruction(profiles, read(path.join(research, 'luraph-compat.json'), null));
   applyDifferential(profiles, path.join(research, 'differential'));
   const problems = profiles.flatMap((p) => validateProfile(p).problems);
   if (problems.length) throw new Error(`profiles failed validation:\n${problems.join('\n')}`);

@@ -8,7 +8,7 @@
     "compatibility-profile",
     "integration"
   ],
-  "generatedAt": "2026-11-09T02:36:56.556Z",
+  "generatedAt": "2026-11-09T12:36:58.531Z",
   "report": [
     {
       "system": "luraph",
@@ -101,11 +101,11 @@
         },
         {
           "stage": "experimental-analysis",
-          "reached": false,
-          "evidence": [],
-          "missing": [
-            "no output of this version has been run through the engine"
-          ]
+          "reached": true,
+          "evidence": [
+            "0 fixtures, 0 authorised pairs, 3 engine runs (3 ended as behaviour traces; failures are recorded)"
+          ],
+          "missing": []
         },
         {
           "stage": "verification",
@@ -136,7 +136,7 @@
           ]
         }
       ],
-      "reached": "classification",
+      "reached": "experimental-analysis",
       "integration": {
         "identify": true,
         "reconstruct": false
@@ -167,11 +167,11 @@
         },
         {
           "stage": "experimental-analysis",
-          "reached": false,
-          "evidence": [],
-          "missing": [
-            "no output of this version has been run through the engine"
-          ]
+          "reached": true,
+          "evidence": [
+            "0 fixtures, 0 authorised pairs, 1 engine run (0 ended as behaviour traces; failures are recorded)"
+          ],
+          "missing": []
         },
         {
           "stage": "verification",
@@ -185,7 +185,7 @@
           "stage": "compatibility-profile",
           "reached": false,
           "evidence": [
-            "status identified"
+            "status internally-tested"
           ],
           "missing": [
             "an earlier stage is not reached"
@@ -202,7 +202,7 @@
           ]
         }
       ],
-      "reached": "classification",
+      "reached": "experimental-analysis",
       "integration": {
         "identify": true,
         "reconstruct": false
@@ -299,7 +299,7 @@
           "stage": "experimental-analysis",
           "reached": true,
           "evidence": [
-            "91 fixtures, 0 authorised pairs, 0 failures recorded"
+            "91 fixtures, 0 authorised pairs, 0 engine runs (0 ended as behaviour traces; failures are recorded)"
           ],
           "missing": []
         },
@@ -360,7 +360,7 @@
           "stage": "experimental-analysis",
           "reached": true,
           "evidence": [
-            "115 fixtures, 0 authorised pairs, 0 failures recorded"
+            "115 fixtures, 0 authorised pairs, 0 engine runs (0 ended as behaviour traces; failures are recorded)"
           ],
           "missing": []
         },
@@ -611,7 +611,7 @@
           "stage": "experimental-analysis",
           "reached": true,
           "evidence": [
-            "64 fixtures, 0 authorised pairs, 0 failures recorded"
+            "64 fixtures, 0 authorised pairs, 0 engine runs (0 ended as behaviour traces; failures are recorded)"
           ],
           "missing": []
         },
@@ -925,7 +925,7 @@
           "stage": "experimental-analysis",
           "reached": false,
           "evidence": [
-            "48 fixtures, 0 authorised pairs, 0 failures recorded"
+            "48 fixtures, 0 authorised pairs, 0 engine runs (0 ended as behaviour traces; failures are recorded)"
           ],
           "missing": [
             "an earlier stage is not reached"
@@ -991,7 +991,7 @@
           "stage": "experimental-analysis",
           "reached": true,
           "evidence": [
-            "8 fixtures, 0 authorised pairs, 0 failures recorded"
+            "8 fixtures, 0 authorised pairs, 0 engine runs (0 ended as behaviour traces; failures are recorded)"
           ],
           "missing": []
         },
@@ -1052,7 +1052,7 @@
           "stage": "experimental-analysis",
           "reached": false,
           "evidence": [
-            "8 fixtures, 0 authorised pairs, 0 failures recorded"
+            "8 fixtures, 0 authorised pairs, 0 engine runs (0 ended as behaviour traces; failures are recorded)"
           ],
           "missing": [
             "an earlier stage is not reached"
@@ -1497,7 +1497,7 @@
           "stage": "experimental-analysis",
           "reached": true,
           "evidence": [
-            "48 fixtures, 0 authorised pairs, 0 failures recorded"
+            "48 fixtures, 0 authorised pairs, 0 engine runs (0 ended as behaviour traces; failures are recorded)"
           ],
           "missing": []
         },
@@ -1559,7 +1559,7 @@
           "stage": "experimental-analysis",
           "reached": true,
           "evidence": [
-            "8 fixtures, 0 authorised pairs, 0 failures recorded"
+            "8 fixtures, 0 authorised pairs, 0 engine runs (0 ended as behaviour traces; failures are recorded)"
           ],
           "missing": []
         },
@@ -1620,7 +1620,7 @@
           "stage": "experimental-analysis",
           "reached": true,
           "evidence": [
-            "25 fixtures, 0 authorised pairs, 0 failures recorded"
+            "25 fixtures, 0 authorised pairs, 0 engine runs (0 ended as behaviour traces; failures are recorded)"
           ],
           "missing": []
         },
@@ -1996,7 +1996,7 @@
           "stage": "experimental-analysis",
           "reached": true,
           "evidence": [
-            "16 fixtures, 0 authorised pairs, 0 failures recorded"
+            "16 fixtures, 0 authorised pairs, 0 engine runs (0 ended as behaviour traces; failures are recorded)"
           ],
           "missing": []
         },
@@ -2058,7 +2058,7 @@
           "stage": "experimental-analysis",
           "reached": true,
           "evidence": [
-            "16 fixtures, 0 authorised pairs, 0 failures recorded"
+            "16 fixtures, 0 authorised pairs, 0 engine runs (0 ended as behaviour traces; failures are recorded)"
           ],
           "missing": []
         },
@@ -2120,7 +2120,7 @@
           "stage": "experimental-analysis",
           "reached": true,
           "evidence": [
-            "16 fixtures, 0 authorised pairs, 0 failures recorded"
+            "16 fixtures, 0 authorised pairs, 0 engine runs (0 ended as behaviour traces; failures are recorded)"
           ],
           "missing": []
         },
