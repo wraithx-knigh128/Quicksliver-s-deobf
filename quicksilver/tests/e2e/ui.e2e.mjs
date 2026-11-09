@@ -24,9 +24,16 @@ async function loadPlaywright() {
 }
 
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.lua': 'text/plain' };
+let pyPort = 0; let pyProc = null;
 function serve() {
   const server = http.createServer((req, res) => {
     const u = new URL(req.url, 'http://x');
+    if (u.pathname === '/api/reconstruct' && pyPort) {      // the reconstruction service is a Python function; tests run it locally and proxy to it
+      const up = http.request({ host: '127.0.0.1', port: pyPort, path: req.url, method: req.method, headers: req.headers }, (r) => { res.writeHead(r.statusCode, r.headers); r.pipe(res); });
+      up.on('error', () => { res.writeHead(502); res.end('{}'); });
+      req.pipe(up);
+      return;
+    }
     let file = path.join(root, decodeURIComponent(u.pathname === '/' ? '/index.html' : u.pathname));
     if (!file.startsWith(root) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.writeHead(404); res.end('not found'); return; }
     res.writeHead(200, { 'Content-Type': MIME[path.extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-store' });
@@ -40,13 +47,26 @@ const skip = pw ? false : 'Playwright is not available (set QS_PLAYWRIGHT)';
 let server; let browser; let base;
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'qs-e2e-'));
 
+async function startPython() {
+  const net = await import('node:net');
+  const { spawn } = await import('node:child_process');
+  const port = await new Promise((r) => { const s = net.createServer().listen(0, '127.0.0.1', () => { const p = s.address().port; s.close(() => r(p)); }); });
+  pyProc = spawn('python3', ['-I', path.join(root, 'api', 'reconstruct.py'), '--serve', String(port)], { stdio: 'ignore' });
+  for (let i = 0; i < 50; i++) {
+    const ok = await new Promise((r) => { const q = http.get({ host: '127.0.0.1', port, path: '/api/reconstruct' }, (x) => { x.resume(); r(true); }); q.on('error', () => r(false)); });
+    if (ok) { pyPort = port; return; }
+    await new Promise((r) => setTimeout(r, 100));
+  }
+}
+
 before(async () => {
   if (!pw) return;
+  await startPython();
   server = await serve();
   base = `http://127.0.0.1:${server.address().port}`;
   browser = await pw.chromium.launch();
 });
-after(async () => { if (browser) await browser.close(); if (server) server.close(); fs.rmSync(tmp, { recursive: true, force: true }); });
+after(async () => { if (browser) await browser.close(); if (server) server.close(); if (pyProc) pyProc.kill(); fs.rmSync(tmp, { recursive: true, force: true }); });
 
 async function newPage(opts = {}) {
   const ctx = await browser.newContext({ viewport: { width: 1400, height: 860 }, acceptDownloads: true, ...opts });
@@ -894,5 +914,78 @@ test('the advisor can be switched off, and the page then recovers with the setti
   await page.click('#act-recover'); await idle(page);
   await page.click('#tab-research');
   assert.match(await page.textContent('#view-research'), /Press Deobfuscate/);
+  await ctx.close();
+});
+
+
+// ---- the Reconstruct tab (the reconstruction service runs locally behind the proxy above) --------------------------------------------------
+import { spawnSync } from 'node:child_process';
+const reconHost = spawnSync('python3', ['-V']).status === 0 && fs.existsSync(path.join(root, 'api/_engine/luraph/deobf/bin/luau'));
+const skipRecon = () => (reconHost ? false : 'python3 or the bundled engine is not available here');
+const fixtureDir = path.join(root, 'api/_engine/luraph/fixtures');
+
+test('Reconstruct: upload a protected script and its original, watch the stages, read a lifted and verified reconstruction, export it', { skip: skipRecon() || skip, timeout: 120_000 }, async () => {
+  const { page, ctx, problems } = await newPage();
+  await page.click('#tab-reconstruct');
+  await page.waitForSelector('#recon-file', { state: 'attached' });
+  assert.equal(await page.isDisabled('#recon-run'), true, 'nothing to run yet');
+  await page.setInputFiles('#recon-file', path.join(fixtureDir, '001_vm_like_dispatch-obfuscated.lua'));
+  await page.setInputFiles('#recon-original', path.join(fixtureDir, '001_vm_like_dispatch.lua'));
+  const left = await page.textContent('.recon-left');
+  assert.match(left, /This file was protected using Luraph Obfuscator v15\.0/);
+  assert.match(left, /it says what the file claims, not what produced it/);
+  assert.match(left, /Luraph v15\.0/);
+  assert.equal(await page.isDisabled('#recon-run'), true, 'the attestation is required');
+  await page.check('#recon-attest');
+  await page.click('#recon-run');
+  await page.waitForSelector('#recon-kind', { timeout: 100_000 });
+  assert.equal(await page.textContent('#recon-kind'), 'Lifted from the virtual machine');
+  assert.equal(await page.textContent('#recon-verify'), 'Identical to the original');
+  assert.equal(await page.locator('.recon-stages li[data-state="done"]').count() >= 5, true);
+  const code = await page.textContent('#recon-code .code');
+  assert.match(code, /handlers = \{/);
+  assert.match(code, /assert\(n == 1 and tbl2\[1\] == 34\)/);
+  assert.match(await page.textContent('.recon-right'), /not a proof of equivalence/);
+  const [dl] = await Promise.all([page.waitForEvent('download'), page.click('#recon-download')]);
+  assert.match(fs.readFileSync(await dl.path(), 'utf8'), /return tbl2\[1\]/);
+  const [rep] = await Promise.all([page.waitForEvent('download'), page.click('#recon-download-report')]);
+  const md = fs.readFileSync(await rep.path(), 'utf8');
+  assert.match(md, /^# Reconstruction report:/);
+  assert.match(md, /\*\*identical\*\*/);
+  assert.match(md, /Luraph v15\.0: \*\*partially-tested\*\*/);
+  await page.click('[data-tab="compatibility"]');
+  const compat = await page.textContent('.recon-right');
+  assert.match(compat, /Luraph v14\.8[\s\S]*Experimental/);
+  assert.match(compat, /Luraph v15\.1 and later 15\.x[\s\S]*Unsupported/);
+  assert.deepEqual(problems, []);
+  await ctx.close();
+});
+
+test('Reconstruct: without a recognised protector only a behaviour trace is offered, and the page says it is not the program', { skip: skipRecon() || skip, timeout: 120_000 }, async () => {
+  const { page, ctx } = await newPage();
+  await page.fill('textarea.editor', 'local t = {}\nfor i = 1, 3 do t[#t + 1] = i end\nprint(#t)');
+  await page.click('#tab-reconstruct');
+  await page.waitForSelector('#recon-attest');
+  assert.match(await page.textContent('.recon-plan'), /no engine recognised the input/);
+  await page.check('#recon-attest');
+  await page.click('#recon-run');
+  await page.waitForSelector('#recon-kind', { timeout: 100_000 });
+  assert.equal(await page.textContent('#recon-kind'), 'Behaviour trace only');
+  assert.match(await page.textContent('.recon-right'), /not the program/);
+  assert.equal(await page.textContent('#recon-verify'), 'Not verified');
+  await ctx.close();
+});
+
+test('Reconstruct: a failure is explained, not hidden (service refuses an unattested request)', { skip: skipRecon() || skip }, async () => {
+  const { page, ctx } = await newPage();
+  await page.fill('textarea.editor', 'print(1)');
+  await page.click('#tab-reconstruct');
+  await page.waitForSelector('#recon-attest');
+  const res = await page.evaluate(async () => {
+    const r = await fetch('api/reconstruct', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ source_b64: btoa('print(1)') }) });
+    return { status: r.status, body: await r.json() };
+  });
+  assert.equal(res.status, 400);
+  assert.equal(res.body.error.code, 'attestation_required');
   await ctx.close();
 });

@@ -613,3 +613,35 @@ textarea.form { height: 92px; padding: 6px 8px; width: 100%; font: 12px var(--mo
 .research .form-grid { display: grid; gap: 8px; max-width: 560px; }
 .research .form-grid input[type="text"], .research .form-grid textarea { width: 100%; box-sizing: border-box; background: var(--panel, transparent); color: var(--text); border: 1px solid var(--line, #444); border-radius: 4px; padding: 6px 8px; font: inherit; }
 .research .form-grid .btn { justify-self: start; }
+
+/* Reconstruct tab */
+.recon { overflow: auto; padding: 0 0 24px; }
+.recon-head { padding: 12px 16px 4px; } .recon-head h2 { margin: 0 0 2px; font-size: 16px; }
+.recon-grid { display: grid; grid-template-columns: minmax(300px, 400px) minmax(0, 1fr); gap: 12px; padding: 0 12px; align-items: start; }
+@media (max-width: 900px) { .recon-grid { grid-template-columns: 1fr; } }
+.recon-left, .recon-right { border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); min-width: 0; }
+.recon input[type="file"] { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
+.recon label.btn { cursor: pointer; display: inline-flex; }
+.recon .field { display: grid; gap: 3px; margin: 6px 0; font-size: 12.5px; } .recon .field span { color: var(--dim); }
+.recon .field select { width: 100%; background: var(--panel); color: var(--text); border: 1px solid var(--line-2); border-radius: 4px; padding: 5px 6px; font: inherit; }
+.recon .check { display: flex; gap: 6px; align-items: flex-start; margin: 6px 0; font-size: 12.5px; }
+.recon-buttons { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 6px 0; }
+.recon-plan { margin: 6px 0; padding-left: 18px; font-size: 12.5px; } .recon-plan li { margin: 4px 0; }
+.recon-stages { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.recon-stages li { display: flex; gap: 8px; align-items: baseline; font-size: 12.5px; }
+.recon-stages .dot { flex: none; width: 9px; height: 9px; border-radius: 50%; border: 1.5px solid var(--faint); transform: translateY(1px); }
+.recon-stages .st-running .dot { border-color: var(--info); background: var(--info); }
+.recon-stages .st-done .dot { border-color: var(--ok); background: var(--ok); }
+.recon-stages .st-skipped .dot { border-style: dashed; }
+.recon-stages .st-fail .dot, .recon-stages .st-failed .dot { border-color: var(--bad); background: var(--bad); }
+.recon-stages .detail { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.recon-attempts { margin: 8px 0 0; padding-left: 18px; font-size: 12.5px; }
+.recon-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+.recon-tabs { display: flex; gap: 4px; flex-wrap: wrap; margin: 8px 0; }
+.recon-tabs .btn[aria-selected="true"] { color: var(--text); border-color: var(--line-2); background: var(--panel-2, var(--panel)); }
+.recon-code { display: grid; grid-template-columns: auto 1fr; border: 1px solid var(--line); border-radius: 4px; max-height: 60vh; overflow: auto; background: var(--bg, transparent); }
+.recon-code pre { margin: 0; padding: 8px 10px; font: 12px/1.5 var(--mono); }
+.recon-code .gutter { color: var(--faint); text-align: right; user-select: none; border-right: 1px solid var(--line); position: sticky; left: 0; background: inherit; }
+.recon-code .code { overflow-x: auto; white-space: pre; tab-size: 2; }
+.recon-report, .recon-log { margin: 0; padding: 8px 10px; font: 12px/1.5 var(--mono); max-height: 60vh; overflow: auto; white-space: pre-wrap; border: 1px solid var(--line); border-radius: 4px; }
+.recon tr.me td { background: var(--info-bg, rgba(80,140,255,.12)); }

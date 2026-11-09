@@ -21,6 +21,7 @@ import { makeZip } from './zip.js';
 import { showHelp } from './help.js';
 import { originView } from './origin-view.js';
 import { loadResearch, researchView } from './research-view.js';
+import { createReconstructView } from './reconstruct-view.js';
 import { buildMarkdownReport } from './report-md.js';
 import { planOptions } from '../research/plans.js';
 import { mergeOnline, originAnalysis } from '../origin/index.js';
@@ -75,6 +76,7 @@ const S = {
 const TABS = [
   { id: 'work', label: 'Deobfuscator' },
   { id: 'compare', label: 'Compare' },
+  { id: 'reconstruct', label: 'Reconstruct' },
   { id: 'detection', label: 'Detection' },
   { id: 'analysis', label: 'Analysis' },
   { id: 'origin', label: 'AI check' },
@@ -348,6 +350,8 @@ views.luast = h('div.view', { id: 'view-luast' },
   h('div#luast-body.view', tree.root), h('div#luast-empty.view'));
 views.compat = h('div.view', { id: 'view-compat' }, emptyState('Loading', 'Reading data/compat.json'));
 views.research = h('div.view', { id: 'view-research' }, emptyState('Loading', 'Reading data/research'));
+const recon = createReconstructView({ getEditorBytes: () => getInputBytes(), getEditorName: () => S.name || 'script.lua', toast });
+views.reconstruct = recon.root;
 let research = null;      // { summary, knowledge, families } from data/research, once loaded
 // Examples: every bundled script with an offline check and a timer (wired to the engine further down, once the helpers exist)
 const board = new ExamplesBoard({
@@ -400,6 +404,7 @@ function switchTab(id) {
   if (id === 'luast') ensureLuast();
   if (id === 'examples') board.show();
   if (id === 'research') renderResearch();
+  if (id === 'reconstruct') recon.show();
   if (id === 'detection' && !S.detection && inputPresent()) runDetect({ quiet: true });
   if (id === 'analysis' && !S.analysis && inputPresent()) runAnalyze({ quiet: true });
 }

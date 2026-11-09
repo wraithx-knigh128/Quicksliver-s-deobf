@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "note": "Fixtures the reconstruction registry is built from. `committed` ones are in the repository; the others are read from local/luraph-fixtures/ (git-ignored) when present and recorded by SHA-256 so a run can be reproduced by anyone holding the same file. Nobody's protected script is committed here without its original.",
+  "fixtures": [
+    { "id": "v15-001-vm-like-dispatch", "file": "api/_engine/luraph/fixtures/001_vm_like_dispatch-obfuscated.lua", "original": "api/_engine/luraph/fixtures/001_vm_like_dispatch.lua", "claimed": "Luraph v15.0 (banner)", "versionRow": "luraph-15.0", "engine": "luraph_v15", "committed": true,
+      "provenance": "supplied with the engine archive, with its source; a 559-byte stack-machine program written for that archive's tests. Options used to protect it are unknown." },
+    { "id": "ib1-001-vm-like-dispatch", "file": "api/_engine/luraph/fixtures/001_vm_like_dispatch-ib1.lua", "original": "api/_engine/luraph/fixtures/001_vm_like_dispatch.lua", "claimed": "IronBrew 1 (header)", "versionRow": "ironbrew-1", "engine": "ironbrew1", "committed": true,
+      "provenance": "supplied with the engine archive, with its source (same program as above)." },
+    { "id": "v14.7-supplied", "file": "local/luraph-fixtures/v14_7.lua", "original": null, "claimed": "Luraph v14.7 (banner)", "versionRow": "luraph-14.7", "engine": "luraph_v14_7", "committed": false,
+      "provenance": "supplied with the engine archive without a source; prints one line (the engine's own trace shows it). No ground truth." },
+    { "id": "v14.8-supplied", "file": "local/luraph-fixtures/v14_8.lua", "original": null, "claimed": "Luraph v14.8 (banner)", "versionRow": "luraph-14.8", "engine": "luraph_v14_8", "committed": false,
+      "provenance": "supplied with the engine archive without a source. No ground truth." },
+    { "id": "v14.9-supplied", "file": "local/luraph-fixtures/v14_9.lua", "original": null, "claimed": "Luraph v14.9 (banner)", "versionRow": "luraph-14.9", "engine": "luraph_v14_9", "committed": false,
+      "provenance": "supplied with the engine archive without a source. No ground truth." }
+  ]
+}

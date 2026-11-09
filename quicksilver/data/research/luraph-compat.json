@@ -1,0 +1,475 @@
+{
+ "schema": 1,
+ "generatedAt": "2026-11-09T12:32:49.322Z",
+ "host": {
+  "luauSha256": "137f500514f09dea3494562f5363a6f50535f3fad812b0a8e1c3f334d0a35c8c",
+  "luauNote": "Luau 0.739 built with the one-line vector-metatable patch of build_luau.py, static, portable (see api/_engine/luraph/NOTICE.md)",
+  "engineRevision": "08069568d3063b05"
+ },
+ "records": [
+  {
+   "id": "v15-001-vm-like-dispatch",
+   "sha256": "838a5ec65dde4b22399d88b4dc86d6c87dcdb6c1fe18f3c8dc54cd1b366af925",
+   "claimed": "Luraph v15.0 (banner)",
+   "versionRow": "luraph-15.0",
+   "requested": "luraph_v15",
+   "engine": "luraph_v15",
+   "answeredBy": "luraph_v15",
+   "mode": "lift",
+   "ok": true,
+   "kind": "devirtualized",
+   "attempts": [
+    {
+     "engine": "luraph_v15",
+     "mode": "lift",
+     "outcome": "output",
+     "seconds": 2.3
+    }
+   ],
+   "quality": {
+    "lines": 32,
+    "functions": 4,
+    "grade": "clean",
+    "unresolved": 0
+   },
+   "syntax": true,
+   "verification": {
+    "status": "identical",
+    "reason": "same output and same return values on this runtime"
+   },
+   "hasOriginal": true,
+   "diagnostics": [],
+   "seconds": 2.3,
+   "stable": true,
+   "outputSha256": "5057439f3a28c14addacf1ddd419628db0b0d2a9283d147fa0d7e78249730e67",
+   "provenance": "supplied with the engine archive, with its source; a 559-byte stack-machine program written for that archive's tests. Options used to protect it are unknown."
+  },
+  {
+   "id": "ib1-001-vm-like-dispatch",
+   "sha256": "b903900a70d6f557b71c14a43cf3207b104cda5dac5221aa7c93365f1c5dad40",
+   "claimed": "IronBrew 1 (header)",
+   "versionRow": "ironbrew-1",
+   "requested": "ironbrew1",
+   "engine": "ironbrew1",
+   "answeredBy": "ironbrew1",
+   "mode": "lift",
+   "ok": true,
+   "kind": "devirtualized",
+   "attempts": [
+    {
+     "engine": "ironbrew1",
+     "mode": "lift",
+     "outcome": "output",
+     "seconds": 3.2
+    }
+   ],
+   "quality": {
+    "lines": 34,
+    "functions": 4,
+    "grade": "clean",
+    "unresolved": 0
+   },
+   "syntax": true,
+   "verification": {
+    "status": "identical",
+    "reason": "same output and same return values on this runtime"
+   },
+   "hasOriginal": true,
+   "diagnostics": [],
+   "seconds": 3.3,
+   "stable": true,
+   "outputSha256": "566f16c12e737433b6a1fe81332039132b84f2b23876164ab48d65043e91c240",
+   "provenance": "supplied with the engine archive, with its source (same program as above)."
+  },
+  {
+   "id": "v14.7-supplied",
+   "sha256": "aaf25cc314cf7b09d3eafcaf821bc1798c794197897f63ca20c2b9182afedc8d",
+   "claimed": "Luraph v14.7 (banner)",
+   "versionRow": "luraph-14.7",
+   "requested": "luraph_v14_7",
+   "engine": "luraph_v14_7",
+   "answeredBy": "luraph_v14_7",
+   "mode": "lift",
+   "ok": true,
+   "kind": "trace-assisted",
+   "attempts": [
+    {
+     "engine": "luraph_v14_7",
+     "mode": "lift",
+     "outcome": "output",
+     "seconds": 1.5
+    }
+   ],
+   "quality": {
+    "lines": 1,
+    "functions": 0,
+    "grade": "clean",
+    "unresolved": 0
+   },
+   "syntax": true,
+   "verification": {
+    "status": "not-run",
+    "reason": "No original was supplied. Readable output is not the same as a verified reconstruction."
+   },
+   "hasOriginal": false,
+   "diagnostics": [
+    "scaffolding-root",
+    "trace-assisted"
+   ],
+   "seconds": 1.6,
+   "stable": true,
+   "outputSha256": "a357087f70f0182422b9b5fc9052d9d5f11ca207c47713a1a00cc53e2c2b15a6",
+   "provenance": "supplied with the engine archive without a source; prints one line (the engine's own trace shows it). No ground truth."
+  },
+  {
+   "id": "v14.8-supplied",
+   "sha256": "860bb5d4d6e7dc2b0df63ce999d20619bdefaa178eb1557ce9cea48b5858149e",
+   "claimed": "Luraph v14.8 (banner)",
+   "versionRow": "luraph-14.8",
+   "requested": "luraph_v14_8",
+   "engine": "luraph_v14_8",
+   "answeredBy": "luraph_v14_8",
+   "mode": "trace",
+   "ok": true,
+   "kind": "trace",
+   "attempts": [
+    {
+     "engine": "luraph_v14_8",
+     "mode": "lift",
+     "outcome": "no-output",
+     "seconds": 1.2
+    },
+    {
+     "engine": "luraph_v14_8",
+     "mode": "trace",
+     "outcome": "output",
+     "seconds": 0.6
+    }
+   ],
+   "quality": {
+    "lines": 29,
+    "functions": 2,
+    "grade": "clean",
+    "unresolved": 0
+   },
+   "syntax": true,
+   "verification": {
+    "status": "not-run",
+    "reason": "No original was supplied. Readable output is not the same as a verified reconstruction."
+   },
+   "hasOriginal": false,
+   "diagnostics": [
+    "lift-failed",
+    "partial-lift",
+    "trace-only"
+   ],
+   "seconds": 1.8,
+   "stable": false,
+   "outputSha256": "0134a7623429b5b774afe5e8e9f60ce2326df2a962a2e7cd949b83410c2ef7fd",
+   "provenance": "supplied with the engine archive without a source. No ground truth."
+  },
+  {
+   "id": "v14.9-supplied",
+   "sha256": "d8cfe912228ca57cced5114aa2682b5330e77b9dfe8a5486114ef914471f3944",
+   "claimed": "Luraph v14.9 (banner)",
+   "versionRow": "luraph-14.9",
+   "requested": "luraph_v14_9",
+   "engine": "luraph_v14_9",
+   "answeredBy": "luraph_v14_9",
+   "mode": "trace",
+   "ok": true,
+   "kind": "trace",
+   "attempts": [
+    {
+     "engine": "luraph_v14_9",
+     "mode": "lift",
+     "outcome": "no-output",
+     "seconds": 5.5
+    },
+    {
+     "engine": "luraph_v14_9",
+     "mode": "trace",
+     "outcome": "output",
+     "seconds": 0.7
+    }
+   ],
+   "quality": {
+    "lines": 5,
+    "functions": 0,
+    "grade": "clean",
+    "unresolved": 0
+   },
+   "syntax": true,
+   "verification": {
+    "status": "not-run",
+    "reason": "No original was supplied. Readable output is not the same as a verified reconstruction."
+   },
+   "hasOriginal": false,
+   "diagnostics": [
+    "lift-failed",
+    "partial-lift",
+    "env-api-missing",
+    "run-failed",
+    "trace-only"
+   ],
+   "seconds": 6.3,
+   "stable": false,
+   "outputSha256": "2203134a836add89fcd2cef97b13d836ee73763f2c931a2e0a8471d143462338",
+   "provenance": "supplied with the engine archive without a source. No ground truth."
+  }
+ ],
+ "skipped": [],
+ "summary": {
+  "engines": {
+   "luraph_v14_7": {
+    "status": "experimental",
+    "evidence": {
+     "runs": 1,
+     "lifted": 0,
+     "liftedUnverified": 0,
+     "traceOnly": 1,
+     "liftFailed": 0,
+     "pairs": 0,
+     "identical": 0,
+     "different": 0,
+     "inconclusive": 0
+    },
+    "reasons": [
+     "1 input tried; the engine lifted none (1 ended as a behaviour trace)"
+    ]
+   },
+   "luraph_v14_8": {
+    "status": "experimental",
+    "evidence": {
+     "runs": 1,
+     "lifted": 0,
+     "liftedUnverified": 0,
+     "traceOnly": 1,
+     "liftFailed": 1,
+     "pairs": 0,
+     "identical": 0,
+     "different": 0,
+     "inconclusive": 0
+    },
+    "reasons": [
+     "1 input tried; the engine lifted none (1 ended as a behaviour trace)"
+    ]
+   },
+   "luraph_v14_9": {
+    "status": "experimental",
+    "evidence": {
+     "runs": 1,
+     "lifted": 0,
+     "liftedUnverified": 0,
+     "traceOnly": 1,
+     "liftFailed": 1,
+     "pairs": 0,
+     "identical": 0,
+     "different": 0,
+     "inconclusive": 0
+    },
+    "reasons": [
+     "1 input tried; the engine lifted none (1 ended as a behaviour trace)"
+    ]
+   },
+   "luraph_v15": {
+    "status": "partially-tested",
+    "evidence": {
+     "runs": 1,
+     "lifted": 1,
+     "liftedUnverified": 0,
+     "traceOnly": 0,
+     "liftFailed": 0,
+     "pairs": 1,
+     "identical": 1,
+     "different": 0,
+     "inconclusive": 0
+    },
+    "reasons": [
+     "1 lifted run compared identical with the original; 8 are needed (with a lower bound of 70%) for \"fully tested\""
+    ]
+   },
+   "ironbrew1": {
+    "status": "partially-tested",
+    "evidence": {
+     "runs": 1,
+     "lifted": 1,
+     "liftedUnverified": 0,
+     "traceOnly": 0,
+     "liftFailed": 0,
+     "pairs": 1,
+     "identical": 1,
+     "different": 0,
+     "inconclusive": 0
+    },
+    "reasons": [
+     "1 lifted run compared identical with the original; 8 are needed (with a lower bound of 70%) for \"fully tested\""
+    ]
+   }
+  },
+  "versions": {
+   "luraph-13": {
+    "status": "unsupported",
+    "evidence": {
+     "runs": 0,
+     "lifted": 0,
+     "liftedUnverified": 0,
+     "traceOnly": 0,
+     "liftFailed": 0,
+     "pairs": 0,
+     "identical": 0,
+     "different": 0,
+     "inconclusive": 0
+    },
+    "reasons": [
+     "no engine exists for this version"
+    ],
+    "nearest": null
+   },
+   "luraph-14-early": {
+    "status": "unsupported",
+    "evidence": {
+     "runs": 0,
+     "lifted": 0,
+     "liftedUnverified": 0,
+     "traceOnly": 0,
+     "liftFailed": 0,
+     "pairs": 0,
+     "identical": 0,
+     "different": 0,
+     "inconclusive": 0
+    },
+    "reasons": [
+     "no engine exists for this version"
+    ],
+    "nearest": "luraph_v14_7"
+   },
+   "luraph-14.7": {
+    "status": "experimental",
+    "evidence": {
+     "runs": 1,
+     "lifted": 0,
+     "liftedUnverified": 0,
+     "traceOnly": 1,
+     "liftFailed": 0,
+     "pairs": 0,
+     "identical": 0,
+     "different": 0,
+     "inconclusive": 0
+    },
+    "reasons": [
+     "1 input tried; the engine lifted none (1 ended as a behaviour trace)"
+    ],
+    "nearest": null
+   },
+   "luraph-14.8": {
+    "status": "experimental",
+    "evidence": {
+     "runs": 1,
+     "lifted": 0,
+     "liftedUnverified": 0,
+     "traceOnly": 1,
+     "liftFailed": 1,
+     "pairs": 0,
+     "identical": 0,
+     "different": 0,
+     "inconclusive": 0
+    },
+    "reasons": [
+     "1 input tried; the engine lifted none (1 ended as a behaviour trace)"
+    ],
+    "nearest": null
+   },
+   "luraph-14.9": {
+    "status": "experimental",
+    "evidence": {
+     "runs": 1,
+     "lifted": 0,
+     "liftedUnverified": 0,
+     "traceOnly": 1,
+     "liftFailed": 1,
+     "pairs": 0,
+     "identical": 0,
+     "different": 0,
+     "inconclusive": 0
+    },
+    "reasons": [
+     "1 input tried; the engine lifted none (1 ended as a behaviour trace)"
+    ],
+    "nearest": null
+   },
+   "luraph-14-late": {
+    "status": "unsupported",
+    "evidence": {
+     "runs": 0,
+     "lifted": 0,
+     "liftedUnverified": 0,
+     "traceOnly": 0,
+     "liftFailed": 0,
+     "pairs": 0,
+     "identical": 0,
+     "different": 0,
+     "inconclusive": 0
+    },
+    "reasons": [
+     "no engine exists for this version"
+    ],
+    "nearest": "luraph_v14_9"
+   },
+   "luraph-15.0": {
+    "status": "partially-tested",
+    "evidence": {
+     "runs": 1,
+     "lifted": 1,
+     "liftedUnverified": 0,
+     "traceOnly": 0,
+     "liftFailed": 0,
+     "pairs": 1,
+     "identical": 1,
+     "different": 0,
+     "inconclusive": 0
+    },
+    "reasons": [
+     "1 lifted run compared identical with the original; 8 are needed (with a lower bound of 70%) for \"fully tested\""
+    ],
+    "nearest": null
+   },
+   "luraph-15.1": {
+    "status": "unsupported",
+    "evidence": {
+     "runs": 0,
+     "lifted": 0,
+     "liftedUnverified": 0,
+     "traceOnly": 0,
+     "liftFailed": 0,
+     "pairs": 0,
+     "identical": 0,
+     "different": 0,
+     "inconclusive": 0
+    },
+    "reasons": [
+     "no engine exists for this version"
+    ],
+    "nearest": "luraph_v15"
+   },
+   "ironbrew-1": {
+    "status": "partially-tested",
+    "evidence": {
+     "runs": 1,
+     "lifted": 1,
+     "liftedUnverified": 0,
+     "traceOnly": 0,
+     "liftFailed": 0,
+     "pairs": 1,
+     "identical": 1,
+     "different": 0,
+     "inconclusive": 0
+    },
+    "reasons": [
+     "1 lifted run compared identical with the original; 8 are needed (with a lower bound of 70%) for \"fully tested\""
+    ],
+    "nearest": null
+   }
+  }
+ }
+}
