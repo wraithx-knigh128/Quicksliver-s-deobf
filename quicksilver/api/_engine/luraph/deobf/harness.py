@@ -9,7 +9,6 @@ REPL process (HarnessServer), or in Roblox Studio (StudioBridge, --studio).
 Its stdout holds the rendered trace between \\0ENVLOG-BEGIN and
 \\0ENVLOG-END, plus machine-readable lines (`\\0NAME ...`).
 """
-import http.server
 import os
 import queue
 import re
@@ -433,56 +432,16 @@ return ok0 and "deobf: done" or ("deobf loader error: " .. tostring(err0))
 
 
 class StudioBridge:
-    """Local HTTP endpoint the Studio loader talks to. GET /harness blocks until
-    the next harness is ready ("" when finished); POST /result takes the trace."""
+    """Studio mode needed a local HTTP server; it is not part of this build (QuickSilver never listens on a port from the engine)."""
 
     def __init__(self, port):
         raise RuntimeError("Studio mode is disabled in this build")
-        self.jobs = queue.Queue()
-        self.results = queue.Queue()
-        self.parts = []
-        bridge = self
-
-        class Handler(http.server.BaseHTTPRequestHandler):
-            def log_message(self, *a):
-                pass
-
-            def do_GET(self):
-                if self.path != "/harness":
-                    self.send_error(404)
-                    return
-                body = bridge.jobs.get()
-                self.send_response(200)
-                self.send_header("Content-Type", "text/plain")
-                self.send_header("Content-Length", str(len(body)))
-                self.end_headers()
-                self.wfile.write(body)
-
-            def do_POST(self):
-                data = self.rfile.read(int(self.headers.get("Content-Length", 0)))
-                self.send_response(200)
-                self.send_header("Content-Length", "0")
-                self.end_headers()
-                m = re.search(r"part=(\d+)&of=(\d+)", self.path)
-                part, of = (int(m.group(1)), int(m.group(2))) if m else (1, 1)
-                bridge.parts.append(data)
-                if part == of:
-                    bridge.results.put(b"".join(bridge.parts))
-                    bridge.parts = []
-
-        self.server = http.server.ThreadingHTTPServer(("127.0.0.1", port), Handler)
-        threading.Thread(target=self.server.serve_forever, daemon=True).start()
 
     def run(self, harness, timeout):
-        self.jobs.put(harness.encode("latin-1"))
-        try:
-            return self.results.get(timeout=timeout).decode("utf-8", "replace")
-        except queue.Empty:
-            return None
+        raise RuntimeError("Studio mode is disabled in this build")
 
     def finish(self):
-        self.jobs.put(b"")
-        time.sleep(1)  # let the loader pick up the stop signal
+        pass
 
 
 def run_once_studio(bridge, source, cfg, timeout, chunks=None):

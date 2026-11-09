@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "generatedAt": "2026-11-09T12:36:44.274Z",
+ "generatedAt": "2026-11-09T12:50:40.082Z",
  "gates": {
   "real": {
    "minFixtures": 8,
@@ -442,7 +442,7 @@
         "id": "luraph-15.0",
         "status": "partially-tested",
         "reasons": [
-         "1 lifted run compared identical with the original; 8 are needed (with a lower bound of 70%) for \"fully tested\""
+         "1 lifted run compared identical with the original; 10 are needed (with a lower bound of 70%) for \"fully tested\""
         ]
        }
       ],

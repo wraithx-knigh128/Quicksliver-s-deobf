@@ -24,7 +24,9 @@
     "research:capabilities": "node tools/research/capabilities.mjs",
     "research:pipeline": "node tools/research/pipeline.mjs --write",
     "research:differential": "node tools/research/differential.mjs",
-    "research": "node tools/research/profiles-build.mjs && node tools/research/capabilities.mjs && node tools/research/pipeline.mjs --write"
+    "research": "node tools/luraph/verify.mjs && node tools/research/profiles-build.mjs && node tools/research/capabilities.mjs && node tools/research/pipeline.mjs --write",
+    "luraph:verify": "node tools/luraph/verify.mjs",
+    "reconstruct:serve": "python3 api/reconstruct.py --serve 8788"
   },
   "optionalDependencies": {
     "@anthropic-ai/sdk": "^1.6.0"

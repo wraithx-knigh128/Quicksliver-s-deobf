@@ -99,10 +99,20 @@ def isolation_prefix(timeout_s: int) -> list[str]:
             except Exception:
                 pass
         _isolation_cache[key] = prefix
-    prefix = list(_isolation_cache[key])
-    if shutil.which("prlimit"):
-        prefix += ["prlimit", "--as=%d" % (ENGINE_MEM_MB << 20), "--cpu=%d" % (timeout_s + 30)]
-    return prefix
+    return list(_isolation_cache[key])
+
+
+def _limits(timeout_s: int):
+    """A preexec function that sets address-space and CPU limits in the child (Python's `resource`, so it needs no prlimit binary)."""
+    def apply():
+        try:
+            import resource
+            resource.setrlimit(resource.RLIMIT_AS, (ENGINE_MEM_MB << 20, ENGINE_MEM_MB << 20))
+            resource.setrlimit(resource.RLIMIT_CPU, (timeout_s + 30, timeout_s + 40))
+            resource.setrlimit(resource.RLIMIT_FSIZE, (256 << 20, 256 << 20))
+        except Exception:
+            pass
+    return apply
 
 
 def capabilities() -> dict:
@@ -119,7 +129,7 @@ def capabilities() -> dict:
         info["luauAst"] = {"sha256": _sha256(Path(d) / "luau-ast")}
     except Exception as e:  # noqa: BLE001 - reported, not raised
         info["luau"] = {"ok": False, "error": str(e)}
-    info["isolation"] = {"networkNamespace": "unshare" in isolation_prefix(10), "limits": shutil.which("prlimit") is not None}
+    info["isolation"] = {"networkNamespace": "unshare" in isolation_prefix(10), "limits": "setrlimit (address space, cpu, file size)"}
     return info
 
 
@@ -262,7 +272,7 @@ class Run:
 
 def _run_process(cmd, cwd, env, deadline, run: Run):
     """Run `cmd`, stream its stderr into the run log, kill it at the deadline. Returns (returncode, timed_out, stdout)."""
-    p = subprocess.Popen(cmd, cwd=cwd, env=env, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE, start_new_session=True)
+    p = subprocess.Popen(cmd, cwd=cwd, env=env, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE, start_new_session=True, preexec_fn=_limits(max(10, int(deadline - time.time()))))
     out_chunks: list[bytes] = []
 
     def pump_err():
@@ -379,7 +389,7 @@ def _run_luau(code: str, work: Path, timeout_s: int) -> dict:
     path.write_text(_WRAP % code, encoding="utf-8")
     cmd = isolation_prefix(timeout_s) + [str(Path(bin_dir()) / "luau"), str(path)]
     try:
-        r = subprocess.run(cmd, capture_output=True, timeout=timeout_s, cwd=str(work), env={"PATH": "/usr/bin:/bin"})
+        r = subprocess.run(cmd, capture_output=True, timeout=timeout_s, cwd=str(work), env={"PATH": "/usr/bin:/bin"}, preexec_fn=_limits(timeout_s))
     except subprocess.TimeoutExpired:
         return {"ok": False, "timedOut": True, "stdout": "", "stderr": "timeout"}
     return {"ok": r.returncode == 0, "timedOut": False, "stdout": r.stdout.decode("utf-8", "replace"), "stderr": r.stderr.decode("utf-8", "replace")}

@@ -7,7 +7,7 @@
 // Runtimes (through `lupa`, which bundles the reference implementations):
 //   lua51, lua52, lua53, lua54   PUC-Rio Lua
 //   luajit                        LuaJIT 2.1
-//   luau                          Roblox's Luau, through an external binary named by QS_LUAU_BIN. Not bundled: it must be built or installed.
+//   luau                          Roblox's Luau 0.739: QS_LUAU_BIN, else the build vendored with the reconstruction engine (api/_engine/luraph/deobf/bin/luau).
 //
 // Safety, per run: the program gets a mock environment and no I/O (io, os.execute, package, require, loadfile and dofile are removed), an instruction
 // budget, a memory cap on the runner process (QS_ORACLE_MEM_MB), and a wall-clock timeout after which the runner is killed and restarted. The
@@ -42,9 +42,12 @@ export function findPython() {
   return fs.existsSync(local) ? local : null;
 }
 
+/** QS_LUAU_BIN, else the Luau 0.739 build vendored with the reconstruction engine (api/_engine/luraph/NOTICE.md). */
 export function findLuau() {
   const bin = process.env.QS_LUAU_BIN;
-  return bin && fs.existsSync(bin) ? bin : null;
+  if (bin && fs.existsSync(bin)) return bin;
+  const vendored = path.join(root, 'api', '_engine', 'luraph', 'deobf', 'bin', 'luau');
+  return fs.existsSync(vendored) ? vendored : null;
 }
 
 export class Oracle {

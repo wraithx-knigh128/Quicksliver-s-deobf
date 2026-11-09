@@ -5,6 +5,9 @@
 // be silently replaced by something that agrees.
 
 import test, { after } from 'node:test';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
 import { Oracle, oracle, stopOracle, RUNTIMES, findPython } from '../tools/runtime/oracle.mjs';
 import { compareBehaviour, observeBehaviour, sandboxRun } from '../tools/lab/behaviour.mjs';
@@ -30,9 +33,22 @@ test('oracle: every runtime is listed, and one that is not installed says so ins
   await none.stop();
 });
 
-test('oracle: Luau is reported unavailable unless a binary is named; it is never stood in for by another runtime', () => {
+test('oracle: Luau is its own runtime: available only through a Luau binary (QS_LUAU_BIN or the vendored build), never stood in for by another runtime', async () => {
   const luau = found.find((r) => r.id === 'luau');
-  if (!process.env.QS_LUAU_BIN) { assert.equal(luau.available, false); assert.match(luau.why || '', /Luau|QS_LUAU_BIN/); }
+  const vendored = fs.existsSync(path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'api', '_engine', 'luraph', 'deobf', 'bin', 'luau'));
+  assert.equal(luau.available, !!process.env.QS_LUAU_BIN || vendored);
+  if (!luau.available) assert.match(luau.why || '', /Luau|QS_LUAU_BIN/);
+  const none = new Oracle({ python: null, luau: null });
+  assert.equal((await none.run('luau', 'print(1)')).unavailable, true, 'without a binary, Luau is unavailable and lua51 does not answer for it');
+  await none.stop();
+  if (luau.available) {
+    const r = await oracle().run('luau', 'print(_VERSION, 1 // 1 == nil, typeof(vector.create(1,2,3)))');
+    assert.equal(r.ok, true, r.error);
+    assert.match(r.stdout, /^Luau\t/);
+    const syn = await oracle().run('luau', 'local x = 1; x += 2; print(x, if x > 2 then "big" else "small")');
+    assert.match(syn.stdout, /3\tbig/, 'Luau syntax runs on Luau (it does not on Lua 5.1)');
+    assert.equal((await oracle().run('lua51', 'local x = 1; x += 2')).ok, false);
+  }
 });
 
 test('oracle: a program runs, prints, and the runtime that ran it is named', { skip: need('lua51') }, async () => {

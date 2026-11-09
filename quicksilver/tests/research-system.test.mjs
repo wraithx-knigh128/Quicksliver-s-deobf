@@ -84,16 +84,26 @@ test('profiles: identification confidence is capped by the kind of evidence, and
   assert.equal(validateProfile(r).ok, false, 'a profile says what is not known');
 });
 
-test('profiles: Luraph has four generations taken from the vendor\'s own SDK history, and none is more than identified', () => {
+test('profiles: Luraph has four generations taken from the vendor\'s own SDK history; the engine lifts v15 on one fixture and that is all it is called', () => {
   assert.deepEqual(luraph.versions.map((v) => v.id), ['v13-era', 'v14', 'v15', 'v15.1']);
   const counts = luraph.versions.map((v) => v.macros.all.length);
   assert.deepEqual(counts, [7, 11, 12, 14]);
   for (const v of luraph.versions) {
-    assert.equal(v.verification.status, 'identified');
-    assert.equal(v.samples.authorizedPairs, 0);
-    assert.equal(v.capabilities.recover && v.capabilities.recover.available, false, 'no reconstruction is offered for Luraph');
-    assert.ok(v.limitations.some((l) => /never been run|nothing is claimed/i.test(l)), v.id);
+    assert.equal(v.samples.authorizedPairs, 0, 'no authorised pair exists, whatever fixtures the engine was tried on');
+    assert.notEqual(supportClaim(luraph, v.id).claim, 'supported');
+    assert.notEqual(supportClaim(luraph, v.id).claim, 'partial');
+    assert.ok(v.reconstruction, `${v.id} carries what the reconstruction registry says`);
   }
+  const by = Object.fromEntries(luraph.versions.map((v) => [v.id, v]));
+  assert.equal(by.v15.verification.status, 'internally-tested');
+  assert.equal(supportClaim(luraph, 'v15').claim, 'experimental', 'one lifted fixture compared identical: an engine exists, below the gates');
+  assert.match(supportClaim(luraph, 'v15').why, /8 authorised pairs are needed/);
+  assert.equal(by.v15.capabilities.recover.available, true);
+  for (const id of ['v13-era', 'v14', 'v15.1']) {
+    assert.equal(by[id].capabilities.recover.available, false, `${id}: no lifted run, so no reconstruction capability`);
+    assert.equal(by[id].verification.status, 'identified');
+  }
+  assert.ok(by.v14.reconstruction.runs >= 0 && by.v14.reconstruction.liftedIdentical === 0, 'the v14 fixtures were not lifted');
   assert.ok(luraph.versions[2].macros.removed.includes('LPH_NO_VIRTUALIZE'), 'v15 dropped macros the earlier generations had');
 });
 
@@ -113,7 +123,7 @@ test('identify: a banner names a version and a generation, at no more than the c
     assert.equal(s.version.generation, gen, v);
     assert.ok(s.version.confidence <= IDENTIFICATION_CAPS.banner);
     assert.ok(s.version.caveats[0].includes('controls'), 'the caveat says a banner is only a claim');
-    assert.equal(s.profile ? s.profile.claim.claim : null, gen ? 'identification-only' : null);
+    assert.equal(s.profile ? s.profile.claim.claim : null, gen === 'v15' ? 'experimental' : gen ? 'identification-only' : null);
   }
   assert.equal(generationForVersion(12, 0), null);
   assert.equal(identify('print("hello")', { profiles }).systems.some((x) => x.id === 'luraph'), false);
@@ -179,13 +189,14 @@ test('capabilities: one that could not be verified here is disabled with the rea
 });
 
 // ---- the pipeline ----------------------------------------------------------------------------------------------------------------------------
-test('pipeline: stages are reached in order, and Luraph stops after classification because nothing was ever run through the engine', () => {
+test('pipeline: stages are reached in order; Luraph v14 stops after experimental analysis because no run was verified against an original', () => {
   const r = stagesFor(luraph, 'v14', capabilities);
   assert.deepEqual(r.stages.map((s) => s.stage), STAGES);
-  assert.equal(r.reached, 'classification');
-  const exp = r.stages.find((s) => s.stage === 'experimental-analysis');
-  assert.equal(exp.reached, false);
-  assert.match(exp.missing[0], /no output of this version/);
+  assert.equal(r.reached, 'experimental-analysis');
+  assert.equal(r.stages.find((s) => s.stage === 'experimental-analysis').reached, true, 'the engine was run on the v14 fixtures, failures included');
+  const fresh = stagesFor(luraph, 'v13-era', capabilities);
+  assert.equal(fresh.reached, 'classification', 'a generation no engine was ever run on');
+  assert.match(fresh.stages.find((s) => s.stage === 'experimental-analysis').missing[0], /no output of this version/);
   assert.equal(r.stages.find((s) => s.stage === 'verification').reached, false);
   assert.equal(r.stages.find((s) => s.stage === 'integration').reached, false, 'a later stage is never reached over an unreached one');
   assert.equal(r.integration.identify, true, 'recognition is wired to the page');

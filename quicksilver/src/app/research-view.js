@@ -144,7 +144,7 @@ function systemsSection(data) {
     }))),
     luraph ? h('details', [
       h('summary', 'Luraph: what was found, version by version'),
-      note('warn', 'No Luraph output could be obtained from a source the laboratory may use, so the engine has never been run on any, and nothing is claimed about reconstructing it. What follows is identification and documentation, each item with how it is known.'),
+      note('warn', 'No Luraph output could be obtained from a source the laboratory may use; the only Luraph inputs are the few fixtures that came with the supplied reconstruction engine. On them the engine lifts v15 (one program, compared identical with its original on Luau), ends as a behaviour trace for v14.7, and does not lift v14.8 or v14.9. That is "experimental", not support: the Reconstruct tab shows every version\'s status and the evidence behind it. What follows is identification and documentation, each item with how it is known.'),
       ...luraph.versions.map((v) => h('details', [
         h('summary', `${v.label} (${v.period.since}${v.period.until ? ` to ${v.period.until}` : ' on'}): ${v.macros.all.length} macros`),
         h('ul.list', v.characteristics.map((c) => h('li', [c.text, h('div.faint', `${c.knownAs}${c.note ? `: ${c.note}` : c.basis ? `: ${c.basis}` : ''}`)]))),

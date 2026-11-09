@@ -4,9 +4,12 @@ Phase V adds the machinery to *find out* what the engine can do for a named tran
 honest. It does not add support for any commercial system. This document says what exists, how to run it, what it found for Luraph, and what is
 still not known.
 
-> **Nothing here claims that QuickSilver reconstructs Luraph output.** No Luraph output could be obtained from a source the laboratory may use, so the
-> engine has never been run on any. What exists for Luraph is *identification* (which generation a banner or a macro set points to) and a
-> documented, sourced profile. Everything below is built so that the claim can change only when the evidence does.
+> **Update (Phase VI):** a reconstruction engine was supplied and is now integrated (`RECONSTRUCT.md`). On the few fixtures that came with it, it lifts one Luraph v15 program (compared identical
+> with its original on Luau) and one IronBrew 1 program, and does not lift the v14.8 / v14.9 fixtures. Luraph v15 is therefore *experimental* in the profiles and *partially tested* in the
+> Reconstruct tab; nothing is fully tested or "supported". What this document describes of Phase V (identification from banners and macro sets, the claim gates, the research service) is unchanged.
+>
+> **Original Phase V statement, kept for the record:** nothing here claimed that QuickSilver reconstructs Luraph output, because no Luraph output could be obtained from a source the laboratory may use.
+> Everything below is built so that the claim can change only when the evidence does, and it now has.
 
 Code: `src/research/` (profiles, identification, pipeline gates, sample packages, grouping; runs in the page and in Node), `tools/research/` and
 `tools/runtime/` (Node only), `api/research.js` and `api/_lib/research-*.js` (server side). Data: `data/research/`. Tests: `tests/runtime.test.mjs`,
@@ -29,7 +32,7 @@ implementations. Or point `QS_LUA_PYTHON` at any Python that has `lupa`. `.runti
 | Variable | Meaning |
 |---|---|
 | `QS_LUA_PYTHON` | Python with `lupa` (default: `.runtime/venv/bin/python`). |
-| `QS_LUAU_BIN` | A built `luau` binary. **Luau is not bundled and was not built here** (see below). Without it Luau is reported `unavailable`, never approximated. |
+| `QS_LUAU_BIN` | A `luau` binary. Default since Phase VI: the Luau 0.739 build vendored with the reconstruction engine. Without any binary Luau is reported `unavailable`, never approximated. |
 | `QS_ORACLE_MEM_MB` | Address-space cap of the runner process (default 3072). |
 
 **Safety of a run.** The program gets a stand-in environment and no I/O (`io`, `os.execute`, `package`, `require`, `loadfile`, `dofile` are removed),
@@ -52,7 +55,7 @@ itself, and samples a person supplied for this purpose.
   been sent to its replacement. Fixed by tying a pending run to the process it was sent to; the test that killed a hostile program and ran another
   caught it.
 
-**Luau.** The Luau reference implementation has to be built from source (a C++ project). The environment this was developed in refused that
+**Luau.** *(Phase V: unavailable. Phase VI: available.)* The Luau reference implementation has to be built from source (a C++ project). The environment this was developed in refused that
 step, and it was not worked around. To get Luau verification: build `luau` (`git clone https://github.com/Roblox/luau && cd luau && make config=release
 luau`) on a machine where that is allowed and set `QS_LUAU_BIN=/path/to/luau`. The oracle already has the path; nothing else changes. Until then
 every Luau verdict is `unavailable`, and a Luau claim cannot reach `verified`.
@@ -221,8 +224,8 @@ one system; the three flattening styles share one surface and are merged, as `st
 
 ## 9. Limits (read these)
 
-* **Luraph reconstruction: none, and none claimed.** No sample. The version estimates are only as good as the banner or the macro list.
-* **Luau: unavailable.** Build refused in the development environment; the path exists (`QS_LUAU_BIN`).
+* **Luraph reconstruction: experimental.** One lifted v15 program verified against its source (see `RECONSTRUCT.md`); no authorised pairs; the version estimates are only as good as the banner or the macro list.
+* **Luau: available** (Luau 0.739 built in Phase VI with the owner's approval, vendored as the oracle's default; `QS_LUAU_BIN` overrides it). Phase V reported it unavailable because the build had been refused.
 * **lura.ph unreachable**, so the vendor's documentation was not read; the changelog may exist and say more.
 * **The model integration has not run against the real API.**
 * **Lab and open-source results are about those tools**, on programs written for this project; they are not evidence about commercial tools.

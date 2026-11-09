@@ -833,8 +833,13 @@ test('Luraph: a banner gives a version estimate with its caveat and the label "r
   assert.match(research, /Systems and versions/);
   const rows = await page.locator('#view-research table.steps tr:has-text("Luraph")').allTextContents();
   assert.equal(rows.length, 4, 'four generations');
-  for (const r of rows) { assert.match(r, /recognised only/); assert.doesNotMatch(r, /reconstruction verified/); }
-  assert.match(await page.locator('#view-research details:has-text("Luraph: what was found")').textContent(), /nothing is claimed about reconstructing it/);
+  const exists = rows.filter((r) => /reconstruction exists, not verified to the gates/.test(r));
+  const only = rows.filter((r) => /recognised only/.test(r));
+  assert.equal(exists.length, 1, 'only the generation the supplied engine lifts on a fixture says a reconstruction exists');
+  assert.equal(only.length, 3, 'the others are recognised only');
+  assert.match(exists[0], /internally-tested/);
+  for (const r of rows) assert.doesNotMatch(r, /reconstruction verified|partly verified/, 'no Luraph generation is called verified');
+  assert.match(await page.locator('#view-research details:has-text("Luraph: what was found")').textContent(), /That is "experimental", not support/);
   assert.deepEqual(problems, []);
   await ctx.close();
 });

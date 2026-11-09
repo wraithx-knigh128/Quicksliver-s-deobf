@@ -8,7 +8,7 @@ import { h, replace, fmtBytes, pct } from './dom.js';
 import { section, kv, note } from './views.js';
 import { download } from './files.js';
 import { ENGINES, VERSIONS, parseBanner, versionFor, plan as planFor, hasIronbrewHeader } from '../reconstruct/engines.js';
-import { versionStatus, engineStatus } from '../reconstruct/status.js';
+import { versionStatus, engineStatus, GATES } from '../reconstruct/status.js';
 import { buildReconstructionReport } from '../reconstruct/report.js';
 import { buildCaseFile } from '../reconstruct/casefile.js';
 
@@ -231,7 +231,7 @@ export function createReconstructView(ctx) {
     if (!S.registry) return note('warn', 'The compatibility registry could not be loaded.');
     const ident = r.identification && r.identification.banner ? versionFor(parseBanner(r.identification.banner.text)) : null;
     return h('div', [
-      note('', `Statuses are derived from ${S.registry.records.length} recorded run(s) on ${S.registry.skipped && S.registry.skipped.length ? 'the fixtures present' : 'every fixture'}; see data/research/luraph-compat.json. "Fully tested" needs at least 8 lifted runs compared identical with their originals on a real Luau runtime.`),
+      note('', `Statuses are derived from ${S.registry.records.length} recorded run(s) on ${S.registry.skipped && S.registry.skipped.length ? 'the fixtures present' : 'every fixture'}; see data/research/luraph-compat.json. "Fully tested" needs at least ${GATES.full.minPairs} lifted runs compared identical with their originals on a real Luau runtime, none different.`),
       h('table.steps', h('thead', h('tr', ['Version', 'Engine', 'Status', 'Evidence'].map((x) => h('th', x)))), h('tbody', VERSIONS.map((v) => {
         const s = versionStatus(v, S.registry);
         return h('tr', { class: ident && ident.id === v.id ? 'me' : '' }, [h('td', v.label), h('td', v.engine ? ENGINES[v.engine].label : (v.nearest ? `none (${ENGINES[v.nearest].label} tried)` : 'none')),

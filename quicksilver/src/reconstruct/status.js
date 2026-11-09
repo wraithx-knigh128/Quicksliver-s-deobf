@@ -1,6 +1,6 @@
 // What may be said about an engine or a version, derived from recorded runs and from nothing else.
 //
-//   fully-tested      at least GATES.full.minPairs runs lifted by this engine (not a trace) and compared with their originals on a real Luau runtime, every one
+//   fully-tested      at least GATES.full.minPairs (10) runs lifted by this engine (not a trace) and compared with their originals on a real Luau runtime, every one
 //                     identical, and the 95% lower bound of the success rate at least GATES.full.lo
 //   partially-tested  at least one such comparison came out identical and none different
 //   experimental      the engine exists and ran, but no lifted run was compared with an original (or the comparisons disagree): readable output exists, support is not shown
@@ -11,7 +11,8 @@
 import { wilson } from '../research/judge.js';
 
 export const STATUS_ORDER = ['unsupported', 'experimental', 'partially-tested', 'fully-tested'];
-export const GATES = Object.freeze({ full: { minPairs: 8, lo: 0.7 }, unsupportedAfter: 3 });
+// ten, not eight: the 95% lower bound of 8 of 8 is 0.68, so a bound of 0.7 first holds at 10 of 10 (the same arithmetic as src/research/profiles.js)
+export const GATES = Object.freeze({ full: { minPairs: 10, lo: 0.7 }, unsupportedAfter: 3 });
 
 /** @param {Array<object>} records the records of data/research/luraph-compat.json whose `engine` is the one in question */
 export function engineStatus(records, { hasEngine = true } = {}) {

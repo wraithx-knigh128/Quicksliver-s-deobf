@@ -230,3 +230,8 @@ None of these is imported by the deployed site.
 Luraph, MoonSec, MoonVeil, Kirus, PSU, IronBrew, AztupBrew, Prometheus, Hercules, Colisseum, Zenfus, AzureVM, Clyde, Stealth-X, Roblox and other names are used only to identify the software they belong to. No affiliation or endorsement is implied.
 No obfuscator other than Prometheus, Hercules, IronBrew 2, Zenfus, AzureVM, the single-page obfuscator and Clyde produced any file in this repository, and no vendor material was copied. The further open-source obfuscators named in `docs/RESEARCH.md`
 (second research pass) were cloned and read only; one of them was started once and ended with an error before writing output. None of their code or output is included.
+
+
+## Reconstruction engine (api/_engine/luraph)
+
+Supplied by the project owner as the archive `luraph-v15-v14.x-deobfuscator-main` (readme credits "KryptIT / larpcorrupt"; an earlier output header named another person). **No licence file or grant was found**: it is included at the owner's direction and must not be redistributed until its licence status is confirmed. Modifications are listed in `api/_engine/luraph/NOTICE.md`. `luau` and `luau-ast` in `deobf/bin` are builds of Luau 0.739 (MIT, Roblox Corporation and Luau contributors, https://github.com/luau-lang/luau) made for this project.
