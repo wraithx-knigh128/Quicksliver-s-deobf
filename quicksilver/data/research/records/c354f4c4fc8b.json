@@ -1,0 +1,97 @@
+{
+ "id": "c354f4c4fc8b",
+ "url": "https://raw.githubusercontent.com/Roblox/luau/master/README.md",
+ "requestedUrl": "https://raw.githubusercontent.com/Roblox/luau/master/README.md",
+ "subject": "Luau",
+ "why": "the Luau runtime the transformations target",
+ "fetchedAt": "2026-11-09T02:08:53.761Z",
+ "history": [],
+ "ok": true,
+ "status": 200,
+ "finalUrl": "https://raw.githubusercontent.com/Roblox/luau/master/README.md",
+ "contentType": "text/plain",
+ "bytes": 7329,
+ "truncated": false,
+ "sha256": "12643b91979101103346ef110cb5759bc89a0135afe6f9fb6c7e63080f54b20a",
+ "credibility": {
+  "class": "tool-source",
+  "subject": "Luau",
+  "score": 0.85,
+  "reasons": [
+   "repository owned by Roblox, the author of Luau"
+  ],
+  "flags": []
+ },
+ "findings": [
+  {
+   "method": "rule",
+   "type": "license",
+   "value": "MIT License",
+   "quote": "# License\n\nLuau implementation is distributed under the terms of [MIT License](https://github.com/luau-lang/luau/blob/master/LICENSE.txt). It is",
+   "offset": 6816
+  },
+  {
+   "method": "rule",
+   "type": "feature",
+   "subject": "Luau",
+   "value": "virtual machine",
+   "quote": "at the minimum, you'll need to depend on `Luau.Compiler` and `Luau.VM` projects. From there you need to create a new Luau state (using Lua",
+   "offset": 4604
+  },
+  {
+   "method": "rule",
+   "type": "feature",
+   "subject": "Luau",
+   "value": "virtual machine",
+   "quote": "as `lua_newstate`), compile source to bytecode and load it into the VM like this:\n\n```cpp\n// needs lua.h and luacode.h\nsize_t bytecodeSize =",
+   "offset": 4756
+  },
+  {
+   "method": "rule",
+   "type": "feature",
+   "subject": "Luau",
+   "value": "virtual machine",
+   "quote": "to compile source separately (which is important to be able to deploy VM without a compiler), and the lack of `__gc` support (use",
+   "offset": 5366
+  },
+  {
+   "method": "rule",
+   "type": "feature",
+   "subject": "Luau",
+   "value": "bytecode",
+   "quote": "state (using Lua 5.x API such as `lua_newstate`), compile source to bytecode and load it into the VM like this:\n\n```cpp\n// needs lua.h and",
+   "offset": 4726
+  },
+  {
+   "method": "rule",
+   "type": "feature",
+   "value": "bytecode",
+   "quote": "```cpp\n// needs lua.h and luacode.h\nsize_t bytecodeSize = 0;\nchar* bytecode = luau_compile(source, strlen(source), NULL, &bytecodeSize);\nint",
+   "offset": 4838
+  },
+  {
+   "method": "rule",
+   "type": "feature",
+   "value": "bytecode",
+   "quote": "NULL, &bytecodeSize);\nint result = luau_load(L, chunkname, bytecode, bytecodeSize, 0);\nfree(bytecode);\n\nif (result == 0)\n    return 1; /*",
+   "offset": 4954
+  }
+ ],
+ "injection": [],
+ "digest": {
+  "headings": [
+   "Usage",
+   "Installation",
+   "Building",
+   "Testing",
+   "Dependencies",
+   "License"
+  ],
+  "opening": "Luau ![CI](https://github.com/luau-lang/luau/actions/workflows/build.yml/badge.svg) [![codecov](https://codecov.io/gh/luau-lang/luau/branch/master/graph/badge.svg)](https://codecov.io/gh/luau-lang/luau)\n====",
+  "counts": {
+   "license": 1,
+   "feature": 6
+  }
+ },
+ "excerpt": "Luau ![CI](https://github.com/luau-lang/luau/actions/workflows/build.yml/badge.svg) [![codecov](https://codecov.io/gh/luau-lang/luau/branch/master/graph/badge.svg)](https://codecov.io/gh/luau-lang/luau) ==== Luau (lowercase u, /ˈlu.aʊ/) is a fast, small, safe, gradually typed embeddable scripting language derived from [Lua](https://lua.org). It is designed to be backwards compatible with Lua 5.1"
+}

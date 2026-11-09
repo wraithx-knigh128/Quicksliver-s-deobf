@@ -1,0 +1,118 @@
+{
+ "id": "7fb82dfd40cb",
+ "url": "https://raw.githubusercontent.com/PhoenixZeng/LuraphDeobfuscator/master/README.md",
+ "requestedUrl": "https://raw.githubusercontent.com/PhoenixZeng/LuraphDeobfuscator/master/README.md",
+ "subject": "Luraph",
+ "why": "third-party repo, same reason",
+ "fetchedAt": "2026-11-09T02:08:51.764Z",
+ "history": [],
+ "ok": true,
+ "status": 200,
+ "finalUrl": "https://raw.githubusercontent.com/PhoenixZeng/LuraphDeobfuscator/master/README.md",
+ "contentType": "text/plain",
+ "bytes": 7728,
+ "truncated": false,
+ "sha256": "107186b44ffb0204d83a197b595a5e0445ed566b83b99fc19327edbfd59ab00e",
+ "credibility": {
+  "class": "unvetted-tool-repo",
+  "subject": null,
+  "score": 0.2,
+  "reasons": [
+   "a third-party tool that claims to defeat a protection; its claims are unverified"
+  ],
+  "flags": [
+   "may-be-malicious: repositories like this are a common way to distribute malware; read, never run"
+  ]
+ },
+ "findings": [
+  {
+   "method": "rule",
+   "type": "version",
+   "subject": "Luraph",
+   "value": "v11.5",
+   "quote": "deobfuscate Luraph scripts. Tested on Luraph scripts between v11.5 and v11.8.1 (May 1, 2020 release)\n\nRequires Java 8 to run.\n\n# Binary",
+   "offset": 66
+  },
+  {
+   "method": "rule",
+   "type": "version",
+   "subject": "Luraph",
+   "value": "v11.8.1",
+   "quote": "Luraph scripts. Tested on Luraph scripts between v11.5 and v11.8.1 (May 1, 2020 release)\n\nRequires Java 8 to run.\n\n# Binary Release",
+   "offset": 78
+  },
+  {
+   "method": "rule",
+   "type": "feature",
+   "value": "virtual machine",
+   "quote": "and function names into names such as ```get_float64```, etc\n- Detect VM handlers\n- Find all encryption information in Lua VM\n- Load and",
+   "offset": 1313
+  },
+  {
+   "method": "rule",
+   "type": "feature",
+   "value": "virtual machine",
+   "quote": "etc\n- Detect VM handlers\n- Find all encryption information in Lua VM\n- Load and decrypt bytecode using above information.\n- Decrypt and",
+   "offset": 1370
+  },
+  {
+   "method": "rule",
+   "type": "feature",
+   "value": "virtual machine",
+   "quote": "executing Lua code (constants, instructions, prototypes).\n- Process VM handler redirection and decryption (bytecode redirection).\n- Remove",
+   "offset": 1538
+  },
+  {
+   "method": "rule",
+   "type": "feature",
+   "value": "bytecode",
+   "quote": "- Find all encryption information in Lua VM\n- Load and decrypt bytecode using above information.\n- Decrypt and populate chunks by",
+   "offset": 1395
+  },
+  {
+   "method": "rule",
+   "type": "feature",
+   "value": "bytecode",
+   "quote": "prototypes).\n- Process VM handler redirection and decryption (bytecode redirection).\n- Remove antidecompiler tricks from optimized bytecode",
+   "offset": 1583
+  },
+  {
+   "method": "rule",
+   "type": "feature",
+   "value": "bytecode",
+   "quote": "(bytecode redirection).\n- Remove antidecompiler tricks from optimized bytecode\n- Remove junk code and further optimize bytecode using various",
+   "offset": 1644
+  },
+  {
+   "method": "rule",
+   "type": "date",
+   "subject": "Luraph",
+   "value": "May 1, 2020",
+   "quote": "Luraph scripts. Tested on Luraph scripts between v11.5 and v11.8.1 (May 1, 2020 release)\n\nRequires Java 8 to run.\n\n# Binary Release (Version 1.0.0)",
+   "offset": 78
+  }
+ ],
+ "injection": [],
+ "digest": {
+  "headings": [
+   "不提供Luraph相关技术支持和脚本,无论是否付费",
+   "Luraph_Deobfuscator",
+   "Binary Release (Version 1.0.0)",
+   "Discord Group",
+   "Motivation",
+   "Simple usage",
+   "Advanced Use: Introduction",
+   "Advanced Use: Deobfuscation ##",
+   "Advanced Use: Inspecting Luraph VM",
+   "Advanced Use: Viewing Abstract Syntax Trees",
+   "Advanced Use: Dumping Bytecode"
+  ],
+  "opening": "```The Great Sage Equal To Heaven#7780```",
+  "counts": {
+   "version": 2,
+   "feature": 6,
+   "date": 1
+  }
+ },
+ "excerpt": "# 不提供Luraph相关技术支持和脚本,无论是否付费 # Luraph_Deobfuscator Automatically deobfuscate Luraph scripts. Tested on Luraph scripts between v11.5 and v11.8.1 (May 1, 2020 release) Requires Java 8 to run. # Binary Release (Version 1.0.0) https://github.com/TheGreatSageEqualToHeaven/LuraphDeobfuscator/releases/download/v1.0.0/LuraphDevirtualizer.jar # Discord Group Come discuss this project in my Lua discord"
+}

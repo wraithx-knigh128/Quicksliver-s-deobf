@@ -1,0 +1,23 @@
+{
+ "id": "ca097308a20d",
+ "url": "https://luau.org/",
+ "requestedUrl": "https://luau.org/",
+ "subject": "Luau",
+ "why": "Luau language site (blocked in the research environment)",
+ "fetchedAt": "2026-11-09T02:08:54.160Z",
+ "history": [],
+ "ok": false,
+ "error": {
+  "code": "unreachable",
+  "message": "The host could not be reached from here (DNS or network policy)."
+ },
+ "credibility": {
+  "class": "vendor-primary",
+  "subject": "Luau",
+  "score": 0.9,
+  "reasons": [
+   "luau.org is the publisher's own site for Luau"
+  ],
+  "flags": []
+ }
+}

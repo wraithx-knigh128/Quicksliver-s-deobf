@@ -1,0 +1,170 @@
+{
+ "id": "a2dd55ef0d90",
+ "url": "https://raw.githubusercontent.com/Luraph/macrosdk/main/luraphsdk.lua",
+ "requestedUrl": "https://raw.githubusercontent.com/Luraph/macrosdk/main/luraphsdk.lua",
+ "subject": "Luraph",
+ "why": "vendor SDK source: stubs for all Luraph macros (the list of macros the vendor documents)",
+ "fetchedAt": "2026-11-09T02:08:46.428Z",
+ "history": [],
+ "ok": true,
+ "status": 200,
+ "finalUrl": "https://raw.githubusercontent.com/Luraph/macrosdk/main/luraphsdk.lua",
+ "contentType": "text/plain",
+ "bytes": 2740,
+ "truncated": false,
+ "sha256": "44336cf1f825faed50b532f42977793d06667c2c0d5e59b3744a6cb53f43d8f8",
+ "credibility": {
+  "class": "vendor-primary",
+  "subject": "Luraph",
+  "score": 0.9,
+  "reasons": [
+   "repository owned by Luraph, the author of Luraph"
+  ],
+  "flags": []
+ },
+ "findings": [
+  {
+   "method": "rule",
+   "type": "macro",
+   "subject": "Luraph",
+   "value": "LPH_OBFUSCATED",
+   "quote": "if not LPH_OBFUSCATED then\n\n    -- Macros:\n\n    LPH_ENCSTR = function(n) return n end",
+   "offset": 0
+  },
+  {
+   "method": "rule",
+   "type": "macro",
+   "subject": "Luraph",
+   "value": "LPH_ENCSTR",
+   "quote": "if not LPH_OBFUSCATED then\n\n    -- Macros:\n\n    LPH_ENCSTR = function(n) return n end\n    LPH_ENCNUM = function(n) return n end",
+   "offset": 0
+  },
+  {
+   "method": "rule",
+   "type": "macro",
+   "subject": "Luraph",
+   "value": "LPH_ENCNUM",
+   "quote": "then\n\n    -- Macros:\n\n    LPH_ENCSTR = function(n) return n end\n    LPH_ENCNUM = function(n) return n end\n\n    LPH_STRENC = function(n) return n end",
+   "offset": 22
+  },
+  {
+   "method": "rule",
+   "type": "macro",
+   "subject": "Luraph",
+   "value": "LPH_STRENC",
+   "quote": "return n end\n    LPH_ENCNUM = function(n) return n end\n\n    LPH_STRENC = function(n) return n end\n    LPH_NUMENC = function(n) return n end",
+   "offset": 73
+  },
+  {
+   "method": "rule",
+   "type": "macro",
+   "subject": "Luraph",
+   "value": "LPH_NUMENC",
+   "quote": "return n end\n\n    LPH_STRENC = function(n) return n end\n    LPH_NUMENC = function(n) return n end\n\n    if buffer then\n\n        local",
+   "offset": 115
+  },
+  {
+   "method": "rule",
+   "type": "macro",
+   "subject": "Luraph",
+   "value": "LPH_ENCBUF",
+   "quote": "local buffer_fromstring = buffer.fromstring\n        \n        LPH_ENCBUF = function(n) return buffer_fromstring(n) end\n        LPH_BUFENC =",
+   "offset": 233
+  },
+  {
+   "method": "rule",
+   "type": "macro",
+   "subject": "Luraph",
+   "value": "LPH_BUFENC",
+   "quote": "LPH_ENCBUF = function(n) return buffer_fromstring(n) end\n        LPH_BUFENC = function(n) return buffer_fromstring(n) end\n        \n    end",
+   "offset": 298
+  },
+  {
+   "method": "rule",
+   "type": "macro",
+   "subject": "Luraph",
+   "value": "LPH_CRASH",
+   "quote": "return buffer_fromstring(n) end\n        \n    end\n     \n    LPH_CRASH = function() end\n\n    do\n\n        local table_unpack = table.unpack",
+   "offset": 393
+  },
+  {
+   "method": "rule",
+   "type": "macro",
+   "subject": "Luraph",
+   "value": "LPH_STACKALLOC",
+   "quote": "= function(self) return self.__size end\n        \n        LPH_STACKALLOC = function(size, base)\n\n            base = base or 1",
+   "offset": 1430
+  },
+  {
+   "method": "rule",
+   "type": "macro",
+   "subject": "Luraph",
+   "value": "LPH_PRECHECK",
+   "quote": "setmetatable(allocation, __stackalloc)\n\n        end\n\n    end\n\n    LPH_PRECHECK = function(check) check() end\n\n    LPH_REWRITE = function(e) return e",
+   "offset": 1732
+  },
+  {
+   "method": "rule",
+   "type": "macro",
+   "subject": "Luraph",
+   "value": "LPH_REWRITE",
+   "quote": "end\n\n    end\n\n    LPH_PRECHECK = function(check) check() end\n\n    LPH_REWRITE = function(e) return e end\n    LPH_ASSUME = function(e) return e end",
+   "offset": 1776
+  },
+  {
+   "method": "rule",
+   "type": "macro",
+   "subject": "Luraph",
+   "value": "LPH_ASSUME",
+   "quote": "check() end\n\n    LPH_REWRITE = function(e) return e end\n    LPH_ASSUME = function(e) return e end\n    LPH_OPAQUE = function(e) return e end",
+   "offset": 1829
+  },
+  {
+   "method": "rule",
+   "type": "macro",
+   "subject": "Luraph",
+   "value": "LPH_OPAQUE",
+   "quote": "return e end\n    LPH_ASSUME = function(e) return e end\n    LPH_OPAQUE = function(e) return e end\n\n    -- Attributes:\n\n    local __attribute",
+   "offset": 1872
+  },
+  {
+   "method": "rule",
+   "type": "macro",
+   "subject": "Luraph",
+   "value": "LPH_ATTRIBUTES",
+   "quote": "end\n\n    -- Attributes:\n\n    local __attribute = function() end\n\n    LPH_ATTRIBUTES = __attribute\n\n    ENCRYPT = __attribute\n\n    VM = __attribute",
+   "offset": 1965
+  },
+  {
+   "method": "rule",
+   "type": "feature",
+   "value": "virtual machine",
+   "quote": "end\n\n    LPH_ATTRIBUTES = __attribute\n\n    ENCRYPT = __attribute\n\n    VM = __attribute\n    PRESET = __attribute\n    OPTIMIZE = __attribute",
+   "offset": 2025
+  },
+  {
+   "method": "rule",
+   "type": "feature",
+   "value": "virtual machine",
+   "quote": "INLINE = __attribute\n\n    TRANSFORM = __attribute\n\n    -- VM Options:\n\n    NONE = __attribute\n    OPAL = __attribute\n    ONYX =",
+   "offset": 2290
+  },
+  {
+   "method": "rule",
+   "type": "feature",
+   "value": "macros",
+   "quote": "if not LPH_OBFUSCATED then\n\n    -- Macros:\n\n    LPH_ENCSTR = function(n) return n end\n    LPH_ENCNUM =",
+   "offset": 0
+  }
+ ],
+ "injection": [],
+ "digest": {
+  "headings": [],
+  "opening": "LPH_ENCSTR = function(n) return n end\n    LPH_ENCNUM = function(n) return n end",
+  "counts": {
+   "macro": 14,
+   "feature": 3
+  }
+ },
+ "excerpt": "if not LPH_OBFUSCATED then -- Macros: LPH_ENCSTR = function(n) return n end LPH_ENCNUM = function(n) return n end LPH_STRENC = function(n) return n end LPH_NUMENC = function(n) return n end if buffer then local buffer_fromstring = buffer.fromstring LPH_ENCBUF = function(n) return buffer_fromstring(n) end LPH_BUFENC = function(n) return"
+}

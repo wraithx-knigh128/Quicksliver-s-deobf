@@ -1,0 +1,23 @@
+{
+ "id": "f6f578d60508",
+ "url": "https://raw.githubusercontent.com/ByteXenon/LuaXen/main/README.md",
+ "requestedUrl": "https://raw.githubusercontent.com/ByteXenon/LuaXen/main/README.md",
+ "subject": "LuaXen",
+ "why": "open-source toolkit with a two-stage obfuscator example",
+ "fetchedAt": "2026-11-09T02:08:52.986Z",
+ "history": [],
+ "ok": false,
+ "error": {
+  "code": "not_found",
+  "message": "The site answered 404."
+ },
+ "credibility": {
+  "class": "tool-source",
+  "subject": "LuaXen",
+  "score": 0.85,
+  "reasons": [
+   "repository owned by ByteXenon, the author of LuaXen"
+  ],
+  "flags": []
+ }
+}

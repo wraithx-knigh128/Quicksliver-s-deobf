@@ -1,0 +1,23 @@
+{
+ "id": "06a36a3893ae",
+ "url": "https://raw.githubusercontent.com/kosuke14/ByteLuaObfuscator/master/README.md",
+ "requestedUrl": "https://raw.githubusercontent.com/kosuke14/ByteLuaObfuscator/master/README.md",
+ "subject": "ByteLuaObfuscator",
+ "why": "bytecode-method obfuscator (clone was refused earlier)",
+ "fetchedAt": "2026-11-09T02:10:20.833Z",
+ "history": [],
+ "ok": false,
+ "error": {
+  "code": "not_found",
+  "message": "The site answered 404."
+ },
+ "credibility": {
+  "class": "community-repo",
+  "subject": null,
+  "score": 0.4,
+  "reasons": [
+   "a repository by a third party; what it says is not checked against the tool"
+  ],
+  "flags": []
+ }
+}

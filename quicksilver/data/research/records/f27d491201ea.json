@@ -1,0 +1,23 @@
+{
+ "id": "f27d491201ea",
+ "url": "https://lura.ph/dashboard/documents/macros",
+ "requestedUrl": "https://lura.ph/dashboard/documents/macros",
+ "subject": "Luraph",
+ "why": "official macros documentation",
+ "fetchedAt": "2026-11-09T02:08:47.848Z",
+ "history": [],
+ "ok": false,
+ "error": {
+  "code": "unreachable",
+  "message": "The host could not be reached from here (DNS or network policy)."
+ },
+ "credibility": {
+  "class": "vendor-primary",
+  "subject": "Luraph",
+  "score": 0.9,
+  "reasons": [
+   "lura.ph is the publisher's own site for Luraph"
+  ],
+  "flags": []
+ }
+}

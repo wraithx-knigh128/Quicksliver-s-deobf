@@ -1,0 +1,23 @@
+{
+ "id": "1daec132dd21",
+ "url": "https://lura.ph/dashboard/faq",
+ "requestedUrl": "https://lura.ph/dashboard/faq",
+ "subject": "Luraph",
+ "why": "official FAQ",
+ "fetchedAt": "2026-11-09T02:08:48.326Z",
+ "history": [],
+ "ok": false,
+ "error": {
+  "code": "unreachable",
+  "message": "The host could not be reached from here (DNS or network policy)."
+ },
+ "credibility": {
+  "class": "vendor-primary",
+  "subject": "Luraph",
+  "score": 0.9,
+  "reasons": [
+   "lura.ph is the publisher's own site for Luraph"
+  ],
+  "flags": []
+ }
+}

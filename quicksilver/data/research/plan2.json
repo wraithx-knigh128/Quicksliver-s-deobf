@@ -1,0 +1,37 @@
+{
+ "note": "Second batch: candidates found by search after the first batch. Same rules.",
+ "sources": [
+  {
+   "url": "https://raw.githubusercontent.com/naymmmm/encrypted-luau-vm/main/README.md",
+   "subject": "encrypted-luau-vm",
+   "why": "small Luau VM project described as 'basically for obfuscators'",
+   "fallbacks": [
+    "https://raw.githubusercontent.com/naymmmm/encrypted-luau-vm/master/README.md"
+   ]
+  },
+  {
+   "url": "https://raw.githubusercontent.com/asstralnetwork/LennyObf/main/README.md",
+   "subject": "LennyObf",
+   "why": "obfuscator repository that appeared in a Prometheus search",
+   "fallbacks": [
+    "https://raw.githubusercontent.com/asstralnetwork/LennyObf/master/README.md"
+   ]
+  },
+  {
+   "url": "https://raw.githubusercontent.com/kosuke14/ByteLuaObfuscator/main/README.md",
+   "subject": "ByteLuaObfuscator",
+   "why": "bytecode-method obfuscator (clone was refused earlier)",
+   "fallbacks": [
+    "https://raw.githubusercontent.com/kosuke14/ByteLuaObfuscator/master/README.md"
+   ]
+  },
+  {
+   "url": "https://raw.githubusercontent.com/Federal9999/Luarmor/main/README.md",
+   "subject": "Luarmor",
+   "why": "listing that mentions MoonSec and PSU file names",
+   "fallbacks": [
+    "https://raw.githubusercontent.com/Federal9999/Luarmor/master/README.md"
+   ]
+  }
+ ]
+}

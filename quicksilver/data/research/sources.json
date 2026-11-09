@@ -27,13 +27,14 @@
       "title": "Luraph (lura.ph)",
       "url": "https://lura.ph/",
       "retrieved": "2026-11-08",
-      "grade": "unreachable",
+      "grade": "source",
       "claims": [
-        "The vendor site could not be reached from the research environment (the egress proxy refused the connection).",
-        "A web search found no official changelog. Third-party pages label obfuscated files v13.6.x, v14.3 and v14.4.1; none of them is a reliable source for how the versions differ, and no source found mentioned v15."
+        "The vendor site (lura.ph) could not be reached from the research environment (the egress proxy refuses the host), so its documentation pages were not read; an attempt to add the host to the environment was declined.",
+        "The vendor's own GitHub organisation could be read. Its macro SDK repository (https://github.com/Luraph/macrosdk) states that it holds stubs for all Luraph macros, and its commit history dates the SDK updates for v14 (2024-04-23), v15 (2026-08-10) and v15.1 (2026-10-03): see histories/luraph-macrosdk.json.",
+        "A web search found no official changelog. Third-party pages label obfuscated files v13.6.x, v14.3 and v14.4.1."
       ],
-      "labStatus": "untested",
-      "labReason": "No sample output of any Luraph version was available. The laboratory cannot generate Luraph output (commercial service). A person who owns Luraph output can add it as a supplied sample; until then nothing is claimed beyond what the detector's signatures already say."
+      "labStatus": "identification-only",
+      "labReason": "Version identification from a banner and from the macro set of an unprotected script is implemented and tested against the vendor's data. No output of any Luraph version has been obtained from a source the lab may use, so reconstruction has never been tried and nothing is claimed for it."
     },
     {
       "id": "prometheus-docs",
@@ -54,7 +55,9 @@
       "url": "https://github.com/zeusssz/hercules-obfuscator",
       "retrieved": "2026-11-08",
       "grade": "search-snippet",
-      "claims": ["Its README says the VirtualMachine and bytecode_encoding modules are disabled automatically for Luau output."],
+      "claims": [
+        "Its README says the VirtualMachine and bytecode_encoding modules are disabled automatically for Luau output."
+      ],
       "labStatus": "covered-elsewhere",
       "labReason": "Measured with real tool output in data/compat.json."
     },
@@ -77,9 +80,74 @@
       "url": "https://github.com/kosuke14/ByteLuaObfuscator",
       "retrieved": "2026-11-08",
       "grade": "unreachable",
-      "claims": ["A search listing describes a bytecode-method obfuscator without Luau support. A clone attempt was refused (the repository asked for credentials), so its code was not read."],
+      "claims": [
+        "A search listing describes a bytecode-method obfuscator without Luau support. A clone attempt was refused (the repository asked for credentials), so its code was not read."
+      ],
       "labStatus": "untested",
       "labReason": "Could not be cloned."
+    },
+    {
+      "id": "luraph-v14-docs-snippet",
+      "title": "Luraph v14 documentation (lura.ph/dashboard/documents/v14)",
+      "url": "https://lura.ph/dashboard/documents/v14",
+      "retrieved": "2026-11-09",
+      "grade": "search-snippet",
+      "claims": [
+        "Per a search-result summary of the vendor's page: VM Compression returned in v14; four new settings (Optimization Level, Enable FFI Library, Hardcode Globals, Static Environment); an enforceSettings option for POST /obfuscate/new and multipart/form-data payloads; and a note that Luraph v15 has been released."
+      ],
+      "labStatus": "untested",
+      "labReason": "The page could not be fetched, so these statements come from a summary of it, not from the page. Not used to claim anything beyond what the summary says."
+    },
+    {
+      "id": "luraph-macrosdk-history",
+      "title": "Luraph/macrosdk: the vendor's SDK repository and its history",
+      "url": "https://github.com/Luraph/macrosdk",
+      "retrieved": "2026-11-09",
+      "grade": "source",
+      "claims": [
+        "README: 'Macro SDK with function stubs for all Luraph macros'; it says to update the file 'when newer versions of Luraph are released' and points to the official macros documentation for the complete reference.",
+        "Commits (read from a clone, text only): 2024-02-02 initial upload; 2024-04-23 'update sdk for luraph v14'; 2026-08-10 'update sdk for luraph v15'; 2026-10-03 'update sdk for luraph v15.1'; 2026-10-06 adds an UNSAFE_ENVIRONMENT attribute.",
+        "Macro sets by generation, derived from the file at each commit: 7, 11, 12 and 14 macros. The v15 update removes ENCFUNC, FUNCENC, JIT, JIT_MAX, NO_UPVALUES and NO_VIRTUALIZE and adds ATTRIBUTES, BUFENC/ENCBUF, OBFUSCATED, PRECHECK, REWRITE and STACKALLOC; v15.1 adds ASSUME and OPAQUE."
+      ],
+      "labStatus": "used",
+      "labReason": "This is the evidence behind the version-aware identification of Luraph macros (capability luraph.macro-generation). It describes the SDK stubs, not the protected output."
+    },
+    {
+      "id": "luraph-third-party-deobfuscators",
+      "title": "Third-party 'Luraph deobfuscator' repositories (four READMEs read as text)",
+      "url": "https://github.com/caomod2077/Deobfuscator-Luraph-V15",
+      "retrieved": "2026-11-09",
+      "grade": "third-party",
+      "claims": [
+        "Four repositories claim to deobfuscate Luraph (targets: v11.5/v11.8.1 in one, v14.x experimental and v15 in two, v15.1 in one). One README says of itself 'This deobf is shit do not use it' and credits an AI model; one states it provides no Luraph support. Two mention macros (LPH_ENCFUNC, LPH_NO_VIRTUALIZE) that the vendor's SDK dropped at v15.",
+        "None of their claims were tested, and none of their code was run: repositories like these are a common way to distribute malware. They are recorded as claims of low credibility."
+      ],
+      "labStatus": "not-run",
+      "labReason": "Read as text only, by policy."
+    },
+    {
+      "id": "luraph-banner-copies",
+      "title": "Copies of Luraph-protected scripts on document-sharing sites",
+      "url": "https://www.scribd.com/document/890390571/gistfile1",
+      "retrieved": "2026-11-09",
+      "grade": "search-snippet",
+      "claims": [
+        "Search summaries say copies of scripts carry banners naming Luraph v14.3 and v13.6.x. Nothing else was taken from them."
+      ],
+      "labStatus": "not-collected",
+      "labReason": "Other people's protected scripts, without their originals: there is nothing to compare a reconstruction with and no basis to use them as test cases, so they were not collected."
+    },
+    {
+      "id": "small-luau-vm-repos",
+      "title": "Small VM and obfuscator repositories found by search (encrypted-luau-vm, a Luarmor listing)",
+      "url": "https://github.com/naymmmm/encrypted-luau-vm",
+      "retrieved": "2026-11-09",
+      "grade": "source",
+      "claims": [
+        "Their READMEs were read; the extractor found no technical statements in them (versions, features, macros). Two further repositories (LennyObf, ByteLuaObfuscator) could not be read."
+      ],
+      "labStatus": "untested",
+      "labReason": "No output samples and no technical description: nothing to measure."
     }
   ]
 }

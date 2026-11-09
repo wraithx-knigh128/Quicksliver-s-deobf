@@ -1,0 +1,39 @@
+{
+ "id": "6957277bc070",
+ "url": "https://raw.githubusercontent.com/Luraph/luraph-vscode/main/README.md",
+ "requestedUrl": "https://raw.githubusercontent.com/Luraph/luraph-vscode/main/README.md",
+ "subject": "Luraph",
+ "why": "vendor editor extension readme",
+ "fetchedAt": "2026-11-09T02:08:47.006Z",
+ "history": [],
+ "ok": true,
+ "status": 200,
+ "finalUrl": "https://raw.githubusercontent.com/Luraph/luraph-vscode/main/README.md",
+ "contentType": "text/plain",
+ "bytes": 2686,
+ "truncated": false,
+ "sha256": "cfb6a2f201063f6387b3f2510359ce86f95717747f95c690b8f2c35cc72c00da",
+ "credibility": {
+  "class": "vendor-primary",
+  "subject": "Luraph",
+  "score": 0.9,
+  "reasons": [
+   "repository owned by Luraph, the author of Luraph"
+  ],
+  "flags": []
+ },
+ "findings": [],
+ "injection": [],
+ "digest": {
+  "headings": [
+   "luraph-vscode",
+   "Installation",
+   "Usage",
+   "Looking for a feature? Is something broken? Want to add something new?",
+   "Useful Links"
+  ],
+  "opening": "[![Version](https://img.shields.io/visual-studio-marketplace/v/luraph.luraph-vscode.svg)](https://marketplace.visualstudio.com/items?itemName=luraph.luraph-vscode)\n[![Downloads](https://img.shields.io/visual-studio-marketplace/d/luraph.luraph-vscode.svg)](https://marketplace.visualstudio.com/items?i",
+  "counts": {}
+ },
+ "excerpt": "# luraph-vscode [![Version](https://img.shields.io/visual-studio-marketplace/v/luraph.luraph-vscode.svg)](https://marketplace.visualstudio.com/items?itemName=luraph.luraph-vscode) [![Downloads](https://img.shields.io/visual-studio-marketplace/d/luraph.luraph-vscode.svg)](https://marketplace.visualstudio.com/items?itemName=luraph.luraph-vscode) [![Build Status](https://github.com/Luraph/luraph-vsc"
+}

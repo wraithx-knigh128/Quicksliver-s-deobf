@@ -1,0 +1,35 @@
+{
+ "id": "387302044855",
+ "url": "https://raw.githubusercontent.com/naymmmm/encrypted-luau-vm/main/README.md",
+ "requestedUrl": "https://raw.githubusercontent.com/naymmmm/encrypted-luau-vm/main/README.md",
+ "subject": "encrypted-luau-vm",
+ "why": "small Luau VM project described as 'basically for obfuscators'",
+ "fetchedAt": "2026-11-09T02:10:19.439Z",
+ "history": [],
+ "ok": true,
+ "status": 200,
+ "finalUrl": "https://raw.githubusercontent.com/naymmmm/encrypted-luau-vm/main/README.md",
+ "contentType": "text/plain",
+ "bytes": 273,
+ "truncated": false,
+ "sha256": "82fb5646e584c6f203969e77298cd964d2f905dec633d3d0abf415d893c8563f",
+ "credibility": {
+  "class": "community-repo",
+  "subject": null,
+  "score": 0.4,
+  "reasons": [
+   "a repository by a third party; what it says is not checked against the tool"
+  ],
+  "flags": []
+ },
+ "findings": [],
+ "injection": [],
+ "digest": {
+  "headings": [
+   "encrypted-luau-vm"
+  ],
+  "opening": "",
+  "counts": {}
+ },
+ "excerpt": "# encrypted-luau-vm Silly thing I made, basically for obfuscators. X28 is an AES decryption module, whilst L27 is vLuau and M29 is a Base64 encoder/decoder. M26 is the secret key and X25 is the code. Everything else is gibberish and a pain to read, do not make my mistake."
+}

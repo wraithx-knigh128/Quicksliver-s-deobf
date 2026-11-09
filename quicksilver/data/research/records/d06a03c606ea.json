@@ -1,0 +1,23 @@
+{
+ "id": "d06a03c606ea",
+ "url": "https://git.openpunk.com/CPunch/MoonVeil-Docs/raw/branch/main/content/docs/compatibility.md",
+ "requestedUrl": "https://git.openpunk.com/CPunch/MoonVeil-Docs/raw/branch/main/content/docs/compatibility.md",
+ "subject": "Luraph",
+ "why": "another product's compatibility notes on Luraph macros",
+ "fetchedAt": "2026-11-09T02:08:48.769Z",
+ "history": [],
+ "ok": false,
+ "error": {
+  "code": "unreachable",
+  "message": "The host could not be reached from here (DNS or network policy)."
+ },
+ "credibility": {
+  "class": "documentation-other-vendor",
+  "subject": "MoonVeil",
+  "score": 0.6,
+  "reasons": [
+   "another product's documentation: primary for that product, secondary for anything it says about others"
+  ],
+  "flags": []
+ }
+}

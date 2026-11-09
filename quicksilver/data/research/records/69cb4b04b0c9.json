@@ -1,0 +1,23 @@
+{
+ "id": "69cb4b04b0c9",
+ "url": "https://github.com/Luraph/luraph-node",
+ "requestedUrl": "https://github.com/Luraph/luraph-node",
+ "subject": null,
+ "why": "",
+ "fetchedAt": "2026-11-09T02:07:43.312Z",
+ "history": [],
+ "ok": false,
+ "error": {
+  "code": "http_error",
+  "message": "The site answered 403."
+ },
+ "credibility": {
+  "class": "vendor-primary",
+  "subject": "Luraph",
+  "score": 0.9,
+  "reasons": [
+   "repository owned by Luraph, the author of Luraph"
+  ],
+  "flags": []
+ }
+}

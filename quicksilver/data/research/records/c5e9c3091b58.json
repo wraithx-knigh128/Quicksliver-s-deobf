@@ -1,0 +1,98 @@
+{
+ "id": "c5e9c3091b58",
+ "url": "https://raw.githubusercontent.com/zeusssz/hercules-obfuscator/main/README.md",
+ "requestedUrl": "https://raw.githubusercontent.com/zeusssz/hercules-obfuscator/main/README.md",
+ "subject": "Hercules",
+ "why": "open-source obfuscator: modules and Luau notes",
+ "fetchedAt": "2026-11-09T02:08:52.594Z",
+ "history": [],
+ "ok": true,
+ "status": 200,
+ "finalUrl": "https://raw.githubusercontent.com/zeusssz/hercules-obfuscator/main/README.md",
+ "contentType": "text/plain",
+ "bytes": 12861,
+ "truncated": false,
+ "sha256": "2be094cf25cd93275ea82d3fa9616cf517365feb4ff3004408152bc9f86317c3",
+ "credibility": {
+  "class": "tool-source",
+  "subject": "Hercules",
+  "score": 0.85,
+  "reasons": [
+   "repository owned by zeusssz, the author of Hercules"
+  ],
+  "flags": []
+ },
+ "findings": [
+  {
+   "method": "rule",
+   "type": "feature",
+   "value": "virtual machine",
+   "quote": "to deduce their original meaning.\n\n- **Virtual Machinery:** Employs a virtual machine environment to execute obfuscated code, adding a layer of execution",
+   "offset": 5158
+  },
+  {
+   "method": "rule",
+   "type": "feature",
+   "value": "anti-tamper",
+   "quote": "the code's entry points and enhancing overall security.\n\n- **Anti Tamper:** Implements runtime integrity checks to detect and block",
+   "offset": 5462
+  },
+  {
+   "method": "rule",
+   "type": "feature",
+   "value": "anti-tamper",
+   "quote": "as `--compressor`/`-c`.\neg.\n```sh\nlua hercules.lua my_script.lua -c --antitamper\n```\n\n<h6>above enables compressor and antitamper</h6>\n\n## Adding a",
+   "offset": 6973
+  },
+  {
+   "method": "rule",
+   "type": "feature",
+   "value": "anti-tamper",
+   "quote": "my_script.lua -c --antitamper\n```\n\n<h6>above enables compressor and antitamper</h6>\n\n## Adding a New Module\n\nTo add a module so it runs in the",
+   "offset": 7024
+  },
+  {
+   "method": "rule",
+   "type": "feature",
+   "value": "bytecode",
+   "quote": "your scripts, complicating the analysis and deterring attackers.\n\n- **Bytecode Encoding:** Seamlessly convert critical sections of your script into",
+   "offset": 4338
+  },
+  {
+   "method": "rule",
+   "type": "feature",
+   "value": "bytecode",
+   "quote": "Encoding:** Seamlessly convert critical sections of your script into bytecode, adding an additional layer of complexity that hinders comprehension.",
+   "offset": 4417
+  },
+  {
+   "method": "rule",
+   "type": "feature",
+   "value": "bytecode",
+   "quote": "block unauthorized overrides or manipulations of core functions and bytecode.\n\n>[!TIP]\n>You can customize your obfuscation settings through the",
+   "offset": 5588
+  }
+ ],
+ "injection": [],
+ "digest": {
+  "headings": [
+   "Features",
+   "Installation",
+   "Usage",
+   "Example",
+   "Adding a New Module",
+   "1. Create the module file",
+   "2. Register it in `config.lua`",
+   "3. Wire it into `pipeline.lua`",
+   "4. Register it in `test.lua`",
+   "5. Verify",
+   "Customization",
+   "Testing"
+  ],
+  "opening": "---\n**Hercules** is a powerful Lua obfuscator designed to make your Lua code _nearly_ impossible to reverse-engineer. With multiple layers of advanced obfuscation techniques, Hercules ensures your scripts are secure from prying eyes.\n<br>\n<br>\nIf you decide to use/fork Hercules, please do **star it*",
+  "counts": {
+   "feature": 7
+  }
+ },
+ "excerpt": "<p align=\"center\"> <img src=\"https://github.com/user-attachments/assets/ff2ed207-c95e-45c3-831f-04a32675dbb5?size=32\" alt=\"Banner Image\" /> </p> <pre align=\"center\"> _ /\\ /\\ ___ _ __ ___ _ _ | | ___ ___ / /_/ // _ \\| '__|/ __|| | | || | / _ \\/ __| / __ /| __/| | | (__ | |_| || || __/\\__ \\ \\/ /_/ \\___||_| \\___| \\__,_||_| \\___||___/ </"
+}

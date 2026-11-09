@@ -1,0 +1,33 @@
+{
+ "id": "00f824634dfb",
+ "url": "https://raw.githubusercontent.com/Federal9999/Luarmor/main/README.md",
+ "requestedUrl": "https://raw.githubusercontent.com/Federal9999/Luarmor/main/README.md",
+ "subject": "Luarmor",
+ "why": "listing that mentions MoonSec and PSU file names",
+ "fetchedAt": "2026-11-09T02:10:21.234Z",
+ "history": [],
+ "ok": true,
+ "status": 200,
+ "finalUrl": "https://raw.githubusercontent.com/Federal9999/Luarmor/main/README.md",
+ "contentType": "text/plain",
+ "bytes": 7,
+ "truncated": false,
+ "sha256": "cad557d629e379274ce11b514d9690994c8c1da48c3fd972d69526a52243f366",
+ "credibility": {
+  "class": "community-repo",
+  "subject": null,
+  "score": 0.4,
+  "reasons": [
+   "a repository by a third party; what it says is not checked against the tool"
+  ],
+  "flags": []
+ },
+ "findings": [],
+ "injection": [],
+ "digest": {
+  "headings": [],
+  "opening": "",
+  "counts": {}
+ },
+ "excerpt": "i quit"
+}

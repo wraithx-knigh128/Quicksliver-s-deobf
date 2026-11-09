@@ -1,0 +1,70 @@
+{
+ "id": "df8cde5122e7",
+ "url": "https://raw.githubusercontent.com/prometheus-lua/Prometheus/master/README.md",
+ "requestedUrl": "https://raw.githubusercontent.com/prometheus-lua/Prometheus/master/README.md",
+ "subject": "Prometheus",
+ "why": "open-source Lua obfuscator: presets and steps",
+ "fetchedAt": "2026-11-09T02:08:52.175Z",
+ "history": [],
+ "ok": true,
+ "status": 200,
+ "finalUrl": "https://raw.githubusercontent.com/prometheus-lua/Prometheus/master/README.md",
+ "contentType": "text/plain",
+ "bytes": 6913,
+ "truncated": false,
+ "sha256": "d0c80d6b9635e9b72b251413ff76331ebc90f1450fe9a8825663a3ab0bdd0caf",
+ "credibility": {
+  "class": "tool-source",
+  "subject": "Prometheus",
+  "score": 0.85,
+  "reasons": [
+   "repository owned by prometheus-lua, the author of Prometheus"
+  ],
+  "flags": []
+ },
+ "findings": [
+  {
+   "method": "rule",
+   "type": "feature",
+   "value": "virtual machine",
+   "quote": "to read, analyze, and reverse engineer.  \nThese include **register VM virtualization**, **control-flow flattening**, **constant",
+   "offset": 1852
+  },
+  {
+   "method": "rule",
+   "type": "feature",
+   "value": "control-flow flattening",
+   "quote": "reverse engineer.  \nThese include **register VM virtualization**, **control-flow flattening**, **constant encryption**, and other Lua-specific obfuscation",
+   "offset": 1874
+  },
+  {
+   "method": "rule",
+   "type": "feature",
+   "subject": "Prometheus",
+   "value": "anti-tamper",
+   "quote": "Anti-Tamper;Lua+5.1+and+LuaU+support;Built+for+code+protection\" alt=\"Typing SVG\"",
+   "offset": 586
+  }
+ ],
+ "injection": [],
+ "digest": {
+  "headings": [
+   "Quick Start",
+   "Install CLI (Linux/macOS)",
+   "Local source usage",
+   "Documentation",
+   "Requirements",
+   "Example",
+   "Input",
+   "Obfuscated output",
+   "Tests",
+   "Community",
+   "License and Commercial Use"
+  ],
+  "opening": "**Prometheus** is a Lua obfuscator written in pure Lua.",
+  "counts": {
+   "feature": 3
+  }
+ },
+ "excerpt": "<div align=\"center\"> <img width=\"100%\" src=\"https://capsule-render.vercel.app/api?type=waving&height=180&color=gradient&text=Prometheus&fontAlign=50&fontAlignY=35&fontSize=42&desc=Lua%20Obfuscator%20%E2%80%A2%20AST%20Transformations%20%E2%80%A2%20Control%20Flow%20Obfuscation&descAlign=50&descAlignY=60\" /> <a href=\"https://github.com/prometheus-lua/Prometheus\"> <img src=\"https://readme-typing-s"
+}

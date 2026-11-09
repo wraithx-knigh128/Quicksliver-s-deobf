@@ -1,0 +1,25 @@
+{
+ "id": "bf626c1cf582",
+ "url": "https://raw.githubusercontent.com/larpcorrupt/luraph-v15-v14.x-deobfuscator/master/README.md",
+ "requestedUrl": "https://raw.githubusercontent.com/larpcorrupt/luraph-v15-v14.x-deobfuscator/master/README.md",
+ "subject": "Luraph",
+ "why": "third-party repo, same reason",
+ "fetchedAt": "2026-11-09T02:08:50.558Z",
+ "history": [],
+ "ok": false,
+ "error": {
+  "code": "not_found",
+  "message": "The site answered 404."
+ },
+ "credibility": {
+  "class": "unvetted-tool-repo",
+  "subject": null,
+  "score": 0.2,
+  "reasons": [
+   "a third-party tool that claims to defeat a protection; its claims are unverified"
+  ],
+  "flags": [
+   "may-be-malicious: repositories like this are a common way to distribute malware; read, never run"
+  ]
+ }
+}

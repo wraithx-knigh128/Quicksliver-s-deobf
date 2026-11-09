@@ -1,0 +1,84 @@
+{
+ "id": "e9e6435880ee",
+ "url": "https://raw.githubusercontent.com/Luraph/macrosdk/master/README.md",
+ "requestedUrl": "https://raw.githubusercontent.com/Luraph/macrosdk/master/README.md",
+ "subject": null,
+ "why": "",
+ "fetchedAt": "2026-11-09T02:07:42.781Z",
+ "history": [],
+ "ok": true,
+ "status": 200,
+ "finalUrl": "https://raw.githubusercontent.com/Luraph/macrosdk/master/README.md",
+ "contentType": "text/plain",
+ "bytes": 2543,
+ "truncated": false,
+ "sha256": "744bdb7c44d0e7e5ef1fbada441af0324e2c7754fd396cfd24c4b0078361bafe",
+ "credibility": {
+  "class": "vendor-primary",
+  "subject": "Luraph",
+  "score": 0.9,
+  "reasons": [
+   "repository owned by Luraph, the author of Luraph"
+  ],
+  "flags": []
+ },
+ "findings": [
+  {
+   "method": "rule",
+   "type": "macro",
+   "subject": "Luraph",
+   "value": "LPH_OBFUSCATED",
+   "quote": "#### Roblox (**with `game:HttpGet` and `loadstring`**)\n\n```lua\nif not LPH_OBFUSCATED then",
+   "offset": 1154
+  },
+  {
+   "method": "rule",
+   "type": "macro",
+   "subject": "Luraph",
+   "value": "LPH_OBFUSCATED",
+   "quote": "#### Roblox (**with `HttpService` and `loadstring`**)\n\n```lua\nif not LPH_OBFUSCATED then",
+   "offset": 1355
+  },
+  {
+   "method": "rule",
+   "type": "macro",
+   "subject": "Luraph",
+   "value": "LPH_OBFUSCATED",
+   "quote": "#### FiveM (**with `PerformHttpRequest` and `load`**)\n```lua\nif not LPH_OBFUSCATED then",
+   "offset": 1583
+  },
+  {
+   "method": "rule",
+   "type": "feature",
+   "subject": "Luraph",
+   "value": "macros",
+   "quote": "# Luraph/macrosdk\n\nMacro SDK with function stubs for all Luraph macros to allow Lua scripts to",
+   "offset": 0
+  },
+  {
+   "method": "rule",
+   "type": "feature",
+   "subject": "Luraph",
+   "value": "macros",
+   "quote": "while unobfuscated (eg: during development).\n\n*The official [Luraph macros documentation](https://lura.ph/dashboard/documents/macros) contains",
+   "offset": 113
+  }
+ ],
+ "injection": [],
+ "digest": {
+  "headings": [
+   "Luraph/macrosdk",
+   "Instructions",
+   "Examples",
+   "Help! I don't see any examples for my platform here!",
+   "Help! My environment does not have `load`/`loadstring`",
+   "Useful Links"
+  ],
+  "opening": "Macro SDK with function stubs for all Luraph macros to allow Lua scripts to remain functional while unobfuscated (eg: during development).",
+  "counts": {
+   "macro": 3,
+   "feature": 2
+  }
+ },
+ "excerpt": "# Luraph/macrosdk Macro SDK with function stubs for all Luraph macros to allow Lua scripts to remain functional while unobfuscated (eg: during development). *The official [Luraph macros documentation](https://lura.ph/dashboard/documents/macros) contains the most up-to-date and complete information and instructions for utilization of Luraph macros.* **You should load this script using an HTTP(S)"
+}

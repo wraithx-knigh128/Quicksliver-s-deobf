@@ -1,0 +1,187 @@
+{
+ "id": "b55440b9e92c",
+ "url": "https://raw.githubusercontent.com/ludicious-claw/Deobfuscator-Luraph-V15-1/main/README.md",
+ "requestedUrl": "https://raw.githubusercontent.com/ludicious-claw/Deobfuscator-Luraph-V15-1/main/README.md",
+ "subject": "Luraph",
+ "why": "third-party repo claiming v15.1, same reason",
+ "fetchedAt": "2026-11-09T02:08:50.942Z",
+ "history": [],
+ "ok": true,
+ "status": 200,
+ "finalUrl": "https://raw.githubusercontent.com/ludicious-claw/Deobfuscator-Luraph-V15-1/main/README.md",
+ "contentType": "text/plain",
+ "bytes": 15679,
+ "truncated": false,
+ "sha256": "8d996c62878d0688eabb056b0c8ccbeae4bca60ff6939b1517f0dd0bdae4cf24",
+ "credibility": {
+  "class": "unvetted-tool-repo",
+  "subject": null,
+  "score": 0.2,
+  "reasons": [
+   "a third-party tool that claims to defeat a protection; its claims are unverified"
+  ],
+  "flags": [
+   "may-be-malicious: repositories like this are a common way to distribute malware; read, never run"
+  ]
+ },
+ "findings": [
+  {
+   "method": "rule",
+   "type": "version",
+   "subject": "Luraph",
+   "value": "v15.1",
+   "quote": "# Luraph v15-v15.1 Deobfuscator\n# This deobf is shit do not use it, you can try updating",
+   "offset": 0
+  },
+  {
+   "method": "rule",
+   "type": "version",
+   "subject": "Luraph",
+   "value": "v4.1",
+   "quote": "you can try updating it\n# Thanks to the caomod2077, _xerax., deepseek v4.1 flash",
+   "offset": 68
+  },
+  {
+   "method": "rule",
+   "type": "macro",
+   "subject": "Luraph",
+   "value": "LPH_ENCSTR",
+   "quote": "(VM) with flattened dispatch loops, encrypted memory buffers (`LPH_ENCSTR`, `LPH_ENCFUNC`), and anti-tamper crash traps (`LPH_CRASH()`).\n\nThis",
+   "offset": 768
+  },
+  {
+   "method": "rule",
+   "type": "macro",
+   "subject": "Luraph",
+   "value": "LPH_ENCFUNC",
+   "quote": "flattened dispatch loops, encrypted memory buffers (`LPH_ENCSTR`, `LPH_ENCFUNC`), and anti-tamper crash traps (`LPH_CRASH()`).\n\nThis tool acts as a",
+   "offset": 778
+  },
+  {
+   "method": "rule",
+   "type": "macro",
+   "subject": "Luraph",
+   "value": "LPH_CRASH",
+   "quote": "buffers (`LPH_ENCSTR`, `LPH_ENCFUNC`), and anti-tamper crash traps (`LPH_CRASH()`).\n\nThis tool acts as a reverse compiler:\n- Recovers original",
+   "offset": 821
+  },
+  {
+   "method": "rule",
+   "type": "macro",
+   "subject": "Luraph",
+   "value": "LPH_CRASH",
+   "quote": "(`envlog.luau`). If execution encounters an anti-tamper trap (`LPH_CRASH()`), the engine identifies the responsible function, disables the",
+   "offset": 2631
+  },
+  {
+   "method": "rule",
+   "type": "license",
+   "value": "MIT License",
+   "quote": "---\n\n## License\n\nThis project is open-source under the [MIT License](LICENSE).\n\n## Credits\nThanks source to **ccjvwsod** on Discord\nThis",
+   "offset": 13378
+  },
+  {
+   "method": "rule",
+   "type": "feature",
+   "subject": "Luau",
+   "value": "virtual machine",
+   "quote": "## Overview\n\nLuraph v15 compiles Luau scripts into an interpreted virtual machine (VM) with flattened dispatch loops, encrypted memory buffers",
+   "offset": 685
+  },
+  {
+   "method": "rule",
+   "type": "feature",
+   "subject": "Luau",
+   "value": "virtual machine",
+   "quote": "Luraph v15 compiles Luau scripts into an interpreted virtual machine (VM) with flattened dispatch loops, encrypted memory buffers",
+   "offset": 699
+  },
+  {
+   "method": "rule",
+   "type": "feature",
+   "subject": "Luau",
+   "value": "virtual machine",
+   "quote": "structures (`if/else`, `while`, `for`, `repeat/until`) from low-level VM dispatchers.\n- Decrypts lazy in-memory constants using a live",
+   "offset": 977
+  },
+  {
+   "method": "rule",
+   "type": "feature",
+   "subject": "Luau",
+   "value": "anti-tamper",
+   "quote": "loops, encrypted memory buffers (`LPH_ENCSTR`, `LPH_ENCFUNC`), and anti-tamper crash traps (`LPH_CRASH()`).\n\nThis tool acts as a reverse compiler:\n-",
+   "offset": 797
+  },
+  {
+   "method": "rule",
+   "type": "feature",
+   "subject": "Luau",
+   "value": "anti-tamper",
+   "quote": "using a live sandboxed Luau runtime.\n- Isolates and bypasses anti-tamper traps to discover hidden code paths.\n\n---\n\n## How It Works\n\nThe",
+   "offset": 1099
+  },
+  {
+   "method": "rule",
+   "type": "feature",
+   "subject": "Luau",
+   "value": "anti-tamper",
+   "quote": "│ 2. Sandboxed Simulation│ ➔ Runs in offline Roblox VM; isolates anti-tamper traps\n└───────────┬────────────┘\n            │\n            ▼",
+   "offset": 1575
+  },
+  {
+   "method": "rule",
+   "type": "feature",
+   "subject": "Luraph",
+   "value": "bytecode",
+   "quote": "file2.lua file3.lua\n\n# Fast trace-only mode (~2 seconds, skips bytecode lifting)\nnode deob.js input.lua --no-devirt\n\n# Detect if a script is",
+   "offset": 6287
+  },
+  {
+   "method": "rule",
+   "type": "feature",
+   "value": "bytecode",
+   "quote": "|\n| `--no-devirt` | | `false` | Fast execution trace only (skips VM bytecode lifting) |\n| `--no-hooks` | | `false` | Disable VM closure entry",
+   "offset": 12492
+  },
+  {
+   "method": "rule",
+   "type": "feature",
+   "subject": "Luau",
+   "value": "per-function virtualisation",
+   "quote": "directly inside this repository.\n- **Fail-Loud Error Handling**: Per-function error isolation during devirtualization — a function that cannot be",
+   "offset": 4626
+  },
+  {
+   "method": "rule",
+   "type": "feature",
+   "value": "per-function virtualisation",
+   "quote": "cache (mode resolution is computed once per VM instead of once per function), iterative AST walkers with declaration caching, a single-pass",
+   "offset": 11664
+  }
+ ],
+ "injection": [],
+ "digest": {
+  "headings": [
+   "Luraph v15-v15.1 Deobfuscator",
+   "This deobf is shit do not use it, you can try updating it",
+   "Thanks to the caomod2077, _xerax., deepseek v4.1 flash",
+   "Overview",
+   "How It Works",
+   "Features",
+   "Quick Start",
+   "Prerequisites",
+   "Installation",
+   "Basic Commands",
+   "Deobfuscate a single script (saves to ./output/<filename>)",
+   "Save to a specific output path"
+  ],
+  "opening": "A standalone, high-performance deobfuscator for Roblox Luau scripts protected by **Luraph v15**.",
+  "counts": {
+   "version": 2,
+   "macro": 4,
+   "license": 1,
+   "feature": 10
+  }
+ },
+ "excerpt": "# Luraph v15-v15.1 Deobfuscator # This deobf is shit do not use it, you can try updating it # Thanks to the caomod2077, _xerax., deepseek v4.1 flash [![CI](https://github.com/Aditya-lua/Deobfuscator-Luraph-V15/actions/workflows/ci.yml/badge.svg)](https://github.com/Aditya-lua/Deobfuscator-Luraph-V15/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICE"
+}

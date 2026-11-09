@@ -1,0 +1,23 @@
+{
+ "id": "bef080976f03",
+ "url": "https://raw.githubusercontent.com/asstralnetwork/LennyObf/main/README.md",
+ "requestedUrl": "https://raw.githubusercontent.com/asstralnetwork/LennyObf/main/README.md",
+ "subject": "LennyObf",
+ "why": "obfuscator repository that appeared in a Prometheus search",
+ "fetchedAt": "2026-11-09T02:10:19.964Z",
+ "history": [],
+ "ok": false,
+ "error": {
+  "code": "not_found",
+  "message": "The site answered 404."
+ },
+ "credibility": {
+  "class": "community-repo",
+  "subject": null,
+  "score": 0.4,
+  "reasons": [
+   "a repository by a third party; what it says is not checked against the tool"
+  ],
+  "flags": []
+ }
+}

@@ -1,0 +1,73 @@
+{
+ "id": "122cde1ca574",
+ "url": "https://raw.githubusercontent.com/Luraph/luraph-node/main/README.md",
+ "requestedUrl": "https://raw.githubusercontent.com/Luraph/luraph-node/main/README.md",
+ "subject": "Luraph",
+ "why": "vendor API client readme: obfuscation API, settings, node lists",
+ "fetchedAt": "2026-11-09T02:08:46.563Z",
+ "history": [],
+ "ok": true,
+ "status": 200,
+ "finalUrl": "https://raw.githubusercontent.com/Luraph/luraph-node/main/README.md",
+ "contentType": "text/plain",
+ "bytes": 9978,
+ "truncated": false,
+ "sha256": "a8864ace80569faecc7990242fb09ad14e2155529461d4356e2281b1fcb068f5",
+ "credibility": {
+  "class": "vendor-primary",
+  "subject": "Luraph",
+  "score": 0.9,
+  "reasons": [
+   "repository owned by Luraph, the author of Luraph"
+  ],
+  "flags": []
+ },
+ "findings": [
+  {
+   "method": "rule",
+   "type": "macro",
+   "subject": "Luraph",
+   "value": "LPH_API_KEY",
+   "quote": "const { Luraph } = require(\"luraph\");\n\nconst apiKey = process.env.LPH_API_KEY; //replace with your api key\nconst luraph = new Luraph(apiKey);",
+   "offset": 1301
+  },
+  {
+   "method": "rule",
+   "type": "macro",
+   "subject": "Luraph",
+   "value": "LPH_API_KEY",
+   "quote": "const { Luraph } = require(\"luraph\");\n\nconst apiKey = process.env.LPH_API_KEY; //replace with your api key\nconst luraph = new Luraph(apiKey);",
+   "offset": 2552
+  },
+  {
+   "method": "rule",
+   "type": "macro",
+   "subject": "Luraph",
+   "value": "LPH_API_KEY",
+   "quote": "const { Luraph } = require(\"luraph\");\n\nconst apiKey = process.env.LPH_API_KEY; //replace with your api key\nconst luraph = new Luraph(apiKey);",
+   "offset": 3597
+  }
+ ],
+ "injection": [],
+ "digest": {
+  "headings": [
+   "luraph-node",
+   "Installation",
+   "or",
+   "or",
+   "Usage",
+   "Documentation",
+   "class Luraph",
+   "interface LuraphOptionInfo",
+   "interface LuraphNode",
+   "interface LuraphOptionList",
+   "interface LuraphError",
+   "class LuraphException extends Error"
+  ],
+  "opening": "[![Version](https://img.shields.io/npm/v/luraph.svg)](https://www.npmjs.org/package/luraph)\n[![Downloads](https://img.shields.io/npm/dm/luraph.svg)](https://www.npmjs.com/package/luraph)\n[![Bundle Size](https://img.shields.io/bundlephobia/minzip/luraph)](https://bundlephobia.com/package/luraph)\n[![B",
+  "counts": {
+   "macro": 3
+  }
+ },
+ "excerpt": "# luraph-node [![Version](https://img.shields.io/npm/v/luraph.svg)](https://www.npmjs.org/package/luraph) [![Downloads](https://img.shields.io/npm/dm/luraph.svg)](https://www.npmjs.com/package/luraph) [![Bundle Size](https://img.shields.io/bundlephobia/minzip/luraph)](https://bundlephobia.com/package/luraph) [![Build Status](https://github.com/Luraph/luraph-node/actions/workflows/release.yml/badg"
+}

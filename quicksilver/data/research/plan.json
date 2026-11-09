@@ -1,0 +1,125 @@
+{
+ "note": "Sources the research service was pointed at. Each entry says what it is for; whether it could be read is in its record (data/research/records).",
+ "sources": [
+  {
+   "url": "https://raw.githubusercontent.com/Luraph/macrosdk/main/README.md",
+   "subject": "Luraph",
+   "why": "vendor SDK readme: names the official macro docs and the LPH_OBFUSCATED convention"
+  },
+  {
+   "url": "https://raw.githubusercontent.com/Luraph/macrosdk/main/luraphsdk.lua",
+   "subject": "Luraph",
+   "why": "vendor SDK source: stubs for all Luraph macros (the list of macros the vendor documents)"
+  },
+  {
+   "url": "https://raw.githubusercontent.com/Luraph/luraph-node/main/README.md",
+   "subject": "Luraph",
+   "why": "vendor API client readme: obfuscation API, settings, node lists",
+   "fallbacks": [
+    "https://raw.githubusercontent.com/Luraph/luraph-node/master/README.md"
+   ]
+  },
+  {
+   "url": "https://raw.githubusercontent.com/Luraph/luraph-vscode/main/README.md",
+   "subject": "Luraph",
+   "why": "vendor editor extension readme",
+   "fallbacks": [
+    "https://raw.githubusercontent.com/Luraph/luraph-vscode/master/README.md"
+   ]
+  },
+  {
+   "url": "https://lura.ph/dashboard/documents/v14",
+   "subject": "Luraph",
+   "why": "official v14 documentation (found by search; the host is blocked in the research environment)"
+  },
+  {
+   "url": "https://lura.ph/dashboard/documents/macros",
+   "subject": "Luraph",
+   "why": "official macros documentation"
+  },
+  {
+   "url": "https://lura.ph/dashboard/faq",
+   "subject": "Luraph",
+   "why": "official FAQ"
+  },
+  {
+   "url": "https://git.openpunk.com/CPunch/MoonVeil-Docs/raw/branch/main/content/docs/compatibility.md",
+   "subject": "Luraph",
+   "why": "another product's compatibility notes on Luraph macros"
+  },
+  {
+   "url": "https://birk.blog/lua-virtualization-part-5",
+   "subject": "Luraph",
+   "why": "public write-up series on devirtualising a Luraph-class protector (URL guessed from a search summary)"
+  },
+  {
+   "url": "https://raw.githubusercontent.com/caomod2077/Deobfuscator-Luraph-V15/main/README.md",
+   "subject": "Luraph",
+   "why": "third-party repo that claims to deobfuscate Luraph v15: read as text to see what it claims; never run",
+   "fallbacks": [
+    "https://raw.githubusercontent.com/caomod2077/Deobfuscator-Luraph-V15/master/README.md"
+   ]
+  },
+  {
+   "url": "https://raw.githubusercontent.com/larpcorrupt/luraph-v15-v14.x-deobfuscator/main/README.md",
+   "subject": "Luraph",
+   "why": "third-party repo, same reason",
+   "fallbacks": [
+    "https://raw.githubusercontent.com/larpcorrupt/luraph-v15-v14.x-deobfuscator/master/README.md"
+   ]
+  },
+  {
+   "url": "https://raw.githubusercontent.com/ludicious-claw/Deobfuscator-Luraph-V15-1/main/README.md",
+   "subject": "Luraph",
+   "why": "third-party repo claiming v15.1, same reason",
+   "fallbacks": [
+    "https://raw.githubusercontent.com/ludicious-claw/Deobfuscator-Luraph-V15-1/master/README.md"
+   ]
+  },
+  {
+   "url": "https://raw.githubusercontent.com/PhoenixZeng/LuraphDeobfuscator/main/README.md",
+   "subject": "Luraph",
+   "why": "third-party repo, same reason",
+   "fallbacks": [
+    "https://raw.githubusercontent.com/PhoenixZeng/LuraphDeobfuscator/master/README.md"
+   ]
+  },
+  {
+   "url": "https://raw.githubusercontent.com/prometheus-lua/Prometheus/master/README.md",
+   "subject": "Prometheus",
+   "why": "open-source Lua obfuscator: presets and steps",
+   "fallbacks": [
+    "https://raw.githubusercontent.com/prometheus-lua/Prometheus/main/README.md"
+   ]
+  },
+  {
+   "url": "https://raw.githubusercontent.com/zeusssz/hercules-obfuscator/main/README.md",
+   "subject": "Hercules",
+   "why": "open-source obfuscator: modules and Luau notes",
+   "fallbacks": [
+    "https://raw.githubusercontent.com/zeusssz/hercules-obfuscator/master/README.md"
+   ]
+  },
+  {
+   "url": "https://raw.githubusercontent.com/ByteXenon/LuaXen/main/README.md",
+   "subject": "LuaXen",
+   "why": "open-source toolkit with a two-stage obfuscator example",
+   "fallbacks": [
+    "https://raw.githubusercontent.com/ByteXenon/LuaXen/master/README.md"
+   ]
+  },
+  {
+   "url": "https://raw.githubusercontent.com/Roblox/luau/master/README.md",
+   "subject": "Luau",
+   "why": "the Luau runtime the transformations target",
+   "fallbacks": [
+    "https://raw.githubusercontent.com/Roblox/luau/main/README.md"
+   ]
+  },
+  {
+   "url": "https://luau.org/",
+   "subject": "Luau",
+   "why": "Luau language site (blocked in the research environment)"
+  }
+ ]
+}

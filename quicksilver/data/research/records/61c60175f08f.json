@@ -1,0 +1,23 @@
+{
+ "id": "61c60175f08f",
+ "url": "https://birk.blog/lua-virtualization-part-5",
+ "requestedUrl": "https://birk.blog/lua-virtualization-part-5",
+ "subject": "Luraph",
+ "why": "public write-up series on devirtualising a Luraph-class protector (URL guessed from a search summary)",
+ "fetchedAt": "2026-11-09T02:08:49.228Z",
+ "history": [],
+ "ok": false,
+ "error": {
+  "code": "unreachable",
+  "message": "The host could not be reached from here (DNS or network policy)."
+ },
+ "credibility": {
+  "class": "blog-writeup",
+  "subject": null,
+  "score": 0.45,
+  "reasons": [
+   "an individual's write-up"
+  ],
+  "flags": []
+ }
+}

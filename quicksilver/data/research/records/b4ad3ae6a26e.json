@@ -1,0 +1,201 @@
+{
+ "id": "b4ad3ae6a26e",
+ "url": "https://raw.githubusercontent.com/caomod2077/Deobfuscator-Luraph-V15/master/README.md",
+ "requestedUrl": "https://raw.githubusercontent.com/caomod2077/Deobfuscator-Luraph-V15/master/README.md",
+ "subject": "Luraph",
+ "why": "third-party repo that claims to deobfuscate Luraph v15: read as text to see what it claims; never run",
+ "fetchedAt": "2026-11-09T02:08:49.752Z",
+ "history": [],
+ "ok": true,
+ "status": 200,
+ "finalUrl": "https://raw.githubusercontent.com/caomod2077/Deobfuscator-Luraph-V15/master/README.md",
+ "contentType": "text/plain",
+ "bytes": 14559,
+ "truncated": false,
+ "sha256": "3fba4efb628a1e34945e8ac6bb5cacc00c54c3a45585d53f60576d0f3392af59",
+ "credibility": {
+  "class": "unvetted-tool-repo",
+  "subject": null,
+  "score": 0.2,
+  "reasons": [
+   "a third-party tool that claims to defeat a protection; its claims are unverified"
+  ],
+  "flags": [
+   "may-be-malicious: repositories like this are a common way to distribute malware; read, never run"
+  ]
+ },
+ "findings": [
+  {
+   "method": "rule",
+   "type": "version",
+   "subject": "Luraph",
+   "value": "v14.7",
+   "quote": "Honest status per version:\n\n| Version | Status |\n|---|---|\n| **v14.7** | Lifts real source for many scripts (verified on multiple samples,",
+   "offset": 4512
+  },
+  {
+   "method": "rule",
+   "type": "version",
+   "subject": "Luau",
+   "value": "v14.8",
+   "quote": "with their upvalue bindings rebuilt.\n\nWhat is still missing for full v14.8/v14.9 source recovery: the runtime-built\nVM-object tables whose",
+   "offset": 6134
+  },
+  {
+   "method": "rule",
+   "type": "version",
+   "subject": "Luau",
+   "value": "v14.9",
+   "quote": "their upvalue bindings rebuilt.\n\nWhat is still missing for full v14.8/v14.9 source recovery: the runtime-built\nVM-object tables whose methods are",
+   "offset": 6139
+  },
+  {
+   "method": "rule",
+   "type": "macro",
+   "subject": "Luraph",
+   "value": "LPH_ENCSTR",
+   "quote": "(VM) with flattened dispatch loops, encrypted memory buffers (`LPH_ENCSTR`, `LPH_ENCFUNC`), and anti-tamper crash traps (`LPH_CRASH()`).\n\nThis",
+   "offset": 468
+  },
+  {
+   "method": "rule",
+   "type": "macro",
+   "subject": "Luraph",
+   "value": "LPH_ENCFUNC",
+   "quote": "flattened dispatch loops, encrypted memory buffers (`LPH_ENCSTR`, `LPH_ENCFUNC`), and anti-tamper crash traps (`LPH_CRASH()`).\n\nThis tool acts as a",
+   "offset": 478
+  },
+  {
+   "method": "rule",
+   "type": "macro",
+   "subject": "Luraph",
+   "value": "LPH_CRASH",
+   "quote": "buffers (`LPH_ENCSTR`, `LPH_ENCFUNC`), and anti-tamper crash traps (`LPH_CRASH()`).\n\nThis tool acts as a reverse compiler:\n- Recovers original",
+   "offset": 521
+  },
+  {
+   "method": "rule",
+   "type": "macro",
+   "subject": "Luraph",
+   "value": "LPH_CRASH",
+   "quote": "(`envlog.luau`). If execution encounters an anti-tamper trap (`LPH_CRASH()`), the engine identifies the responsible function, disables the",
+   "offset": 2331
+  },
+  {
+   "method": "rule",
+   "type": "macro",
+   "subject": "Luraph",
+   "value": "LPH_NO_VIRTUALIZE",
+   "quote": "missing value stays symbolic instead of aborting the walk;\n- native `LPH_NO_VIRTUALIZE` closures are preserved as Luau source with their upvalue bindings",
+   "offset": 6008
+  },
+  {
+   "method": "rule",
+   "type": "license",
+   "value": "MIT License",
+   "quote": "---\n\n## License\n\nThis project is open-source under the [MIT License](LICENSE).\n\n## Credits\nThanks source to **ccjvwsod** on Discord\nThis",
+   "offset": 13090
+  },
+  {
+   "method": "rule",
+   "type": "feature",
+   "subject": "Luau",
+   "value": "virtual machine",
+   "quote": "## Overview\n\nLuraph v15 compiles Luau scripts into an interpreted virtual machine (VM) with flattened dispatch loops, encrypted memory buffers",
+   "offset": 385
+  },
+  {
+   "method": "rule",
+   "type": "feature",
+   "subject": "Luau",
+   "value": "virtual machine",
+   "quote": "Luraph v15 compiles Luau scripts into an interpreted virtual machine (VM) with flattened dispatch loops, encrypted memory buffers",
+   "offset": 399
+  },
+  {
+   "method": "rule",
+   "type": "feature",
+   "subject": "Luau",
+   "value": "virtual machine",
+   "quote": "structures (`if/else`, `while`, `for`, `repeat/until`) from low-level VM dispatchers.\n- Decrypts lazy in-memory constants using a live",
+   "offset": 677
+  },
+  {
+   "method": "rule",
+   "type": "feature",
+   "subject": "Luau",
+   "value": "anti-tamper",
+   "quote": "loops, encrypted memory buffers (`LPH_ENCSTR`, `LPH_ENCFUNC`), and anti-tamper crash traps (`LPH_CRASH()`).\n\nThis tool acts as a reverse compiler:\n-",
+   "offset": 497
+  },
+  {
+   "method": "rule",
+   "type": "feature",
+   "subject": "Luau",
+   "value": "anti-tamper",
+   "quote": "using a live sandboxed Luau runtime.\n- Isolates and bypasses anti-tamper traps to discover hidden code paths.\n\n---\n\n## How It Works\n\nThe",
+   "offset": 799
+  },
+  {
+   "method": "rule",
+   "type": "feature",
+   "subject": "Luau",
+   "value": "anti-tamper",
+   "quote": "│ 2. Sandboxed Simulation│ ➔ Runs in offline Roblox VM; isolates anti-tamper traps\n└───────────┬────────────┘\n            │\n            ▼",
+   "offset": 1275
+  },
+  {
+   "method": "rule",
+   "type": "feature",
+   "value": "bytecode",
+   "quote": "or hit parser limits. |\n| **v14.8** | Experimental. Detection and bytecode walking work; the lift often stops at runtime-built helper closures",
+   "offset": 4762
+  },
+  {
+   "method": "rule",
+   "type": "feature",
+   "value": "bytecode",
+   "quote": "/ `local init = (function(...` shapes;\n- VM chunk extraction: for bytecode-wrapper samples the VM lives inside a loadstring'd chunk, which is",
+   "offset": 5270
+  },
+  {
+   "method": "rule",
+   "type": "feature",
+   "value": "bytecode",
+   "quote": "Large v14.8/v14.9 samples (1-2 MB) need longer budgets because the bytecode\nblob decode is slow in the emulator:\n\n```bash\nnode deob.js sample.lua",
+   "offset": 6518
+  },
+  {
+   "method": "rule",
+   "type": "feature",
+   "value": "per-function virtualisation",
+   "quote": "cache (mode resolution is computed once per VM instead of once per function), iterative AST walkers with declaration caching, a single-pass",
+   "offset": 11376
+  }
+ ],
+ "injection": [],
+ "digest": {
+  "headings": [
+   "Luraph v15 Deobfuscator",
+   "Overview",
+   "How It Works",
+   "Features",
+   "Luraph v14.x Support (EXPERIMENTAL)",
+   "Quick Start",
+   "Prerequisites",
+   "Installation",
+   "Basic Commands",
+   "Deobfuscate a single script (saves to ./output/<filename>)",
+   "Save to a specific output path",
+   "Batch mode: process a whole folder of scripts"
+  ],
+  "opening": "[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)\n[![Platform](https://img.shields.io/badge/Node.js-18%2B-green.svg)](https://nodejs.org/)\n[![Target](https://img.shields.io/badge/Target-Luraph%20v15-red.svg)](https://lura.ph/)",
+  "counts": {
+   "version": 3,
+   "macro": 5,
+   "license": 1,
+   "feature": 10
+  }
+ },
+ "excerpt": "# Luraph v15 Deobfuscator [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE) [![Platform](https://img.shields.io/badge/Node.js-18%2B-green.svg)](https://nodejs.org/) [![Target](https://img.shields.io/badge/Target-Luraph%20v15-red.svg)](https://lura.ph/) A standalone, high-performance deobfuscator for Roblox Luau scripts protected by **Luraph v15**. --- ## Overview L"
+}

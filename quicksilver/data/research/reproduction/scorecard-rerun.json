@@ -1,0 +1,123 @@
+{
+ "schema": 1,
+ "committed": {
+  "generatedAt": "2026-10-25T11:32:40.868Z",
+  "fixtures": 481
+ },
+ "rerun": {
+  "generatedAt": "2026-11-09T02:11:15.970Z",
+  "fixtures": 425
+ },
+ "compared": 425,
+ "onlyInCommitted": {
+  "count": 56,
+  "byTool": {
+   "colisseum": 48,
+   "simple_lua": 8
+  },
+  "why": "generated locally from tools whose licence keeps their output out of the repository (tests/corpus/obfuscated-local); not present on the machine that did the rerun"
+ },
+ "onlyInRerun": 0,
+ "verdictChanges": {
+  "behavior": {
+   "count": 0,
+   "items": []
+  },
+  "behaviorOriginal": {
+   "count": 6,
+   "items": [
+    {
+     "fixture": "hercules|mod-virtual_machine|s02_renamed_vars",
+     "committed": "error: sample:96: attempt to call field 'tointeger' (a nil value)",
+     "rerun": "error: sample:110: attempt to call field 'tointeger' (a nil value)"
+    },
+    {
+     "fixture": "hercules|heavy|s06_combined",
+     "committed": "error: sample:207: attempt to index global 'FLeORjwr' (a nil value)",
+     "rerun": "error: sample:217: attempt to index global 'FLeORjwr' (a nil value)"
+    },
+    {
+     "fixture": "hercules|mod-virtual_machine|s06_combined",
+     "committed": "error: sample:96: attempt to call field 'tointeger' (a nil value)",
+     "rerun": "error: sample:110: attempt to call field 'tointeger' (a nil value)"
+    },
+    {
+     "fixture": "zenfus|default|s02_renamed_vars",
+     "committed": "error: syntax: sample:104: 'do' expected near '&'",
+     "rerun": "error: syntax: sample:117: 'do' expected near '&'"
+    },
+    {
+     "fixture": "zenfus|default|s06_combined",
+     "committed": "error: syntax: sample:104: 'do' expected near '&'",
+     "rerun": "error: syntax: sample:120: 'do' expected near '&'"
+    },
+    {
+     "fixture": "clyde|vm-max|s01_minify_basic",
+     "committed": "error: sample:20: attempt to index local '__0IOdr' (a nil value)",
+     "rerun": "error: sample:37: attempt to index local '__0IOdr' (a nil value)"
+    }
+   ]
+  },
+  "toolBehavior": {
+   "count": 0,
+   "items": []
+  },
+  "ok": {
+   "count": 0,
+   "items": []
+  }
+ },
+ "movedWithTheEngine": {
+  "fidelityAfter": {
+   "count": 8,
+   "items": [
+    {
+     "fixture": "prometheus|Strong|s02_renamed_vars",
+     "committed": 0.365,
+     "rerun": 0.387
+    },
+    {
+     "fixture": "prometheus|Strong|s04_control_flow",
+     "committed": 0.381,
+     "rerun": 0.404
+    },
+    {
+     "fixture": "prometheus|Weak|s05_nested_functions",
+     "committed": 0.461,
+     "rerun": 0.481
+    },
+    {
+     "fixture": "prometheus|Strong|s05_nested_functions",
+     "committed": 0.297,
+     "rerun": 0.313
+    },
+    {
+     "fixture": "prometheus|step-Vmify|s05_nested_functions",
+     "committed": 0.461,
+     "rerun": 0.481
+    },
+    {
+     "fixture": "prometheus|Medium|s06_combined",
+     "committed": 0.631,
+     "rerun": 0.641
+    },
+    {
+     "fixture": "hercules|balanced|s05_nested_functions",
+     "committed": 0.498,
+     "rerun": 0.986
+    },
+    {
+     "fixture": "hercules|mod-string_encoding|s05_nested_functions",
+     "committed": 0.504,
+     "rerun": 1
+    }
+   ]
+  },
+  "outputBytes": 98,
+  "steps": 64
+ },
+ "recoveredBehaviourSame": {
+  "committedOnTheseFixtures": 403,
+  "rerunOnTheseFixtures": 403
+ }
+}

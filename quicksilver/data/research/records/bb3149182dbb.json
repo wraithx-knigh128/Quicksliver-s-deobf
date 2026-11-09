@@ -1,0 +1,29 @@
+{
+ "id": "bb3149182dbb",
+ "url": "https://lura.ph/dashboard/documents/v14",
+ "requestedUrl": "https://lura.ph/dashboard/documents/v14",
+ "subject": "Luraph",
+ "why": "official v14 documentation (found by search; the host is blocked in the research environment)",
+ "fetchedAt": "2026-11-09T02:08:47.395Z",
+ "history": [
+  {
+   "fetchedAt": "2026-11-09T02:07:42.903Z",
+   "sha256": null,
+   "ok": false
+  }
+ ],
+ "ok": false,
+ "error": {
+  "code": "unreachable",
+  "message": "The host could not be reached from here (DNS or network policy)."
+ },
+ "credibility": {
+  "class": "vendor-primary",
+  "subject": "Luraph",
+  "score": 0.9,
+  "reasons": [
+   "lura.ph is the publisher's own site for Luraph"
+  ],
+  "flags": []
+ }
+}

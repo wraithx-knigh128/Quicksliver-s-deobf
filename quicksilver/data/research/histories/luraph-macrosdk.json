@@ -1,0 +1,222 @@
+{
+ "schema": 1,
+ "file": "luraphsdk.lua",
+ "pattern": "\\bLPH_[A-Z0-9_]+\\b",
+ "source": "https://github.com/Luraph/macrosdk",
+ "commits": [
+  {
+   "commit": "5da2d670be",
+   "date": "2024-02-02",
+   "subject": "upload macrosdk",
+   "fileSha256": "d7560e4eda3b9d04",
+   "count": 7,
+   "names": [
+    "LPH_CRASH",
+    "LPH_ENCNUM",
+    "LPH_ENCSTR",
+    "LPH_JIT",
+    "LPH_JIT_MAX",
+    "LPH_NO_UPVALUES",
+    "LPH_NO_VIRTUALIZE"
+   ],
+   "added": [
+    "LPH_CRASH",
+    "LPH_ENCNUM",
+    "LPH_ENCSTR",
+    "LPH_JIT",
+    "LPH_JIT_MAX",
+    "LPH_NO_UPVALUES",
+    "LPH_NO_VIRTUALIZE"
+   ],
+   "removed": []
+  },
+  {
+   "commit": "c475541ba5",
+   "date": "2024-04-23",
+   "subject": "update sdk for luraph v14",
+   "fileSha256": "6ba799fa20bfc80d",
+   "count": 11,
+   "names": [
+    "LPH_CRASH",
+    "LPH_ENCFUNC",
+    "LPH_ENCNUM",
+    "LPH_ENCSTR",
+    "LPH_FUNCENC",
+    "LPH_JIT",
+    "LPH_JIT_MAX",
+    "LPH_NO_UPVALUES",
+    "LPH_NO_VIRTUALIZE",
+    "LPH_NUMENC",
+    "LPH_STRENC"
+   ],
+   "added": [
+    "LPH_ENCFUNC",
+    "LPH_FUNCENC",
+    "LPH_NUMENC",
+    "LPH_STRENC"
+   ],
+   "removed": []
+  },
+  {
+   "commit": "cbb78f0c18",
+   "date": "2026-08-10",
+   "subject": "ref(sdk): update sdk for luraph v15",
+   "fileSha256": "cb9275ebda4cae81",
+   "count": 12,
+   "names": [
+    "LPH_ATTRIBUTES",
+    "LPH_BUFENC",
+    "LPH_CRASH",
+    "LPH_ENCBUF",
+    "LPH_ENCNUM",
+    "LPH_ENCSTR",
+    "LPH_NUMENC",
+    "LPH_OBFUSCATED",
+    "LPH_PRECHECK",
+    "LPH_REWRITE",
+    "LPH_STACKALLOC",
+    "LPH_STRENC"
+   ],
+   "added": [
+    "LPH_ATTRIBUTES",
+    "LPH_BUFENC",
+    "LPH_ENCBUF",
+    "LPH_OBFUSCATED",
+    "LPH_PRECHECK",
+    "LPH_REWRITE",
+    "LPH_STACKALLOC"
+   ],
+   "removed": [
+    "LPH_ENCFUNC",
+    "LPH_FUNCENC",
+    "LPH_JIT",
+    "LPH_JIT_MAX",
+    "LPH_NO_UPVALUES",
+    "LPH_NO_VIRTUALIZE"
+   ]
+  },
+  {
+   "commit": "e9a4c5ce77",
+   "date": "2026-08-12",
+   "subject": "fix(sdk): macro usage error",
+   "fileSha256": "a004632a37776e6f",
+   "count": 12,
+   "names": [
+    "LPH_ATTRIBUTES",
+    "LPH_BUFENC",
+    "LPH_CRASH",
+    "LPH_ENCBUF",
+    "LPH_ENCNUM",
+    "LPH_ENCSTR",
+    "LPH_NUMENC",
+    "LPH_OBFUSCATED",
+    "LPH_PRECHECK",
+    "LPH_REWRITE",
+    "LPH_STACKALLOC",
+    "LPH_STRENC"
+   ],
+   "added": [],
+   "removed": []
+  },
+  {
+   "commit": "adc7130c90",
+   "date": "2026-08-12",
+   "subject": "fix(sdk): buffer return type",
+   "fileSha256": "474c26fd33af36e4",
+   "count": 12,
+   "names": [
+    "LPH_ATTRIBUTES",
+    "LPH_BUFENC",
+    "LPH_CRASH",
+    "LPH_ENCBUF",
+    "LPH_ENCNUM",
+    "LPH_ENCSTR",
+    "LPH_NUMENC",
+    "LPH_OBFUSCATED",
+    "LPH_PRECHECK",
+    "LPH_REWRITE",
+    "LPH_STACKALLOC",
+    "LPH_STRENC"
+   ],
+   "added": [],
+   "removed": []
+  },
+  {
+   "commit": "572b3cda92",
+   "date": "2026-09-15",
+   "subject": "fix(sdk): stack allocation default indexing",
+   "fileSha256": "955e5e38143f2417",
+   "count": 12,
+   "names": [
+    "LPH_ATTRIBUTES",
+    "LPH_BUFENC",
+    "LPH_CRASH",
+    "LPH_ENCBUF",
+    "LPH_ENCNUM",
+    "LPH_ENCSTR",
+    "LPH_NUMENC",
+    "LPH_OBFUSCATED",
+    "LPH_PRECHECK",
+    "LPH_REWRITE",
+    "LPH_STACKALLOC",
+    "LPH_STRENC"
+   ],
+   "added": [],
+   "removed": []
+  },
+  {
+   "commit": "52f49951cc",
+   "date": "2026-10-03",
+   "subject": "ref(sdk): update sdk for luraph v15.1",
+   "fileSha256": "b91acb7314720d89",
+   "count": 14,
+   "names": [
+    "LPH_ASSUME",
+    "LPH_ATTRIBUTES",
+    "LPH_BUFENC",
+    "LPH_CRASH",
+    "LPH_ENCBUF",
+    "LPH_ENCNUM",
+    "LPH_ENCSTR",
+    "LPH_NUMENC",
+    "LPH_OBFUSCATED",
+    "LPH_OPAQUE",
+    "LPH_PRECHECK",
+    "LPH_REWRITE",
+    "LPH_STACKALLOC",
+    "LPH_STRENC"
+   ],
+   "added": [
+    "LPH_ASSUME",
+    "LPH_OPAQUE"
+   ],
+   "removed": []
+  },
+  {
+   "commit": "8d9ff65c66",
+   "date": "2026-10-06",
+   "subject": "ref(sdk): add UNSAFE_ENVIRONMENT attribute",
+   "fileSha256": "44336cf1f825faed",
+   "count": 14,
+   "names": [
+    "LPH_ASSUME",
+    "LPH_ATTRIBUTES",
+    "LPH_BUFENC",
+    "LPH_CRASH",
+    "LPH_ENCBUF",
+    "LPH_ENCNUM",
+    "LPH_ENCSTR",
+    "LPH_NUMENC",
+    "LPH_OBFUSCATED",
+    "LPH_OPAQUE",
+    "LPH_PRECHECK",
+    "LPH_REWRITE",
+    "LPH_STACKALLOC",
+    "LPH_STRENC"
+   ],
+   "added": [],
+   "removed": []
+  }
+ ],
+ "note": "Derived from the repository's git history; the file contents are not stored here."
+}

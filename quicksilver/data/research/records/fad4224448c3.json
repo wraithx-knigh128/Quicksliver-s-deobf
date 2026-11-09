@@ -1,0 +1,25 @@
+{
+ "id": "fad4224448c3",
+ "url": "https://raw.githubusercontent.com/caomod2077/Deobfuscator-Luraph-V15/main/README.md",
+ "requestedUrl": "https://raw.githubusercontent.com/caomod2077/Deobfuscator-Luraph-V15/main/README.md",
+ "subject": "Luraph",
+ "why": "third-party repo that claims to deobfuscate Luraph v15: read as text to see what it claims; never run",
+ "fetchedAt": "2026-11-09T02:08:49.662Z",
+ "history": [],
+ "ok": false,
+ "error": {
+  "code": "not_found",
+  "message": "The site answered 404."
+ },
+ "credibility": {
+  "class": "unvetted-tool-repo",
+  "subject": null,
+  "score": 0.2,
+  "reasons": [
+   "a third-party tool that claims to defeat a protection; its claims are unverified"
+  ],
+  "flags": [
+   "may-be-malicious: repositories like this are a common way to distribute malware; read, never run"
+  ]
+ }
+}
