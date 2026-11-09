@@ -10,6 +10,7 @@ import { download } from './files.js';
 import { ENGINES, VERSIONS, parseBanner, versionFor, plan as planFor, hasIronbrewHeader } from '../reconstruct/engines.js';
 import { versionStatus, engineStatus } from '../reconstruct/status.js';
 import { buildReconstructionReport } from '../reconstruct/report.js';
+import { buildCaseFile } from '../reconstruct/casefile.js';
 
 const STAGES = [
   ['identify', 'Identify the input'], ['select', 'Choose the engine'], ['run', 'Run in the instrumented environment'], ['lift', 'Lift the virtual machine'],
@@ -43,7 +44,7 @@ export async function loadRegistry() {
 export function createReconstructView(ctx) {
   const root = h('div.view.recon', { id: 'view-reconstruct' });
   const S = { bytes: null, name: 'script.lua', fromEditor: true, original: null, originalName: null, engine: 'auto', fallback: true, timeout: 90, attest: false,
-    running: false, controller: null, stages: {}, attempts: [], fallbacks: [], log: [], ident: null, plan: null, result: null, error: null, tab: 'output', registry: null, started: 0 };
+    running: false, controller: null, stages: {}, attempts: [], fallbacks: [], log: [], ident: null, plan: null, result: null, error: null, tab: 'output', registry: null, started: 0, assistant: null };
   const doFetch = ctx.fetchImpl || ((...a) => fetch(...a));
 
   const input = () => (S.fromEditor ? ctx.getEditorBytes() : S.bytes) || new Uint8Array(0);
@@ -158,7 +159,7 @@ export function createReconstructView(ctx) {
       r.verification && r.verification.status === 'different' ? note('bad', `${r.verification.reason}. Original: ${r.verification.original} / Reconstruction: ${r.verification.reconstruction}`) : null,
       r.verification && r.verification.status === 'identical' ? note('ok', `${r.verification.reason}. This holds for the run compared (${r.verification.runtime}); it is not a proof of equivalence.`) : null,
       h('div.recon-tabs', { role: 'tablist' }, tabs.map((t) => h('button.btn.small', { type: 'button', role: 'tab', 'aria-selected': String(S.tab === t), dataset: { tab: t }, onclick: () => { S.tab = t; render(); } }, tabLabel[t]))),
-      S.tab === 'output' ? viewer(r) : S.tab === 'report' ? reportBox(r) : S.tab === 'diagnostics' ? diagnosticsList(r.diagnostics || []) : S.tab === 'log' ? logBox() : compatBox(r),
+      S.tab === 'output' ? viewer(r) : S.tab === 'report' ? reportBox(r) : S.tab === 'diagnostics' ? h('div', [diagnosticsList(r.diagnostics || []), assistantBox(r)]) : S.tab === 'log' ? logBox() : compatBox(r),
     ]);
   }
 
@@ -190,6 +191,40 @@ export function createReconstructView(ctx) {
       h('span.badge.' + (SEV[d.severity] || ''), d.severity), ' ', h('b', d.code), h('div', d.message), d.hint ? h('div.faint', d.hint) : null, d.evidence ? h('div.faint.mono', d.evidence) : null,
     ])));
   }
+  function assistantBox(r) {
+    const a = S.assistant;
+    const kids = [h('h4', 'Research assistant'),
+      note('', 'The rules above run on every result. The assistant is an optional model that reads a case file (what was identified, which engines ran and how, the engine log, the compatibility table; never your script) and PROPOSES hypotheses and experiments. Nothing it says is a finding until an experiment is run and recorded.'),
+      h('div.recon-buttons', [
+        h('button.btn.small', { type: 'button', id: 'recon-assist', disabled: !!(a && a.loading), onclick: () => askAssistant(r) }, a && a.loading ? 'Asking…' : 'Ask the research assistant'),
+        h('button.btn.small', { type: 'button', id: 'recon-casefile', onclick: () => download('reconstruction.casefile.json', JSON.stringify(buildCaseFile(r, S.registry), null, 2), 'application/json') }, 'Download the case file')])];
+    if (a && a.error) kids.push(note(a.unconfigured ? '' : 'bad', a.error));
+    if (a && a.answer) {
+      const x = a.answer;
+      kids.push(h('div.recon-assistant', { id: 'recon-assistant-answer' }, [
+        h('span.badge.warn', 'hypotheses, not findings'), ' ', h('span.faint', `model: ${x.model}`), h('p', x.summary),
+        x.hypotheses.length ? h('div', [h('b', 'Hypotheses'), h('ul.list', x.hypotheses.map((q) => h('li', [q.claim, ' ', h('span.badge', q.confidence), q.evidence.map((e) => h('div.faint.mono', `“${e}”`))])))]) : null,
+        x.experiments.length ? h('div', [h('b', 'Experiments that would test them'), h('ul.list', x.experiments.map((q) => h('li', [h('b', q.title), h('ol', q.steps.map((t) => h('li', t))), h('div.faint', `if true: ${q.ifTrue}`), h('div.faint', `if false: ${q.ifFalse}`)])))]) : null,
+        x.engineChanges.length ? h('div', [h('b', 'Possible engine changes'), h('ul.list', x.engineChanges.map((q) => h('li', [q.target, ': ', q.change, h('div.faint', `risk: ${q.risk}`)])))]) : null,
+        x.comparisons.length ? h('div', [h('b', 'Compared with other versions'), h('ul.list', x.comparisons.map((q) => h('li', [h('b', q.between), ': ', q.observation])))]) : null,
+        x.dropped && x.dropped.length ? h('div.faint', `${x.dropped.length} suggestion(s) were discarded because the evidence they quoted is not in the case file.`) : null,
+      ]));
+    }
+    return h('div.recon-assist', kids);
+  }
+
+  async function askAssistant(r) {
+    S.assistant = { loading: true };
+    renderLive();
+    try {
+      const check = await (await doFetch('api/assistant')).json().catch(() => null);
+      if (!check || !check.configured) { S.assistant = { unconfigured: true, error: `The research assistant is not configured on this deployment${check && check.reason ? ` (${check.reason})` : ''}. You can download the case file and use any assistant you trust; the deterministic diagnostics above work without one.` }; return; }
+      const res = await doFetch('api/assistant', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ case: buildCaseFile(r, S.registry) }) });
+      const body = await res.json();
+      S.assistant = body.ok ? { answer: body } : { error: (body.error && body.error.message) || `The assistant answered ${res.status}.` };
+    } catch (e) { S.assistant = { error: String(e.message || e) }; } finally { renderLive(); }
+  }
+
   const logBox = () => h('pre.recon-log', S.log.join('\n') || '(no engine output)');
 
   function compatBox(r) {

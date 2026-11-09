@@ -26,7 +26,7 @@ Findings:
 | Output carried advertising/joke text: a header ("dsc.gg/…"), debug comments, stub bodies with profanity, and `tidy.py` replaced a trace's whole body with a joke line whenever folding found a helper or loop | headers and comments neutralised; the body replacement deleted |
 | `obfuscators/luraph_v14_{7,8,9}` are copies of the v15 plugin (4–85 changed lines each); no v14 source/original pairs exist in the archive | recorded; the compatibility registry treats them as separate engines with their own evidence |
 | The archive also holds a separate, older prototype at its top level (`deobfuscate.py`, `lifter.py`, `interp.py`, `hook.lua`, … for "LuaObfuscator.com"), `deobf.rar`, Windows `.exe` files, `.pyc` caches, and ~2.5 MB of protected scripts without sources (`input.lua`, `SON.LUA`, …) | **not vendored.** Other people's protected scripts are not redistributed |
-| `bin/luau-ast` (7.6 MB ELF) and the stock `bin/luau` (3 MB ELF) | static check only (no socket/exec/system imports; Luau CLI strings); `luau-ast` is vendored as supplied |
+| `bin/luau-ast` (7.6 MB ELF) and the stock `bin/luau` (3 MB ELF) | static check only (no socket/exec/system imports; Luau CLI strings); both replaced by builds from the upstream tag (see Binaries) |
 
 The engine is a **dynamic** analyser: it runs the protected script in a Luau VM against a fake Roblox environment. That is why the service runs it in a
 separate process with a wall-clock, CPU and address-space limit and no network namespace where the host allows it, and why the endpoint requires an attestation.
@@ -37,7 +37,7 @@ The Luau CLI itself has no `io`, `os.execute` or `os.getenv`. This is a risk-red
 | File | SHA-256 | Origin |
 |---|---|---|
 | `deobf/bin/luau` | `137f500514f09dea3494562f5363a6f50535f3fad812b0a8e1c3f334d0a35c8c` | **built here** from `luau-lang/luau` tag **0.739** with the archive's `build_luau.py` (one patch: `lveclib.cpp` leaves the vector type's metatable writable, which Roblox's Vector3 members need); `--portable` (no `-march=native`), static, `-O3 -flto`. The stock binary in the archive froze that metatable and is not used. |
-| `deobf/bin/luau-ast` | `87e5c6eb92a1f33ba4a1a460f63f9d64e773b6a3a40c6f608b4deb9eb197e98c` | as supplied in the archive (prints a script's AST as JSON; used for scope-safe renaming and as the syntax check) |
+| `deobf/bin/luau-ast` | `5a17b2d8532a6501835623dabba680077cb5c8e7c4032b4f44b8d7f83e03c745` | **built here** from the same `luau-lang/luau` tag 0.739 (commit a62362a, target `Luau.Ast.CLI`), static, `-O2`, stripped. It replaces the 7.6 MB dynamically linked binary supplied in the archive (`87e5c6eb…`), whose provenance could not be checked and which exited with status 1 on Vercel's Python runtime (the engine then fell back to tracing). On a sample file both print identical JSON. |
 
 ## Changes to the engine
 

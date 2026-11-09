@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "note": "What has been learned about the reconstruction engines. A verified entry names a command that reproduces its evidence and records in luraph-compat.json; a refuted entry keeps the experiment that disproved it. Hypotheses carry no weight.",
+  "entries": [
+    {
+      "id": "d-v15-root-choice",
+      "state": "verified",
+      "origin": "reading the archive's driver and running its regression sample",
+      "claim": "For a Luraph v15 script whose payload emits no environment statements (pure computation), the runtime's recorded payload root is the last probe helper, so the engine lifts Luraph's own environment probes instead of the program. A script's main chunk has no upvalues, so a root whose lift names free upvalues (upvN) is a probe or loader; trying the other VM roots and taking the first without free upvalues selects the script.",
+      "evidence": { "records": ["v15-001-vm-like-dispatch"], "note": "Before the check the engine's output for this sample was the probe state machine (free upvalues upv3/upv4/upv5); after it the output is the stack-machine program and compares identical with the original on Luau (return value 34)." },
+      "reproduce": "node tools/luraph/verify.mjs --only v15-001-vm-like-dispatch",
+      "verifiedAt": "2026-11-09",
+      "usedFor": ["engine fix in api/_engine/luraph/deobf/obfuscators/luraph_v15/devirt.py (_payload_without_scaffolding)"],
+      "limits": "One sample. The rule is structural (no sample text is used) but it has been exercised on one program."
+    },
+    {
+      "id": "d-stock-luau-not-the-cause",
+      "state": "refuted",
+      "origin": "the engine's notes: Luraph keys its decryption on the environment, and a stock Luau lacks the writable vector metatable",
+      "claim": "The v14.8 and v14.9 fixtures failed to lift because the supplied Linux luau was a stock build.",
+      "experiment": "Built Luau 0.739 with the one-line vector-metatable patch (build_luau.py --portable) and re-ran the v14.7, v14.8 and v14.9 fixtures: same outcomes (v14.7 trace-assisted, v14.8 and v14.9 'devirtualization produced no source'). The stock binary was not kept, so this comparison is recorded here and not reproducible from the repository.",
+      "evidence": { "records": [] }
+    },
+    {
+      "id": "d-v14-engines-are-v15-copies",
+      "state": "verified",
+      "origin": "diffing the plugin directories of the archive",
+      "claim": "The luraph_v14_7, luraph_v14_8 and luraph_v14_9 plugins are copies of the v15 engine with small changes (devirt.py differs by 12 lines between versions; driver.py by 12 and 85 lines), and the archive has no v14 fixture with a source. A v14 'supported' claim therefore cannot rest on the engine's age or documentation.",
+      "evidence": { "records": ["v14.7-supplied", "v14.8-supplied", "v14.9-supplied"], "note": "Registry statuses: all three experimental, none lifted." },
+      "reproduce": "node tools/luraph/verify.mjs --only v14.7-supplied,v14.8-supplied,v14.9-supplied",
+      "verifiedAt": "2026-11-09",
+      "usedFor": []
+    }
+  ]
+}

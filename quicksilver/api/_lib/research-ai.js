@@ -77,7 +77,7 @@ export function buildRequest({ text, url, subject, retrievedAt, sourceClass, mod
   return { request: { model, max_tokens: 8000, system: SYSTEM_PROMPT, messages: [{ role: 'user', content }], output_config }, sentText: body };
 }
 
-async function loadSdk() {
+export async function loadSdk() {
   try { return (await import('@anthropic-ai/sdk')).default; } catch {
     throw new ResearchAIError('The Anthropic SDK is not installed. Run `npm install @anthropic-ai/sdk` in the quicksilver folder.', 'sdk_missing', 501);
   }

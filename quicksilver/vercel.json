@@ -59,6 +59,9 @@
       "maxDuration": 300,
       "memory": 2048,
       "includeFiles": "api/_engine/**"
+    },
+    "api/assistant.js": {
+      "maxDuration": 60
     }
   }
 }
