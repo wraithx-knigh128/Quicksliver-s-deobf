@@ -30,6 +30,8 @@ import base64
 import hmac
 import json
 import os
+import select
+import socket
 import sys
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -167,9 +169,19 @@ class handler(BaseHTTPRequestHandler):          # noqa: N801 - the name the Verc
             except Exception:       # the client went away: the job still finishes and cleans up
                 pass
 
+        def client_gone() -> bool:
+            # the request body has been read, so anything readable on the socket is the peer closing (or resetting) the connection
+            try:
+                conn = self.connection
+                if select.select([conn], [], [], 0)[0]:
+                    return conn.recv(1, socket.MSG_PEEK) == b""
+            except (OSError, ValueError, AttributeError):
+                return False
+            return False
+
         _active["n"] += 1
         try:
-            result = service.reconstruct(source, engine, timeout_s, original, bool(body.get("fallback", True)), emit)
+            result = service.reconstruct(source, engine, timeout_s, original, bool(body.get("fallback", True)), emit, client_gone)
         finally:
             _active["n"] -= 1
         result["t"] = "result"

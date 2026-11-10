@@ -29,6 +29,8 @@ function toBase64(bytes) {
   for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
   return btoa(s);
 }
+/** A cheap fingerprint of the input (FNV-1a over the bytes plus the length): enough to notice that the editor changed since a result was produced. */
+const keyOf = (bytes) => { let h = 0x811c9dc5; for (let i = 0; i < bytes.length; i++) { h ^= bytes[i]; h = Math.imul(h, 0x01000193) >>> 0; } return `${bytes.length}:${h}`; };
 const asLatin1 = (bytes) => { let s = ''; for (let i = 0; i < Math.min(bytes.length, 8192); i++) s += String.fromCharCode(bytes[i]); return s; };
 
 export async function loadRegistry() {
@@ -44,7 +46,7 @@ export async function loadRegistry() {
 export function createReconstructView(ctx) {
   const root = h('div.view.recon', { id: 'view-reconstruct' });
   const S = { bytes: null, name: 'script.lua', fromEditor: true, original: null, originalName: null, engine: 'auto', fallback: true, timeout: 90, attest: false,
-    running: false, controller: null, stages: {}, attempts: [], fallbacks: [], log: [], ident: null, plan: null, result: null, error: null, tab: 'output', registry: null, started: 0, assistant: null };
+    running: false, controller: null, stages: {}, attempts: [], fallbacks: [], log: [], ident: null, plan: null, result: null, error: null, tab: 'output', registry: null, started: 0, assistant: null, resultKey: null };
   const doFetch = ctx.fetchImpl || ((...a) => fetch(...a));
 
   const input = () => (S.fromEditor ? ctx.getEditorBytes() : S.bytes) || new Uint8Array(0);
@@ -261,6 +263,7 @@ export function createReconstructView(ctx) {
     if (S.running) return;
     const bytes = input();
     resetRun();
+    S.resultKey = keyOf(bytes);
     S.running = true; S.started = performance.now(); S.controller = new AbortController();
     render();
     try {
@@ -270,7 +273,7 @@ export function createReconstructView(ctx) {
       });
       const type = res.headers.get('content-type') || '';
       if (!res.ok || !type.includes('ndjson')) {
-        let msg = `The service answered ${res.status}.`;
+        let msg = res.ok ? `The server answered ${res.status} with ${type || 'no content type'}, which is not the reconstruction service's stream (is /api/reconstruct routed to the Python function?).` : `The service answered ${res.status}.`;
         try { const j = await res.json(); if (j && j.error) msg = j.error.message; } catch { /* keep the status text */ }
         if (res.status === 404) msg = 'The reconstruction service is not available on this deployment (no /api/reconstruct).';
         throw new Error(msg);
@@ -313,6 +316,8 @@ export function createReconstructView(ctx) {
     root,
     async show() {
       if (!S.registry) S.registry = await loadRegistry();
+      // a result belongs to the input it was made from: if the editor changed since, it is not shown as the result for the new text
+      if (S.fromEditor && !S.running && (S.result || S.error) && S.resultKey !== keyOf(input())) resetRun();
       render();
     },
     // for tests and the page's other tabs

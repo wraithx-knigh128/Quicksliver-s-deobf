@@ -234,8 +234,10 @@ _LOG_STAGES = [
 
 
 class Run:
-    def __init__(self, emit):
+    def __init__(self, emit, cancelled=lambda: False):
         self.emit = emit
+        self.cancelled = cancelled      # true once the client has gone: the engine process is killed instead of running to its time limit
+        self.was_cancelled = False
         self.stage = None
         self.t0 = time.time()
         self.log: list[str] = []
@@ -287,6 +289,13 @@ def _run_process(cmd, cwd, env, deadline, run: Run):
         t.start()
     timed_out = False
     while p.poll() is None:
+        if run.cancelled():
+            run.was_cancelled = True
+            try:
+                os.killpg(os.getpgid(p.pid), signal.SIGKILL)
+            except Exception:
+                p.kill()
+            break
         if time.time() > deadline:
             timed_out = True
             try:
@@ -328,7 +337,9 @@ def _attempt(step, input_path: Path, work: Path, deadline, run: Run) -> dict:
     if out_path.exists():
         text = out_path.read_text(encoding="utf-8", errors="replace")
     res = {"engine": step["engine"], "mode": step["mode"], "seconds": secs, "returnCode": rc, "timedOut": timed_out, "produced": bool(text and text.strip()), "nearest": bool(step.get("nearest"))}
-    if timed_out:
+    if run.was_cancelled:
+        res["outcome"] = "cancelled"
+    elif timed_out:
         res["outcome"] = "timeout"
     elif text and text.strip():
         res["outcome"] = "output"
@@ -463,10 +474,10 @@ def diagnose(log: list[str], attempts: list[dict], output_kind: str, quality: di
 
 # ---- the whole job -------------------------------------------------------------------------------------------------------
 
-def reconstruct(source: bytes, engine: str = "auto", timeout_s: int = DEFAULT_TIMEOUT_S, original: bytes | None = None, allow_fallback: bool = True, emit=lambda e: None) -> dict:
+def reconstruct(source: bytes, engine: str = "auto", timeout_s: int = DEFAULT_TIMEOUT_S, original: bytes | None = None, allow_fallback: bool = True, emit=lambda e: None, cancelled=lambda: False) -> dict:
     """Run one reconstruction. `emit` receives progress events (dicts) as they happen; the return value is the final result."""
     timeout_s = max(10, min(int(timeout_s), MAX_TIMEOUT_S))
-    run = Run(emit)
+    run = Run(emit, cancelled)
     deadline = time.time() + timeout_s
     if len(source) > MAX_INPUT_BYTES:
         return {"ok": False, "error": {"code": "too_large", "message": "The input is %d bytes; the limit is %d." % (len(source), MAX_INPUT_BYTES)}}
@@ -495,6 +506,9 @@ def reconstruct(source: bytes, engine: str = "auto", timeout_s: int = DEFAULT_TI
             run.stage_start("run", "attempt: %s (%s)" % (ENGINES[step["engine"]]["label"], step["mode"]))
             a = _attempt(step, input_path, work, deadline, run)
             attempts.append(a["result"])
+            if run.was_cancelled:
+                return {"ok": False, "engine": {"requested": engine, "attempts": attempts}, "kind": "none", "log": run.log, "diagnostics": [], "seconds": round(time.time() - run.t0, 1),
+                        "error": {"code": "cancelled", "message": "The client disconnected; the run was stopped."}}
             if a["result"]["produced"]:
                 chosen = {"step": step, "text": a["text"]}
                 if step["mode"] == "lift":

@@ -312,3 +312,31 @@ test('engine tree: nothing in the vendored engine can fetch a runtime or open a 
   }
   assert.match(fs.readFileSync(path.join(engineDir, 'NOTICE.md'), 'utf8'), /Licence: not established/);
 });
+
+// ---- regressions found in the Phase VII audit -----------------------------------------------------------------------------------------------
+test('regression: a client that disconnects mid-run stops the engine and frees its slot (it used to run to the time limit and answer "busy")', { skip: skipPy, timeout: 60_000 }, async () => {
+  const api = await startApi({ QS_RECONSTRUCT_RPM: '1000', QS_RECONSTRUCT_CONCURRENCY: '1' });
+  const loop = Buffer.from('local i = 0 while true do i = i + 1 end').toString('base64');
+  const body = JSON.stringify({ source_b64: loop, attest: true, engine: 'generic', timeout_s: 60 });
+  const sock = net.connect(api.port, '127.0.0.1');
+  sock.write(`POST /api/reconstruct HTTP/1.1\r\nHost: x\r\nContent-Type: application/json\r\nContent-Length: ${Buffer.byteLength(body)}\r\n\r\n${body}`);
+  await new Promise((r) => setTimeout(r, 2500));
+  const busy = await call(api.port, 'POST', { source_b64: Buffer.from('print(1)').toString('base64'), attest: true, engine: 'generic', fallback: false });
+  assert.equal(busy.status, 503, 'while the first run is alive the single slot is taken');
+  sock.destroy();
+  let status = 0;
+  for (let i = 0; i < 30 && status !== 200; i++) {
+    await new Promise((r) => setTimeout(r, 500));
+    status = (await call(api.port, 'POST', { source_b64: Buffer.from('print(1)').toString('base64'), attest: true, engine: 'generic', fallback: false, timeout_s: 20 })).status;
+  }
+  api.child.kill();
+  assert.equal(status, 200, 'after the client left, the slot was released within seconds');
+});
+
+test('regression: every Python file of the engine and the API compiles with warnings as errors (an invalid escape in ir.py becomes a SyntaxError on newer Pythons)', { skip: skipPy }, () => {
+  const files = [];
+  const walk = (d) => { for (const e of fs.readdirSync(d, { withFileTypes: true })) { const p = path.join(d, e.name); if (e.isDirectory()) { if (e.name !== 'bin' && e.name !== '__pycache__') walk(p); } else if (e.name.endsWith('.py')) files.push(p); } };
+  walk(engineDir); files.push(path.join(root, 'api', 'reconstruct.py'));
+  const r = spawnSync('python3', ['-I', '-W', 'error::SyntaxWarning', '-c', 'import sys\nfor f in sys.argv[1:]:\n    with open(f, encoding="utf-8") as h: compile(h.read(), f, "exec")', ...files], { encoding: 'utf8' });
+  assert.equal(r.status, 0, r.stderr);
+});

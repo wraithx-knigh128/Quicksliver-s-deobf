@@ -994,3 +994,51 @@ test('Reconstruct: a failure is explained, not hidden (service refuses an unatte
   assert.equal(res.body.error.code, 'attestation_required');
   await ctx.close();
 });
+
+// ---- regressions found in the Phase VII audit ------------------------------------------------------------------------------------------------
+test('Reconstruct: a result belongs to the input it was made from (editing the text and coming back does not show the old result for the new text)', { skip: skipRecon() || skip, timeout: 120_000 }, async () => {
+  const { page, ctx } = await newPage();
+  await page.fill('textarea.editor', 'local t = {}\\nprint(#t)');
+  await page.click('#tab-reconstruct');
+  await page.check('#recon-attest');
+  await page.click('#recon-run');
+  await page.waitForSelector('#recon-kind', { timeout: 100_000 });
+  await page.click('#tab-work');
+  await page.fill('textarea.editor', 'print("a different script")');
+  await page.click('#tab-reconstruct');
+  assert.equal(await page.locator('#recon-kind').count(), 0, 'the old result is not presented for the new text');
+  assert.match(await page.textContent('.recon-right'), /The reconstruction appears here/);
+  await ctx.close();
+});
+
+test('Reconstruct: on a phone-width screen nothing in the tab is wider than the screen', { skip: skipRecon() || skip, timeout: 120_000 }, async () => {
+  const { page, ctx } = await newPage({ viewport: { width: 390, height: 800 } });
+  await page.click('#tab-reconstruct');
+  await page.setInputFiles('#recon-file', path.join(fixtureDir, '001_vm_like_dispatch-obfuscated.lua'));
+  await page.check('#recon-attest');
+  await page.click('#recon-run');
+  await page.waitForSelector('#recon-kind', { timeout: 100_000 });
+  const wide = await page.evaluate(() => [...document.querySelectorAll('#view-reconstruct *')].filter((e) => e.getBoundingClientRect().right > window.innerWidth + 2).map((e) => `${e.tagName}.${e.className}`).slice(0, 5));
+  assert.deepEqual(wide, []);
+  await ctx.close();
+});
+
+test('Reconstruct: cancelling says so, re-enables the button, and a server that is not the service is named as such', { skip: skipRecon() || skip, timeout: 120_000 }, async () => {
+  const { page, ctx } = await newPage();
+  await page.fill('textarea.editor', 'local i = 0 while true do i = i + 1 end');
+  await page.click('#tab-reconstruct');
+  await page.selectOption('#recon-engine', 'generic');
+  await page.check('#recon-attest');
+  await page.click('#recon-run');
+  await page.waitForSelector('#recon-cancel');
+  await page.waitForTimeout(1200);
+  await page.click('#recon-cancel');
+  await page.waitForSelector('.recon-right .note.bad');
+  assert.equal(await page.textContent('.recon-right .note.bad'), 'Cancelled.');
+  assert.equal(await page.isDisabled('#recon-run'), false);
+  await page.route('**/api/reconstruct', (route) => route.fulfill({ status: 200, contentType: 'text/html', body: '<html>spa fallback</html>' }));
+  await page.click('#recon-run');
+  await page.waitForSelector('.recon-right .note.bad');
+  assert.match(await page.textContent('.recon-right .note.bad'), /not the reconstruction service/);
+  await ctx.close();
+});
