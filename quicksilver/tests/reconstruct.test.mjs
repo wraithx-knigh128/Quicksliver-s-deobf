@@ -471,3 +471,16 @@ print(good[0][1][0][1])
   assert.equal(r.status, 0, r.stderr);
   assert.equal(r.stdout.trim(), 'vm 27\n27', 'the biggest proto that lifts without free upvalues becomes the root; a root that already lifts cleanly is left alone');
 });
+
+test('regression: a recursive watcher (a handler that connects handlers for every child) is traced in seconds with a bounded record, and says where it stopped', { skip: skipPy, timeout: 120_000 }, () => {
+  const tmp = fs.mkdtempSync(path.join(fs.realpathSync(process.env.TMPDIR || '/tmp'), 'qs-t-'));
+  const f = path.join(tmp, 'watch.lua');
+  fs.writeFileSync(f, 'local function watch(x)\n\tx.ChildAdded:Connect(function(c) watch(c) end)\n\tfor _, c in x:GetChildren() do watch(c) end\nend\nwatch(workspace)\nprint("watching")');
+  const t0 = Date.now();
+  const r = runService(f, 'generic');
+  fs.rmSync(tmp, { recursive: true, force: true });
+  assert.equal(r.ok, true);
+  assert.ok(Date.now() - t0 < 60_000, 'handlers connected by handlers made new ones until the statement budget (tens of MB, minutes, out of memory under the service limits)');
+  assert.ok((r.output || '').length < 5_000_000, 'the record is bounded (the unbounded chain was tens of MB)');
+  assert.match(r.output, /nesting limit/, 'what was left unrun is stated in the output');
+});

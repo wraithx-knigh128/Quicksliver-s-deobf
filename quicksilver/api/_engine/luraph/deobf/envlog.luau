@@ -757,6 +757,11 @@ local DEFERRED = {}
 -- connects tamper responses to signals that must not fire, e.g.
 -- game.DescendantRemoving; running those early looks like tampering)
 local HANDLERS = {}
+-- a handler that connects handlers (a recursive watcher: `watch(child)` connects ChildAdded and calls itself for every child) makes new ones every time
+-- it runs; each stand-in child is a fresh instance, so the chain only ends at the statement budget (tens of MB of trace). Handlers connected by a
+-- handler connected by a handler (generation 3) are recorded; the next generation is left unrun and says so.
+-- (fields of HANDLERS, not locals: the harness's top level is at Luau's 200-register limit)
+HANDLERS.gen, HANDLERS.max = 0, 3
 
 function captureFunction(fn, names, args, defer)
 	local fid = FUNCS[fn]
@@ -784,7 +789,7 @@ function captureFunction(fn, names, args, defer)
 		end
 	end
 	if defer == "handler" then
-		R.insert(HANDLERS, { rec = rec, fn = fn, args = callArgs, n = args and args.n or #callArgs })
+		R.insert(HANDLERS, { rec = rec, fn = fn, args = callArgs, n = args and args.n or #callArgs, gen = HANDLERS.gen + 1 })
 		return "\3" .. fid .. "\4"
 	end
 	if defer then
@@ -824,8 +829,14 @@ local function runHandlers()
 		local h = HANDLERS[i]
 		i += 1
 		popTo(1)
-		local ok, err = R.pcall(runInBlock, h.rec.block, h.fn, R.unpack(h.args, 1, h.n))
-		if not ok and err == ABORT then return end
+		if h.gen > HANDLERS.max then
+			R.insert(h.rec.block.lines, { text = "-- [envlog] not run: connected by a handler that was itself connected by a handler (nesting limit " .. HANDLERS.max .. ")" })
+		else
+			HANDLERS.gen = h.gen
+			local ok, err = R.pcall(runInBlock, h.rec.block, h.fn, R.unpack(h.args, 1, h.n))
+			HANDLERS.gen = 0
+			if not ok and err == ABORT then return end
+		end
 	end
 end
 
@@ -860,10 +871,10 @@ local function iterProxy(p, how)
 		state += 1
 		if state == 1 then
 			-- a real instance tree is finite, but every stand-in child here is iterable again: a script that walks the tree recursively
-			-- (`for _, c in x:GetChildren() do walk(c) end`) would never reach a leaf. Past a nesting depth no real tree reaches, the iteration is empty.
+			-- (`for _, c in x:GetChildren() do walk(c) end`) would never reach a leaf. Past a nesting depth of 8 the iteration is empty (a wider cut-off multiplies the recorded output by the branching of the walk).
 			local depth = 0
 			for i = 1, #STACK do if STACK[i].iter then depth += 1 end end
-			if depth >= 24 then state = 2; return nil end
+			if depth >= 8 then state = 2; return nil end
 			local b = { lines = {}, waits = {}, iter = true }
 			kp = newP({ kind = "name", gen = true, name = paramName(how == "ipairs" and "i" or "k"), tname = "number" })
 			vp = newP({ kind = "name", gen = true, name = paramName("v"), tname = "Instance" })
@@ -4564,6 +4575,11 @@ end
 function renderBlock(block, ind, out)
 	local pad = R.rep("\t", ind)
 	for _, s in block.lines do
+		-- formatting a long trace is progress too (harness.run_once gives up on a run that prints nothing for a while)
+		if CFG.heartbeat and R.clock() - (CFG._hb or START) > CFG.heartbeat then
+			CFG._hb = R.clock()
+			R.print("\0HB\n" .. R.rep(" ", 16384))
+		end
 		local mark = CHAIN.markers and #out + 1
 		if mark then R.insert(out, false) end
 		if s.header then
