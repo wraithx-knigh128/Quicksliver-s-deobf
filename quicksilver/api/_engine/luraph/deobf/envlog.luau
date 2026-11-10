@@ -859,7 +859,12 @@ local function iterProxy(p, how)
 	return function()
 		state += 1
 		if state == 1 then
-			local b = { lines = {}, waits = {} }
+			-- a real instance tree is finite, but every stand-in child here is iterable again: a script that walks the tree recursively
+			-- (`for _, c in x:GetChildren() do walk(c) end`) would never reach a leaf. Past a nesting depth no real tree reaches, the iteration is empty.
+			local depth = 0
+			for i = 1, #STACK do if STACK[i].iter then depth += 1 end end
+			if depth >= 24 then state = 2; return nil end
+			local b = { lines = {}, waits = {}, iter = true }
 			kp = newP({ kind = "name", gen = true, name = paramName(how == "ipairs" and "i" or "k"), tname = "number" })
 			vp = newP({ kind = "name", gen = true, name = paramName("v"), tname = "Instance" })
 			local header = "for " .. tok(kp) .. ", " .. tok(vp) .. " in " ..

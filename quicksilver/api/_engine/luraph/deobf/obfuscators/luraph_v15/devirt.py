@@ -3291,6 +3291,27 @@ def program_roots(prog):
 _FREE_UPVALUE = re.compile(r"\bupv\d+\b")
 
 
+def _proto_weight(proto):
+    """A rough size of a proto: the entries of the tables it refers to directly (code, constants, nested protos)."""
+    try:
+        return sum(len(v.h) for v in proto.h.values() if isinstance(v, LTable))
+    except AttributeError:
+        return 0
+
+
+def _lifts_clean(prog, fl, cap):
+    """True when the proto lifts to code with no free upvalues (the shape of a script's main chunk)."""
+    try:
+        vm = prog.vm_of(cap)
+        lines = fl.lift(vm, vm.vmobj_of(cap), vm.proto_of(cap), UpList(), {}, 0)
+    except Exception:                      # a proto that cannot be lifted is not a candidate
+        return False
+    return not _FREE_UPVALUE.search("\n".join(lines))
+
+
+MAIN_CANDIDATES = 10
+
+
 def _payload_without_scaffolding(prog, fl, vms, payload):
     """The VM whose root is the script, checked on what it lifts to.
 
@@ -3298,23 +3319,27 @@ def _payload_without_scaffolding(prog, fl, vms, payload):
     emits none (pure computation) leaves the last probe helper as the pick, and the output is then Luraph's own
     environment probes. A script's main chunk is top-level code and has no upvalues, so a root whose lift still
     names free upvalues (`upv3()`) is a loader or probe helper. When the pick is one, the other VM roots are
-    tried in order and the first that lifts without free upvalues replaces it. Nothing changes otherwise."""
-    if len(vms) < 2:
-        return payload
+    tried in order and the first that lifts without free upvalues replaces it. Where no VM root qualifies (one VM
+    holds the loader and the script, or the script's callbacks emitted after its main chunk) the largest protos of
+    the payload VM are tried, biggest first, and the first that lifts cleanly becomes the root. Nothing changes
+    when the pick already lifts cleanly."""
     by_tag = dict(vms)
-    order = [payload] + [t for t, _ in vms if t != payload]
+    order = [payload] + [t for t, _ in vms if t != payload] if len(vms) > 1 else [payload]
     for tag in order:
-        cap = by_tag[tag][0][2]
-        try:
-            vm = prog.vm_of(cap)
-            lines = fl.lift(vm, vm.vmobj_of(cap), vm.proto_of(cap), UpList(), {}, 0)
-        except Exception:                  # a root that cannot be lifted is not a candidate
-            continue
-        if not _FREE_UPVALUE.search("\n".join(lines)):
+        if _lifts_clean(prog, fl, by_tag[tag][0][2]):
             if tag != payload:
                 print("[*] payload root #%s lifts to loader/probe code (free upvalues); using root #%s"
                       % (by_tag[payload][0][1], by_tag[tag][0][1]), file=sys.stderr)
             return tag
+    lst = by_tag[payload]
+    rest = sorted(lst[1:], key=lambda x: -_proto_weight(prog.vm_of(x[2]).proto_of(x[2])))
+    for item in rest[:MAIN_CANDIDATES]:
+        if _lifts_clean(prog, fl, item[2]):
+            print("[*] payload root #%s lifts to loader/probe code (free upvalues); using the main chunk #%s"
+                  % (lst[0][1], item[1]), file=sys.stderr)
+            lst.remove(item)
+            lst.insert(0, item)
+            return payload
     return payload
 
 

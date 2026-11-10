@@ -426,3 +426,48 @@ test('regression: a request with an engine that is not a string is a 400, not a 
   assert.equal(last.kind, 'trace');
   assert.equal(last.engine.mode, 'trace');
 });
+
+test('regression: a script that walks the instance tree recursively is traced to the end, not forever', { skip: skipPy, timeout: 120_000 }, () => {
+  const tmp = fs.mkdtempSync(path.join(fs.realpathSync(process.env.TMPDIR || '/tmp'), 'qs-t-'));
+  const f = path.join(tmp, 'walk.lua');
+  fs.writeFileSync(f, 'local n = 0\nlocal function walk(x)\n\tn += 1\n\tfor _, c in x:GetChildren() do walk(c) end\nend\nwalk(game)\nprint("walked")');
+  const t0 = Date.now();
+  const r = runService(f, 'generic');
+  fs.rmSync(tmp, { recursive: true, force: true });
+  assert.equal(r.ok, true, 'every stand-in child is iterable again; without a nesting limit the walk never reached a leaf');
+  assert.ok(Date.now() - t0 < 60_000);
+  assert.ok((r.output || '').length < 200_000, 'the recorded walk is bounded');
+});
+
+test('regression: the main chunk is found among the protos of one VM when the recorded root is a helper that names free upvalues', { skip: skipPy }, () => {
+  const py = `
+import sys
+sys.path.insert(0, ${JSON.stringify(path.join(engineDir, 'deobf'))})
+sys.path.insert(0, ${JSON.stringify(path.join(engineDir, 'deobf/obfuscators/luraph_v15'))})
+import devirt
+from luasym import LTable
+class VM:
+    def vmobj_of(self, cap): return cap
+    def proto_of(self, cap): return cap["proto"]
+class Prog:
+    def vm_of(self, cap): return VM()
+class FL:
+    def lift(self, vm, vmobj, proto, ups, a, b): return proto.h["code"]
+def cap(code, size):
+    t = LTable(); t.h["code"] = code.split("\\n"); t.h["k"] = LTable(h={i: i for i in range(size)})
+    return {"proto": t}
+helper = (1, 30, cap("local v = ...\\nif upv1[v] then return end", 3))
+tiny   = (2, 5, cap("upv2()", 1))
+main   = (3, 27, cap("local Players = game:GetService('Players')", 900))
+mid    = (4, 9, cap("local x = 1", 40))
+vms = [(b"vm", [helper, tiny, mid, main])]
+tag = devirt._payload_without_scaffolding(Prog(), FL(), vms, b"vm")
+print(tag.decode(), vms[0][1][0][1])
+good = [(b"vm", [main, tiny])]
+devirt._payload_without_scaffolding(Prog(), FL(), good, b"vm")
+print(good[0][1][0][1])
+`;
+  const r = spawnSync('python3', ['-I', '-c', py], { encoding: 'utf8' });
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(r.stdout.trim(), 'vm 27\n27', 'the biggest proto that lifts without free upvalues becomes the root; a root that already lifts cleanly is left alone');
+});
