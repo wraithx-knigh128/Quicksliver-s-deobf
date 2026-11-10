@@ -55,10 +55,7 @@ itself, and samples a person supplied for this purpose.
   been sent to its replacement. Fixed by tying a pending run to the process it was sent to; the test that killed a hostile program and ran another
   caught it.
 
-**Luau.** *(Phase V: unavailable. Phase VI: available.)* The Luau reference implementation has to be built from source (a C++ project). The environment this was developed in refused that
-step, and it was not worked around. To get Luau verification: build `luau` (`git clone https://github.com/Roblox/luau && cd luau && make config=release
-luau`) on a machine where that is allowed and set `QS_LUAU_BIN=/path/to/luau`. The oracle already has the path; nothing else changes. Until then
-every Luau verdict is `unavailable`, and a Luau claim cannot reach `verified`.
+**Luau.** Phase V reported Luau unavailable because building it had been refused. In Phase VI the owner approved building it: Luau 0.739 with the archive's one-line vector-metatable patch is vendored under `api/_engine/luraph/deobf/bin/luau` (provenance and hashes in its NOTICE.md) and is the oracle's default Luau runtime; `QS_LUAU_BIN` overrides it. Without any binary a Luau verdict is `unavailable`, never approximated.
 
 ## 2. The research service
 

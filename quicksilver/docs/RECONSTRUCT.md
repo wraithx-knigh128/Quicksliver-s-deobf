@@ -118,9 +118,15 @@ Locally: `npm run reconstruct:serve` (Python 3, the vendored binaries) serves `/
 | `QS_RECONSTRUCT_CONCURRENCY` | 2 | simultaneous jobs per instance |
 | `QS_RECONSTRUCT_MAX_BYTES` / `_MAX_SECONDS` / `QS_ENGINE_MEM_MB` | 3 MiB / 240 s / 3072 | limits |
 | `QS_LURAPH_BIN_DIR` | – | use binaries from this directory instead of the vendored ones |
+| `QS_RECONSTRUCT_READ_TIMEOUT` | 60 | seconds a client may stall while sending its request before it is dropped |
+| `QS_CHECK_CACHE_SECONDS` | 300 | how long `GET ?check=1` (which runs the engine on a fixture) keeps its answer; the check is rate limited like a request |
 
 **Limits that matter.** A serverless function has a time limit (set to 300 s; your plan may allow less). Large scripts take minutes in the archive's own timings; a script that does not finish is stopped and the answer says so.
 For heavy use, run `api/reconstruct.py --serve` behind your own host and point the page at it.
+
+## 6b. Health report
+
+`npm run doctor` (`tools/doctor.mjs`) runs every check below and prints OK / WARN / FAIL with the action to take; it exits 1 on a FAIL. It covers: Node and Python, the binaries (execute bit, SHA-256 against NOTICE.md, that Luau runs and lacks `io`/`os.execute`, that `luau-ast` reports a syntax error on stderr with a non-zero exit), each bundled engine fixture end to end, every reference runtime, that the registry, profiles and ledger are what the code derives, configuration, the deployment config (function limits, `.vercelignore`, binary modes), and with `--online` live research connectivity, with `--url https://…` the deployed engine self-test.
 
 ## 7. The research assistant
 

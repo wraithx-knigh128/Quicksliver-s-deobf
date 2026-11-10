@@ -185,6 +185,8 @@ def plan(ident: dict, requested: str = "auto", allow_fallback: bool = True) -> l
     if requested and requested != "auto":
         if requested not in ENGINES:
             raise ValueError("unknown engine %r" % requested)
+        if requested == "generic":                  # the generic engine has no lifter: what it produces is a behaviour trace, and is labelled as one
+            return [{"engine": "generic", "mode": "trace", "why": "chosen by you: a behaviour trace of one run", "tested": None}]
         steps = [{"engine": requested, "mode": "lift", "why": "chosen by you", "tested": None}]
         if requested != "generic":
             steps.append({"engine": requested, "mode": "trace", "why": "same engine, behaviour trace only", "tested": None})
@@ -380,10 +382,12 @@ def syntax_check(text: str, work: Path) -> dict:
         r = subprocess.run([str(Path(bin_dir()) / "luau-ast"), str(path)], capture_output=True, timeout=60)
     except Exception as e:  # noqa: BLE001
         return {"ok": None, "error": "syntax checker failed: %s" % e}
-    head = r.stdout[:400].decode("latin-1")
-    if head.startswith("Parse errors were encountered"):
-        errs = [l.strip() for l in r.stdout.decode("latin-1").splitlines()[1:8] if l.strip().startswith("(")]
-        return {"ok": False, "errors": errs}
+    # luau-ast prints "Parse errors were encountered:" and the errors on STDERR and exits non-zero (the JSON AST, error nodes included, is on stdout). Reading stdout
+    # for them reported every broken output as valid Luau.
+    err = r.stderr.decode("latin-1")
+    if r.returncode != 0 or err.startswith("Parse errors were encountered"):
+        errs = [l.strip() for l in err.splitlines()[1:8] if l.strip().startswith("(")]
+        return {"ok": False, "errors": errs or ["luau-ast exited with status %d" % r.returncode]}
     return {"ok": True, "parser": "Luau (luau-ast)"}
 
 

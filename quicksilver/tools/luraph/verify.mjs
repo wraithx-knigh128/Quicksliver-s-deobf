@@ -62,7 +62,9 @@ function main() {
     const original = fx.original ? path.join(root, fx.original) : null;
     const results = [];
     for (let i = 0; i < 3; i++) results.push(runService(file, { engine: fx.engine, original }));
-    const sig = results.map((r) => `${r.kind}|${r.engine && r.engine.used}|${r.verification && r.verification.status}|${r.output ? sha(r.output) : ''}`);
+    // a trace's header carries how long the run took ("48 statements recorded in 0.15s"), which differs from run to run without the output differing: not instability
+    const norm = (t) => String(t || '').replace(/recorded in \d+(?:\.\d+)?s/g, 'recorded in Ns').replace(/\/tmp\/[\w./-]*qs-recon-[\w-]+/g, '<work>');
+    const sig = results.map((r) => `${r.kind}|${r.engine && r.engine.used}|${r.verification && r.verification.status}|${r.output ? sha(norm(r.output)) : ''}`);
     const rec = recordFor(fx, results[0], sig);
     records.push(rec);
     console.log(`${fx.id.padEnd(28)} ${String(rec.kind).padEnd(15)} by ${String(rec.answeredBy).padEnd(13)} verification ${rec.verification.status}${rec.stable ? '' : '  (UNSTABLE across 3 runs)'}`);

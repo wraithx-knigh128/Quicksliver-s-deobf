@@ -377,3 +377,11 @@ test('build: a record produced by the differential tool itself is accepted', { s
   assert.deepEqual(warnings, []);
   assert.equal(v14(out).verification.status, 'authorized-sample-verified');
 });
+
+test('derivation: the committed profiles are exactly what the build gives from the data on disk (no hand-edited claim, no stale result)', () => {
+  const built = JSON.parse(JSON.stringify(buildProfiles()));
+  const shipped = clone(profiles);
+  built.generatedAt = shipped.generatedAt = 0;
+  for (const p of built.profiles) assert.deepEqual(p, shipped.profiles.find((q) => q.id === p.id), `${p.id} differs from what tools/research/profiles-build.mjs produces (run npm run research)`);
+  assert.equal(built.profiles.length, shipped.profiles.length);
+});

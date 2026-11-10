@@ -204,7 +204,7 @@ def preamble_plan(lines):
         if re.search(r"\b%s\b" % m.group(1), rest):
             kept.append(lines[a])
     removed = sum(b - a for a, b in drop) - len(kept)
-    note = ["[probe block removed]"]
+    note = ["-- [probe block removed]"]   # a comment: a bare line here made every trace that strips a probe block invalid Luau
     comments = [lines[i] for a, b in drop for i in range(a, b) if lines[i].startswith("-- ")
                 and not lines[i].startswith("-- [envlog]")]
     return head, end, comments + note + kept

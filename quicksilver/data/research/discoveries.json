@@ -7,10 +7,17 @@
       "state": "verified",
       "origin": "reading the archive's driver and running its regression sample",
       "claim": "For a Luraph v15 script whose payload emits no environment statements (pure computation), the runtime's recorded payload root is the last probe helper, so the engine lifts Luraph's own environment probes instead of the program. A script's main chunk has no upvalues, so a root whose lift names free upvalues (upvN) is a probe or loader; trying the other VM roots and taking the first without free upvalues selects the script.",
-      "evidence": { "records": ["v15-001-vm-like-dispatch"], "note": "Before the check the engine's output for this sample was the probe state machine (free upvalues upv3/upv4/upv5); after it the output is the stack-machine program and compares identical with the original on Luau (return value 34)." },
+      "evidence": {
+        "records": [
+          "v15-001-vm-like-dispatch"
+        ],
+        "note": "Before the check the engine's output for this sample was the probe state machine (free upvalues upv3/upv4/upv5); after it the output is the stack-machine program and compares identical with the original on Luau (return value 34)."
+      },
       "reproduce": "node tools/luraph/verify.mjs --only v15-001-vm-like-dispatch",
       "verifiedAt": "2026-11-09",
-      "usedFor": ["engine fix in api/_engine/luraph/deobf/obfuscators/luraph_v15/devirt.py (_payload_without_scaffolding)"],
+      "usedFor": [
+        "engine fix in api/_engine/luraph/deobf/obfuscators/luraph_v15/devirt.py (_payload_without_scaffolding)"
+      ],
       "limits": "One sample. The rule is structural (no sample text is used) but it has been exercised on one program."
     },
     {
@@ -19,17 +26,58 @@
       "origin": "the engine's notes: Luraph keys its decryption on the environment, and a stock Luau lacks the writable vector metatable",
       "claim": "The v14.8 and v14.9 fixtures failed to lift because the supplied Linux luau was a stock build.",
       "experiment": "Built Luau 0.739 with the one-line vector-metatable patch (build_luau.py --portable) and re-ran the v14.7, v14.8 and v14.9 fixtures: same outcomes (v14.7 trace-assisted, v14.8 and v14.9 'devirtualization produced no source'). The stock binary was not kept, so this comparison is recorded here and not reproducible from the repository.",
-      "evidence": { "records": [] }
+      "evidence": {
+        "records": []
+      }
     },
     {
       "id": "d-v14-engines-are-v15-copies",
       "state": "verified",
       "origin": "diffing the plugin directories of the archive",
       "claim": "The luraph_v14_7, luraph_v14_8 and luraph_v14_9 plugins are copies of the v15 engine with small changes (devirt.py differs by 12 lines between versions; driver.py by 12 and 85 lines), and the archive has no v14 fixture with a source. A v14 'supported' claim therefore cannot rest on the engine's age or documentation.",
-      "evidence": { "records": ["v14.7-supplied", "v14.8-supplied", "v14.9-supplied"], "note": "Registry statuses: all three experimental, none lifted." },
+      "evidence": {
+        "records": [
+          "v14.7-supplied",
+          "v14.8-supplied",
+          "v14.9-supplied"
+        ],
+        "note": "Registry statuses: all three experimental, none lifted."
+      },
       "reproduce": "node tools/luraph/verify.mjs --only v14.7-supplied,v14.8-supplied,v14.9-supplied",
       "verifiedAt": "2026-11-09",
       "usedFor": []
+    },
+    {
+      "id": "d-v148-lift-limit",
+      "state": "verified",
+      "origin": "Phase VII audit of the v14.8 fixture",
+      "claim": "The v14.8 fixture is not lifted because the v14 lifter cannot resolve two numeric `for` loops whose bounds are symbolic (\"0:2647 and 0:5301: numeric for with symbolic bounds\"); with partial output allowed it lifts 28 functions with 7 unlifted blocks, but the root it selects is still Luraph's bootstrap scaffolding, so the driver refuses it. This is a limit of the lifter (luasym/devirt), not of the integration, the Luau build or the environment emulation.",
+      "evidence": {
+        "records": [
+          "v14.8-supplied"
+        ],
+        "note": "WalkIncomplete: refusing partial devirtualization: 2 unresolved VM state(s) ... numeric for with symbolic bounds. The same outcome with the stock and the patched Luau."
+      },
+      "reproduce": "python3 -I api/_engine/luraph/deobf/obfuscators/luraph_v14_8/devirt.py <in.src.lua> <in.protos.json> --all out.luau   (after cli.py <fixture> --debug --keep-work)",
+      "verifiedAt": "2026-11-10",
+      "usedFor": [],
+      "limits": "One fixture, no source."
+    },
+    {
+      "id": "d-v149-instrumentation",
+      "state": "verified",
+      "origin": "Phase VII audit of the v14.9 fixture",
+      "claim": "The v14.9 fixture's instrumented run (the one the devirtualizer needs) stops with \"attempt to call a nil value\" inside the script, while the same script run without instrumentation (deob.py --obfuscator generic --no-devirt) finishes and prints `Hi luraph 14.9`. The failure is therefore introduced by the engine's VM instrumentation for v14.9, not by a missing Roblox API: the behaviour trace is the best this engine produces for the fixture.",
+      "evidence": {
+        "records": [
+          "v14.9-supplied"
+        ],
+        "note": "Uninstrumented trace ends with print(\"Hi luraph 14.9\"); instrumented run ends in a script error at Script:3."
+      },
+      "reproduce": "python3 -I api/_engine/luraph/deobf/deob.py local/luraph-fixtures/v14_9.lua --obfuscator generic --no-devirt --no-pypy -o out.lua",
+      "verifiedAt": "2026-11-10",
+      "usedFor": [],
+      "limits": "The instrumentation point that changes the behaviour was not isolated."
     }
   ]
 }

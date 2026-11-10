@@ -1,10 +1,10 @@
 {
  "schema": 1,
- "generatedAt": "2026-11-09T12:50:40.010Z",
+ "generatedAt": "2026-11-10T16:33:41.617Z",
  "host": {
   "luauSha256": "137f500514f09dea3494562f5363a6f50535f3fad812b0a8e1c3f334d0a35c8c",
   "luauNote": "Luau 0.739 built with the one-line vector-metatable patch of build_luau.py, static, portable (see api/_engine/luraph/NOTICE.md)",
-  "engineRevision": "21a181ec806cabcb"
+  "engineRevision": "335de2ed1febe902"
  },
  "records": [
   {
@@ -23,7 +23,7 @@
      "engine": "luraph_v15",
      "mode": "lift",
      "outcome": "output",
-     "seconds": 2.4
+     "seconds": 1.9
     }
    ],
    "quality": {
@@ -39,7 +39,7 @@
    },
    "hasOriginal": true,
    "diagnostics": [],
-   "seconds": 2.5,
+   "seconds": 1.9,
    "stable": true,
    "outputSha256": "5057439f3a28c14addacf1ddd419628db0b0d2a9283d147fa0d7e78249730e67",
    "provenance": "supplied with the engine archive, with its source; a 559-byte stack-machine program written for that archive's tests. Options used to protect it are unknown."
@@ -60,7 +60,7 @@
      "engine": "ironbrew1",
      "mode": "lift",
      "outcome": "output",
-     "seconds": 3
+     "seconds": 2.5
     }
    ],
    "quality": {
@@ -76,7 +76,7 @@
    },
    "hasOriginal": true,
    "diagnostics": [],
-   "seconds": 3.1,
+   "seconds": 2.5,
    "stable": true,
    "outputSha256": "566f16c12e737433b6a1fe81332039132b84f2b23876164ab48d65043e91c240",
    "provenance": "supplied with the engine archive, with its source (same program as above)."
@@ -97,7 +97,7 @@
      "engine": "luraph_v14_7",
      "mode": "lift",
      "outcome": "output",
-     "seconds": 1.4
+     "seconds": 1.3
     }
    ],
    "quality": {
@@ -116,7 +116,7 @@
     "scaffolding-root",
     "trace-assisted"
    ],
-   "seconds": 1.4,
+   "seconds": 1.3,
    "stable": true,
    "outputSha256": "a357087f70f0182422b9b5fc9052d9d5f11ca207c47713a1a00cc53e2c2b15a6",
    "provenance": "supplied with the engine archive without a source; prints one line (the engine's own trace shows it). No ground truth."
@@ -137,17 +137,17 @@
      "engine": "luraph_v14_8",
      "mode": "lift",
      "outcome": "no-output",
-     "seconds": 1.3
+     "seconds": 1
     },
     {
      "engine": "luraph_v14_8",
      "mode": "trace",
      "outcome": "output",
-     "seconds": 0.5
+     "seconds": 0.4
     }
    ],
    "quality": {
-    "lines": 29,
+    "lines": 28,
     "functions": 2,
     "grade": "clean",
     "unresolved": 0
@@ -163,9 +163,9 @@
     "partial-lift",
     "trace-only"
    ],
-   "seconds": 1.7,
-   "stable": false,
-   "outputSha256": "3f56035a22c6cd9d19b099d0463ad1df129e8fd7ff49c2d0c0057c4a4c11dc17",
+   "seconds": 1.4,
+   "stable": true,
+   "outputSha256": "51be3515fe5962832812a44d1593fbdbbdfeb1a2421706323f5e1cab6fba4816",
    "provenance": "supplied with the engine archive without a source. No ground truth."
   },
   {
@@ -184,13 +184,13 @@
      "engine": "luraph_v14_9",
      "mode": "lift",
      "outcome": "no-output",
-     "seconds": 5.7
+     "seconds": 4.8
     },
     {
      "engine": "luraph_v14_9",
      "mode": "trace",
      "outcome": "output",
-     "seconds": 0.7
+     "seconds": 0.6
     }
    ],
    "quality": {
@@ -212,9 +212,9 @@
     "run-failed",
     "trace-only"
    ],
-   "seconds": 6.4,
-   "stable": false,
-   "outputSha256": "894c818f87a3fe20762fa652b6ac3c5e1391e6b8d31d940e081892e8eebb2a10",
+   "seconds": 5.3,
+   "stable": true,
+   "outputSha256": "02cf66ece0a1179ab6f3848531c92e43e712ca666b5f7747910ec8885c2e2ff4",
    "provenance": "supplied with the engine archive without a source. No ground truth."
   }
  ],

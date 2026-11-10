@@ -60,6 +60,7 @@ test('plan: a fallback is marked as one, a neighbouring engine as "nearest", and
   assert.equal(p('15.0')[0].nearest, false);
   assert.deepEqual(plan({ banner: null, candidates: [], text: 'print(1)' }).map((s) => `${s.engine}:${s.mode}`), ['generic:trace']);
   assert.deepEqual(plan({ banner: null, candidates: [] }, 'luraph_v15', true).map((s) => s.mode), ['lift', 'trace']);
+  assert.deepEqual(plan({ banner: null, candidates: [] }, 'generic').map((s) => `${s.engine}:${s.mode}`), ['generic:trace'], 'choosing the trace engine is choosing a trace, not a lift');
   assert.throws(() => plan({ banner: null, candidates: [] }, 'nonsense'));
 });
 
@@ -113,6 +114,7 @@ test('registry: the committed statuses are what the records give, every record i
     assert.ok(r.provenance && r.provenance.length > 20, r.id);
     assert.ok(['devirtualized', 'trace-assisted', 'trace', 'none'].includes(r.kind), r.id);
   }
+  assert.ok(registry.records.every((r) => r.stable), 'every record was identical across its three runs (a run time in a trace header is not a difference)');
   assert.ok(!Object.values(registry.summary.versions).some((s) => s.status === 'fully-tested'), 'ten verified pairs do not exist, so nothing is fully tested');
   assert.equal(registry.summary.versions['luraph-15.0'].status, 'partially-tested');
   assert.equal(registry.summary.versions['ironbrew-1'].status, 'partially-tested');
@@ -229,9 +231,11 @@ print(json.dumps({"ok": r.get("ok"), "kind": r.get("kind"), "seconds": time.time
 
 // ---- the HTTP API -----------------------------------------------------------------------------------------------------------------------------
 let proc; let port = 0;
+const spawned = [];
 async function startApi(env = {}) {
   const p = await new Promise((r) => { const s = net.createServer().listen(0, '127.0.0.1', () => { const x = s.address().port; s.close(() => r(x)); }); });
   const child = spawn('python3', ['-I', path.join(root, 'api/reconstruct.py'), '--serve', String(p)], { stdio: 'ignore', env: { PATH: process.env.PATH, ...env } });
+  spawned.push(child);     // killed in after(), so a failing test cannot leave a server that keeps the test run from exiting
   for (let i = 0; i < 60; i++) {
     const ok = await new Promise((r) => { const q = http.get({ host: '127.0.0.1', port: p, path: '/api/reconstruct?check=1' }, (x) => { x.resume(); r(true); }); q.on('error', () => r(false)); });
     if (ok) return { child, port: p };
@@ -249,7 +253,7 @@ const call = (p, method, body, headers = {}, p2 = '/api/reconstruct') => new Pro
 });
 
 before(async () => { if (hasPython) ({ child: proc, port } = await startApi({ QS_RECONSTRUCT_RPM: '1000' })); });
-after(() => { if (proc) proc.kill(); });
+after(() => { for (const c of spawned) c.kill(); if (proc) proc.kill(); });
 
 test('api: the request is checked before anything runs (attestation, encoding, size, engine name, emptiness)', { skip: skipPy }, async () => {
   const b64 = Buffer.from('print(1)').toString('base64');
@@ -293,7 +297,7 @@ test('api: it can be switched off or put behind a token, and it rate limits', { 
   assert.equal((await call(tok.port, 'POST', body, { 'x-reconstruct-token': 'wrong' })).status, 401);
   assert.equal((await call(tok.port, 'POST', body, { 'x-reconstruct-token': 'sekret-token-123456' })).status, 200);
   tok.child.kill();
-  const rl = await startApi({ QS_RECONSTRUCT_RPM: '2' });
+  const rl = await startApi({ QS_RECONSTRUCT_RPM: '3' });     // the readiness probe of startApi is the first of the three requests
   assert.equal((await call(rl.port, 'POST', body)).status, 200);
   assert.equal((await call(rl.port, 'POST', body)).status, 200);
   const third = await call(rl.port, 'POST', body);
@@ -339,4 +343,86 @@ test('regression: every Python file of the engine and the API compiles with warn
   walk(engineDir); files.push(path.join(root, 'api', 'reconstruct.py'));
   const r = spawnSync('python3', ['-I', '-W', 'error::SyntaxWarning', '-c', 'import sys\nfor f in sys.argv[1:]:\n    with open(f, encoding="utf-8") as h: compile(h.read(), f, "exec")', ...files], { encoding: 'utf8' });
   assert.equal(r.status, 0, r.stderr);
+});
+
+test('regression: the output check reports invalid Luau as invalid (luau-ast prints its errors on stderr; the check used to read stdout and call everything valid)', { skip: skipPy }, () => {
+  const py = spawnSync('python3', ['-I', '-c', `
+import sys, json, tempfile, pathlib
+sys.path.insert(0, ${JSON.stringify(engineDir)})
+import service
+w = pathlib.Path(tempfile.mkdtemp())
+print(json.dumps([service.syntax_check("local x = = 1\\n", w), service.syntax_check("local x: number = 1\\nlocal t = {1, 2}\\nfor i, v in t do print(i, v) end\\n", w)]))
+`], { encoding: 'utf8' });
+  assert.equal(py.status, 0, py.stderr);
+  const [bad, good] = JSON.parse(py.stdout);
+  assert.equal(bad.ok, false);
+  assert.ok(bad.errors.length >= 1);
+  assert.equal(good.ok, true, 'valid Luau (types, generalised iteration) is accepted');
+});
+
+test('regression: a behaviour trace that strips a probe block is valid Luau (the note it leaves used to be a bare line)', { skip: skipPy, timeout: 120_000 }, () => {
+  const tmp = fs.mkdtempSync(path.join(fs.realpathSync(process.env.TMPDIR || '/tmp'), 'qs-t-'));
+  const out = path.join(tmp, 'trace.lua');
+  const r = spawnSync('python3', ['-I', path.join(engineDir, 'deobf/deob.py'), fx('001_vm_like_dispatch-obfuscated.lua'), '--obfuscator', 'luraph_v15', '--no-devirt', '--no-pypy', '-o', out],
+    { encoding: 'utf8', timeout: 100_000, env: { PATH: process.env.PATH, DEOBF_BIN_DIR: path.join(engineDir, 'deobf/bin') } });
+  assert.equal(r.status, 0, r.stderr);
+  const text = fs.readFileSync(out, 'utf8');
+  assert.match(text, /^-- \[probe block removed\]$/m, 'the probe block was stripped and the note is a comment');
+  const ast = spawnSync(path.join(engineDir, 'deobf/bin/luau-ast'), [out], { encoding: 'utf8' });
+  assert.equal(ast.status, 0, ast.stderr);
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
+
+test('registry: every output the engine produced is valid Luau', () => {
+  for (const r of registry.records.filter((x) => x.kind !== 'none')) assert.equal(r.syntax, true, `${r.id}: the recorded output does not parse`);
+});
+
+test('regression: a client that declares a body and never sends it is dropped after the read timeout instead of holding a thread', { skip: skipPy, timeout: 60_000 }, async () => {
+  const api = await startApi({ QS_RECONSTRUCT_RPM: '1000', QS_RECONSTRUCT_READ_TIMEOUT: '2' });
+  try {
+    const sock = net.connect(api.port, '127.0.0.1');
+    sock.resume();
+    sock.write('POST /api/reconstruct HTTP/1.1\r\nHost: x\r\nContent-Type: application/json\r\nContent-Length: 5000\r\n\r\n{"source');
+    const t0 = Date.now();
+    const closed = await new Promise((resolve) => { const t = setTimeout(() => resolve(false), 8000); sock.on('close', () => { clearTimeout(t); resolve(true); }); sock.on('error', () => {}); });
+    assert.equal(closed, true, 'the server closed the stalled connection');
+    assert.ok(Date.now() - t0 < 7000);
+    const ok = await call(api.port, 'POST', { source_b64: Buffer.from('print(1)').toString('base64'), attest: true, engine: 'generic', fallback: false, timeout_s: 20 });
+    assert.equal(ok.status, 200, 'and kept serving');
+  } finally { api.child.kill(); }
+});
+
+test('regression: the capability check (which runs the engine) is rate limited and cached, so it cannot be used to run the engine in a loop', { skip: skipPy, timeout: 120_000 }, async () => {
+  // startApi's own readiness probe is the first check: it runs the engine and primes the cache (and uses one request of the minute)
+  const api = await startApi({ QS_RECONSTRUCT_RPM: '3' });
+  try {
+    const t0 = Date.now();
+    const a = JSON.parse((await call(api.port, 'GET', undefined, {}, '/api/reconstruct?check=1')).body);
+    const fast = Date.now() - t0;
+    assert.equal(a.cached, true, 'the answer is the one the probe produced, not a second engine run');
+    assert.equal(a.selfTest.ok, true);
+    assert.ok(fast < 1500, `a cached answer is immediate (${fast} ms), a fresh one takes seconds`);
+    assert.equal((await call(api.port, 'GET', undefined, {}, '/api/reconstruct?check=1')).status, 200);
+    assert.equal((await call(api.port, 'GET', undefined, {}, '/api/reconstruct?check=1')).status, 429, 'a fourth request in the minute is refused');
+  } finally { api.child.kill(); }
+  const fresh = await startApi({ QS_RECONSTRUCT_RPM: '100', QS_CHECK_CACHE_SECONDS: '0' });
+  try {
+    const t = Date.now();
+    const b = JSON.parse((await call(fresh.port, 'GET', undefined, {}, '/api/reconstruct?check=1')).body);
+    assert.equal(b.cached, false, 'with the cache off the engine really runs');
+    assert.ok(Date.now() - t > 1000);
+  } finally { fresh.child.kill(); }
+});
+
+test('regression: a request with an engine that is not a string is a 400, not a dropped connection; choosing the trace engine yields kind "trace"', { skip: skipPy, timeout: 120_000 }, async () => {
+  const b64 = Buffer.from('print(1)').toString('base64');
+  for (const engine of [['generic'], { a: 1 }, 5]) {
+    const r = await call(port, 'POST', { source_b64: b64, attest: true, engine });
+    assert.equal(r.status, 400, JSON.stringify(engine));
+    assert.equal(JSON.parse(r.body).error.code, 'bad_engine');
+  }
+  const ok = await call(port, 'POST', { source_b64: b64, attest: true, engine: 'generic', fallback: false, timeout_s: 30 });
+  const last = JSON.parse(ok.body.trim().split('\n').pop());
+  assert.equal(last.kind, 'trace');
+  assert.equal(last.engine.mode, 'trace');
 });

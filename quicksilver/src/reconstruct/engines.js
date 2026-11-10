@@ -61,8 +61,9 @@ export function plan(input, requested = 'auto', allowFallback = true) {
   const candidates = input.candidates || [];
   if (requested && requested !== 'auto') {
     if (!ENGINES[requested]) throw new Error(`unknown engine ${requested}`);
+    if (requested === 'generic') return [{ engine: 'generic', mode: 'trace', why: 'chosen by you: a behaviour trace of one run' }];
     const steps = [{ engine: requested, mode: 'lift', why: 'chosen by you' }];
-    if (requested !== 'generic') steps.push({ engine: requested, mode: 'trace', why: 'same engine, behaviour trace only' });
+    steps.push({ engine: requested, mode: 'trace', why: 'same engine, behaviour trace only' });
     return steps;
   }
   const steps = [];

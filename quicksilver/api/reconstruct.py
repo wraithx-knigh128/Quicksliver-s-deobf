@@ -33,6 +33,7 @@ import os
 import select
 import socket
 import sys
+import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -44,6 +45,8 @@ import service  # noqa: E402
 
 _hits: dict[str, list[float]] = {}
 _active = {"n": 0}
+_check_cache: dict = {}
+_lock = threading.Lock()          # the handler runs in one thread per request: the busy check and the increment must be one step
 MAX_BODY = int(service.MAX_INPUT_BYTES * 2.8) + 200_000      # base64 of source + base64 of original + JSON
 
 
@@ -70,6 +73,7 @@ def _limited(client: str) -> bool:
 class handler(BaseHTTPRequestHandler):          # noqa: N801 - the name the Vercel Python runtime looks for
     protocol_version = "HTTP/1.0"                # the body ends when the connection closes, so streaming needs no chunk framing
     server_version = "QuickSilver"
+    timeout = int(os.environ.get("QS_RECONSTRUCT_READ_TIMEOUT", 60))   # a client that declares a body and never sends it must not hold a thread forever
 
     def log_message(self, *a):                   # no request lines in the function logs (they could carry client addresses)
         pass
@@ -108,6 +112,13 @@ class handler(BaseHTTPRequestHandler):          # noqa: N801 - the name the Verc
             return
         if "check=1" not in (self.path or ""):
             return self._error(405, "method", "POST a reconstruction request, or GET ?check=1.")
+        # the check runs the engine on a bundled fixture: unauthenticated callers must not be able to run it in a loop, so it is rate limited like a request and its
+        # answer is kept for a few minutes (per instance)
+        if _limited(_client(self.headers, self.client_address)):
+            return self._error(429, "rate_limited", "Too many requests from this client; try again in a minute.", {"Retry-After": "30"})
+        cached = _check_cache.get("v")
+        if cached and time.time() - cached["at"] < int(os.environ.get("QS_CHECK_CACHE_SECONDS", 300)):
+            return self._send_json(200, {**cached["body"], "cached": True, "ageSeconds": round(time.time() - cached["at"])})
         caps = service.capabilities()
         fixture = ENGINE / "fixtures" / "001_vm_like_dispatch-ib1.lua"
         selftest = {"ran": False}
@@ -119,7 +130,9 @@ class handler(BaseHTTPRequestHandler):          # noqa: N801 - the name the Verc
                         "kind": r.get("kind"), "seconds": round(time.time() - t, 1), "engine": (r.get("engine") or {}).get("used"),
                         "attempts": (r.get("engine") or {}).get("attempts"), "diagnostics": [d["code"] for d in r.get("diagnostics", [])],
                         "log": (r.get("log") or [])[-25:]}       # the engine's own progress lines for a bundled fixture: no user input in them
-        self._send_json(200, {"ok": True, "capabilities": caps, "selfTest": selftest, "mode": os.environ.get("QS_RECONSTRUCT_MODE", "open")})
+        body = {"ok": True, "capabilities": caps, "selfTest": selftest, "mode": os.environ.get("QS_RECONSTRUCT_MODE", "open")}
+        _check_cache["v"] = {"at": time.time(), "body": body}
+        self._send_json(200, {**body, "cached": False})
 
     # ---- POST: a reconstruction
     def do_POST(self):  # noqa: N802
@@ -147,14 +160,16 @@ class handler(BaseHTTPRequestHandler):          # noqa: N801 - the name the Verc
         if len(source) > service.MAX_INPUT_BYTES or (original is not None and len(original) > service.MAX_INPUT_BYTES):
             return self._error(413, "too_large", "Inputs may be at most %d bytes." % service.MAX_INPUT_BYTES)
         engine = body.get("engine") or "auto"
-        if engine != "auto" and engine not in service.ENGINES:
+        if not isinstance(engine, str) or (engine != "auto" and engine not in service.ENGINES):
             return self._error(400, "bad_engine", "Unknown engine. Known: auto, %s." % ", ".join(service.ENGINES))
         try:
             timeout_s = int(body.get("timeout_s") or service.DEFAULT_TIMEOUT_S)
         except (TypeError, ValueError):
             timeout_s = service.DEFAULT_TIMEOUT_S
-        if _active["n"] >= int(os.environ.get("QS_RECONSTRUCT_CONCURRENCY", 2)):
-            return self._error(503, "busy", "The service is busy; try again shortly.", {"Retry-After": "15"})
+        with _lock:
+            if _active["n"] >= int(os.environ.get("QS_RECONSTRUCT_CONCURRENCY", 2)):
+                return self._error(503, "busy", "The service is busy; try again shortly.", {"Retry-After": "15"})
+            _active["n"] += 1
 
         self.send_response(200)
         self.send_header("Content-Type", "application/x-ndjson; charset=utf-8")
@@ -179,11 +194,11 @@ class handler(BaseHTTPRequestHandler):          # noqa: N801 - the name the Verc
                 return False
             return False
 
-        _active["n"] += 1
         try:
             result = service.reconstruct(source, engine, timeout_s, original, bool(body.get("fallback", True)), emit, client_gone)
         finally:
-            _active["n"] -= 1
+            with _lock:
+                _active["n"] -= 1
         result["t"] = "result"
         emit(result)
 
