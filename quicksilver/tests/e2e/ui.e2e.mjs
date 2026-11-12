@@ -520,6 +520,63 @@ test('the Obfuscators tab shows Hercules per revision and the layered chains wit
   await ctx.close();
 });
 
+// The workflow the user follows, across the formats of Phase VIII: upload a script, let the page name it, recover it, read the result and its limits.
+const WORKFLOW = [
+  { name: 'Hercules virtual machine (committed fixture)', file: path.join(corpus, 'obfuscated/hercules/s03_encoded_strings__mod-virtual_machine.lua'),
+    bar: [/Hercules/, /Confidence \d+% \((high|medium)\)/], out: [/Hello, QuickSilver!/, /for index, item in ipairs/], notOut: [/BcToState|WrapState/] },
+  { name: 'Hercules heavy preset (committed fixture): without the sandbox the strings stay encoded, and the page says so', file: path.join(corpus, 'obfuscated/hercules/s07_roblox_style__heavy.lua'),
+    bar: [/Hercules/, /Confidence \d+% \((low|minimal|medium)\)/], out: [/Sandboxed evaluation is off|sandboxed evaluation is not enabled/], notOut: [/Tamper Detected/] },
+  { name: 'Hercules 1.5 coin-flip guard', file: path.join(corpus, 'obfuscated/hercules-1.5/s04_control_flow__mod-control_flow.lua'),
+    bar: [/Hercules/], out: [/collatz/], notOut: [/math\.random\(0, 1\)/, /local executed/] },
+  { name: 'a packer over Hercules: the page says it did not read the computed text, and what to do', file: path.join(corpus, 'obfuscated/mixed/s03_encoded_strings__hercules-light+base64.lua'),
+    bar: [/Confidence \d+% \((low|minimal)\)/], out: [/loader whose text is computed/] },
+  { name: 'MoonVeil 2.1.0 (local sample, not stored)', file: path.join(root, 'local/moonveil/v2.1.0_sample6.lua'), optional: true,
+    bar: [/MoonVeil 2\.1\.0/, /Confidence \d+% \((medium|low|minimal)\)/], out: [/table of lifted functions|MoonVeil/], notBar: [/\(high\)/] },
+  { name: 'SnowVeil v1 (local sample, not stored)', file: path.join(root, 'local/snowveil/sample2.lua'), optional: true,
+    bar: [/SnowVeil 1/, /Still protected by a virtual machine/], out: [/not recovered|still present/] },
+  { name: 'RBXLuaObfuscator (local fixture, not stored)', file: path.join(corpus, 'obfuscated-local/rbxlua/s03_encoded_strings__default.lua'), optional: true,
+    bar: [/RBXLuaObfuscator/], out: [/Hello, QuickSilver!/], notOut: [/TK_AND/] },
+];
+for (const w of WORKFLOW) {
+  test(`workflow: ${w.name}`, { skip: !fs.existsSync(w.file) ? 'sample not present on this machine' : skip }, async () => {
+    const { page, ctx, problems } = await newPage();
+    await loadFile(page, w.file);
+    await page.click('#act-recover'); await idle(page);
+    const bar = await page.textContent('#resultbar');
+    const out = await page.textContent('#out-body');
+    for (const re of w.bar || []) assert.match(bar, re, `result bar: ${bar.replace(/\s+/g, ' ').slice(0, 200)}`);
+    for (const re of w.notBar || []) assert.doesNotMatch(bar, re);
+    for (const re of w.out || []) assert.match(out, re, `output: ${out.slice(0, 300)}`);
+    for (const re of w.notOut || []) assert.doesNotMatch(out, re);
+    assert.match(await page.textContent('#view-work'), /Recovered/);
+    assert.deepEqual(problems, []);
+    await ctx.close();
+  });
+}
+
+for (const w of [
+  { name: 'a packed script', file: 'obfuscated/mixed/s03_encoded_strings__hercules-light+base64.lua', before: /loader whose text is computed/, out: /Hello, QuickSilver!/, notOut: /loader whose text is computed/ },
+  { name: 'Hercules heavy preset', file: 'obfuscated/hercules/s07_roblox_style__heavy.lua', before: /Sandboxed evaluation is off|sandboxed evaluation is not enabled/, out: /GetService\("Players"\)/, notOut: /Tamper Detected/ },
+]) {
+  test(`workflow: ${w.name} is read after the user allows the sandbox, and the result becomes the program`, { skip }, async () => {
+    const { page, ctx } = await newPage();
+    await loadFile(page, path.join(corpus, w.file));
+    await page.click('#act-recover'); await idle(page);
+    assert.match(await page.textContent('#out-body'), w.before);
+    await page.click('#resultbar button:has-text("Recover with sandbox")');
+    await page.waitForSelector('.modal');
+    await page.click('.modal button:has-text("Allow")');
+    await idle(page);
+    await page.waitForFunction(() => /sandbox: on/.test(document.querySelector('#st-sandbox').textContent));
+    // the recovery runs again with the sandbox on: wait for the result that replaces the one without it
+    await page.waitForFunction((t) => document.querySelector('#act-cancel').hidden && !new RegExp(t).test(document.querySelector('#out-body').textContent), w.before.source, { timeout: 90_000 });
+    const out = await page.textContent('#out-body');
+    assert.match(out, w.out);
+    assert.doesNotMatch(out, w.notOut);
+    await ctx.close();
+  });
+}
+
 test('the Examples tab lists every bundled script and times a recovery on request', { skip }, async () => {
   const { page, ctx, problems } = await newPage();
   await page.click('#tab-examples');

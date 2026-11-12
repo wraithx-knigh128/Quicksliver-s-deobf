@@ -735,7 +735,9 @@ async function runRecover({ quiet = false } = {}) {
         S.advice = a.advice; S.observed = a.observed;
         // only the plan's technique switches are taken from it; the person's own settings (formatting, rename mode, limits) stay
         const planned = planOptions(a.advice.applied, options);
-        options = { ...options, adaptive: planned.adaptive, nexus: planned.nexus, sandbox: { ...options.sandbox, enabled: planned.sandbox.enabled && allowSandbox && settings.sandbox } };
+        // the sandbox is the person's decision: a plan can add it where it helps, but never takes away what was allowed (a Hercules script whose strings
+        // are encoded by a decoder the plan did not know about stayed encoded after the person had clicked Allow)
+        options = { ...options, adaptive: planned.adaptive, nexus: planned.nexus, sandbox: { ...options.sandbox, enabled: options.sandbox.enabled || (planned.sandbox.enabled && allowSandbox && settings.sandbox) } };
       }
     }
   }

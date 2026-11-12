@@ -39,6 +39,8 @@ export const NEXUS_DEFAULTS = Object.freeze({
   recover: {},          // options handed to recover()
 });
 
+/** Passes whose output is a program read out of data the script carries. */
+const REBUILDS = new Set(['ironbrew2', 'hercules.vm', 'moonveil.vm', 'moonveil.constants', 'charlist', 'layers', 'prometheus.vmify', 'evaluate']);
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 const WIDTH = 108;
 const wrap = (text, first, rest) => {
@@ -263,7 +265,10 @@ export function nexusRecover(source, userOptions = {}) {
     } catch { /* the validation above already says so */ }
 
     const extra = newGlobals(source, code);
-    if (extra && extra.length) ledger.inconsistent('output.new-globals', `The result uses global names the input did not: ${extra.join(', ')}.`, extra);
+    // a program read out of data the script carries (a VM's bytecode, a packed text, a decompiled chunk) uses the globals that data names: they are not in the input's code
+    const rebuiltFromData = [...mergedSteps.values()].some((st) => st.status === 'applied' && REBUILDS.has(st.id));
+    if (extra && extra.length && rebuiltFromData) ledger.verified('output.new-globals-from-data', `The program was read out of data the script carries, so the global names it uses (${extra.join(', ')}) come from that data, not from the input's code.`, 'a rebuild pass applied');
+    else if (extra && extra.length) ledger.inconsistent('output.new-globals', `The result uses global names the input did not: ${extra.join(', ')}.`, extra);
     else if (extra) ledger.verified('output.no-new-globals', 'The result reads and writes no global name that the input did not.', 'free names of both programs compared');
 
     // names: a rule reached them, so they stay "inferred", whatever the evidence
