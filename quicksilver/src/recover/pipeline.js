@@ -22,7 +22,11 @@ import { booleanResults, orientComparisons, shortCircuits, tableConstructors, me
 import { removeAntiTamper, undoProxifyLocals } from './prometheus.js';
 import { propagateStable } from '../passes/stable.js';
 import { buildReport, annotate, stripReport } from './annotate.js';
-import { removeHerculesAntiTamper } from './hercules.js';
+import { removeHerculesAntiTamper, removeHerculesAntiTamperFunction, restoreMethodSelf } from './hercules.js';
+import { uninlinePass } from '../passes/uninline.js';
+import { splitWebs } from '../passes/webs.js';
+import { analyze as analyzeScopes } from '../core/scope.js';
+import { readHerculesVm, findVmCall, replaceVmCall, HerculesVmError } from './hercules-vm.js';
 import { removeColisseumGuard } from './colisseum.js';
 import { decodePageStrings } from './simple_html.js';
 import { unflattenMoonVeil } from './moonveil-cff.js';
@@ -133,6 +137,28 @@ function rebuildIronBrew(ast) {
   return { changed: r.stats.instructions, ...r.stats };
 }
 
+/**
+ * Hercules' virtual-machine module: the program is Lua 5.1 bytecode in a text the script carries. It is decoded, decompiled and put where the
+ * interpreter was started; the interpreter's own declarations are dropped. Nothing is executed.
+ */
+function rebuildHerculesVm(ast) {
+  const call = findVmCall(ast);
+  if (!call) return { changed: 0 };
+  let r;
+  try { r = readHerculesVm(ast); } catch (e) {
+    if (e instanceof HerculesVmError) return { skipped: `the interpreter call was found, but its data is not in the layout this reader knows: ${e.message}` };
+    throw e;
+  }
+  const out = decompile({ version: 0x51, main: r.main });
+  if (out.failures.length) throw new Error(`the decompiler could not structure ${out.failures.length} function(s): ${out.failures[0]}`);
+  const removed = call.run ? replaceVmCall(ast, call.run, out.ast.body, call.holder) : -1;
+  if (removed < 0) return { skipped: 'the interpreter call is part of a larger expression; the program was read but not put in its place' };
+  const detail = { changed: r.stats.instructions, ...r.stats, interpreterStatementsRemoved: removed };
+  // the tool wrote no bytes for a nil constant; where more than one slot could have been the nil one the choice is a ranking, and is said to be
+  if ((r.stats.nilReadings || []).some((n) => n > 1)) detail.inferred = `a nil constant the tool left out of its data was put back in ${r.stats.nilReadings.filter((n) => n > 1).length} function(s) by choosing the likeliest of ${Math.max(...r.stats.nilReadings)} possible slots`;
+  return detail;
+}
+
 /** Parse, or return a structured error. */
 export function tryParse(source) {
   try {
@@ -183,7 +209,19 @@ export function recover(source, userOptions = {}) {
     total += run.step('unwrap', 'Unwrap outer wrapper function', (a) => unwrapWrapper(a), { quiet: true });
     total += run.step('prometheus.antitamper', 'Remove Prometheus anti-tamper block', (a) => removeAntiTamper(a), { quiet: true });
     total += run.step('hercules.antitamper', 'Remove Hercules anti-tamper block', (a) => removeHerculesAntiTamper(a), { quiet: true });
+    if (decompiled) total += run.step('hercules.antitamper.compiled', 'Remove the Hercules anti-tamper check that was compiled with the script', (a) => removeHerculesAntiTamperFunction(a), { quiet: true });
     total += run.step('colisseum.guard', 'Remove the Colisseum tamper guard', (a) => removeColisseumGuard(a), { quiet: true });
+    if (detection.families.some((f) => f.id === 'hercules' && f.confidence >= 0.5)) {
+      total += run.step('hercules.self', 'Read the renamed `self` of methods as `self` again', (a) => restoreMethodSelf(a, analyzeScopes(a)), { quiet: true });
+    }
+    // stripped bytecode keeps unrelated values in one register; each value gets its own variable before anything looks for constants
+    if (decompiled) total += run.step('webs', 'Give values that shared a register their own variables', (a) => splitWebs(a), { quiet: true });
+    // closures pasted at every call site are one function each again; the string decoders among them then have calls the evaluator can see
+    total += run.step('uninline', 'Give inlined function bodies back their own functions', (a) => uninlinePass(a, { single: detection.families.some((f) => f.id === 'hercules' && f.confidence >= 0.5) }), { quiet: true });
+    {
+      const n = run.step('hercules.vm', 'Rebuild the program from the Hercules VM data', rebuildHerculesVm, { quiet: true });
+      if (n) { total += n; unusedAtStart = new WeakSet(); decompiled = true; }
+    }
     if (maybeVmify) {
       // a rebuilt program has no author-written dead code to preserve; Strong applies the pass twice, so this runs each round
       const n = run.step('prometheus.vmify', 'Rebuild the functions Vmify flattened into a dispatcher', (a) => rebuildVmify(a, run), { quiet: true });

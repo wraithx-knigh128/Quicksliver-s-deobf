@@ -111,6 +111,8 @@ export function tableConstructors(chunk) {
         const seen = new Set(fields.filter((f) => f.kind === 'named').map((f) => f.key));
         let j = i + 1;
         let positional = fields.filter((f) => f.kind === 'item').length;
+        const seenKeys = new Set(fields.filter((f) => f.kind === 'keyed' && (f.key.type === 'Number' || f.key.type === 'String')).map((f) => `${f.key.type}:${f.key.value}`));
+        for (const k of seen) seenKeys.add(`String:${k}`);
         for (; j < stmts.length; j++) {
           const a = stmts[j];
           if (a.type !== 'Assign' || a.targets.length !== 1 || a.values.length !== 1 || a.comments?.length) break;
@@ -118,7 +120,7 @@ export function tableConstructors(chunk) {
           if (t.type !== 'Index' || t.obj.type !== 'Name' || t.obj.name !== name) break;
           if (mentions(a.values[0], name) || (captured && !isInert(a.values[0]))) break;
           if (t.key.type === 'String' && isIdentifier(t.key.value)) {
-            if (seen.has(t.key.value)) break;
+            if (seen.has(t.key.value) || seenKeys.has(`String:${t.key.value}`)) break;
             seen.add(t.key.value);
             fields.push({ kind: 'named', key: t.key.value, value: a.values[0] });
           } else if (t.key.type === 'Number' && Number.isInteger(t.key.value) && t.key.value === positional + 1
@@ -127,6 +129,13 @@ export function tableConstructors(chunk) {
             // `t[1] = a; t[2] = b` is `{ a, b }`; a call is left out because as the last item it would spread its results
             positional++;
             fields.push({ kind: 'item', value: a.values[0] });
+          } else if ((t.key.type === 'Number' || t.key.type === 'String') && isInert(a.values[0])) {
+            // `t[124] = "|"; t[32] = " "`: constant keys in any order are `{ [124] = "|", [32] = " " }` (a later store to the same key
+            // would have to win, so a repeated key ends the run)
+            const id = `${t.key.type}:${t.key.value}`;
+            if (seenKeys.has(id) || (t.key.type === 'Number' && Number.isInteger(t.key.value) && t.key.value >= 1 && t.key.value <= positional)) break;
+            seenKeys.add(id);
+            fields.push({ kind: 'keyed', key: t.key, value: a.values[0] });
           } else break;
         }
         if (j === i + 1) { out.push(s); continue; }

@@ -50,7 +50,7 @@ export function assessConfidence(before, output, ctx) {
   }
   // A VM the input showed and no pass rebuilt. Clean-up can rewrite the signature away (an inlined alias is gone) while the program is still
   // inside the VM, so the verdict cannot depend on the signature surviving.
-  const REBUILT_BY = { ironbrew2: ['ironbrew2'], hercules: ['layers'], moonveil: ['moonveil.vm'] };
+  const REBUILT_BY = { ironbrew2: ['ironbrew2'], hercules: ['layers', 'hercules.vm'], moonveil: ['moonveil.vm'] };
   for (const f of before.families) {
     const hard = f.confidence >= 0.5 && f.evidence.find((e) => e.unrecoverable);
     if (!hard) continue;
@@ -67,6 +67,7 @@ export function assessConfidence(before, output, ctx) {
   }
   if ((after.metrics.mangledRatio || 0) > 0.6 && (before.metrics.mangledRatio || 0) > 0.6) note(-0.08, 'Most identifiers are still machine generated (renaming is off or found no better names).');
 
+  for (const s of steps) if (s.status === 'applied' && s.detail && s.detail.inferred) note(-0.15, `Inferred, not read: ${s.detail.inferred}.`);
   for (const s of steps.filter((x) => x.status === 'failed')) note(-0.1, `Pass "${s.label}" failed and was skipped: ${s.error}`);
   const evalStep = steps.find((s) => s.id === 'evaluate');
   if (evalStep && evalStep.detail && evalStep.detail.rejected > 0) note(-Math.min(0.2, 0.04 * evalStep.detail.rejected), `${evalStep.detail.rejected} decoder call(s) could not be evaluated safely and were left as they are.`);
