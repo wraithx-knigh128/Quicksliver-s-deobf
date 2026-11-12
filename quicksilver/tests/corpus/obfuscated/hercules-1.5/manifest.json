@@ -1,0 +1,1263 @@
+{
+  "tool": "Hercules",
+  "version": "1.5",
+  "source": "https://github.com/zeusssz/hercules-obfuscator",
+  "sourceRevision": "1723b42795556d14c33bb7624e7aadade8d08d0d",
+  "revisionDate": "2024-11-03",
+  "note": "last commit whose watermark says v1.5 (2024-11-03): first virtual machine (Compiler/c.lua), StringToExpressions, WrapInFunction, compressor",
+  "runtime": "PUC Lua 5.4 via lupa",
+  "seed": 1337,
+  "modules": [
+    "StringToExpressions",
+    "VirtualMachine",
+    "WrapInFunction",
+    "bytecode_encoding",
+    "compressor",
+    "control_flow",
+    "dynamic_code",
+    "function_inlining",
+    "garbage_code",
+    "opaque_predicates",
+    "string_encoding",
+    "variable_renaming"
+  ],
+  "entries": [
+    {
+      "file": "s01_minify_basic__default.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "default",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 12422,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__all.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "all",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "tool-error",
+      "error": "/tmp/tmp6v_k_jxt/src/modules/dynamic_code_generator.lua:21: Error generating dynamic code: /tmp/tmp6v_k_jxt/src/modules/dynamic_code_generator.lua:5: attempt to call a nil value\nstack traceback:\n\t[C]: in function 'error'\n\t/tmp/tmp6v_k_jxt/src/modules/dynamic_code_generator.lua:21: in function 'modul",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s01_minify_basic__mod-StringToExpressions.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "mod-StringToExpressions",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 2192,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__mod-VirtualMachine.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "mod-VirtualMachine",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 6445,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__mod-WrapInFunction.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "mod-WrapInFunction",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 1106,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__mod-bytecode_encoding.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "mod-bytecode_encoding",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 8413,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__mod-compressor.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "mod-compressor",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 845,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__mod-control_flow.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "mod-control_flow",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 1193,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__mod-dynamic_code.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "mod-dynamic_code",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "tool-error",
+      "error": "/tmp/tmp6v_k_jxt/src/modules/dynamic_code_generator.lua:21: Error generating dynamic code: /tmp/tmp6v_k_jxt/src/modules/dynamic_code_generator.lua:5: attempt to call a nil value\nstack traceback:\n\t[C]: in function 'error'\n\t/tmp/tmp6v_k_jxt/src/modules/dynamic_code_generator.lua:21: in function 'modul",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s01_minify_basic__mod-function_inlining.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "mod-function_inlining",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 852,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:4: '<name>' expected near 'return'"
+    },
+    {
+      "file": "s01_minify_basic__mod-garbage_code.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "mod-garbage_code",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 1231,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__mod-opaque_predicates.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "mod-opaque_predicates",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 1074,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__mod-string_encoding.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "mod-string_encoding",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 2389,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__mod-variable_renaming.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "mod-variable_renaming",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 1599,
+      "behaviors": {
+        "lua51": "diverged",
+        "lua54": "diverged"
+      },
+      "behavior": "diverged"
+    },
+    {
+      "file": "s02_renamed_vars__default.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "default",
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 18718,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:2: attempt to call field '?' (a nil value)"
+    },
+    {
+      "file": "s02_renamed_vars__all.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "all",
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "tool-error",
+      "error": "/tmp/tmp6v_k_jxt/src/modules/dynamic_code_generator.lua:21: Error generating dynamic code: /tmp/tmp6v_k_jxt/src/modules/dynamic_code_generator.lua:5: attempt to call a nil value\nstack traceback:\n\t[C]: in function 'error'\n\t/tmp/tmp6v_k_jxt/src/modules/dynamic_code_generator.lua:21: in function 'modul",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s02_renamed_vars__mod-StringToExpressions.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "mod-StringToExpressions",
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 3051,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__mod-VirtualMachine.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "mod-VirtualMachine",
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 11561,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "instruction budget exceeded"
+    },
+    {
+      "file": "s02_renamed_vars__mod-WrapInFunction.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "mod-WrapInFunction",
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 1533,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__mod-bytecode_encoding.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "mod-bytecode_encoding",
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 11063,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__mod-compressor.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "mod-compressor",
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 1226,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__mod-control_flow.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "mod-control_flow",
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 1620,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__mod-dynamic_code.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "mod-dynamic_code",
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "tool-error",
+      "error": "/tmp/tmp6v_k_jxt/src/modules/dynamic_code_generator.lua:21: Error generating dynamic code: /tmp/tmp6v_k_jxt/src/modules/dynamic_code_generator.lua:5: attempt to call a nil value\nstack traceback:\n\t[C]: in function 'error'\n\t/tmp/tmp6v_k_jxt/src/modules/dynamic_code_generator.lua:21: in function 'modul",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s02_renamed_vars__mod-function_inlining.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "mod-function_inlining",
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 1103,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:8: '<name>' expected near 'if'"
+    },
+    {
+      "file": "s02_renamed_vars__mod-garbage_code.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "mod-garbage_code",
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 1732,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__mod-opaque_predicates.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "mod-opaque_predicates",
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 1501,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__mod-string_encoding.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "mod-string_encoding",
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 2895,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__mod-variable_renaming.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "mod-variable_renaming",
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 1925,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:42: attempt to call field 'PszEfWZNq' (a nil value)"
+    },
+    {
+      "file": "s03_encoded_strings__default.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "default",
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 17031,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:2: attempt to call global 'iONuIQpDwnHHl' (a nil value)"
+    },
+    {
+      "file": "s03_encoded_strings__all.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "all",
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "tool-error",
+      "error": "/tmp/tmp6v_k_jxt/src/modules/dynamic_code_generator.lua:21: Error generating dynamic code: /tmp/tmp6v_k_jxt/src/modules/dynamic_code_generator.lua:5: attempt to call a nil value\nstack traceback:\n\t[C]: in function 'error'\n\t/tmp/tmp6v_k_jxt/src/modules/dynamic_code_generator.lua:21: in function 'modul",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s03_encoded_strings__mod-StringToExpressions.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "mod-StringToExpressions",
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 4436,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__mod-VirtualMachine.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "mod-VirtualMachine",
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 9115,
+      "behaviors": {
+        "lua51": "diverged",
+        "lua54": "diverged"
+      },
+      "behavior": "diverged"
+    },
+    {
+      "file": "s03_encoded_strings__mod-WrapInFunction.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "mod-WrapInFunction",
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 1093,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__mod-bytecode_encoding.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "mod-bytecode_encoding",
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 8916,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__mod-compressor.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "mod-compressor",
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 900,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__mod-control_flow.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "mod-control_flow",
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 1180,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__mod-dynamic_code.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "mod-dynamic_code",
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "tool-error",
+      "error": "/tmp/tmp6v_k_jxt/src/modules/dynamic_code_generator.lua:21: Error generating dynamic code: /tmp/tmp6v_k_jxt/src/modules/dynamic_code_generator.lua:5: attempt to call a nil value\nstack traceback:\n\t[C]: in function 'error'\n\t/tmp/tmp6v_k_jxt/src/modules/dynamic_code_generator.lua:21: in function 'modul",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s03_encoded_strings__mod-function_inlining.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "mod-function_inlining",
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 1061,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__mod-garbage_code.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "mod-garbage_code",
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 1218,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__mod-opaque_predicates.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "mod-opaque_predicates",
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 1061,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__mod-string_encoding.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "mod-string_encoding",
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 2635,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__mod-variable_renaming.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "mod-variable_renaming",
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 1437,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:13: attempt to call global 'ixHvKEpMRBuM' (a nil value)"
+    },
+    {
+      "file": "s04_control_flow__default.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "default",
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 5198,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:2: attempt to get length of global 'MpscWbjICo' (a nil value)"
+    },
+    {
+      "file": "s04_control_flow__all.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "all",
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "tool-error",
+      "error": "/tmp/tmp6v_k_jxt/src/modules/dynamic_code_generator.lua:21: Error generating dynamic code: /tmp/tmp6v_k_jxt/src/modules/dynamic_code_generator.lua:5: attempt to call a nil value\nstack traceback:\n\t[C]: in function 'error'\n\t/tmp/tmp6v_k_jxt/src/modules/dynamic_code_generator.lua:21: in function 'modul",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s04_control_flow__mod-StringToExpressions.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "mod-StringToExpressions",
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 4084,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__mod-VirtualMachine.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "mod-VirtualMachine",
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 11921,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:2: 'end' expected near 'break'"
+    },
+    {
+      "file": "s04_control_flow__mod-WrapInFunction.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "mod-WrapInFunction",
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 1681,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__mod-bytecode_encoding.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "mod-bytecode_encoding",
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 12084,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__mod-compressor.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "mod-compressor",
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 1265,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__mod-control_flow.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "mod-control_flow",
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 1768,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__mod-dynamic_code.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "mod-dynamic_code",
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "tool-error",
+      "error": "/tmp/tmp6v_k_jxt/src/modules/dynamic_code_generator.lua:21: Error generating dynamic code: /tmp/tmp6v_k_jxt/src/modules/dynamic_code_generator.lua:5: attempt to call a nil value\nstack traceback:\n\t[C]: in function 'error'\n\t/tmp/tmp6v_k_jxt/src/modules/dynamic_code_generator.lua:21: in function 'modul",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s04_control_flow__mod-function_inlining.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "mod-function_inlining",
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 1115,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:5: '<eof>' expected near 'end'"
+    },
+    {
+      "file": "s04_control_flow__mod-garbage_code.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "mod-garbage_code",
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 1720,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__mod-opaque_predicates.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "mod-opaque_predicates",
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 1649,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__mod-string_encoding.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "mod-string_encoding",
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 3382,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__mod-variable_renaming.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "mod-variable_renaming",
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 2304,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:34: '=' expected near 'JxEmbDXKy'"
+    },
+    {
+      "file": "s05_nested_functions__default.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "default",
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 10537,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:2: attempt to call global 'iBmtNFxGytsfz' (a nil value)"
+    },
+    {
+      "file": "s05_nested_functions__all.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "all",
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "tool-error",
+      "error": "/tmp/tmp6v_k_jxt/src/modules/dynamic_code_generator.lua:21: Error generating dynamic code: /tmp/tmp6v_k_jxt/src/modules/dynamic_code_generator.lua:5: attempt to call a nil value\nstack traceback:\n\t[C]: in function 'error'\n\t/tmp/tmp6v_k_jxt/src/modules/dynamic_code_generator.lua:21: in function 'modul",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s05_nested_functions__mod-StringToExpressions.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "mod-StringToExpressions",
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 1554,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__mod-VirtualMachine.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "mod-VirtualMachine",
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 5183,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__mod-WrapInFunction.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "mod-WrapInFunction",
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 1546,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__mod-bytecode_encoding.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "mod-bytecode_encoding",
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 12547,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__mod-compressor.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "mod-compressor",
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 1146,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__mod-control_flow.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "mod-control_flow",
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 1633,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__mod-dynamic_code.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "mod-dynamic_code",
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "tool-error",
+      "error": "/tmp/tmp6v_k_jxt/src/modules/dynamic_code_generator.lua:21: Error generating dynamic code: /tmp/tmp6v_k_jxt/src/modules/dynamic_code_generator.lua:5: attempt to call a nil value\nstack traceback:\n\t[C]: in function 'error'\n\t/tmp/tmp6v_k_jxt/src/modules/dynamic_code_generator.lua:21: in function 'modul",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s05_nested_functions__mod-function_inlining.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "mod-function_inlining",
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 1120,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:4: '<name>' expected near 'end'"
+    },
+    {
+      "file": "s05_nested_functions__mod-garbage_code.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "mod-garbage_code",
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 1812,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__mod-opaque_predicates.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "mod-opaque_predicates",
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 1514,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__mod-string_encoding.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "mod-string_encoding",
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 2674,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__mod-variable_renaming.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "mod-variable_renaming",
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 2086,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:45: attempt to call global 'inGDKQPJZ' (a nil value)"
+    },
+    {
+      "file": "s06_combined__default.lua",
+      "sample": "s06_combined.lua",
+      "config": "default",
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 28032,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:2: attempt to index global 'Queue' (a nil value)"
+    },
+    {
+      "file": "s06_combined__all.lua",
+      "sample": "s06_combined.lua",
+      "config": "all",
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "tool-error",
+      "error": "/tmp/tmp6v_k_jxt/src/modules/dynamic_code_generator.lua:21: Error generating dynamic code: /tmp/tmp6v_k_jxt/src/modules/dynamic_code_generator.lua:5: attempt to call a nil value\nstack traceback:\n\t[C]: in function 'error'\n\t/tmp/tmp6v_k_jxt/src/modules/dynamic_code_generator.lua:21: in function 'modul",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s06_combined__mod-StringToExpressions.lua",
+      "sample": "s06_combined.lua",
+      "config": "mod-StringToExpressions",
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 4495,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__mod-VirtualMachine.lua",
+      "sample": "s06_combined.lua",
+      "config": "mod-VirtualMachine",
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 20144,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__mod-WrapInFunction.lua",
+      "sample": "s06_combined.lua",
+      "config": "mod-WrapInFunction",
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 2289,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__mod-bytecode_encoding.lua",
+      "sample": "s06_combined.lua",
+      "config": "mod-bytecode_encoding",
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 17736,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__mod-compressor.lua",
+      "sample": "s06_combined.lua",
+      "config": "mod-compressor",
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 1844,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__mod-control_flow.lua",
+      "sample": "s06_combined.lua",
+      "config": "mod-control_flow",
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 2376,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__mod-dynamic_code.lua",
+      "sample": "s06_combined.lua",
+      "config": "mod-dynamic_code",
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "tool-error",
+      "error": "/tmp/tmp6v_k_jxt/src/modules/dynamic_code_generator.lua:21: Error generating dynamic code: /tmp/tmp6v_k_jxt/src/modules/dynamic_code_generator.lua:5: attempt to call a nil value\nstack traceback:\n\t[C]: in function 'error'\n\t/tmp/tmp6v_k_jxt/src/modules/dynamic_code_generator.lua:21: in function 'modul",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s06_combined__mod-function_inlining.lua",
+      "sample": "s06_combined.lua",
+      "config": "mod-function_inlining",
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 2122,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:82: '<name>' expected near 'local'"
+    },
+    {
+      "file": "s06_combined__mod-garbage_code.lua",
+      "sample": "s06_combined.lua",
+      "config": "mod-garbage_code",
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 2310,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__mod-opaque_predicates.lua",
+      "sample": "s06_combined.lua",
+      "config": "mod-opaque_predicates",
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 2257,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__mod-string_encoding.lua",
+      "sample": "s06_combined.lua",
+      "config": "mod-string_encoding",
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 3598,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__mod-variable_renaming.lua",
+      "sample": "s06_combined.lua",
+      "config": "mod-variable_renaming",
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 3104,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:49: attempt to index global 'Queue' (a nil value)"
+    },
+    {
+      "file": "s07_roblox_style__default.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "default",
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 18510,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__all.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "all",
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "tool-error",
+      "error": "/tmp/tmp6v_k_jxt/src/modules/dynamic_code_generator.lua:21: Error generating dynamic code: /tmp/tmp6v_k_jxt/src/modules/dynamic_code_generator.lua:5: attempt to call a nil value\nstack traceback:\n\t[C]: in function 'error'\n\t/tmp/tmp6v_k_jxt/src/modules/dynamic_code_generator.lua:21: in function 'modul",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s07_roblox_style__mod-StringToExpressions.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "mod-StringToExpressions",
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 3478,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__mod-VirtualMachine.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "mod-VirtualMachine",
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 12201,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__mod-WrapInFunction.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "mod-WrapInFunction",
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 1258,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__mod-bytecode_encoding.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "mod-bytecode_encoding",
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 8472,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__mod-compressor.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "mod-compressor",
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 933,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__mod-control_flow.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "mod-control_flow",
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 1345,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__mod-dynamic_code.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "mod-dynamic_code",
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "tool-error",
+      "error": "/tmp/tmp6v_k_jxt/src/modules/dynamic_code_generator.lua:21: Error generating dynamic code: /tmp/tmp6v_k_jxt/src/modules/dynamic_code_generator.lua:5: attempt to call a nil value\nstack traceback:\n\t[C]: in function 'error'\n\t/tmp/tmp6v_k_jxt/src/modules/dynamic_code_generator.lua:21: in function 'modul",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s07_roblox_style__mod-function_inlining.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "mod-function_inlining",
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 1170,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:13: '<name>' expected near 'local'"
+    },
+    {
+      "file": "s07_roblox_style__mod-garbage_code.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "mod-garbage_code",
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 1279,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__mod-opaque_predicates.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "mod-opaque_predicates",
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 1226,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__mod-string_encoding.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "mod-string_encoding",
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 2620,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__mod-variable_renaming.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "mod-variable_renaming",
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 1365,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:25: attempt to index local 'JxEmbDXKy' (a function value)"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "note": "Scripts of closed obfuscators that were read for this project. None is stored in the repository (its authors did not license it, or it is a third party's output): they sit in quicksilver/local/ (git-ignored). tools/formats/measure.mjs re-measures every one that is present and checks its SHA-256; records for the others keep their last measured numbers and say so.",
+  "samples": [
+    { "id": "moonveil-1.4.5-raw3", "family": "moonveil", "version": "1.4.5", "path": "local/moonveil/v1.4.5_raw-3.lua", "source": "https://github.com/edwindev-spec/MoonVeil (samples/raw-3.txt), read as text" },
+    { "id": "moonveil-2.0.26-rideafish", "family": "moonveil", "version": "2.0.26", "path": "local/moonveil/v2.0.26_rideafish.lua", "reference": "local/moonveil/v2.0.26_rideafish.reference.lua", "source": "https://github.com/Nonition/MoonveilDeobfuscator (research/rideafish), the reference is that repository's hand-made reconstruction" },
+    { "id": "moonveil-2.1.0-sample6", "family": "moonveil", "version": "2.1.0", "path": "local/moonveil/v2.1.0_sample6.lua", "source": "https://github.com/Nonition/MoonveilDeobfuscator (moonveil-2.1.0/samples)" },
+    { "id": "moonveil-2.1.0-sample7", "family": "moonveil", "version": "2.1.0", "path": "local/moonveil/v2.1.0_sample7.lua", "source": "https://github.com/Nonition/MoonveilDeobfuscator (moonveil-2.1.0/samples)" },
+    { "id": "snowveil-1-sample2", "family": "snowveil", "version": "1", "path": "local/snowveil/sample2.lua", "source": "https://github.com/Mazsigiit/SnowLarpVeil-deobf (sample2.lua), read as text" }
+  ]
+}

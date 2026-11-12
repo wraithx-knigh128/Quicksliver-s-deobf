@@ -1,0 +1,1272 @@
+{
+  "tool": "Hercules",
+  "version": "1.6",
+  "source": "https://github.com/zeusssz/hercules-obfuscator",
+  "sourceRevision": "f8e5d3822120d81fe3a4a09758216714744c0c3d",
+  "revisionDate": "2025-01-25",
+  "note": "last commit whose watermark says v1.6 (2025-01-25): anti_tamper added",
+  "runtime": "PUC Lua 5.4 via lupa",
+  "seed": 1337,
+  "modules": [
+    "StringToExpressions",
+    "VirtualMachine",
+    "WrapInFunction",
+    "bytecode_encoding",
+    "compressor",
+    "control_flow",
+    "dynamic_code",
+    "function_inlining",
+    "garbage_code",
+    "opaque_predicates",
+    "string_encoding",
+    "variable_renaming"
+  ],
+  "entries": [
+    {
+      "file": "s01_minify_basic__default.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "default",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 37386,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:2: unexpected symbol near 'and'"
+    },
+    {
+      "file": "s01_minify_basic__all.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "all",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "tool-error",
+      "error": "/tmp/tmp644uk981/src/modules/dynamic_code_generator.lua:26: Error processing block 'while': /tmp/tmp644uk981/src/modules/dynamic_code_generator.lua:7: Failed to load block: [string \"return while\"]:1: unexpected symbol near 'while'\nstack traceback:\n\t[C]: in function 'error'\n\t/tmp/tmp644uk981/src/modu",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s01_minify_basic__mod-StringToExpressions.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "mod-StringToExpressions",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 2255,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__mod-VirtualMachine.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "mod-VirtualMachine",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 27273,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__mod-WrapInFunction.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "mod-WrapInFunction",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 1123,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__mod-bytecode_encoding.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "mod-bytecode_encoding",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 342,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:2: '=' expected near 'f'"
+    },
+    {
+      "file": "s01_minify_basic__mod-compressor.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "mod-compressor",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 855,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__mod-control_flow.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "mod-control_flow",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 1210,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__mod-dynamic_code.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "mod-dynamic_code",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "tool-error",
+      "error": "/tmp/tmp644uk981/src/modules/dynamic_code_generator.lua:26: Error processing block 'and': /tmp/tmp644uk981/src/modules/dynamic_code_generator.lua:7: Failed to load block: [string \"return and\"]:1: unexpected symbol near 'and'\nstack traceback:\n\t[C]: in function 'error'\n\t/tmp/tmp644uk981/src/modules/dy",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s01_minify_basic__mod-function_inlining.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "mod-function_inlining",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 869,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:4: '<name>' expected near 'return'"
+    },
+    {
+      "file": "s01_minify_basic__mod-garbage_code.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "mod-garbage_code",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 2064,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__mod-opaque_predicates.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "mod-opaque_predicates",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 1091,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__mod-string_encoding.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "mod-string_encoding",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 2434,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__mod-variable_renaming.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "mod-variable_renaming",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 1609,
+      "behaviors": {
+        "lua51": "diverged",
+        "lua54": "diverged"
+      },
+      "behavior": "diverged"
+    },
+    {
+      "file": "s02_renamed_vars__default.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "default",
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 39115,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:2: attempt to perform arithmetic on local 'bXzimrNo' (a nil value)"
+    },
+    {
+      "file": "s02_renamed_vars__all.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "all",
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "tool-error",
+      "error": "/tmp/tmp644uk981/src/modules/dynamic_code_generator.lua:26: Error processing block 'local': /tmp/tmp644uk981/src/modules/dynamic_code_generator.lua:7: Failed to load block: [string \"return local\"]:1: unexpected symbol near 'local'\nstack traceback:\n\t[C]: in function 'error'\n\t/tmp/tmp644uk981/src/modu",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s02_renamed_vars__mod-StringToExpressions.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "mod-StringToExpressions",
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 3132,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__mod-VirtualMachine.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "mod-VirtualMachine",
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 29283,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:95: attempt to perform arithmetic on local 'Val2' (a nil value)"
+    },
+    {
+      "file": "s02_renamed_vars__mod-WrapInFunction.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "mod-WrapInFunction",
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 1550,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__mod-bytecode_encoding.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "mod-bytecode_encoding",
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 342,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:2: '=' expected near 'f'"
+    },
+    {
+      "file": "s02_renamed_vars__mod-compressor.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "mod-compressor",
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 1239,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__mod-control_flow.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "mod-control_flow",
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 1637,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__mod-dynamic_code.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "mod-dynamic_code",
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "tool-error",
+      "error": "/tmp/tmp644uk981/src/modules/dynamic_code_generator.lua:26: Error processing block 'local': /tmp/tmp644uk981/src/modules/dynamic_code_generator.lua:7: Failed to load block: [string \"return local\"]:1: unexpected symbol near 'local'\nstack traceback:\n\t[C]: in function 'error'\n\t/tmp/tmp644uk981/src/modu",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s02_renamed_vars__mod-function_inlining.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "mod-function_inlining",
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 1120,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:8: '<name>' expected near 'if'"
+    },
+    {
+      "file": "s02_renamed_vars__mod-garbage_code.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "mod-garbage_code",
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 2686,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__mod-opaque_predicates.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "mod-opaque_predicates",
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 1518,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__mod-string_encoding.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "mod-string_encoding",
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 2909,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__mod-variable_renaming.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "mod-variable_renaming",
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 1933,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:42: attempt to call field 'NwgoUcmSm' (a nil value)"
+    },
+    {
+      "file": "s03_encoded_strings__default.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "default",
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 36872,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__all.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "all",
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "tool-error",
+      "error": "/tmp/tmp644uk981/src/modules/dynamic_code_generator.lua:26: Error processing block 'while': /tmp/tmp644uk981/src/modules/dynamic_code_generator.lua:7: Failed to load block: [string \"return while\"]:1: unexpected symbol near 'while'\nstack traceback:\n\t[C]: in function 'error'\n\t/tmp/tmp644uk981/src/modu",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s03_encoded_strings__mod-StringToExpressions.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "mod-StringToExpressions",
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 4583,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__mod-VirtualMachine.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "mod-VirtualMachine",
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 25461,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__mod-WrapInFunction.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "mod-WrapInFunction",
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 1110,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__mod-bytecode_encoding.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "mod-bytecode_encoding",
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 342,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:2: '=' expected near 'f'"
+    },
+    {
+      "file": "s03_encoded_strings__mod-compressor.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "mod-compressor",
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 909,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__mod-control_flow.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "mod-control_flow",
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 1197,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__mod-dynamic_code.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "mod-dynamic_code",
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "tool-error",
+      "error": "/tmp/tmp644uk981/src/modules/dynamic_code_generator.lua:26: Error processing block 'and': /tmp/tmp644uk981/src/modules/dynamic_code_generator.lua:7: Failed to load block: [string \"return and\"]:1: unexpected symbol near 'and'\nstack traceback:\n\t[C]: in function 'error'\n\t/tmp/tmp644uk981/src/modules/dy",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s03_encoded_strings__mod-function_inlining.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "mod-function_inlining",
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 1078,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__mod-garbage_code.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "mod-garbage_code",
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 1992,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__mod-opaque_predicates.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "mod-opaque_predicates",
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 1078,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__mod-string_encoding.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "mod-string_encoding",
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 2575,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__mod-variable_renaming.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "mod-variable_renaming",
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 1451,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:29: attempt to call field 'cDGcFkDJOk' (a nil value)"
+    },
+    {
+      "file": "s04_control_flow__default.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "default",
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 45489,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:2: unexpected symbol near 'and'"
+    },
+    {
+      "file": "s04_control_flow__all.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "all",
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "tool-error",
+      "error": "/tmp/tmp644uk981/src/modules/dynamic_code_generator.lua:26: Error processing block 'if': /tmp/tmp644uk981/src/modules/dynamic_code_generator.lua:7: Failed to load block: [string \"return if\"]:1: unexpected symbol near 'if'\nstack traceback:\n\t[C]: in function 'error'\n\t/tmp/tmp644uk981/src/modules/dynam",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s04_control_flow__mod-StringToExpressions.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "mod-StringToExpressions",
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 4201,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__mod-VirtualMachine.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "mod-VirtualMachine",
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 34719,
+      "behaviors": {
+        "lua51": "diverged",
+        "lua54": "errored"
+      },
+      "behavior": "diverged"
+    },
+    {
+      "file": "s04_control_flow__mod-WrapInFunction.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "mod-WrapInFunction",
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 1698,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__mod-bytecode_encoding.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "mod-bytecode_encoding",
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 342,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:2: '=' expected near 'f'"
+    },
+    {
+      "file": "s04_control_flow__mod-compressor.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "mod-compressor",
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 1253,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__mod-control_flow.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "mod-control_flow",
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 1785,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__mod-dynamic_code.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "mod-dynamic_code",
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "tool-error",
+      "error": "/tmp/tmp644uk981/src/modules/dynamic_code_generator.lua:26: Error processing block 'and': /tmp/tmp644uk981/src/modules/dynamic_code_generator.lua:7: Failed to load block: [string \"return and\"]:1: unexpected symbol near 'and'\nstack traceback:\n\t[C]: in function 'error'\n\t/tmp/tmp644uk981/src/modules/dy",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s04_control_flow__mod-function_inlining.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "mod-function_inlining",
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 1132,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:5: '<eof>' expected near 'end'"
+    },
+    {
+      "file": "s04_control_flow__mod-garbage_code.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "mod-garbage_code",
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 2645,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__mod-opaque_predicates.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "mod-opaque_predicates",
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 1666,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__mod-string_encoding.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "mod-string_encoding",
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 3262,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__mod-variable_renaming.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "mod-variable_renaming",
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 2322,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:34: '=' expected near 'd'"
+    },
+    {
+      "file": "s05_nested_functions__default.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "default",
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 47261,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:2: unexpected symbol near 'and'"
+    },
+    {
+      "file": "s05_nested_functions__all.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "all",
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "tool-error",
+      "error": "/tmp/tmp644uk981/src/modules/dynamic_code_generator.lua:26: Error processing block 'local': /tmp/tmp644uk981/src/modules/dynamic_code_generator.lua:7: Failed to load block: [string \"return local\"]:1: unexpected symbol near 'local'\nstack traceback:\n\t[C]: in function 'error'\n\t/tmp/tmp644uk981/src/modu",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s05_nested_functions__mod-StringToExpressions.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "mod-StringToExpressions",
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 1571,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__mod-VirtualMachine.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "mod-VirtualMachine",
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 36222,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__mod-WrapInFunction.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "mod-WrapInFunction",
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 1563,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__mod-bytecode_encoding.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "mod-bytecode_encoding",
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 342,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:2: '=' expected near 'f'"
+    },
+    {
+      "file": "s05_nested_functions__mod-compressor.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "mod-compressor",
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 1167,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__mod-control_flow.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "mod-control_flow",
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 1650,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__mod-dynamic_code.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "mod-dynamic_code",
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "tool-error",
+      "error": "/tmp/tmp644uk981/src/modules/dynamic_code_generator.lua:26: Error processing block 'function': /tmp/tmp644uk981/src/modules/dynamic_code_generator.lua:7: Failed to load block: [string \"return function\"]:1: '(' expected near <eof>\nstack traceback:\n\t[C]: in function 'error'\n\t/tmp/tmp644uk981/src/modul",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s05_nested_functions__mod-function_inlining.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "mod-function_inlining",
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 1137,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:4: '<name>' expected near 'end'"
+    },
+    {
+      "file": "s05_nested_functions__mod-garbage_code.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "mod-garbage_code",
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 2510,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__mod-opaque_predicates.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "mod-opaque_predicates",
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 1531,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__mod-string_encoding.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "mod-string_encoding",
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 2781,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__mod-variable_renaming.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "mod-variable_renaming",
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 2083,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:78: attempt to call a nil value"
+    },
+    {
+      "file": "s06_combined__default.lua",
+      "sample": "s06_combined.lua",
+      "config": "default",
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 57869,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:2: unexpected symbol near 'and'"
+    },
+    {
+      "file": "s06_combined__all.lua",
+      "sample": "s06_combined.lua",
+      "config": "all",
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "tool-error",
+      "error": "/tmp/tmp644uk981/src/modules/dynamic_code_generator.lua:26: Error processing block 'if': /tmp/tmp644uk981/src/modules/dynamic_code_generator.lua:7: Failed to load block: [string \"return if\"]:1: unexpected symbol near 'if'\nstack traceback:\n\t[C]: in function 'error'\n\t/tmp/tmp644uk981/src/modules/dynam",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s06_combined__mod-StringToExpressions.lua",
+      "sample": "s06_combined.lua",
+      "config": "mod-StringToExpressions",
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 4598,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__mod-VirtualMachine.lua",
+      "sample": "s06_combined.lua",
+      "config": "mod-VirtualMachine",
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 46895,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:100: attempt to perform arithmetic on local 'Val4' (a nil value)"
+    },
+    {
+      "file": "s06_combined__mod-WrapInFunction.lua",
+      "sample": "s06_combined.lua",
+      "config": "mod-WrapInFunction",
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 2306,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__mod-bytecode_encoding.lua",
+      "sample": "s06_combined.lua",
+      "config": "mod-bytecode_encoding",
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 342,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:2: '=' expected near 'f'"
+    },
+    {
+      "file": "s06_combined__mod-compressor.lua",
+      "sample": "s06_combined.lua",
+      "config": "mod-compressor",
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 1859,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__mod-control_flow.lua",
+      "sample": "s06_combined.lua",
+      "config": "mod-control_flow",
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 2393,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__mod-dynamic_code.lua",
+      "sample": "s06_combined.lua",
+      "config": "mod-dynamic_code",
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "tool-error",
+      "error": "/tmp/tmp644uk981/src/modules/dynamic_code_generator.lua:26: Error processing block 'and': /tmp/tmp644uk981/src/modules/dynamic_code_generator.lua:7: Failed to load block: [string \"return and\"]:1: unexpected symbol near 'and'\nstack traceback:\n\t[C]: in function 'error'\n\t/tmp/tmp644uk981/src/modules/dy",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s06_combined__mod-function_inlining.lua",
+      "sample": "s06_combined.lua",
+      "config": "mod-function_inlining",
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 2139,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:82: '<name>' expected near 'local'"
+    },
+    {
+      "file": "s06_combined__mod-garbage_code.lua",
+      "sample": "s06_combined.lua",
+      "config": "mod-garbage_code",
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 3253,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__mod-opaque_predicates.lua",
+      "sample": "s06_combined.lua",
+      "config": "mod-opaque_predicates",
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 2274,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__mod-string_encoding.lua",
+      "sample": "s06_combined.lua",
+      "config": "mod-string_encoding",
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 3633,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__mod-variable_renaming.lua",
+      "sample": "s06_combined.lua",
+      "config": "mod-variable_renaming",
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 3108,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:56: attempt to index global 'ycbhbXasaqVk' (a nil value)"
+    },
+    {
+      "file": "s07_roblox_style__default.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "default",
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 35475,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:2: attempt to index field '?' (a nil value)"
+    },
+    {
+      "file": "s07_roblox_style__all.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "all",
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "tool-error",
+      "error": "/tmp/tmp644uk981/src/modules/dynamic_code_generator.lua:26: Error processing block 'local': /tmp/tmp644uk981/src/modules/dynamic_code_generator.lua:7: Failed to load block: [string \"return local\"]:1: unexpected symbol near 'local'\nstack traceback:\n\t[C]: in function 'error'\n\t/tmp/tmp644uk981/src/modu",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s07_roblox_style__mod-StringToExpressions.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "mod-StringToExpressions",
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 3583,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__mod-VirtualMachine.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "mod-VirtualMachine",
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 23517,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:289: attempt to index field '?' (a nil value)"
+    },
+    {
+      "file": "s07_roblox_style__mod-WrapInFunction.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "mod-WrapInFunction",
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 1275,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__mod-bytecode_encoding.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "mod-bytecode_encoding",
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 342,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:2: '=' expected near 'f'"
+    },
+    {
+      "file": "s07_roblox_style__mod-compressor.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "mod-compressor",
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 948,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__mod-control_flow.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "mod-control_flow",
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 1362,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__mod-dynamic_code.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "mod-dynamic_code",
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "tool-error",
+      "error": "/tmp/tmp644uk981/src/modules/dynamic_code_generator.lua:26: Error processing block 'in': /tmp/tmp644uk981/src/modules/dynamic_code_generator.lua:7: Failed to load block: [string \"return in\"]:1: unexpected symbol near 'in'\nstack traceback:\n\t[C]: in function 'error'\n\t/tmp/tmp644uk981/src/modules/dynam",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s07_roblox_style__mod-function_inlining.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "mod-function_inlining",
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 1187,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:13: '<name>' expected near 'local'"
+    },
+    {
+      "file": "s07_roblox_style__mod-garbage_code.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "mod-garbage_code",
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 2402,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__mod-opaque_predicates.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "mod-opaque_predicates",
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 1243,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__mod-string_encoding.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "mod-string_encoding",
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 2634,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__mod-variable_renaming.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "mod-variable_renaming",
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 1390,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:3: function arguments expected near ';'"
+    }
+  ]
+}

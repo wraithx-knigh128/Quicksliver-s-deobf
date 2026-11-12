@@ -68,6 +68,7 @@ function collectFacts(ast, src) {
     colisseumNames: 0,
     vmRunCalls: 0,
     kirusEntries: 0,
+    snowGetter: 0,
     z85Blob: 0,
     antiTamperBlocks: 0,
     splitHelpers: 0,
@@ -87,6 +88,16 @@ function collectFacts(ast, src) {
         break;
       }
       case 'Call': {
+        // SnowVeil's builtin getter: `local au = function(lib, member) ... end` called as au("string", "char"), au("Vector3", "new"), au("bit32", "bxor"): one local
+        // function asked for library members by name, so that no builtin is written as `string.char` in the script
+        if (n.fn.type === 'Name' && n.args.length === 2 && n.args[0].type === 'String' && n.args[1].type === 'String'
+          && ['string', 'table', 'math', 'bit32', 'Vector3', 'CFrame'].includes(n.args[0].value)) {
+          if (!f.snowGetters) f.snowGetters = new Map();
+          const set = f.snowGetters.get(n.fn.name) || new Set();
+          set.add(n.args[0].value);
+          f.snowGetters.set(n.fn.name, set);
+          f.snowGetter = Math.max(f.snowGetter, set.size);
+        }
         const p = calleePath(n.fn);
         if (p) f.calls.set(p, (f.calls.get(p) || 0) + 1);
         // setmetatable({ X = v }, { __add = ..., __index = ... }) : Prometheus ProxifyLocals
@@ -256,6 +267,11 @@ const RULES = {
   kirus: [
     rule('banner', 'banner', 0.97, (c) => { const m = /protected by Kirus obfuscator v?([0-9][0-9.]*)/i.exec(c.src); return m ? { text: `Kirus banner (v${m[1]})`, version: m[1] } : false; }),
     rule('vm-entry', 'structure', 0.9, (c) => c.facts && c.facts.kirusEntries > 0 && 'VM entry call setmetatable({...}, {}):name(bit32, string, table, math, type, error, pcall, getfenv, setfenv, tonumber)', true),
+  ],
+  snowveil: [
+    rule('banner', 'banner', 0.97, (c) => { const m = /generated using SnowVeil\s+v?([0-9][0-9.]*)/i.exec(c.src); return m ? { text: `SnowVeil banner (v${m[1]})`, version: m[1] } : false; }),
+    rule('mention', 'banner', 0.5, (c) => /SnowVeil/i.test(c.src) && 'mentions SnowVeil'),
+    rule('builtin-getter', 'structure', 0.75, (c) => c.facts && c.facts.snowGetter >= 4 && `one local function asked for ${c.facts.snowGetter} different libraries' members by name (string, table, math, bit32, Vector3, CFrame): builtins are never written as \`lib.member\``, true),
   ],
   stealthx: [
     rule('banner', 'banner', 0.97, (c) => { const m = /secured by StealthxProtect(?: Gen([0-9][0-9.]*))?/i.exec(c.src); return m ? { text: `Stealth-X header${m[1] ? ` (Gen${m[1]})` : ''}`, version: m[1] ? `Gen${m[1]}` : null } : false; }),

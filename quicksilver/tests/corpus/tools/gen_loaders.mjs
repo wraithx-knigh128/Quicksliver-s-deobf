@@ -38,7 +38,7 @@ function base64(text) {
 
 // ---- the packers: each takes the program text and returns the packed script ------------------------------------------------------
 
-const PACKERS = {
+export const PACKERS = {
   ascii: {
     note: 'decimal character codes separated by commas, decoded with gmatch + string.char',
     needsSandbox: true,

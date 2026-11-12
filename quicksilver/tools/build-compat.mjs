@@ -30,11 +30,14 @@ function derive(agg) {
   return 'unsupported';
 }
 
+/** derive() for rows where behaviour may not be checkable (a tool's own output that does not run, a layer that needs a newer Lua): without a single behaviour check nothing is "supported". */
+const deriveChecked = (agg) => { const st = derive(agg); return st === 'supported' && agg.behaviourChecked < 1 ? 'partial' : st; };
+
 const norm = (s) => s.toLowerCase().replace(/^(step-|mod-)/, '').replace(/[^a-z0-9]/g, '');
 
 const families = familyRegistry().map((f) => {
   const note = NOTES[f.id] || { status: 'unsupported', basis: 'signature', detect: '', limits: [] };
-  const rows = scorecard.results.filter((r) => r.tool === f.id);
+  const rows = scorecard.results.filter((r) => r.tool === f.id && !r.version);
   let measured = null;
   const techniques = [];
   if (rows.length) {
@@ -78,6 +81,26 @@ const families = familyRegistry().map((f) => {
       fidelityAfter: round(mean(all.map((r) => r.fidelityAfter))),
     };
   }
+  // older revisions of the same tool, each measured on its own fixtures (tests/corpus/tools/gen_hercules_versions.py): never averaged into the headline numbers
+  const versions = [];
+  const vrows = scorecard.results.filter((r) => r.tool === f.id && r.version);
+  for (const version of [...new Set(vrows.map((r) => r.version))]) {
+    const rs = vrows.filter((r) => r.version === version);
+    const meta = JSON.parse(fs.readFileSync(path.join(root, `tests/corpus/obfuscated/${f.id}-${version}/manifest.json`), 'utf8'));
+    const usable = rs.filter((r) => r.fidelityAfter != null);
+    const checked = rs.filter((r) => r.behaviorOriginal != null);
+    const configs = [...new Set(rs.map((r) => r.config))].map((config) => {
+      const cs = rs.filter((r) => r.config === config);
+      const u = cs.filter((r) => r.fidelityAfter != null);
+      const ck = cs.filter((r) => r.behaviorOriginal != null);
+      const agg = { config, samples: cs.length, fidelityBefore: round(mean(u.map((r) => r.fidelityBefore ?? 0))), fidelityAfter: round(mean(u.map((r) => r.fidelityAfter))), behaviourChecked: ck.length, behaviourSame: ck.filter((r) => r.behaviorOriginal === 'same').length, toolBroken: cs.filter((r) => r.toolBehavior !== 'equivalent').length, unparsed: cs.length - u.length };
+      agg.status = u.length ? deriveChecked(agg) : 'unsupported';
+      return agg;
+    });
+    versions.push({ version, revision: meta.sourceRevision, revisionDate: meta.revisionDate, note: meta.note, modules: meta.modules, fixtures: rs.length, fidelityBefore: round(mean(usable.map((r) => r.fidelityBefore ?? 0))), fidelityAfter: round(mean(usable.map((r) => r.fidelityAfter))),
+      behaviourChecked: checked.length, behaviourSame: checked.filter((r) => r.behaviorOriginal === 'same').length, configs,
+      supported: configs.filter((c) => c.status === 'supported').length, partial: configs.filter((c) => c.status === 'partial').length, unsupported: configs.filter((c) => c.status === 'unsupported').length });
+  }
   const covered = new Set(techniques.map((t) => norm(t.config)));
   const declared = new Set((note.covers || []).map(norm));
   const untested = f.techniques.filter((t) => !declared.has(norm(t)) && ![...covered].some((c) => norm(t).startsWith(c) || c.startsWith(norm(t))));
@@ -93,11 +116,29 @@ const families = familyRegistry().map((f) => {
     documentedTechniques: f.techniques,
     untestedTechniques: measured ? untested : f.techniques,
     techniques,
+    versions,
     measured,
     limits: note.limits,
     sources: f.sources,
   };
 });
+
+// layered (mixed) chains: real tools stacked with packers and the laboratory's transformations (tests/corpus/tools/gen_mixed.py)
+const layered = [];
+if (fs.existsSync(path.join(root, 'tests/corpus/obfuscated/mixed/manifest.json'))) {
+  const meta = JSON.parse(fs.readFileSync(path.join(root, 'tests/corpus/obfuscated/mixed/manifest.json'), 'utf8'));
+  const mrows = scorecard.results.filter((r) => r.tool === 'mixed');
+  for (const [id, stages] of Object.entries(meta.chains)) {
+    const rs = mrows.filter((r) => r.config === id);
+    const usable = rs.filter((r) => r.fidelityAfter != null);
+    const checked = rs.filter((r) => r.behaviorOriginal != null && r.toolBehavior === 'equivalent');
+    const agg = { id, stages: stages.map((st) => (st[0] === 'hercules' ? `hercules ${st[1]} [${st[2]}]` : `${st[0]} ${st[1]}`)), layers: stages.length, samples: rs.length, detected: rs.filter((r) => r.detected && r.detected.length).length,
+      fidelityBefore: round(mean(usable.map((r) => r.fidelityBefore ?? 0))), fidelityAfter: round(mean(usable.map((r) => r.fidelityAfter))), confidence: round(mean(rs.map((r) => r.confidence ?? 0))),
+      behaviourChecked: checked.length, behaviourSame: checked.filter((r) => r.behaviorOriginal === 'same').length, unparsed: rs.length - usable.length };
+    agg.status = usable.length ? deriveChecked(agg) : 'unsupported';
+    layered.push(agg);
+  }
+}
 
 const out = {
   generatedAt: new Date().toISOString(),
@@ -105,6 +146,7 @@ const out = {
   trace: { generatedAt: traceCard.generatedAt },
   scorecard: { generatedAt: scorecard.generatedAt, fixtures: scorecard.results.length, sandbox: scorecard.sandbox, behaviourOracle: 'PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa' },
   families,
+  layered,
 };
 fs.mkdirSync(path.join(root, 'data'), { recursive: true });
 fs.writeFileSync(path.join(root, 'data/compat.json'), `${JSON.stringify(out, null, 1)}\n`);
@@ -129,8 +171,22 @@ for (const f of families) {
       md.push(`| ${t.label} (${t.kind}) | ${t.status}${t.note ? ` – ${t.note}` : ''} | ${pc(t.fidelityBefore)} → ${pc(t.fidelityAfter)}${t.needsSandbox ? ' (needs sandbox)' : ''} | ${t.behaviourSame} / ${t.behaviourChecked}${t.toolBroken ? ` (${t.toolBroken} tool output broken)` : ''} | ${t.ms} ms |`);
     }
   }
+  if (f.versions && f.versions.length) {
+    md.push('', '### Versions', '', 'Each revision of the tool that can still be run, measured on its own fixtures (a version is what the watermark its source writes says; the tool has no release tags). Rows are never averaged with the current revision.', '',
+      '| Version | Revision | Fixtures | Fidelity before → after | Same behaviour | Configurations (supported / partial / unsupported) |', '|---|---|---|---|---|---|');
+    for (const v of f.versions) md.push(`| ${v.version} | \`${String(v.revision).slice(0, 7)}\` ${v.revisionDate || ''} | ${v.fixtures} | ${pc(v.fidelityBefore)} → ${pc(v.fidelityAfter)} | ${v.behaviourSame} / ${v.behaviourChecked} | ${v.supported} / ${v.partial} / ${v.unsupported} |`);
+    for (const v of f.versions) {
+      const weak = v.configs.filter((c) => c.status !== 'supported');
+      if (weak.length) md.push('', `* **${v.version}** not supported: ${weak.map((c) => `${c.config} (${c.status}, ${pc(c.fidelityAfter)}${c.unparsed ? `, ${c.unparsed} output(s) the tool wrote that do not parse` : ''})`).join('; ')}`);
+    }
+  }
   if (f.limits && f.limits.length) md.push('', '**Limits**', '', ...f.limits.map((l) => `* ${l}`));
   if (f.untestedTechniques && f.untestedTechniques.length) md.push('', `**Documented techniques with no fixture:** ${f.untestedTechniques.join(', ')}`);
+}
+if (layered.length) {
+  md.push('', '## Layered (mixed) obfuscation', '', 'Real tools stacked with packers and with the laboratory\u2019s transformations, in both orders (`tests/corpus/tools/gen_mixed.py`). The outermost layer is what an analyst sees first; the original program is what the chain protects. Behaviour counts only fixtures whose own output behaves like the original.', '',
+    '| Chain | Layers | Detected | Fidelity before → after | Same behaviour | Confidence | Status |', '|---|---|---|---|---|---|---|');
+  for (const l of layered) md.push(`| ${l.id} (${l.stages.join(' → ')}) | ${l.layers} | ${l.detected} / ${l.samples} | ${pc(l.fidelityBefore)} → ${pc(l.fidelityAfter)} | ${l.behaviourSame} / ${l.behaviourChecked} | ${pc(l.confidence)} | ${l.status} |`);
 }
 fs.mkdirSync(path.join(root, 'docs'), { recursive: true });
 fs.writeFileSync(path.join(root, 'docs/COMPATIBILITY.md'), `${md.join('\n')}\n`);

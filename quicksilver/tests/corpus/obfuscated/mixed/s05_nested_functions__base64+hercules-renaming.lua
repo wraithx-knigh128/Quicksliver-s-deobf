@@ -1,0 +1,25 @@
+--[Obfuscated by Hercules v2.0.0 | hercules-obfuscator.xyz/discord | hercules-obfuscator.xyz/source]
+(function(...) local nToMJhcidNSu,amlYvSjELkxY,cXCAIeCyAquE
+nToMJhcidNSu=math.floor;amlYvSjELkxY=string.char;cXCAIeCyAquE=table.concat;
+local kGVDzihq = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+local function dCTXLZowtL(text)
+  local RJhQJexzoEs, esahvaGEdsW, RMhhZOJR = {}, 0, 0
+  for i = 1, #text do
+    local ZxdMMfaQSJ = text:sub(i, i)
+    local FYtJIeYu = kGVDzihq:find(ZxdMMfaQSJ, 1, true)
+    if FYtJIeYu then
+      esahvaGEdsW = esahvaGEdsW * 64 + (FYtJIeYu - 1)
+      RMhhZOJR = RMhhZOJR + 6
+      if RMhhZOJR >= 8 then
+        RMhhZOJR = RMhhZOJR - 8
+        local NzteKqkRAPw = 2 ^ RMhhZOJR
+        RJhQJexzoEs[#RJhQJexzoEs + 1] = string.char(math.floor(esahvaGEdsW / NzteKqkRAPw))
+        esahvaGEdsW = esahvaGEdsW % NzteKqkRAPw
+      end
+    end
+  end
+  return table.concat(RJhQJexzoEs)
+end
+local eJGJNYYuQ = (loadstring or load)(dCTXLZowtL("LS0gczA1OiBjbG9zdXJlcywgdmFyYXJncywgcmVjdXJzaW9uLCBoaWdoZXItb3JkZXIgZnVuY3Rpb25zLiBVc2VkIHRvIHRlc3QgbmVzdGVkLWZ1bmN0aW9uIGhhbmRsaW5nLgpsb2NhbCBmdW5jdGlvbiBjb3VudGVyKHN0YXJ0LCBzdGVwKQogIGxvY2FsIHZhbHVlID0gc3RhcnQKICByZXR1cm4gZnVuY3Rpb24oKQogICAgdmFsdWUgPSB2YWx1ZSArIHN0ZXAKICAgIHJldHVybiB2YWx1ZQogIGVuZAplbmQKCmxvY2FsIGZ1bmN0aW9uIG1lbW9pemUoZm4pCiAgbG9jYWwgY2FjaGUgPSB7fQogIHJldHVybiBmdW5jdGlvbihuKQogICAgbG9jYWwgaGl0ID0gY2FjaGVbbl0KICAgIGlmIGhpdCA9PSBuaWwgdGhlbgogICAgICBoaXQgPSBmbihuKQogICAgICBjYWNoZVtuXSA9IGhpdAogICAgZW5kCiAgICByZXR1cm4gaGl0CiAgZW5kCmVuZAoKbG9jYWwgZmliCmZpYiA9IG1lbW9pemUoZnVuY3Rpb24obikKICBpZiBuIDwgMiB0aGVuCiAgICByZXR1cm4gbgogIGVuZAogIHJldHVybiBmaWIobiAtIDEpICsgZmliKG4gLSAyKQplbmQpCgpsb2NhbCBmdW5jdGlvbiBjb21wb3NlKC4uLikKICBsb2NhbCBmbnMgPSB7IC4uLiB9CiAgcmV0dXJuIGZ1bmN0aW9uKHgpCiAgICBmb3IgaSA9ICNmbnMsIDEsIC0xIGRvCiAgICAgIHggPSBmbnNbaV0oeCkKICAgIGVuZAogICAgcmV0dXJuIHgKICBlbmQKZW5kCgpsb2NhbCBmdW5jdGlvbiBtYXAobGlzdCwgZm4pCiAgbG9jYWwgb3V0ID0ge30KICBmb3IgaSwgdiBpbiBpcGFpcnMobGlzdCkgZG8KICAgIG91dFtpXSA9IGZuKHYsIGkpCiAgZW5kCiAgcmV0dXJuIG91dAplbmQKCmxvY2FsIGZ1bmN0aW9uIHN1bSguLi4pCiAgbG9jYWwgdG90YWwgPSAwCiAgZm9yIGkgPSAxLCBzZWxlY3QoIiMiLCAuLi4pIGRvCiAgICB0b3RhbCA9IHRvdGFsICsgKHNlbGVjdChpLCAuLi4pKQogIGVuZAogIHJldHVybiB0b3RhbAplbmQKCmxvY2FsIG5leHQ1ID0gY291bnRlcigxMCwgNSkKcHJpbnQobmV4dDUoKSwgbmV4dDUoKSwgbmV4dDUoKSkKcHJpbnQoZmliKDMwKSwgZmliKDQwKSkKCmxvY2FsIGluYyA9IGZ1bmN0aW9uKHgpIHJldHVybiB4ICsgMSBlbmQKbG9jYWwgZGJsID0gZnVuY3Rpb24oeCkgcmV0dXJuIHggKiAyIGVuZApwcmludChjb21wb3NlKGluYywgZGJsKSg1KSwgY29tcG9zZShkYmwsIGluYykoNSkpCnByaW50KHRhYmxlLmNvbmNhdChtYXAoeyAxLCAyLCAzLCA0IH0sIGZ1bmN0aW9uKHYsIGkpIHJldHVybiB2ICogaSBlbmQpLCAiLCIpKQpwcmludChzdW0oMSwgMiwgMywgNCwgNSksIHN1bSgpKQoKbG9jYWwgZnVuY3Rpb24gb3V0ZXIoYSkKICBsb2NhbCBmdW5jdGlvbiBtaWRkbGUoYikKICAgIGxvY2FsIGZ1bmN0aW9uIGlubmVyKGMpCiAgICAgIHJldHVybiBhICogMTAwICsgYiAqIDEwICsgYwogICAgZW5kCiAgICByZXR1cm4gaW5uZXIKICBlbmQKICByZXR1cm4gbWlkZGxlCmVuZApwcmludChvdXRlcigxKSgyKSgzKSkK"))
+eJGJNYYuQ()
+ end)()

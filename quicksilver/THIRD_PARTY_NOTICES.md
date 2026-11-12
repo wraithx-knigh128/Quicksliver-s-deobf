@@ -26,6 +26,11 @@ The recovery modules were written after reading each tool's source and output; n
 * Copyright 2024-2025 zeusssz, Apache License 2.0, `https://github.com/zeusssz/hercules-obfuscator`. Full text: `https://www.apache.org/licenses/LICENSE-2.0`.
 * Generated fixtures (`tests/corpus/obfuscated/hercules/**`) contain code produced from Hercules' templates (for example its anti-tamper block and its Lua-in-Lua virtual machine).
   They are kept unmodified and for testing only. QuickSilver includes no source file of Hercules.
+* The same applies to `tests/corpus/obfuscated/hercules-<version>/**` (output of five older revisions of the tool, `tests/corpus/tools/gen_hercules_versions.py`) and to
+  `tests/corpus/obfuscated/mixed/**` (Hercules output stacked with this project's own packers and transformations, `gen_mixed.py`). The tool is run from a `git archive` of its public repository
+  and is not stored here.
+* Scripts of MoonVeil and SnowVeil that were read for Phase VIII (`tools/formats/samples.json`) are third parties' outputs from public repositories that carry no licence for them: they are
+  **not** in this repository (`quicksilver/local/` is ignored); only measurements of them are (`data/research/format-records.json`).
 
 ### IronBrew 2
 

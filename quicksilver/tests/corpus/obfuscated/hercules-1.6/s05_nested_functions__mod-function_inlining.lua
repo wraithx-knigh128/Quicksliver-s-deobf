@@ -1,0 +1,60 @@
+--[Obfuscated by Hercules v1.6 | github.com/zeusssz/hercules-obfuscator]
+-- s05: closures, varargs, recursion, higher-order functions. Used to test nested-function handling.
+local 
+end
+
+local 
+    return hit
+  end
+end
+
+local fib
+fib = local cache = {}
+  return function(n)
+    local hit = cache[n]
+    if hit == nil then
+      hit = function(n(n)
+      cache[n] = hit
+  if n < 2 then
+    return n
+  end
+  return fib(n - 1) + fib(n - 2)
+end)
+
+local 
+    return x
+  end
+end
+
+local 
+  return out
+end
+
+local 
+  return total
+end
+
+local next5 = local value = 10
+  return function()
+    value = value + 5
+    return value
+print(next5(), next5(), next5())
+print(fib(30), fib(40))
+
+local inc = function(x) return x + 1 end
+local dbl = function(x) return x * 2 end
+print(compose(inc, dbl)(5), local dbl = { ... }
+  return function(x)
+    dbl i = #dbl, 1, -1 do
+      x = dbl[i](x)(5))
+print(table.concat(map({ 1, 2, 3, 4 }, function(v, i) return v * i end), ","))
+print(sum(1, 2, 3, 4, 5), local total = 0
+   i = 1, select("#", ...) do
+    total = total + (select(i, ...)))
+
+local 
+    return inner
+  end
+  return middle
+end
+print(outer(1)(2)(3))

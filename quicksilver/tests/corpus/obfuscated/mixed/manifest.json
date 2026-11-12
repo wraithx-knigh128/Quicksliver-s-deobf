@@ -1,0 +1,1684 @@
+{
+  "tool": "Mixed (layered) obfuscation",
+  "synthetic": false,
+  "source": "real Hercules output (https://github.com/zeusssz/hercules-obfuscator, revision ace084c897369faf584dfa3baeea159d7b205213 and the older revisions in gen_hercules_versions.py) stacked with this project's packers (gen_loaders.mjs) and laboratory transformations (tools/lab/transforms.mjs)",
+  "chains": {
+    "hercules-light+base64": [
+      [
+        "hercules",
+        "head",
+        "variable_renaming,compressor"
+      ],
+      [
+        "loader",
+        "base64"
+      ]
+    ],
+    "hercules-balanced+xor": [
+      [
+        "hercules",
+        "head",
+        "variable_renaming,control_flow,string_encoding,opaque_predicates,compressor"
+      ],
+      [
+        "loader",
+        "xor"
+      ]
+    ],
+    "hercules-vm+base64": [
+      [
+        "hercules",
+        "head",
+        "virtual_machine"
+      ],
+      [
+        "loader",
+        "base64"
+      ]
+    ],
+    "xor+hercules-strings": [
+      [
+        "loader",
+        "xor"
+      ],
+      [
+        "hercules",
+        "head",
+        "string_encoding,compressor"
+      ]
+    ],
+    "base64+hercules-renaming": [
+      [
+        "loader",
+        "base64"
+      ],
+      [
+        "hercules",
+        "head",
+        "variable_renaming,wrap_in_function"
+      ]
+    ],
+    "hercules-heavy+light": [
+      [
+        "hercules",
+        "head",
+        "variable_renaming,control_flow,string_encoding,string_to_expressions,opaque_predicates,garbage_code,function_inlining,wrap_in_function,antitamper,dynamic_code,compressor"
+      ],
+      [
+        "hercules",
+        "head",
+        "variable_renaming,compressor"
+      ]
+    ],
+    "hercules-1.6.2+head": [
+      [
+        "hercules",
+        "1.6.2",
+        "variable_renaming,control_flow,string_encoding,compressor"
+      ],
+      [
+        "hercules",
+        "head",
+        "variable_renaming,string_to_expressions,compressor"
+      ]
+    ],
+    "hercules-1.5+head-inlining": [
+      [
+        "hercules",
+        "1.5",
+        "variable_renaming,string_encoding,compressor"
+      ],
+      [
+        "hercules",
+        "head",
+        "function_inlining,variable_renaming"
+      ]
+    ],
+    "lab-rename-strings+hercules": [
+      [
+        "lab",
+        "stack-rename-strings"
+      ],
+      [
+        "hercules",
+        "head",
+        "variable_renaming,control_flow,compressor"
+      ]
+    ],
+    "hercules-s2e+lab-flatten": [
+      [
+        "hercules",
+        "head",
+        "string_to_expressions,variable_renaming"
+      ],
+      [
+        "lab",
+        "flatten-chain"
+      ]
+    ],
+    "lab-tabledispatch+hercules-inlining": [
+      [
+        "lab",
+        "tabledispatch"
+      ],
+      [
+        "hercules",
+        "head",
+        "function_inlining,variable_renaming,compressor"
+      ]
+    ],
+    "lab-xorpack-loadwrap+layered": [
+      [
+        "lab",
+        "stack-xorpack-loadwrap"
+      ],
+      [
+        "loader",
+        "layered"
+      ]
+    ],
+    "lab-flatten-opaque+hercules": [
+      [
+        "lab",
+        "stack-flatten-opaque"
+      ],
+      [
+        "hercules",
+        "head",
+        "variable_renaming,string_encoding,garbage_code,compressor"
+      ]
+    ],
+    "lab+hercules+base64": [
+      [
+        "lab",
+        "stack-rename-strings"
+      ],
+      [
+        "hercules",
+        "head",
+        "control_flow,string_encoding,compressor"
+      ],
+      [
+        "loader",
+        "base64"
+      ]
+    ],
+    "base64+hercules-vm+hercules-light": [
+      [
+        "loader",
+        "base64"
+      ],
+      [
+        "hercules",
+        "head",
+        "virtual_machine"
+      ],
+      [
+        "hercules",
+        "head",
+        "variable_renaming,compressor"
+      ]
+    ]
+  },
+  "entries": [
+    {
+      "file": "s01_minify_basic__hercules-light+base64.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "hercules-light+base64",
+      "layers": 2,
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 2196,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__hercules-balanced+xor.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "hercules-balanced+xor",
+      "layers": 2,
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 7451,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__hercules-vm+base64.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "hercules-vm+base64",
+      "layers": 2,
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 53100,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "[string \"--[Obfuscated by Hercules v2.0.0 | hercules...\"]:76: attempt to call field 'tointeger' (a nil value)"
+    },
+    {
+      "file": "s01_minify_basic__xor+hercules-strings.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "xor+hercules-strings",
+      "layers": 2,
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 4178,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__base64+hercules-renaming.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "base64+hercules-renaming",
+      "layers": 2,
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 2365,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__hercules-heavy+light.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "hercules-heavy+light",
+      "layers": 2,
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 14819,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__hercules-1.6.2+head.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "hercules-1.6.2+head",
+      "layers": 2,
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 4484,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__hercules-1.5+head-inlining.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "hercules-1.5+head-inlining",
+      "layers": 2,
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 2707,
+      "behaviors": {
+        "lua51": "diverged",
+        "lua54": "diverged"
+      },
+      "behavior": "diverged"
+    },
+    {
+      "file": "s01_minify_basic__lab-rename-strings+hercules.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "lab-rename-strings+hercules",
+      "layers": 2,
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 1887,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__hercules-s2e+lab-flatten.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "hercules-s2e+lab-flatten",
+      "layers": 2,
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 6259,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__lab-tabledispatch+hercules-inlining.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "lab-tabledispatch+hercules-inlining",
+      "layers": 2,
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 1275,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__lab-xorpack-loadwrap+layered.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "lab-xorpack-loadwrap+layered",
+      "layers": 2,
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 19224,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__lab-flatten-opaque+hercules.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "lab-flatten-opaque+hercules",
+      "layers": 2,
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 5029,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__lab+hercules+base64.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "lab+hercules+base64",
+      "layers": 3,
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 3672,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "[string \"--[Obfuscated by Hercules v2.0.0 | hercules...\"]:2: invalid option '%\u0095' to 'format'"
+    },
+    {
+      "file": "s01_minify_basic__base64+hercules-vm+hercules-light.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "base64+hercules-vm+hercules-light",
+      "layers": 3,
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 44613,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:2: attempt to call field 'tointeger' (a nil value)"
+    },
+    {
+      "file": "s02_renamed_vars__hercules-light+base64.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "hercules-light+base64",
+      "layers": 2,
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 2692,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__hercules-balanced+xor.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "hercules-balanced+xor",
+      "layers": 2,
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 8996,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__hercules-vm+base64.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "hercules-vm+base64",
+      "layers": 2,
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 57840,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "[string \"--[Obfuscated by Hercules v2.0.0 | hercules...\"]:76: attempt to call field 'tointeger' (a nil value)"
+    },
+    {
+      "file": "s02_renamed_vars__xor+hercules-strings.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "xor+hercules-strings",
+      "layers": 2,
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 5377,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__base64+hercules-renaming.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "base64+hercules-renaming",
+      "layers": 2,
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 2928,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__hercules-heavy+light.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "hercules-heavy+light",
+      "layers": 2,
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 21604,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__hercules-1.6.2+head.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "hercules-1.6.2+head",
+      "layers": 2,
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 4856,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__hercules-1.5+head-inlining.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "hercules-1.5+head-inlining",
+      "layers": 2,
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 3075,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:5: attempt to call field 'NcSIlALoCb' (a nil value)"
+    },
+    {
+      "file": "s02_renamed_vars__lab-rename-strings+hercules.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "lab-rename-strings+hercules",
+      "layers": 2,
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 2399,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__hercules-s2e+lab-flatten.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "hercules-s2e+lab-flatten",
+      "layers": 2,
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 7448,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__lab-tabledispatch+hercules-inlining.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "lab-tabledispatch+hercules-inlining",
+      "layers": 2,
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 1628,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__lab-xorpack-loadwrap+layered.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "lab-xorpack-loadwrap+layered",
+      "layers": 2,
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 25988,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__lab-flatten-opaque+hercules.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "lab-flatten-opaque+hercules",
+      "layers": 2,
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 5215,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__lab+hercules+base64.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "lab+hercules+base64",
+      "layers": 3,
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 4208,
+      "behaviors": {
+        "lua51": "diverged",
+        "lua54": "diverged"
+      },
+      "behavior": "diverged"
+    },
+    {
+      "file": "s02_renamed_vars__base64+hercules-vm+hercules-light.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "base64+hercules-vm+hercules-light",
+      "layers": 3,
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 52248,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:2: attempt to call field 'tointeger' (a nil value)"
+    },
+    {
+      "file": "s03_encoded_strings__hercules-light+base64.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "hercules-light+base64",
+      "layers": 2,
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 2292,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__hercules-balanced+xor.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "hercules-balanced+xor",
+      "layers": 2,
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 8535,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__hercules-vm+base64.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "hercules-vm+base64",
+      "layers": 2,
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 50112,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "[string \"--[Obfuscated by Hercules v2.0.0 | hercules...\"]:76: attempt to call field 'tointeger' (a nil value)"
+    },
+    {
+      "file": "s03_encoded_strings__xor+hercules-strings.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "xor+hercules-strings",
+      "layers": 2,
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 4086,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__base64+hercules-renaming.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "base64+hercules-renaming",
+      "layers": 2,
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 2343,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__hercules-heavy+light.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "hercules-heavy+light",
+      "layers": 2,
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 24415,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__hercules-1.6.2+head.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "hercules-1.6.2+head",
+      "layers": 2,
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 6724,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__hercules-1.5+head-inlining.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "hercules-1.5+head-inlining",
+      "layers": 2,
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 2906,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:5: attempt to call global 'iZrsMuoExE' (a nil value)"
+    },
+    {
+      "file": "s03_encoded_strings__lab-rename-strings+hercules.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "lab-rename-strings+hercules",
+      "layers": 2,
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 2190,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__hercules-s2e+lab-flatten.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "hercules-s2e+lab-flatten",
+      "layers": 2,
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 8696,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__lab-tabledispatch+hercules-inlining.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "lab-tabledispatch+hercules-inlining",
+      "layers": 2,
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 1296,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__lab-xorpack-loadwrap+layered.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "lab-xorpack-loadwrap+layered",
+      "layers": 2,
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 24424,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__lab-flatten-opaque+hercules.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "lab-flatten-opaque+hercules",
+      "layers": 2,
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 4549,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__lab+hercules+base64.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "lab+hercules+base64",
+      "layers": 3,
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 4084,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "[string \"--[Obfuscated by Hercules v2.0.0 | hercules...\"]:2: invalid option '%\u008a' to 'format'"
+    },
+    {
+      "file": "s03_encoded_strings__base64+hercules-vm+hercules-light.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "base64+hercules-vm+hercules-light",
+      "layers": 3,
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 44264,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:2: attempt to call field 'tointeger' (a nil value)"
+    },
+    {
+      "file": "s04_control_flow__hercules-light+base64.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "hercules-light+base64",
+      "layers": 2,
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 2800,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__hercules-balanced+xor.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "hercules-balanced+xor",
+      "layers": 2,
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 9754,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__hercules-vm+base64.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "hercules-vm+base64",
+      "layers": 2,
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 68432,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "[string \"--[Obfuscated by Hercules v2.0.0 | hercules...\"]:76: attempt to call field 'tointeger' (a nil value)"
+    },
+    {
+      "file": "s04_control_flow__xor+hercules-strings.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "xor+hercules-strings",
+      "layers": 2,
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 5825,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__base64+hercules-renaming.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "base64+hercules-renaming",
+      "layers": 2,
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 3128,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__hercules-heavy+light.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "hercules-heavy+light",
+      "layers": 2,
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 39826,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__hercules-1.6.2+head.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "hercules-1.6.2+head",
+      "layers": 2,
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 6227,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__hercules-1.5+head-inlining.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "hercules-1.5+head-inlining",
+      "layers": 2,
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 3644,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:5: '=' expected near 'i'"
+    },
+    {
+      "file": "s04_control_flow__lab-rename-strings+hercules.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "lab-rename-strings+hercules",
+      "layers": 2,
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 2722,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__hercules-s2e+lab-flatten.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "hercules-s2e+lab-flatten",
+      "layers": 2,
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 11059,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__lab-tabledispatch+hercules-inlining.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "lab-tabledispatch+hercules-inlining",
+      "layers": 2,
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 1756,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__lab-xorpack-loadwrap+layered.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "lab-xorpack-loadwrap+layered",
+      "layers": 2,
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 30776,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__lab-flatten-opaque+hercules.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "lab-flatten-opaque+hercules",
+      "layers": 2,
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 7181,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__lab+hercules+base64.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "lab+hercules+base64",
+      "layers": 3,
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 4912,
+      "behaviors": {
+        "lua51": "diverged",
+        "lua54": "diverged"
+      },
+      "behavior": "diverged"
+    },
+    {
+      "file": "s04_control_flow__base64+hercules-vm+hercules-light.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "base64+hercules-vm+hercules-light",
+      "layers": 3,
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 54767,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:2: attempt to call field 'tointeger' (a nil value)"
+    },
+    {
+      "file": "s05_nested_functions__hercules-light+base64.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "hercules-light+base64",
+      "layers": 2,
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 2952,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__hercules-balanced+xor.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "hercules-balanced+xor",
+      "layers": 2,
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 9288,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__hercules-vm+base64.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "hercules-vm+base64",
+      "layers": 2,
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 72604,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "[string \"--[Obfuscated by Hercules v2.0.0 | hercules...\"]:76: attempt to call field 'tointeger' (a nil value)"
+    },
+    {
+      "file": "s05_nested_functions__xor+hercules-strings.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "xor+hercules-strings",
+      "layers": 2,
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 5417,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__base64+hercules-renaming.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "base64+hercules-renaming",
+      "layers": 2,
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 2949,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__hercules-heavy+light.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "hercules-heavy+light",
+      "layers": 2,
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 10721,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:2: syntax error near 'end'"
+    },
+    {
+      "file": "s05_nested_functions__hercules-1.6.2+head.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "hercules-1.6.2+head",
+      "layers": 2,
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 3577,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__hercules-1.5+head-inlining.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "hercules-1.5+head-inlining",
+      "layers": 2,
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 2958,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:5: attempt to call global 'iTTOBfgEw' (a nil value)"
+    },
+    {
+      "file": "s05_nested_functions__lab-rename-strings+hercules.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "lab-rename-strings+hercules",
+      "layers": 2,
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 2403,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__hercules-s2e+lab-flatten.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "hercules-s2e+lab-flatten",
+      "layers": 2,
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 4576,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__lab-tabledispatch+hercules-inlining.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "lab-tabledispatch+hercules-inlining",
+      "layers": 2,
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 1824,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__lab-xorpack-loadwrap+layered.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "lab-xorpack-loadwrap+layered",
+      "layers": 2,
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 21812,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__lab-flatten-opaque+hercules.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "lab-flatten-opaque+hercules",
+      "layers": 2,
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 5645,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__lab+hercules+base64.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "lab+hercules+base64",
+      "layers": 3,
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 4172,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__base64+hercules-vm+hercules-light.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "base64+hercules-vm+hercules-light",
+      "layers": 3,
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 52779,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:2: attempt to call field 'tointeger' (a nil value)"
+    },
+    {
+      "file": "s06_combined__hercules-light+base64.lua",
+      "sample": "s06_combined.lua",
+      "config": "hercules-light+base64",
+      "layers": 2,
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 4140,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "[string \"--[Obfuscated by Hercules v2.0.0 | hercules...\"]:2: attempt to index global 'okkvbJDTux' (a nil value)"
+    },
+    {
+      "file": "s06_combined__hercules-balanced+xor.lua",
+      "sample": "s06_combined.lua",
+      "config": "hercules-balanced+xor",
+      "layers": 2,
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 12368,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "[string \"--[Obfuscated by Hercules v2.0.0 | hercules...\"]:2: attempt to index global 'ktgEHnNou' (a nil value)"
+    },
+    {
+      "file": "s06_combined__hercules-vm+base64.lua",
+      "sample": "s06_combined.lua",
+      "config": "hercules-vm+base64",
+      "layers": 2,
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 94952,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "[string \"--[Obfuscated by Hercules v2.0.0 | hercules...\"]:76: attempt to call field 'tointeger' (a nil value)"
+    },
+    {
+      "file": "s06_combined__xor+hercules-strings.lua",
+      "sample": "s06_combined.lua",
+      "config": "xor+hercules-strings",
+      "layers": 2,
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 7604,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__base64+hercules-renaming.lua",
+      "sample": "s06_combined.lua",
+      "config": "base64+hercules-renaming",
+      "layers": 2,
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 3940,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__hercules-heavy+light.lua",
+      "sample": "s06_combined.lua",
+      "config": "hercules-heavy+light",
+      "layers": 2,
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 18370,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:2: attempt to index global 'KsBlErmmlnhK' (a nil value)"
+    },
+    {
+      "file": "s06_combined__hercules-1.6.2+head.lua",
+      "sample": "s06_combined.lua",
+      "config": "hercules-1.6.2+head",
+      "layers": 2,
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 6526,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:2: attempt to index global 'pxucSSncqCba' (a nil value)"
+    },
+    {
+      "file": "s06_combined__hercules-1.5+head-inlining.lua",
+      "sample": "s06_combined.lua",
+      "config": "hercules-1.5+head-inlining",
+      "layers": 2,
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 4054,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:5: attempt to index global 'Queue' (a nil value)"
+    },
+    {
+      "file": "s06_combined__lab-rename-strings+hercules.lua",
+      "sample": "s06_combined.lua",
+      "config": "lab-rename-strings+hercules",
+      "layers": 2,
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 3346,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__hercules-s2e+lab-flatten.lua",
+      "sample": "s06_combined.lua",
+      "config": "hercules-s2e+lab-flatten",
+      "layers": 2,
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 8666,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:127: attempt to index global 'VuTqcSIsT' (a nil value)"
+    },
+    {
+      "file": "s06_combined__lab-tabledispatch+hercules-inlining.lua",
+      "sample": "s06_combined.lua",
+      "config": "lab-tabledispatch+hercules-inlining",
+      "layers": 2,
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 2646,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:2: attempt to index global 'kGVDzihq' (a nil value)"
+    },
+    {
+      "file": "s06_combined__lab-xorpack-loadwrap+layered.lua",
+      "sample": "s06_combined.lua",
+      "config": "lab-xorpack-loadwrap+layered",
+      "layers": 2,
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 36032,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__lab-flatten-opaque+hercules.lua",
+      "sample": "s06_combined.lua",
+      "config": "lab-flatten-opaque+hercules",
+      "layers": 2,
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 7038,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__lab+hercules+base64.lua",
+      "sample": "s06_combined.lua",
+      "config": "lab+hercules+base64",
+      "layers": 3,
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 5340,
+      "behaviors": {
+        "lua51": "diverged",
+        "lua54": "diverged"
+      },
+      "behavior": "diverged"
+    },
+    {
+      "file": "s06_combined__base64+hercules-vm+hercules-light.lua",
+      "sample": "s06_combined.lua",
+      "config": "base64+hercules-vm+hercules-light",
+      "layers": 3,
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 65303,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:2: attempt to call field 'tointeger' (a nil value)"
+    },
+    {
+      "file": "s07_roblox_style__hercules-light+base64.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "hercules-light+base64",
+      "layers": 2,
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 2080,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__hercules-balanced+xor.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "hercules-balanced+xor",
+      "layers": 2,
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 7865,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__hercules-vm+base64.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "hercules-vm+base64",
+      "layers": 2,
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 45248,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "[string \"--[Obfuscated by Hercules v2.0.0 | hercules...\"]:76: attempt to call field 'tointeger' (a nil value)"
+    },
+    {
+      "file": "s07_roblox_style__xor+hercules-strings.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "xor+hercules-strings",
+      "layers": 2,
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 4600,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__base64+hercules-renaming.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "base64+hercules-renaming",
+      "layers": 2,
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 2561,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__hercules-heavy+light.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "hercules-heavy+light",
+      "layers": 2,
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 18598,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__hercules-1.6.2+head.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "hercules-1.6.2+head",
+      "layers": 2,
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 5205,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__hercules-1.5+head-inlining.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "hercules-1.5+head-inlining",
+      "layers": 2,
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 2467,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:5: attempt to index local 'iGUjwMBik' (a function value)"
+    },
+    {
+      "file": "s07_roblox_style__lab-rename-strings+hercules.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "lab-rename-strings+hercules",
+      "layers": 2,
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 1959,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__hercules-s2e+lab-flatten.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "hercules-s2e+lab-flatten",
+      "layers": 2,
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 5490,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__lab-tabledispatch+hercules-inlining.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "lab-tabledispatch+hercules-inlining",
+      "layers": 2,
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 1170,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__lab-xorpack-loadwrap+layered.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "lab-xorpack-loadwrap+layered",
+      "layers": 2,
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 23392,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "errored"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__lab-flatten-opaque+hercules.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "lab-flatten-opaque+hercules",
+      "layers": 2,
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 3266,
+      "behaviors": {
+        "lua51": "equivalent",
+        "lua54": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__lab+hercules+base64.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "lab+hercules+base64",
+      "layers": 3,
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 3852,
+      "behaviors": {
+        "lua51": "diverged",
+        "lua54": "diverged"
+      },
+      "behavior": "diverged"
+    },
+    {
+      "file": "s07_roblox_style__base64+hercules-vm+hercules-light.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "base64+hercules-vm+hercules-light",
+      "layers": 3,
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 47294,
+      "behaviors": {
+        "lua51": "errored",
+        "lua54": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:2: attempt to call field 'tointeger' (a nil value)"
+    }
+  ]
+}

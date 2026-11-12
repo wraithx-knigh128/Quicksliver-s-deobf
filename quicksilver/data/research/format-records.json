@@ -1,0 +1,417 @@
+{
+ "generatedAt": "2026-11-12T08:50:42.025Z",
+ "engine": "src/recover/pipeline.js",
+ "records": [
+  {
+   "id": "moonveil-1.4.5-raw3",
+   "family": "moonveil",
+   "version": "1.4.5",
+   "source": "https://github.com/edwindev-spec/MoonVeil (samples/raw-3.txt), read as text",
+   "bytes": 93317,
+   "sha256": "3fb9e5bd7ab4fdd431f35dd3a1236f3c31fe4d25dac47dc1c68aa403169decae",
+   "present": true,
+   "detected": {
+    "confidence": 0.97,
+    "version": "1.4.5",
+    "rules": [
+     "banner",
+     "mention"
+    ]
+   },
+   "versionMatches": true,
+   "ok": true,
+   "confidence": {
+    "score": 0.5,
+    "level": "low"
+   },
+   "steps": [
+    {
+     "id": "fold",
+     "status": "applied",
+     "changed": 888
+    },
+    {
+     "id": "moonveil.cells",
+     "status": "applied",
+     "changed": 12
+    },
+    {
+     "id": "simplify",
+     "status": "applied",
+     "changed": 44
+    },
+    {
+     "id": "tidy",
+     "status": "applied",
+     "changed": 3
+    },
+    {
+     "id": "stable",
+     "status": "applied",
+     "changed": 2
+    },
+    {
+     "id": "evaluate",
+     "status": "applied",
+     "changed": 168
+    },
+    {
+     "id": "rename",
+     "status": "applied",
+     "changed": 317
+    }
+   ],
+   "unresolved": 4,
+   "outputBytes": 168248
+  },
+  {
+   "id": "moonveil-2.0.26-rideafish",
+   "family": "moonveil",
+   "version": "2.0.26",
+   "source": "https://github.com/Nonition/MoonveilDeobfuscator (research/rideafish), the reference is that repository's hand-made reconstruction",
+   "bytes": 83078,
+   "sha256": "f235e3843beba872fb69bc2fcc1bc66651ebfeba8a37fd58f366dbb04ed12a4c",
+   "present": true,
+   "detected": {
+    "confidence": 0.97,
+    "version": "2.0.26",
+    "rules": [
+     "banner",
+     "mention",
+     "table-script"
+    ]
+   },
+   "versionMatches": true,
+   "ok": true,
+   "confidence": {
+    "score": 0.6,
+    "level": "medium"
+   },
+   "steps": [
+    {
+     "id": "fold",
+     "status": "applied",
+     "changed": 944
+    },
+    {
+     "id": "moonveil.constants",
+     "status": "applied",
+     "changed": 929
+    },
+    {
+     "id": "moonveil.cells",
+     "status": "applied",
+     "changed": 276
+    },
+    {
+     "id": "moonveil.vm",
+     "status": "skipped",
+     "changed": 0,
+     "why": "the interpreter does not have the expected shape"
+    },
+    {
+     "id": "moonveil.cff",
+     "status": "applied",
+     "changed": 202
+    },
+    {
+     "id": "simplify",
+     "status": "applied",
+     "changed": 111
+    },
+    {
+     "id": "dataflow",
+     "status": "applied",
+     "changed": 455
+    },
+    {
+     "id": "idioms.whiles",
+     "status": "applied",
+     "changed": 11
+    },
+    {
+     "id": "evaluate",
+     "status": "skipped",
+     "changed": 0,
+     "why": "no top-level definitions"
+    },
+    {
+     "id": "webs",
+     "status": "applied",
+     "changed": 122
+    },
+    {
+     "id": "idioms.shortcircuit",
+     "status": "applied",
+     "changed": 16
+    },
+    {
+     "id": "varargs",
+     "status": "applied",
+     "changed": 1
+    },
+    {
+     "id": "rename",
+     "status": "applied",
+     "changed": 447
+    }
+   ],
+   "unresolved": 0,
+   "outputBytes": 52729,
+   "reference": {
+    "literals": 81,
+    "found": 77,
+    "fidelity": 0.207
+   }
+  },
+  {
+   "id": "moonveil-2.1.0-sample6",
+   "family": "moonveil",
+   "version": "2.1.0",
+   "source": "https://github.com/Nonition/MoonveilDeobfuscator (moonveil-2.1.0/samples)",
+   "bytes": 125381,
+   "sha256": "0e34cd19184467821dbe6a744b7fa1ef71eb6200b19a754d2f0b5061caf0ad76",
+   "present": true,
+   "detected": {
+    "confidence": 0.97,
+    "version": "2.1.0",
+    "rules": [
+     "banner",
+     "mention",
+     "table-script"
+    ]
+   },
+   "versionMatches": true,
+   "ok": true,
+   "confidence": {
+    "score": 0.6,
+    "level": "medium"
+   },
+   "steps": [
+    {
+     "id": "fold",
+     "status": "applied",
+     "changed": 1513
+    },
+    {
+     "id": "moonveil.constants",
+     "status": "applied",
+     "changed": 838
+    },
+    {
+     "id": "moonveil.cells",
+     "status": "applied",
+     "changed": 436
+    },
+    {
+     "id": "moonveil.vm",
+     "status": "skipped",
+     "changed": 0,
+     "why": "the interpreter does not have the expected shape"
+    },
+    {
+     "id": "moonveil.cff",
+     "status": "applied",
+     "changed": 333
+    },
+    {
+     "id": "simplify",
+     "status": "applied",
+     "changed": 198
+    },
+    {
+     "id": "dataflow",
+     "status": "applied",
+     "changed": 692
+    },
+    {
+     "id": "idioms.whiles",
+     "status": "applied",
+     "changed": 31
+    },
+    {
+     "id": "evaluate",
+     "status": "skipped",
+     "changed": 0,
+     "why": "no top-level definitions"
+    },
+    {
+     "id": "webs",
+     "status": "applied",
+     "changed": 137
+    },
+    {
+     "id": "idioms.shortcircuit",
+     "status": "applied",
+     "changed": 14
+    },
+    {
+     "id": "idioms.table",
+     "status": "applied",
+     "changed": 36
+    },
+    {
+     "id": "rename",
+     "status": "applied",
+     "changed": 823
+    }
+   ],
+   "unresolved": 0,
+   "outputBytes": 75414
+  },
+  {
+   "id": "moonveil-2.1.0-sample7",
+   "family": "moonveil",
+   "version": "2.1.0",
+   "source": "https://github.com/Nonition/MoonveilDeobfuscator (moonveil-2.1.0/samples)",
+   "bytes": 98341,
+   "sha256": "fb26e52ce09f4faa5625b0c1b0a15a213af6ffd35ba2db5d570cbf08f6d3c172",
+   "present": true,
+   "detected": {
+    "confidence": 0.97,
+    "version": "2.1.0",
+    "rules": [
+     "banner",
+     "mention",
+     "table-script"
+    ]
+   },
+   "versionMatches": true,
+   "ok": true,
+   "confidence": {
+    "score": 0.6,
+    "level": "medium"
+   },
+   "steps": [
+    {
+     "id": "fold",
+     "status": "applied",
+     "changed": 1179
+    },
+    {
+     "id": "moonveil.constants",
+     "status": "applied",
+     "changed": 644
+    },
+    {
+     "id": "moonveil.cells",
+     "status": "applied",
+     "changed": 434
+    },
+    {
+     "id": "moonveil.vm",
+     "status": "skipped",
+     "changed": 0,
+     "why": "the interpreter does not have the expected shape"
+    },
+    {
+     "id": "moonveil.cff",
+     "status": "applied",
+     "changed": 300
+    },
+    {
+     "id": "simplify",
+     "status": "applied",
+     "changed": 168
+    },
+    {
+     "id": "dataflow",
+     "status": "applied",
+     "changed": 583
+    },
+    {
+     "id": "idioms.whiles",
+     "status": "applied",
+     "changed": 30
+    },
+    {
+     "id": "evaluate",
+     "status": "skipped",
+     "changed": 0,
+     "why": "no top-level definitions"
+    },
+    {
+     "id": "webs",
+     "status": "applied",
+     "changed": 111
+    },
+    {
+     "id": "idioms.shortcircuit",
+     "status": "applied",
+     "changed": 10
+    },
+    {
+     "id": "idioms.table",
+     "status": "applied",
+     "changed": 33
+    },
+    {
+     "id": "varargs",
+     "status": "applied",
+     "changed": 1
+    },
+    {
+     "id": "rename",
+     "status": "applied",
+     "changed": 680
+    }
+   ],
+   "unresolved": 0,
+   "outputBytes": 65684
+  },
+  {
+   "id": "snowveil-1-sample2",
+   "family": "snowveil",
+   "version": "1",
+   "source": "https://github.com/Mazsigiit/SnowLarpVeil-deobf (sample2.lua), read as text",
+   "bytes": 32719,
+   "sha256": "36e5325a217b1b8ad876abe007918749b6b2a2169c118dc18a6236cb945af25d",
+   "present": true,
+   "detected": {
+    "confidence": 0.97,
+    "version": "1",
+    "rules": [
+     "banner",
+     "mention",
+     "builtin-getter"
+    ]
+   },
+   "versionMatches": true,
+   "ok": true,
+   "confidence": {
+    "score": 0.35,
+    "level": "low"
+   },
+   "steps": [
+    {
+     "id": "fold",
+     "status": "applied",
+     "changed": 164
+    },
+    {
+     "id": "simplify",
+     "status": "applied",
+     "changed": 32
+    },
+    {
+     "id": "stable",
+     "status": "applied",
+     "changed": 8
+    },
+    {
+     "id": "evaluate",
+     "status": "skipped",
+     "changed": 0,
+     "why": "no decoder-like function calls with constant arguments"
+    },
+    {
+     "id": "rename",
+     "status": "applied",
+     "changed": 780
+    }
+   ],
+   "unresolved": 0,
+   "outputBytes": 66933
+  }
+ ]
+}

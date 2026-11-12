@@ -71,24 +71,40 @@ export function moonveilShape(ast) {
   return !!root && !!nameMap(root);
 }
 
-/** The constants of the bootstrap's permutation, found by the shape of its code: `a, d = K, a * h` after `.., a = .., M`. */
+/**
+ * The constants of the bootstrap's permutation (position h of the function list is stored under names[(mul * h + add) % #names]).
+ * Two spellings of the same two assignments are known, and the order of statements does not matter (a flattened bootstrap scrambles it):
+ *
+ *   2.0.25   `a, d = ADD, a * h`  after `.., a = .., MUL`     (the multiplier is in the second target of an earlier pair)
+ *   2.0.26   `o = MUL`  ...  `t, o = o * h, ADD`              (the product is taken first, then the name is given the addend)
+ *
+ * Both give the same thing: a name that holds MUL, then is multiplied by the counter while it is given ADD.
+ */
 function permutationConstants(builder) {
-  let mul = null;
-  let add = null;
-  let counter = null;
+  const numbers = new Map();                     // name -> every number assigned to it
+  const note = (name, value) => { if (!numbers.has(name)) numbers.set(name, []); numbers.get(name).push(value); };
+  const products = [];                           // { left, right, addTo }: `x = left * right` seen together with `addTo = NUMBER`
   walk(builder, (n) => {
-    if (n.type !== 'Assign' || n.targets.length !== 2 || n.values.length !== 2) return;
-    const [t0, t1] = n.targets;
-    const [v0, v1] = n.values;
-    if (t0.type === 'Name' && t1.type === 'Name' && isNum(v0) && v1.type === 'Binary' && v1.op === '*'
-      && v1.left.type === 'Name' && v1.left.name === t0.name && v1.right.type === 'Name') { add = { name: t0.name, value: v0.value }; counter = v1.right.name; }
+    if (n.type !== 'Assign' || n.targets.length !== n.values.length) return;
+    n.targets.forEach((t, i) => { if (t.type === 'Name' && isNum(n.values[i])) note(t.name, n.values[i].value); });
+    if (n.targets.length !== 2) return;
+    for (const [pi, ni] of [[0, 1], [1, 0]]) {
+      const prod = n.values[pi];
+      const target = n.targets[ni];
+      if (prod.type === 'Binary' && prod.op === '*' && prod.left.type === 'Name' && prod.right.type === 'Name' && target.type === 'Name' && isNum(n.values[ni])
+        && (target.name === prod.left.name || (pi === 1 && ni === 0 && target.name === prod.left.name))) {
+        products.push({ name: target.name, add: n.values[ni].value, counter: prod.right.name, stmt: n });
+      }
+    }
   });
-  if (!add) return null;
-  walk(builder, (n) => {
-    if (n.type !== 'Assign' || n.targets.length !== 2 || n.values.length !== 2) return;
-    if (n.targets[1].type === 'Name' && n.targets[1].name === add.name && isNum(n.values[1]) && n.targets[0].type === 'Name') mul = n.values[1].value;
-  });
-  return mul === null ? null : { mul, add: add.value };
+  for (const p of products) {
+    // the multiplier: another number the same name holds (the one that is not the addend)
+    const others = (numbers.get(p.name) || []).filter((v, i, all) => !(v === p.add && all.indexOf(v) === i && all.length === 1));
+    const mulCandidates = (numbers.get(p.name) || []).filter((v) => v !== p.add);
+    if (mulCandidates.length === 1) return { mul: mulCandidates[0], add: p.add };
+    if (others.length === 1 && others[0] !== p.add) return { mul: others[0], add: p.add };
+  }
+  return null;
 }
 
 /** name -> the table entry the bootstrap stores under it. Null when the construction is not the one this module knows. */
@@ -275,34 +291,65 @@ export function decodeMoonVeilConstants(ast) {
 }
 
 /**
- * `a[n][2][a[n][1]]` is a cell read (and `a[n][2][a[n][1]] = v` a cell write): cells are `{ [1] = 3, [3] = value, [2] = itself }`, so both mean `a[n][3]`.
- * Only applied when every cell constructor in the script has that shape.
+ * A MoonVeil "cell" is a table `{ [1] = K, [K] = value }` that is also stored in one of its own slots S (`cell[S] = cell`), and is read as
+ * `cell[S][cell[1]]`, which is `cell[K]`: the layer of indirection is what keeps a decompiler from reading it as a variable. The slot numbers
+ * differ between builds (P: where the index sits, K: where the value sits, S: where the cell stores itself):
+ *
+ *   2.0.25   P = 1, K = 3, S = 2:   `a[n][2][a[n][1]]`, constructors `{ [1] = 3, [3] = value }`
+ *   2.0.26   P = 3, K = 1, S = 2:   `cell[2][cell[3]]`, constructors `{ [3] = 1, [1] = value }` followed by `cell[2] = cell`
+ *   2.1.0    P = 1, K = 2, S = 3:   `cell[3][cell[1]]`, constructors `{ [1] = 2, [2] = value }` followed by `cell[3] = cell`
+ *
+ * They are read from the script itself: every constructor must agree on K, and every access must agree on S (a script where they do not is left
+ * alone and the step says so). Not run: the claim is that the constructors and the accesses have the one shape the script's own code gives them.
  */
 export function simplifyCells(ast) {
+  const layouts = new Map();                                     // "P,K" -> count
   let cells = 0;
-  let odd = 0;
   walk(ast, (n) => {
-    if (n.type !== 'Table' || n.fields.length !== 2) return;
-    const [a, b] = n.fields;
-    if (a.kind === 'keyed' && b.kind === 'keyed' && a.key.type === 'Number' && b.key.type === 'Number' && a.key.value === 1 && b.key.value === 3) {
+    if (n.type !== 'Table' || n.fields.length < 2 || n.fields.length > 3) return;
+    const num = n.fields.filter((f) => f.kind === 'keyed' && f.key.type === 'Number');
+    if (num.length < 2) return;
+    // `{ [P] = K, [K] = value }`, the two fields in either order
+    for (const a of num) {
+      const b = num.find((x) => x !== a && a.value.type === 'Number' && x.key.value === a.value.value);
+      if (!b || a.key.value === b.key.value) continue;
       cells++;
-      if (!(a.value.type === 'Number' && a.value.value === 3)) odd++;
+      layouts.set(`${a.key.value},${a.value.value}`, (layouts.get(`${a.key.value},${a.value.value}`) || 0) + 1);
+      break;
     }
   });
   if (!cells) return { changed: 0 };
-  if (odd) return { changed: 0, skipped: 'a cell with another layout exists' };
+  if (layouts.size !== 1) return { changed: 0, skipped: 'a cell with another layout exists' };
+  const [P, K] = [...layouts.keys()][0].split(',').map(Number);
+  const slots = new Set();
+  const isCellRead = (e) => {
+    if (e.type !== 'Index' || e.key.type !== 'Index' || e.obj.type !== 'Index') return false;
+    const slot = e.obj;
+    const k = e.key;
+    if (!(slot.key.type === 'Number' && Number.isInteger(slot.key.value) && slot.key.value !== P && slot.key.value !== K)) return false;
+    if (!(k.key.type === 'Number' && k.key.value === P)) return false;
+    return structuralKey(slot.obj) === structuralKey(k.obj);
+  };
+  walk(ast, (n) => { if (isCellRead(n)) slots.add(n.obj.key.value); });
+  if (slots.size > 1) return { changed: 0, skipped: 'cells are read through more than one slot' };
   let changed = 0;
   transform(ast, {
     expr(e) {
-      if (e.type !== 'Index' || e.key.type !== 'Index' || e.obj.type !== 'Index') return undefined;
-      const slot = e.obj; // E[2]
-      if (!(slot.key.type === 'Number' && slot.key.value === 2)) return undefined;
-      const k = e.key; // E[1]
-      if (!(k.key.type === 'Number' && k.key.value === 1)) return undefined;
-      if (structuralKey(slot.obj) !== structuralKey(k.obj)) return undefined;
+      if (!isCellRead(e)) return undefined;
       changed++;
-      return { type: 'Index', obj: slot.obj, key: { type: 'Number', value: 3, raw: '3' }, dot: false };
+      return { type: 'Index', obj: e.obj.obj, key: { type: 'Number', value: K, raw: String(K) }, dot: false };
     },
   });
-  return { changed };
+  // `cell[S] = cell`: what the reads went through; nothing reads it any more
+  if (slots.size === 1) {
+    const S = [...slots][0];
+    transform(ast, {
+      stmt(s) {
+        if (s.type === 'Assign' && s.targets.length === 1 && s.values.length === 1 && s.targets[0].type === 'Index' && s.targets[0].key.type === 'Number' && s.targets[0].key.value === S
+          && s.targets[0].obj.type === 'Name' && s.values[0].type === 'Name' && s.values[0].name === s.targets[0].obj.name) { changed++; return null; }
+        return undefined;
+      },
+    });
+  }
+  return { changed, indexSlot: P, valueSlot: K, selfSlot: slots.size ? [...slots][0] : null, cells };
 }

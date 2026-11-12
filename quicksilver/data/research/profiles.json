@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "generatedAt": "2026-11-09T12:50:40.082Z",
+ "generatedAt": "2026-11-12T09:05:56.847Z",
  "gates": {
   "real": {
    "minFixtures": 8,
@@ -851,11 +851,11 @@
       "traceChecked": 87,
       "traceIdentical": 87,
       "toolBroken": 4,
-      "fidelityAfter": 0.819,
+      "fidelityAfter": 0.821,
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-10-25T11:32:40.868Z"
+       "measuredAt": "2026-11-12T08:48:05.169Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -1017,15 +1017,15 @@
       "fixtures": 115,
       "syntheticFixtures": 0,
       "behaviourChecked": 111,
-      "behaviourSame": 103,
+      "behaviourSame": 110,
       "traceChecked": 103,
       "traceIdentical": 103,
       "toolBroken": 12,
-      "fidelityAfter": 0.82,
+      "fidelityAfter": 0.959,
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-10-25T11:32:40.868Z"
+       "measuredAt": "2026-11-12T08:48:05.169Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -1034,7 +1034,11 @@
      },
      "limitations": [
       "The bytecode-encoding module hides a compiled Lua 5.4 chunk behind a hex string and an offset. With sandboxed evaluation on, the chunk is read out, decompiled and put in place of the script; without it the module is only detected. The chunk carries debug information, so the original local and function names come back.",
-      "The virtual-machine module embeds a Lua-in-Lua interpreter and its data. It is detected and flagged; its source is not recovered.",
+      "The virtual-machine module (revisions 1.6.2 and later, VMGenerator.lua) is read back without running anything: the program text (base-94 digits over a shuffled alphabet, bytes written as pairs with a backslash) is decoded, the Lua 5.1 chunk in it is decompiled and put where the interpreter was started, and the interpreter’s declarations are dropped. Constants the tool’s serialiser measured with `#` and therefore left out when a nil sits among them are put back only where the instructions leave one possible slot; where they leave more than one the choice is ranked and the report says so, and where constants are really missing from the file the module is refused (sample s06 of the corpus is such a case: the values are not in the output the tool wrote). Names are the decompiler’s: the original ones are not in the data.",
+      "The virtual-machine module of revisions 1.5 and 1.6 (Compiler/c.lua, a different interpreter and data format) is detected and flagged; its program is not recovered (10% fidelity, measured).",
+      "Function inlining is undone: closures pasted at each call site become one local function again, placed where the hole the tool left for the deleted definition is when the text still has it. Original function names are not recoverable.",
+      "The renaming module renames `self` in method bodies without declaring it (a defect of the tool): the renamed global is read as `self` again when every use of it is inside a method that does not use `self`, and the report says that it was inferred.",
+      "Revisions 1.5 and 1.6: the coin-flip guard of the control-flow module is removed; the older modules (string encoding, garbage code, opaque predicates, wrappers) share their patterns with later revisions and are measured per revision in the Versions table.",
       "The tool itself produced non-equivalent output for some module/sample pairs (see the \"tool broken\" column); those cases are excluded from behaviour claims."
      ],
      "verification": {
@@ -1046,7 +1050,7 @@
    "claims": {
     "unversioned": {
      "claim": "supported",
-     "why": "103 of 111 real-tool fixtures reconstructed with identical behaviour on a reference runtime (lower bound 86%)."
+     "why": "110 of 111 real-tool fixtures reconstructed with identical behaviour on a reference runtime (lower bound 95%)."
     }
    }
   },
@@ -1225,14 +1229,128 @@
       "reproduction": null
      },
      "limitations": [
-      "Read back statically from the one script: the strings (Z85 text plus an XOR cipher), the numbers (bit32 expressions) and the table of cells, which makes the program’s plain Lua readable.",
-      "The function MoonVeil compiled to its own VM is read back too, without running anything. How its data is laid out (field ids, opcode table, instruction layouts), which cell of the interpreter is which builtin and what its helper methods do are all taken from the script’s own interpreter code, so they are not fixed in this tool. The data is decoded, the encrypted part of it is opened by searching for the one small number its key depends on, and every instruction is partially evaluated against the interpreter’s own handlers and structured back into Lua.",
-      "A build whose interpreter has a different shape is not guessed at: the step says which part did not fit and the general passes take over. Only version 2.0.25 and one script were looked at, so other builds and settings (MV_CFF, MV_ENC_FUNC) are unconfirmed.",
-      "Not compared with a run of the original: the report says so and keeps the confidence at medium. A generic for loop of a shape the reader does not know stays as a call to forgprep (the VM’s own step; none is left in the script that was studied), and register capture follows the VM’s model rather than Lua’s scoping, so a few locals are shared where the source had separate ones."
+      "Read back statically: the strings (Z85 text plus an XOR cipher), the numbers (bit32 expressions) and the table of cells, which makes the program’s plain Lua readable. The bootstrap permutation is read in both spellings seen (2.0.25 and 2.0.26/2.1.0, where the flattened bootstrap scrambles the statements), and the cell layout (where the index, the value and the self reference sit) is read from the script, not fixed: it differs between 2.0.25, 2.0.26 and 2.1.0.",
+      "Version 2.0.25 only: the function MoonVeil compiled to its own VM is read back too, without running anything (data layout, opcode table and instruction layouts are taken from the script’s own interpreter code).",
+      "Versions 2.0.26 and 2.1.0: strings and numbers are decoded (for the one 2.0.26 script with a hand-made reference, 77 of its 81 string literals are in the output, including every URL), but the VM reader does not fit the interpreter of these builds (\"the interpreter does not have the expected shape\") and the control-flow-flattened functions are not all unflattened (the initial state of the dispatcher is not a constant). The program stays a table of decoded functions; fidelity against the reference is 21%. The confidence is capped for that reason (0.60, medium); it was 0.90 before this was measured.",
+      "Version 1.4.5: a different layout (no function table): constants and cells are decoded, three dispatcher loops of 8, 135 and 259 blocks remain, and a 28888-character encoded blob is left. No reference exists, so fidelity is not measured; the confidence is low (0.50).",
+      "MV_CFF, MV_ENC_FUNC and MV_VM are the vendor’s documented macros (per-function virtualisation, encryption keyed at run time, control-flow flattening, MV_OMIT to exclude one); MV_ENC_FUNC bodies need their run-time key and are not recovered. The vendor’s documentation site could not be read from this environment, so the macro list is from search results quoting it."
      ],
      "verification": {
       "status": "internally-tested",
       "basis": "recovery measured on examples that are not real tool output"
+     }
+    }
+   ],
+   "claims": {
+    "unversioned": {
+     "claim": "identification-only",
+     "why": "The output can be recognised. No reconstruction has been verified against real or authorised samples."
+    }
+   }
+  },
+  {
+   "id": "snowveil",
+   "name": "SnowVeil",
+   "kind": "unknown",
+   "summary": "Obfuscator that stamps \"This file was generated using SnowVeil v1 [discord invite]\". No documentation of the tool itself was found. One public sample was read (as text, never as an authority): a VM in one pcall with a collector, a getter that hands out builtins by library and member name, a custom base-85 container, varint-coded constant pools and environment probes through Roblox objects (Path2D, Vector3, CFrame).",
+   "versions": [
+    {
+     "id": "unversioned",
+     "label": "as measured (no version split)",
+     "identification": {
+      "methods": [
+       {
+        "kind": "banner",
+        "confidence": 0.7,
+        "note": "banner comment"
+       }
+      ],
+      "confidence": 0.7
+     },
+     "characteristics": [
+      {
+       "text": "bytecode VM",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/Mazsigiit/SnowLarpVeil-deobf"
+       ]
+      },
+      {
+       "text": "custom base-85 container (RFC 1924 order)",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/Mazsigiit/SnowLarpVeil-deobf"
+       ]
+      },
+      {
+       "text": "varint-coded constant pools",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/Mazsigiit/SnowLarpVeil-deobf"
+       ]
+      },
+      {
+       "text": "builtins fetched by name",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/Mazsigiit/SnowLarpVeil-deobf"
+       ]
+      },
+      {
+       "text": "environment probes (Path2D, Vector3, CFrame)",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/Mazsigiit/SnowLarpVeil-deobf"
+       ]
+      },
+      {
+       "text": "checksums that make the script error() when the environment differs",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/Mazsigiit/SnowLarpVeil-deobf"
+       ]
+      }
+     ],
+     "samples": {
+      "authorizedPairs": 0,
+      "realOutput": 0,
+      "publicObserved": 0,
+      "notes": "No real output of this tool was available."
+     },
+     "capabilities": {
+      "identify": {
+       "available": true,
+       "verified": "format-tested"
+      },
+      "trace": {
+       "available": true,
+       "verified": "unverified"
+      },
+      "recover": {
+       "available": false,
+       "verified": "none"
+      }
+     },
+     "results": {
+      "fixtures": 0,
+      "syntheticFixtures": 0,
+      "behaviourChecked": 0,
+      "behaviourSame": 0,
+      "traceChecked": 0,
+      "traceIdentical": 0,
+      "toolBroken": 0,
+      "fidelityAfter": null,
+      "runtime": null,
+      "reproduction": null
+     },
+     "limitations": [
+      "The script is a VM in one pcall with a collector, a custom base-85 container, varint-coded constant pools and checksums that make it call error() when the environment differs. Detected and flagged as not recovered: 35% confidence, measured.",
+      "The behaviour trace cannot get past the checks: the script probes Path2D objects (GetPositionOnCurve, GetTangentOnCurve, GetLength, GetBoundingRect, GetControlPoints) and the offline Path2D model has no answer for GetBoundingRect, so the run stops at error() after 93 recorded statements. Making it up would be a guess; the answers need a recording from the real engine (--studio) that was not available.",
+      "Only version 1 and one script were seen. Another build or setting is unconfirmed."
+     ],
+     "verification": {
+      "status": "identified",
+      "basis": "recognised from signatures; no reconstruction measured"
      }
     }
    ],
@@ -1430,11 +1548,11 @@
       "traceChecked": 59,
       "traceIdentical": 59,
       "toolBroken": 5,
-      "fidelityAfter": 0.897,
+      "fidelityAfter": 0.906,
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-10-25T11:32:40.868Z"
+       "measuredAt": "2026-11-12T08:48:05.169Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -1795,7 +1913,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-10-25T11:32:40.868Z"
+       "measuredAt": "2026-11-12T08:48:05.169Z"
       },
       "reproduction": null
      },
@@ -1890,7 +2008,7 @@
      ],
      "samples": {
       "authorizedPairs": 0,
-      "realOutput": 48,
+      "realOutput": 0,
       "publicObserved": 0,
       "notes": "Fixtures were made by running the real tool on programs written for this project."
      },
@@ -1901,7 +2019,7 @@
       },
       "trace": {
        "available": true,
-       "verified": "real-output-tested"
+       "verified": "unverified"
       },
       "recover": {
        "available": true,
@@ -1909,18 +2027,18 @@
       }
      },
      "results": {
-      "fixtures": 48,
+      "fixtures": 0,
       "syntheticFixtures": 0,
-      "behaviourChecked": 48,
-      "behaviourSame": 32,
-      "traceChecked": 48,
-      "traceIdentical": 8,
+      "behaviourChecked": 0,
+      "behaviourSame": 0,
+      "traceChecked": 0,
+      "traceIdentical": 0,
       "toolBroken": 0,
-      "fidelityAfter": 0.676,
+      "fidelityAfter": null,
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-10-25T11:32:40.868Z"
+       "measuredAt": "2026-11-12T08:48:05.169Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -1935,15 +2053,15 @@
       "The total and fortress fixtures only run without an instruction-count hook, on LuaJIT: their anti-tamper treats a hook as an attack, so they were verified with tests/corpus/tools/run_lua_nohook.py."
      ],
      "verification": {
-      "status": "real-output-verified",
-      "basis": "fixtures made by the real tool, behaviour decided on reference runtimes"
+      "status": "internally-tested",
+      "basis": "recovery measured on examples that are not real tool output"
      }
     }
    ],
    "claims": {
     "unversioned": {
-     "claim": "partial",
-     "why": "32 of 48 reconstructed with identical behaviour (lower bound 53%)."
+     "claim": "identification-only",
+     "why": "The output can be recognised. No reconstruction has been verified against real or authorised samples."
     }
    }
   },
@@ -2042,7 +2160,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-10-25T11:32:40.868Z"
+       "measuredAt": "2026-11-12T08:48:05.169Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -2118,7 +2236,7 @@
      ],
      "samples": {
       "authorizedPairs": 0,
-      "realOutput": 8,
+      "realOutput": 0,
       "publicObserved": 0,
       "notes": "Fixtures were made by running the real tool on programs written for this project."
      },
@@ -2129,7 +2247,7 @@
       },
       "trace": {
        "available": true,
-       "verified": "real-output-tested"
+       "verified": "unverified"
       },
       "recover": {
        "available": true,
@@ -2137,18 +2255,18 @@
       }
      },
      "results": {
-      "fixtures": 8,
+      "fixtures": 0,
       "syntheticFixtures": 0,
-      "behaviourChecked": 8,
-      "behaviourSame": 8,
-      "traceChecked": 8,
-      "traceIdentical": 8,
+      "behaviourChecked": 0,
+      "behaviourSame": 0,
+      "traceChecked": 0,
+      "traceIdentical": 0,
       "toolBroken": 0,
-      "fidelityAfter": 0.998,
+      "fidelityAfter": null,
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-10-25T11:32:40.868Z"
+       "measuredAt": "2026-11-12T08:48:05.169Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -2160,15 +2278,15 @@
       "This is a loader-style packer: anything the loader does besides decoding (touching other globals, printing) stops the replacement. Variable names of the original are kept because the payload is the original source."
      ],
      "verification": {
-      "status": "real-output-verified",
-      "basis": "fixtures made by the real tool, behaviour decided on reference runtimes"
+      "status": "internally-tested",
+      "basis": "recovery measured on examples that are not real tool output"
      }
     }
    ],
    "claims": {
     "unversioned": {
-     "claim": "partial",
-     "why": "8 of 8 reconstructed with identical behaviour (lower bound 68%)."
+     "claim": "identification-only",
+     "why": "The output can be recognised. No reconstruction has been verified against real or authorised samples."
     }
    }
   },
@@ -2739,11 +2857,11 @@
       "traceChecked": 47,
       "traceIdentical": 47,
       "toolBroken": 1,
-      "fidelityAfter": 0.134,
+      "fidelityAfter": 0.135,
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-10-25T11:32:40.868Z"
+       "measuredAt": "2026-11-12T08:48:05.169Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -2864,7 +2982,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-10-25T11:32:40.868Z"
+       "measuredAt": "2026-11-12T08:48:05.169Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -2984,7 +3102,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-10-25T11:32:40.868Z"
+       "measuredAt": "2026-11-12T08:48:05.169Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",

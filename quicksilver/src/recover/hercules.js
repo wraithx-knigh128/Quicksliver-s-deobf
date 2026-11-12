@@ -18,6 +18,8 @@ function isAntiTamperBlock(stmt) {
   let marker = false;
   walk(stmt, (n) => {
     if (n.type === 'Id' && n.name === '_BFR') hasTable = true;
+    // a second Hercules pass over the script renamed the block's locals: the table of standard functions is then recognised by its keys
+    if (n.type === 'String' && n.value === 'debug.getinfo') hasTable = true;
     if (n.type === 'String' && n.value.startsWith('Tamper Detected! Reason:')) marker = true;
   });
   return hasTable && marker;
@@ -143,5 +145,49 @@ export function removeHerculesAntiTamperFunction(chunk) {
   visit(chunk.body);
   // one level down as well: the block can sit inside the wrapper the control-flow module puts around the script
   walk(chunk, (n) => { if (n !== chunk && Array.isArray(n.body) && n.type !== 'Func') visit(n.body); if (n.type === 'If') { n.clauses.forEach((c) => visit(c.body)); if (n.orelse) visit(n.orelse); } });
+  return { changed: removed };
+}
+
+/**
+ * control_flow_obfuscator.lua of Hercules 1.5 to 1.6 prepends one guard, written the same way every time:
+ *
+ *   local executed = false while not executed do if math.random(0, 1) == 0 then local _ = <n> else executed = true end end
+ *
+ * It repeats until a coin comes up the right way and does nothing else: the only other branch holds a junk local. The program after it is
+ * the script. (The coin flips advance the random generator, so a script that draws random numbers without seeding them draws other numbers
+ * once the guard is gone; such a script has no fixed output to preserve.)
+ */
+export function removeHerculesCoinGuard(chunk) {
+  let removed = 0;
+  const isJunk = (body) => body.length === 0 || (body.length === 1 && body[0].type === 'Local' && body[0].ids.length === 1 && body[0].values.length === 1 && body[0].values[0].type === 'Number');
+  const sets = (body, name) => body.length === 1 && body[0].type === 'Assign' && body[0].targets.length === 1 && body[0].targets[0].type === 'Name' && body[0].targets[0].name === name
+    && body[0].values.length === 1 && body[0].values[0].type === 'True';
+  const coin = (e) => e.type === 'Binary' && (e.op === '==' || e.op === '~=') && e.left.type === 'Call' && e.left.fn.type === 'Index' && e.left.fn.obj.type === 'Name'
+    && e.left.fn.obj.name === 'math' && e.left.fn.key.type === 'String' && e.left.fn.key.value === 'random' && e.left.args.length === 2 && e.left.args.every((a) => a.type === 'Number')
+    && e.right.type === 'Number';
+  transform(chunk, {
+    block(stmts) {
+      for (let i = 0; i + 1 < stmts.length; i++) {
+        const a = stmts[i];
+        const w = stmts[i + 1];
+        if (a.type !== 'Local' || a.ids.length !== 1 || a.values.length !== 1 || a.values[0].type !== 'False') continue;
+        const name = a.ids[0].name;
+        if (w.type !== 'While' || w.cond.type !== 'Unary' || w.cond.op !== 'not' || w.cond.arg.type !== 'Name' || w.cond.arg.name !== name) continue;
+        if (w.body.length !== 1 || w.body[0].type !== 'If' || w.body[0].clauses.length !== 1) continue;
+        const iff = w.body[0];
+        const c = iff.clauses[0];
+        if (!coin(c.cond) || !iff.orelse) continue;
+        if (!((isJunk(c.body) && sets(iff.orelse, name)) || (sets(c.body, name) && isJunk(iff.orelse)))) continue;
+        const out = stmts.slice();
+        // a comment written before the guard belongs to what follows
+        const next = out[i + 2];
+        if (next && a.comments && a.comments.length) next.comments = [...a.comments, ...(next.comments || [])];
+        out.splice(i, 2);
+        removed++;
+        return out;
+      }
+      return undefined;
+    },
+  });
   return { changed: removed };
 }

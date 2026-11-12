@@ -11,6 +11,7 @@
 // tests/ compares this score with the measured fidelity against the original sources.
 
 import { detect } from '../detect/detect.js';
+import { findRoot } from './moonveil.js';
 
 const clamp = (x, lo = 0, hi = 1) => Math.min(hi, Math.max(lo, x));
 
@@ -67,6 +68,15 @@ export function assessConfidence(before, output, ctx) {
   }
   if ((after.metrics.mangledRatio || 0) > 0.6 && (before.metrics.mangledRatio || 0) > 0.6) note(-0.08, 'Most identifiers are still machine generated (renaming is off or found no better names).');
 
+  // What the passes themselves reported as left: each is a place where the control flow or a value is still the obfuscator's.
+  const residual = ctx.adaptive && ctx.adaptive.residual ? ctx.adaptive.residual.length : 0;
+  if (residual) note(-Math.min(0.5, 0.05 * residual), `${residual} place(s) were found and could not be resolved (listed in the report).`);
+  // MoonVeil keeps the program as a table of lifted functions; unless the VM reader or the cell/constant passes joined it into one program, that table is still the script.
+  if (ctx.ast && before.families.some((f) => f.id === 'moonveil' && f.confidence >= 0.5) && !steps.some((x) => x.id === 'moonveil.vm' && x.status === 'applied')) {
+    let root = null;
+    try { root = findRoot(ctx.ast); } catch { root = null; }
+    if (root) note(-0.3, 'The program is still MoonVeil\u2019s table of lifted functions: the functions are decoded and readable, but they are not joined into the script\u2019s own flow of control.');
+  }
   for (const s of steps) if (s.status === 'applied' && s.detail && s.detail.inferred) note(-0.15, `Inferred, not read: ${s.detail.inferred}.`);
   for (const s of steps.filter((x) => x.status === 'failed')) note(-0.1, `Pass "${s.label}" failed and was skipped: ${s.error}`);
   const evalStep = steps.find((s) => s.id === 'evaluate');

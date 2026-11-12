@@ -1,0 +1,1113 @@
+{
+  "tool": "Hercules",
+  "version": "1.5-early",
+  "source": "https://github.com/zeusssz/hercules-obfuscator",
+  "sourceRevision": "938497446e73013a33b603c43d61b4b8d046a73f",
+  "revisionDate": "2024-09-22",
+  "note": "first commit whose watermark says v1.5 (2024-09-22): text modules only, no virtual machine",
+  "runtime": "PUC Lua 5.4 via lupa",
+  "seed": 1337,
+  "modules": [
+    "bytecode_encoding",
+    "control_flow",
+    "dynamic_code",
+    "function_inlining",
+    "garbage_code",
+    "opaque_predicates",
+    "string_encoding",
+    "variable_renaming"
+  ],
+  "entries": [
+    {
+      "file": "s01_minify_basic__default.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "default",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 1531,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:2: unfinished string near '<eof>'"
+    },
+    {
+      "file": "s01_minify_basic__all.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "all",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 1531,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:2: unfinished string near '<eof>'"
+    },
+    {
+      "file": "s01_minify_basic__mod-bytecode_encoding.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "mod-bytecode_encoding",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 911,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__mod-control_flow.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "mod-control_flow",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 1030,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__mod-dynamic_code.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "mod-dynamic_code",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 1109,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:2: unfinished string near '<eof>'"
+    },
+    {
+      "file": "s01_minify_basic__mod-function_inlining.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "mod-function_inlining",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 697,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:2: '<name>' expected near 'return'"
+    },
+    {
+      "file": "s01_minify_basic__mod-garbage_code.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "mod-garbage_code",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 1015,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__mod-opaque_predicates.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "mod-opaque_predicates",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 911,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__mod-string_encoding.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "mod-string_encoding",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 922,
+      "behaviors": {
+        "lua51": "diverged",
+        "luajit": "diverged",
+        "lua54": "diverged",
+        "lua54c": "diverged"
+      },
+      "behavior": "diverged"
+    },
+    {
+      "file": "s01_minify_basic__mod-variable_renaming.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "mod-variable_renaming",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 1313,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:2: attempt to call field 'mmhoymifacip' (a nil value)"
+    },
+    {
+      "file": "s02_renamed_vars__default.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "default",
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 1892,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:2: unfinished string near '<eof>'"
+    },
+    {
+      "file": "s02_renamed_vars__all.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "all",
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 1892,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:2: unfinished string near '<eof>'"
+    },
+    {
+      "file": "s02_renamed_vars__mod-bytecode_encoding.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "mod-bytecode_encoding",
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 1326,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__mod-control_flow.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "mod-control_flow",
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 1445,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__mod-dynamic_code.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "mod-dynamic_code",
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 1545,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:2: unfinished string near '<eof>'"
+    },
+    {
+      "file": "s02_renamed_vars__mod-function_inlining.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "mod-function_inlining",
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 951,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:2: '<name>' expected near 'if'"
+    },
+    {
+      "file": "s02_renamed_vars__mod-garbage_code.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "mod-garbage_code",
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 1398,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__mod-opaque_predicates.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "mod-opaque_predicates",
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 1326,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__mod-string_encoding.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "mod-string_encoding",
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 1344,
+      "behaviors": {
+        "lua51": "diverged",
+        "luajit": "diverged",
+        "lua54": "diverged",
+        "lua54c": "diverged"
+      },
+      "behavior": "diverged"
+    },
+    {
+      "file": "s02_renamed_vars__mod-variable_renaming.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "mod-variable_renaming",
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 1631,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:2: attempt to call field 'guqtihgr' (a nil value)"
+    },
+    {
+      "file": "s03_encoded_strings__default.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "default",
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 1955,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:2: unfinished string near '<eof>'"
+    },
+    {
+      "file": "s03_encoded_strings__all.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "all",
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 2039,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:2: unfinished string near '<eof>'"
+    },
+    {
+      "file": "s03_encoded_strings__mod-bytecode_encoding.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "mod-bytecode_encoding",
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 944,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:2: unexpected symbol near '%'"
+    },
+    {
+      "file": "s03_encoded_strings__mod-control_flow.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "mod-control_flow",
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 1063,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:2: unexpected symbol near '%'"
+    },
+    {
+      "file": "s03_encoded_strings__mod-dynamic_code.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "mod-dynamic_code",
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 1106,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:2: unfinished string near '<eof>'"
+    },
+    {
+      "file": "s03_encoded_strings__mod-function_inlining.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "mod-function_inlining",
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 944,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:2: unexpected symbol near '%'"
+    },
+    {
+      "file": "s03_encoded_strings__mod-garbage_code.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "mod-garbage_code",
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 1066,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:2: unexpected symbol near '%'"
+    },
+    {
+      "file": "s03_encoded_strings__mod-opaque_predicates.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "mod-opaque_predicates",
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 944,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:2: unexpected symbol near '%'"
+    },
+    {
+      "file": "s03_encoded_strings__mod-string_encoding.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "mod-string_encoding",
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 1013,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:2: attempt to concatenate a nil value"
+    },
+    {
+      "file": "s03_encoded_strings__mod-variable_renaming.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "mod-variable_renaming",
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 1296,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:2: unexpected symbol near '%'"
+    },
+    {
+      "file": "s04_control_flow__default.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "default",
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 2039,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:2: unfinished string near '<eof>'"
+    },
+    {
+      "file": "s04_control_flow__all.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "all",
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 2022,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:2: unfinished string near '<eof>'"
+    },
+    {
+      "file": "s04_control_flow__mod-bytecode_encoding.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "mod-bytecode_encoding",
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 1380,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__mod-control_flow.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "mod-control_flow",
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 1499,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__mod-dynamic_code.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "mod-dynamic_code",
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 1652,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:2: unfinished string near '<eof>'"
+    },
+    {
+      "file": "s04_control_flow__mod-function_inlining.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "mod-function_inlining",
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 907,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:2: '<eof>' expected near 'end'"
+    },
+    {
+      "file": "s04_control_flow__mod-garbage_code.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "mod-garbage_code",
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 1415,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__mod-opaque_predicates.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "mod-opaque_predicates",
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 1380,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__mod-string_encoding.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "mod-string_encoding",
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 1418,
+      "behaviors": {
+        "lua51": "diverged",
+        "luajit": "diverged",
+        "lua54": "diverged",
+        "lua54c": "diverged"
+      },
+      "behavior": "diverged"
+    },
+    {
+      "file": "s04_control_flow__mod-variable_renaming.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "mod-variable_renaming",
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 2015,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:2: attempt to call field 'naekjdtk' (a nil value)"
+    },
+    {
+      "file": "s05_nested_functions__default.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "default",
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 2236,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:2: unfinished string near '<eof>'"
+    },
+    {
+      "file": "s05_nested_functions__all.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "all",
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 2236,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:2: unfinished string near '<eof>'"
+    },
+    {
+      "file": "s05_nested_functions__mod-bytecode_encoding.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "mod-bytecode_encoding",
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 1274,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__mod-control_flow.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "mod-control_flow",
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 1393,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__mod-dynamic_code.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "mod-dynamic_code",
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 1523,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:2: unfinished string near '<eof>'"
+    },
+    {
+      "file": "s05_nested_functions__mod-function_inlining.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "mod-function_inlining",
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 919,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:2: '<name>' expected near 'end'"
+    },
+    {
+      "file": "s05_nested_functions__mod-garbage_code.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "mod-garbage_code",
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 1416,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__mod-opaque_predicates.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "mod-opaque_predicates",
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 1274,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__mod-string_encoding.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "mod-string_encoding",
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 1277,
+      "behaviors": {
+        "lua51": "diverged",
+        "luajit": "diverged",
+        "lua54": "diverged",
+        "lua54c": "diverged"
+      },
+      "behavior": "diverged"
+    },
+    {
+      "file": "s05_nested_functions__mod-variable_renaming.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "mod-variable_renaming",
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 2023,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:2: attempt to call field 'qqkjeesfq' (a nil value)"
+    },
+    {
+      "file": "s06_combined__default.lua",
+      "sample": "s06_combined.lua",
+      "config": "default",
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 3694,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:2: unfinished string near '<eof>'"
+    },
+    {
+      "file": "s06_combined__all.lua",
+      "sample": "s06_combined.lua",
+      "config": "all",
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 3694,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:2: unfinished string near '<eof>'"
+    },
+    {
+      "file": "s06_combined__mod-bytecode_encoding.lua",
+      "sample": "s06_combined.lua",
+      "config": "mod-bytecode_encoding",
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 2007,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__mod-control_flow.lua",
+      "sample": "s06_combined.lua",
+      "config": "mod-control_flow",
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 2126,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__mod-dynamic_code.lua",
+      "sample": "s06_combined.lua",
+      "config": "mod-dynamic_code",
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 2331,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:2: unfinished string near '<eof>'"
+    },
+    {
+      "file": "s06_combined__mod-function_inlining.lua",
+      "sample": "s06_combined.lua",
+      "config": "mod-function_inlining",
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 1881,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:2: '<name>' expected near 'local'"
+    },
+    {
+      "file": "s06_combined__mod-garbage_code.lua",
+      "sample": "s06_combined.lua",
+      "config": "mod-garbage_code",
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 2129,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__mod-opaque_predicates.lua",
+      "sample": "s06_combined.lua",
+      "config": "mod-opaque_predicates",
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 2007,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__mod-string_encoding.lua",
+      "sample": "s06_combined.lua",
+      "config": "mod-string_encoding",
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 2041,
+      "behaviors": {
+        "lua51": "diverged",
+        "luajit": "diverged",
+        "lua54": "diverged",
+        "lua54c": "diverged"
+      },
+      "behavior": "diverged"
+    },
+    {
+      "file": "s06_combined__mod-variable_renaming.lua",
+      "sample": "s06_combined.lua",
+      "config": "mod-variable_renaming",
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 2946,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:2: attempt to call global 'hxwxgoocv' (a nil value)"
+    },
+    {
+      "file": "s07_roblox_style__default.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "default",
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 1816,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:2: unfinished string near '<eof>'"
+    },
+    {
+      "file": "s07_roblox_style__all.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "all",
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 1816,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:2: unfinished string near '<eof>'"
+    },
+    {
+      "file": "s07_roblox_style__mod-bytecode_encoding.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "mod-bytecode_encoding",
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 1000,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__mod-control_flow.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "mod-control_flow",
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 1119,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__mod-dynamic_code.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "mod-dynamic_code",
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 1285,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:2: unfinished string near '<eof>'"
+    },
+    {
+      "file": "s07_roblox_style__mod-function_inlining.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "mod-function_inlining",
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 945,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:2: '<name>' expected near 'local'"
+    },
+    {
+      "file": "s07_roblox_style__mod-garbage_code.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "mod-garbage_code",
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 1264,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__mod-opaque_predicates.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "mod-opaque_predicates",
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 1000,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent",
+        "lua54": "equivalent",
+        "lua54c": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__mod-string_encoding.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "mod-string_encoding",
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 1026,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:2: attempt to index field 'Heartbeat' (a function value)"
+    },
+    {
+      "file": "s07_roblox_style__mod-variable_renaming.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "mod-variable_renaming",
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 1195,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored",
+        "lua54": "errored",
+        "lua54c": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:2: attempt to index global 'aykbkicc' (a nil value)"
+    }
+  ]
+}

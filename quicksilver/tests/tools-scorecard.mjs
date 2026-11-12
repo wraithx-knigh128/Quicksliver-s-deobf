@@ -26,6 +26,15 @@ const tools = [['prometheus', 'obfuscated/prometheus'], ['hercules', 'obfuscated
 for (const [tool, dir] of [['colisseum', 'obfuscated-local/colisseum'], ['simple_lua', 'obfuscated-local/simple_lua']]) {
   if (fs.existsSync(path.join(corpus, dir, 'manifest.json'))) tools.push([tool, dir]);
 }
+// Hercules revisions older than the current one (each its own folder, tests/corpus/tools/gen_hercules_versions.py) and the layered (mixed) chains
+// (gen_mixed.py): measured with the same pipeline, kept apart in the results by `version` / the tool name `mixed`.
+const versions = new Map();
+for (const d of fs.readdirSync(path.join(corpus, 'obfuscated')).filter((x) => /^hercules-\d/.test(x)).sort()) {
+  if (!fs.existsSync(path.join(corpus, 'obfuscated', d, 'manifest.json'))) continue;
+  tools.push(['hercules', `obfuscated/${d}`]);
+  versions.set(`obfuscated/${d}`, d.replace(/^hercules-/, ''));
+}
+if (fs.existsSync(path.join(corpus, 'obfuscated/mixed/manifest.json'))) tools.push(['mixed', 'obfuscated/mixed']);
 const results = [];
 const read = (p) => bytesToBinary(fs.readFileSync(p));
 
@@ -36,6 +45,8 @@ for (const [tool, dir] of tools) {
     const original = read(path.join(corpus, 'originals', e.sample));
     const input = read(path.join(corpus, dir, e.file));
     const entry = { tool, config: e.config, sample: e.sample.replace(/\.lua$/, ''), file: e.file, toolBehavior: e.behavior };
+    if (versions.has(dir)) entry.version = versions.get(dir);
+    if (e.layers) entry.layers = e.layers;
     try { entry.fidelityBefore = fidelity(original, input).score; } catch { entry.fidelityBefore = null; }
     const t0 = Date.now();
     let r;
@@ -69,7 +80,7 @@ oracle.stopOracle?.();
 // ---- report ---------------------------------------------------------------------------------------------------
 const groups = new Map();
 for (const r of results) {
-  const k = `${r.tool}/${r.config}`;
+  const k = `${r.tool}${r.version ? " " + r.version : ""}/${r.config}`;
   if (!groups.has(k)) groups.set(k, []);
   groups.get(k).push(r);
 }

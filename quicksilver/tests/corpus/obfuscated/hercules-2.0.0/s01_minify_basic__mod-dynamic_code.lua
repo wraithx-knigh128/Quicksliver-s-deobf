@@ -1,0 +1,49 @@
+--[Obfuscated by Hercules v2.0.0 | hercules-obfuscator.xyz/discord | hercules-obfuscator.xyz/source]
+-- s01: arithmetic and string utilities. Used for minification / formatting tests.
+local function clamp(value, low, high)
+  if value < low then
+    return low
+  elseif value > high then
+    return high
+  end
+  return value
+end
+
+local function gcd(a, b)
+  while b ~= 0 do
+    do (function() a, b = b, a % b end)() end
+  end
+  return a
+end
+
+local function isPrime(n)
+  if n < 2 then
+    return false
+  end
+  for i = 2, math.floor(math.sqrt(n)) do
+    if n % i == 0 then
+      return false
+    end
+  end
+  return true
+end
+
+local function join(list, separator)
+  local parts = {}
+  for index = 1, #list do
+    do (function() parts[#parts + 1] = tostring(list[index]) end)() end
+  end
+  return table.concat(parts, separator)
+end
+
+local primes = {}
+for candidate = 1, 50 do
+  if isPrime(candidate) then
+    do (function() primes[#primes + 1] = candidate end)() end
+  end
+end
+
+do (function() print("primes: " .. join(primes, ",")) end)() end
+do (function() print("gcd(84, 36) = " .. gcd(84, 36)) end)() end
+do (function() print("clamp: " .. clamp(15, 0, 10) .. " " .. clamp(-3, 0, 10) .. " " .. clamp(7, 0, 10)) end)() end
+do (function() print(string.format("%5.2f|%-6s|%03d", 3.14159, "ab", 7)) end)() end

@@ -38,7 +38,11 @@ export const NOTES = {
     config: {},
     limits: [
       'The bytecode-encoding module hides a compiled Lua 5.4 chunk behind a hex string and an offset. With sandboxed evaluation on, the chunk is read out, decompiled and put in place of the script; without it the module is only detected. The chunk carries debug information, so the original local and function names come back.',
-      'The virtual-machine module embeds a Lua-in-Lua interpreter and its data. It is detected and flagged; its source is not recovered.',
+      'The virtual-machine module (revisions 1.6.2 and later, VMGenerator.lua) is read back without running anything: the program text (base-94 digits over a shuffled alphabet, bytes written as pairs with a backslash) is decoded, the Lua 5.1 chunk in it is decompiled and put where the interpreter was started, and the interpreter\u2019s declarations are dropped. Constants the tool\u2019s serialiser measured with `#` and therefore left out when a nil sits among them are put back only where the instructions leave one possible slot; where they leave more than one the choice is ranked and the report says so, and where constants are really missing from the file the module is refused (sample s06 of the corpus is such a case: the values are not in the output the tool wrote). Names are the decompiler\u2019s: the original ones are not in the data.',
+      'The virtual-machine module of revisions 1.5 and 1.6 (Compiler/c.lua, a different interpreter and data format) is detected and flagged; its program is not recovered (10% fidelity, measured).',
+      'Function inlining is undone: closures pasted at each call site become one local function again, placed where the hole the tool left for the deleted definition is when the text still has it. Original function names are not recoverable.',
+      'The renaming module renames `self` in method bodies without declaring it (a defect of the tool): the renamed global is read as `self` again when every use of it is inside a method that does not use `self`, and the report says that it was inferred.',
+      'Revisions 1.5 and 1.6: the coin-flip guard of the control-flow module is removed; the older modules (string encoding, garbage code, opaque predicates, wrappers) share their patterns with later revisions and are measured per revision in the Versions table.',
       'The tool itself produced non-equivalent output for some module/sample pairs (see the "tool broken" column); those cases are excluded from behaviour claims.',
     ],
   },
@@ -66,14 +70,26 @@ export const NOTES = {
   moonveil: {
     status: 'partial',
     basis: 'signature',
-    detect: 'Taken from one real script (a MoonVeil 2.0.25 script supplied by a user and not stored here): the table-and-permutation shape is recognised structurally, the banner by its text. No MoonVeil output could be generated here (the tool is closed and hosted), so there is no scorecard row; the claims below rest on that one script.',
+    detect: 'Banner by its text (the version in it is what the file claims) and the table-and-permutation shape structurally. Five scripts of four versions were read, none of them stored here: 1.4.5, 2.0.25 (supplied by a user), 2.0.26 and 2.1.0 (two scripts) from public deobfuscator repositories. No MoonVeil output could be generated (the tool is closed and hosted), so there is no scorecard row; per-version records are in data/research/format-records.json and are re-measured by tools/formats/measure.mjs when the scripts are present.',
     covers: [],
     config: {},
     limits: [
-      'Read back statically from the one script: the strings (Z85 text plus an XOR cipher), the numbers (bit32 expressions) and the table of cells, which makes the program\u2019s plain Lua readable.',
-      'The function MoonVeil compiled to its own VM is read back too, without running anything. How its data is laid out (field ids, opcode table, instruction layouts), which cell of the interpreter is which builtin and what its helper methods do are all taken from the script\u2019s own interpreter code, so they are not fixed in this tool. The data is decoded, the encrypted part of it is opened by searching for the one small number its key depends on, and every instruction is partially evaluated against the interpreter\u2019s own handlers and structured back into Lua.',
-      'A build whose interpreter has a different shape is not guessed at: the step says which part did not fit and the general passes take over. Only version 2.0.25 and one script were looked at, so other builds and settings (MV_CFF, MV_ENC_FUNC) are unconfirmed.',
-      'Not compared with a run of the original: the report says so and keeps the confidence at medium. A generic for loop of a shape the reader does not know stays as a call to forgprep (the VM\u2019s own step; none is left in the script that was studied), and register capture follows the VM\u2019s model rather than Lua\u2019s scoping, so a few locals are shared where the source had separate ones.',
+      'Read back statically: the strings (Z85 text plus an XOR cipher), the numbers (bit32 expressions) and the table of cells, which makes the program\u2019s plain Lua readable. The bootstrap permutation is read in both spellings seen (2.0.25 and 2.0.26/2.1.0, where the flattened bootstrap scrambles the statements), and the cell layout (where the index, the value and the self reference sit) is read from the script, not fixed: it differs between 2.0.25, 2.0.26 and 2.1.0.',
+      'Version 2.0.25 only: the function MoonVeil compiled to its own VM is read back too, without running anything (data layout, opcode table and instruction layouts are taken from the script\u2019s own interpreter code).',
+      'Versions 2.0.26 and 2.1.0: strings and numbers are decoded (for the one 2.0.26 script with a hand-made reference, 77 of its 81 string literals are in the output, including every URL), but the VM reader does not fit the interpreter of these builds ("the interpreter does not have the expected shape") and the control-flow-flattened functions are not all unflattened (the initial state of the dispatcher is not a constant). The program stays a table of decoded functions; fidelity against the reference is 21%. The confidence is capped for that reason (0.60, medium); it was 0.90 before this was measured.',
+      'Version 1.4.5: a different layout (no function table): constants and cells are decoded, three dispatcher loops of 8, 135 and 259 blocks remain, and a 28888-character encoded blob is left. No reference exists, so fidelity is not measured; the confidence is low (0.50).',
+      'MV_CFF, MV_ENC_FUNC and MV_VM are the vendor\u2019s documented macros (per-function virtualisation, encryption keyed at run time, control-flow flattening, MV_OMIT to exclude one); MV_ENC_FUNC bodies need their run-time key and are not recovered. The vendor\u2019s documentation site could not be read from this environment, so the macro list is from search results quoting it.',
+    ],
+  },
+  snowveil: {
+    status: 'unsupported',
+    basis: 'signature',
+    detect: 'Banner ("generated using SnowVeil v1") and, without it, the builtin getter (one local function asked for string / table / math / bit32 / Vector3 / CFrame members by name): 0.97 and 0.75. One public sample was read as text and run in the sandboxed environment; nothing about the tool\u2019s own documentation could be found.',
+    config: {},
+    limits: [
+      'The script is a VM in one pcall with a collector, a custom base-85 container, varint-coded constant pools and checksums that make it call error() when the environment differs. Detected and flagged as not recovered: 35% confidence, measured.',
+      'The behaviour trace cannot get past the checks: the script probes Path2D objects (GetPositionOnCurve, GetTangentOnCurve, GetLength, GetBoundingRect, GetControlPoints) and the offline Path2D model has no answer for GetBoundingRect, so the run stops at error() after 93 recorded statements. Making it up would be a guess; the answers need a recording from the real engine (--studio) that was not available.',
+      'Only version 1 and one script were seen. Another build or setting is unconfirmed.',
     ],
   },
   kirus: {
@@ -223,9 +239,6 @@ export const NOTES = {
 /** Per-configuration status overrides where the measured numbers alone would mislead. */
 export const OVERRIDES = {
   hercules: {
-    'mod-virtual_machine': { status: 'unsupported', note: 'The script runs inside an interpreter written in Lua; the original program is only present as data.' },
-    'mod-function_inlining': { status: 'unsupported', note: 'No dedicated pass; the output is left as the tool wrote it.' },
-    heavy: { status: 'unsupported', note: 'Combines function inlining (no dedicated pass; every small function becomes an inline closure) with string encoding, wrappers and anti-tamper. It does not contain the virtual-machine module.' },
-    maximum: { status: 'unsupported', note: 'Includes the virtual-machine module. With the sandbox on, the bytecode layer around it is now read and decompiled, which leaves the interpreter and its data: more transparent, but further from the original program, so fidelity drops.' },
+    // none: the statuses of the Hercules configurations are derived from the measured fixtures
   },
 };

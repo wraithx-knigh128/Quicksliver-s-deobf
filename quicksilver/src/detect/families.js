@@ -57,6 +57,15 @@ export const FAMILIES = {
     techniques: ['optional VM', 'function encryption', 'control-flow flattening', 'closure table with cell variables', 'Z85 + XOR string encryption', 'bit32 arithmetic constants'],
     sources: ['https://git.openpunk.com/CPunch/MoonVeil-Docs'],
   },
+  snowveil: {
+    name: 'SnowVeil',
+    kind: 'unknown',
+    evidence: 'banner',
+    maxConfidence: 0.97,
+    summary: 'Obfuscator that stamps "This file was generated using SnowVeil v1 [discord invite]". No documentation of the tool itself was found. One public sample was read (as text, never as an authority): a VM in one pcall with a collector, a getter that hands out builtins by library and member name, a custom base-85 container, varint-coded constant pools and environment probes through Roblox objects (Path2D, Vector3, CFrame).',
+    techniques: ['bytecode VM', 'custom base-85 container (RFC 1924 order)', 'varint-coded constant pools', 'builtins fetched by name', 'environment probes (Path2D, Vector3, CFrame)', 'checksums that make the script error() when the environment differs'],
+    sources: ['https://github.com/Mazsigiit/SnowLarpVeil-deobf'],
+  },
   kirus: {
     name: 'Kirus',
     kind: 'unknown',

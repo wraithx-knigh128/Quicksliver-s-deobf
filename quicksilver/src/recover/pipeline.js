@@ -22,7 +22,7 @@ import { booleanResults, orientComparisons, shortCircuits, tableConstructors, me
 import { removeAntiTamper, undoProxifyLocals } from './prometheus.js';
 import { propagateStable } from '../passes/stable.js';
 import { buildReport, annotate, stripReport } from './annotate.js';
-import { removeHerculesAntiTamper, removeHerculesAntiTamperFunction, restoreMethodSelf } from './hercules.js';
+import { removeHerculesAntiTamper, removeHerculesAntiTamperFunction, removeHerculesCoinGuard, restoreMethodSelf } from './hercules.js';
 import { uninlinePass } from '../passes/uninline.js';
 import { splitWebs } from '../passes/webs.js';
 import { analyze as analyzeScopes } from '../core/scope.js';
@@ -208,8 +208,9 @@ export function recover(source, userOptions = {}) {
     let total = 0;
     total += run.step('unwrap', 'Unwrap outer wrapper function', (a) => unwrapWrapper(a), { quiet: true });
     total += run.step('prometheus.antitamper', 'Remove Prometheus anti-tamper block', (a) => removeAntiTamper(a), { quiet: true });
+    total += run.step('hercules.coinguard', 'Remove the Hercules 1.x coin-flip guard loop', (a) => removeHerculesCoinGuard(a), { quiet: true });
     total += run.step('hercules.antitamper', 'Remove Hercules anti-tamper block', (a) => removeHerculesAntiTamper(a), { quiet: true });
-    if (decompiled) total += run.step('hercules.antitamper.compiled', 'Remove the Hercules anti-tamper check that was compiled with the script', (a) => removeHerculesAntiTamperFunction(a), { quiet: true });
+    if (decompiled || detection.families.some((f) => f.id === 'hercules' && f.confidence >= 0.5)) total += run.step('hercules.antitamper.compiled', 'Remove the Hercules anti-tamper check that was compiled with the script', (a) => removeHerculesAntiTamperFunction(a), { quiet: true });
     total += run.step('colisseum.guard', 'Remove the Colisseum tamper guard', (a) => removeColisseumGuard(a), { quiet: true });
     if (detection.families.some((f) => f.id === 'hercules' && f.confidence >= 0.5)) {
       total += run.step('hercules.self', 'Read the renamed `self` of methods as `self` again', (a) => restoreMethodSelf(a, analyzeScopes(a)), { quiet: true });
