@@ -81,7 +81,24 @@ export class CompatDashboard {
     this.root.append(bar, filters, h('div.table-wrap', h('table.grid', [
       h('thead', h('tr', [h('th', 'Obfuscator'), h('th', 'Status'), h('th', 'What you get'), h('th', 'Tested on'), h('th', { title: 'Mean similarity to the original source, before → after recovery' }, 'Fidelity'), h('th', 'Fixtures')])),
       body,
-    ])), this.footer());
+    ])), this.layered(), this.footer());
+  }
+
+  /** Real tools stacked with packers and with home-made transformations: what the pipeline does when no single signature explains a script. */
+  layered() {
+    const rows = this.data.layered || [];
+    if (!rows.length) return h('div');
+    return h('div', { style: { margin: '18px 0 0' } }, [
+      h('h4', 'Layered (mixed) obfuscation'),
+      h('p.dim', { style: { margin: '0 0 6px' } }, 'The outermost layer is what an analyst sees first. Fidelity compares the recovered code with the program the chain protects; behaviour counts only chains whose own output runs like the original.'),
+      h('div.table-wrap', h('table.grid', [
+        h('thead', h('tr', [h('th', 'Chain'), h('th', 'Layers'), h('th', 'Detected'), h('th', 'Fidelity'), h('th', 'Same behaviour'), h('th', 'Status')])),
+        h('tbody', rows.map((l) => h('tr', [
+          h('td', [l.id, h('div.faint', l.stages.join(' \u2192 '))]), h('td.num', String(l.layers)), h('td.num', `${l.detected}/${l.samples}`),
+          h('td.num', `${pct(l.fidelityBefore)} \u2192 ${pct(l.fidelityAfter)}`), h('td.num', l.behaviourChecked ? `${l.behaviourSame}/${l.behaviourChecked}` : '\u2014'), h('td', statusBadge(l.status)),
+        ]))),
+      ])),
+    ]);
   }
 
   toggle(id) {
@@ -105,6 +122,21 @@ export class CompatDashboard {
             h('td.num', t.behaviourChecked ? `${t.behaviourSame}/${t.behaviourChecked} same` : '—'),
             h('td.num', t.traceChecked ? `${t.traceIdentical}/${t.traceChecked}` : '—'),
             h('td', [t.note || '', t.toolBroken ? h('div.faint', `the tool's own output was wrong for ${t.toolBroken} of ${t.samples} samples`) : null]),
+          ]))),
+        ]),
+      ]));
+    }
+    if (f.versions && f.versions.length) {
+      parts.push(h('div', { style: { gridColumn: '1 / -1' } }, [
+        h('h4', 'Measured per revision of the tool'),
+        h('p.dim', { style: { margin: '0 0 4px' } }, 'Each revision that can still be run, on its own fixtures; never averaged with the current one. A version is what the watermark in the tool\u2019s source says.'),
+        h('table.grid', { style: { marginTop: '4px' } }, [
+          h('thead', h('tr', [h('th', 'Version'), h('th', 'Revision'), h('th', 'Fidelity'), h('th', 'Same behaviour'), h('th', 'Configurations supported / partial / not'), h('th', 'Not supported')])),
+          h('tbody', f.versions.map((v) => h('tr', [
+            h('td', v.version), h('td.mono', `${String(v.revision).slice(0, 7)} ${v.revisionDate || ''}`),
+            h('td.num', `${pct(v.fidelityBefore)} → ${pct(v.fidelityAfter)}`), h('td.num', `${v.behaviourSame}/${v.behaviourChecked}`),
+            h('td.num', `${v.supported} / ${v.partial} / ${v.unsupported}`),
+            h('td.faint', v.configs.filter((c) => c.status === 'unsupported').map((c) => `${c.config} (${pct(c.fidelityAfter)})`).join(', ') || '—'),
           ]))),
         ]),
       ]));

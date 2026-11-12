@@ -497,6 +497,29 @@ test('the Examples tab groups the committed open-source tools, and ?tab= opens a
   await ctx.close();
 });
 
+test('the Obfuscators tab shows Hercules per revision and the layered chains with measured numbers', { skip }, async () => {
+  const ctx = await browser.newContext({ viewport: { width: 1400, height: 860 } });
+  const page = await ctx.newPage();
+  const problems = [];
+  page.on('console', (m) => { if (['error', 'warning'].includes(m.type())) problems.push(m.text()); });
+  page.on('pageerror', (e) => problems.push(e.message));
+  await page.goto(`${base}/index.html?tab=compat`);
+  await page.waitForSelector('#tab-compat[aria-selected=true]');
+  await page.waitForSelector('#view-compat table.grid tr.row-main');
+  await page.locator('#view-compat tr.row-main', { hasText: 'Hercules' }).first().dispatchEvent('click');
+  const detail = await page.textContent('#view-compat .detail-grid');
+  for (const v of ['1.5-early', '1.6.2', '2.0.0']) assert.ok(detail.includes(v), `revision ${v} listed`);
+  assert.match(detail, /Measured per revision of the tool/);
+  const body = await page.textContent('#view-compat');
+  assert.match(body, /Layered \(mixed\) obfuscation/);
+  assert.match(body, /hercules-light\+base64/);
+  assert.match(body, /lab-flatten-opaque\+hercules/);
+  await page.locator('#view-compat tr.row-main', { hasText: 'SnowVeil' }).first().dispatchEvent('click');
+  assert.match(await page.textContent('#view-compat'), /Path2D/);
+  assert.deepEqual(problems, []);
+  await ctx.close();
+});
+
 test('the Examples tab lists every bundled script and times a recovery on request', { skip }, async () => {
   const { page, ctx, problems } = await newPage();
   await page.click('#tab-examples');
