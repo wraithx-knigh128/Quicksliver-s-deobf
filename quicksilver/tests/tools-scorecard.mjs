@@ -23,7 +23,7 @@ const outName = args.includes('--out') ? args[args.indexOf('--out') + 1] : 'scor
 
 const tools = [['prometheus', 'obfuscated/prometheus'], ['hercules', 'obfuscated/hercules'], ['ironbrew2', 'obfuscated/ironbrew2'], ['loaders', 'obfuscated/loaders'], ['zenfus', 'obfuscated/zenfus'], ['azurevm', 'obfuscated/azurevm'], ['simple_html', 'obfuscated/simple_html'], ['clyde', 'obfuscated/clyde']];
 // Output of tools whose licence does not allow committing it (AGPL, or no licence) is generated locally by gen_external.py into a git-ignored folder; it is measured when present.
-for (const [tool, dir] of [['colisseum', 'obfuscated-local/colisseum'], ['simple_lua', 'obfuscated-local/simple_lua']]) {
+for (const [tool, dir] of [['colisseum', 'obfuscated-local/colisseum'], ['simple_lua', 'obfuscated-local/simple_lua'], ['rbxlua', 'obfuscated-local/rbxlua']]) {
   if (fs.existsSync(path.join(corpus, dir, 'manifest.json'))) tools.push([tool, dir]);
 }
 // Hercules revisions older than the current one (each its own folder, tests/corpus/tools/gen_hercules_versions.py) and the layered (mixed) chains

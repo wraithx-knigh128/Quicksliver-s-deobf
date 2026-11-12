@@ -25,6 +25,7 @@ import { buildReport, annotate, stripReport } from './annotate.js';
 import { removeHerculesAntiTamper, removeHerculesAntiTamperFunction, removeHerculesCoinGuard, restoreMethodSelf } from './hercules.js';
 import { uninlinePass } from '../passes/uninline.js';
 import { splitWebs } from '../passes/webs.js';
+import { unwrapCharList } from '../passes/charlist.js';
 import { analyze as analyzeScopes } from '../core/scope.js';
 import { readHerculesVm, findVmCall, replaceVmCall, HerculesVmError } from './hercules-vm.js';
 import { removeColisseumGuard } from './colisseum.js';
@@ -242,6 +243,11 @@ export function recover(source, userOptions = {}) {
     // the text it produces may make `"a" .. "b"` and similar foldable
     const pageStrings = run.step('simple_html.strings', 'Read the _D string calls of the single-page obfuscator', (a) => decodePageStrings(a), { quiet: true });
     if (pageStrings) total += pageStrings + run.step('fold.after', 'Fold constant expressions', (a) => foldPass(a, { foldCalls: options.foldCalls }), { quiet: true });
+    // a program kept as a list of one-character strings and run by a compiler the script carries (no `loadstring` to call): the text is the program
+    {
+      const nChars = run.step('charlist', 'Read the program out of the script\u2019s embedded-compiler loader', (a) => unwrapCharList(a), { quiet: true });
+      if (nChars) { total += nChars; unusedAtStart = new WeakSet(); refreshDetection(); }
+    }
     // the loaded text of `loadstring(...)()` becomes the program; compiled Lua in it is decompiled, so the rebuilt-program clean-ups apply
     let layers = null;
     const nLayers = run.step('layers', 'Unwrap loadstring layers', (a) => { layers = unwrapLayers(a, { sandbox: options.sandbox }); return layers; }, { quiet: true });

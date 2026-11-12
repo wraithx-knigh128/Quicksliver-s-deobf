@@ -92,6 +92,16 @@ export const NOTES = {
       'Only version 1 and one script were seen. Another build or setting is unconfirmed.',
     ],
   },
+  ironbrew1: { status: 'unsupported', basis: 'signature', detect: 'Header comment and the wrapper shape, read on 24 real scripts of a public collection (24 of 24 identified, 12 of them held out when the rule was written). The dynamic service has an IronBrew 1 engine (see the Reconstruct tab); the static pipeline does not rebuild the VM.', limits: ['Identified, not rebuilt statically: the confidence is capped low (0.27 on three scripts).'] },
+  moonsec_v2: { status: 'unsupported', basis: 'signature', detect: 'The Protected_by_MoonSecV2 banner variable and the _msec assignment, read on the scripts of a public collection. Some files filed under MoonSecV2 there are other tools\u2019 output (a "Protected by Mnx Obfuscator", a "DELTA V3"); they are reported as an unrecognised vendor banner, not as MoonSec.', limits: ['VM loader: identified, not rebuilt.'] },
+  wynfuscate: { status: 'unsupported', basis: 'signature', detect: 'The "Protected by wYnFuscate" header and the wrapper that rebuilds getfenv from string.char codes, read on 22 scripts of a public collection.', limits: ['VM: identified, not rebuilt. One recovery run took 7 s on a 245 KB script; no crash on any.'] },
+  boronide: { status: 'unsupported', basis: 'signature', detect: 'The "Boronide[\u2122] [Free|Premium] Obfuscation, vX" header (v0.3.0 to v0.7.0 were found) and the credit string run through :gsub(\'(.*)\', function ...), read on the scripts of a public collection.', limits: ['Opaque state loops and a VM: identified, not rebuilt.'] },
+  rbxlua: {
+    status: 'supported',
+    basis: 'real-output',
+    detect: 'Output of the real tool (kosuke14/RBXLuaObfuscator, run in the isolated Lua state; no licence, so the fixtures are in the git-ignored obfuscated-local/): the program is a list of one-character decimal escapes handed to a Lua compiler the script carries (there is no loadstring). Found by shape: the final call, the table.concat of the list, and a lexer that names Lua\u2019s keywords.',
+    limits: ['The program text is a plain constant and is read without running anything; the output of the tool is identical in behaviour (8 of 8 samples on PUC Lua 5.1 / LuaJIT / 5.4) and 100% in fidelity. The tool does not rename anything, so original names are kept. Only the 2022 revision exists.'],
+  },
   kirus: {
     status: 'unsupported',
     basis: 'signature',

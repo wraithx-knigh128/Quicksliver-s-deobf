@@ -17,6 +17,7 @@ import { FAMILIES, TRAITS } from './families.js';
 import { detectDialect } from './dialect.js';
 import { isColisseumGuard } from '../recover/colisseum.js';
 import { moonveilShape } from '../recover/moonveil.js';
+import { findCharListLoader } from '../passes/charlist.js';
 
 // ---- facts -----------------------------------------------------------------------------------------
 
@@ -216,7 +217,7 @@ const RULES = {
     rule('mention', 'banner', 0.5, (c) => /lura\.ph/i.test(c.src) && 'mentions lura.ph'),
   ],
   moonsec_v3: [
-    rule('banner', 'banner', 0.97, (c) => { const m = /This file was protected with MoonSec V(\d)/i.exec(c.src); return m ? { text: `MoonSec banner (V${m[1]})`, version: `V${m[1]}` } : false; }),
+    rule('banner', 'banner', 0.97, (c) => { const m = /This file was protected with MoonSec V(\d)/i.exec(c.src); return m ? { text: `MoonSec banner (V${m[1]}): a VM loader (all 24 scripts of the public collection were)`, version: `V${m[1]}` } : false; }, true),
     rule('mention', 'banner', 0.4, (c) => /MoonSec/i.test(c.src) && 'mentions MoonSec'),
   ],
   moonveil: [
@@ -236,8 +237,33 @@ const RULES = {
   ],
   luaobfuscator: [
     rule('mention', 'banner', 0.6, (c) => /luaobfuscator\.com/i.test(c.src) && 'mentions luaobfuscator.com'),
+    // the banner of the service's free tier: an ASCII-art header and the credit line (read on 24 real scripts of the public collection)
+    rule('art', 'banner', 0.9, (c) => /\.____\s+________ ___\.[\s\S]{0,1200}Obfuscator\.com/.test(c.src.slice(0, 3000)) && 'the ASCII-art header of the free tier'),
+    // the prelude of the service's string-XOR output: local v0=string.char; v1=string.byte; v2=string.sub; v3=bit32 or bit; ... then v4=v3.bxor, v5=table.concat, v6=table.insert
+    rule('prelude', 'structure', 0.85, (c) => /^(?:--[^\n]*\n)*\s*local v0=string\.char;\s*local v1=string\.byte;\s*local v2=string\.sub;\s*local v3=bit32 or bit\s*;/.test(c.src.slice(0, 800)) && 'starts with local v0=string.char; local v1=string.byte; local v2=string.sub; local v3=bit32 or bit; (numbered names, XOR string decoder)'),
+    rule('credit', 'banner', 0.95, (c) => { const m = /Obfuscator\.com\s+\(Alpha\s*([0-9][0-9.]*)\)[\s\S]{0,40}Much Love, Ferib/.exec(c.src.slice(0, 4000)); return m ? { text: `LuaObfuscator.com credit line (Alpha ${m[1]})`, version: `Alpha ${m[1]}` } : false; }),
   ],
-  psu: [rule('mention', 'banner', 0.45, (c) => /\bPSU\b\s*(?:Obfuscat|Protect|v\d)/i.test(c.src) && 'mentions PSU obfuscation')],
+  psu: [
+    rule('mention', 'banner', 0.45, (c) => /\bPSU\b\s*(?:Obfuscat|Protect|v\d)/i.test(c.src) && 'mentions PSU obfuscation'),
+    // the string every PSU 4.x script keeps as a local (found in all 11 scripts of the public collection, 4.0.A and 4.5.A)
+    rule('banner', 'banner', 0.97, (c) => { const m = /obfuscated using PSU Obfuscator ([0-9][0-9.A-Za-z]*)/.exec(c.src.slice(0, 20000)); return m ? { text: `PSU banner string (${m[1]}): a VM-protected script (all 11 scripts of the public collection were)`, version: m[1] } : false; }, true),
+  ],
+  ironbrew1: [
+    rule('header', 'banner', 0.97, (c) => /^\s*--\s*this file was generated using ironbrew1\b/i.test(c.src.slice(0, 600)) && 'IronBrew 1 header comment'),
+    rule('wrapper', 'structure', 0.6, (c) => /^[^\n]*\n*return\(function\((?:[a-z]{1,2},){8,}[a-z]{1,2}\)local (?:[a-z]{1,2},){12,}/.test(c.src.slice(0, 1200)) && 'one wrapper function with thirty-odd one- and two-letter parameters (duplicates allowed) and a long run of locals, then decimal-escaped data', true),
+  ],
+  moonsec_v2: [
+    rule('banner', 'banner', 0.97, (c) => { const m = /Protected_by_MoonSecV2/.exec(c.src.slice(0, 4000)); return m ? { text: 'MoonSec V2 banner variable (Protected_by_MoonSecV2)', version: 'V2' } : false; }),
+    rule('global', 'structure', 0.85, (c) => /\(function\(\)\s*_msec=\(function\(/.test(c.src.slice(0, 4000)) && 'the loader assigns its VM to the global _msec', true),
+  ],
+  wynfuscate: [
+    rule('banner', 'banner', 0.97, (c) => { const m = /Protected by wYnFuscate/i.exec(c.src.slice(0, 600)); return m ? { text: 'wYnFuscate header comment' } : false; }),
+    rule('getfenv-name', 'structure', 0.7, (c) => c.src.slice(0, 3000).includes('string.char(103,101,116,102,101,110,118)') && 'the name getfenv written as string.char(103,101,116,102,101,110,118) inside a (vE,vZ,vu,...) wrapper', true),
+  ],
+  boronide: [
+    rule('banner', 'banner', 0.97, (c) => { const m = /Boronide[^\n]{0,40}?,\s*v([0-9][0-9.]*)/.exec(c.src.slice(0, 600)); return m ? { text: `Boronide header comment (v${m[1]})`, version: m[1] } : false; }),
+    rule('gsub-loader', 'structure', 0.8, (c) => /\(\[\[Boronide[^\]]*\]\]\):gsub\('\(\.\*\)',function\(/.test(c.src.slice(0, 2000)) && 'a credit string run through :gsub(\'(.*)\', function(d) ...) whose body is a state loop that decides what the loader does', true),
+  ],
   ironveil: [rule('mention', 'banner', 0.5, (c) => /Iron\s?Veil/i.test(c.src) && 'mentions IronVeil')],
   goofyscator: [rule('mention', 'banner', 0.5, (c) => /Goofyscator/i.test(c.src) && 'mentions Goofyscator')],
   xhider: [rule('mention', 'banner', 0.5, (c) => /X\s?Hider/i.test(c.src) && 'mentions XHider')],
@@ -267,6 +293,9 @@ const RULES = {
   kirus: [
     rule('banner', 'banner', 0.97, (c) => { const m = /protected by Kirus obfuscator v?([0-9][0-9.]*)/i.exec(c.src); return m ? { text: `Kirus banner (v${m[1]})`, version: m[1] } : false; }),
     rule('vm-entry', 'structure', 0.9, (c) => c.facts && c.facts.kirusEntries > 0 && 'VM entry call setmetatable({...}, {}):name(bit32, string, table, math, type, error, pcall, getfenv, setfenv, tonumber)', true),
+  ],
+  rbxlua: [
+    rule('embedded-compiler', 'structure', 0.9, (c) => { const f = c.ast && findCharListLoader(c.ast); return f ? `the program is a list of ${f.items} one-character strings run by a Lua compiler the script carries (${f.keywords} of Lua's keywords in its lexer): no loadstring is called` : false; }),
   ],
   snowveil: [
     rule('banner', 'banner', 0.97, (c) => { const m = /generated using SnowVeil\s+v?([0-9][0-9.]*)/i.exec(c.src); return m ? { text: `SnowVeil banner (v${m[1]})`, version: m[1] } : false; }),
@@ -300,6 +329,13 @@ const RULES = {
   ],
   wearedevs: [rule('mention', 'banner', 0.5, (c) => /wearedevs\.net|WeAreDevs/i.test(c.src) && 'mentions WeAreDevs')],
 };
+
+/** The tool a header comment claims made the script: "-- Protected by Mnx Obfuscator | Public Enemy", "--// PROTECTED BY DELTA V3 //--", "-- File protected by void [..]". Null when there is none. */
+export function vendorBanner(source) {
+  const head = source.slice(0, 600);
+  const m = /^\s*(?:--\[\[|--\/\/|--)[ \t]*(?:this (?:file|script) was )?(?:file )?(?:protected|obfuscated|generated|secured|encrypted)\s+(?:by|with|using)\s+([^\n|\[\]\/]{2,48}?)\s*(?:[|\[\n\/\]]|$)/im.exec(head);
+  return m ? m[1].trim() : null;
+}
 
 /** The fixed run of `local x = <library function>` statements IronBrew 2's generator writes before anything else. */
 const IB2_PRELUDE = ['string.byte', 'string.char', 'string.sub', 'table.concat', 'table.insert', 'math.ldexp', 'getfenv|_ENV', 'setmetatable', 'select', 'unpack|table.unpack', 'tonumber'];
@@ -457,6 +493,13 @@ export function detect(source, knownAst = null) {
   const bc = bytecodeInfo(source, strings);
   if (bc) { result.bytecode = bc; traits.add('bytecode-blob'); }
   result.traits = [...traits].map((id) => ({ id, text: TRAITS[id] }));
+  // A header comment that names a tool no rule above knows is still worth saying: custom and unfamiliar obfuscators usually sign their output.
+  const banner = vendorBanner(source);
+  if (banner) {
+    result.vendorBanner = banner;
+    const known = result.families.some((f) => f.confidence >= 0.5 && f.evidence.some((e) => e.kind === 'banner'));
+    if (!known) result.traits.push({ id: 'vendor-banner', text: `The header comment names a tool: "${banner}". No rule knows it, so the script is analysed by what it is made of.` });
+  }
   result.metrics.bytes = source.length;
   return result;
 }

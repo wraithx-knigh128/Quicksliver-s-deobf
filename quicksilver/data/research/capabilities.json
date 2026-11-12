@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "generatedAt": "2026-11-12T09:06:02.649Z",
+  "generatedAt": "2026-11-12T18:59:29.282Z",
   "capabilities": [
     {
       "id": "luraph.banner-version",
@@ -139,6 +139,31 @@
           },
           {
             "name": "moonveil validates",
+            "ok": true,
+            "detail": []
+          },
+          {
+            "name": "ironbrew1 validates",
+            "ok": true,
+            "detail": []
+          },
+          {
+            "name": "moonsec_v2 validates",
+            "ok": true,
+            "detail": []
+          },
+          {
+            "name": "wynfuscate validates",
+            "ok": true,
+            "detail": []
+          },
+          {
+            "name": "boronide validates",
+            "ok": true,
+            "detail": []
+          },
+          {
+            "name": "rbxlua validates",
             "ok": true,
             "detail": []
           },
@@ -299,6 +324,18 @@
           },
           {
             "name": "moonveil@unversioned is not \"supported\"",
+            "ok": true
+          },
+          {
+            "name": "moonsec_v2@unversioned is not \"supported\"",
+            "ok": true
+          },
+          {
+            "name": "wynfuscate@unversioned is not \"supported\"",
+            "ok": true
+          },
+          {
+            "name": "boronide@unversioned is not \"supported\"",
             "ok": true
           },
           {

@@ -65,8 +65,8 @@
       "status": "ok",
       "bytes": 6445,
       "behaviors": {
-        "lua51": "equivalent",
-        "lua54": "equivalent"
+        "lua54c": "equivalent",
+        "lua51": "equivalent"
       },
       "behavior": "equivalent"
     },
@@ -241,8 +241,8 @@
       "status": "ok",
       "bytes": 11561,
       "behaviors": {
-        "lua51": "errored",
-        "lua54": "errored"
+        "lua54c": "errored",
+        "lua51": "errored"
       },
       "behavior": "errored",
       "behaviorError": "instruction budget exceeded"
@@ -419,8 +419,8 @@
       "status": "ok",
       "bytes": 9115,
       "behaviors": {
-        "lua51": "diverged",
-        "lua54": "diverged"
+        "lua54c": "diverged",
+        "lua51": "diverged"
       },
       "behavior": "diverged"
     },
@@ -595,11 +595,11 @@
       "status": "ok",
       "bytes": 11921,
       "behaviors": {
-        "lua51": "errored",
-        "lua54": "errored"
+        "lua54c": "errored",
+        "lua51": "errored"
       },
       "behavior": "errored",
-      "behaviorError": "syntax: sample:2: 'end' expected near 'break'"
+      "behaviorError": "instruction budget exceeded"
     },
     {
       "file": "s04_control_flow__mod-WrapInFunction.lua",
@@ -773,8 +773,8 @@
       "status": "ok",
       "bytes": 5183,
       "behaviors": {
-        "lua51": "equivalent",
-        "lua54": "equivalent"
+        "lua54c": "equivalent",
+        "lua51": "equivalent"
       },
       "behavior": "equivalent"
     },
@@ -950,8 +950,8 @@
       "status": "ok",
       "bytes": 20144,
       "behaviors": {
-        "lua51": "equivalent",
-        "lua54": "equivalent"
+        "lua54c": "equivalent",
+        "lua51": "equivalent"
       },
       "behavior": "equivalent"
     },
@@ -1126,8 +1126,8 @@
       "status": "ok",
       "bytes": 12201,
       "behaviors": {
-        "lua51": "equivalent",
-        "lua54": "equivalent"
+        "lua54c": "equivalent",
+        "lua51": "equivalent"
       },
       "behavior": "equivalent"
     },

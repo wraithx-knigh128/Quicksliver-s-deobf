@@ -289,3 +289,90 @@ test('format research: every finding names its method, a source and how far it c
   }
   assert.ok(r.unresolved.length >= 3, 'what could not be done is recorded');
 });
+
+// ---- Phase VIII, second round: embedded-compiler loaders, identification of formats read on real scripts, the labelled collection -----
+import { unwrapCharList, findCharListLoader } from '../src/passes/charlist.js';
+import { vendorBanner } from '../src/detect/detect.js';
+
+const KW = 'TK_AND and\nTK_BREAK break\nTK_DO do\nTK_ELSE else\nTK_ELSEIF elseif\nTK_END end\nTK_FALSE false\nTK_FOR for\nTK_FUNCTION function\nTK_IF if\nTK_IN in\nTK_LOCAL local\nTK_NIL nil\nTK_NOT not\nTK_OR or\nTK_REPEAT repeat\nTK_RETURN return\nTK_THEN then\nTK_TRUE true\nTK_UNTIL until\nTK_WHILE while';
+const chars = (t) => [...t].map((c) => `'\\${c.charCodeAt(0)}'`).join(',');
+const charListScript = (program, { keywords = true, sep = null, tail = '()' } = {}) =>
+  `local d = {${chars(program)},}\nlocal c = table.concat\nlocal run = (function(...) local R = ${JSON.stringify(keywords ? KW : 'x')} return function(s) return s end end)(...)\nrun(c(d${sep === null ? '' : `, ${sep}`}))${tail}`;
+
+test('charlist: a program kept as one-character strings and run by an embedded lexer is read out; nothing else is taken for one', () => {
+  const program = 'local function f(a) return a * 2 end\nprint(f(21))\nprint("done")\n';
+  const ok = parse(charListScript(program, { sep: 'nobody' }));          // an unassigned global as the separator is nil: the empty string
+  const r = unwrapCharList(ok);
+  assert.equal(r.changed, 1, JSON.stringify(r));
+  assert.match(text(ok), /local function f\(a\)[\s\S]*print\(f\(21\)\)/);
+  assert.ok(r.compilerKeywords >= 14);
+  // the function that runs the text is not a lexer: left alone
+  const plain = parse(charListScript(program, { keywords: false }));
+  assert.equal(unwrapCharList(plain).changed, 0);
+  assert.equal(findCharListLoader(plain), null);
+  // not enough items, a final call with arguments, or text that is not Lua
+  assert.equal(findCharListLoader(parse(charListScript('x=1', {}))), null, 'a list shorter than 16');
+  assert.equal(findCharListLoader(parse(charListScript(program, { tail: '(1)' }))), null);
+  const junk = parse(charListScript('this is ) not ( lua at all, really not', { sep: null }));
+  const jr = unwrapCharList(junk);
+  assert.equal(jr.changed, 0);
+  assert.match(jr.skipped, /not Lua/);
+});
+
+test('identification: formats read on real scripts are named by their banners, with versions where the banner has one, and nothing is claimed for a plain script', () => {
+  const cases = [
+    ['ironbrew1', '-- this file was generated using ironbrew1\n\nreturn(function(a,a,b,c,d,d,e,f,g,h,h,h,h,i,j,k,l,m,m,n,n,n,o,p,q,q,r,s,s)local t,u,v,w,x,y,z,ba,bb,bc,bd,be,bf,bg,bh,bi,bj,bk,bl,bm,bn,bo,bp,bq,br,bs,bt,bu,bv,bw,bx,by={}end)()', null],
+    ['moonsec_v2', "\n\n_, Protected_by_MoonSecV2, Discord = 'discord.gg/x'\n\n,nil,nil;(function() _msec=(function(o,h,l) end)() end)()", 'V2'],
+    ['wynfuscate', '-- Protected by wYnFuscate: https://wynfuscate.com | https://discord.gg/x\nreturn(function(vE,vZ,vu,...) end)()', null],
+    ['boronide', "--Boronide™ Premium Obfuscation, v0.6.3\n\nlocal f,c,E=nil,nil,nil([[x]]):gsub('(.*)',function(v) end)", '0.6.3'],
+    ['psu', 'return(function(e,...)local U="This file was obfuscated using PSU Obfuscator 4.5.A | https://www.psu.dev/ & discord.gg/psu";local G=e[(477801264)] end)()', '4.5.A'],
+    ['luaobfuscator', 'local v0=string.char;local v1=string.byte;local v2=string.sub;local v3=bit32 or bit ;local v4=v3.bxor;local v5=table.concat;local v6=table.insert;local function v7(v72,v73) end', null],
+  ];
+  for (const [id, src, version] of cases) {
+    let ast = null; try { ast = parse(src); } catch { ast = null; }
+    const f = detect(src, ast).families.find((x) => x.id === id);
+    assert.ok(f && f.confidence >= 0.8, `${id}: ${f && f.confidence}`);
+    if (version) assert.equal(f.version, version, id);
+  }
+  const plain = 'local Players = game:GetService("Players")\nprint("Protected by nobody here? no: this is a plain script", Players)';
+  assert.ok(!detect(plain, parse(plain)).families.some((x) => x.confidence >= 0.5));
+  // a VM-protected script is not reported as recovered
+  const psu = run(cases[4][1]);
+  assert.ok(psu.confidence.score < 0.5, `PSU confidence ${psu.confidence.score}`);
+});
+
+test('vendor banner: a header comment that names a tool no rule knows is reported; ordinary comments are not', () => {
+  assert.equal(vendorBanner('-- Protected by Mnx Obfuscator | Public Enemy\nlocal a = 1'), 'Mnx Obfuscator');
+  assert.equal(vendorBanner('--// PROTECTED BY DELTA V3 //--\nlocal a = 1'), 'DELTA V3');
+  assert.equal(vendorBanner('-- File protected by void [https://discord.gg/x]\nreturn 1'), 'void');
+  assert.equal(vendorBanner('-- a helper for protected mode\nlocal a = 1'), null);
+  assert.equal(vendorBanner('local a = 1 -- protected by nobody'), null, 'only a header counts');
+  const r = detect('-- Protected by Mnx Obfuscator | Public Enemy\nlocal a = 1', parse('local a = 1'));
+  assert.equal(r.vendorBanner, 'Mnx Obfuscator');
+  assert.ok(r.traits.some((t) => t.id === 'vendor-banner'));
+});
+
+test('labelled collection: the index is complete and the committed detection numbers reproduce when the sample is present', () => {
+  const idx = JSON.parse(fs.readFileSync(path.join(root, 'data/research/corpus-index.json'), 'utf8'));
+  assert.equal(idx.index.length, idx.files);
+  assert.match(idx.commit, /^[0-9a-f]{40}$/);
+  assert.ok(idx.index.every((e) => /^[0-9a-f]{64}$/.test(e.sha256) && e.bytes > 0 && e.bytes <= idx.maxBytes));
+  const ev = JSON.parse(fs.readFileSync(path.join(root, 'data/research/corpus-eval.json'), 'utf8'));
+  assert.equal(ev.commit, idx.commit);
+  for (const [label, s] of Object.entries(ev.summary)) assert.ok(s.identified + s.unidentified <= s.files, label);
+  // what the written rules were read from is not what is claimed: held-out files exist for every family that has more than 12
+  for (const fam of ['IronBrew1', 'MoonSecV3', 'MoonVeil', 'Luraph']) assert.ok(ev.rows.some((r) => r.label === fam && r.set === 'holdout'), `${fam} has held-out files`);
+  if (fs.existsSync(path.join(root, 'local/corpus'))) {
+    const out = spawnSync('node', [path.join(root, 'tools/formats/corpus-eval.mjs'), '--check'], { encoding: 'utf8' });
+    assert.equal(out.status, 0, out.stdout + out.stderr);
+  }
+});
+
+test('rbxlua: the real tool’s output is read back to the program (needs the local fixtures)', { skip: !fs.existsSync(path.join(corpus, 'obfuscated-local/rbxlua/manifest.json')) && 'fixtures are not stored (no licence): tests/corpus/tools/gen_external.py --tool rbxlua' }, () => {
+  const m = JSON.parse(fs.readFileSync(path.join(corpus, 'obfuscated-local/rbxlua/manifest.json'), 'utf8'));
+  for (const e of m.entries.filter((x) => x.status === 'ok').slice(0, 4)) {
+    const r = run(read(path.join(corpus, 'obfuscated-local/rbxlua', e.file)));
+    assert.ok(r.steps.some((s) => s.id === 'charlist' && s.status === 'applied'), e.file);
+    assert.ok(fidelity(read(path.join(corpus, 'originals', e.sample)), r.output).score >= 0.95, e.file);
+  }
+});

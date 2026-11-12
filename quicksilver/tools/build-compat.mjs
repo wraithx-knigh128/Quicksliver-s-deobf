@@ -35,6 +35,8 @@ const deriveChecked = (agg) => { const st = derive(agg); return st === 'supporte
 
 const norm = (s) => s.toLowerCase().replace(/^(step-|mod-)/, '').replace(/[^a-z0-9]/g, '');
 
+const corpusPath = path.join(root, 'data/research/corpus-eval.json');
+const corpusEval = fs.existsSync(corpusPath) ? JSON.parse(fs.readFileSync(corpusPath, 'utf8')) : null;
 const families = familyRegistry().map((f) => {
   const note = NOTES[f.id] || { status: 'unsupported', basis: 'signature', detect: '', limits: [] };
   const rows = scorecard.results.filter((r) => r.tool === f.id && !r.version);
@@ -104,8 +106,18 @@ const families = familyRegistry().map((f) => {
   const covered = new Set(techniques.map((t) => norm(t.config)));
   const declared = new Set((note.covers || []).map(norm));
   const untested = f.techniques.filter((t) => !declared.has(norm(t)) && ![...covered].some((c) => norm(t).startsWith(c) || c.startsWith(norm(t))));
+  // detection measured on the labelled public collection (tools/formats/corpus-eval.mjs): per family, how many of its files were identified as it
+  let corpus = null;
+  if (corpusEval) {
+    const labels = Object.entries(corpusEval.summary).filter(([, v]) => v.expected === f.id);
+    if (labels.length) {
+      const sum = (k) => labels.reduce((a, [, v]) => a + v[k], 0);
+      corpus = { labels: labels.map(([k]) => k), files: sum('files'), identified: sum('identified'), unidentified: sum('unidentified'), versionFiles: sum('versionFiles'), versionRight: sum('versionRight'), commit: corpusEval.commit, source: corpusEval.source };
+    }
+  }
   return {
     id: f.id,
+    corpus,
     name: f.name,
     kind: f.kind,
     status: note.status,
@@ -171,6 +183,7 @@ for (const f of families) {
       md.push(`| ${t.label} (${t.kind}) | ${t.status}${t.note ? ` – ${t.note}` : ''} | ${pc(t.fidelityBefore)} → ${pc(t.fidelityAfter)}${t.needsSandbox ? ' (needs sandbox)' : ''} | ${t.behaviourSame} / ${t.behaviourChecked}${t.toolBroken ? ` (${t.toolBroken} tool output broken)` : ''} | ${t.ms} ms |`);
     }
   }
+  if (f.corpus) md.push('', `**Detection on real scripts:** ${f.corpus.identified} of ${f.corpus.files} files filed under ${f.corpus.labels.join(', ')} in the public collection (${f.corpus.source}, commit \`${String(f.corpus.commit).slice(0, 10)}\`) were identified as ${f.name}${f.corpus.versionFiles ? `; the version read from the script matched the collection's version directory in ${f.corpus.versionRight} of ${f.corpus.versionFiles}` : ''}. The collection's labels are its uploaders' and are noisy; a file our rules call something else was looked at before being counted as a miss.`);
   if (f.versions && f.versions.length) {
     md.push('', '### Versions', '', 'Each revision of the tool that can still be run, measured on its own fixtures (a version is what the watermark its source writes says; the tool has no release tags). Rows are never averaged with the current revision.', '',
       '| Version | Revision | Fixtures | Fidelity before → after | Same behaviour | Configurations (supported / partial / unsupported) |', '|---|---|---|---|---|---|');

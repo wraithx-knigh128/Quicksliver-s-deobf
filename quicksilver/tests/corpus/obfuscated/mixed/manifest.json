@@ -218,11 +218,11 @@
       "status": "ok",
       "bytes": 53100,
       "behaviors": {
-        "lua51": "errored",
-        "lua54": "errored"
+        "lua54c": "equivalent",
+        "lua51": "errored"
       },
-      "behavior": "errored",
-      "behaviorError": "[string \"--[Obfuscated by Hercules v2.0.0 | hercules...\"]:76: attempt to call field 'tointeger' (a nil value)"
+      "behavior": "equivalent",
+      "behaviorError": "[string \"--[Obfuscated by Hercules v2.0.0 | hercules-o...\"]:192: attempt to call a nil value (field 'ldexp')"
     },
     {
       "file": "s01_minify_basic__xor+hercules-strings.lua",
@@ -388,11 +388,11 @@
       "status": "ok",
       "bytes": 44613,
       "behaviors": {
-        "lua51": "errored",
-        "lua54": "errored"
+        "lua54c": "equivalent",
+        "lua51": "errored"
       },
-      "behavior": "errored",
-      "behaviorError": "sample:2: attempt to call field 'tointeger' (a nil value)"
+      "behavior": "equivalent",
+      "behaviorError": "sample:2: attempt to call a nil value (field 'ldexp')"
     },
     {
       "file": "s02_renamed_vars__hercules-light+base64.lua",
@@ -431,11 +431,11 @@
       "status": "ok",
       "bytes": 57840,
       "behaviors": {
-        "lua51": "errored",
-        "lua54": "errored"
+        "lua54c": "errored",
+        "lua51": "errored"
       },
       "behavior": "errored",
-      "behaviorError": "[string \"--[Obfuscated by Hercules v2.0.0 | hercules...\"]:76: attempt to call field 'tointeger' (a nil value)"
+      "behaviorError": "[string \"--[Obfuscated by Hercules v2.0.0 | hercules-o...\"]:123: attempt to perform arithmetic on a nil value (local 'Val2')"
     },
     {
       "file": "s02_renamed_vars__xor+hercules-strings.lua",
@@ -601,11 +601,11 @@
       "status": "ok",
       "bytes": 52248,
       "behaviors": {
-        "lua51": "errored",
-        "lua54": "errored"
+        "lua54c": "equivalent",
+        "lua51": "errored"
       },
-      "behavior": "errored",
-      "behaviorError": "sample:2: attempt to call field 'tointeger' (a nil value)"
+      "behavior": "equivalent",
+      "behaviorError": "sample:2: attempt to call a nil value (field 'ldexp')"
     },
     {
       "file": "s03_encoded_strings__hercules-light+base64.lua",
@@ -644,11 +644,11 @@
       "status": "ok",
       "bytes": 50112,
       "behaviors": {
-        "lua51": "errored",
-        "lua54": "errored"
+        "lua54c": "equivalent",
+        "lua51": "errored"
       },
-      "behavior": "errored",
-      "behaviorError": "[string \"--[Obfuscated by Hercules v2.0.0 | hercules...\"]:76: attempt to call field 'tointeger' (a nil value)"
+      "behavior": "equivalent",
+      "behaviorError": "[string \"--[Obfuscated by Hercules v2.0.0 | hercules-o...\"]:192: attempt to call a nil value (field 'ldexp')"
     },
     {
       "file": "s03_encoded_strings__xor+hercules-strings.lua",
@@ -815,11 +815,11 @@
       "status": "ok",
       "bytes": 44264,
       "behaviors": {
-        "lua51": "errored",
-        "lua54": "errored"
+        "lua54c": "equivalent",
+        "lua51": "errored"
       },
-      "behavior": "errored",
-      "behaviorError": "sample:2: attempt to call field 'tointeger' (a nil value)"
+      "behavior": "equivalent",
+      "behaviorError": "sample:2: attempt to call a nil value (field 'ldexp')"
     },
     {
       "file": "s04_control_flow__hercules-light+base64.lua",
@@ -858,11 +858,11 @@
       "status": "ok",
       "bytes": 68432,
       "behaviors": {
-        "lua51": "errored",
-        "lua54": "errored"
+        "lua54c": "equivalent",
+        "lua51": "errored"
       },
-      "behavior": "errored",
-      "behaviorError": "[string \"--[Obfuscated by Hercules v2.0.0 | hercules...\"]:76: attempt to call field 'tointeger' (a nil value)"
+      "behavior": "equivalent",
+      "behaviorError": "[string \"--[Obfuscated by Hercules v2.0.0 | hercules-o...\"]:192: attempt to call a nil value (field 'ldexp')"
     },
     {
       "file": "s04_control_flow__xor+hercules-strings.lua",
@@ -1028,11 +1028,11 @@
       "status": "ok",
       "bytes": 54767,
       "behaviors": {
-        "lua51": "errored",
-        "lua54": "errored"
+        "lua54c": "equivalent",
+        "lua51": "errored"
       },
-      "behavior": "errored",
-      "behaviorError": "sample:2: attempt to call field 'tointeger' (a nil value)"
+      "behavior": "equivalent",
+      "behaviorError": "sample:2: attempt to call a nil value (field 'ldexp')"
     },
     {
       "file": "s05_nested_functions__hercules-light+base64.lua",
@@ -1071,11 +1071,11 @@
       "status": "ok",
       "bytes": 72604,
       "behaviors": {
-        "lua51": "errored",
-        "lua54": "errored"
+        "lua54c": "equivalent",
+        "lua51": "errored"
       },
-      "behavior": "errored",
-      "behaviorError": "[string \"--[Obfuscated by Hercules v2.0.0 | hercules...\"]:76: attempt to call field 'tointeger' (a nil value)"
+      "behavior": "equivalent",
+      "behaviorError": "[string \"--[Obfuscated by Hercules v2.0.0 | hercules-o...\"]:192: attempt to call a nil value (field 'ldexp')"
     },
     {
       "file": "s05_nested_functions__xor+hercules-strings.lua",
@@ -1242,11 +1242,11 @@
       "status": "ok",
       "bytes": 52779,
       "behaviors": {
-        "lua51": "errored",
-        "lua54": "errored"
+        "lua54c": "equivalent",
+        "lua51": "errored"
       },
-      "behavior": "errored",
-      "behaviorError": "sample:2: attempt to call field 'tointeger' (a nil value)"
+      "behavior": "equivalent",
+      "behaviorError": "sample:2: attempt to call a nil value (field 'ldexp')"
     },
     {
       "file": "s06_combined__hercules-light+base64.lua",
@@ -1287,11 +1287,11 @@
       "status": "ok",
       "bytes": 94952,
       "behaviors": {
-        "lua51": "errored",
-        "lua54": "errored"
+        "lua54c": "errored",
+        "lua51": "errored"
       },
       "behavior": "errored",
-      "behaviorError": "[string \"--[Obfuscated by Hercules v2.0.0 | hercules...\"]:76: attempt to call field 'tointeger' (a nil value)"
+      "behaviorError": "[string \"--[Obfuscated by Hercules v2.0.0 | hercules-o...\"]:128: attempt to perform arithmetic on a nil value (local 'Val4')"
     },
     {
       "file": "s06_combined__xor+hercules-strings.lua",
@@ -1461,11 +1461,11 @@
       "status": "ok",
       "bytes": 65303,
       "behaviors": {
-        "lua51": "errored",
-        "lua54": "errored"
+        "lua54c": "equivalent",
+        "lua51": "errored"
       },
-      "behavior": "errored",
-      "behaviorError": "sample:2: attempt to call field 'tointeger' (a nil value)"
+      "behavior": "equivalent",
+      "behaviorError": "sample:2: attempt to call a nil value (field 'ldexp')"
     },
     {
       "file": "s07_roblox_style__hercules-light+base64.lua",
@@ -1504,11 +1504,11 @@
       "status": "ok",
       "bytes": 45248,
       "behaviors": {
-        "lua51": "errored",
-        "lua54": "errored"
+        "lua54c": "equivalent",
+        "lua51": "errored"
       },
-      "behavior": "errored",
-      "behaviorError": "[string \"--[Obfuscated by Hercules v2.0.0 | hercules...\"]:76: attempt to call field 'tointeger' (a nil value)"
+      "behavior": "equivalent",
+      "behaviorError": "[string \"--[Obfuscated by Hercules v2.0.0 | hercules-o...\"]:192: attempt to call a nil value (field 'ldexp')"
     },
     {
       "file": "s07_roblox_style__xor+hercules-strings.lua",
@@ -1674,11 +1674,11 @@
       "status": "ok",
       "bytes": 47294,
       "behaviors": {
-        "lua51": "errored",
-        "lua54": "errored"
+        "lua54c": "equivalent",
+        "lua51": "errored"
       },
-      "behavior": "errored",
-      "behaviorError": "sample:2: attempt to call field 'tointeger' (a nil value)"
+      "behavior": "equivalent",
+      "behaviorError": "sample:2: attempt to call a nil value (field 'ldexp')"
     }
   ]
 }

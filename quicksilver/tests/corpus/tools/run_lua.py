@@ -23,7 +23,7 @@ import os
 import sys
 
 # lua52 is here for its bit32, which Luau scripts (Clyde's output, for one) expect and Lua 5.1 / LuaJIT / 5.4 do not have
-RUNTIMES = {"lua51": "lupa.lua51", "lua52": "lupa.lua52", "lua53": "lupa.lua53", "luajit": "lupa.luajit21", "lua54": "lupa.lua54", "lua54c": "lupa.lua54"}
+RUNTIMES = {"luau": None, "lua51": "lupa.lua51", "lua52": "lupa.lua52", "lua53": "lupa.lua53", "luajit": "lupa.luajit21", "lua54": "lupa.lua54", "lua54c": "lupa.lua54"}
 
 # "lua54c" = Lua 5.4 + the math.ldexp / math.frexp polyfills that Hercules' own CLI installs
 # (Lua 5.3+ dropped them unless built with LUA_COMPAT_MATHLIB). Some Hercules VM output needs them.
@@ -57,6 +57,55 @@ RUNNER = b"""function(src, limit)
 end"""
 
 
+LUAU_BIN = os.environ.get("QS_LUAU_BIN") or os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "api", "_engine", "luraph", "deobf", "bin", "luau"))
+
+
+def run_luau(code, budget=0):
+    """Luau (Roblox's dialect) through the vendored standalone `luau` binary: the same mock environment and print capture as the lupa runtimes, the script loaded with
+    loadstring so that its own `return`, `...` and local count are its own. Wall-clock limited; the binary is run without a network namespace only where the host allows it."""
+    import subprocess, tempfile
+    if not os.path.exists(LUAU_BIN):
+        return {"ok": False, "stdout": "", "error": "harness: no luau binary at " + LUAU_BIN}
+    def quote(text):
+        level = 0
+        while ("]" + "=" * level + "]") in text:
+            level += 1
+        q = "=" * level
+        return "[" + q + "[\n" + text + "]" + q + "]"
+    mock = HARNESS.replace("\r\n", "\n")
+    strip = ""
+    # Luau's standalone binary freezes the globals: the mock environment and the script run in a table of their own that falls back to the real ones
+    prog = ("local __rawprint = print\nlocal __real = getfenv()\nlocal __blocked = { io = true, package = true, require = true, dofile = true, loadfile = true, debug = true, getfenv = true, setfenv = true }\n"
+            "local __os = { clock = os.clock, time = os.time, date = os.date, difftime = os.difftime }\n"
+            "local __env = setmetatable({ os = __os }, { __index = function(_, k) if __blocked[k] then return nil end return __real[k] end })\n__env._G = __env\n"
+            "local __h = loadstring(" + quote(mock + "\n" + strip) + ", '=mock')\nsetfenv(__h, __env)\n__h()\n"
+            "local __f, __e = loadstring(" + quote(code) + ", '=sample')\n"
+            "if not __f then __rawprint('QSERR syntax: ' .. tostring(__e)) return end\nsetfenv(__f, __env)\n"
+            "local __ok, __err = xpcall(function() __f() __env.QS_PUMP() end, function(m) return tostring(m) end)\n"
+            "__rawprint(table.concat(__env.QS_OUT))\nif not __ok then __rawprint('QSERR ' .. tostring(__err)) end\n")
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, "run.lua")
+        with open(path, "wb") as fh:
+            fh.write(prog.encode("latin-1"))
+        try:
+            p = subprocess.run([LUAU_BIN, path], capture_output=True, timeout=int(os.environ.get("QS_LUAU_TIMEOUT", "60")))
+        except subprocess.TimeoutExpired:
+            return {"ok": False, "stdout": "", "error": "no result after the time limit"}
+    out = p.stdout.decode("latin-1")
+    err = None
+    i = out.rfind("QSERR ")
+    if i >= 0 and (i == 0 or out[i - 1] == "\n"):
+        err = out[i + 6:].strip()
+        out = out[:i]
+    if out.endswith("\n\n"):
+        out = out[:-1]                      # the captured text ends in a newline and the binary's own print added another
+    elif out == "\n":
+        out = ""
+    if p.returncode != 0 and err is None:
+        err = p.stderr.decode("latin-1")[-300:] or "exit %d" % p.returncode
+    return {"ok": err is None, "stdout": out, "error": err}
+
+
 def _runtime(name):
     mod = __import__(RUNTIMES[name], fromlist=["LuaRuntime"])
     # encoding=None: Lua strings stay raw bytes in both directions (Lua strings are byte strings).
@@ -65,6 +114,8 @@ def _runtime(name):
 
 def run(code, runtime="lua51", budget=20_000_000):
     """`code` is a str whose code points are bytes (latin-1 view of the Lua source)."""
+    if runtime == "luau":
+        return run_luau(code, budget)
     rt = _runtime(runtime)
     try:
         rt.execute(HARNESS.encode("latin-1"))

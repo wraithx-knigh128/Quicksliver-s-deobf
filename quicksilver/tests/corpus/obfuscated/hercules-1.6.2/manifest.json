@@ -62,11 +62,11 @@
       "status": "ok",
       "bytes": 39403,
       "behaviors": {
-        "lua51": "errored",
-        "lua54": "errored"
+        "lua54c": "equivalent",
+        "lua51": "errored"
       },
-      "behavior": "errored",
-      "behaviorError": "sample:76: attempt to call field 'tointeger' (a nil value)"
+      "behavior": "equivalent",
+      "behaviorError": "sample:192: attempt to call a nil value (field 'ldexp')"
     },
     {
       "file": "s01_minify_basic__mod-WrapInFunction.lua",
@@ -251,11 +251,11 @@
       "status": "ok",
       "bytes": 42975,
       "behaviors": {
-        "lua51": "errored",
-        "lua54": "errored"
+        "lua54c": "errored",
+        "lua51": "errored"
       },
       "behavior": "errored",
-      "behaviorError": "sample:76: attempt to call field 'tointeger' (a nil value)"
+      "behaviorError": "sample:123: attempt to perform arithmetic on a nil value (local 'Val2')"
     },
     {
       "file": "s02_renamed_vars__mod-WrapInFunction.lua",
@@ -440,11 +440,11 @@
       "status": "ok",
       "bytes": 37186,
       "behaviors": {
-        "lua51": "errored",
-        "lua54": "errored"
+        "lua54c": "equivalent",
+        "lua51": "errored"
       },
-      "behavior": "errored",
-      "behaviorError": "sample:76: attempt to call field 'tointeger' (a nil value)"
+      "behavior": "equivalent",
+      "behaviorError": "sample:192: attempt to call a nil value (field 'ldexp')"
     },
     {
       "file": "s03_encoded_strings__mod-WrapInFunction.lua",
@@ -629,11 +629,11 @@
       "status": "ok",
       "bytes": 50907,
       "behaviors": {
-        "lua51": "errored",
-        "lua54": "errored"
+        "lua54c": "equivalent",
+        "lua51": "errored"
       },
-      "behavior": "errored",
-      "behaviorError": "sample:76: attempt to call field 'tointeger' (a nil value)"
+      "behavior": "equivalent",
+      "behaviorError": "sample:192: attempt to call a nil value (field 'ldexp')"
     },
     {
       "file": "s04_control_flow__mod-WrapInFunction.lua",
@@ -819,11 +819,11 @@
       "status": "ok",
       "bytes": 54045,
       "behaviors": {
-        "lua51": "errored",
-        "lua54": "errored"
+        "lua54c": "equivalent",
+        "lua51": "errored"
       },
-      "behavior": "errored",
-      "behaviorError": "sample:76: attempt to call field 'tointeger' (a nil value)"
+      "behavior": "equivalent",
+      "behaviorError": "sample:192: attempt to call a nil value (field 'ldexp')"
     },
     {
       "file": "s05_nested_functions__mod-WrapInFunction.lua",
@@ -1010,11 +1010,11 @@
       "status": "ok",
       "bytes": 70832,
       "behaviors": {
-        "lua51": "errored",
-        "lua54": "errored"
+        "lua54c": "errored",
+        "lua51": "errored"
       },
       "behavior": "errored",
-      "behaviorError": "sample:76: attempt to call field 'tointeger' (a nil value)"
+      "behaviorError": "sample:128: attempt to perform arithmetic on a nil value (local 'Val4')"
     },
     {
       "file": "s06_combined__mod-WrapInFunction.lua",
@@ -1202,11 +1202,11 @@
       "status": "ok",
       "bytes": 33542,
       "behaviors": {
-        "lua51": "errored",
-        "lua54": "errored"
+        "lua54c": "equivalent",
+        "lua51": "errored"
       },
-      "behavior": "errored",
-      "behaviorError": "sample:76: attempt to call field 'tointeger' (a nil value)"
+      "behavior": "equivalent",
+      "behaviorError": "sample:192: attempt to call a nil value (field 'ldexp')"
     },
     {
       "file": "s07_roblox_style__mod-WrapInFunction.lua",

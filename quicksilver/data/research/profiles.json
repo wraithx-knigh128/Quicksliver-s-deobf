@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "generatedAt": "2026-11-12T09:05:56.847Z",
+ "generatedAt": "2026-11-12T18:59:24.257Z",
  "gates": {
   "real": {
    "minFixtures": 8,
@@ -855,7 +855,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-12T08:48:05.169Z"
+       "measuredAt": "2026-11-12T18:58:11.522Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -1025,7 +1025,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-12T08:48:05.169Z"
+       "measuredAt": "2026-11-12T18:58:11.522Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -1245,6 +1245,470 @@
     "unversioned": {
      "claim": "identification-only",
      "why": "The output can be recognised. No reconstruction has been verified against real or authorised samples."
+    }
+   }
+  },
+  {
+   "id": "ironbrew1",
+   "name": "IronBrew 1",
+   "kind": "open-source",
+   "summary": "The first IronBrew (Lua 5.1 VM obfuscator for Roblox): a header comment \"this file was generated using ironbrew1\" and one wrapper function with dozens of one- and two-letter parameters. A reconstruction engine for it exists in the dynamic service (api/_engine/luraph); the static pipeline only identifies it.",
+   "versions": [
+    {
+     "id": "unversioned",
+     "label": "as measured (no version split)",
+     "identification": {
+      "methods": [
+       {
+        "kind": "banner",
+        "confidence": 0.7,
+        "note": "banner comment"
+       }
+      ],
+      "confidence": 0.7
+     },
+     "characteristics": [
+      {
+       "text": "bytecode VM",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/vyxonq-dev/obfuscator-samples"
+       ]
+      },
+      {
+       "text": "decimal-escaped program data",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/vyxonq-dev/obfuscator-samples"
+       ]
+      },
+      {
+       "text": "one wrapper function with duplicated parameter names",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/vyxonq-dev/obfuscator-samples"
+       ]
+      }
+     ],
+     "samples": {
+      "authorizedPairs": 0,
+      "realOutput": 0,
+      "publicObserved": 0,
+      "notes": "No real output of this tool was available."
+     },
+     "capabilities": {
+      "identify": {
+       "available": true,
+       "verified": "format-tested"
+      },
+      "trace": {
+       "available": true,
+       "verified": "unverified"
+      },
+      "recover": {
+       "available": false,
+       "verified": "none"
+      }
+     },
+     "results": {
+      "fixtures": 0,
+      "syntheticFixtures": 0,
+      "behaviourChecked": 0,
+      "behaviourSame": 0,
+      "traceChecked": 0,
+      "traceIdentical": 0,
+      "toolBroken": 0,
+      "fidelityAfter": null,
+      "runtime": null,
+      "reproduction": null
+     },
+     "limitations": [
+      "Identified, not rebuilt statically: the confidence is capped low (0.27 on three scripts)."
+     ],
+     "verification": {
+      "status": "identified",
+      "basis": "recognised from signatures; no reconstruction measured"
+     }
+    }
+   ],
+   "claims": {
+    "unversioned": {
+     "claim": "identification-only",
+     "why": "The output can be recognised. No reconstruction has been verified against real or authorised samples."
+    }
+   }
+  },
+  {
+   "id": "moonsec_v2",
+   "name": "MoonSec V2",
+   "kind": "commercial",
+   "summary": "Older MoonSec generation: a global `Protected_by_MoonSecV2` with a discord invite, then a loader that assigns its VM to the global `_msec`. Read on the scripts of a public collection; no generator was available.",
+   "versions": [
+    {
+     "id": "unversioned",
+     "label": "as measured (no version split)",
+     "identification": {
+      "methods": [
+       {
+        "kind": "banner",
+        "confidence": 0.7,
+        "note": "banner comment"
+       }
+      ],
+      "confidence": 0.7
+     },
+     "characteristics": [
+      {
+       "text": "VM loader assigned to _msec",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/vyxonq-dev/obfuscator-samples"
+       ]
+      },
+      {
+       "text": "constant arithmetic with # of tables and strings",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/vyxonq-dev/obfuscator-samples"
+       ]
+      },
+      {
+       "text": "banner variable",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/vyxonq-dev/obfuscator-samples"
+       ]
+      }
+     ],
+     "samples": {
+      "authorizedPairs": 0,
+      "realOutput": 0,
+      "publicObserved": 0,
+      "notes": "No real output of this tool was available."
+     },
+     "capabilities": {
+      "identify": {
+       "available": true,
+       "verified": "format-tested"
+      },
+      "trace": {
+       "available": true,
+       "verified": "unverified"
+      },
+      "recover": {
+       "available": false,
+       "verified": "none"
+      }
+     },
+     "results": {
+      "fixtures": 0,
+      "syntheticFixtures": 0,
+      "behaviourChecked": 0,
+      "behaviourSame": 0,
+      "traceChecked": 0,
+      "traceIdentical": 0,
+      "toolBroken": 0,
+      "fidelityAfter": null,
+      "runtime": null,
+      "reproduction": null
+     },
+     "limitations": [
+      "VM loader: identified, not rebuilt."
+     ],
+     "verification": {
+      "status": "identified",
+      "basis": "recognised from signatures; no reconstruction measured"
+     }
+    }
+   ],
+   "claims": {
+    "unversioned": {
+     "claim": "identification-only",
+     "why": "The output can be recognised. No reconstruction has been verified against real or authorised samples."
+    }
+   }
+  },
+  {
+   "id": "wynfuscate",
+   "name": "wYnFuscate",
+   "kind": "commercial",
+   "summary": "Obfuscator (wynfuscate.com) whose scripts begin \"Protected by wYnFuscate\" and one wrapper `return(function(vE,vZ,vu,...)` that rebuilds getfenv from string.char codes. Read on the scripts of a public collection.",
+   "versions": [
+    {
+     "id": "unversioned",
+     "label": "as measured (no version split)",
+     "identification": {
+      "methods": [
+       {
+        "kind": "banner",
+        "confidence": 0.7,
+        "note": "banner comment"
+       }
+      ],
+      "confidence": 0.7
+     },
+     "characteristics": [
+      {
+       "text": "wrapper with environment recovery",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/vyxonq-dev/obfuscator-samples"
+       ]
+      },
+      {
+       "text": "names written as string.char codes",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/vyxonq-dev/obfuscator-samples"
+       ]
+      },
+      {
+       "text": "VM",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/vyxonq-dev/obfuscator-samples"
+       ]
+      }
+     ],
+     "samples": {
+      "authorizedPairs": 0,
+      "realOutput": 0,
+      "publicObserved": 0,
+      "notes": "No real output of this tool was available."
+     },
+     "capabilities": {
+      "identify": {
+       "available": true,
+       "verified": "format-tested"
+      },
+      "trace": {
+       "available": true,
+       "verified": "unverified"
+      },
+      "recover": {
+       "available": false,
+       "verified": "none"
+      }
+     },
+     "results": {
+      "fixtures": 0,
+      "syntheticFixtures": 0,
+      "behaviourChecked": 0,
+      "behaviourSame": 0,
+      "traceChecked": 0,
+      "traceIdentical": 0,
+      "toolBroken": 0,
+      "fidelityAfter": null,
+      "runtime": null,
+      "reproduction": null
+     },
+     "limitations": [
+      "VM: identified, not rebuilt. One recovery run took 7 s on a 245 KB script; no crash on any."
+     ],
+     "verification": {
+      "status": "identified",
+      "basis": "recognised from signatures; no reconstruction measured"
+     }
+    }
+   ],
+   "claims": {
+    "unversioned": {
+     "claim": "identification-only",
+     "why": "The output can be recognised. No reconstruction has been verified against real or authorised samples."
+    }
+   }
+  },
+  {
+   "id": "boronide",
+   "name": "Boronide",
+   "kind": "commercial",
+   "summary": "Obfuscator whose scripts begin with a \"Boronide, vX\" comment and run a credit string through :gsub('(.*)', function(d) ...) whose body is a state loop. Read on the scripts of a public collection.",
+   "versions": [
+    {
+     "id": "unversioned",
+     "label": "as measured (no version split)",
+     "identification": {
+      "methods": [
+       {
+        "kind": "banner",
+        "confidence": 0.7,
+        "note": "banner comment"
+       }
+      ],
+      "confidence": 0.7
+     },
+     "characteristics": [
+      {
+       "text": "credit string as the entry",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/vyxonq-dev/obfuscator-samples"
+       ]
+      },
+      {
+       "text": "opaque state loops",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/vyxonq-dev/obfuscator-samples"
+       ]
+      },
+      {
+       "text": "VM",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/vyxonq-dev/obfuscator-samples"
+       ]
+      }
+     ],
+     "samples": {
+      "authorizedPairs": 0,
+      "realOutput": 0,
+      "publicObserved": 0,
+      "notes": "No real output of this tool was available."
+     },
+     "capabilities": {
+      "identify": {
+       "available": true,
+       "verified": "format-tested"
+      },
+      "trace": {
+       "available": true,
+       "verified": "unverified"
+      },
+      "recover": {
+       "available": false,
+       "verified": "none"
+      }
+     },
+     "results": {
+      "fixtures": 0,
+      "syntheticFixtures": 0,
+      "behaviourChecked": 0,
+      "behaviourSame": 0,
+      "traceChecked": 0,
+      "traceIdentical": 0,
+      "toolBroken": 0,
+      "fidelityAfter": null,
+      "runtime": null,
+      "reproduction": null
+     },
+     "limitations": [
+      "Opaque state loops and a VM: identified, not rebuilt."
+     ],
+     "verification": {
+      "status": "identified",
+      "basis": "recognised from signatures; no reconstruction measured"
+     }
+    }
+   ],
+   "claims": {
+    "unversioned": {
+     "claim": "identification-only",
+     "why": "The output can be recognised. No reconstruction has been verified against real or authorised samples."
+    }
+   }
+  },
+  {
+   "id": "rbxlua",
+   "name": "RBXLuaObfuscator",
+   "kind": "open-source",
+   "summary": "Small Roblox-targeted obfuscator (kosuke14, no licence, 2022) that does not call loadstring: it embeds a Lua lexer, parser and interpreter written in Lua (a few thousand characters of generated text) and hands it the program as a list of one-character decimal-escape strings, after decoy functions built from arithmetic that cancels.",
+   "versions": [
+    {
+     "id": "unversioned",
+     "label": "as measured (no version split)",
+     "identification": {
+      "methods": [
+       {
+        "kind": "signature",
+        "confidence": 0.8,
+        "note": "structure matched against the tool's own source and its real output"
+       }
+      ],
+      "confidence": 0.8
+     },
+     "characteristics": [
+      {
+       "text": "embedded Lua compiler instead of loadstring",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/kosuke14/RBXLuaObfuscator"
+       ]
+      },
+      {
+       "text": "program as a list of decimal-escape characters",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/kosuke14/RBXLuaObfuscator"
+       ]
+      },
+      {
+       "text": "decoy functions",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/kosuke14/RBXLuaObfuscator"
+       ]
+      },
+      {
+       "text": "arithmetic that cancels",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/kosuke14/RBXLuaObfuscator"
+       ]
+      }
+     ],
+     "samples": {
+      "authorizedPairs": 0,
+      "realOutput": 8,
+      "publicObserved": 0,
+      "notes": "Fixtures were made by running the real tool on programs written for this project."
+     },
+     "capabilities": {
+      "identify": {
+       "available": true,
+       "verified": "real-output-tested"
+      },
+      "trace": {
+       "available": true,
+       "verified": "unverified"
+      },
+      "recover": {
+       "available": true,
+       "verified": "real-output-tested"
+      }
+     },
+     "results": {
+      "fixtures": 8,
+      "syntheticFixtures": 0,
+      "behaviourChecked": 8,
+      "behaviourSame": 8,
+      "traceChecked": 0,
+      "traceIdentical": 0,
+      "toolBroken": 0,
+      "fidelityAfter": 0.998,
+      "runtime": {
+       "source": "reference",
+       "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
+       "measuredAt": "2026-11-12T18:58:11.522Z"
+      },
+      "reproduction": {
+       "rerunAt": "2026-11-09T02:11:15.970Z",
+       "note": "fixtures re-measured on a fresh machine; verdict changes: 0"
+      }
+     },
+     "limitations": [
+      "The program text is a plain constant and is read without running anything; the output of the tool is identical in behaviour (8 of 8 samples on PUC Lua 5.1 / LuaJIT / 5.4) and 100% in fidelity. The tool does not rename anything, so original names are kept. Only the 2022 revision exists."
+     ],
+     "verification": {
+      "status": "real-output-verified",
+      "basis": "fixtures made by the real tool, behaviour decided on reference runtimes"
+     }
+    }
+   ],
+   "claims": {
+    "unversioned": {
+     "claim": "partial",
+     "why": "8 of 8 reconstructed with identical behaviour (lower bound 68%)."
     }
    }
   },
@@ -1552,7 +2016,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-12T08:48:05.169Z"
+       "measuredAt": "2026-11-12T18:58:11.522Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -1583,7 +2047,7 @@
    "id": "luaobfuscator",
    "name": "LuaObfuscator.com",
    "kind": "unknown",
-   "summary": "Web obfuscation service with several protection levels.",
+   "summary": "Web obfuscation service (luaobfuscator.com) with several protection levels. Its free tier writes an ASCII-art header ending \"LuaObfuscator.com (Alpha x.y.z) ~ Much Love, Ferib\", read on the scripts of a public collection; a script without the header is only a signature at this point.",
    "versions": [
     {
      "id": "unversioned",
@@ -1591,33 +2055,36 @@
      "identification": {
       "methods": [
        {
-        "kind": "signature",
-        "confidence": 0.4,
-        "note": "heuristic"
+        "kind": "banner",
+        "confidence": 0.7,
+        "note": "banner comment"
        }
       ],
-      "confidence": 0.4
+      "confidence": 0.7
      },
      "characteristics": [
       {
        "text": "string escaping",
        "knownAs": "documented",
        "sources": [
-        "https://luaobfuscator.com"
+        "https://luaobfuscator.com",
+        "https://github.com/vyxonq-dev/obfuscator-samples"
        ]
       },
       {
        "text": "constant tables",
        "knownAs": "documented",
        "sources": [
-        "https://luaobfuscator.com"
+        "https://luaobfuscator.com",
+        "https://github.com/vyxonq-dev/obfuscator-samples"
        ]
       },
       {
        "text": "optional VM",
        "knownAs": "documented",
        "sources": [
-        "https://luaobfuscator.com"
+        "https://luaobfuscator.com",
+        "https://github.com/vyxonq-dev/obfuscator-samples"
        ]
       }
      ],
@@ -1741,7 +2208,7 @@
    "id": "psu",
    "name": "PSU",
    "kind": "commercial",
-   "summary": "Commercial obfuscator mentioned in community threads; no public signature or documentation was found.",
+   "summary": "Commercial obfuscator (psu.dev). Every script of the public collection (versions 4.0.A and 4.5.A) keeps the string \"This file was obfuscated using PSU Obfuscator <version>\" as a local of its wrapper `return(function(e, ...)` and reads its constants from a table with numeric and short-string keys. Only identified here.",
    "versions": [
     {
      "id": "unversioned",
@@ -1749,14 +2216,39 @@
      "identification": {
       "methods": [
        {
-        "kind": "signature",
-        "confidence": 0.3,
-        "note": "heuristic"
+        "kind": "banner",
+        "confidence": 0.7,
+        "note": "banner comment"
        }
       ],
-      "confidence": 0.3
+      "confidence": 0.7
      },
-     "characteristics": [],
+     "characteristics": [
+      {
+       "text": "wrapper function with a constant table",
+       "knownAs": "documented",
+       "sources": [
+        "https://www.psu.dev/",
+        "https://github.com/vyxonq-dev/obfuscator-samples"
+       ]
+      },
+      {
+       "text": "numeric keys",
+       "knownAs": "documented",
+       "sources": [
+        "https://www.psu.dev/",
+        "https://github.com/vyxonq-dev/obfuscator-samples"
+       ]
+      },
+      {
+       "text": "VM",
+       "knownAs": "documented",
+       "sources": [
+        "https://www.psu.dev/",
+        "https://github.com/vyxonq-dev/obfuscator-samples"
+       ]
+      }
+     ],
      "samples": {
       "authorizedPairs": 0,
       "realOutput": 0,
@@ -1913,7 +2405,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-12T08:48:05.169Z"
+       "measuredAt": "2026-11-12T18:58:11.522Z"
       },
       "reproduction": null
      },
@@ -2038,7 +2530,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-12T08:48:05.169Z"
+       "measuredAt": "2026-11-12T18:58:11.522Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -2160,7 +2652,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-12T08:48:05.169Z"
+       "measuredAt": "2026-11-12T18:58:11.522Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -2266,7 +2758,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-12T08:48:05.169Z"
+       "measuredAt": "2026-11-12T18:58:11.522Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -2861,7 +3353,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-12T08:48:05.169Z"
+       "measuredAt": "2026-11-12T18:58:11.522Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -2982,7 +3474,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-12T08:48:05.169Z"
+       "measuredAt": "2026-11-12T18:58:11.522Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -3102,7 +3594,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-12T08:48:05.169Z"
+       "measuredAt": "2026-11-12T18:58:11.522Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",

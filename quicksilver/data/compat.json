@@ -1,18 +1,30 @@
 {
- "generatedAt": "2026-11-12T08:50:12.091Z",
+ "generatedAt": "2026-11-12T18:59:24.162Z",
  "engineVersion": "1.0.0",
  "trace": {
   "generatedAt": "2026-10-25T11:35:15.127Z"
  },
  "scorecard": {
-  "generatedAt": "2026-11-12T08:48:05.169Z",
-  "fixtures": 952,
+  "generatedAt": "2026-11-12T18:58:11.522Z",
+  "fixtures": 960,
   "sandbox": true,
   "behaviourOracle": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa"
  },
  "families": [
   {
    "id": "prometheus",
+   "corpus": {
+    "labels": [
+     "Prometheus"
+    ],
+    "files": 238,
+    "identified": 230,
+    "unidentified": 8,
+    "versionFiles": 0,
+    "versionRight": 0,
+    "commit": "82e582fcdd78948212192e1ceb748769ef3e8494",
+    "source": "https://github.com/vyxonq-dev/obfuscator-samples"
+   },
    "name": "Prometheus",
    "kind": "open-source",
    "status": "partial",
@@ -63,7 +75,7 @@
      "traceIdentical": 6,
      "traceChecked": 6,
      "toolBroken": 1,
-     "ms": 141,
+     "ms": 140,
      "status": "partial",
      "needsSandbox": true,
      "kind": "preset",
@@ -81,7 +93,7 @@
      "traceIdentical": 6,
      "traceChecked": 6,
      "toolBroken": 1,
-     "ms": 399,
+     "ms": 409,
      "status": "partial",
      "needsSandbox": true,
      "kind": "preset",
@@ -99,7 +111,7 @@
      "traceIdentical": 6,
      "traceChecked": 6,
      "toolBroken": 1,
-     "ms": 1289,
+     "ms": 1320,
      "status": "partial",
      "needsSandbox": true,
      "kind": "preset",
@@ -117,7 +129,7 @@
      "traceIdentical": 7,
      "traceChecked": 7,
      "toolBroken": 0,
-     "ms": 18,
+     "ms": 20,
      "status": "supported",
      "needsSandbox": true,
      "kind": "step",
@@ -135,7 +147,7 @@
      "traceIdentical": 7,
      "traceChecked": 7,
      "toolBroken": 0,
-     "ms": 20,
+     "ms": 23,
      "status": "supported",
      "needsSandbox": true,
      "kind": "step",
@@ -153,7 +165,7 @@
      "traceIdentical": 7,
      "traceChecked": 7,
      "toolBroken": 0,
-     "ms": 7,
+     "ms": 8,
      "status": "supported",
      "needsSandbox": false,
      "kind": "step",
@@ -189,7 +201,7 @@
      "traceIdentical": 7,
      "traceChecked": 7,
      "toolBroken": 0,
-     "ms": 12,
+     "ms": 11,
      "status": "supported",
      "needsSandbox": false,
      "kind": "step",
@@ -225,7 +237,7 @@
      "traceIdentical": 7,
      "traceChecked": 7,
      "toolBroken": 0,
-     "ms": 6,
+     "ms": 5,
      "status": "supported",
      "needsSandbox": false,
      "kind": "step",
@@ -243,7 +255,7 @@
      "traceIdentical": 7,
      "traceChecked": 7,
      "toolBroken": 0,
-     "ms": 8,
+     "ms": 7,
      "status": "supported",
      "needsSandbox": false,
      "kind": "step",
@@ -288,6 +300,7 @@
   },
   {
    "id": "hercules",
+   "corpus": null,
    "name": "Hercules",
    "kind": "open-source",
    "status": "partial",
@@ -326,7 +339,7 @@
      "traceIdentical": 6,
      "traceChecked": 6,
      "toolBroken": 1,
-     "ms": 11,
+     "ms": 8,
      "status": "supported",
      "needsSandbox": false,
      "kind": "preset",
@@ -344,7 +357,7 @@
      "traceIdentical": 6,
      "traceChecked": 6,
      "toolBroken": 1,
-     "ms": 17,
+     "ms": 15,
      "status": "supported",
      "needsSandbox": true,
      "kind": "preset",
@@ -362,7 +375,7 @@
      "traceIdentical": 5,
      "traceChecked": 5,
      "toolBroken": 2,
-     "ms": 36,
+     "ms": 39,
      "status": "partial",
      "needsSandbox": true,
      "kind": "preset",
@@ -380,7 +393,7 @@
      "traceIdentical": 2,
      "traceChecked": 2,
      "toolBroken": 1,
-     "ms": 1419,
+     "ms": 1255,
      "status": "partial",
      "needsSandbox": true,
      "kind": "preset",
@@ -398,7 +411,7 @@
      "traceIdentical": 5,
      "traceChecked": 5,
      "toolBroken": 2,
-     "ms": 61,
+     "ms": 49,
      "status": "partial",
      "needsSandbox": false,
      "kind": "module",
@@ -434,7 +447,7 @@
      "traceIdentical": 7,
      "traceChecked": 7,
      "toolBroken": 0,
-     "ms": 10,
+     "ms": 9,
      "status": "supported",
      "needsSandbox": false,
      "kind": "module",
@@ -452,7 +465,7 @@
      "traceIdentical": 7,
      "traceChecked": 7,
      "toolBroken": 0,
-     "ms": 14,
+     "ms": 12,
      "status": "supported",
      "needsSandbox": false,
      "kind": "module",
@@ -470,7 +483,7 @@
      "traceIdentical": 7,
      "traceChecked": 7,
      "toolBroken": 0,
-     "ms": 12,
+     "ms": 11,
      "status": "supported",
      "needsSandbox": true,
      "kind": "module",
@@ -488,7 +501,7 @@
      "traceIdentical": 7,
      "traceChecked": 7,
      "toolBroken": 0,
-     "ms": 7,
+     "ms": 6,
      "status": "supported",
      "needsSandbox": false,
      "kind": "module",
@@ -506,7 +519,7 @@
      "traceIdentical": 6,
      "traceChecked": 6,
      "toolBroken": 1,
-     "ms": 9,
+     "ms": 8,
      "status": "supported",
      "needsSandbox": false,
      "kind": "module",
@@ -524,7 +537,7 @@
      "traceIdentical": 7,
      "traceChecked": 7,
      "toolBroken": 0,
-     "ms": 10,
+     "ms": 9,
      "status": "supported",
      "needsSandbox": false,
      "kind": "module",
@@ -542,7 +555,7 @@
      "traceIdentical": 7,
      "traceChecked": 7,
      "toolBroken": 0,
-     "ms": 9,
+     "ms": 8,
      "status": "supported",
      "needsSandbox": false,
      "kind": "module",
@@ -560,7 +573,7 @@
      "traceIdentical": 4,
      "traceChecked": 4,
      "toolBroken": 3,
-     "ms": 7,
+     "ms": 5,
      "status": "supported",
      "needsSandbox": false,
      "kind": "module",
@@ -578,7 +591,7 @@
      "traceIdentical": 6,
      "traceChecked": 6,
      "toolBroken": 1,
-     "ms": 10,
+     "ms": 8,
      "status": "supported",
      "needsSandbox": false,
      "kind": "module",
@@ -596,7 +609,7 @@
      "traceIdentical": 7,
      "traceChecked": 7,
      "toolBroken": 0,
-     "ms": 49,
+     "ms": 39,
      "status": "supported",
      "needsSandbox": true,
      "kind": "module",
@@ -943,7 +956,7 @@
      "fidelityBefore": 0.617,
      "fidelityAfter": 0.848,
      "behaviourChecked": 65,
-     "behaviourSame": 54,
+     "behaviourSame": 51,
      "configs": [
       {
        "config": "default",
@@ -973,7 +986,7 @@
        "fidelityBefore": 0.078,
        "fidelityAfter": 0.079,
        "behaviourChecked": 7,
-       "behaviourSame": 3,
+       "behaviourSame": 0,
        "toolBroken": 4,
        "unparsed": 0,
        "status": "unsupported"
@@ -1126,7 +1139,7 @@
        "fidelityAfter": 0.834,
        "behaviourChecked": 7,
        "behaviourSame": 6,
-       "toolBroken": 7,
+       "toolBroken": 2,
        "unparsed": 0,
        "status": "partial"
       },
@@ -1300,7 +1313,7 @@
        "fidelityAfter": 0.834,
        "behaviourChecked": 7,
        "behaviourSame": 6,
-       "toolBroken": 7,
+       "toolBroken": 2,
        "unparsed": 0,
        "status": "partial"
       },
@@ -1475,6 +1488,18 @@
   },
   {
    "id": "luraph",
+   "corpus": {
+    "labels": [
+     "Luraph"
+    ],
+    "files": 218,
+    "identified": 195,
+    "unidentified": 15,
+    "versionFiles": 195,
+    "versionRight": 195,
+    "commit": "82e582fcdd78948212192e1ceb748769ef3e8494",
+    "source": "https://github.com/vyxonq-dev/obfuscator-samples"
+   },
    "name": "Luraph",
    "kind": "commercial",
    "status": "unsupported",
@@ -1506,6 +1531,18 @@
   },
   {
    "id": "moonsec_v3",
+   "corpus": {
+    "labels": [
+     "MoonSecV3"
+    ],
+    "files": 23,
+    "identified": 23,
+    "unidentified": 0,
+    "versionFiles": 0,
+    "versionRight": 0,
+    "commit": "82e582fcdd78948212192e1ceb748769ef3e8494",
+    "source": "https://github.com/vyxonq-dev/obfuscator-samples"
+   },
    "name": "MoonSec V3",
    "kind": "commercial",
    "status": "unsupported",
@@ -1531,6 +1568,18 @@
   },
   {
    "id": "moonveil",
+   "corpus": {
+    "labels": [
+     "MoonVeil"
+    ],
+    "files": 76,
+    "identified": 76,
+    "unidentified": 0,
+    "versionFiles": 58,
+    "versionRight": 58,
+    "commit": "82e582fcdd78948212192e1ceb748769ef3e8494",
+    "source": "https://github.com/vyxonq-dev/obfuscator-samples"
+   },
    "name": "MoonVeil",
    "kind": "commercial",
    "status": "partial",
@@ -1569,7 +1618,229 @@
    ]
   },
   {
+   "id": "ironbrew1",
+   "corpus": {
+    "labels": [
+     "IronBrew1"
+    ],
+    "files": 25,
+    "identified": 24,
+    "unidentified": 1,
+    "versionFiles": 0,
+    "versionRight": 0,
+    "commit": "82e582fcdd78948212192e1ceb748769ef3e8494",
+    "source": "https://github.com/vyxonq-dev/obfuscator-samples"
+   },
+   "name": "IronBrew 1",
+   "kind": "open-source",
+   "status": "unsupported",
+   "basis": "signature",
+   "summary": "The first IronBrew (Lua 5.1 VM obfuscator for Roblox): a header comment \"this file was generated using ironbrew1\" and one wrapper function with dozens of one- and two-letter parameters. A reconstruction engine for it exists in the dynamic service (api/_engine/luraph); the static pipeline only identifies it.",
+   "detect": "Header comment and the wrapper shape, read on 24 real scripts of a public collection (24 of 24 identified, 12 of them held out when the rule was written). The dynamic service has an IronBrew 1 engine (see the Reconstruct tab); the static pipeline does not rebuild the VM.",
+   "detectEvidence": "banner",
+   "documentedTechniques": [
+    "bytecode VM",
+    "decimal-escaped program data",
+    "one wrapper function with duplicated parameter names"
+   ],
+   "untestedTechniques": [
+    "bytecode VM",
+    "decimal-escaped program data",
+    "one wrapper function with duplicated parameter names"
+   ],
+   "techniques": [],
+   "versions": [],
+   "measured": null,
+   "limits": [
+    "Identified, not rebuilt statically: the confidence is capped low (0.27 on three scripts)."
+   ],
+   "sources": [
+    "https://github.com/vyxonq-dev/obfuscator-samples"
+   ]
+  },
+  {
+   "id": "moonsec_v2",
+   "corpus": {
+    "labels": [
+     "MoonSecV2"
+    ],
+    "files": 26,
+    "identified": 21,
+    "unidentified": 5,
+    "versionFiles": 0,
+    "versionRight": 0,
+    "commit": "82e582fcdd78948212192e1ceb748769ef3e8494",
+    "source": "https://github.com/vyxonq-dev/obfuscator-samples"
+   },
+   "name": "MoonSec V2",
+   "kind": "commercial",
+   "status": "unsupported",
+   "basis": "signature",
+   "summary": "Older MoonSec generation: a global `Protected_by_MoonSecV2` with a discord invite, then a loader that assigns its VM to the global `_msec`. Read on the scripts of a public collection; no generator was available.",
+   "detect": "The Protected_by_MoonSecV2 banner variable and the _msec assignment, read on the scripts of a public collection. Some files filed under MoonSecV2 there are other tools’ output (a \"Protected by Mnx Obfuscator\", a \"DELTA V3\"); they are reported as an unrecognised vendor banner, not as MoonSec.",
+   "detectEvidence": "banner",
+   "documentedTechniques": [
+    "VM loader assigned to _msec",
+    "constant arithmetic with # of tables and strings",
+    "banner variable"
+   ],
+   "untestedTechniques": [
+    "VM loader assigned to _msec",
+    "constant arithmetic with # of tables and strings",
+    "banner variable"
+   ],
+   "techniques": [],
+   "versions": [],
+   "measured": null,
+   "limits": [
+    "VM loader: identified, not rebuilt."
+   ],
+   "sources": [
+    "https://github.com/vyxonq-dev/obfuscator-samples"
+   ]
+  },
+  {
+   "id": "wynfuscate",
+   "corpus": {
+    "labels": [
+     "wYnFuscate"
+    ],
+    "files": 15,
+    "identified": 15,
+    "unidentified": 0,
+    "versionFiles": 0,
+    "versionRight": 0,
+    "commit": "82e582fcdd78948212192e1ceb748769ef3e8494",
+    "source": "https://github.com/vyxonq-dev/obfuscator-samples"
+   },
+   "name": "wYnFuscate",
+   "kind": "commercial",
+   "status": "unsupported",
+   "basis": "signature",
+   "summary": "Obfuscator (wynfuscate.com) whose scripts begin \"Protected by wYnFuscate\" and one wrapper `return(function(vE,vZ,vu,...)` that rebuilds getfenv from string.char codes. Read on the scripts of a public collection.",
+   "detect": "The \"Protected by wYnFuscate\" header and the wrapper that rebuilds getfenv from string.char codes, read on 22 scripts of a public collection.",
+   "detectEvidence": "banner",
+   "documentedTechniques": [
+    "wrapper with environment recovery",
+    "names written as string.char codes",
+    "VM"
+   ],
+   "untestedTechniques": [
+    "wrapper with environment recovery",
+    "names written as string.char codes",
+    "VM"
+   ],
+   "techniques": [],
+   "versions": [],
+   "measured": null,
+   "limits": [
+    "VM: identified, not rebuilt. One recovery run took 7 s on a 245 KB script; no crash on any."
+   ],
+   "sources": [
+    "https://github.com/vyxonq-dev/obfuscator-samples"
+   ]
+  },
+  {
+   "id": "boronide",
+   "corpus": {
+    "labels": [
+     "Boronide"
+    ],
+    "files": 24,
+    "identified": 22,
+    "unidentified": 0,
+    "versionFiles": 0,
+    "versionRight": 0,
+    "commit": "82e582fcdd78948212192e1ceb748769ef3e8494",
+    "source": "https://github.com/vyxonq-dev/obfuscator-samples"
+   },
+   "name": "Boronide",
+   "kind": "commercial",
+   "status": "unsupported",
+   "basis": "signature",
+   "summary": "Obfuscator whose scripts begin with a \"Boronide, vX\" comment and run a credit string through :gsub('(.*)', function(d) ...) whose body is a state loop. Read on the scripts of a public collection.",
+   "detect": "The \"Boronide[™] [Free|Premium] Obfuscation, vX\" header (v0.3.0 to v0.7.0 were found) and the credit string run through :gsub('(.*)', function ...), read on the scripts of a public collection.",
+   "detectEvidence": "banner",
+   "documentedTechniques": [
+    "credit string as the entry",
+    "opaque state loops",
+    "VM"
+   ],
+   "untestedTechniques": [
+    "credit string as the entry",
+    "opaque state loops",
+    "VM"
+   ],
+   "techniques": [],
+   "versions": [],
+   "measured": null,
+   "limits": [
+    "Opaque state loops and a VM: identified, not rebuilt."
+   ],
+   "sources": [
+    "https://github.com/vyxonq-dev/obfuscator-samples"
+   ]
+  },
+  {
+   "id": "rbxlua",
+   "corpus": null,
+   "name": "RBXLuaObfuscator",
+   "kind": "open-source",
+   "status": "supported",
+   "basis": "real-output",
+   "summary": "Small Roblox-targeted obfuscator (kosuke14, no licence, 2022) that does not call loadstring: it embeds a Lua lexer, parser and interpreter written in Lua (a few thousand characters of generated text) and hands it the program as a list of one-character decimal-escape strings, after decoy functions built from arithmetic that cancels.",
+   "detect": "Output of the real tool (kosuke14/RBXLuaObfuscator, run in the isolated Lua state; no licence, so the fixtures are in the git-ignored obfuscated-local/): the program is a list of one-character decimal escapes handed to a Lua compiler the script carries (there is no loadstring). Found by shape: the final call, the table.concat of the list, and a lexer that names Lua’s keywords.",
+   "detectEvidence": "source",
+   "documentedTechniques": [
+    "embedded Lua compiler instead of loadstring",
+    "program as a list of decimal-escape characters",
+    "decoy functions",
+    "arithmetic that cancels"
+   ],
+   "untestedTechniques": [
+    "embedded Lua compiler instead of loadstring",
+    "program as a list of decimal-escape characters",
+    "decoy functions",
+    "arithmetic that cancels"
+   ],
+   "techniques": [
+    {
+     "config": "default",
+     "samples": 8,
+     "fidelityBefore": 0.033,
+     "fidelityAfter": 0.998,
+     "fidelityStatic": 0.998,
+     "confidence": 0.9,
+     "behaviourChecked": 8,
+     "behaviourSame": 8,
+     "traceIdentical": 0,
+     "traceChecked": 0,
+     "toolBroken": 0,
+     "ms": 181,
+     "status": "supported",
+     "needsSandbox": false,
+     "kind": "preset",
+     "label": "default"
+    }
+   ],
+   "versions": [],
+   "measured": {
+    "traceIdentical": 0,
+    "traceChecked": 0,
+    "fixtures": 8,
+    "fidelityBefore": 0.033,
+    "fidelityAfter": 0.998
+   },
+   "limits": [
+    "The program text is a plain constant and is read without running anything; the output of the tool is identical in behaviour (8 of 8 samples on PUC Lua 5.1 / LuaJIT / 5.4) and 100% in fidelity. The tool does not rename anything, so original names are kept. Only the 2022 revision exists."
+   ],
+   "sources": [
+    "https://github.com/kosuke14/RBXLuaObfuscator"
+   ]
+  },
+  {
    "id": "snowveil",
+   "corpus": null,
    "name": "SnowVeil",
    "kind": "unknown",
    "status": "unsupported",
@@ -1607,6 +1878,7 @@
   },
   {
    "id": "kirus",
+   "corpus": null,
    "name": "Kirus",
    "kind": "unknown",
    "status": "unsupported",
@@ -1640,6 +1912,18 @@
   },
   {
    "id": "ironbrew2",
+   "corpus": {
+    "labels": [
+     "IronBrew2"
+    ],
+    "files": 8,
+    "identified": 7,
+    "unidentified": 0,
+    "versionFiles": 0,
+    "versionRight": 0,
+    "commit": "82e582fcdd78948212192e1ceb748769ef3e8494",
+    "source": "https://github.com/vyxonq-dev/obfuscator-samples"
+   },
    "name": "IronBrew 2",
    "kind": "open-source",
    "status": "supported",
@@ -1669,7 +1953,7 @@
      "traceIdentical": 8,
      "traceChecked": 8,
      "toolBroken": 0,
-     "ms": 63,
+     "ms": 55,
      "status": "supported",
      "needsSandbox": false,
      "kind": "preset",
@@ -1705,7 +1989,7 @@
      "traceIdentical": 8,
      "traceChecked": 8,
      "toolBroken": 0,
-     "ms": 44,
+     "ms": 41,
      "status": "supported",
      "needsSandbox": false,
      "kind": "preset",
@@ -1723,7 +2007,7 @@
      "traceIdentical": 8,
      "traceChecked": 8,
      "toolBroken": 0,
-     "ms": 49,
+     "ms": 45,
      "status": "supported",
      "needsSandbox": false,
      "kind": "preset",
@@ -1741,7 +2025,7 @@
      "traceIdentical": 3,
      "traceChecked": 3,
      "toolBroken": 5,
-     "ms": 46,
+     "ms": 42,
      "status": "supported",
      "needsSandbox": false,
      "kind": "preset",
@@ -1759,7 +2043,7 @@
      "traceIdentical": 8,
      "traceChecked": 8,
      "toolBroken": 0,
-     "ms": 491,
+     "ms": 374,
      "status": "partial",
      "needsSandbox": false,
      "kind": "preset",
@@ -1777,7 +2061,7 @@
      "traceIdentical": 8,
      "traceChecked": 8,
      "toolBroken": 0,
-     "ms": 61,
+     "ms": 50,
      "status": "supported",
      "needsSandbox": false,
      "kind": "preset",
@@ -1795,7 +2079,7 @@
      "traceIdentical": 8,
      "traceChecked": 8,
      "toolBroken": 0,
-     "ms": 57,
+     "ms": 48,
      "status": "supported",
      "needsSandbox": false,
      "kind": "preset",
@@ -1823,13 +2107,25 @@
   },
   {
    "id": "luaobfuscator",
+   "corpus": {
+    "labels": [
+     "LuaObfuscator"
+    ],
+    "files": 5,
+    "identified": 5,
+    "unidentified": 0,
+    "versionFiles": 0,
+    "versionRight": 0,
+    "commit": "82e582fcdd78948212192e1ceb748769ef3e8494",
+    "source": "https://github.com/vyxonq-dev/obfuscator-samples"
+   },
    "name": "LuaObfuscator.com",
    "kind": "service",
    "status": "experimental",
    "basis": "signature",
-   "summary": "Web obfuscation service with several protection levels.",
+   "summary": "Web obfuscation service (luaobfuscator.com) with several protection levels. Its free tier writes an ASCII-art header ending \"LuaObfuscator.com (Alpha x.y.z) ~ Much Love, Ferib\", read on the scripts of a public collection; a script without the header is only a signature at this point.",
    "detect": "Generic string-escape and constant-table heuristics only.",
-   "detectEvidence": "none",
+   "detectEvidence": "banner",
    "documentedTechniques": [
     "string escaping",
     "constant tables",
@@ -1847,11 +2143,13 @@
     "No real output obtained to test against."
    ],
    "sources": [
-    "https://luaobfuscator.com"
+    "https://luaobfuscator.com",
+    "https://github.com/vyxonq-dev/obfuscator-samples"
    ]
   },
   {
    "id": "fuscator77",
+   "corpus": null,
    "name": "77fuscator",
    "kind": "unknown",
    "status": "experimental",
@@ -1871,25 +2169,60 @@
   },
   {
    "id": "psu",
+   "corpus": {
+    "labels": [
+     "PSU"
+    ],
+    "files": 8,
+    "identified": 8,
+    "unidentified": 0,
+    "versionFiles": 8,
+    "versionRight": 8,
+    "commit": "82e582fcdd78948212192e1ceb748769ef3e8494",
+    "source": "https://github.com/vyxonq-dev/obfuscator-samples"
+   },
    "name": "PSU",
    "kind": "commercial",
    "status": "unsupported",
    "basis": "signature",
-   "summary": "Commercial obfuscator mentioned in community threads; no public signature or documentation was found.",
+   "summary": "Commercial obfuscator (psu.dev). Every script of the public collection (versions 4.0.A and 4.5.A) keeps the string \"This file was obfuscated using PSU Obfuscator <version>\" as a local of its wrapper `return(function(e, ...)` and reads its constants from a table with numeric and short-string keys. Only identified here.",
    "detect": "No signature known.",
-   "detectEvidence": "none",
-   "documentedTechniques": [],
-   "untestedTechniques": [],
+   "detectEvidence": "banner",
+   "documentedTechniques": [
+    "wrapper function with a constant table",
+    "numeric keys",
+    "VM"
+   ],
+   "untestedTechniques": [
+    "wrapper function with a constant table",
+    "numeric keys",
+    "VM"
+   ],
    "techniques": [],
    "versions": [],
    "measured": null,
    "limits": [
     "Nothing public to verify against."
    ],
-   "sources": []
+   "sources": [
+    "https://www.psu.dev/",
+    "https://github.com/vyxonq-dev/obfuscator-samples"
+   ]
   },
   {
    "id": "loaders",
+   "corpus": {
+    "labels": [
+     "Base64Payload"
+    ],
+    "files": 4,
+    "identified": 0,
+    "unidentified": 4,
+    "versionFiles": 0,
+    "versionRight": 0,
+    "commit": "82e582fcdd78948212192e1ceb748769ef3e8494",
+    "source": "https://github.com/vyxonq-dev/obfuscator-samples"
+   },
    "name": "Loadstring packers",
    "kind": "synthetic",
    "status": "supported",
@@ -1928,7 +2261,7 @@
      "traceIdentical": 0,
      "traceChecked": 0,
      "toolBroken": 0,
-     "ms": 11,
+     "ms": 10,
      "status": "supported",
      "needsSandbox": true,
      "kind": "preset",
@@ -1946,7 +2279,7 @@
      "traceIdentical": 0,
      "traceChecked": 0,
      "toolBroken": 0,
-     "ms": 12,
+     "ms": 9,
      "status": "supported",
      "needsSandbox": true,
      "kind": "preset",
@@ -1964,7 +2297,7 @@
      "traceIdentical": 0,
      "traceChecked": 0,
      "toolBroken": 0,
-     "ms": 12,
+     "ms": 10,
      "status": "supported",
      "needsSandbox": true,
      "kind": "preset",
@@ -1982,7 +2315,7 @@
      "traceIdentical": 0,
      "traceChecked": 0,
      "toolBroken": 0,
-     "ms": 12,
+     "ms": 10,
      "status": "supported",
      "needsSandbox": true,
      "kind": "preset",
@@ -2000,7 +2333,7 @@
      "traceIdentical": 0,
      "traceChecked": 0,
      "toolBroken": 0,
-     "ms": 12,
+     "ms": 10,
      "status": "supported",
      "needsSandbox": true,
      "kind": "preset",
@@ -2018,7 +2351,7 @@
      "traceIdentical": 0,
      "traceChecked": 0,
      "toolBroken": 0,
-     "ms": 26,
+     "ms": 23,
      "status": "supported",
      "needsSandbox": true,
      "kind": "preset",
@@ -2036,7 +2369,7 @@
      "traceIdentical": 0,
      "traceChecked": 0,
      "toolBroken": 0,
-     "ms": 10,
+     "ms": 8,
      "status": "supported",
      "needsSandbox": false,
      "kind": "preset",
@@ -2054,7 +2387,7 @@
      "traceIdentical": 0,
      "traceChecked": 0,
      "toolBroken": 0,
-     "ms": 11,
+     "ms": 7,
      "status": "supported",
      "needsSandbox": false,
      "kind": "preset",
@@ -2072,7 +2405,7 @@
      "traceIdentical": 0,
      "traceChecked": 0,
      "toolBroken": 0,
-     "ms": 17,
+     "ms": 12,
      "status": "supported",
      "needsSandbox": false,
      "kind": "preset",
@@ -2090,7 +2423,7 @@
      "traceIdentical": 0,
      "traceChecked": 0,
      "toolBroken": 0,
-     "ms": 10,
+     "ms": 7,
      "status": "supported",
      "needsSandbox": false,
      "kind": "preset",
@@ -2108,7 +2441,7 @@
      "traceIdentical": 0,
      "traceChecked": 0,
      "toolBroken": 0,
-     "ms": 21,
+     "ms": 15,
      "status": "supported",
      "needsSandbox": true,
      "kind": "preset",
@@ -2133,6 +2466,7 @@
   },
   {
    "id": "colisseum",
+   "corpus": null,
    "name": "Colisseum",
    "kind": "open-source",
    "status": "partial",
@@ -2174,6 +2508,7 @@
   },
   {
    "id": "zenfus",
+   "corpus": null,
    "name": "Zenfus",
    "kind": "open-source",
    "status": "unsupported",
@@ -2203,7 +2538,7 @@
      "traceIdentical": 2,
      "traceChecked": 2,
      "toolBroken": 6,
-     "ms": 292,
+     "ms": 233,
      "status": "unsupported",
      "needsSandbox": false,
      "kind": "preset",
@@ -2229,6 +2564,7 @@
   },
   {
    "id": "simple_lua",
+   "corpus": null,
    "name": "Simple-Lua-Obfuscator",
    "kind": "open-source",
    "status": "supported",
@@ -2261,6 +2597,18 @@
   },
   {
    "id": "aztupbrew",
+   "corpus": {
+    "labels": [
+     "AztupBrew"
+    ],
+    "files": 3,
+    "identified": 0,
+    "unidentified": 0,
+    "versionFiles": 0,
+    "versionRight": 0,
+    "commit": "82e582fcdd78948212192e1ceb748769ef3e8494",
+    "source": "https://github.com/vyxonq-dev/obfuscator-samples"
+   },
    "name": "AztupBrew",
    "kind": "unknown",
    "status": "unsupported",
@@ -2287,6 +2635,7 @@
   },
   {
    "id": "joker",
+   "corpus": null,
    "name": "Joker Obfuscator",
    "kind": "service",
    "status": "unsupported",
@@ -2308,6 +2657,7 @@
   },
   {
    "id": "zerolua",
+   "corpus": null,
    "name": "Zero Lua",
    "kind": "service",
    "status": "unsupported",
@@ -2329,6 +2679,7 @@
   },
   {
    "id": "fivem_strong",
+   "corpus": null,
    "name": "Strong FiveM Lua Obfuscator",
    "kind": "service",
    "status": "unsupported",
@@ -2350,6 +2701,7 @@
   },
   {
    "id": "neuroforge",
+   "corpus": null,
    "name": "NeuroForge VM",
    "kind": "unknown",
    "status": "unsupported",
@@ -2371,6 +2723,7 @@
   },
   {
    "id": "stealthx",
+   "corpus": null,
    "name": "Stealth-X",
    "kind": "service",
    "status": "unsupported",
@@ -2406,6 +2759,7 @@
   },
   {
    "id": "azurevm",
+   "corpus": null,
    "name": "AzureVM",
    "kind": "open-source",
    "status": "unsupported",
@@ -2438,7 +2792,7 @@
      "traceIdentical": 8,
      "traceChecked": 8,
      "toolBroken": 0,
-     "ms": 165,
+     "ms": 138,
      "status": "unsupported",
      "needsSandbox": false,
      "kind": "preset",
@@ -2456,7 +2810,7 @@
      "traceIdentical": 7,
      "traceChecked": 7,
      "toolBroken": 1,
-     "ms": 288,
+     "ms": 280,
      "status": "partial",
      "needsSandbox": true,
      "kind": "preset",
@@ -2474,7 +2828,7 @@
      "traceIdentical": 8,
      "traceChecked": 8,
      "toolBroken": 0,
-     "ms": 190,
+     "ms": 203,
      "status": "unsupported",
      "needsSandbox": false,
      "kind": "preset",
@@ -2492,7 +2846,7 @@
      "traceIdentical": 8,
      "traceChecked": 8,
      "toolBroken": 0,
-     "ms": 168,
+     "ms": 181,
      "status": "unsupported",
      "needsSandbox": false,
      "kind": "preset",
@@ -2510,7 +2864,7 @@
      "traceIdentical": 8,
      "traceChecked": 8,
      "toolBroken": 0,
-     "ms": 202,
+     "ms": 182,
      "status": "unsupported",
      "needsSandbox": false,
      "kind": "preset",
@@ -2528,7 +2882,7 @@
      "traceIdentical": 8,
      "traceChecked": 8,
      "toolBroken": 0,
-     "ms": 385,
+     "ms": 337,
      "status": "unsupported",
      "needsSandbox": false,
      "kind": "preset",
@@ -2555,6 +2909,7 @@
   },
   {
    "id": "simple_html",
+   "corpus": null,
    "name": "Simple Open source Lua Obfuscator (page)",
    "kind": "open-source",
    "status": "partial",
@@ -2584,7 +2939,7 @@
      "traceIdentical": 5,
      "traceChecked": 5,
      "toolBroken": 3,
-     "ms": 10,
+     "ms": 7,
      "status": "partial",
      "needsSandbox": false,
      "kind": "preset",
@@ -2610,6 +2965,7 @@
   },
   {
    "id": "clyde",
+   "corpus": null,
    "name": "Clyde",
    "kind": "open-source",
    "status": "partial",
@@ -2657,7 +3013,7 @@
      "traceIdentical": 8,
      "traceChecked": 8,
      "toolBroken": 0,
-     "ms": 10,
+     "ms": 8,
      "status": "supported",
      "needsSandbox": true,
      "kind": "preset",
@@ -2675,7 +3031,7 @@
      "traceIdentical": 8,
      "traceChecked": 8,
      "toolBroken": 0,
-     "ms": 298,
+     "ms": 251,
      "status": "unsupported",
      "needsSandbox": false,
      "kind": "preset",
@@ -2693,7 +3049,7 @@
      "traceIdentical": 0,
      "traceChecked": 0,
      "toolBroken": 1,
-     "ms": 386,
+     "ms": 370,
      "status": "unsupported",
      "needsSandbox": false,
      "kind": "preset",
@@ -2719,6 +3075,7 @@
   },
   {
    "id": "ironveil",
+   "corpus": null,
    "name": "IronVeil",
    "kind": "unknown",
    "status": "unsupported",
@@ -2738,6 +3095,7 @@
   },
   {
    "id": "goofyscator",
+   "corpus": null,
    "name": "Goofyscator",
    "kind": "unknown",
    "status": "unsupported",
@@ -2757,6 +3115,7 @@
   },
   {
    "id": "xhider",
+   "corpus": null,
    "name": "XHider",
    "kind": "unknown",
    "status": "unsupported",
@@ -2776,6 +3135,18 @@
   },
   {
    "id": "synapse_xen",
+   "corpus": {
+    "labels": [
+     "SynapseXen"
+    ],
+    "files": 5,
+    "identified": 0,
+    "unidentified": 3,
+    "versionFiles": 0,
+    "versionRight": 0,
+    "commit": "82e582fcdd78948212192e1ceb748769ef3e8494",
+    "source": "https://github.com/vyxonq-dev/obfuscator-samples"
+   },
    "name": "Synapse Xen",
    "kind": "commercial",
    "status": "unsupported",
@@ -2795,6 +3166,7 @@
   },
   {
    "id": "wearedevs",
+   "corpus": null,
    "name": "WeAreDevs Obfuscator",
    "kind": "service",
    "status": "experimental",
@@ -2860,8 +3232,8 @@
    "fidelityBefore": 0.236,
    "fidelityAfter": 0.834,
    "confidence": 0.793,
-   "behaviourChecked": 0,
-   "behaviourSame": 0,
+   "behaviourChecked": 5,
+   "behaviourSame": 5,
    "unparsed": 0,
    "status": "partial"
   },
@@ -3066,10 +3438,10 @@
    "fidelityBefore": 0.073,
    "fidelityAfter": 0.997,
    "confidence": 0.9,
-   "behaviourChecked": 0,
-   "behaviourSame": 0,
+   "behaviourChecked": 7,
+   "behaviourSame": 7,
    "unparsed": 0,
-   "status": "partial"
+   "status": "supported"
   }
  ]
 }

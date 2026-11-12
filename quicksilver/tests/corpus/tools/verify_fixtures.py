@@ -33,6 +33,7 @@ def main():
     ap.add_argument("--budget", type=int, default=200_000_000)
     ap.add_argument("--nohook", action="store_true", help="run without the instruction-count hook (in a subprocess with a timeout): for outputs whose anti-tamper rejects hooks")
     ap.add_argument("--timeout", type=int, default=180)
+    ap.add_argument("--only", default="", help="verify only the entries whose file name contains this text (the others keep their recorded behaviour)")
     args = ap.parse_args()
     runner = load_runner()
 
@@ -55,6 +56,8 @@ def main():
             return runner.run(fh.read().decode("latin-1"), rt, args.budget)
 
     for entry in manifest["entries"]:
+        if args.only and args.only not in entry["file"]:
+            continue
         if entry.get("status") != "ok":
             entry["behavior"] = "skipped"
             counts["skipped"] += 1
