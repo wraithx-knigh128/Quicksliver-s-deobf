@@ -26,6 +26,7 @@ import { removeHerculesAntiTamper, removeHerculesAntiTamperFunction, removeHercu
 import { uninlinePass } from '../passes/uninline.js';
 import { splitWebs } from '../passes/webs.js';
 import { unwrapCharList } from '../passes/charlist.js';
+import { raiseLoops } from '../passes/loopraise.js';
 import { analyze as analyzeScopes } from '../core/scope.js';
 import { readHerculesVm, findVmCall, replaceVmCall, HerculesVmError } from './hercules-vm.js';
 import { removeColisseumGuard } from './colisseum.js';
@@ -309,6 +310,19 @@ export function recover(source, userOptions = {}) {
       return { changed: adaptive.changed, scoreBefore: adaptive.score.before, scoreAfter: adaptive.score.after, left: adaptive.residual.length };
     });
     if (adaptive && adaptive.rebuilt) decompiled = true;
+  }
+  // loops a dispatcher or a compiler lowered to `while` (the structure reader may have just produced them)
+  if ((options.adaptive || decompiled)) {
+    const n = run.step('loops.raise', 'Write lowered loops as for loops again', (a) => raiseLoops(a), { quiet: true });
+    if (n) run.step('simplify.after-loops', 'Simplify control flow and remove dead code', (a) => simplifyPass(a, { unusedAtStart: new WeakSet() }), { quiet: true });
+  }
+  // what the structure reader rebuilt exposes what the first rounds could not see: copies of values that never change, and constants now in one place
+  if (adaptive && adaptive.rebuilt) {
+    const k = run.step('stable.after-adaptive', 'Read copies of values that never change as the values', (a) => propagateStable(a), { quiet: true });
+    if (k) {
+      run.step('fold.after-adaptive', 'Fold constant expressions', (a) => foldPass(a, { foldCalls: options.foldCalls }), { quiet: true });
+      run.step('simplify.after-adaptive', 'Simplify control flow and remove dead code', (a) => simplifyPass(a, { unusedAtStart: new WeakSet() }), { quiet: true });
+    }
   }
   if (vmified) run.step('prometheus.environment', 'Declare the environment the script still reads', (a) => envToGlobals(a, true), { quiet: true });
   if (!vmLifted) run.step('varargs', 'Remove unused vararg parameters', (a) => removeUnusedVararg(a), { quiet: true });

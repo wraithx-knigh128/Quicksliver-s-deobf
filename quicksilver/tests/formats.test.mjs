@@ -376,3 +376,34 @@ test('rbxlua: the real tool’s output is read back to the program (needs the lo
     assert.ok(fidelity(read(path.join(corpus, 'originals', e.sample)), r.output).score >= 0.95, e.file);
   }
 });
+
+// ---- loops lowered to `while` ------------------------------------------------------------------------------------------------------------
+import { raiseLoops } from '../src/passes/loopraise.js';
+
+test('loops: a lowered generic and a lowered numeric for loop are written as for loops again; a loop that does not match exactly is left alone', () => {
+  const g = parse('local it, st, ct = ipairs(list)\nwhile true do\n  v, w = it(st, ct)\n  if v == nil then break end\n  ct = v\n  print(w)\nend');
+  assert.equal(raiseLoops(g).generic, 1);
+  assert.match(text(g), /for v, w in ipairs\(list\) do\s+print\(w\)\s+end/);
+  const n = parse('local i, lim, stp\ni, lim, stp = 1, #s, 1\nwhile stp > 0 and i <= lim or stp <= 0 and i >= lim do\n  print(s:sub(i, i))\n  i = i + stp\nend');
+  assert.equal(raiseLoops(n).numeric, 1);
+  assert.match(text(n), /for i = 1, #s do\s+print\(s:sub\(i, i\)\)\s+end/);
+  const stepped = parse('i, lim, stp = 10, 1, -2\nwhile stp > 0 and i <= lim or stp <= 0 and i >= lim do\n  print(i)\n  i = i + stp\nend');
+  assert.equal(raiseLoops(stepped).numeric, 1);
+  assert.match(text(stepped), /for i = 10, 1, -2 do/);
+  // the body assigns the control variable: a for loop would not count the same
+  const assigned = parse('i, lim, stp = 1, 9, 1\nwhile stp > 0 and i <= lim or stp <= 0 and i >= lim do\n  i = i + 1\n  i = i + stp\nend');
+  assert.equal(raiseLoops(assigned).changed, 0);
+  // the hidden value is read after the loop
+  const after = parse('it, st, ct = ipairs(t)\nwhile true do\n  v = it(st, ct)\n  if v == nil then break end\n  ct = v\nend\nprint(ct)');
+  assert.equal(raiseLoops(after).changed, 0);
+  // not the shape: the nil test has an else branch
+  const other = parse('it, st, ct = ipairs(t)\nwhile true do\n  v = it(st, ct)\n  if v == nil then break else print(1) end\n  ct = v\nend');
+  assert.equal(raiseLoops(other).changed, 0);
+});
+
+test('loops: the real chain with the laboratory’s flattening is rebuilt to the original loops (s04)', () => {
+  const r = run(read(path.join(corpus, 'obfuscated/mixed/s04_control_flow__hercules-s2e+lab-flatten.lua')));
+  assert.ok(r.steps.some((s) => s.id === 'loops.raise' && s.status === 'applied'));
+  assert.match(r.output, /for \w+, \w+ in ipairs\(\{ 6, 7, 27 \}\) do/);
+  assert.ok(fidelity(read(path.join(corpus, 'originals/s04_control_flow.lua')), r.output).score >= 0.95);
+});

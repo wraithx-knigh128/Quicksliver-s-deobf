@@ -1,22 +1,127 @@
 {
-  "schema": 1,
-  "note": "What was learned about Hercules, MoonVeil and SnowVeil in Phase VIII, with where it came from and how far it can be trusted. Measured results are in format-records.json and docs/COMPATIBILITY.md; this file is the reading behind them. A source that could not be read is listed as such.",
-  "researchedAt": "2026-11-12",
-  "findings": [
-    { "id": "hercules-history", "family": "hercules", "finding": "Hercules (Apache-2.0) has no release tags. A version is the watermark its source writes: v1.5 (from 2024-09-22), v1.6 (2024-11-03), v1.6.2 (2025-01-27), v2.0.0 (2026-04-30, manifest.lua and a rewritten compiler), v2.0.1 (2026-06-17, current; the manifest watermark still says v2.0.0 and the VM header says V2.0.1). Five revisions are run in tests/corpus/tools/gen_hercules_versions.py.", "method": "git history of the public repository, read and run unmodified on PUC Lua 5.4 (lupa)", "source": "https://github.com/zeusssz/hercules-obfuscator", "reliability": "high: the tool's own source" },
-    { "id": "hercules-vm-formats", "family": "hercules", "finding": "Two virtual-machine formats exist. 1.5 and 1.6 use modules/Compiler/c.lua; 1.6.2 and 2.x use VMGenerator.lua with Compiler/Serializer.lua: Lua 5.1 bytecode, serialised with a per-instruction record, written as base-94 digits over a shuffled alphabet. Only the second is read.", "method": "reading the source; decoding generated output", "source": "https://github.com/zeusssz/hercules-obfuscator (src/modules/VMGenerator.lua, Compiler/Serializer.lua, Compiler/VMStrings.lua)", "reliability": "high" },
-    { "id": "hercules-serialiser-nil", "family": "hercules", "finding": "Serializer.lua writes no bytes for a nil constant but the count includes it (`#` stops at a nil), so the interpreter reads the next tag as this one's and the script does not run. The data of such a script is still decodable, and where two constants are lost the values are not in the file.", "method": "decoding the committed fixtures s02 and s06 and running the results", "source": "tests/corpus/obfuscated/hercules (s02, s06 virtual_machine)", "reliability": "high: reproduced" },
-    { "id": "moonveil-macros", "family": "moonveil", "finding": "Vendor macros: MV_VM(fn, vmType?) virtualises one function; MV_ENC_FUNC(fn, key, rtKey, vmType?) encrypts a function so it decrypts only when a run-time key matches; MV_CFF(fn, decompose?, mangleExpr?, cfManglePercent?) flattens control flow (and is lifted out of virtualised functions as a separate state machine); MV_OMIT(fn) leaves a function in plaintext; MV_OMIT_CFF and MV_OMIT_VM exist. LPH_* names are accepted as aliases (LPH_ENCFUNC, LPH_NO_VIRTUALIZE). The product describes an IR optimisation pass and a compile mode.", "method": "search results quoting the vendor documentation; the documentation host could not be fetched (DNS refused)", "source": "https://moonveil.cc/docs/macros/", "reliability": "medium: quoted by a search engine, not read" },
-    { "id": "moonveil-versions-seen", "family": "moonveil", "finding": "Third-party material names MoonVeil v1.4.5, 2.0.24, 2.0.25, 2.0.26 and 2.1.0. Scripts with banners were read for 1.4.5, 2.0.26 and 2.1.0; 2.0.24 and 2.0.25 only as an earlier user script (2.0.25) and a regression issue (2.0.24).", "method": "public deobfuscator repositories read as text", "source": "https://github.com/Nonition/MoonveilDeobfuscator", "reliability": "medium: the banners are text the file's owner controls" },
-    { "id": "moonveil-cells-differ", "family": "moonveil", "finding": "The cell layout changed between builds: 2.0.25 `{[1]=3,[3]=v}` read as c[2][c[1]]; 2.0.26 `{[3]=1,[1]=v}` read as c[2][c[3]]; 2.1.0 `{[1]=2,[2]=v}` read as c[3][c[1]]. The bootstrap permutation is the same (position h under names[(MUL*h+ADD) % n]) but its statements are written in a different order and a flattened builder scrambles them.", "method": "measured on the scripts; reproduced by tests/formats.test.mjs", "source": "tools/formats/samples.json", "reliability": "high for the scripts read; unknown for other builds" },
-    { "id": "moonveil-false-high", "family": "moonveil", "finding": "Before this phase a 2.0.26 script whose constants were not decoded was reported \"RECOVERED (confidence high, 0.90)\". Against the one hand-made reference its fidelity was 19%. The confidence now counts places left unresolved and a function table that was not joined into the program (0.60 for those builds).", "method": "comparison with the reference in the public repository (research/rideafish/manual_reference.lua)", "source": "https://github.com/Nonition/MoonveilDeobfuscator", "reliability": "high: a measurement; the reference is one person's work" },
-    { "id": "snowveil-existence", "family": "snowveil", "finding": "No site, documentation or changelog of SnowVeil was found by two searches. The only artefacts are a banner (\"generated using SnowVeil v1\" with a Discord invite) and a public repository holding a decoder and one sample.", "method": "two web searches; reading the repository as text (it carries no licence, so nothing of it is stored here)", "source": "https://github.com/Mazsigiit/SnowLarpVeil-deobf", "reliability": "low: one repository, no vendor source" },
-    { "id": "snowveil-structure", "family": "snowveil", "finding": "The sample is one pcall holding a collector, a getter that returns builtins by library and member name (string, table, math, bit32, Vector3, CFrame), a custom base-85 container in RFC 1924 order, varint constant pools, and Path2D probes that feed checks. In the sandboxed environment the probes are answered by the offline Path2D model except GetBoundingRect, and the script then calls error().", "method": "running the sample in the sandboxed environment with the engine's behaviour trace", "source": "tools/formats/samples.json (snowveil-1-sample2)", "reliability": "medium: one sample" }
-  ],
-  "unresolved": [
-    "The vendor documentation of MoonVeil could not be read.",
-    "No SnowVeil source other than one repository.",
-    "Hercules 1.5/1.6 virtual machine format is not read.",
-    "MoonVeil 2.0.24 (named by a regression issue) has no script here."
-  ]
+ "schema": 1,
+ "note": "What was learned about Hercules, MoonVeil and SnowVeil in Phase VIII, with where it came from and how far it can be trusted. Measured results are in format-records.json and docs/COMPATIBILITY.md; this file is the reading behind them. A source that could not be read is listed as such.",
+ "researchedAt": "2026-11-12",
+ "findings": [
+  {
+   "id": "hercules-history",
+   "family": "hercules",
+   "finding": "Hercules (Apache-2.0) has no release tags. A version is the watermark its source writes: v1.5 (from 2024-09-22), v1.6 (2024-11-03), v1.6.2 (2025-01-27), v2.0.0 (2026-04-30, manifest.lua and a rewritten compiler), v2.0.1 (2026-06-17, current; the manifest watermark still says v2.0.0 and the VM header says V2.0.1). Five revisions are run in tests/corpus/tools/gen_hercules_versions.py.",
+   "method": "git history of the public repository, read and run unmodified on PUC Lua 5.4 (lupa)",
+   "source": "https://github.com/zeusssz/hercules-obfuscator",
+   "reliability": "high: the tool's own source"
+  },
+  {
+   "id": "hercules-vm-formats",
+   "family": "hercules",
+   "finding": "Two virtual-machine formats exist. 1.5 and 1.6 use modules/Compiler/c.lua; 1.6.2 and 2.x use VMGenerator.lua with Compiler/Serializer.lua: Lua 5.1 bytecode, serialised with a per-instruction record, written as base-94 digits over a shuffled alphabet. Only the second is read.",
+   "method": "reading the source; decoding generated output",
+   "source": "https://github.com/zeusssz/hercules-obfuscator (src/modules/VMGenerator.lua, Compiler/Serializer.lua, Compiler/VMStrings.lua)",
+   "reliability": "high"
+  },
+  {
+   "id": "hercules-serialiser-nil",
+   "family": "hercules",
+   "finding": "Serializer.lua writes no bytes for a nil constant but the count includes it (`#` stops at a nil), so the interpreter reads the next tag as this one's and the script does not run. The data of such a script is still decodable, and where two constants are lost the values are not in the file.",
+   "method": "decoding the committed fixtures s02 and s06 and running the results",
+   "source": "tests/corpus/obfuscated/hercules (s02, s06 virtual_machine)",
+   "reliability": "high: reproduced"
+  },
+  {
+   "id": "moonveil-macros",
+   "family": "moonveil",
+   "finding": "Vendor macros: MV_VM(fn, vmType?) virtualises one function; MV_ENC_FUNC(fn, key, rtKey, vmType?) encrypts a function so it decrypts only when a run-time key matches; MV_CFF(fn, decompose?, mangleExpr?, cfManglePercent?) flattens control flow (and is lifted out of virtualised functions as a separate state machine); MV_OMIT(fn) leaves a function in plaintext; MV_OMIT_CFF and MV_OMIT_VM exist. LPH_* names are accepted as aliases (LPH_ENCFUNC, LPH_NO_VIRTUALIZE). The product describes an IR optimisation pass and a compile mode.",
+   "method": "search results quoting the vendor documentation; the documentation host could not be fetched (DNS refused)",
+   "source": "https://moonveil.cc/docs/macros/",
+   "reliability": "medium: quoted by a search engine, not read"
+  },
+  {
+   "id": "moonveil-versions-seen",
+   "family": "moonveil",
+   "finding": "Third-party material names MoonVeil v1.4.5, 2.0.24, 2.0.25, 2.0.26 and 2.1.0. Scripts with banners were read for 1.4.5, 2.0.26 and 2.1.0; 2.0.24 and 2.0.25 only as an earlier user script (2.0.25) and a regression issue (2.0.24).",
+   "method": "public deobfuscator repositories read as text",
+   "source": "https://github.com/Nonition/MoonveilDeobfuscator",
+   "reliability": "medium: the banners are text the file's owner controls"
+  },
+  {
+   "id": "moonveil-cells-differ",
+   "family": "moonveil",
+   "finding": "The cell layout changed between builds: 2.0.25 `{[1]=3,[3]=v}` read as c[2][c[1]]; 2.0.26 `{[3]=1,[1]=v}` read as c[2][c[3]]; 2.1.0 `{[1]=2,[2]=v}` read as c[3][c[1]]. The bootstrap permutation is the same (position h under names[(MUL*h+ADD) % n]) but its statements are written in a different order and a flattened builder scrambles them.",
+   "method": "measured on the scripts; reproduced by tests/formats.test.mjs",
+   "source": "tools/formats/samples.json",
+   "reliability": "high for the scripts read; unknown for other builds"
+  },
+  {
+   "id": "moonveil-false-high",
+   "family": "moonveil",
+   "finding": "Before this phase a 2.0.26 script whose constants were not decoded was reported \"RECOVERED (confidence high, 0.90)\". Against the one hand-made reference its fidelity was 19%. The confidence now counts places left unresolved and a function table that was not joined into the program (0.60 for those builds).",
+   "method": "comparison with the reference in the public repository (research/rideafish/manual_reference.lua)",
+   "source": "https://github.com/Nonition/MoonveilDeobfuscator",
+   "reliability": "high: a measurement; the reference is one person's work"
+  },
+  {
+   "id": "snowveil-existence",
+   "family": "snowveil",
+   "finding": "No site, documentation or changelog of SnowVeil was found by two searches. The only artefacts are a banner (\"generated using SnowVeil v1\" with a Discord invite) and a public repository holding a decoder and one sample.",
+   "method": "two web searches; reading the repository as text (it carries no licence, so nothing of it is stored here)",
+   "source": "https://github.com/Mazsigiit/SnowLarpVeil-deobf",
+   "reliability": "low: one repository, no vendor source"
+  },
+  {
+   "id": "snowveil-structure",
+   "family": "snowveil",
+   "finding": "The sample is one pcall holding a collector, a getter that returns builtins by library and member name (string, table, math, bit32, Vector3, CFrame), a custom base-85 container in RFC 1924 order, varint constant pools, and Path2D probes that feed checks. In the sandboxed environment the probes are answered by the offline Path2D model except GetBoundingRect, and the script then calls error().",
+   "method": "running the sample in the sandboxed environment with the engine's behaviour trace",
+   "source": "tools/formats/samples.json (snowveil-1-sample2)",
+   "reliability": "medium: one sample"
+  },
+  {
+   "id": "collection-vyxonq",
+   "family": "corpus",
+   "finding": "A public collection of 22,748 labelled scripts (a directory per obfuscator, per version for Luraph and MoonVeil) exists: Luraph v13.4.5 to v15.0 (v14.3, 14.4.1, 14.4.2, 14.5, 14.5.1, 14.5.2, 14.6, 14.7, 14.8, 14.9, 15.0 among them), MoonVeil v1.2.2 to v1.4.5 and 2.0.20 to 2.0.23, MoonSec V2/V3, IronBrew 1/2, PSU v4.0.A and v4.5.A, wYnFuscate, Boronide (v0.3.0 to v0.7.0), LuaObfuscator.com, Prometheus. Its labels are its uploaders' and are noisy (a PSU script filed as AztupBrew, MoonSec V2 files that are other tools, unobfuscated scripts under Luraph/Unknown).",
+   "method": "cloned and read as text; a reproducible sample of 1,004 files is indexed with SHA-256s and measured by tools/formats/corpus-eval.mjs",
+   "source": "https://github.com/vyxonq-dev/obfuscator-samples",
+   "reliability": "medium: unlicensed third-party scripts with uploader labels; used for measurement only and never stored"
+  },
+  {
+   "id": "obscura",
+   "family": "obscura",
+   "finding": "Obscura (MIT, Python, vo3pal) is a Luau obfuscator with modes lightweight, rename, native and vm; versions 1.0.0 (pre-hardening), 1.0.1 (2026-04-30, VM hardening: lazy constants, split keys, integrity checks) and 1.1.0 (2026-10-08, --mode replaces --level; rolling bytecode reads). No fixtures were generated: running a third party's Python on the host was refused by the session's permission policy and was not worked around.",
+   "method": "git history and README read as text; no code run",
+   "source": "https://github.com/vo3pal/obscura",
+   "reliability": "high for the history; nothing measured"
+  },
+  {
+   "id": "realobfuscator",
+   "family": "realobfuscator",
+   "finding": "RealObfuscator 2.0.0 (GPL-3.0, Rust, linkoro57) is a layered Luau obfuscator (renaming, string and number encoding, minification, build signatures; modes in its README). Not built or run for the same reason as Obscura.",
+   "method": "README and manifest read as text",
+   "source": "https://github.com/linkoro57/RealObfuscator",
+   "reliability": "medium: nothing measured"
+  },
+  {
+   "id": "rbxlua",
+   "family": "rbxlua",
+   "finding": "RBXLuaObfuscator (kosuke14, no licence, 2022) does not call loadstring: it ships a Lua lexer, parser and interpreter written in Lua and hands it the program as a list of one-character decimal escapes. The program is therefore a plain constant. Output of the real tool was generated in the isolated Lua state and verified equivalent (8 of 8 samples).",
+   "method": "run unmodified in tests/corpus/tools/run_isolated.py; fixtures kept in the git-ignored obfuscated-local/",
+   "source": "https://github.com/kosuke14/RBXLuaObfuscator",
+   "reliability": "high"
+  },
+  {
+   "id": "other-tools-not-covered",
+   "family": "survey",
+   "finding": "Other open-source obfuscators found and not yet covered: efrederickson/XFuscator (Lua, no licence), PY44N/Lua-Obfuscator (Lua), TimOdemchuk/Zartha-Obfuscator (MIT, Lua 5.1), adzwang/fusgato-v1 (MIT, Lua), luauminati/LuaXen (MIT), zynaa/LuaObfuscator (Python, 2018), leiradel/bstree (Zlib; encodes source for a C reader).",
+   "method": "GitHub repository search",
+   "source": "https://github.com/spxnso/lua-obfuscators",
+   "reliability": "medium: a list, not an audit"
+  }
+ ],
+ "unresolved": [
+  "The vendor documentation of MoonVeil could not be read.",
+  "No SnowVeil source other than one repository.",
+  "Hercules 1.5/1.6 virtual machine format is not read.",
+  "MoonVeil 2.0.24 (named by a regression issue) has no script here.",
+  "Obscura and RealObfuscator were not run (third-party code on the host was refused by the permission policy); their fixtures and per-version measurements are missing.",
+  "The collection's Unknown, VM Compressed and MinifiedLua directories are mostly unidentified by signature (they hold unobfuscated scripts and unfamiliar tools)."
+ ]
 }
