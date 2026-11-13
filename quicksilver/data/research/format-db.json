@@ -2,13 +2,13 @@
  "schema": "format-db/1",
  "engine": "1.0.0",
  "inputs": {
-  "scorecard": "2026-11-13T06:25:10.554Z",
-  "scorecardFixtures": 1089,
+  "scorecard": "2026-11-13T07:24:11.953Z",
+  "scorecardFixtures": 1298,
   "notes": "format-notes/1"
  },
  "calibration": {
-  "pairs": 1014,
-  "pearson": 0.877
+  "pairs": 1210,
+  "pearson": 0.924
  },
  "projects": [
   {
@@ -38,7 +38,7 @@
       "toolOutputDiverged": 1
      },
      "fidelityBefore": 0.038,
-     "fidelityAfter": 0.135,
+     "fidelityAfter": 0.134,
      "configs": [
       {
        "config": "Fast",
@@ -57,7 +57,7 @@
        "samples": 8,
        "detected": 8,
        "fidelityBefore": 0.026,
-       "fidelityAfter": 0.607,
+       "fidelityAfter": 0.602,
        "confidence": 0.881,
        "behaviourChecked": 8,
        "behaviourSame": 7,
@@ -216,6 +216,106 @@
    "support": "mixed"
   },
   {
+   "id": "fusgato",
+   "name": "FusGato v1",
+   "kind": "open-source",
+   "sources": [
+    "https://github.com/adzwang/fusgato-v1"
+   ],
+   "researchedFrom": [
+    "README and the source read as text; the Luvit program was run through run_isolated.py with drivers/fusgato.lua (stand-ins for Luvit's fs, json and relative require; the compile is string.dump)"
+   ],
+   "versions": [
+    {
+     "version": "current",
+     "revision": "fa8c93d6c13e5cadaa26b0477a319eef697e373a",
+     "revisionDate": null,
+     "note": null,
+     "fixtureDir": "tests/corpus/obfuscated/fusgato",
+     "committed": true,
+     "licence": "MIT",
+     "fixtures": {
+      "measured": 4,
+      "written": 4,
+      "toolErrors": 12,
+      "omittedLarge": 0,
+      "toolOutputEquivalent": 0,
+      "toolOutputErrored": 0,
+      "toolOutputDiverged": 4
+     },
+     "fidelityBefore": 0.023,
+     "fidelityAfter": 0.023,
+     "configs": [
+      {
+       "config": "default",
+       "samples": 2,
+       "detected": 2,
+       "fidelityBefore": 0.023,
+       "fidelityAfter": 0.023,
+       "confidence": 0.3,
+       "behaviourChecked": 2,
+       "behaviourSame": 0,
+       "unparsed": 0,
+       "status": "unsupported"
+      },
+      {
+       "config": "noconstants",
+       "samples": 2,
+       "detected": 2,
+       "fidelityBefore": 0.023,
+       "fidelityAfter": 0.023,
+       "confidence": 0.3,
+       "behaviourChecked": 2,
+       "behaviourSame": 0,
+       "unparsed": 0,
+       "status": "unsupported"
+      }
+     ],
+     "summary": {
+      "verified": 0,
+      "partial": 0,
+      "unsupported": 2
+     }
+    }
+   ],
+   "improvements": [
+    {
+     "id": "not-ironbrew",
+     "summary": "the IronBrew watermark FusGato copies does not make it IronBrew 2: the credit line decides, and the VM is flagged as not rebuilt (before this it was reported as recovered with confidence high)",
+     "files": [
+      "src/detect/detect.js"
+     ],
+     "tests": [
+      "tests/formats-ix.test.mjs: luaxen IronBrikked, zartha and fusgato"
+     ]
+    }
+   ],
+   "failurePatterns": [
+    {
+     "id": "tool-half-working",
+     "configs": [
+      "default",
+      "noconstants"
+     ],
+     "status": "tool defect",
+     "summary": "the author calls it half-working: vm/opcodes/24.lua has no `return`, so 12 of 16 builds fail with `attempt to index local 'opcode'`; the 4 outputs that were written run but do not reproduce the original's output (diverged)"
+    },
+    {
+     "id": "vm",
+     "configs": [
+      "default",
+      "noconstants"
+     ],
+     "status": "open",
+     "summary": "the outputs are IronBrew-style VMs; identified, not recovered"
+    }
+   ],
+   "assumptions": [
+    "The relative-require resolution of the driver (every module directory tried when a tail call hides the caller) is ours; it was checked on the one build that completes"
+   ],
+   "support": "unsupported"
+  },
+  {
    "id": "hercules",
    "name": "Hercules",
    "kind": "open-source",
@@ -246,14 +346,14 @@
       "toolOutputDiverged": 0
      },
      "fidelityBefore": 0.549,
-     "fidelityAfter": 0.963,
+     "fidelityAfter": 0.955,
      "configs": [
       {
        "config": "light",
        "samples": 7,
        "detected": 7,
        "fidelityBefore": 0.64,
-       "fidelityAfter": 0.998,
+       "fidelityAfter": 0.964,
        "confidence": 0.879,
        "behaviourChecked": 7,
        "behaviourSame": 7,
@@ -265,7 +365,7 @@
        "samples": 7,
        "detected": 7,
        "fidelityBefore": 0.374,
-       "fidelityAfter": 0.985,
+       "fidelityAfter": 0.951,
        "confidence": 0.879,
        "behaviourChecked": 7,
        "behaviourSame": 7,
@@ -277,7 +377,7 @@
        "samples": 7,
        "detected": 7,
        "fidelityBefore": 0.073,
-       "fidelityAfter": 0.798,
+       "fidelityAfter": 0.772,
        "confidence": 0.75,
        "behaviourChecked": 6,
        "behaviourSame": 6,
@@ -373,7 +473,7 @@
        "samples": 7,
        "detected": 7,
        "fidelityBefore": 0.64,
-       "fidelityAfter": 0.998,
+       "fidelityAfter": 0.964,
        "confidence": 0.879,
        "behaviourChecked": 7,
        "behaviourSame": 7,
@@ -477,19 +577,19 @@
       "toolOutputDiverged": 2
      },
      "fidelityBefore": 0.568,
-     "fidelityAfter": 0.819,
+     "fidelityAfter": 0.947,
      "configs": [
       {
        "config": "default",
        "samples": 7,
        "detected": 7,
        "fidelityBefore": 0.06,
-       "fidelityAfter": 0.067,
-       "confidence": 0.814,
+       "fidelityAfter": 0.633,
+       "confidence": 0.857,
        "behaviourChecked": 7,
        "behaviourSame": 2,
        "unparsed": 0,
-       "status": "unsupported"
+       "status": "partial"
       },
       {
        "config": "mod-StringToExpressions",
@@ -508,12 +608,12 @@
        "samples": 7,
        "detected": 7,
        "fidelityBefore": 0.095,
-       "fidelityAfter": 0.103,
-       "confidence": 0.9,
+       "fidelityAfter": 0.977,
+       "confidence": 0.893,
        "behaviourChecked": 7,
        "behaviourSame": 4,
        "unparsed": 0,
-       "status": "unsupported"
+       "status": "partial"
       },
       {
        "config": "mod-WrapInFunction",
@@ -616,7 +716,7 @@
        "samples": 7,
        "detected": 7,
        "fidelityBefore": 0.603,
-       "fidelityAfter": 0.976,
+       "fidelityAfter": 0.939,
        "confidence": 0.75,
        "behaviourChecked": 6,
        "behaviourSame": 0,
@@ -626,8 +726,8 @@
      ],
      "summary": {
       "verified": 9,
-      "partial": 1,
-      "unsupported": 2
+      "partial": 3,
+      "unsupported": 0
      }
     },
     {
@@ -795,7 +895,7 @@
       "toolOutputDiverged": 2
      },
      "fidelityBefore": 0.617,
-     "fidelityAfter": 0.848,
+     "fidelityAfter": 0.845,
      "configs": [
       {
        "config": "default",
@@ -934,7 +1034,7 @@
        "samples": 7,
        "detected": 7,
        "fidelityBefore": 0.588,
-       "fidelityAfter": 0.971,
+       "fidelityAfter": 0.926,
        "confidence": 0.621,
        "behaviourChecked": 5,
        "behaviourSame": 0,
@@ -966,7 +1066,7 @@
       "toolOutputDiverged": 0
      },
      "fidelityBefore": 0.579,
-     "fidelityAfter": 0.977,
+     "fidelityAfter": 0.974,
      "configs": [
       {
        "config": "mod-StringToExpressions",
@@ -1117,7 +1217,7 @@
        "samples": 7,
        "detected": 7,
        "fidelityBefore": 0.612,
-       "fidelityAfter": 0.991,
+       "fidelityAfter": 0.959,
        "confidence": 0.879,
        "behaviourChecked": 7,
        "behaviourSame": 7,
@@ -1149,7 +1249,7 @@
       "toolOutputDiverged": 0
      },
      "fidelityBefore": 0.595,
-     "fidelityAfter": 0.976,
+     "fidelityAfter": 0.974,
      "configs": [
       {
        "config": "mod-StringToExpressions",
@@ -1300,7 +1400,7 @@
        "samples": 7,
        "detected": 7,
        "fidelityBefore": 0.64,
-       "fidelityAfter": 0.998,
+       "fidelityAfter": 0.964,
        "confidence": 0.879,
        "behaviourChecked": 7,
        "behaviourSame": 7,
@@ -1371,14 +1471,14 @@
       "toolOutputDiverged": 1
      },
      "fidelityBefore": 0.052,
-     "fidelityAfter": 0.906,
+     "fidelityAfter": 0.883,
      "configs": [
       {
        "config": "default",
        "samples": 8,
        "detected": 8,
        "fidelityBefore": 0.039,
-       "fidelityAfter": 0.906,
+       "fidelityAfter": 0.884,
        "confidence": 0.9,
        "behaviourChecked": 8,
        "behaviourSame": 8,
@@ -1390,7 +1490,7 @@
        "samples": 8,
        "detected": 8,
        "fidelityBefore": 0.081,
-       "fidelityAfter": 0.925,
+       "fidelityAfter": 0.896,
        "confidence": 0.9,
        "behaviourChecked": 8,
        "behaviourSame": 8,
@@ -1402,7 +1502,7 @@
        "samples": 8,
        "detected": 8,
        "fidelityBefore": 0.062,
-       "fidelityAfter": 0.925,
+       "fidelityAfter": 0.896,
        "confidence": 0.9,
        "behaviourChecked": 8,
        "behaviourSame": 8,
@@ -1414,7 +1514,7 @@
        "samples": 8,
        "detected": 8,
        "fidelityBefore": 0.045,
-       "fidelityAfter": 0.925,
+       "fidelityAfter": 0.896,
        "confidence": 0.9,
        "behaviourChecked": 8,
        "behaviourSame": 8,
@@ -1426,7 +1526,7 @@
        "samples": 8,
        "detected": 8,
        "fidelityBefore": 0.081,
-       "fidelityAfter": 0.906,
+       "fidelityAfter": 0.884,
        "confidence": 0.9,
        "behaviourChecked": 8,
        "behaviourSame": 8,
@@ -1438,7 +1538,7 @@
        "samples": 8,
        "detected": 8,
        "fidelityBefore": 0.03,
-       "fidelityAfter": 0.848,
+       "fidelityAfter": 0.842,
        "confidence": 0.9,
        "behaviourChecked": 8,
        "behaviourSame": 8,
@@ -1450,7 +1550,7 @@
        "samples": 8,
        "detected": 8,
        "fidelityBefore": 0.039,
-       "fidelityAfter": 0.906,
+       "fidelityAfter": 0.884,
        "confidence": 0.9,
        "behaviourChecked": 8,
        "behaviourSame": 8,
@@ -1462,7 +1562,7 @@
        "samples": 8,
        "detected": 8,
        "fidelityBefore": 0.04,
-       "fidelityAfter": 0.906,
+       "fidelityAfter": 0.884,
        "confidence": 0.9,
        "behaviourChecked": 8,
        "behaviourSame": 8,
@@ -1655,6 +1755,138 @@
    "support": "verified"
   },
   {
+   "id": "luaxen",
+   "name": "LuaXen",
+   "kind": "open-source",
+   "sources": [
+    "https://github.com/luauminati/LuaXen"
+   ],
+   "researchedFrom": [
+    "README and examples/obfuscator-example.lua read as text; run through run_isolated.py with drivers/luaxen.lua (the call the example makes)"
+   ],
+   "versions": [
+    {
+     "version": "current",
+     "revision": "a6e66ac7307a124f876975fae44693c6ba0fc388",
+     "revisionDate": null,
+     "note": null,
+     "fixtureDir": "tests/corpus/obfuscated/luaxen",
+     "committed": true,
+     "licence": "MIT",
+     "fixtures": {
+      "measured": 22,
+      "written": 22,
+      "toolErrors": 2,
+      "omittedLarge": 0,
+      "toolOutputEquivalent": 0,
+      "toolOutputErrored": 0,
+      "toolOutputDiverged": 0
+     },
+     "fidelityBefore": 0.064,
+     "fidelityAfter": 0.382,
+     "configs": [
+      {
+       "config": "ironbrikked",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.048,
+       "fidelityAfter": 0.05,
+       "confidence": 0.35,
+       "behaviourChecked": 7,
+       "behaviourSame": 0,
+       "unparsed": 0,
+       "status": "unsupported"
+      },
+      {
+       "config": "ast",
+       "samples": 8,
+       "detected": 8,
+       "fidelityBefore": 0.105,
+       "fidelityAfter": 0.965,
+       "confidence": 0.894,
+       "behaviourChecked": 8,
+       "behaviourSame": 5,
+       "unparsed": 0,
+       "status": "partial"
+      },
+      {
+       "config": "both",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.032,
+       "fidelityAfter": 0.05,
+       "confidence": 0.35,
+       "behaviourChecked": 7,
+       "behaviourSame": 0,
+       "unparsed": 0,
+       "status": "unsupported"
+      }
+     ],
+     "summary": {
+      "verified": 0,
+      "partial": 1,
+      "unsupported": 2
+     }
+    }
+   ],
+   "improvements": [
+    {
+     "id": "metamethod-numbers",
+     "summary": "numbers hidden as `setmetatable({}, {__op = function(_, a) local x, y, z = a[1], a[2], a[3] return x*x - y*y + z end}) <op> {x, y, z}` are evaluated without running anything; the same trick with a loop that builds strings from triples is evaluated in the sandbox when every name in it is declared inside or a standard global",
+     "files": [
+      "src/passes/metaarith.js"
+     ],
+     "tests": [
+      "tests/formats-ix.test.mjs: metaarith"
+     ]
+    },
+    {
+     "id": "while-once",
+     "summary": "a `while` whose body always leaves it is an `if` (the AST stage writes its conditionals this way)",
+     "files": [
+      "src/passes/structure.js"
+     ],
+     "tests": [
+      "tests/formats-ix.test.mjs: structure"
+     ]
+    },
+    {
+     "id": "endless-two-block",
+     "summary": "the state loops of the AST stage (`while 0.69 do if state == ...`, as few as two blocks) are unflattened",
+     "files": [
+      "src/adaptive/strategies/dispatch.js"
+     ],
+     "tests": [
+      "tests/formats-ix.test.mjs: dispatch"
+     ]
+    }
+   ],
+   "failurePatterns": [
+    {
+     "id": "ironbrikked-vm",
+     "configs": [
+      "ironbrikked",
+      "both"
+     ],
+     "status": "open",
+     "summary": "IronBrikked, the VM stage (LZW-compressed encoded prototype and an interpreter), is identified and reported as not recovered; with `both` the AST layer over it is peeled and the VM remains"
+    },
+    {
+     "id": "tool-defects",
+     "configs": [
+      "ironbrikked",
+      "both"
+     ],
+     "status": "tool defect",
+     "summary": "the tool raised `No loop to break` on s04 in both configurations; recorded as tool-error"
+    }
+   ],
+   "assumptions": [
+    "Only the single commit of the repository was run; `legacy/` was not touched"
+   ],
+   "support": "experimental"
+  },
+  {
    "id": "mixed",
    "name": "mixed",
    "kind": null,
@@ -1679,14 +1911,14 @@
       "toolOutputDiverged": 5
      },
      "fidelityBefore": 0.234,
-     "fidelityAfter": 0.867,
+     "fidelityAfter": 0.86,
      "configs": [
       {
        "config": "hercules-light+base64",
        "samples": 7,
        "detected": 0,
        "fidelityBefore": 0.236,
-       "fidelityAfter": 0.998,
+       "fidelityAfter": 0.964,
        "confidence": 0.879,
        "behaviourChecked": 7,
        "behaviourSame": 7,
@@ -1698,7 +1930,7 @@
        "samples": 7,
        "detected": 0,
        "fidelityBefore": 0.025,
-       "fidelityAfter": 0.943,
+       "fidelityAfter": 0.91,
        "confidence": 0.9,
        "behaviourChecked": 7,
        "behaviourSame": 6,
@@ -1746,7 +1978,7 @@
        "samples": 7,
        "detected": 0,
        "fidelityBefore": 0.068,
-       "fidelityAfter": 0.58,
+       "fidelityAfter": 0.581,
        "confidence": 0.75,
        "behaviourChecked": 6,
        "behaviourSame": 6,
@@ -1770,7 +2002,7 @@
        "samples": 7,
        "detected": 0,
        "fidelityBefore": 0.381,
-       "fidelityAfter": 0.718,
+       "fidelityAfter": 0.724,
        "confidence": 0.75,
        "behaviourChecked": 6,
        "behaviourSame": 0,
@@ -1806,7 +2038,7 @@
        "samples": 7,
        "detected": 0,
        "fidelityBefore": 0.617,
-       "fidelityAfter": 0.95,
+       "fidelityAfter": 0.915,
        "confidence": 0.879,
        "behaviourChecked": 7,
        "behaviourSame": 7,
@@ -1830,19 +2062,19 @@
        "samples": 7,
        "detected": 0,
        "fidelityBefore": 0.21,
-       "fidelityAfter": 0.847,
+       "fidelityAfter": 0.883,
        "confidence": 0.9,
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "partial"
+       "status": "verified"
       },
       {
        "config": "lab+hercules+base64",
        "samples": 7,
        "detected": 0,
        "fidelityBefore": 0.236,
-       "fidelityAfter": 0.894,
+       "fidelityAfter": 0.86,
        "confidence": 0.9,
        "behaviourChecked": 7,
        "behaviourSame": 1,
@@ -1863,8 +2095,8 @@
       }
      ],
      "summary": {
-      "verified": 7,
-      "partial": 8,
+      "verified": 8,
+      "partial": 7,
       "unsupported": 0
      }
     }
@@ -1911,7 +2143,7 @@
        "samples": 6,
        "detected": 6,
        "fidelityBefore": 0.148,
-       "fidelityAfter": 0.892,
+       "fidelityAfter": 0.852,
        "confidence": 0.9,
        "behaviourChecked": 6,
        "behaviourSame": 6,
@@ -1947,7 +2179,7 @@
        "samples": 6,
        "detected": 6,
        "fidelityBefore": 0.466,
-       "fidelityAfter": 0.917,
+       "fidelityAfter": 0.96,
        "confidence": 0.9,
        "behaviourChecked": 6,
        "behaviourSame": 6,
@@ -1991,14 +2223,14 @@
       "toolOutputDiverged": 8
      },
      "fidelityBefore": 0.116,
-     "fidelityAfter": 0.608,
+     "fidelityAfter": 0.61,
      "configs": [
       {
        "config": "level-1",
        "samples": 6,
        "detected": 6,
        "fidelityBefore": 0.121,
-       "fidelityAfter": 0.892,
+       "fidelityAfter": 0.852,
        "confidence": 0.9,
        "behaviourChecked": 6,
        "behaviourSame": 6,
@@ -2034,7 +2266,7 @@
        "samples": 6,
        "detected": 6,
        "fidelityBefore": 0.349,
-       "fidelityAfter": 0.905,
+       "fidelityAfter": 0.96,
        "confidence": 0.9,
        "behaviourChecked": 6,
        "behaviourSame": 6,
@@ -2090,14 +2322,14 @@
       "toolOutputDiverged": 0
      },
      "fidelityBefore": 0.224,
-     "fidelityAfter": 0.645,
+     "fidelityAfter": 0.643,
      "configs": [
       {
        "config": "level-1",
        "samples": 7,
        "detected": 7,
        "fidelityBefore": 0.295,
-       "fidelityAfter": 0.917,
+       "fidelityAfter": 0.964,
        "confidence": 0.9,
        "behaviourChecked": 7,
        "behaviourSame": 7,
@@ -2133,7 +2365,7 @@
        "samples": 7,
        "detected": 7,
        "fidelityBefore": 0.377,
-       "fidelityAfter": 0.954,
+       "fidelityAfter": 0.92,
        "confidence": 0.9,
        "behaviourChecked": 7,
        "behaviourSame": 7,
@@ -2145,7 +2377,7 @@
        "samples": 7,
        "detected": 7,
        "fidelityBefore": 1,
-       "fidelityAfter": 0.998,
+       "fidelityAfter": 0.964,
        "confidence": 0.9,
        "behaviourChecked": 7,
        "behaviourSame": 7,
@@ -2363,7 +2595,7 @@
       "toolOutputDiverged": 4
      },
      "fidelityBefore": 0.45,
-     "fidelityAfter": 0.821,
+     "fidelityAfter": 0.82,
      "configs": [
       {
        "config": "Minify",
@@ -2382,7 +2614,7 @@
        "samples": 7,
        "detected": 7,
        "fidelityBefore": 0.064,
-       "fidelityAfter": 0.587,
+       "fidelityAfter": 0.58,
        "confidence": 0.856,
        "behaviourChecked": 7,
        "behaviourSame": 6,
@@ -2406,7 +2638,7 @@
        "samples": 7,
        "detected": 7,
        "fidelityBefore": 0.026,
-       "fidelityAfter": 0.434,
+       "fidelityAfter": 0.435,
        "confidence": 0.759,
        "behaviourChecked": 7,
        "behaviourSame": 6,
@@ -2514,7 +2746,7 @@
        "samples": 7,
        "detected": 7,
        "fidelityBefore": 0.096,
-       "fidelityAfter": 0.648,
+       "fidelityAfter": 0.641,
        "confidence": 0.9,
        "behaviourChecked": 7,
        "behaviourSame": 6,
@@ -2591,6 +2823,177 @@
    "support": "verified"
   },
   {
+   "id": "realobfuscator",
+   "name": "RealObfuscator",
+   "kind": "open-source",
+   "sources": [
+    "https://github.com/linkoro57/RealObfuscator"
+   ],
+   "researchedFrom": [
+    "README, Cargo.toml and docs read as text; the 166 crates were downloaded with `cargo vendor` (no build script of theirs ran on the host), the tool was built offline in the sandbox and run only there (gen_realobf.py)",
+    "RealObfuscator 2.0.0 (GPL-3.0, Rust, linkoro57) is a layered Luau obfuscator (renaming, string and number encoding, minification, build signatures; modes in its [https://github.com/linkoro57/RealObfuscator; medium: nothing measured]"
+   ],
+   "versions": [
+    {
+     "version": "2.2.1",
+     "revision": "9ec569fed4a190a5cbb9835e3bfaf06e3de98ef0",
+     "revisionDate": "2026-11-13",
+     "note": null,
+     "fixtureDir": "tests/corpus/obfuscated-local/realobfuscator-2.2.1",
+     "committed": false,
+     "licence": "GPL-3.0-only",
+     "fixtures": {
+      "measured": 41,
+      "written": 41,
+      "toolErrors": 0,
+      "omittedLarge": 1,
+      "toolOutputEquivalent": 41,
+      "toolOutputErrored": 0,
+      "toolOutputDiverged": 0
+     },
+     "fidelityBefore": 0.29,
+     "fidelityAfter": 0.51,
+     "configs": [
+      {
+       "config": "rename",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 1,
+       "fidelityAfter": 0.964,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "lightweight",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.407,
+       "fidelityAfter": 0.964,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "native",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.223,
+       "fidelityAfter": 0.956,
+       "confidence": 0.831,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "vm",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.028,
+       "fidelityAfter": 0.044,
+       "confidence": 0.279,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "unsupported"
+      },
+      {
+       "config": "vm-max",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.028,
+       "fidelityAfter": 0.044,
+       "confidence": 0.279,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "unsupported"
+      },
+      {
+       "config": "vm-cached",
+       "samples": 6,
+       "detected": 6,
+       "fidelityBefore": 0.018,
+       "fidelityAfter": 0.016,
+       "confidence": 0.317,
+       "behaviourChecked": 6,
+       "behaviourSame": 6,
+       "unparsed": 0,
+       "status": "unsupported"
+      }
+     ],
+     "summary": {
+      "verified": 3,
+      "partial": 0,
+      "unsupported": 3
+     }
+    }
+   ],
+   "improvements": [
+    {
+     "id": "luau-generalized-iteration",
+     "summary": "the sandbox walks `for k, v in t do` over a table without __iter (Luau); the lightweight mode's eager-decoding loop made the whole evaluation fail before",
+     "files": [
+      "src/sandbox/interp.js"
+     ],
+     "tests": [
+      "tests/formats-ix.test.mjs: sandbox: Luau's generalized iteration"
+     ]
+    },
+    {
+     "id": "key-constants",
+     "summary": "a number held by a randomly named local is an obfuscator's key and goes where it is used; `(bit32.op(...) + k) - k` is the bit32 result",
+     "files": [
+      "src/passes/simplify.js",
+      "src/passes/fold.js"
+     ],
+     "tests": [
+      "tests/formats-ix.test.mjs: fold"
+     ]
+    },
+    {
+     "id": "vm-pool",
+     "summary": "a VM build is recognised by its pool of dozens of encoded records and flagged as not rebuilt",
+     "files": [
+      "src/detect/detect.js"
+     ],
+     "tests": [
+      "tests/formats-ix.test.mjs: detection"
+     ]
+    }
+   ],
+   "failurePatterns": [
+    {
+     "id": "vm",
+     "configs": [
+      "vm",
+      "vm-max",
+      "vm-cached"
+     ],
+     "status": "open",
+     "summary": "register bytecode with shuffled records, opcode aliases and lazy constants: identified, not recovered"
+    },
+    {
+     "id": "vm-heuristic",
+     "configs": [
+      "lightweight (large programs)"
+     ],
+     "status": "known risk",
+     "summary": "the VM rule counts records (40 or more in a build over 20 kB); a lightweight build of a program with that many strings would be flagged as a VM although it is recovered"
+    }
+   ],
+   "assumptions": [
+    "Version 2.2.1 (revision 9ec569f) only; the repository's earlier Python versions were not run",
+    "Behaviour checked on Luau; fixtures are not committed (GPL), so the measurements reproduce only with the same build"
+   ],
+   "support": "mixed"
+  },
+  {
    "id": "simple_html",
    "name": "Simple Open source Lua Obfuscator (page)",
    "kind": "open-source",
@@ -2645,60 +3048,6 @@
    "support": "experimental"
   },
   {
-   "id": "zenfus",
-   "name": "Zenfus",
-   "kind": "open-source",
-   "sources": [
-    "https://github.com/Zaenalos/Zenfus"
-   ],
-   "researchedFrom": [],
-   "versions": [
-    {
-     "version": "current",
-     "revision": "94d4ae1",
-     "revisionDate": null,
-     "note": null,
-     "fixtureDir": "tests/corpus/obfuscated/zenfus",
-     "committed": true,
-     "licence": "MIT",
-     "fixtures": {
-      "measured": 8,
-      "written": 8,
-      "toolErrors": 0,
-      "omittedLarge": 0,
-      "toolOutputEquivalent": 2,
-      "toolOutputErrored": 2,
-      "toolOutputDiverged": 4
-     },
-     "fidelityBefore": 0.038,
-     "fidelityAfter": 0.038,
-     "configs": [
-      {
-       "config": "default",
-       "samples": 8,
-       "detected": 8,
-       "fidelityBefore": 0.038,
-       "fidelityAfter": 0.038,
-       "confidence": 0.194,
-       "behaviourChecked": 8,
-       "behaviourSame": 2,
-       "unparsed": 0,
-       "status": "unsupported"
-      }
-     ],
-     "summary": {
-      "verified": 0,
-      "partial": 0,
-      "unsupported": 1
-     }
-    }
-   ],
-   "improvements": [],
-   "failurePatterns": [],
-   "assumptions": [],
-   "support": "unsupported"
-  },
-  {
    "id": "xfuscator",
    "name": "XFuscator",
    "kind": "open-source",
@@ -2708,7 +3057,95 @@
    "researchedFrom": [
     "README, Obfuscation Scripts and the library (XFuscator/init.lua) read as text; run through run_isolated.py with drivers/xfuscator.lua, which calls XFuscator.XFuscate with the options the command line would set"
    ],
-   "versions": [],
+   "versions": [
+    {
+     "version": "current",
+     "revision": "7e58176d3fe3cd9349c64652c61fed1cf2092fa1",
+     "revisionDate": null,
+     "note": null,
+     "fixtureDir": "tests/corpus/obfuscated-local/xfuscator",
+     "committed": false,
+     "licence": "none stated",
+     "fixtures": {
+      "measured": 40,
+      "written": 40,
+      "toolErrors": 24,
+      "omittedLarge": 0,
+      "toolOutputEquivalent": 32,
+      "toolOutputErrored": 8,
+      "toolOutputDiverged": 0
+     },
+     "fidelityBefore": 0.017,
+     "fidelityAfter": 0.811,
+     "configs": [
+      {
+       "config": "default",
+       "samples": 8,
+       "detected": 8,
+       "fidelityBefore": 0.014,
+       "fidelityAfter": 0.82,
+       "confidence": 0.9,
+       "behaviourChecked": 8,
+       "behaviourSame": 8,
+       "unparsed": 0,
+       "status": "partial"
+      },
+      {
+       "config": "uglify",
+       "samples": 8,
+       "detected": 8,
+       "fidelityBefore": 0.014,
+       "fidelityAfter": 0.82,
+       "confidence": 0.9,
+       "behaviourChecked": 8,
+       "behaviourSame": 8,
+       "unparsed": 0,
+       "status": "partial"
+      },
+      {
+       "config": "encrypt",
+       "samples": 8,
+       "detected": 8,
+       "fidelityBefore": 0.013,
+       "fidelityAfter": 0.775,
+       "confidence": 0.9,
+       "behaviourChecked": 8,
+       "behaviourSame": 0,
+       "unparsed": 0,
+       "status": "partial"
+      },
+      {
+       "config": "nostep2",
+       "samples": 8,
+       "detected": 0,
+       "fidelityBefore": 0.028,
+       "fidelityAfter": 0.82,
+       "confidence": 0.9,
+       "behaviourChecked": 8,
+       "behaviourSame": 8,
+       "unparsed": 0,
+       "status": "partial"
+      },
+      {
+       "config": "notamper",
+       "samples": 8,
+       "detected": 8,
+       "fidelityBefore": 0.014,
+       "fidelityAfter": 0.82,
+       "confidence": 0.9,
+       "behaviourChecked": 8,
+       "behaviourSame": 8,
+       "unparsed": 0,
+       "status": "partial"
+      }
+     ],
+     "summary": {
+      "verified": 0,
+      "partial": 5,
+      "unsupported": 0
+     }
+    }
+   ],
    "improvements": [
     {
      "id": "step2-array",
@@ -2767,75 +3204,7 @@
    "assumptions": [
     "Output of XFuscator 2013 'Version 2.0 b1' only; there are 8 commits and the last one was run"
    ],
-   "support": "identification-only"
-  },
-  {
-   "id": "luaxen",
-   "name": "LuaXen",
-   "kind": "open-source",
-   "sources": [
-    "https://github.com/luauminati/LuaXen"
-   ],
-   "researchedFrom": [
-    "README and examples/obfuscator-example.lua read as text; run through run_isolated.py with drivers/luaxen.lua (the call the example makes)"
-   ],
-   "versions": [],
-   "improvements": [
-    {
-     "id": "metamethod-numbers",
-     "summary": "numbers hidden as `setmetatable({}, {__op = function(_, a) local x, y, z = a[1], a[2], a[3] return x*x - y*y + z end}) <op> {x, y, z}` are evaluated without running anything; the same trick with a loop that builds strings from triples is evaluated in the sandbox when every name in it is declared inside or a standard global",
-     "files": [
-      "src/passes/metaarith.js"
-     ],
-     "tests": [
-      "tests/formats-ix.test.mjs: metaarith"
-     ]
-    },
-    {
-     "id": "while-once",
-     "summary": "a `while` whose body always leaves it is an `if` (the AST stage writes its conditionals this way)",
-     "files": [
-      "src/passes/structure.js"
-     ],
-     "tests": [
-      "tests/formats-ix.test.mjs: structure"
-     ]
-    },
-    {
-     "id": "endless-two-block",
-     "summary": "the state loops of the AST stage (`while 0.69 do if state == ...`, as few as two blocks) are unflattened",
-     "files": [
-      "src/adaptive/strategies/dispatch.js"
-     ],
-     "tests": [
-      "tests/formats-ix.test.mjs: dispatch"
-     ]
-    }
-   ],
-   "failurePatterns": [
-    {
-     "id": "ironbrikked-vm",
-     "configs": [
-      "ironbrikked",
-      "both"
-     ],
-     "status": "open",
-     "summary": "IronBrikked, the VM stage (LZW-compressed encoded prototype and an interpreter), is identified and reported as not recovered; with `both` the AST layer over it is peeled and the VM remains"
-    },
-    {
-     "id": "tool-defects",
-     "configs": [
-      "ironbrikked",
-      "both"
-     ],
-     "status": "tool defect",
-     "summary": "the tool raised `No loop to break` on s04 in both configurations; recorded as tool-error"
-    }
-   ],
-   "assumptions": [
-    "Only the single commit of the repository was run; `legacy/` was not touched"
-   ],
-   "support": "identification-only"
+   "support": "experimental"
   },
   {
    "id": "zartha",
@@ -2847,7 +3216,119 @@
    "researchedFrom": [
     "README, Main.lua, Pipeline.lua and the Vm tree read as text; run through run_isolated.py with drivers/zartha.lua, which does in memory what Pipeline.lua does (luac replaced by string.dump)"
    ],
-   "versions": [],
+   "versions": [
+    {
+     "version": "current",
+     "revision": "3973a262adede79a5ba1eda3d2d3a272c167f128",
+     "revisionDate": null,
+     "note": null,
+     "fixtureDir": "tests/corpus/obfuscated/zartha",
+     "committed": true,
+     "licence": "MIT",
+     "fixtures": {
+      "measured": 54,
+      "written": 54,
+      "toolErrors": 2,
+      "omittedLarge": 0,
+      "toolOutputEquivalent": 0,
+      "toolOutputErrored": 0,
+      "toolOutputDiverged": 0
+     },
+     "fidelityBefore": 0.035,
+     "fidelityAfter": 0.035,
+     "configs": [
+      {
+       "config": "default",
+       "samples": 8,
+       "detected": 8,
+       "fidelityBefore": 0.038,
+       "fidelityAfter": 0.038,
+       "confidence": 0.306,
+       "behaviourChecked": 7,
+       "behaviourSame": 4,
+       "unparsed": 1,
+       "status": "unsupported"
+      },
+      {
+       "config": "minify",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.038,
+       "fidelityAfter": 0.039,
+       "confidence": 0.35,
+       "behaviourChecked": 7,
+       "behaviourSame": 4,
+       "unparsed": 0,
+       "status": "unsupported"
+      },
+      {
+       "config": "encryptstrings",
+       "samples": 8,
+       "detected": 8,
+       "fidelityBefore": 0.038,
+       "fidelityAfter": 0.038,
+       "confidence": 0.306,
+       "behaviourChecked": 7,
+       "behaviourSame": 4,
+       "unparsed": 1,
+       "status": "unsupported"
+      },
+      {
+       "config": "flatten",
+       "samples": 8,
+       "detected": 8,
+       "fidelityBefore": 0.031,
+       "fidelityAfter": 0.031,
+       "confidence": 0.306,
+       "behaviourChecked": 7,
+       "behaviourSame": 4,
+       "unparsed": 1,
+       "status": "unsupported"
+      },
+      {
+       "config": "antitamper",
+       "samples": 8,
+       "detected": 8,
+       "fidelityBefore": 0.033,
+       "fidelityAfter": 0.033,
+       "confidence": 0.306,
+       "behaviourChecked": 7,
+       "behaviourSame": 0,
+       "unparsed": 1,
+       "status": "unsupported"
+      },
+      {
+       "config": "constants",
+       "samples": 8,
+       "detected": 8,
+       "fidelityBefore": 0.038,
+       "fidelityAfter": 0.038,
+       "confidence": 0.306,
+       "behaviourChecked": 7,
+       "behaviourSame": 0,
+       "unparsed": 1,
+       "status": "unsupported"
+      },
+      {
+       "config": "all",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.03,
+       "fidelityAfter": 0.03,
+       "confidence": 0.35,
+       "behaviourChecked": 7,
+       "behaviourSame": 0,
+       "unparsed": 0,
+       "status": "unsupported"
+      }
+     ],
+     "summary": {
+      "verified": 0,
+      "partial": 0,
+      "unsupported": 7
+     }
+    }
+   ],
    "improvements": [],
    "failurePatterns": [
     {
@@ -2872,130 +3353,78 @@
      ],
      "status": "tool defect",
      "summary": "luasrcdiet inside the tool fails on s06 in both configurations that minify (an unexpected backslash); recorded as tool-error"
+    },
+    {
+     "id": "invalid-output",
+     "configs": [
+      "default",
+      "encryptstrings",
+      "flatten",
+      "antitamper",
+      "constants"
+     ],
+     "status": "tool defect",
+     "summary": "on s06 the tool writes `\\n\\t` as literal characters into the code of one opcode handler, which PUC Lua 5.1 and LuaJIT reject (\"unexpected symbol near '\\'\"); QuickSilver's parser rejects it too, so those outputs are counted as unparsed, not as recovery failures"
     }
    ],
    "assumptions": [
     "The watermark text is a setting (`File generated using [Zartha]` is the default), so it is evidence and not proof; the prelude rule is the structural one"
    ],
-   "support": "identification-only"
+   "support": "unsupported"
   },
   {
-   "id": "fusgato",
-   "name": "FusGato v1",
+   "id": "zenfus",
+   "name": "Zenfus",
    "kind": "open-source",
    "sources": [
-    "https://github.com/adzwang/fusgato-v1"
+    "https://github.com/Zaenalos/Zenfus"
    ],
-   "researchedFrom": [
-    "README and the source read as text; the Luvit program was run through run_isolated.py with drivers/fusgato.lua (stand-ins for Luvit's fs, json and relative require; the compile is string.dump)"
-   ],
-   "versions": [],
-   "improvements": [
+   "researchedFrom": [],
+   "versions": [
     {
-     "id": "not-ironbrew",
-     "summary": "the IronBrew watermark FusGato copies does not make it IronBrew 2: the credit line decides, and the VM is flagged as not rebuilt (before this it was reported as recovered with confidence high)",
-     "files": [
-      "src/detect/detect.js"
+     "version": "current",
+     "revision": "94d4ae1",
+     "revisionDate": null,
+     "note": null,
+     "fixtureDir": "tests/corpus/obfuscated/zenfus",
+     "committed": true,
+     "licence": "MIT",
+     "fixtures": {
+      "measured": 8,
+      "written": 8,
+      "toolErrors": 0,
+      "omittedLarge": 0,
+      "toolOutputEquivalent": 2,
+      "toolOutputErrored": 2,
+      "toolOutputDiverged": 4
+     },
+     "fidelityBefore": 0.038,
+     "fidelityAfter": 0.038,
+     "configs": [
+      {
+       "config": "default",
+       "samples": 8,
+       "detected": 8,
+       "fidelityBefore": 0.038,
+       "fidelityAfter": 0.038,
+       "confidence": 0.194,
+       "behaviourChecked": 8,
+       "behaviourSame": 2,
+       "unparsed": 0,
+       "status": "unsupported"
+      }
      ],
-     "tests": [
-      "tests/formats-ix.test.mjs: luaxen IronBrikked, zartha and fusgato"
-     ]
+     "summary": {
+      "verified": 0,
+      "partial": 0,
+      "unsupported": 1
+     }
     }
    ],
-   "failurePatterns": [
-    {
-     "id": "tool-half-working",
-     "configs": [
-      "default",
-      "noconstants"
-     ],
-     "status": "tool defect",
-     "summary": "the author calls it half-working: vm/opcodes/24.lua has no `return`, so 12 of 16 builds fail with `attempt to index local 'opcode'`; the 4 outputs that were written run but do not reproduce the original's output (diverged)"
-    },
-    {
-     "id": "vm",
-     "configs": [
-      "default",
-      "noconstants"
-     ],
-     "status": "open",
-     "summary": "the outputs are IronBrew-style VMs; identified, not recovered"
-    }
-   ],
-   "assumptions": [
-    "The relative-require resolution of the driver (every module directory tried when a tail call hides the caller) is ours; it was checked on the one build that completes"
-   ],
-   "support": "identification-only"
-  },
-  {
-   "id": "realobfuscator",
-   "name": "RealObfuscator",
-   "kind": "open-source",
-   "sources": [
-    "https://github.com/linkoro57/RealObfuscator"
-   ],
-   "researchedFrom": [
-    "README, Cargo.toml and docs read as text; the 166 crates were downloaded with `cargo vendor` (no build script of theirs ran on the host), the tool was built offline in the sandbox and run only there (gen_realobf.py)"
-   ],
-   "versions": [],
-   "improvements": [
-    {
-     "id": "luau-generalized-iteration",
-     "summary": "the sandbox walks `for k, v in t do` over a table without __iter (Luau); the lightweight mode's eager-decoding loop made the whole evaluation fail before",
-     "files": [
-      "src/sandbox/interp.js"
-     ],
-     "tests": [
-      "tests/formats-ix.test.mjs: sandbox: Luau's generalized iteration"
-     ]
-    },
-    {
-     "id": "key-constants",
-     "summary": "a number held by a randomly named local is an obfuscator's key and goes where it is used; `(bit32.op(...) + k) - k` is the bit32 result",
-     "files": [
-      "src/passes/simplify.js",
-      "src/passes/fold.js"
-     ],
-     "tests": [
-      "tests/formats-ix.test.mjs: fold"
-     ]
-    },
-    {
-     "id": "vm-pool",
-     "summary": "a VM build is recognised by its pool of dozens of encoded records and flagged as not rebuilt",
-     "files": [
-      "src/detect/detect.js"
-     ],
-     "tests": [
-      "tests/formats-ix.test.mjs: detection"
-     ]
-    }
-   ],
-   "failurePatterns": [
-    {
-     "id": "vm",
-     "configs": [
-      "vm",
-      "vm-max",
-      "vm-cached"
-     ],
-     "status": "open",
-     "summary": "register bytecode with shuffled records, opcode aliases and lazy constants: identified, not recovered"
-    },
-    {
-     "id": "vm-heuristic",
-     "configs": [
-      "lightweight (large programs)"
-     ],
-     "status": "known risk",
-     "summary": "the VM rule counts records (40 or more in a build over 20 kB); a lightweight build of a program with that many strings would be flagged as a VM although it is recovered"
-    }
-   ],
-   "assumptions": [
-    "Version 2.2.1 (revision 9ec569f) only; the repository's earlier Python versions were not run",
-    "Behaviour checked on Luau; fixtures are not committed (GPL), so the measurements reproduce only with the same build"
-   ],
-   "support": "identification-only"
+   "improvements": [],
+   "failurePatterns": [],
+   "assumptions": [],
+   "support": "unsupported"
   },
   {
    "id": "zynaa",
@@ -3007,7 +3436,158 @@
    "researchedFrom": [
     "README and the Python source read as text; both commits run through gen_zynaa.py in sandbox_run.py with the random generator seeded and the clipboard switched off"
    ],
-   "versions": [],
+   "versions": [
+    {
+     "version": "2016-06",
+     "revision": "3d168a6a40d9eb644ff5855bfaa7a78b70480f20",
+     "revisionDate": "2016-06-09",
+     "note": "the first commit (2016-06-09)",
+     "fixtureDir": "tests/corpus/obfuscated-local/zynaa-2016-06",
+     "committed": false,
+     "licence": "none stated",
+     "fixtures": {
+      "measured": 24,
+      "written": 24,
+      "toolErrors": 4,
+      "omittedLarge": 0,
+      "toolOutputEquivalent": 16,
+      "toolOutputErrored": 8,
+      "toolOutputDiverged": 0
+     },
+     "fidelityBefore": 0.43,
+     "fidelityAfter": 0.755,
+     "configs": [
+      {
+       "config": "level-0",
+       "samples": 6,
+       "detected": 6,
+       "fidelityBefore": 0.504,
+       "fidelityAfter": 0.778,
+       "confidence": 0.742,
+       "behaviourChecked": 5,
+       "behaviourSame": 4,
+       "unparsed": 1,
+       "status": "partial"
+      },
+      {
+       "config": "level-1",
+       "samples": 6,
+       "detected": 6,
+       "fidelityBefore": 0.407,
+       "fidelityAfter": 0.748,
+       "confidence": 0.75,
+       "behaviourChecked": 5,
+       "behaviourSame": 4,
+       "unparsed": 1,
+       "status": "partial"
+      },
+      {
+       "config": "level-2",
+       "samples": 6,
+       "detected": 6,
+       "fidelityBefore": 0.409,
+       "fidelityAfter": 0.747,
+       "confidence": 0.75,
+       "behaviourChecked": 5,
+       "behaviourSame": 4,
+       "unparsed": 1,
+       "status": "partial"
+      },
+      {
+       "config": "level-3",
+       "samples": 6,
+       "detected": 6,
+       "fidelityBefore": 0.401,
+       "fidelityAfter": 0.746,
+       "confidence": 0.725,
+       "behaviourChecked": 5,
+       "behaviourSame": 4,
+       "unparsed": 1,
+       "status": "partial"
+      }
+     ],
+     "summary": {
+      "verified": 0,
+      "partial": 4,
+      "unsupported": 0
+     }
+    },
+    {
+     "version": "2018-08",
+     "revision": "b0ff84ecb02d78586e312fa9931c1bfb03b48904",
+     "revisionDate": "2018-08-15",
+     "note": "`Removed recursion from dot_to_index` (2018-08-15), the current revision",
+     "fixtureDir": "tests/corpus/obfuscated-local/zynaa-2018-08",
+     "committed": false,
+     "licence": "none stated",
+     "fixtures": {
+      "measured": 24,
+      "written": 24,
+      "toolErrors": 4,
+      "omittedLarge": 0,
+      "toolOutputEquivalent": 16,
+      "toolOutputErrored": 8,
+      "toolOutputDiverged": 0
+     },
+     "fidelityBefore": 0.43,
+     "fidelityAfter": 0.755,
+     "configs": [
+      {
+       "config": "level-0",
+       "samples": 6,
+       "detected": 6,
+       "fidelityBefore": 0.504,
+       "fidelityAfter": 0.778,
+       "confidence": 0.742,
+       "behaviourChecked": 5,
+       "behaviourSame": 4,
+       "unparsed": 1,
+       "status": "partial"
+      },
+      {
+       "config": "level-1",
+       "samples": 6,
+       "detected": 6,
+       "fidelityBefore": 0.407,
+       "fidelityAfter": 0.748,
+       "confidence": 0.75,
+       "behaviourChecked": 5,
+       "behaviourSame": 4,
+       "unparsed": 1,
+       "status": "partial"
+      },
+      {
+       "config": "level-2",
+       "samples": 6,
+       "detected": 6,
+       "fidelityBefore": 0.409,
+       "fidelityAfter": 0.747,
+       "confidence": 0.75,
+       "behaviourChecked": 5,
+       "behaviourSame": 4,
+       "unparsed": 1,
+       "status": "partial"
+      },
+      {
+       "config": "level-3",
+       "samples": 6,
+       "detected": 6,
+       "fidelityBefore": 0.401,
+       "fidelityAfter": 0.746,
+       "confidence": 0.725,
+       "behaviourChecked": 5,
+       "behaviourSame": 4,
+       "unparsed": 1,
+       "status": "partial"
+      }
+     ],
+     "summary": {
+      "verified": 0,
+      "partial": 4,
+      "unsupported": 0
+     }
+    }
+   ],
    "improvements": [
     {
      "id": "bit-library",
@@ -3026,7 +3606,7 @@
       "src/passes/simplify.js"
      ],
      "tests": [
-      "data/research/format-notes.json (covered by the zynaa fixtures when present)"
+      "tests/formats-ix.test.mjs: simplify: `local G = _G`"
      ]
     }
    ],
@@ -3067,7 +3647,7 @@
    "assumptions": [
     "The tool was written for Garry's Mod; Roblox-style samples are outside what it was made for"
    ],
-   "support": "identification-only"
+   "support": "experimental"
   },
   {
    "id": "luarmor",
@@ -3120,7 +3700,7 @@
     "expected": "aztupbrew",
     "identified": 0,
     "unidentified": 0,
-    "classOfUnidentified": null
+    "classOfUnidentified": {}
    },
    {
     "label": "Base64Payload",
@@ -3129,7 +3709,10 @@
     "expected": "loaders",
     "identified": 0,
     "unidentified": 4,
-    "classOfUnidentified": null
+    "classOfUnidentified": {
+     "dynamic-loader": 3,
+     "minified-script": 1
+    }
    },
    {
     "label": "Boronide",
@@ -3138,7 +3721,7 @@
     "expected": "boronide",
     "identified": 22,
     "unidentified": 0,
-    "classOfUnidentified": null
+    "classOfUnidentified": {}
    },
    {
     "label": "IronBrew1",
@@ -3147,7 +3730,9 @@
     "expected": "ironbrew1",
     "identified": 24,
     "unidentified": 1,
-    "classOfUnidentified": null
+    "classOfUnidentified": {
+     "minified-script": 1
+    }
    },
    {
     "label": "IronBrew2",
@@ -3156,7 +3741,7 @@
     "expected": "ironbrew2",
     "identified": 7,
     "unidentified": 0,
-    "classOfUnidentified": null
+    "classOfUnidentified": {}
    },
    {
     "label": "LuaObfuscator",
@@ -3165,16 +3750,18 @@
     "expected": "luaobfuscator",
     "identified": 5,
     "unidentified": 0,
-    "classOfUnidentified": null
+    "classOfUnidentified": {}
    },
    {
     "label": "Luraph",
     "files": 218,
     "parsed": 217,
     "expected": "luraph",
-    "identified": 195,
-    "unidentified": 15,
-    "classOfUnidentified": null
+    "identified": 206,
+    "unidentified": 4,
+    "classOfUnidentified": {
+     "minified-script": 4
+    }
    },
    {
     "label": "MinifiedLua",
@@ -3183,7 +3770,11 @@
     "expected": "unlabelled",
     "identified": 0,
     "unidentified": 18,
-    "classOfUnidentified": null
+    "classOfUnidentified": {
+     "minified-script": 16,
+     "bytecode": 1,
+     "remote-library-script": 1
+    }
    },
    {
     "label": "MoonSecV2",
@@ -3192,7 +3783,10 @@
     "expected": "moonsec_v2",
     "identified": 21,
     "unidentified": 5,
-    "classOfUnidentified": null
+    "classOfUnidentified": {
+     "numeric-array-loader": 4,
+     "minified-script": 1
+    }
    },
    {
     "label": "MoonSecV3",
@@ -3201,7 +3795,7 @@
     "expected": "moonsec_v3",
     "identified": 23,
     "unidentified": 0,
-    "classOfUnidentified": null
+    "classOfUnidentified": {}
    },
    {
     "label": "MoonVeil",
@@ -3210,7 +3804,7 @@
     "expected": "moonveil",
     "identified": 76,
     "unidentified": 0,
-    "classOfUnidentified": null
+    "classOfUnidentified": {}
    },
    {
     "label": "PSU",
@@ -3219,7 +3813,7 @@
     "expected": "psu",
     "identified": 8,
     "unidentified": 0,
-    "classOfUnidentified": null
+    "classOfUnidentified": {}
    },
    {
     "label": "Prometheus",
@@ -3227,8 +3821,11 @@
     "parsed": 236,
     "expected": "prometheus",
     "identified": 230,
-    "unidentified": 8,
-    "classOfUnidentified": null
+    "unidentified": 7,
+    "classOfUnidentified": {
+     "minified-script": 5,
+     "not-lua": 2
+    }
    },
    {
     "label": "SynapseXen",
@@ -3237,7 +3834,10 @@
     "expected": "synapse_xen",
     "identified": 0,
     "unidentified": 3,
-    "classOfUnidentified": null
+    "classOfUnidentified": {
+     "minified-script": 2,
+     "encoded-strings": 1
+    }
    },
    {
     "label": "Unknown",
@@ -3245,8 +3845,14 @@
     "parsed": 24,
     "expected": "unlabelled",
     "identified": 0,
-    "unidentified": 20,
-    "classOfUnidentified": null
+    "unidentified": 13,
+    "classOfUnidentified": {
+     "plain-script": 3,
+     "encoded-strings": 3,
+     "credit-entry": 1,
+     "minified-script": 5,
+     "bytecode": 1
+    }
    },
    {
     "label": "VM Compressed",
@@ -3255,7 +3861,10 @@
     "expected": "unlabelled",
     "identified": 0,
     "unidentified": 21,
-    "classOfUnidentified": null
+    "classOfUnidentified": {
+     "remote-loader": 6,
+     "remote-library-script": 15
+    }
    },
    {
     "label": "wYnFuscate",
@@ -3264,7 +3873,7 @@
     "expected": "wynfuscate",
     "identified": 15,
     "unidentified": 0,
-    "classOfUnidentified": null
+    "classOfUnidentified": {}
    }
   ]
  },

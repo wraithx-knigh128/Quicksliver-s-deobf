@@ -124,19 +124,30 @@ function inlineGlobalAlias(chunk) {
   const info = analyze(chunk);
   const localNames = new Set(info.vars.filter((v) => !v.isGlobal).map((v) => v.name));
   const parentOf = new Map();
-  walk(chunk, (n, parent) => { if (n.type === 'Name') parentOf.set(n, parent); });
+  const assigned = new Set();                       // Index nodes that are written to (`_G.x = 1`, `function _G.f() end`)
+  walk(chunk, (n, parent) => {
+    if (n.type === 'Name') parentOf.set(n, parent);
+    if (n.type === 'Assign') for (const t of n.targets) assigned.add(t);
+    else if (n.type === 'CompoundAssign') assigned.add(n.target);
+    else if (n.type === 'Function') assigned.add(n.target);
+    return undefined;
+  });
   const replace = new Map();
-  for (const v of info.vars) {
-    if (v.kind !== 'local' || v.writes.length || !v.hasInit || !v.init || !v.reads.length) continue;
-    const init = v.init;
-    if (init.type !== 'Name' || init.name !== '_G') continue;
-    const g = info.varOf.get(init);
-    if (!g || !g.isGlobal || g.writes.length) continue;
+  const gt = info.globals.get('_G');
+  for (const v of gt ? [...info.vars, gt] : info.vars) {
+    // `local G = _G` (an alias read only as G.name), or `_G` itself read only as _G.name
+    const isAlias = v.kind === 'local' && !v.writes.length && v.hasInit && v.init && v.init.type === 'Name' && v.init.name === '_G' && v.reads.length;
+    const isGlobalTable = v.isGlobal && v.name === '_G' && !v.writes.length && v.reads.length;
+    if (!isAlias && !isGlobalTable) continue;
+    if (isAlias) {
+      const g = info.varOf.get(v.init);
+      if (!g || !g.isGlobal || g.writes.length) continue;
+    }
     const uses = [];
     let ok = true;
     for (const r of v.reads) {
       const p = parentOf.get(r);
-      if (!p || p.type !== 'Index' || p.obj !== r || p.key.type !== 'String' || !/^[A-Za-z_][A-Za-z0-9_]*$/.test(p.key.value) || LUA_KEYWORDS.has(p.key.value) || localNames.has(p.key.value)) { ok = false; break; }
+      if (!p || p.type !== 'Index' || p.obj !== r || assigned.has(p) || p.key.type !== 'String' || !/^[A-Za-z_][A-Za-z0-9_]*$/.test(p.key.value) || LUA_KEYWORDS.has(p.key.value) || localNames.has(p.key.value)) { ok = false; break; }
       uses.push(p);
     }
     if (ok) for (const p of uses) replace.set(p, p.key.value);

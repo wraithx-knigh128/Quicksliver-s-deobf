@@ -335,6 +335,8 @@ const RULES = {
   zartha: [
     // the watermark setting's default; the author can change it, so it is evidence and not proof
     rule('watermark', 'banner', 0.9, (c) => /File generated using \[Zartha\]/.test(c.src.slice(0, 600)) && 'the default watermark string "File generated using [Zartha]"'),
+    // the wrapper every build has, whatever the options do to the inside (encrypted keys, minified names): a watermark expression `and` an immediately called function that returns the VM function of four parameters
+    rule('vm-wrapper', 'structure', 0.8, (c) => /^\s*return\s*\(\s*\(?"[^"\n]{0,80}"\)?\s*and\s*\(\s*function\s*\(\s*\)\s*return\s*\(\s*function\s*\(\s*\w+\s*,\s*\w+\s*,\s*\w+\s*,\s*\w+\s*\)/.test(c.src.slice(0, 400)) && 'a watermark string `and (function() return (function(a, b, c, d)` wrapped around the VM function', true),
     rule('vm-prelude', 'structure', 0.8, (c) => /^\s*return\s*\(\s*\(?"[^"\n]{0,80}"\)?\s*and\s*\(function\(\)\s*return\s*\(function\(\w+,\w+,\w+,\w+\)[\s\S]{0,200}?\w+\["string"\]\["char"\],\w+\["string"\]\["byte"\],\w+\["string"\]\["sub"\],\w+\["tostring"\],\w+\["pcall"\]/.test(c.src.slice(0, 1500)) && 'a watermark string `and (function() return (function(Env, Constants, shiftKey, decrypt)` whose locals are read out of Env["string"]["char"], ["byte"], ["sub"], ["tostring"], ["pcall"]', true),
   ],
   fusgato: [

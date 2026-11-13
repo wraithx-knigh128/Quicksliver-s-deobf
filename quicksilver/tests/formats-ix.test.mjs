@@ -66,6 +66,14 @@ test('simplify: a table of builtins read only by constant keys is indirection an
   assert.match(kept, /T\[i\]/, 'computed keys keep the table');
 });
 
+test('simplify: `local G = _G` (or _G itself) read only as G.name / G["name"] is the global; writes through _G, an alias that is used otherwise, and a used local of the same name keep it', () => {
+  assert.doesNotMatch(through('local G = _G local a = G.print local b = G["tostring"](1) a(b)', (x) => simplifyPass(x)), /\bG\b|_G/);
+  assert.equal(through('_G.print(_G.tostring(1))', (x) => simplifyPass(x)).trim(), 'print(tostring(1))');
+  assert.match(through('_G.x = 1 print(_G.y)', (x) => simplifyPass(x)), /_G\.y/, 'the script writes through _G: the table is part of its logic');
+  assert.match(through('local t = _G for k in pairs(t) do print(k) end', (x) => simplifyPass(x)), /_G/, 'passed on: left alone');
+  assert.match(through('local print = 5 local G = _G G.print(print)', (x) => simplifyPass(x)), /_G\.print|G\.print/, 'a local called print that is used would capture the global');
+});
+
 test('structure: a while whose last statement leaves it is an if; one with another way round stays a loop', () => {
   assert.match(through('while x < 3 do print(1) return false end', whileToIf), /^if x < 3 then/);
   assert.match(through('while x < 3 do print(1) break end', whileToIf), /^if x < 3 then/);

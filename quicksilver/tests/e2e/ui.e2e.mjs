@@ -93,7 +93,8 @@ async function loadFile(page, file) {
 
 test('page loads cleanly and lists every obfuscator', { skip }, async () => {
   const { page, ctx, problems } = await newPage();
-  assert.equal(await page.locator("#toollist li").count(), 34);
+  // one entry per family of the registry (data/compat.json is generated from it)
+  assert.equal(await page.locator("#toollist li").count(), JSON.parse(fs.readFileSync(path.join(root, 'data/compat.json'), 'utf8')).families.length);
   assert.equal(await page.textContent('#ver'), 'v1.0.0');
   for (const id of ['open', 'detect', 'beautify', 'analyze', 'recover', 'compare', 'export']) assert.ok(await page.isVisible(`#act-${id}`), `${id} button`);
   // strict CSP: no inline styles or scripts were needed to render

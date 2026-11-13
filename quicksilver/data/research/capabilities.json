@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "generatedAt": "2026-11-12T19:39:06.431Z",
+  "generatedAt": "2026-11-13T07:29:26.298Z",
   "capabilities": [
     {
       "id": "luraph.banner-version",
@@ -159,6 +159,46 @@
           },
           {
             "name": "boronide validates",
+            "ok": true,
+            "detail": []
+          },
+          {
+            "name": "obscura validates",
+            "ok": true,
+            "detail": []
+          },
+          {
+            "name": "realobfuscator validates",
+            "ok": true,
+            "detail": []
+          },
+          {
+            "name": "zynaa validates",
+            "ok": true,
+            "detail": []
+          },
+          {
+            "name": "luarmor validates",
+            "ok": true,
+            "detail": []
+          },
+          {
+            "name": "xfuscator validates",
+            "ok": true,
+            "detail": []
+          },
+          {
+            "name": "zartha validates",
+            "ok": true,
+            "detail": []
+          },
+          {
+            "name": "fusgato validates",
+            "ok": true,
+            "detail": []
+          },
+          {
+            "name": "luaxen validates",
             "ok": true,
             "detail": []
           },

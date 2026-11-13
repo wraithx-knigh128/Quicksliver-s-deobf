@@ -433,7 +433,7 @@
             "src/passes/simplify.js"
           ],
           "tests": [
-            "data/research/format-notes.json (covered by the zynaa fixtures when present)"
+            "tests/formats-ix.test.mjs: simplify: `local G = _G`"
           ]
         }
       ],
