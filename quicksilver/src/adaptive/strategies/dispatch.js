@@ -181,9 +181,17 @@ function findState(loop, ctx) {
     };
     ifs.forEach((x) => collect(x, 0));
     const real = leaves.filter((b) => b.length);
-    if (real.length < 3) continue;
+    // two blocks are enough for a loop that cannot end on its own account (`while true` / `while 0.69 do`): a function of two straight pieces
+    // is what a flattener leaves of a short body, and unflattening it keeps the semantics by construction (the states are followed, not guessed)
+    const lc = strip(loop.cond);
+    const endless = loop.type === 'While' && (lc.type === 'True' || lc.type === 'Number');
+    if (real.length < (endless ? 2 : 3)) continue;
     const writing = real.filter((b) => b.some((x) => m.writes(x))).length;
-    if (writing < Math.ceil(real.length * 0.6)) continue;
+    // a block that ends the function (a return, or the `error("invalid state")` an obfuscator puts in the unreachable `else`) hands control on to
+    // nothing, so it does not count against the machine: what has to write the state is every block that does go on
+    const endsRun = (b) => { const last = b[b.length - 1]; return ends(b) && last.type !== 'Continue' || (last.type === 'CallStmt' && last.call.type === 'Call' && last.call.fn.type === 'Name' && last.call.fn.name === 'error'); };
+    const going = real.filter((b) => !endsRun(b) || b.some((x) => m.writes(x))).length;
+    if (writing < Math.ceil(real.length * 0.6) && !(writing >= 2 && writing >= Math.ceil(going * 0.6))) continue;
     if (!driven(state)) continue;
     // nothing besides the selection may steer the loop: a statement that can leave it, or that reads the state, makes the state part of the
     // program's own logic (a machine that consumes input) and not a disguise for its control flow

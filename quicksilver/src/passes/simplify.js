@@ -12,7 +12,7 @@ import { transform, walk, clone } from '../core/walk.js';
 import { analyze, STDLIB_GLOBALS } from '../core/scope.js';
 import { NOT_CONST, evalBinary, evalUnary } from './consteval.js';
 import { constOf, makeConst, PURE_LIBS } from './fold.js';
-import { isMachineName } from './rename.js';
+import { isMachineName, looksObfuscated } from './rename.js';
 import { numericExpr, numericVars, isArithmetic, isComparison } from './numeric.js';
 
 // ---- purity ------------------------------------------------------------------
@@ -62,6 +62,14 @@ const isTerminal = (s) => s && (s.type === 'Return' || s.type === 'Break' || s.t
 
 // ---- propagate -----------------------------------------------------------------
 
+/** A global (a library, `game`, `workspace`) that nothing in the script assigns, or a field of one by name (`math.pi`). */
+function untouchedGlobal(e, info) {
+  if (e.type === 'Index') return e.key.type === 'String' && untouchedGlobal(e.obj, info);
+  if (e.type !== 'Name') return false;
+  const v = info.varOf.get(e);
+  return !!v && v.isGlobal && v.writes.length === 0;
+}
+
 /** `string.char`, `print`, `table.insert`: a reference to an untouched standard global. */
 function stdAlias(e, info) {
   if (e.type === 'Name') {
@@ -89,7 +97,9 @@ function propagate(chunk) {
     if (c !== NOT_CONST && init.type !== 'Paren') {
       // Numbers and strings stay as the named constants they are. Booleans and nil are inlined because they
       // decide branches (opaque predicates are built from them); aliases of standard functions are handled below.
-      const worthInlining = typeof c === 'boolean' || c === undefined;
+      // A number held by a local with a randomly generated name (not a short one: minified code keeps its constants) is an obfuscator's key or offset: it
+      // goes where it is used, which is what lets `bit32.bxor(key, n)` and `(x + k) - k` fold.
+      const worthInlining = typeof c === 'boolean' || c === undefined || (typeof c === 'number' && looksObfuscated(v.name) && v.name.length > 4);
       if (worthInlining) make = () => makeConst(c);
     } else if (stdAlias(init, info)) {
       const root = init.type === 'Name' ? init.name : init.obj.name;
@@ -227,6 +237,11 @@ function removeDead(chunk, state) {
         if ((isMachineName(v.name) || trivial || !state.unusedAtStart.has(v.decl)) && v.reads.every((r) => inside.has(r)) && v.writes.length === 0) { changed++; return null; }
       } else if (s.type === 'Assign') {
         if (s.targets.every((t) => t.type === 'Name' && dead(t)) && s.values.every((x) => isPure(x, info))) { changed++; return null; }
+      } else if (s.type === 'CallStmt' && s.call.type === 'Call') {
+        // `math.cos(12)` as a statement: a numeric function of numeric literals whose result nobody keeps computes nothing anyone can see
+        const name = pureCalleeName(s.call.fn, info);
+        if (name && /^math\.(abs|acos|asin|atan|ceil|cos|cosh|deg|exp|floor|log|rad|sin|sinh|sqrt|tan|tanh)$/.test(name)
+            && s.call.args.length >= 1 && s.call.args.every((a) => constOf(a) !== NOT_CONST && typeof constOf(a) === 'number')) { changed++; return null; }
       } else if (s.type === 'NumFor') {
         const empty = s.body.length === 0 && !(s.body.endComments && s.body.endComments.length);
         if (empty && isPure(s.start, info) && isPure(s.stop, info) && (!s.step || isPure(s.step, info))) { changed++; return null; }
@@ -266,6 +281,44 @@ function evalWith(e, env, info) {
     }
     default: return constOf(e);
   }
+}
+
+/**
+ * A closure that is called on the spot and only computes a constant from constants:
+ *
+ *     (function() local n = 22 return n * n < 0 end)()     ->   false
+ *
+ * Obfuscators use these as opaque predicates and as numbers that are not literals. The body is evaluated, nothing is guessed: it must
+ * be `local` declarations of constants (or of earlier locals) followed by one `return` of one value, with no parameters and no
+ * arguments, so there is nothing the call could see that the evaluation does not. Returns how many calls were replaced.
+ */
+function collapseConstClosures(chunk) {
+  const info = analyze(chunk);
+  let changed = 0;
+  transform(chunk, {
+    expr(e) {
+      if (e.type !== 'Call' || e.args.length) return undefined;
+      let fn = e.fn;
+      while (fn.type === 'Paren') fn = fn.expr;
+      if (fn.type !== 'Func' || fn.params.length || fn.vararg || fn.body.length === 0) return undefined;
+      const last = fn.body[fn.body.length - 1];
+      if (last.type !== 'Return' || last.values.length !== 1) return undefined;
+      const env = new Map();
+      for (const st of fn.body.slice(0, -1)) {
+        if (st.type !== 'Local' || st.ids.length !== 1 || st.values.length !== 1) return undefined;
+        const v = evalWith(st.values[0], env, info);
+        if (v === NOT_CONST) return undefined;
+        const variable = info.varOf.get(st.ids[0]);
+        if (!variable) return undefined;
+        env.set(variable, v);
+      }
+      const r = evalWith(last.values[0], env, info);
+      if (r === NOT_CONST) return undefined;
+      changed++;
+      return makeConst(r);
+    },
+  });
+  return changed;
 }
 
 function levelHasBreak(stmts) {
@@ -403,10 +456,13 @@ function inlineConstTables(chunk) {
     if (v.kind !== 'local' || v.writes.length || written.has(v) || !v.init || v.init.type !== 'Table' || !v.reads.length) continue;
     const table = v.init;
     const charMap = table.fields.length > 0 && table.fields.every((f) => f.value.type === 'String' && f.value.value.length === 1);
+    // Table indirection: a table whose values are all untouched standard globals (`{ [2] = bit32, [4] = print }`) read by constant keys
+    // (a table of three or more builtins that is only ever indexed by constants is indirection whatever its name looks like)
+    const globalsTable = table.fields.length >= 3 && v.reads.length >= 3 && table.fields.every((f) => untouchedGlobal(f.value, info));
     // An obfuscator's string array (machine-named, positional strings, read by constant index at several places)
     // is worth inlining; a table the author named, or one holding mixed data, is left alone.
     const stringArray = table.fields.length > 0 && table.fields.every((f) => f.kind === 'item' && f.value.type === 'String') && v.reads.length >= 3;
-    if (!charMap && !(isMachineName(v.name) && stringArray)) continue;
+    if (!charMap && !globalsTable && !(isMachineName(v.name) && stringArray)) continue;
     const entries = new Map();
     let ok = table.fields.length > 0;
     let positional = 1;
@@ -416,7 +472,7 @@ function inlineConstTables(chunk) {
       if (f.kind === 'item') key = positional++;
       else if (f.kind === 'named') key = f.key;
       else { key = constOf(f.key); if (key === NOT_CONST || key === undefined) { ok = false; return; } }
-      const val = constOf(f.value);
+      const val = globalsTable ? { global: f.value } : constOf(f.value);
       const spreads = f.kind === 'item' && i === table.fields.length - 1 && (f.value.type === 'Call' || f.value.type === 'Vararg');
       if (val === NOT_CONST || spreads) { ok = false; return; }
       entries.set(key, val);
@@ -433,7 +489,13 @@ function inlineConstTables(chunk) {
     if (ok) for (const [idx, val] of uses) replace.set(idx, val);
   }
   if (!replace.size) return 0;
-  transform(chunk, { expr(e) { return replace.has(e) ? makeConst(replace.get(e)) : undefined; } });
+  transform(chunk, {
+    expr(e) {
+      if (!replace.has(e)) return undefined;
+      const val = replace.get(e);
+      return val !== null && typeof val === 'object' && val.global ? clone(val.global) : makeConst(val);
+    },
+  });
   return replace.size;
 }
 
@@ -590,9 +652,10 @@ export function simplifyPass(chunk, ctx = {}) {
     const r = reduce(chunk);
     const d = removeDead(chunk, deadState);
     const u = unrollOnce(chunk);
-    stats.tables += t;
+    const c = collapseConstClosures(chunk);
+    stats.tables += t; stats.closures = (stats.closures || 0) + c;
     stats.sunk += k; stats.propagated += p; stats.reduced += r; stats.dead += d; stats.unrolled += u;
-    if (!(k + t + p + r + d + u)) break;
+    if (!(k + t + p + r + d + u + c)) break;
   }
   if (ctx.log) ctx.log('simplify', stats);
   return { changed: Object.values(stats).reduce((x, y) => x + y, 0), stats };

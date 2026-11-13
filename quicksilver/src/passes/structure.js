@@ -3,6 +3,7 @@
 //   unwrapWrapper       `return (function(...) BODY end)(...)` -> BODY
 //   removeUnusedVararg  `function(a, ...)` where `...` is never read -> `function(a)`
 //   tidyIfs             `if c then else B end` -> `if not c then B end` (left behind when a test was flipped)
+//   whileToIf           `while c do ... return end` -> `if c then ... end` (a loop whose body always leaves it runs at most once)
 
 import { transform, walk } from '../core/walk.js';
 
@@ -80,6 +81,46 @@ export function tidyIfs(chunk) {
       if (s.type !== 'If' || s.clauses.length !== 1 || s.clauses[0].body.length || !s.orelse || !s.orelse.length) return undefined;
       changed++;
       return { ...s, clauses: [{ cond: negateCondition(s.clauses[0].cond), body: s.orelse }], orelse: null };
+    },
+  });
+  return { changed };
+}
+
+/** Break and continue statements and gotos that belong to this loop level (not to loops or functions nested inside it). */
+function loopExits(body) {
+  const found = { breaks: 0, other: false };
+  const visit = (n) => {
+    if (!n || typeof n !== 'object') return;
+    if (Array.isArray(n)) { n.forEach(visit); return; }
+    if (n.type === 'Func' || n.type === 'While' || n.type === 'Repeat' || n.type === 'NumFor' || n.type === 'GenFor') {
+      // a nested loop owns its own breaks, but a goto or label still reaches out
+      walk(n, (m) => { if (m.type === 'Goto' || m.type === 'Label') found.other = true; return undefined; });
+      return;
+    }
+    if (n.type === 'Break') found.breaks++;
+    else if (n.type === 'Continue' || n.type === 'Goto' || n.type === 'Label') found.other = true;
+    for (const k of Object.keys(n)) if (k !== 'line' && k !== 'comments' && k !== 'trailing' && n[k] && typeof n[k] === 'object') visit(n[k]);
+  };
+  body.forEach(visit);
+  return found;
+}
+
+/**
+ * A `while` whose last statement is a `return` (or `break`) and which has no other way round to the top runs its body at most once: it is an `if`.
+ * Flatteners write their conditionals this way. Nothing else at this loop level may break or continue, and no goto or label may be inside.
+ */
+export function whileToIf(chunk) {
+  let changed = 0;
+  transform(chunk, {
+    stmt(s) {
+      if (s.type !== 'While' || !s.body.length) return undefined;
+      const last = s.body[s.body.length - 1];
+      if (last.type !== 'Return' && last.type !== 'Break') return undefined;
+      const exits = loopExits(s.body);
+      if (exits.other || exits.breaks !== (last.type === 'Break' ? 1 : 0)) return undefined;
+      changed++;
+      const body = last.type === 'Break' ? s.body.slice(0, -1) : s.body;
+      return { type: 'If', clauses: [{ cond: s.cond, body }], orelse: null, comments: s.comments, line: s.line, endLine: s.endLine };
     },
   });
   return { changed };

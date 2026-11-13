@@ -166,7 +166,14 @@ function evaluateOnce(chunk, ctx = {}) {
         r = { ok: a.ok && b.ok, call: a.call || b.call };
         break;
       }
-      case 'Call': { const f = closed(e.fn); const args = e.args.map(closed); r = { ok: f.ok && args.every((x) => x.ok), call: true }; break; }
+      case 'Call': {
+        // `bit or bit32 or require'bit'`: the portable way to get a bit library; `require` is only reached on a runtime that has neither, where the
+        // evaluation fails and the decoder call is left alone
+        const fnv = e.fn.type === 'Name' ? info.varOf.get(e.fn) : null;
+        if (e.fn.type === 'Name' && e.fn.name === 'require' && fnv && fnv.isGlobal && fnv.writes.length === 0 && e.args.length === 1
+            && e.args[0].type === 'String' && /^bit(32)?$/.test(e.args[0].value)) { r = { ok: true, call: false }; break; }
+        const f = closed(e.fn); const args = e.args.map(closed); r = { ok: f.ok && args.every((x) => x.ok), call: true }; break;
+      }
       case 'MethodCall': { const o = closed(e.obj); const args = e.args.map(closed); r = { ok: o.ok && args.every((x) => x.ok), call: true }; break; }
       case 'Table': {
         const parts = e.fields.map((f) => (f.kind === 'keyed' ? [closed(f.key), closed(f.value)] : [closed(f.value)])).flat();
@@ -248,10 +255,28 @@ function evaluateOnce(chunk, ctx = {}) {
     walk(f.body, (n) => { if (n.type === 'Number' && (n.value === 1103515245 || n.value === 2147483648)) seen.add(n.value); return undefined; });
     if (seen.size === 2) keystream.add(v);
   }
+  // a function that reads bytes of its argument, mixes them with bit32/bit `bxor` and builds a string with string.char is a byte cipher whatever its name is
+  // and however it is wrapped (`local d = (function() ... return function(s, k) ... end end)()`): from its first call on it is a decoder
+  const cipher = new Set();
+  for (const [v, st] of declOf) {
+    const e = st.type === 'LocalFunction' ? st.func : st.type === 'Local' && st.values.length === 1 && st.ids.length === 1 ? st.values[0] : null;
+    if (!e) continue;
+    const seen = new Set();
+    walk(e, (n) => {
+      if (n.type === 'Index' && n.key.type === 'String' && n.obj.type === 'Name') {
+        const lib = n.obj.name;
+        if (lib === 'string' && n.key.value === 'char') seen.add('char');
+        else if (lib === 'string' && (n.key.value === 'byte' || n.key.value === 'sub')) seen.add('byte');
+        else if ((lib === 'bit32' || lib === 'bit') && n.key.value === 'bxor') seen.add('xor');
+      } else if (n.type === 'MethodCall' && n.name === 'byte') seen.add('byte');
+      return undefined;
+    });
+    if (seen.size === 3) cipher.add(v);
+  }
   const decoders = new Set();
   for (const [v, n] of siteCount) {
     const machineName = looksObfuscated(v.name) || isShortName(v.name);
-    const threshold = (ctx.knownDecoders && ctx.knownDecoders.has(v.name)) || (offsetAccessor.has(v) && machineName) || keystream.has(v) ? 1 : machineName ? minSites : (opts.minSitesReadable ?? MIN_SITES_READABLE_NAME);
+    const threshold = (ctx.knownDecoders && ctx.knownDecoders.has(v.name)) || (offsetAccessor.has(v) && machineName) || keystream.has(v) || cipher.has(v) ? 1 : machineName ? minSites : (opts.minSitesReadable ?? MIN_SITES_READABLE_NAME);
     if (n >= threshold) decoders.add(v);
   }
   result.decoders = [...decoders].map((v) => ({ name: v.name, sites: siteCount.get(v) }));
@@ -419,13 +444,20 @@ function evaluateOnce(chunk, ctx = {}) {
   const perDecoder = new Map(); // Var -> { strings, others }
   const decoderOf = (e) => { let found = null; walk(e, (n) => { if (!found && n.type === 'Call' && n.fn.type === 'Name' && decoders.has(info.varOf.get(n.fn))) found = info.varOf.get(n.fn); }); return found; };
   const candidates = [];
+  const byteArgs = new Set();
+  walk(chunk, (n) => {
+    if (n.type === 'Call' && n.fn.type === 'Index' && n.fn.obj.type === 'Name' && n.fn.obj.name === 'string' && n.fn.key.type === 'String' && n.fn.key.value === 'char'
+        && n.args.length === 1 && n.args[0].type === 'Call') byteArgs.add(n.args[0]);
+  });
   for (const e of sites) {
     const a = table.get(ids.get(e));
     const b = table.get(ids.get(e) + n);
     if (unresolved.has(ids.get(e)) || !single(a) || !single(b) || a.get(2) !== b.get(2) || !usable(a.get(2))) { result.rejected++; continue; }
     const v = decoderOf(e);
     const tally = perDecoder.get(v) || { strings: 0, others: 0 };
-    if (typeof a.get(2) === 'string') tally.strings++; else tally.others++;
+    // a byte decoder (`string.char(d(19))`, `d(n)` = n xor key) returns numbers, and what it decodes is the text those make
+    const byteValue = typeof a.get(2) === 'number' && Number.isInteger(a.get(2)) && a.get(2) >= 0 && a.get(2) <= 255 && byteArgs.has(e);
+    if (typeof a.get(2) === 'string' || byteValue) tally.strings++; else tally.others++;
     perDecoder.set(v, tally);
     candidates.push([e, a.get(2), v]);
   }
@@ -434,7 +466,7 @@ function evaluateOnce(chunk, ctx = {}) {
     const t = perDecoder.get(v);
     const stringy = t.strings / (t.strings + t.others) >= 0.75;
     // a text decoder's number results are keys into a table it fills as a side effect; the call has to stay
-    if (accessorShaped.has(v) || (stringy && typeof value === 'string')) accepted.set(e, value);
+    if (accessorShaped.has(v) || (stringy && (typeof value === 'string' || byteArgs.has(e)))) accepted.set(e, value);
     else if (!stringy) result.notDecoder = (result.notDecoder || 0) + 1; // mostly numbers: the program's own helper, not a decoder that failed
     else result.rejected++;
   }

@@ -21,9 +21,10 @@ const sandbox = !args.includes('--no-sandbox');
 const write = args.includes('--write');
 const outName = args.includes('--out') ? args[args.indexOf('--out') + 1] : 'scorecard.json';
 
-const tools = [['prometheus', 'obfuscated/prometheus'], ['hercules', 'obfuscated/hercules'], ['ironbrew2', 'obfuscated/ironbrew2'], ['loaders', 'obfuscated/loaders'], ['zenfus', 'obfuscated/zenfus'], ['azurevm', 'obfuscated/azurevm'], ['simple_html', 'obfuscated/simple_html'], ['clyde', 'obfuscated/clyde']];
+const tools = [['prometheus', 'obfuscated/prometheus'], ['hercules', 'obfuscated/hercules'], ['ironbrew2', 'obfuscated/ironbrew2'], ['loaders', 'obfuscated/loaders'], ['zenfus', 'obfuscated/zenfus'], ['azurevm', 'obfuscated/azurevm'], ['simple_html', 'obfuscated/simple_html'], ['clyde', 'obfuscated/clyde'],
+  ['zartha', 'obfuscated/zartha'], ['fusgato', 'obfuscated/fusgato'], ['luaxen', 'obfuscated/luaxen']];
 // Output of tools whose licence does not allow committing it (AGPL, or no licence) is generated locally by gen_external.py into a git-ignored folder; it is measured when present.
-for (const [tool, dir] of [['colisseum', 'obfuscated-local/colisseum'], ['simple_lua', 'obfuscated-local/simple_lua'], ['rbxlua', 'obfuscated-local/rbxlua']]) {
+for (const [tool, dir] of [['colisseum', 'obfuscated-local/colisseum'], ['simple_lua', 'obfuscated-local/simple_lua'], ['rbxlua', 'obfuscated-local/rbxlua'], ['xfuscator', 'obfuscated-local/xfuscator']]) {
   if (fs.existsSync(path.join(corpus, dir, 'manifest.json'))) tools.push([tool, dir]);
 }
 // Hercules revisions older than the current one (each its own folder, tests/corpus/tools/gen_hercules_versions.py) and the layered (mixed) chains
@@ -34,6 +35,16 @@ for (const d of fs.readdirSync(path.join(corpus, 'obfuscated')).filter((x) => /^
   const [tool, ...ver] = d.split('-');
   tools.push([tool, `obfuscated/${d}`]);
   versions.set(`obfuscated/${d}`, ver.join('-'));
+}
+// Revisions of tools whose output cannot be committed (zynaa/LuaObfuscator: no licence; RealObfuscator: GPL, and a fixture is only reproducible with the same build) are
+// generated into obfuscated-local/<tool>-<version> by gen_zynaa.py / gen_realobf.py and measured when present.
+if (fs.existsSync(path.join(corpus, 'obfuscated-local'))) {
+  for (const d of fs.readdirSync(path.join(corpus, 'obfuscated-local')).filter((x) => /^(zynaa|realobfuscator)-/.test(x)).sort()) {
+    if (!fs.existsSync(path.join(corpus, 'obfuscated-local', d, 'manifest.json'))) continue;
+    const [tool, ...ver] = d.split('-');
+    tools.push([tool, `obfuscated-local/${d}`]);
+    versions.set(`obfuscated-local/${d}`, ver.join('-'));
+  }
 }
 // the newest revision of a tool whose revisions live in <tool>-<version> folders has no folder of its own: it is the version the folder named current stands for
 

@@ -5,6 +5,10 @@
   python -I gen_external.py --tool azurevm   --root /path/to/AzureVM   --out ../obfuscated/azurevm --commit <git sha>
   python -I gen_external.py --tool rbxlua --root /path/to/RBXLuaObfuscator --out ../obfuscated-local/rbxlua --commit <git sha>
   python -I gen_external.py --tool simple_lua --root /path/to/dir-with-tool.lua --out ../obfuscated-local/simple_lua --commit <git sha>
+  python -I gen_external.py --tool xfuscator --root /path/to/XFuscator --out ../obfuscated-local/xfuscator --commit <git sha>
+  python -I gen_external.py --tool zartha    --root /path/to/Zartha-Obfuscator --out ../obfuscated/zartha --commit <git sha>
+  python -I gen_external.py --tool fusgato   --root /path/to/fusgato-v1 --out ../obfuscated/fusgato --commit <git sha>
+  python -I gen_external.py --tool luaxen    --root /path/to/LuaXen --out ../obfuscated/luaxen --commit <git sha>
 
 Writes <out>/manifest.json in the format verify_fixtures.py reads (run it afterwards to fill in `behaviors`).
 Output is committed to the repository only for tools whose licence allows it (Zenfus, AzureVM: MIT); the rest go to the git-ignored obfuscated-local/.
@@ -36,6 +40,29 @@ TOOLS = {
     "rbxlua": {
         "name": "RBXLuaObfuscator", "source": "https://github.com/kosuke14/RBXLuaObfuscator", "licence": "none stated", "driver": "drivers/rbxlua.lua",
         "configs": [("default", {}, "lua51")],
+    },
+    "xfuscator": {
+        "name": "XFuscator", "source": "https://github.com/efrederickson/XFuscator", "licence": "none stated", "driver": "drivers/xfuscator.lua",
+        # `loadstring` (the precompile step) is not among the configs: it reads Lua 5.1 bytecode through LAT, which reads every integer as a size_t and so
+        # only works on 32-bit builds; this host is 64-bit. The configs are the ones the tool's own README and Obfuscation Scripts name.
+        "configs": [("default", {"loadstring": False}, "lua51"), ("nofluff", {"loadstring": False, "fluff": False}, "lua51"),
+                    ("comments", {"loadstring": False, "comments": True}, "lua51"), ("uglify", {"loadstring": False, "uglify": True}, "lua51"),
+                    ("encrypt", {"loadstring": False, "encrypt": True}, "lua51"), ("nostep2", {"loadstring": False, "step2": False}, "lua51"),
+                    ("level2", {"loadstring": False, "max": 2}, "lua51"), ("notamper", {"loadstring": False, "tamper": False}, "lua51")],
+    },
+    "zartha": {
+        "name": "Zartha", "source": "https://github.com/TimOdemchuk/Zartha-Obfuscator", "licence": "MIT", "driver": "drivers/zartha.lua",
+        "configs": [("default", {}, "lua51"), ("minify", {"minify": True}, "lua51"), ("encryptstrings", {"encryptstrings": True}, "lua51"),
+                    ("flatten", {"flatten": True}, "lua51"), ("antitamper", {"antitamper": True}, "lua51"), ("constants", {"constants": True}, "lua51"),
+                    ("all", {"minify": True, "encryptstrings": True, "flatten": True, "antitamper": True, "constants": True}, "lua51")],
+    },
+    "fusgato": {
+        "name": "FusGato v1", "source": "https://github.com/adzwang/fusgato-v1", "licence": "MIT", "driver": "drivers/fusgato.lua",
+        "configs": [("default", {}, "lua51"), ("noconstants", {"constants": False}, "lua51")],
+    },
+    "luaxen": {
+        "name": "LuaXen", "source": "https://github.com/luauminati/LuaXen", "licence": "MIT", "driver": "drivers/luaxen.lua",
+        "configs": [("ironbrikked", {"mode": "ironbrikked"}, "lua51"), ("ast", {"mode": "ast"}, "lua51"), ("both", {"mode": "both"}, "lua51")],
     },
     "simple_lua": {
         "name": "Simple-Lua-Obfuscator", "source": "https://github.com/CloudHub111/Simple-Lua-Obfuscator", "licence": "none stated", "driver": "drivers/simple_lua.lua",

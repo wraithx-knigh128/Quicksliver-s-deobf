@@ -143,7 +143,12 @@ export function unwrapLayers(chunk, ctx = {}) {
   const loaderRef = (fn) => {
     const f = unparen(fn);
     if (!f) return false;
-    if (f.type === 'Name') return isGlobal(f) && LOADERS.has(f.name);
+    if (f.type === 'Name') {
+      if (isGlobal(f)) return LOADERS.has(f.name);
+      // `local L = loadstring or load`, then `L(text)`: an alias that is assigned once
+      const v = info.varOf.get(f);
+      return !!v && v.writes.length === 0 && !!v.init && v.init !== f && loaderRef(v.init);
+    }
     if (f.type === 'Binary' && f.op === 'or') return loaderRef(f.left) && loaderRef(f.right);
     return false;
   };
@@ -211,7 +216,7 @@ export function unwrapLayers(chunk, ctx = {}) {
   });
 
   // ---- 2. a script that is nothing but a loader ---------------------------------------------------------------------------
-  const plan = loaderPlan(chunk, info, loadCall, isGlobal);
+  const plan = loaderPlan(chunk, info, loadCall, isGlobal) || indirectLoaderPlan(chunk, info, loadCall);
   if (plan && !result.inlined) {
     const setup = plan.stmts.filter((s, i) => i !== plan.finalIndex);
     const { why, helpers } = notJustALoader(setup, plan.stmts[plan.finalIndex], info);
@@ -269,6 +274,27 @@ function loaderPlan(chunk, info, loadCall, isGlobal) {
       const L = loadCall(s.values[0]);
       if (L) return { finalIndex, load: L, stmts: body };
     }
+  }
+  return null;
+}
+
+/**
+ * The same shape with a last statement that runs what was loaded through something other than a plain call: `if type(f) == "function" then P = setmetatable({}, { __call = ... }) P() end`.
+ * The last statement must read the loaded function's variable; everything it touches is checked by notJustALoader, so a script that does more than load still is not replaced.
+ */
+function indirectLoaderPlan(chunk, info, loadCall) {
+  const body = chunk.body;
+  if (body.length < 2) return null;
+  const last = body[body.length - 1];
+  if (last.type !== 'If' && last.type !== 'CallStmt' && last.type !== 'Do') return null;
+  for (const s of body.slice(0, -1)) {
+    if (s.type !== 'Local' || s.ids.length !== 1 || s.values.length !== 1) continue;
+    const L = loadCall(s.values[0]);
+    if (!L) continue;
+    const v = info.varOf.get(s.ids[0]);
+    let reads = false;
+    walk(last, (n) => { if (n.type === 'Name' && info.varOf.get(n) === v) reads = true; return undefined; });
+    if (reads) return { finalIndex: body.length - 1, load: L, stmts: body };
   }
   return null;
 }

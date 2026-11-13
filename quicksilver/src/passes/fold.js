@@ -109,6 +109,13 @@ export function foldPass(chunk, ctx = {}) {
               const r = evalBinary(e.op, a, b);
               if (r !== NOT_CONST) return replaced(makeConst(r));
             }
+            // `(n + k) - k` and `(n - k) + k` where n is a bit-library result (an integer below 2^32, so nothing is lost either way): obfuscators pad numbers this way
+            if ((e.op === '-' || e.op === '+') && b !== NOT_CONST && typeof b === 'number' && e.left.type === 'Binary' && (e.left.op === '+' || e.left.op === '-') && e.left.op !== e.op) {
+              const inner = constOf(e.left.right);
+              const core = e.left.left;
+              if (inner === b && core.type === 'Call' && core.fn.type === 'Index' && core.fn.obj.type === 'Name' && (core.fn.obj.name === 'bit32' || core.fn.obj.name === 'bit')
+                  && stdGlobal(core.fn.obj, info) === core.fn.obj.name) return replaced(core);
+            }
             if (a !== NOT_CONST && (e.op === 'and' || e.op === 'or')) {
               // The left operand decides which side survives.
               const truthy = a !== undefined && a !== false;
@@ -119,11 +126,22 @@ export function foldPass(chunk, ctx = {}) {
           }
 
           case 'Call': {
+            // table.concat{ "a", "b", ... } of literals is the text: obfuscators spell a string as the pieces of one
+            if (e.fn.type === 'Index' && e.fn.key.type === 'String' && e.fn.key.value === 'concat' && stdGlobal(e.fn.obj, info) === 'table'
+                && e.args.length >= 1 && e.args.length <= 2 && e.args[0].type === 'Table' && e.args[0].fields.length > 0
+                && e.args[0].fields.every((f) => f.kind === 'item' && (f.value.type === 'String' || (f.value.type === 'Number' && Number.isSafeInteger(f.value.value))))) {
+              const sep = e.args[1] ? constOf(e.args[1]) : '';
+              if (typeof sep === 'string') return replaced(makeConst(e.args[0].fields.map((f) => String(f.value.value)).join(sep)));
+            }
             const args = e.args.map(constOf);
             if (args.some((a) => a === NOT_CONST)) return undefined;
             const callee = libCallee(e.fn, info);
             let r = NOT_CONST;
-            if (callee) { if (foldable(callee[0], callee[1], ctx.foldCalls)) r = evalLibCall(callee[0], callee[1], args); }
+            // floor / ceil of an integer is that integer: obfuscators wrap number literals in it so that a literal is not a literal,
+            // and nobody writes it on purpose. The result is exact whatever the Lua version.
+            if (callee && callee[0] === 'math' && (callee[1] === 'floor' || callee[1] === 'ceil') && args.length === 1
+                && typeof args[0] === 'number' && Number.isSafeInteger(args[0])) r = args[0];
+            else if (callee) { if (foldable(callee[0], callee[1], ctx.foldCalls)) r = evalLibCall(callee[0], callee[1], args); }
             else {
               const g = stdGlobal(e.fn, info);
               if (g && PURE_GLOBAL_FUNCS.has(g)) r = evalGlobalCall(g, args);

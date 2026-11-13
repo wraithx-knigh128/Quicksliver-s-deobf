@@ -48,6 +48,7 @@ export class Machine {
     this.depth = 0;
     this.line = 0;
     this.chunkName = 'sample';
+    this.dialect = options.dialect || 'luau';
     this.globals = new LuaTable();
     this.stringMeta = null;
     this.output = [];
@@ -764,7 +765,9 @@ export class Compiler {
     };
     return (f) => {
       m.line = line;
-      const init = exprs(f);
+      let init = exprs(f);
+      // Luau's generalized iteration: `for k, v in t do` over a table without __iter walks it like pairs(t)
+      if (m.dialect === 'luau' && init[0] instanceof LuaTable && init[1] === undefined && init[0].meta == null) init = [m.nextFn, init[0], undefined];
       const iter = init[0];
       const state = init[1];
       let control = init[2];

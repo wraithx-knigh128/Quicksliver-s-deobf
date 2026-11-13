@@ -14,7 +14,7 @@ import { foldPass } from '../passes/fold.js';
 import { simplifyPass, snapshotUnused } from '../passes/simplify.js';
 import { evaluatePass } from '../passes/evaluate.js';
 import { renamePass } from '../passes/rename.js';
-import { unwrapWrapper, removeUnusedVararg, tidyIfs } from '../passes/structure.js';
+import { unwrapWrapper, removeUnusedVararg, tidyIfs, whileToIf } from '../passes/structure.js';
 import { unwrapLayers } from '../passes/layers.js';
 import { dataflowPass } from '../passes/dataflow.js';
 import { regionPass } from '../passes/regions.js';
@@ -32,6 +32,10 @@ import { readHerculesVm, findVmCall, replaceVmCall, HerculesVmError } from './he
 import { removeColisseumGuard } from './colisseum.js';
 import { decodePageStrings } from './simple_html.js';
 import { unflattenMoonVeil } from './moonveil-cff.js';
+import { removeObscuraGuards } from './obscura.js';
+import { unwrapXFuscator } from './xfuscator.js';
+import { foldMetaArithmetic } from '../passes/metaarith.js';
+import { seedDecoderCalls, inlineStringTable } from '../passes/strtable.js';
 import { liftMoonVeilVm, VmUnsupported } from './moonveil-vm/index.js';
 import { decodeMoonVeilConstants, simplifyCells, moonveilShape } from './moonveil.js';
 import { assessConfidence } from './confidence.js';
@@ -214,6 +218,7 @@ export function recover(source, userOptions = {}) {
     total += run.step('hercules.antitamper', 'Remove Hercules anti-tamper block', (a) => removeHerculesAntiTamper(a), { quiet: true });
     if (decompiled || detection.families.some((f) => f.id === 'hercules' && f.confidence >= 0.5)) total += run.step('hercules.antitamper.compiled', 'Remove the Hercules anti-tamper check that was compiled with the script', (a) => removeHerculesAntiTamperFunction(a), { quiet: true });
     total += run.step('colisseum.guard', 'Remove the Colisseum tamper guard', (a) => removeColisseumGuard(a), { quiet: true });
+    total += run.step('obscura.guards', 'Remove the executor-detection guards Obscura puts at the top', (a) => removeObscuraGuards(a), { quiet: true });
     if (detection.families.some((f) => f.id === 'hercules' && f.confidence >= 0.5)) {
       total += run.step('hercules.self', 'Read the renamed `self` of methods as `self` again', (a) => restoreMethodSelf(a, analyzeScopes(a)), { quiet: true });
     }
@@ -240,6 +245,7 @@ export function recover(source, userOptions = {}) {
       total += run.step('idioms.nil', 'Declare locals without an explicit nil', (a) => bareNils(a), { quiet: true });
       total += run.step('idioms.compare', 'Orient comparisons', (a) => orientComparisons(a), { quiet: true });
     }
+    total += run.step('metaarith', 'Evaluate numbers hidden behind metamethod arithmetic', (a) => foldMetaArithmetic(a, { sandbox: options.sandbox }), { quiet: true });
     total += run.step('fold', 'Fold constant expressions', (a) => foldPass(a, { foldCalls: options.foldCalls }));
     // the text it produces may make `"a" .. "b"` and similar foldable
     const pageStrings = run.step('simple_html.strings', 'Read the _D string calls of the single-page obfuscator', (a) => decodePageStrings(a), { quiet: true });
@@ -248,6 +254,11 @@ export function recover(source, userOptions = {}) {
     {
       const nChars = run.step('charlist', 'Read the program out of the script\u2019s embedded-compiler loader', (a) => unwrapCharList(a), { quiet: true });
       if (nChars) { total += nChars; unusedAtStart = new WeakSet(); refreshDetection(); }
+    }
+    // XFuscator keeps the program as an array of scaled character codes; the array spells the program
+    {
+      const nX = run.step('xfuscator.step2', 'Read the program out of XFuscator\u2019s character array', (a) => unwrapXFuscator(a), { quiet: true });
+      if (nX) { total += nX; unusedAtStart = new WeakSet(); refreshDetection(); }
     }
     // the loaded text of `loadstring(...)()` becomes the program; compiled Lua in it is decompiled, so the rebuilt-program clean-ups apply
     let layers = null;
@@ -279,14 +290,18 @@ export function recover(source, userOptions = {}) {
     if (decompiled) total += run.step('idioms.loops', 'Write counting loops as for loops', (a) => numericLoops(a), { quiet: true });
     if (decompiled) total += run.step('idioms.whiles', 'Move loop exit tests into the loop header', (a) => loopForms(a), { quiet: true });
     total += run.step('tidy', 'Tidy flipped tests', (a) => tidyIfs(a), { quiet: true });
+    total += run.step('whileonce', 'Write loops whose body always leaves them as conditionals', (a) => whileToIf(a), { quiet: true });
     total += run.step('prometheus.proxify', 'Undo Prometheus ProxifyLocals', (a) => undoProxifyLocals(a), { quiet: true });
     // a rebuilt machine reaches its decoder through copies made at the top of each function; the decoder is only seen once they are gone
     total += run.step('stable', 'Read copies of values that never change as the values', (a) => propagateStable(a), { quiet: true });
+    // a string table that decrypts itself in place: the decoder's first argument becomes the stored text so that the evaluator can run it
+    total += run.step('strtable.seed', 'Read the strings of a self-decrypting table as the decoder\u2019s arguments', (a) => seedDecoderCalls(a), { quiet: true });
     if (options.sandbox.enabled) {
       total += run.step('evaluate', 'Evaluate string decoders (sandbox)', (a) => evaluatePass(a, { sandbox: options.sandbox }));
     } else {
       run.record('evaluate', 'Evaluate string decoders (sandbox)', { status: 'skipped', changed: 0, detail: 'sandboxed evaluation is not enabled', ms: 0 });
     }
+    total += run.step('strtable.inline', 'Replace reads of a self-decrypting string table by its strings', (a) => inlineStringTable(a), { quiet: true });
     return total;
   };
 

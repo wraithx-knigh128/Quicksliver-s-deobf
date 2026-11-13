@@ -1,0 +1,248 @@
+{
+  "tool": "LuaXen",
+  "source": "https://github.com/luauminati/LuaXen",
+  "licence": "MIT",
+  "sourceRevision": "a6e66ac7307a124f876975fae44693c6ba0fc388",
+  "seed": 1337,
+  "runner": "tests/corpus/tools/run_isolated.py (virtual files, no host access)",
+  "entries": [
+    {
+      "file": "s01_minify_basic__ironbrikked.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "ironbrikked",
+      "runtime": "lua51",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 9773,
+      "seconds": 0.06
+    },
+    {
+      "file": "s01_minify_basic__ast.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "ast",
+      "runtime": "lua51",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 7532,
+      "seconds": 0.02
+    },
+    {
+      "file": "s01_minify_basic__both.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "both",
+      "runtime": "lua51",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 133956,
+      "seconds": 0.34
+    },
+    {
+      "file": "s02_renamed_vars__ironbrikked.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "ironbrikked",
+      "runtime": "lua51",
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 10153,
+      "seconds": 0.06
+    },
+    {
+      "file": "s02_renamed_vars__ast.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "ast",
+      "runtime": "lua51",
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 12439,
+      "seconds": 0.03
+    },
+    {
+      "file": "s02_renamed_vars__both.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "both",
+      "runtime": "lua51",
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 143152,
+      "seconds": 0.35
+    },
+    {
+      "file": "s03_encoded_strings__ironbrikked.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "ironbrikked",
+      "runtime": "lua51",
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 10144,
+      "seconds": 0.06
+    },
+    {
+      "file": "s03_encoded_strings__ast.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "ast",
+      "runtime": "lua51",
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 11108,
+      "seconds": 0.03
+    },
+    {
+      "file": "s03_encoded_strings__both.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "both",
+      "runtime": "lua51",
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 142871,
+      "seconds": 0.34
+    },
+    {
+      "file": "s04_control_flow__ironbrikked.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "ironbrikked",
+      "runtime": "lua51",
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "tool-error",
+      "error": "...ructionGenerator/NodeCompilers/StatementCompiler.lua:30: No loop to break"
+    },
+    {
+      "file": "s04_control_flow__ast.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "ast",
+      "runtime": "lua51",
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 12994,
+      "seconds": 0.04
+    },
+    {
+      "file": "s04_control_flow__both.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "both",
+      "runtime": "lua51",
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "tool-error",
+      "error": "...ructionGenerator/NodeCompilers/StatementCompiler.lua:30: No loop to break"
+    },
+    {
+      "file": "s05_nested_functions__ironbrikked.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "ironbrikked",
+      "runtime": "lua51",
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 10074,
+      "seconds": 0.05
+    },
+    {
+      "file": "s05_nested_functions__ast.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "ast",
+      "runtime": "lua51",
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 4995,
+      "seconds": 0.02
+    },
+    {
+      "file": "s05_nested_functions__both.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "both",
+      "runtime": "lua51",
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 139318,
+      "seconds": 0.39
+    },
+    {
+      "file": "s06_combined__ironbrikked.lua",
+      "sample": "s06_combined.lua",
+      "config": "ironbrikked",
+      "runtime": "lua51",
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 10197,
+      "seconds": 0.06
+    },
+    {
+      "file": "s06_combined__ast.lua",
+      "sample": "s06_combined.lua",
+      "config": "ast",
+      "runtime": "lua51",
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 24024,
+      "seconds": 0.06
+    },
+    {
+      "file": "s06_combined__both.lua",
+      "sample": "s06_combined.lua",
+      "config": "both",
+      "runtime": "lua51",
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 144657,
+      "seconds": 0.34
+    },
+    {
+      "file": "s07_roblox_style__ironbrikked.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "ironbrikked",
+      "runtime": "lua51",
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 9974,
+      "seconds": 0.05
+    },
+    {
+      "file": "s07_roblox_style__ast.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "ast",
+      "runtime": "lua51",
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 15889,
+      "seconds": 0.04
+    },
+    {
+      "file": "s07_roblox_style__both.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "both",
+      "runtime": "lua51",
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 138523,
+      "seconds": 0.33
+    },
+    {
+      "file": "s08_ironbrew_macros__ironbrikked.lua",
+      "sample": "s08_ironbrew_macros.lua",
+      "config": "ironbrikked",
+      "runtime": "lua51",
+      "sampleSha256": "5d2ba22d895713dd1a955c8310b1e77d7a5961e854ea58fa77a1089a4041880f",
+      "status": "ok",
+      "bytes": 9384,
+      "seconds": 0.05
+    },
+    {
+      "file": "s08_ironbrew_macros__ast.lua",
+      "sample": "s08_ironbrew_macros.lua",
+      "config": "ast",
+      "runtime": "lua51",
+      "sampleSha256": "5d2ba22d895713dd1a955c8310b1e77d7a5961e854ea58fa77a1089a4041880f",
+      "status": "ok",
+      "bytes": 4024,
+      "seconds": 0.02
+    },
+    {
+      "file": "s08_ironbrew_macros__both.lua",
+      "sample": "s08_ironbrew_macros.lua",
+      "config": "both",
+      "runtime": "lua51",
+      "sampleSha256": "5d2ba22d895713dd1a955c8310b1e77d7a5961e854ea58fa77a1089a4041880f",
+      "status": "ok",
+      "bytes": 113647,
+      "seconds": 0.3
+    }
+  ]
+}

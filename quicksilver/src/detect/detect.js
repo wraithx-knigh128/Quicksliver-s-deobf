@@ -9,6 +9,7 @@
 // family (detect/families.js): a tool whose source was never read cannot be reported with near certainty
 // from structure alone.
 
+import { classify } from './classify.js';
 import { parse, LuaSyntaxError } from '../core/parser.js';
 import { analyze } from '../core/scope.js';
 import { walk } from '../core/walk.js';
@@ -230,7 +231,8 @@ const RULES = {
     rule('banner', 'banner', 0.95, (c) => { const m = /77fuscator\s+v?([0-9][0-9.]*)/i.exec(c.src); return m ? { text: `77fuscator banner (${m[1]})`, version: m[1] } : false; }),
   ],
   ironbrew2: [
-    rule('watermark', 'banner', 0.97, (c) => { const m = /IronBrew:tm: obfuscation; Version ([0-9][0-9.]*)/.exec(c.src); return m ? { text: `IronBrew 2 watermark (version ${m[1]})`, version: m[1] } : false; }),
+    // (FusGato prints the same watermark in front of its own credit line; that is a copy, and the credit line decides)
+    rule('watermark', 'banner', 0.97, (c) => { const m = /IronBrew:tm: obfuscation; Version ([0-9][0-9.]*)/.exec(c.src); return m && !/\blocal FusGato = "discord\.gg\//.test(c.src.slice(0, 600)) ? { text: `IronBrew 2 watermark (version ${m[1]})`, version: m[1] } : false; }),
     rule('prelude', 'structure', 0.92, (c) => c.ast && isIronBrewPrelude(c.ast) && 'the eleven library locals every IronBrew 2 VM starts with (string.byte, string.char, string.sub, table.concat, table.insert, math.ldexp, getfenv, setmetatable, select, unpack, tonumber)'),
     rule('mention', 'banner', 0.3, (c) => /Iron\s?Brew/i.test(c.src) && 'mentions IronBrew'),
     rule('vm-shape', 'heuristic', 0.3, (c) => c.facts && c.vm.score >= 5 && 'VM-shaped script: deserializer, opcode dispatcher and encoded payload (generic; not specific to IronBrew)'),
@@ -300,6 +302,50 @@ const RULES = {
     // the XOR fallback its VM and its string decoder carry, written the same way in every revision read
     rule('bxor-fallback', 'structure', 0.8, (c) => c.src.includes('(bit32 and bit32.bxor) or (bit and bit.bxor) or (function() local function _x(a,b) local r,p=0,1 for _=1,8 do local ab,bb=a%2,b%2') && 'the bit32.bxor / bit.bxor / arithmetic fallback chain written on one line'),
     rule('vm', 'structure', 0.9, (c) => /^--!nocheck\r?\n--!nolint\r?\n-- Obscura VM \[/.test(c.src.slice(0, 200)) && 'the VM build header: the program is bytecode for an interpreter generated into the script', true),
+  ],
+  realobfuscator: [
+    // the header every output starts with (two Luau directives, then the credit line with the build and the repository)
+    rule('banner', 'banner', 0.97, (c) => { const m = /^--!nocheck\r?\n--!nolint\r?\n-- RealObfuscator \[([^\]\n]{1,24})\](?: \| (https:\/\/github\.com\/linkoro57\/RealObfuscator))?/.exec(c.src.slice(0, 240)); return m ? { text: `RealObfuscator header, build ${m[1]}` } : false; }),
+    rule('vm-pool', 'structure', 0.8, (c) => /--!nocheck\r?\n--!nolint\r?\n-- RealObfuscator /.test(c.src.slice(0, 120)) && c.src.length > 20000 && (c.src.match(/\]=\{/g) || []).length >= 40 && 'a pool of dozens of `[id]={encoded, k, k, k, k}` records in a build of this tool (a lightweight or native build of a short program has a handful): the encoded register bytecode of its VM mode', true),
+  ],
+  zynaa: [
+    // every identifier and field name is a run of U+202A (left-to-right embedding): invisible, so the file reads as blank where names are
+    rule('invisible-names', 'structure', 0.9, (c) => /(?:\u202A|\xE2\x80\xAA){4,}/.test(c.src.slice(0, 3000)) && 'identifiers made of runs of the invisible character U+202A'),
+    rule('string-table-lookup', 'structure', 0.6, (c) => /(?:\u202A|\xE2\x80\xAA)+\s*=\s*_G\b/.test(c.src.slice(0, 600)) && 'the first local is _G under an invisible name'),
+  ],
+  luarmor: [
+    // the header every Luarmor-protected bootstrap starts with and the data array it carries
+    rule('header', 'banner', 0.9, (c) => /^\s*--\s*Do not save this file\s*\r?\n--\s*Always use the loadstring/i.test(c.src.slice(0, 200)) && 'the comment "Do not save this file / Always use the loadstring"'),
+    rule('bsdata', 'structure', 0.6, (c) => /\b_bsdata\d+\s*=\s*\{/.test(c.src.slice(0, 600)) && 'a data array named _bsdata0'),
+    rule('cdn', 'banner', 0.9, (c) => /cdn\.luarmor\.net\/v\d+_init/.test(c.src) && 'it downloads its init script from cdn.luarmor.net', true),
+  ],
+  xfuscator: [
+    // the step-2 array: one `string.char(x / scale)` closure and a table of its calls, one entry per character of the program
+    rule('char-array', 'structure', 0.9, (c) => /function\(x\)\s*return string\.char\(x\s*\/\s*_*\w*\)\s*end[\s\S]{0,400}?\{\s*_*\w*\(\d{3,}\)\s*,\s*_*\w*\(\d{3,}\)/.test(c.src.slice(0, 20000)) && 'a closure string.char(x / scale) and a table of its calls with scaled character codes (XFuscator step 2)'),
+    // the string its tamper check plants, spelled in decimal escapes ("XFU5K470R R00LZ")
+    rule('tamper-string', 'banner', 0.97, (c) => c.src.slice(0, 6000).includes('\\88\\70\\85\\53\\75\\52\\55\\48\\82\\32\\82\\48\\48\\76\\90') && 'the decimal-escaped string "XFU5K470R R00LZ" of XFuscator\u2019s tamper check'),
+    rule('loadstring-escapes', 'structure', 0.45, (c) => /^\s*(?:math\.randomseed\([0-9.]+\)\s*)?return loadstring\('(?:\\\d{2,3}){60,}/.test(c.src.slice(0, 400)) && 'return loadstring of one string written entirely in decimal escapes (XFuscator without step 2; other tools write the same)'),
+  ],
+  zartha: [
+    // the watermark setting's default; the author can change it, so it is evidence and not proof
+    rule('watermark', 'banner', 0.9, (c) => /File generated using \[Zartha\]/.test(c.src.slice(0, 600)) && 'the default watermark string "File generated using [Zartha]"'),
+    rule('vm-prelude', 'structure', 0.8, (c) => /^\s*return\s*\(\s*\(?"[^"\n]{0,80}"\)?\s*and\s*\(function\(\)\s*return\s*\(function\(\w+,\w+,\w+,\w+\)[\s\S]{0,200}?\w+\["string"\]\["char"\],\w+\["string"\]\["byte"\],\w+\["string"\]\["sub"\],\w+\["tostring"\],\w+\["pcall"\]/.test(c.src.slice(0, 1500)) && 'a watermark string `and (function() return (function(Env, Constants, shiftKey, decrypt)` whose locals are read out of Env["string"]["char"], ["byte"], ["sub"], ["tostring"], ["pcall"]', true),
+  ],
+  fusgato: [
+    // the IronBrew watermark it copies, then its own credit line
+    // (the tool only ever writes an interpreter and its encoded program: what this marks is a VM that was not rebuilt)
+    rule('credit', 'banner', 0.97, (c) => /^\s*--\[\[\s*IronBrew:tm: obfuscation; Version [0-9.]+\s*\]\]\s*local FusGato = "discord\.gg\/\w+";/.test(c.src.slice(0, 400)) && 'the IronBrew watermark followed by `local FusGato = "discord.gg/..."`', true),
+    rule('mention', 'banner', 0.7, (c) => /\blocal FusGato\b/.test(c.src.slice(0, 600)) && 'a local named FusGato'),
+  ],
+  luaxen: [
+    // IronBrikked, the VM stage: ten library locals read from _ENV, getfenv, string, table, math, select, tonumber, setmetatable, pcall, error
+    rule('ironbrikked-prelude', 'structure', 0.9, (c) => /^\s*local \w,\w,\w,\w,\w,\w,\w,\w,\w,\w\s*=\s*_ENV,\s*getfenv,\s*string,\s*table,\s*math,\s*select,\s*tonumber,\s*setmetatable,\s*pcall,\s*error\b/.test(c.src.slice(0, 400)) && 'ten locals bound to _ENV, getfenv, string, table, math, select, tonumber, setmetatable, pcall, error (LuaXen IronBrikked)', true),
+    // the AST stage hides a number as `setmetatable({}, {__div = function(_, a) local x, y, z = a[1], a[2], a[3] return x*x - y*y + z end}) / {x, y, z}`
+    rule('metamethod-number', 'structure', 0.85, (c) => /setmetatable\(\{\},\{\["__(?:div|mul|add|sub|mod|pow|concat)"\]=function\(_,a\)local x,y,z=a\[1\],a\[2\],a\[3\]return x\*x-y\*y\+z end\}\)\s*[-+*\/%^.]{1,2}\s*\{[-\d]+,[-\d]+,[-\d]+\}/.test(c.src.slice(0, 40000)) && 'numbers hidden as setmetatable({}, {__op = function(_, a) local x, y, z = a[1], a[2], a[3] return x*x - y*y + z end}) <op> {x, y, z} (any of __div, __mul, __add, __sub, __mod, __pow, __concat)'),
+    // ... and strings as the same trick with a loop that builds them from triples
+    rule('metamethod-string', 'structure', 0.85, (c) => /\["__(?:div|mul|add|sub|mod|pow|concat)"\]=function\(_,a\)local str=""local i=1 while a\[i\]do local x,y,z=a\[i\]\[1\],a\[i\]\[2\],a\[i\]\[3\]str=str\.\.str\.char\(x\*x-y\*y\+z\)/.test(c.src.slice(0, 40000)) && 'strings built from triples (x*x - y*y + z) by a metamethod with a loop'),
+    // the AST stage's control flow: a state variable called `state` and a loop whose condition is a fractional literal
+    rule('state-loop', 'structure', 0.7, (c) => /local state=\d{4,}[\s\S]{0,200}?while 0\.\d{6,} do if state==\d+ then/.test(c.src.slice(0, 40000)) && 'a local named state and a while loop on a fractional literal that selects by `state ==`'),
   ],
   rbxlua: [
     rule('embedded-compiler', 'structure', 0.9, (c) => { const f = c.ast && findCharListLoader(c.ast); return f ? `the program is a list of ${f.items} one-character strings run by a Lua compiler the script carries (${f.keywords} of Lua's keywords in its lexer): no loadstring is called` : false; }),
@@ -508,5 +554,6 @@ export function detect(source, knownAst = null) {
     if (!known) result.traits.push({ id: 'vendor-banner', text: `The header comment names a tool: "${banner}". No rule knows it, so the script is analysed by what it is made of.` });
   }
   result.metrics.bytes = source.length;
+  result.classes = classify(source, ast, result);
   return result;
 }

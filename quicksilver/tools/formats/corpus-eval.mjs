@@ -38,6 +38,7 @@ for (const e of index.index) {
     row.top = top.length ? { id: top[0].id, confidence: top[0].confidence, version: top[0].version || null } : null;
     row.all = top.map((f) => `${f.id}:${f.confidence.toFixed(2)}`);
     row.traits = d.traits.map((t) => t.id);
+    row.classes = (d.classes || []).map((c) => c.id);
     if (d.vendorBanner) row.vendorBanner = d.vendorBanner;
   } catch (err) { row.detectError = String(err.message || err).slice(0, 80); }
   rows.push(row);
@@ -61,16 +62,16 @@ if (process.argv.includes('--recover')) {
 }
 const summary = {};
 for (const r of rows.filter((x) => (process.argv.includes('--set') ? x.set === process.argv[process.argv.indexOf('--set') + 1] : true))) {
-  const s = (summary[r.label] ||= { files: 0, parsed: 0, expected: FAMILY[r.label] === undefined ? 'unlabelled' : FAMILY[r.label], identified: 0, other: {}, versionFiles: 0, versionRight: 0, unidentified: 0 });
+  const s = (summary[r.label] ||= { files: 0, parsed: 0, expected: FAMILY[r.label] === undefined ? 'unlabelled' : FAMILY[r.label], identified: 0, other: {}, versionFiles: 0, versionRight: 0, unidentified: 0, classOfUnidentified: {} });
   s.files++;
   if (r.parsed) s.parsed++;
   if (r.top && s.expected && r.top.id === s.expected) s.identified++;
   else if (r.top) s.other[r.top.id] = (s.other[r.top.id] || 0) + 1;
-  else s.unidentified++;
+  else { s.unidentified++; for (const c of (r.classes && r.classes.length ? r.classes.slice(0, 1) : ['unclassified'])) s.classOfUnidentified[c] = (s.classOfUnidentified[c] || 0) + 1; }
   if (r.version && s.expected && r.top && r.top.id === s.expected && r.top.version) { s.versionFiles++; if (String(r.top.version).replace(/^v/, '') === r.version) s.versionRight++; }
 }
 console.log('label'.padEnd(16), 'files  parsed  expected          identified  unidentified  other families  [version right/checked]');
-for (const [k, s] of Object.entries(summary).sort()) console.log(k.padEnd(16), String(s.files).padStart(5), String(s.parsed).padStart(7), String(s.expected).padEnd(17), `${s.identified}`.padStart(10), `${s.unidentified}`.padStart(13), ' ', JSON.stringify(s.other), s.versionFiles ? `[${s.versionRight}/${s.versionFiles}]` : '');
+for (const [k, s] of Object.entries(summary).sort()) console.log(k.padEnd(16), String(s.files).padStart(5), String(s.parsed).padStart(7), String(s.expected).padEnd(17), `${s.identified}`.padStart(10), `${s.unidentified}`.padStart(13), ' ', JSON.stringify(s.other), s.versionFiles ? `[${s.versionRight}/${s.versionFiles}]` : '', s.unidentified ? `unidentified by class: ${JSON.stringify(s.classOfUnidentified)}` : '');
 if (process.argv.includes('--check')) {
   const was = JSON.parse(fs.readFileSync(path.join(root, 'data/research/corpus-eval.json'), 'utf8'));
   const same = JSON.stringify(was.summary) === JSON.stringify(summary);
