@@ -522,6 +522,27 @@ test('the Obfuscators tab shows Hercules per revision and the layered chains wit
   await ctx.close();
 });
 
+test('the Obfuscators tab shows the research record: versions run, failure patterns, improvements and what is assumed', { skip }, async () => {
+  const ctx = await browser.newContext({ viewport: { width: 1400, height: 900 } });
+  const page = await ctx.newPage();
+  const problems = [];
+  page.on('console', (m) => { if (['error', 'warning'].includes(m.type())) problems.push(m.text()); });
+  page.on('pageerror', (e) => problems.push(e.message));
+  await page.goto(`${base}/index.html?tab=compat`);
+  await page.waitForSelector('#view-compat table.grid tr.row-main');
+  for (const [name, expect] of [['Obscura', [/1\.1\.0/, /Failure patterns/, /vm/, /Improvements made because of them/, /nested-flattening/, /Assumed, not shown/]],
+    ['XFuscator', [/precompile/, /step2-array/, /local only \(licence\)/]], ['LuaXen', [/metamethod-numbers/, /ironbrikked-vm/]]]) {
+    await page.locator('#view-compat tr.row-main', { hasText: name }).first().dispatchEvent('click');
+    const detail = await page.textContent('#view-compat');
+    assert.match(detail, /Research record/, `${name}: research record`);
+    for (const re of expect) assert.match(detail, re, `${name}: ${re}`);
+  }
+  assert.match(await page.textContent('#view-compat'), /Scripts of the public collection that no rule recognised/);
+  assert.match(await page.textContent('#view-compat'), /remote-library-script/);
+  assert.deepEqual(problems, []);
+  await ctx.close();
+});
+
 // The workflow the user follows, across the formats of Phase VIII: upload a script, let the page name it, recover it, read the result and its limits.
 const WORKFLOW = [
   { name: 'Hercules virtual machine (committed fixture)', file: path.join(corpus, 'obfuscated/hercules/s03_encoded_strings__mod-virtual_machine.lua'),
@@ -536,6 +557,12 @@ const WORKFLOW = [
     bar: [/MoonVeil 2\.1\.0/, /Confidence \d+% \((medium|low|minimal)\)/], out: [/table of lifted functions|MoonVeil/], notBar: [/\(high\)/] },
   { name: 'SnowVeil v1 (local sample, not stored)', file: path.join(root, 'local/snowveil/sample2.lua'), optional: true,
     bar: [/SnowVeil 1/, /Still protected by a virtual machine/], out: [/not recovered|still present/] },
+  { name: 'Obscura 1.1.0 VM build (committed fixture): identified, and reported as not recovered', file: path.join(corpus, 'obfuscated/obscura-1.1.0/s01_minify_basic__vm.lua'),
+    bar: [/Obscura/, /Confidence \d+% \((low|minimal)\)/], out: [/QuickSilver recovery report/, /Obscura/] },
+  { name: 'LuaXen AST stage (committed fixture): numbers evaluated and the state loops rebuilt without the sandbox', file: path.join(corpus, 'obfuscated/luaxen/s02_renamed_vars__ast.lua'),
+    bar: [/LuaXen/], out: [/addItem/, /totalWeight/], notOut: [/while 0\.\d+ do/, /state ==/] },
+  { name: 'a script that only downloads its program (written for the tests): the page says the program is not in the file', file: path.join(corpus, 'classes/remote-loader.lua'),
+    bar: [/Confidence \d+% \((low|minimal)\)/], out: [/THE PROGRAM IS NOT IN THIS FILE/, /example\.invalid/, /does not fetch it/] },
   { name: 'RBXLuaObfuscator (local fixture, not stored)', file: path.join(corpus, 'obfuscated-local/rbxlua/s03_encoded_strings__default.lua'), optional: true,
     bar: [/RBXLuaObfuscator/], out: [/Hello, QuickSilver!/], notOut: [/TK_AND/] },
 ];
@@ -557,6 +584,8 @@ for (const w of WORKFLOW) {
 }
 
 for (const w of [
+  { name: 'Obscura 1.1.0 level 3', file: 'obfuscated/obscura-1.1.0/s03_encoded_strings__level-3.lua', before: /Sandboxed evaluation is off|sandboxed evaluation is not enabled/, out: /Hello, QuickSilver!/, notOut: /getgenv|CFF Error|math\.floor\(\d+\)/ },
+  { name: 'a program stored as an array of numbers', file: 'classes/numeric-array-loader.lua', before: /loader whose text is computed/, out: /hello from the payload/, notOut: /loader whose text is computed/ },
   { name: 'a packed script', file: 'obfuscated/mixed/s03_encoded_strings__hercules-light+base64.lua', before: /loader whose text is computed/, out: /Hello, QuickSilver!/, notOut: /loader whose text is computed/ },
   { name: 'Hercules heavy preset', file: 'obfuscated/hercules/s07_roblox_style__heavy.lua', before: /Sandboxed evaluation is off|sandboxed evaluation is not enabled/, out: /GetService\("Players"\)/, notOut: /Tamper Detected/ },
 ]) {

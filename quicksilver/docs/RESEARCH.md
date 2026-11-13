@@ -305,6 +305,24 @@ Each change was prompted by a file, and has a test (`tests/zstd.test.mjs`, `test
 * No claim about copying or false ownership. The files give no evidence either way, and absence of a visible signal is not a finding of originality.
 * Hosted tools (Stealth-X, Clyde V3, MoonVeil, Kirus) were not used.
 
+## Prompt IX: the open-source backlog, run in isolation (November 2026)
+
+The tools below were read as text first (README, entry points, the code that writes output), then **run only in isolation**: pure-Lua tools in a Lua state with a virtual read-only file set, no `os`/`io` escape and an instruction budget (`tests/corpus/tools/run_isolated.py` and the drivers in `tests/corpus/tools/drivers/`), Python and Rust tools in a Linux user/mount/net/pid namespace with the host's directories masked, no network, every capability dropped and a wall-clock kill (`tests/corpus/tools/sandbox_run.py`, proved by `tests/sandbox.test.mjs`). Nothing was run on the host and no execution restriction was bypassed. Results (per revision, configuration and sample) are in `data/research/format-db.json`, generated from the measurements; this section is the reading behind them.
+
+| Tool | Read | Run | What it writes | Result |
+|---|---|---|---|---|
+| **Obscura** (MIT, Python, Luau) 1.0.0 / 1.0.1 / 1.1.0 | README, git history, the layers | sandbox, `gen_obscura.py` | header `--!nocheck/--!nolint/-- Obscura [seed]`; renaming, string cipher, number wrappers, flattening with opaque predicates, dead code, table indirection, anti-tamper (executor probes), VM with encrypted constants | all non-VM configurations recovered at 89% to 100% on the three revisions and checked on Luau; VM builds identified, not recovered |
+| **XFuscator** (efrederickson, 2013, no licence) | README, library | isolated Lua state, `drivers/xfuscator.lua` | constants pool, renamed locals, optional XOR strings, the program as an array of scaled character codes run by `loadstring`, a length check | step 2 read by finding the scale; 88% to 100% where names survive; precompile not generated (needs a 32-bit Lua) |
+| **LuaXen** (MIT) | README, example | isolated, `drivers/luaxen.lua` | IronBrikked VM (LZW) and an AST stage: state loops on a fractional literal, numbers and strings behind metamethod arithmetic | AST stage 88% to 100%; IronBrikked identified, not recovered |
+| **Zartha** (MIT, Lua 5.1) | README, pipeline, VM tree | isolated, `drivers/zartha.lua` | a generated VM with per-build opcodes, optional encryption, flattening, anti-tamper, minification | identified (watermark, prelude), not recovered |
+| **FusGato v1** (MIT, Luvit) | README, source | isolated, `drivers/fusgato.lua` | an IronBrew-style VM behind the copied IronBrew watermark and its own credit line | identified (and no longer taken for IronBrew 2), not recovered; the tool's own output is wrong on 12 of 16 builds |
+| **RealObfuscator** 2.2.1 (GPL, Rust) | README, docs, manifest | crates downloaded with `cargo vendor` (nothing of theirs ran on the host), built offline in the sandbox, run there | rename / lightweight pool / native (lazy strings, integer expressions, dispatch with decoys) / register-bytecode VM | rename, lightweight and native recovered (76% to 100%); VM identified, not recovered; fixtures kept local (GPL) |
+| **zynaa/LuaObfuscator** (Python, 2016/2018, no licence) | README, source | sandbox, `gen_zynaa.py` (random seeded, clipboard off) | U+202A identifiers, XOR-ciphered strings, rearranged code | 76% to 98% where the tool's output is valid; some outputs are the tool's own failures |
+
+Two things from the reading changed the code rather than the tables. First, the families overlap in what they print: FusGato prints IronBrew's watermark, so a watermark is a copied string and the credit line decides. Second, a recovery that was confidently wrong was found by the new fixtures (FusGato reported as recovered, confidence high) and fixed in the detector, not in the report.
+
+The collection's **Unknown**, **VM Compressed** and **MinifiedLua** folders (and the Luraph files without a version banner) were looked at one by one. They are mostly not obfuscated by a tool with a signature: remote loaders, scripts that fetch a UI library, plain and minified scripts, a program stored as an array of numbers (a numeric-array encoding with a small permutation, run through an alias of `loadstring`), a spelled-out credit entry, and seven bootstraps of Luarmor (a key service that downloads its init script and caches it with `writefile`). They are now classified (`src/detect/classify.js`) instead of "unidentified", and the page says when the program is not in the file.
+
 ## Technique taxonomy and what each needs
 
 | Technique | Seen in | Static recovery | Needs execution | Notes |

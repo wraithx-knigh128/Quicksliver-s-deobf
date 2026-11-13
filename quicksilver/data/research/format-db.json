@@ -1,0 +1,3303 @@
+{
+ "schema": "format-db/1",
+ "engine": "1.0.0",
+ "inputs": {
+  "scorecard": "2026-11-13T06:25:10.554Z",
+  "scorecardFixtures": 1089,
+  "notes": "format-notes/1"
+ },
+ "calibration": {
+  "pairs": 1014,
+  "pearson": 0.877
+ },
+ "projects": [
+  {
+   "id": "azurevm",
+   "name": "AzureVM",
+   "kind": "open-source",
+   "sources": [
+    "https://github.com/LionHub-Pino/AzureVM"
+   ],
+   "researchedFrom": [],
+   "versions": [
+    {
+     "version": "current",
+     "revision": "0e01e7a",
+     "revisionDate": null,
+     "note": null,
+     "fixtureDir": "tests/corpus/obfuscated/azurevm",
+     "committed": true,
+     "licence": "MIT",
+     "fixtures": {
+      "measured": 48,
+      "written": 48,
+      "toolErrors": 0,
+      "omittedLarge": 0,
+      "toolOutputEquivalent": 47,
+      "toolOutputErrored": 0,
+      "toolOutputDiverged": 1
+     },
+     "fidelityBefore": 0.038,
+     "fidelityAfter": 0.135,
+     "configs": [
+      {
+       "config": "Fast",
+       "samples": 8,
+       "detected": 8,
+       "fidelityBefore": 0.048,
+       "fidelityAfter": 0.047,
+       "confidence": 0.313,
+       "behaviourChecked": 8,
+       "behaviourSame": 8,
+       "unparsed": 0,
+       "status": "unsupported"
+      },
+      {
+       "config": "Balanced",
+       "samples": 8,
+       "detected": 8,
+       "fidelityBefore": 0.026,
+       "fidelityAfter": 0.607,
+       "confidence": 0.881,
+       "behaviourChecked": 8,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "partial"
+      },
+      {
+       "config": "Luraph",
+       "samples": 8,
+       "detected": 8,
+       "fidelityBefore": 0.042,
+       "fidelityAfter": 0.041,
+       "confidence": 0.313,
+       "behaviourChecked": 8,
+       "behaviourSame": 8,
+       "unparsed": 0,
+       "status": "unsupported"
+      },
+      {
+       "config": "Luraph14",
+       "samples": 8,
+       "detected": 8,
+       "fidelityBefore": 0.041,
+       "fidelityAfter": 0.041,
+       "confidence": 0.3,
+       "behaviourChecked": 8,
+       "behaviourSame": 8,
+       "unparsed": 0,
+       "status": "unsupported"
+      },
+      {
+       "config": "AzureGod15",
+       "samples": 8,
+       "detected": 8,
+       "fidelityBefore": 0.037,
+       "fidelityAfter": 0.037,
+       "confidence": 0.3,
+       "behaviourChecked": 8,
+       "behaviourSame": 8,
+       "unparsed": 0,
+       "status": "unsupported"
+      },
+      {
+       "config": "AzureGodUltra",
+       "samples": 8,
+       "detected": 8,
+       "fidelityBefore": 0.035,
+       "fidelityAfter": 0.035,
+       "confidence": 0.3,
+       "behaviourChecked": 8,
+       "behaviourSame": 8,
+       "unparsed": 0,
+       "status": "unsupported"
+      }
+     ],
+     "summary": {
+      "verified": 0,
+      "partial": 1,
+      "unsupported": 5
+     }
+    }
+   ],
+   "improvements": [],
+   "failurePatterns": [],
+   "assumptions": [],
+   "support": "experimental"
+  },
+  {
+   "id": "clyde",
+   "name": "Clyde",
+   "kind": "open-source",
+   "sources": [
+    "https://github.com/sfr-development/Lua-Obfuscator-Clyde-Protection"
+   ],
+   "researchedFrom": [],
+   "versions": [
+    {
+     "version": "current",
+     "revision": "61f86b6",
+     "revisionDate": null,
+     "note": null,
+     "fixtureDir": "tests/corpus/obfuscated/clyde",
+     "committed": true,
+     "licence": "MIT",
+     "fixtures": {
+      "measured": 25,
+      "written": 25,
+      "toolErrors": 0,
+      "omittedLarge": 0,
+      "toolOutputEquivalent": 24,
+      "toolOutputErrored": 1,
+      "toolOutputDiverged": 0
+     },
+     "fidelityBefore": 0.48,
+     "fidelityAfter": 0.637,
+     "configs": [
+      {
+       "config": "rename",
+       "samples": 8,
+       "detected": 0,
+       "fidelityBefore": 1,
+       "fidelityAfter": 0.998,
+       "confidence": 0.906,
+       "behaviourChecked": 8,
+       "behaviourSame": 8,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "strings-flow",
+       "samples": 8,
+       "detected": 8,
+       "fidelityBefore": 0.452,
+       "fidelityAfter": 0.944,
+       "confidence": 0.9,
+       "behaviourChecked": 8,
+       "behaviourSame": 8,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "vm",
+       "samples": 8,
+       "detected": 8,
+       "fidelityBefore": 0.033,
+       "fidelityAfter": 0.033,
+       "confidence": 0.35,
+       "behaviourChecked": 8,
+       "behaviourSame": 8,
+       "unparsed": 0,
+       "status": "unsupported"
+      },
+      {
+       "config": "vm-max",
+       "samples": 1,
+       "detected": 1,
+       "fidelityBefore": 0.125,
+       "fidelityAfter": 0.125,
+       "confidence": 0.1,
+       "behaviourChecked": 1,
+       "behaviourSame": 0,
+       "unparsed": 0,
+       "status": "unsupported"
+      }
+     ],
+     "summary": {
+      "verified": 2,
+      "partial": 0,
+      "unsupported": 2
+     }
+    }
+   ],
+   "improvements": [],
+   "failurePatterns": [],
+   "assumptions": [],
+   "support": "mixed"
+  },
+  {
+   "id": "hercules",
+   "name": "Hercules",
+   "kind": "open-source",
+   "sources": [
+    "https://github.com/zeusssz/hercules-obfuscator"
+   ],
+   "researchedFrom": [
+    "Hercules (Apache-2.0) has no release tags. A version is the watermark its source writes: v1.5 (from 2024-09-22), v1.6 (2024-11-03), v1.6.2 (2025-01-27), v2.0.0  [https://github.com/zeusssz/hercules-obfuscator; high: the tool's own source]",
+    "Two virtual-machine formats exist. 1.5 and 1.6 use modules/Compiler/c.lua; 1.6.2 and 2.x use VMGenerator.lua with Compiler/Serializer.lua: Lua 5.1 bytecode, ser [https://github.com/zeusssz/hercules-obfuscator (src/modules/VMGenerator.lua, Compiler/Serializer.lua, Compiler/VMStrings.lua); high]",
+    "Serializer.lua writes no bytes for a nil constant but the count includes it (`#` stops at a nil), so the interpreter reads the next tag as this one's and the sc [tests/corpus/obfuscated/hercules (s02, s06 virtual_machine); high: reproduced]"
+   ],
+   "versions": [
+    {
+     "version": "current",
+     "revision": "main",
+     "revisionDate": null,
+     "note": null,
+     "fixtureDir": "tests/corpus/obfuscated/hercules",
+     "committed": true,
+     "licence": null,
+     "fixtures": {
+      "measured": 115,
+      "written": 115,
+      "toolErrors": 0,
+      "omittedLarge": 4,
+      "toolOutputEquivalent": 103,
+      "toolOutputErrored": 12,
+      "toolOutputDiverged": 0
+     },
+     "fidelityBefore": 0.549,
+     "fidelityAfter": 0.963,
+     "configs": [
+      {
+       "config": "light",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.64,
+       "fidelityAfter": 0.998,
+       "confidence": 0.879,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "balanced",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.374,
+       "fidelityAfter": 0.985,
+       "confidence": 0.879,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "heavy",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.073,
+       "fidelityAfter": 0.798,
+       "confidence": 0.75,
+       "behaviourChecked": 6,
+       "behaviourSame": 6,
+       "unparsed": 1,
+       "status": "partial"
+      },
+      {
+       "config": "maximum",
+       "samples": 3,
+       "detected": 3,
+       "fidelityBefore": 0.198,
+       "fidelityAfter": 0.655,
+       "confidence": 0.6,
+       "behaviourChecked": 2,
+       "behaviourSame": 2,
+       "unparsed": 1,
+       "status": "partial"
+      },
+      {
+       "config": "mod-virtual_machine",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.076,
+       "fidelityAfter": 0.834,
+       "confidence": 0.793,
+       "behaviourChecked": 7,
+       "behaviourSame": 6,
+       "unparsed": 0,
+       "status": "partial"
+      },
+      {
+       "config": "mod-antitamper",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.372,
+       "fidelityAfter": 0.998,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "mod-control_flow",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.632,
+       "fidelityAfter": 0.983,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "mod-string_to_expressions",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.336,
+       "fidelityAfter": 0.998,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "mod-string_encoding",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.468,
+       "fidelityAfter": 0.998,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "mod-wrap_in_function",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.993,
+       "fidelityAfter": 0.998,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "mod-variable_renaming",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.64,
+       "fidelityAfter": 0.998,
+       "confidence": 0.879,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "mod-garbage_code",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.534,
+       "fidelityAfter": 0.998,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "mod-opaque_predicates",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.926,
+       "fidelityAfter": 0.998,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "mod-function_inlining",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.707,
+       "fidelityAfter": 0.965,
+       "confidence": 0.643,
+       "behaviourChecked": 5,
+       "behaviourSame": 5,
+       "unparsed": 2,
+       "status": "verified"
+      },
+      {
+       "config": "mod-dynamic_code",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.902,
+       "fidelityAfter": 0.998,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "mod-bytecode_encoding",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.18,
+       "fidelityAfter": 0.929,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "mod-compressor",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 1,
+       "fidelityAfter": 0.998,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      }
+     ],
+     "summary": {
+      "verified": 14,
+      "partial": 3,
+      "unsupported": 0
+     }
+    },
+    {
+     "version": "1.5",
+     "revision": "1723b42795556d14c33bb7624e7aadade8d08d0d",
+     "revisionDate": "2024-11-03",
+     "note": "last commit whose watermark says v1.5 (2024-11-03): first virtual machine (Compiler/c.lua), StringToExpressions, WrapInFunction, compressor",
+     "fixtureDir": "tests/corpus/obfuscated/hercules-1.5",
+     "committed": true,
+     "licence": null,
+     "fixtures": {
+      "measured": 84,
+      "written": 84,
+      "toolErrors": 14,
+      "omittedLarge": 0,
+      "toolOutputEquivalent": 63,
+      "toolOutputErrored": 19,
+      "toolOutputDiverged": 2
+     },
+     "fidelityBefore": 0.568,
+     "fidelityAfter": 0.819,
+     "configs": [
+      {
+       "config": "default",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.06,
+       "fidelityAfter": 0.067,
+       "confidence": 0.814,
+       "behaviourChecked": 7,
+       "behaviourSame": 2,
+       "unparsed": 0,
+       "status": "unsupported"
+      },
+      {
+       "config": "mod-StringToExpressions",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.445,
+       "fidelityAfter": 0.945,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "mod-VirtualMachine",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.095,
+       "fidelityAfter": 0.103,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 4,
+       "unparsed": 0,
+       "status": "unsupported"
+      },
+      {
+       "config": "mod-WrapInFunction",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.991,
+       "fidelityAfter": 0.998,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "mod-bytecode_encoding",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.184,
+       "fidelityAfter": 0.929,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "mod-compressor",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 1,
+       "fidelityAfter": 0.998,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "mod-control_flow",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.675,
+       "fidelityAfter": 0.998,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "mod-function_inlining",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 1,
+       "fidelityAfter": 0.987,
+       "confidence": 0.129,
+       "behaviourChecked": 1,
+       "behaviourSame": 1,
+       "unparsed": 6,
+       "status": "verified"
+      },
+      {
+       "config": "mod-garbage_code",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.675,
+       "fidelityAfter": 0.998,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "mod-opaque_predicates",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 1,
+       "fidelityAfter": 0.998,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "mod-string_encoding",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.463,
+       "fidelityAfter": 0.998,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "mod-variable_renaming",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.603,
+       "fidelityAfter": 0.976,
+       "confidence": 0.75,
+       "behaviourChecked": 6,
+       "behaviourSame": 0,
+       "unparsed": 1,
+       "status": "partial"
+      }
+     ],
+     "summary": {
+      "verified": 9,
+      "partial": 1,
+      "unsupported": 2
+     }
+    },
+    {
+     "version": "1.5-early",
+     "revision": "938497446e73013a33b603c43d61b4b8d046a73f",
+     "revisionDate": "2024-09-22",
+     "note": "first commit whose watermark says v1.5 (2024-09-22): text modules only, no virtual machine",
+     "fixtureDir": "tests/corpus/obfuscated/hercules-1.5-early",
+     "committed": true,
+     "licence": null,
+     "fixtures": {
+      "measured": 70,
+      "written": 70,
+      "toolErrors": 0,
+      "omittedLarge": 0,
+      "toolOutputEquivalent": 24,
+      "toolOutputErrored": 41,
+      "toolOutputDiverged": 5
+     },
+     "fidelityBefore": 0.873,
+     "fidelityAfter": 0.977,
+     "configs": [
+      {
+       "config": "default",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": null,
+       "fidelityAfter": null,
+       "confidence": 0,
+       "behaviourChecked": 0,
+       "behaviourSame": 0,
+       "unparsed": 7,
+       "status": "identification-only"
+      },
+      {
+       "config": "all",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": null,
+       "fidelityAfter": null,
+       "confidence": 0,
+       "behaviourChecked": 0,
+       "behaviourSame": 0,
+       "unparsed": 7,
+       "status": "identification-only"
+      },
+      {
+       "config": "mod-bytecode_encoding",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 1,
+       "fidelityAfter": 1,
+       "confidence": 0.771,
+       "behaviourChecked": 6,
+       "behaviourSame": 6,
+       "unparsed": 1,
+       "status": "verified"
+      },
+      {
+       "config": "mod-control_flow",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.673,
+       "fidelityAfter": 1,
+       "confidence": 0.771,
+       "behaviourChecked": 6,
+       "behaviourSame": 6,
+       "unparsed": 1,
+       "status": "verified"
+      },
+      {
+       "config": "mod-dynamic_code",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": null,
+       "fidelityAfter": null,
+       "confidence": 0,
+       "behaviourChecked": 0,
+       "behaviourSame": 0,
+       "unparsed": 7,
+       "status": "identification-only"
+      },
+      {
+       "config": "mod-function_inlining",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": null,
+       "fidelityAfter": null,
+       "confidence": 0,
+       "behaviourChecked": 0,
+       "behaviourSame": 0,
+       "unparsed": 7,
+       "status": "identification-only"
+      },
+      {
+       "config": "mod-garbage_code",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.682,
+       "fidelityAfter": 1,
+       "confidence": 0.771,
+       "behaviourChecked": 6,
+       "behaviourSame": 6,
+       "unparsed": 1,
+       "status": "verified"
+      },
+      {
+       "config": "mod-opaque_predicates",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 1,
+       "fidelityAfter": 1,
+       "confidence": 0.771,
+       "behaviourChecked": 6,
+       "behaviourSame": 6,
+       "unparsed": 1,
+       "status": "verified"
+      },
+      {
+       "config": "mod-string_encoding",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.972,
+       "fidelityAfter": 0.971,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 0,
+       "unparsed": 0,
+       "status": "partial"
+      },
+      {
+       "config": "mod-variable_renaming",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.891,
+       "fidelityAfter": 0.891,
+       "confidence": 0.771,
+       "behaviourChecked": 6,
+       "behaviourSame": 0,
+       "unparsed": 1,
+       "status": "partial"
+      }
+     ],
+     "summary": {
+      "verified": 4,
+      "partial": 2,
+      "unsupported": 0
+     }
+    },
+    {
+     "version": "1.6",
+     "revision": "f8e5d3822120d81fe3a4a09758216714744c0c3d",
+     "revisionDate": "2025-01-25",
+     "note": "last commit whose watermark says v1.6 (2025-01-25): anti_tamper added",
+     "fixtureDir": "tests/corpus/obfuscated/hercules-1.6",
+     "committed": true,
+     "licence": null,
+     "fixtures": {
+      "measured": 84,
+      "written": 84,
+      "toolErrors": 14,
+      "omittedLarge": 0,
+      "toolOutputEquivalent": 54,
+      "toolOutputErrored": 28,
+      "toolOutputDiverged": 2
+     },
+     "fidelityBefore": 0.617,
+     "fidelityAfter": 0.848,
+     "configs": [
+      {
+       "config": "default",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.065,
+       "fidelityAfter": 0.066,
+       "confidence": 0.129,
+       "behaviourChecked": 3,
+       "behaviourSame": 1,
+       "unparsed": 4,
+       "status": "unsupported"
+      },
+      {
+       "config": "mod-StringToExpressions",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.445,
+       "fidelityAfter": 0.945,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "mod-VirtualMachine",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.078,
+       "fidelityAfter": 0.079,
+       "confidence": 0.307,
+       "behaviourChecked": 7,
+       "behaviourSame": 0,
+       "unparsed": 0,
+       "status": "unsupported"
+      },
+      {
+       "config": "mod-WrapInFunction",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.991,
+       "fidelityAfter": 0.998,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "mod-bytecode_encoding",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": null,
+       "fidelityAfter": null,
+       "confidence": 0,
+       "behaviourChecked": 0,
+       "behaviourSame": 0,
+       "unparsed": 7,
+       "status": "identification-only"
+      },
+      {
+       "config": "mod-compressor",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 1,
+       "fidelityAfter": 0.998,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "mod-control_flow",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.675,
+       "fidelityAfter": 0.998,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "mod-function_inlining",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 1,
+       "fidelityAfter": 0.987,
+       "confidence": 0.129,
+       "behaviourChecked": 1,
+       "behaviourSame": 1,
+       "unparsed": 6,
+       "status": "verified"
+      },
+      {
+       "config": "mod-garbage_code",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.503,
+       "fidelityAfter": 0.998,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "mod-opaque_predicates",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 1,
+       "fidelityAfter": 0.998,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "mod-string_encoding",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.448,
+       "fidelityAfter": 0.998,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "mod-variable_renaming",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.588,
+       "fidelityAfter": 0.971,
+       "confidence": 0.621,
+       "behaviourChecked": 5,
+       "behaviourSame": 0,
+       "unparsed": 2,
+       "status": "partial"
+      }
+     ],
+     "summary": {
+      "verified": 8,
+      "partial": 1,
+      "unsupported": 2
+     }
+    },
+    {
+     "version": "1.6.2",
+     "revision": "1b2051094ea0130b9eac3b64695caf9b29340942",
+     "revisionDate": "2026-04-30",
+     "note": "last commit whose watermark says v1.6.2 (2026-04-30)",
+     "fixtureDir": "tests/corpus/obfuscated/hercules-1.6.2",
+     "committed": true,
+     "licence": null,
+     "fixtures": {
+      "measured": 91,
+      "written": 91,
+      "toolErrors": 14,
+      "omittedLarge": 0,
+      "toolOutputEquivalent": 74,
+      "toolOutputErrored": 17,
+      "toolOutputDiverged": 0
+     },
+     "fidelityBefore": 0.579,
+     "fidelityAfter": 0.977,
+     "configs": [
+      {
+       "config": "mod-StringToExpressions",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.336,
+       "fidelityAfter": 0.998,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "mod-VirtualMachine",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.076,
+       "fidelityAfter": 0.834,
+       "confidence": 0.793,
+       "behaviourChecked": 7,
+       "behaviourSame": 6,
+       "unparsed": 0,
+       "status": "partial"
+      },
+      {
+       "config": "mod-WrapInFunction",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.991,
+       "fidelityAfter": 0.998,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "mod-antitamper",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.391,
+       "fidelityAfter": 0.998,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "mod-bytecode_encoding",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.18,
+       "fidelityAfter": 0.929,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "mod-compressor",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 1,
+       "fidelityAfter": 0.998,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "mod-control_flow",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.63,
+       "fidelityAfter": 0.98,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "mod-dynamic_code",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.914,
+       "fidelityAfter": 0.997,
+       "confidence": 0.514,
+       "behaviourChecked": 4,
+       "behaviourSame": 4,
+       "unparsed": 3,
+       "status": "verified"
+      },
+      {
+       "config": "mod-function_inlining",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 1,
+       "fidelityAfter": 0.998,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "mod-garbage_code",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.418,
+       "fidelityAfter": 0.998,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "mod-opaque_predicates",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.748,
+       "fidelityAfter": 0.997,
+       "confidence": 0.514,
+       "behaviourChecked": 4,
+       "behaviourSame": 4,
+       "unparsed": 3,
+       "status": "verified"
+      },
+      {
+       "config": "mod-string_encoding",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.448,
+       "fidelityAfter": 0.998,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "mod-variable_renaming",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.612,
+       "fidelityAfter": 0.991,
+       "confidence": 0.879,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      }
+     ],
+     "summary": {
+      "verified": 12,
+      "partial": 1,
+      "unsupported": 0
+     }
+    },
+    {
+     "version": "2.0.0",
+     "revision": "c4baf05da7c011374d1888f96ea35fb4e2980736",
+     "revisionDate": "2026-06-16",
+     "note": "last commit whose watermark says v2.0.0 (2026-06-16): manifest.lua, presets, rewritten compiler (Compiler/*.lua)",
+     "fixtureDir": "tests/corpus/obfuscated/hercules-2.0.0",
+     "committed": true,
+     "licence": null,
+     "fixtures": {
+      "measured": 93,
+      "written": 93,
+      "toolErrors": 0,
+      "omittedLarge": 12,
+      "toolOutputEquivalent": 84,
+      "toolOutputErrored": 9,
+      "toolOutputDiverged": 0
+     },
+     "fidelityBefore": 0.595,
+     "fidelityAfter": 0.976,
+     "configs": [
+      {
+       "config": "mod-StringToExpressions",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.336,
+       "fidelityAfter": 0.998,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "mod-VirtualMachine",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.076,
+       "fidelityAfter": 0.834,
+       "confidence": 0.793,
+       "behaviourChecked": 7,
+       "behaviourSame": 6,
+       "unparsed": 0,
+       "status": "partial"
+      },
+      {
+       "config": "mod-WrapInFunction",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.993,
+       "fidelityAfter": 0.998,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "mod-antitamper",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.372,
+       "fidelityAfter": 0.998,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "mod-bytecode_encoding",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.18,
+       "fidelityAfter": 0.929,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "mod-compressor",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 1,
+       "fidelityAfter": 0.998,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "mod-control_flow",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.634,
+       "fidelityAfter": 0.98,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "mod-dynamic_code",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.902,
+       "fidelityAfter": 0.998,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "mod-function_inlining",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.707,
+       "fidelityAfter": 0.965,
+       "confidence": 0.643,
+       "behaviourChecked": 5,
+       "behaviourSame": 5,
+       "unparsed": 2,
+       "status": "verified"
+      },
+      {
+       "config": "mod-garbage_code",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.532,
+       "fidelityAfter": 0.998,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "mod-opaque_predicates",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.926,
+       "fidelityAfter": 0.998,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "mod-string_encoding",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.468,
+       "fidelityAfter": 0.998,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "mod-variable_renaming",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.64,
+       "fidelityAfter": 0.998,
+       "confidence": 0.879,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "default",
+       "samples": 1,
+       "detected": 1,
+       "fidelityBefore": null,
+       "fidelityAfter": null,
+       "confidence": 0,
+       "behaviourChecked": 0,
+       "behaviourSame": 0,
+       "unparsed": 1,
+       "status": "identification-only"
+      },
+      {
+       "config": "all",
+       "samples": 1,
+       "detected": 1,
+       "fidelityBefore": null,
+       "fidelityAfter": null,
+       "confidence": 0,
+       "behaviourChecked": 0,
+       "behaviourSame": 0,
+       "unparsed": 1,
+       "status": "identification-only"
+      }
+     ],
+     "summary": {
+      "verified": 12,
+      "partial": 1,
+      "unsupported": 0
+     }
+    }
+   ],
+   "improvements": [],
+   "failurePatterns": [],
+   "assumptions": [],
+   "support": "mixed"
+  },
+  {
+   "id": "ironbrew2",
+   "name": "IronBrew 2",
+   "kind": "open-source",
+   "sources": [
+    "https://github.com/Trollicus/ironbrew-2"
+   ],
+   "researchedFrom": [],
+   "versions": [
+    {
+     "version": "current",
+     "revision": "4063f3aa6b24d24c0d3ce44da55dbd9d591c2cfd",
+     "revisionDate": null,
+     "note": null,
+     "fixtureDir": "tests/corpus/obfuscated/ironbrew2",
+     "committed": true,
+     "licence": null,
+     "fixtures": {
+      "measured": 64,
+      "written": 64,
+      "toolErrors": 0,
+      "omittedLarge": 0,
+      "toolOutputEquivalent": 59,
+      "toolOutputErrored": 4,
+      "toolOutputDiverged": 1
+     },
+     "fidelityBefore": 0.052,
+     "fidelityAfter": 0.906,
+     "configs": [
+      {
+       "config": "default",
+       "samples": 8,
+       "detected": 8,
+       "fidelityBefore": 0.039,
+       "fidelityAfter": 0.906,
+       "confidence": 0.9,
+       "behaviourChecked": 8,
+       "behaviourSame": 8,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "plain",
+       "samples": 8,
+       "detected": 8,
+       "fidelityBefore": 0.081,
+       "fidelityAfter": 0.925,
+       "confidence": 0.9,
+       "behaviourChecked": 8,
+       "behaviourSame": 8,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "mutate",
+       "samples": 8,
+       "detected": 8,
+       "fidelityBefore": 0.062,
+       "fidelityAfter": 0.925,
+       "confidence": 0.9,
+       "behaviourChecked": 8,
+       "behaviourSame": 8,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "super",
+       "samples": 8,
+       "detected": 8,
+       "fidelityBefore": 0.045,
+       "fidelityAfter": 0.925,
+       "confidence": 0.9,
+       "behaviourChecked": 8,
+       "behaviourSame": 8,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "flow",
+       "samples": 8,
+       "detected": 8,
+       "fidelityBefore": 0.081,
+       "fidelityAfter": 0.906,
+       "confidence": 0.9,
+       "behaviourChecked": 8,
+       "behaviourSame": 8,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "strings",
+       "samples": 8,
+       "detected": 8,
+       "fidelityBefore": 0.03,
+       "fidelityAfter": 0.848,
+       "confidence": 0.9,
+       "behaviourChecked": 8,
+       "behaviourSame": 8,
+       "unparsed": 0,
+       "status": "partial"
+      },
+      {
+       "config": "lineinfo",
+       "samples": 8,
+       "detected": 8,
+       "fidelityBefore": 0.039,
+       "fidelityAfter": 0.906,
+       "confidence": 0.9,
+       "behaviourChecked": 8,
+       "behaviourSame": 8,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "nocompress",
+       "samples": 8,
+       "detected": 8,
+       "fidelityBefore": 0.04,
+       "fidelityAfter": 0.906,
+       "confidence": 0.9,
+       "behaviourChecked": 8,
+       "behaviourSame": 8,
+       "unparsed": 0,
+       "status": "verified"
+      }
+     ],
+     "summary": {
+      "verified": 7,
+      "partial": 1,
+      "unsupported": 0
+     }
+    }
+   ],
+   "improvements": [],
+   "failurePatterns": [],
+   "assumptions": [],
+   "support": "mixed"
+  },
+  {
+   "id": "loaders",
+   "name": "Loadstring packers",
+   "kind": "synthetic",
+   "sources": [],
+   "researchedFrom": [],
+   "versions": [
+    {
+     "version": "current",
+     "revision": null,
+     "revisionDate": null,
+     "note": null,
+     "fixtureDir": "tests/corpus/obfuscated/loaders",
+     "committed": true,
+     "licence": null,
+     "fixtures": {
+      "measured": 66,
+      "written": 66,
+      "toolErrors": 0,
+      "omittedLarge": 0,
+      "toolOutputEquivalent": 66,
+      "toolOutputErrored": 0,
+      "toolOutputDiverged": 0
+     },
+     "fidelityBefore": 0.104,
+     "fidelityAfter": 0.998,
+     "configs": [
+      {
+       "config": "ascii",
+       "samples": 6,
+       "detected": 0,
+       "fidelityBefore": 0.149,
+       "fidelityAfter": 0.998,
+       "confidence": 0.95,
+       "behaviourChecked": 6,
+       "behaviourSame": 6,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "hex",
+       "samples": 6,
+       "detected": 0,
+       "fidelityBefore": 0.103,
+       "fidelityAfter": 0.998,
+       "confidence": 0.95,
+       "behaviourChecked": 6,
+       "behaviourSame": 6,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "binary",
+       "samples": 6,
+       "detected": 0,
+       "fidelityBefore": 0.149,
+       "fidelityAfter": 0.998,
+       "confidence": 0.95,
+       "behaviourChecked": 6,
+       "behaviourSame": 6,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "url",
+       "samples": 6,
+       "detected": 0,
+       "fidelityBefore": 0.103,
+       "fidelityAfter": 0.998,
+       "confidence": 0.95,
+       "behaviourChecked": 6,
+       "behaviourSame": 6,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "base64",
+       "samples": 6,
+       "detected": 0,
+       "fidelityBefore": 0.228,
+       "fidelityAfter": 0.998,
+       "confidence": 0.95,
+       "behaviourChecked": 6,
+       "behaviourSame": 6,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "xor",
+       "samples": 6,
+       "detected": 0,
+       "fidelityBefore": 0.048,
+       "fidelityAfter": 0.998,
+       "confidence": 0.95,
+       "behaviourChecked": 6,
+       "behaviourSame": 6,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "reverse",
+       "samples": 6,
+       "detected": 0,
+       "fidelityBefore": 0.03,
+       "fidelityAfter": 0.998,
+       "confidence": 0.95,
+       "behaviourChecked": 6,
+       "behaviourSame": 6,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "escapes",
+       "samples": 6,
+       "detected": 0,
+       "fidelityBefore": 0.028,
+       "fidelityAfter": 0.998,
+       "confidence": 0.9,
+       "behaviourChecked": 6,
+       "behaviourSame": 6,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "charcodes",
+       "samples": 6,
+       "detected": 0,
+       "fidelityBefore": 0.033,
+       "fidelityAfter": 0.998,
+       "confidence": 0.95,
+       "behaviourChecked": 6,
+       "behaviourSame": 6,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "pieces",
+       "samples": 6,
+       "detected": 0,
+       "fidelityBefore": 0.047,
+       "fidelityAfter": 0.998,
+       "confidence": 0.95,
+       "behaviourChecked": 6,
+       "behaviourSame": 6,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "layered",
+       "samples": 6,
+       "detected": 0,
+       "fidelityBefore": 0.228,
+       "fidelityAfter": 0.998,
+       "confidence": 0.95,
+       "behaviourChecked": 6,
+       "behaviourSame": 6,
+       "unparsed": 0,
+       "status": "verified"
+      }
+     ],
+     "summary": {
+      "verified": 11,
+      "partial": 0,
+      "unsupported": 0
+     }
+    }
+   ],
+   "improvements": [],
+   "failurePatterns": [],
+   "assumptions": [],
+   "support": "verified"
+  },
+  {
+   "id": "mixed",
+   "name": "mixed",
+   "kind": null,
+   "sources": [],
+   "researchedFrom": [],
+   "versions": [
+    {
+     "version": "current",
+     "revision": null,
+     "revisionDate": null,
+     "note": null,
+     "fixtureDir": "tests/corpus/obfuscated/mixed",
+     "committed": true,
+     "licence": null,
+     "fixtures": {
+      "measured": 105,
+      "written": 105,
+      "toolErrors": 0,
+      "omittedLarge": 0,
+      "toolOutputEquivalent": 83,
+      "toolOutputErrored": 17,
+      "toolOutputDiverged": 5
+     },
+     "fidelityBefore": 0.234,
+     "fidelityAfter": 0.867,
+     "configs": [
+      {
+       "config": "hercules-light+base64",
+       "samples": 7,
+       "detected": 0,
+       "fidelityBefore": 0.236,
+       "fidelityAfter": 0.998,
+       "confidence": 0.879,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "hercules-balanced+xor",
+       "samples": 7,
+       "detected": 0,
+       "fidelityBefore": 0.025,
+       "fidelityAfter": 0.943,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 6,
+       "unparsed": 0,
+       "status": "partial"
+      },
+      {
+       "config": "hercules-vm+base64",
+       "samples": 7,
+       "detected": 0,
+       "fidelityBefore": 0.236,
+       "fidelityAfter": 0.834,
+       "confidence": 0.793,
+       "behaviourChecked": 7,
+       "behaviourSame": 6,
+       "unparsed": 0,
+       "status": "partial"
+      },
+      {
+       "config": "xor+hercules-strings",
+       "samples": 7,
+       "detected": 0,
+       "fidelityBefore": 0.06,
+       "fidelityAfter": 0.998,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "base64+hercules-renaming",
+       "samples": 7,
+       "detected": 0,
+       "fidelityBefore": 0.235,
+       "fidelityAfter": 0.998,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "hercules-heavy+light",
+       "samples": 7,
+       "detected": 0,
+       "fidelityBefore": 0.068,
+       "fidelityAfter": 0.58,
+       "confidence": 0.75,
+       "behaviourChecked": 6,
+       "behaviourSame": 6,
+       "unparsed": 1,
+       "status": "partial"
+      },
+      {
+       "config": "hercules-1.6.2+head",
+       "samples": 7,
+       "detected": 0,
+       "fidelityBefore": 0.213,
+       "fidelityAfter": 0.87,
+       "confidence": 0.857,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "hercules-1.5+head-inlining",
+       "samples": 7,
+       "detected": 0,
+       "fidelityBefore": 0.381,
+       "fidelityAfter": 0.718,
+       "confidence": 0.75,
+       "behaviourChecked": 6,
+       "behaviourSame": 0,
+       "unparsed": 1,
+       "status": "partial"
+      },
+      {
+       "config": "lab-rename-strings+hercules",
+       "samples": 7,
+       "detected": 0,
+       "fidelityBefore": 0.465,
+       "fidelityAfter": 0.761,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "partial"
+      },
+      {
+       "config": "hercules-s2e+lab-flatten",
+       "samples": 7,
+       "detected": 0,
+       "fidelityBefore": 0.216,
+       "fidelityAfter": 0.607,
+       "confidence": 0.777,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "partial"
+      },
+      {
+       "config": "lab-tabledispatch+hercules-inlining",
+       "samples": 7,
+       "detected": 0,
+       "fidelityBefore": 0.617,
+       "fidelityAfter": 0.95,
+       "confidence": 0.879,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "lab-xorpack-loadwrap+layered",
+       "samples": 7,
+       "detected": 0,
+       "fidelityBefore": 0.236,
+       "fidelityAfter": 0.939,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "lab-flatten-opaque+hercules",
+       "samples": 7,
+       "detected": 0,
+       "fidelityBefore": 0.21,
+       "fidelityAfter": 0.847,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "partial"
+      },
+      {
+       "config": "lab+hercules+base64",
+       "samples": 7,
+       "detected": 0,
+       "fidelityBefore": 0.236,
+       "fidelityAfter": 0.894,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 1,
+       "unparsed": 0,
+       "status": "partial"
+      },
+      {
+       "config": "base64+hercules-vm+hercules-light",
+       "samples": 7,
+       "detected": 0,
+       "fidelityBefore": 0.073,
+       "fidelityAfter": 0.997,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      }
+     ],
+     "summary": {
+      "verified": 7,
+      "partial": 8,
+      "unsupported": 0
+     }
+    }
+   ],
+   "improvements": [],
+   "failurePatterns": [],
+   "assumptions": [],
+   "support": "mixed"
+  },
+  {
+   "id": "obscura",
+   "name": "Obscura",
+   "kind": "open-source",
+   "sources": [
+    "https://github.com/vo3pal/obscura"
+   ],
+   "researchedFrom": [
+    "README and git history read as text; the three revisions were then run in tests/corpus/tools/sandbox_run.py (no network, no host files) through gen_obscura.py",
+    "Obscura (MIT, Python, vo3pal) is a Luau obfuscator with modes lightweight, rename, native and vm; versions 1.0.0 (pre-hardening), 1.0.1 (2026-04-30, VM hardenin [https://github.com/vo3pal/obscura; high for the history; nothing measured]"
+   ],
+   "versions": [
+    {
+     "version": "1.0.0",
+     "revision": "1439a3dbf6c1075971a9d5e53e6573ff8a5b8527",
+     "revisionDate": "2026-04-29",
+     "note": "the state before the VM hardening release (2026-04-29): VM with an encrypted constant pool, --level 1-4, --vm",
+     "fixtureDir": "tests/corpus/obfuscated/obscura-1.0.0",
+     "committed": true,
+     "licence": "MIT",
+     "fixtures": {
+      "measured": 30,
+      "written": 30,
+      "toolErrors": 5,
+      "omittedLarge": 0,
+      "toolOutputEquivalent": 22,
+      "toolOutputErrored": 8,
+      "toolOutputDiverged": 0
+     },
+     "fidelityBefore": 0.184,
+     "fidelityAfter": 0.738,
+     "configs": [
+      {
+       "config": "level-1",
+       "samples": 6,
+       "detected": 6,
+       "fidelityBefore": 0.148,
+       "fidelityAfter": 0.892,
+       "confidence": 0.9,
+       "behaviourChecked": 6,
+       "behaviourSame": 6,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "level-2",
+       "samples": 6,
+       "detected": 6,
+       "fidelityBefore": 0.119,
+       "fidelityAfter": 0.892,
+       "confidence": 0.9,
+       "behaviourChecked": 6,
+       "behaviourSame": 6,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "level-3",
+       "samples": 6,
+       "detected": 6,
+       "fidelityBefore": 0.09,
+       "fidelityAfter": 0.892,
+       "confidence": 0.9,
+       "behaviourChecked": 6,
+       "behaviourSame": 6,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "lightweight",
+       "samples": 6,
+       "detected": 6,
+       "fidelityBefore": 0.466,
+       "fidelityAfter": 0.917,
+       "confidence": 0.9,
+       "behaviourChecked": 6,
+       "behaviourSame": 6,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "vm",
+       "samples": 6,
+       "detected": 6,
+       "fidelityBefore": 0.095,
+       "fidelityAfter": 0.095,
+       "confidence": 0.3,
+       "behaviourChecked": 6,
+       "behaviourSame": 0,
+       "unparsed": 0,
+       "status": "unsupported"
+      }
+     ],
+     "summary": {
+      "verified": 4,
+      "partial": 0,
+      "unsupported": 1
+     }
+    },
+    {
+     "version": "1.0.1",
+     "revision": "abd77f07d9c7a843a45aa3c14c208bd5d2aa10f9",
+     "revisionDate": "2026-04-30",
+     "note": "v1.0.1 (2026-04-30): VM hardening (lazy constants, split keys, integrity checks), --vm-hardening",
+     "fixtureDir": "tests/corpus/obfuscated/obscura-1.0.1",
+     "committed": true,
+     "licence": "MIT",
+     "fixtures": {
+      "measured": 36,
+      "written": 36,
+      "toolErrors": 6,
+      "omittedLarge": 0,
+      "toolOutputEquivalent": 26,
+      "toolOutputErrored": 2,
+      "toolOutputDiverged": 8
+     },
+     "fidelityBefore": 0.116,
+     "fidelityAfter": 0.608,
+     "configs": [
+      {
+       "config": "level-1",
+       "samples": 6,
+       "detected": 6,
+       "fidelityBefore": 0.121,
+       "fidelityAfter": 0.892,
+       "confidence": 0.9,
+       "behaviourChecked": 6,
+       "behaviourSame": 6,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "level-2",
+       "samples": 6,
+       "detected": 6,
+       "fidelityBefore": 0.094,
+       "fidelityAfter": 0.892,
+       "confidence": 0.9,
+       "behaviourChecked": 6,
+       "behaviourSame": 6,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "level-3",
+       "samples": 6,
+       "detected": 6,
+       "fidelityBefore": 0.066,
+       "fidelityAfter": 0.892,
+       "confidence": 0.9,
+       "behaviourChecked": 6,
+       "behaviourSame": 6,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "lightweight",
+       "samples": 6,
+       "detected": 6,
+       "fidelityBefore": 0.349,
+       "fidelityAfter": 0.905,
+       "confidence": 0.9,
+       "behaviourChecked": 6,
+       "behaviourSame": 6,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "vm",
+       "samples": 6,
+       "detected": 6,
+       "fidelityBefore": 0.033,
+       "fidelityAfter": 0.033,
+       "confidence": 0.35,
+       "behaviourChecked": 6,
+       "behaviourSame": 2,
+       "unparsed": 0,
+       "status": "unsupported"
+      },
+      {
+       "config": "vm-max",
+       "samples": 6,
+       "detected": 6,
+       "fidelityBefore": 0.032,
+       "fidelityAfter": 0.033,
+       "confidence": 0.35,
+       "behaviourChecked": 6,
+       "behaviourSame": 0,
+       "unparsed": 0,
+       "status": "unsupported"
+      }
+     ],
+     "summary": {
+      "verified": 4,
+      "partial": 0,
+      "unsupported": 2
+     }
+    },
+    {
+     "version": "1.1.0",
+     "revision": "5657a739fee56b342f3a0cfdd149144b2d3f6d79",
+     "revisionDate": "2026-10-08",
+     "note": "v1.1.0 (2026-10-08): --mode lightweight/rename/native/vm, rolling bytecode reads by default",
+     "fixtureDir": "tests/corpus/obfuscated/obscura-1.1.0",
+     "committed": true,
+     "licence": "MIT",
+     "fixtures": {
+      "measured": 63,
+      "written": 63,
+      "toolErrors": 0,
+      "omittedLarge": 0,
+      "toolOutputEquivalent": 63,
+      "toolOutputErrored": 0,
+      "toolOutputDiverged": 0
+     },
+     "fidelityBefore": 0.224,
+     "fidelityAfter": 0.645,
+     "configs": [
+      {
+       "config": "level-1",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.295,
+       "fidelityAfter": 0.917,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "level-2",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.102,
+       "fidelityAfter": 0.946,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "level-3",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.07,
+       "fidelityAfter": 0.946,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "lightweight",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.377,
+       "fidelityAfter": 0.954,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "rename",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 1,
+       "fidelityAfter": 0.998,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "native",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.07,
+       "fidelityAfter": 0.946,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "vm",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.035,
+       "fidelityAfter": 0.035,
+       "confidence": 0.35,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "unsupported"
+      },
+      {
+       "config": "vm-max",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.033,
+       "fidelityAfter": 0.033,
+       "confidence": 0.35,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "unsupported"
+      },
+      {
+       "config": "vm-cached",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.034,
+       "fidelityAfter": 0.034,
+       "confidence": 0.35,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "unsupported"
+      }
+     ],
+     "summary": {
+      "verified": 6,
+      "partial": 0,
+      "unsupported": 3
+     }
+    }
+   ],
+   "improvements": [
+    {
+     "id": "int-wrappers",
+     "summary": "math.floor / math.ceil of an integer literal is the literal (the number layer wraps every number in it), so bit32.bxor(math.floor(a), math.floor(b)) folds and the control-flow flattener's next states become constants",
+     "files": [
+      "src/passes/fold.js"
+     ],
+     "tests": [
+      "tests/formats-ix.test.mjs: fold: math.floor / math.ceil"
+     ]
+    },
+    {
+     "id": "opaque-closures",
+     "summary": "a closure called on the spot that only computes a constant from constants is that constant (the opaque predicates `(function() local n = 22 return n * n < 0 end)()`)",
+     "files": [
+      "src/passes/simplify.js"
+     ],
+     "tests": [
+      "tests/formats-ix.test.mjs: simplify: a closure called on the spot"
+     ]
+    },
+    {
+     "id": "nested-flattening",
+     "summary": "a flattened function inside another function's body is unflattened: a leaf that returns or raises the `error(\"CFF Error: Invalid state\")` else no longer counts against the machine, and a loop of two blocks that cannot end on its own is read (closes KNOWN-ISSUES 27 for this shape)",
+     "files": [
+      "src/adaptive/strategies/dispatch.js"
+     ],
+     "tests": [
+      "tests/formats-ix.test.mjs: dispatch"
+     ]
+    },
+    {
+     "id": "builtins-table",
+     "summary": "a table of untouched globals read only by constant keys (the table-indirection layer, also `math.pi`) is inlined, whatever its name looks like; a numeric statement nobody keeps (`math.cos(12)`) goes",
+     "files": [
+      "src/passes/simplify.js"
+     ],
+     "tests": [
+      "tests/formats-ix.test.mjs: simplify: a table of builtins"
+     ]
+    },
+    {
+     "id": "guards",
+     "summary": "the run of executor-detection ifs at the top (1.1.0: empty error; 1.0.x: \"Security violation\" messages, in a do block) is taken off when at least two are present and one probes an executor-only global",
+     "files": [
+      "src/recover/obscura.js"
+     ],
+     "tests": [
+      "tests/formats-ix.test.mjs: obscura guards"
+     ]
+    },
+    {
+     "id": "self-decrypting-table",
+     "summary": "lightweight mode decrypts its string table in place (`T[k] = D(T[k], key, i)`): the decoder call is seeded with the stored text, evaluated, and the reads and the copies the obfuscator made (`local a = T[1]`) become the strings",
+     "files": [
+      "src/passes/strtable.js",
+      "src/recover/pipeline.js"
+     ],
+     "tests": [
+      "tests/formats-ix.test.mjs: strtable"
+     ]
+    },
+    {
+     "id": "cipher-decoder",
+     "summary": "a function that reads or slices a string, mixes it with bxor and builds text with string.char is a decoder from its first call, however it is wrapped (a script with two hidden strings has two calls)",
+     "files": [
+      "src/passes/evaluate.js"
+     ],
+     "tests": [
+      "tests/formats-ix.test.mjs: obscura 1.1.0 level-1 / s05_nested_functions"
+     ]
+    },
+    {
+     "id": "oracle-encoding",
+     "summary": "the reference-runtime oracle no longer dies on a recovered file whose report header holds a real Unicode character (it used to take every later request with it)",
+     "files": [
+      "tests/corpus/tools/run_lua.py"
+     ],
+     "tests": [
+      "tests/sandbox.test.mjs",
+      "tests/formats-ix.test.mjs: obscura 1.1.0 ..."
+     ]
+    }
+   ],
+   "failurePatterns": [
+    {
+     "id": "vm",
+     "configs": [
+      "vm",
+      "vm-max",
+      "vm-cached"
+     ],
+     "status": "open",
+     "summary": "the VM builds keep the program as bytecode (encrypted constant pool, rolling reads) for a generated interpreter. Identified from the \"Obscura VM\" header, reported as not recovered; no lifter was written",
+     "evidence": "fidelity 3% before and after on all three revisions; the report header says so"
+    },
+    {
+     "id": "names",
+     "configs": [
+      "level-1",
+      "level-2",
+      "level-3",
+      "native",
+      "lightweight",
+      "rename"
+     ],
+     "status": "by design",
+     "summary": "identifier renaming is not reversible: samples whose original names are descriptive (s02, s03, s06) lose fidelity that no pass can win back; the structure is recovered",
+     "evidence": "the remaining differences in s02/s03/s06 are names and inlined named constants"
+    },
+    {
+     "id": "tool-lexer-1.0.0",
+     "configs": [
+      "level-1",
+      "level-2",
+      "level-3",
+      "lightweight"
+     ],
+     "status": "tool defect",
+     "summary": "Obscura 1.0.0 fails with a Lexer error on one sample (s03); recorded as tool-error in its manifest, never counted as a recovery"
+    }
+   ],
+   "assumptions": [
+    "Only the three revisions named were run; earlier history was read, not run",
+    "Behaviour is checked on Luau 0.739 (the vendored binary), not in Roblox: `game`, `workspace` and the Roblox API come from the oracle's mock environment"
+   ],
+   "support": "mixed"
+  },
+  {
+   "id": "prometheus",
+   "name": "Prometheus",
+   "kind": "open-source",
+   "sources": [
+    "https://github.com/prometheus-lua/Prometheus"
+   ],
+   "researchedFrom": [],
+   "versions": [
+    {
+     "version": "current",
+     "revision": "master",
+     "revisionDate": null,
+     "note": null,
+     "fixtureDir": "tests/corpus/obfuscated/prometheus",
+     "committed": true,
+     "licence": null,
+     "fixtures": {
+      "measured": 91,
+      "written": 91,
+      "toolErrors": 0,
+      "omittedLarge": 0,
+      "toolOutputEquivalent": 87,
+      "toolOutputErrored": 0,
+      "toolOutputDiverged": 4
+     },
+     "fidelityBefore": 0.45,
+     "fidelityAfter": 0.821,
+     "configs": [
+      {
+       "config": "Minify",
+       "samples": 7,
+       "detected": 0,
+       "fidelityBefore": 0.961,
+       "fidelityAfter": 0.962,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "Weak",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.064,
+       "fidelityAfter": 0.587,
+       "confidence": 0.856,
+       "behaviourChecked": 7,
+       "behaviourSame": 6,
+       "unparsed": 0,
+       "status": "partial"
+      },
+      {
+       "config": "Medium",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.026,
+       "fidelityAfter": 0.54,
+       "confidence": 0.879,
+       "behaviourChecked": 7,
+       "behaviourSame": 6,
+       "unparsed": 0,
+       "status": "partial"
+      },
+      {
+       "config": "Strong",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.026,
+       "fidelityAfter": 0.434,
+       "confidence": 0.759,
+       "behaviourChecked": 7,
+       "behaviourSame": 6,
+       "unparsed": 0,
+       "status": "partial"
+      },
+      {
+       "config": "step-EncryptStrings",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.318,
+       "fidelityAfter": 0.877,
+       "confidence": 0.879,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "step-ConstantArray",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.208,
+       "fidelityAfter": 0.919,
+       "confidence": 0.843,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "step-SplitStrings",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.658,
+       "fidelityAfter": 0.915,
+       "confidence": 0.879,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "step-NumbersToExpressions",
+       "samples": 7,
+       "detected": 0,
+       "fidelityBefore": 0.804,
+       "fidelityAfter": 0.962,
+       "confidence": 0.907,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "step-ProxifyLocals",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.392,
+       "fidelityAfter": 0.948,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "step-WrapInFunction",
+       "samples": 7,
+       "detected": 0,
+       "fidelityBefore": 0.952,
+       "fidelityAfter": 0.962,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "step-AddVararg",
+       "samples": 7,
+       "detected": 0,
+       "fidelityBefore": 0.961,
+       "fidelityAfter": 0.962,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "step-AntiTamper",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.389,
+       "fidelityAfter": 0.962,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified"
+      },
+      {
+       "config": "step-Vmify",
+       "samples": 7,
+       "detected": 7,
+       "fidelityBefore": 0.096,
+       "fidelityAfter": 0.648,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 6,
+       "unparsed": 0,
+       "status": "partial"
+      }
+     ],
+     "summary": {
+      "verified": 9,
+      "partial": 4,
+      "unsupported": 0
+     }
+    }
+   ],
+   "improvements": [],
+   "failurePatterns": [],
+   "assumptions": [],
+   "support": "mixed"
+  },
+  {
+   "id": "rbxlua",
+   "name": "RBXLuaObfuscator",
+   "kind": "open-source",
+   "sources": [
+    "https://github.com/kosuke14/RBXLuaObfuscator"
+   ],
+   "researchedFrom": [
+    "RBXLuaObfuscator (kosuke14, no licence, 2022) does not call loadstring: it ships a Lua lexer, parser and interpreter written in Lua and hands it the program as  [https://github.com/kosuke14/RBXLuaObfuscator; high]"
+   ],
+   "versions": [
+    {
+     "version": "current",
+     "revision": "e7a21ecdbeca076d7e314d6da2db6fa644b34fb6",
+     "revisionDate": null,
+     "note": null,
+     "fixtureDir": "tests/corpus/obfuscated-local/rbxlua",
+     "committed": false,
+     "licence": "none stated",
+     "fixtures": {
+      "measured": 8,
+      "written": 8,
+      "toolErrors": 0,
+      "omittedLarge": 0,
+      "toolOutputEquivalent": 8,
+      "toolOutputErrored": 0,
+      "toolOutputDiverged": 0
+     },
+     "fidelityBefore": 0.033,
+     "fidelityAfter": 0.998,
+     "configs": [
+      {
+       "config": "default",
+       "samples": 8,
+       "detected": 8,
+       "fidelityBefore": 0.033,
+       "fidelityAfter": 0.998,
+       "confidence": 0.9,
+       "behaviourChecked": 8,
+       "behaviourSame": 8,
+       "unparsed": 0,
+       "status": "verified"
+      }
+     ],
+     "summary": {
+      "verified": 1,
+      "partial": 0,
+      "unsupported": 0
+     }
+    }
+   ],
+   "improvements": [],
+   "failurePatterns": [],
+   "assumptions": [],
+   "support": "verified"
+  },
+  {
+   "id": "simple_html",
+   "name": "Simple Open source Lua Obfuscator (page)",
+   "kind": "open-source",
+   "sources": [
+    "https://github.com/iamsopotatoe-coder/simple-lua-obfuscator"
+   ],
+   "researchedFrom": [],
+   "versions": [
+    {
+     "version": "current",
+     "revision": "bd4d44e",
+     "revisionDate": null,
+     "note": null,
+     "fixtureDir": "tests/corpus/obfuscated/simple_html",
+     "committed": true,
+     "licence": "MIT",
+     "fixtures": {
+      "measured": 8,
+      "written": 8,
+      "toolErrors": 0,
+      "omittedLarge": 0,
+      "toolOutputEquivalent": 5,
+      "toolOutputErrored": 1,
+      "toolOutputDiverged": 2
+     },
+     "fidelityBefore": 0.345,
+     "fidelityAfter": 0.993,
+     "configs": [
+      {
+       "config": "default",
+       "samples": 8,
+       "detected": 8,
+       "fidelityBefore": 0.345,
+       "fidelityAfter": 0.993,
+       "confidence": 0.9,
+       "behaviourChecked": 8,
+       "behaviourSame": 5,
+       "unparsed": 0,
+       "status": "partial"
+      }
+     ],
+     "summary": {
+      "verified": 0,
+      "partial": 1,
+      "unsupported": 0
+     }
+    }
+   ],
+   "improvements": [],
+   "failurePatterns": [],
+   "assumptions": [],
+   "support": "experimental"
+  },
+  {
+   "id": "zenfus",
+   "name": "Zenfus",
+   "kind": "open-source",
+   "sources": [
+    "https://github.com/Zaenalos/Zenfus"
+   ],
+   "researchedFrom": [],
+   "versions": [
+    {
+     "version": "current",
+     "revision": "94d4ae1",
+     "revisionDate": null,
+     "note": null,
+     "fixtureDir": "tests/corpus/obfuscated/zenfus",
+     "committed": true,
+     "licence": "MIT",
+     "fixtures": {
+      "measured": 8,
+      "written": 8,
+      "toolErrors": 0,
+      "omittedLarge": 0,
+      "toolOutputEquivalent": 2,
+      "toolOutputErrored": 2,
+      "toolOutputDiverged": 4
+     },
+     "fidelityBefore": 0.038,
+     "fidelityAfter": 0.038,
+     "configs": [
+      {
+       "config": "default",
+       "samples": 8,
+       "detected": 8,
+       "fidelityBefore": 0.038,
+       "fidelityAfter": 0.038,
+       "confidence": 0.194,
+       "behaviourChecked": 8,
+       "behaviourSame": 2,
+       "unparsed": 0,
+       "status": "unsupported"
+      }
+     ],
+     "summary": {
+      "verified": 0,
+      "partial": 0,
+      "unsupported": 1
+     }
+    }
+   ],
+   "improvements": [],
+   "failurePatterns": [],
+   "assumptions": [],
+   "support": "unsupported"
+  },
+  {
+   "id": "xfuscator",
+   "name": "XFuscator",
+   "kind": "open-source",
+   "sources": [
+    "https://github.com/efrederickson/XFuscator"
+   ],
+   "researchedFrom": [
+    "README, Obfuscation Scripts and the library (XFuscator/init.lua) read as text; run through run_isolated.py with drivers/xfuscator.lua, which calls XFuscator.XFuscate with the options the command line would set"
+   ],
+   "versions": [],
+   "improvements": [
+    {
+     "id": "step2-array",
+     "summary": "the program kept as an array of scaled character codes (`_(99900)`, scale = a random number drawn at build time) is read by finding the scale that makes every entry divide and the text parse; the wrapper (globals table, tamper check, clock-seeded generator) goes",
+     "files": [
+      "src/recover/xfuscator.js"
+     ],
+     "tests": [
+      "tests/formats-ix.test.mjs: xfuscator step 2"
+     ]
+    },
+    {
+     "id": "byte-decoder",
+     "summary": "`string.char(d(n))` where d is a XOR with a key (the encrypt option, through `bit or bit32 or require'bit'`) is evaluated in the sandbox; `table.concat{ ... }` of the results folds to the string",
+     "files": [
+      "src/passes/evaluate.js",
+      "src/passes/fold.js"
+     ],
+     "tests": [
+      "tests/formats-ix.test.mjs: evaluate: a byte decoder"
+     ]
+    }
+   ],
+   "failurePatterns": [
+    {
+     "id": "precompile",
+     "configs": [
+      "loadstring (not generated)"
+     ],
+     "status": "not testable here",
+     "summary": "the precompile step reads Lua 5.1 bytecode through LAT, which reads every integer as a size_t: it only works on 32-bit builds. This host is 64-bit, so no precompiled output was generated and none is claimed"
+    },
+    {
+     "id": "tool-defects",
+     "configs": [
+      "nofluff",
+      "comments",
+      "level2"
+     ],
+     "status": "tool defect",
+     "summary": "the tool itself fails with those options (Step2.lua:11 concatenates nil, init.lua:110 indexes nil): recorded as tool-error"
+    },
+    {
+     "id": "names",
+     "configs": [
+      "default",
+      "encrypt",
+      "uglify",
+      "notamper",
+      "nostep2"
+     ],
+     "status": "by design",
+     "summary": "locals are renamed (s02, s05, s06 lose their descriptive names)"
+    }
+   ],
+   "assumptions": [
+    "Output of XFuscator 2013 'Version 2.0 b1' only; there are 8 commits and the last one was run"
+   ],
+   "support": "identification-only"
+  },
+  {
+   "id": "luaxen",
+   "name": "LuaXen",
+   "kind": "open-source",
+   "sources": [
+    "https://github.com/luauminati/LuaXen"
+   ],
+   "researchedFrom": [
+    "README and examples/obfuscator-example.lua read as text; run through run_isolated.py with drivers/luaxen.lua (the call the example makes)"
+   ],
+   "versions": [],
+   "improvements": [
+    {
+     "id": "metamethod-numbers",
+     "summary": "numbers hidden as `setmetatable({}, {__op = function(_, a) local x, y, z = a[1], a[2], a[3] return x*x - y*y + z end}) <op> {x, y, z}` are evaluated without running anything; the same trick with a loop that builds strings from triples is evaluated in the sandbox when every name in it is declared inside or a standard global",
+     "files": [
+      "src/passes/metaarith.js"
+     ],
+     "tests": [
+      "tests/formats-ix.test.mjs: metaarith"
+     ]
+    },
+    {
+     "id": "while-once",
+     "summary": "a `while` whose body always leaves it is an `if` (the AST stage writes its conditionals this way)",
+     "files": [
+      "src/passes/structure.js"
+     ],
+     "tests": [
+      "tests/formats-ix.test.mjs: structure"
+     ]
+    },
+    {
+     "id": "endless-two-block",
+     "summary": "the state loops of the AST stage (`while 0.69 do if state == ...`, as few as two blocks) are unflattened",
+     "files": [
+      "src/adaptive/strategies/dispatch.js"
+     ],
+     "tests": [
+      "tests/formats-ix.test.mjs: dispatch"
+     ]
+    }
+   ],
+   "failurePatterns": [
+    {
+     "id": "ironbrikked-vm",
+     "configs": [
+      "ironbrikked",
+      "both"
+     ],
+     "status": "open",
+     "summary": "IronBrikked, the VM stage (LZW-compressed encoded prototype and an interpreter), is identified and reported as not recovered; with `both` the AST layer over it is peeled and the VM remains"
+    },
+    {
+     "id": "tool-defects",
+     "configs": [
+      "ironbrikked",
+      "both"
+     ],
+     "status": "tool defect",
+     "summary": "the tool raised `No loop to break` on s04 in both configurations; recorded as tool-error"
+    }
+   ],
+   "assumptions": [
+    "Only the single commit of the repository was run; `legacy/` was not touched"
+   ],
+   "support": "identification-only"
+  },
+  {
+   "id": "zartha",
+   "name": "Zartha",
+   "kind": "open-source",
+   "sources": [
+    "https://github.com/TimOdemchuk/Zartha-Obfuscator"
+   ],
+   "researchedFrom": [
+    "README, Main.lua, Pipeline.lua and the Vm tree read as text; run through run_isolated.py with drivers/zartha.lua, which does in memory what Pipeline.lua does (luac replaced by string.dump)"
+   ],
+   "versions": [],
+   "improvements": [],
+   "failurePatterns": [
+    {
+     "id": "vm",
+     "configs": [
+      "default",
+      "minify",
+      "encryptstrings",
+      "flatten",
+      "antitamper",
+      "constants",
+      "all"
+     ],
+     "status": "open",
+     "summary": "a per-build Lua 5.1 bytecode VM with generated opcodes: identified (watermark and the `Env[\"string\"][\"char\"]` prelude) and flagged as not recovered; no lifter was written"
+    },
+    {
+     "id": "tool-defect-minify",
+     "configs": [
+      "minify",
+      "all"
+     ],
+     "status": "tool defect",
+     "summary": "luasrcdiet inside the tool fails on s06 in both configurations that minify (an unexpected backslash); recorded as tool-error"
+    }
+   ],
+   "assumptions": [
+    "The watermark text is a setting (`File generated using [Zartha]` is the default), so it is evidence and not proof; the prelude rule is the structural one"
+   ],
+   "support": "identification-only"
+  },
+  {
+   "id": "fusgato",
+   "name": "FusGato v1",
+   "kind": "open-source",
+   "sources": [
+    "https://github.com/adzwang/fusgato-v1"
+   ],
+   "researchedFrom": [
+    "README and the source read as text; the Luvit program was run through run_isolated.py with drivers/fusgato.lua (stand-ins for Luvit's fs, json and relative require; the compile is string.dump)"
+   ],
+   "versions": [],
+   "improvements": [
+    {
+     "id": "not-ironbrew",
+     "summary": "the IronBrew watermark FusGato copies does not make it IronBrew 2: the credit line decides, and the VM is flagged as not rebuilt (before this it was reported as recovered with confidence high)",
+     "files": [
+      "src/detect/detect.js"
+     ],
+     "tests": [
+      "tests/formats-ix.test.mjs: luaxen IronBrikked, zartha and fusgato"
+     ]
+    }
+   ],
+   "failurePatterns": [
+    {
+     "id": "tool-half-working",
+     "configs": [
+      "default",
+      "noconstants"
+     ],
+     "status": "tool defect",
+     "summary": "the author calls it half-working: vm/opcodes/24.lua has no `return`, so 12 of 16 builds fail with `attempt to index local 'opcode'`; the 4 outputs that were written run but do not reproduce the original's output (diverged)"
+    },
+    {
+     "id": "vm",
+     "configs": [
+      "default",
+      "noconstants"
+     ],
+     "status": "open",
+     "summary": "the outputs are IronBrew-style VMs; identified, not recovered"
+    }
+   ],
+   "assumptions": [
+    "The relative-require resolution of the driver (every module directory tried when a tail call hides the caller) is ours; it was checked on the one build that completes"
+   ],
+   "support": "identification-only"
+  },
+  {
+   "id": "realobfuscator",
+   "name": "RealObfuscator",
+   "kind": "open-source",
+   "sources": [
+    "https://github.com/linkoro57/RealObfuscator"
+   ],
+   "researchedFrom": [
+    "README, Cargo.toml and docs read as text; the 166 crates were downloaded with `cargo vendor` (no build script of theirs ran on the host), the tool was built offline in the sandbox and run only there (gen_realobf.py)"
+   ],
+   "versions": [],
+   "improvements": [
+    {
+     "id": "luau-generalized-iteration",
+     "summary": "the sandbox walks `for k, v in t do` over a table without __iter (Luau); the lightweight mode's eager-decoding loop made the whole evaluation fail before",
+     "files": [
+      "src/sandbox/interp.js"
+     ],
+     "tests": [
+      "tests/formats-ix.test.mjs: sandbox: Luau's generalized iteration"
+     ]
+    },
+    {
+     "id": "key-constants",
+     "summary": "a number held by a randomly named local is an obfuscator's key and goes where it is used; `(bit32.op(...) + k) - k` is the bit32 result",
+     "files": [
+      "src/passes/simplify.js",
+      "src/passes/fold.js"
+     ],
+     "tests": [
+      "tests/formats-ix.test.mjs: fold"
+     ]
+    },
+    {
+     "id": "vm-pool",
+     "summary": "a VM build is recognised by its pool of dozens of encoded records and flagged as not rebuilt",
+     "files": [
+      "src/detect/detect.js"
+     ],
+     "tests": [
+      "tests/formats-ix.test.mjs: detection"
+     ]
+    }
+   ],
+   "failurePatterns": [
+    {
+     "id": "vm",
+     "configs": [
+      "vm",
+      "vm-max",
+      "vm-cached"
+     ],
+     "status": "open",
+     "summary": "register bytecode with shuffled records, opcode aliases and lazy constants: identified, not recovered"
+    },
+    {
+     "id": "vm-heuristic",
+     "configs": [
+      "lightweight (large programs)"
+     ],
+     "status": "known risk",
+     "summary": "the VM rule counts records (40 or more in a build over 20 kB); a lightweight build of a program with that many strings would be flagged as a VM although it is recovered"
+    }
+   ],
+   "assumptions": [
+    "Version 2.2.1 (revision 9ec569f) only; the repository's earlier Python versions were not run",
+    "Behaviour checked on Luau; fixtures are not committed (GPL), so the measurements reproduce only with the same build"
+   ],
+   "support": "identification-only"
+  },
+  {
+   "id": "zynaa",
+   "name": "zynaa/LuaObfuscator",
+   "kind": "open-source",
+   "sources": [
+    "https://github.com/zynaa/LuaObfuscator"
+   ],
+   "researchedFrom": [
+    "README and the Python source read as text; both commits run through gen_zynaa.py in sandbox_run.py with the random generator seeded and the clipboard switched off"
+   ],
+   "versions": [],
+   "improvements": [
+    {
+     "id": "bit-library",
+     "summary": "a decoder written for LuaJIT / Garry's Mod (`bit.bxor`) is evaluated: when the Luau sandbox lacks `bit` the run is repeated as LuaJIT",
+     "files": [
+      "src/passes/evaluate.js"
+     ],
+     "tests": [
+      "tests/formats-ix.test.mjs: evaluate"
+     ]
+    },
+    {
+     "id": "global-table-alias",
+     "summary": "`local G = _G` read only as `G.name` / `G[\"name\"]` is the global itself (the tool routes every global through such an alias and spells the names with its decoder)",
+     "files": [
+      "src/passes/simplify.js"
+     ],
+     "tests": [
+      "data/research/format-notes.json (covered by the zynaa fixtures when present)"
+     ]
+    }
+   ],
+   "failurePatterns": [
+    {
+     "id": "invalid-output",
+     "configs": [
+      "level-0",
+      "level-1",
+      "level-2",
+      "level-3"
+     ],
+     "status": "tool defect",
+     "summary": "on LuaJIT s03 is rejected as invalid syntax (\"')' expected\") and s05 stops with a runtime error (\"arithmetic on a nil value\") after printing part of its output, at every level, in both commits; the fixtures are recorded as errored in their manifests and are not counted as recovery failures"
+    },
+    {
+     "id": "tool-strip-bug",
+     "configs": [
+      "level-0",
+      "level-1",
+      "level-2",
+      "level-3"
+     ],
+     "status": "tool defect",
+     "summary": "s06: the tool's string stripper aborts (\"Failed to correctly strip strings\"); no output was written"
+    },
+    {
+     "id": "roblox-globals",
+     "configs": [
+      "level-1",
+      "level-2",
+      "level-3"
+     ],
+     "status": "open",
+     "summary": "s07 (Roblox-style): the sandbox evaluation fails because `game` is not defined in it, so the decoded strings of that sample are not read"
+    }
+   ],
+   "assumptions": [
+    "The tool was written for Garry's Mod; Roblox-style samples are outside what it was made for"
+   ],
+   "support": "identification-only"
+  },
+  {
+   "id": "luarmor",
+   "name": "Luarmor loader",
+   "kind": "service",
+   "sources": [],
+   "researchedFrom": [
+    "seven files of the public collection's Unknown folder read as text; nothing fetched"
+   ],
+   "versions": [],
+   "improvements": [
+    {
+     "id": "classification",
+     "summary": "scripts that only download and run code are classified as remote loaders and the report says the program is not in the file and is not fetched; Luarmor's bootstrap is identified from its header comment and its cdn host",
+     "files": [
+      "src/detect/classify.js",
+      "src/detect/detect.js"
+     ],
+     "tests": [
+      "tests/formats-ix.test.mjs: classes",
+      "tests/formats-ix.test.mjs: detection"
+     ]
+    }
+   ],
+   "failurePatterns": [
+    {
+     "id": "remote-program",
+     "configs": [
+      "bootstrap"
+     ],
+     "status": "not recoverable from the file",
+     "summary": "the protected program is downloaded from the service when the script runs; it is not in the file, and getting it past the service's access control is not something this tool does"
+    }
+   ],
+   "assumptions": [
+    "The bootstrap shape was read on seven files; other Luarmor builds may differ"
+   ],
+   "support": "identification-only"
+  }
+ ],
+ "collection": {
+  "source": "https://github.com/vyxonq-dev/obfuscator-samples",
+  "commit": "82e582fcdd78948212192e1ceb748769ef3e8494",
+  "files": 748,
+  "folders": [
+   {
+    "label": "AztupBrew",
+    "files": 3,
+    "parsed": 3,
+    "expected": "aztupbrew",
+    "identified": 0,
+    "unidentified": 0,
+    "classOfUnidentified": null
+   },
+   {
+    "label": "Base64Payload",
+    "files": 4,
+    "parsed": 4,
+    "expected": "loaders",
+    "identified": 0,
+    "unidentified": 4,
+    "classOfUnidentified": null
+   },
+   {
+    "label": "Boronide",
+    "files": 24,
+    "parsed": 24,
+    "expected": "boronide",
+    "identified": 22,
+    "unidentified": 0,
+    "classOfUnidentified": null
+   },
+   {
+    "label": "IronBrew1",
+    "files": 25,
+    "parsed": 25,
+    "expected": "ironbrew1",
+    "identified": 24,
+    "unidentified": 1,
+    "classOfUnidentified": null
+   },
+   {
+    "label": "IronBrew2",
+    "files": 8,
+    "parsed": 8,
+    "expected": "ironbrew2",
+    "identified": 7,
+    "unidentified": 0,
+    "classOfUnidentified": null
+   },
+   {
+    "label": "LuaObfuscator",
+    "files": 5,
+    "parsed": 5,
+    "expected": "luaobfuscator",
+    "identified": 5,
+    "unidentified": 0,
+    "classOfUnidentified": null
+   },
+   {
+    "label": "Luraph",
+    "files": 218,
+    "parsed": 217,
+    "expected": "luraph",
+    "identified": 195,
+    "unidentified": 15,
+    "classOfUnidentified": null
+   },
+   {
+    "label": "MinifiedLua",
+    "files": 23,
+    "parsed": 23,
+    "expected": "unlabelled",
+    "identified": 0,
+    "unidentified": 18,
+    "classOfUnidentified": null
+   },
+   {
+    "label": "MoonSecV2",
+    "files": 26,
+    "parsed": 26,
+    "expected": "moonsec_v2",
+    "identified": 21,
+    "unidentified": 5,
+    "classOfUnidentified": null
+   },
+   {
+    "label": "MoonSecV3",
+    "files": 23,
+    "parsed": 23,
+    "expected": "moonsec_v3",
+    "identified": 23,
+    "unidentified": 0,
+    "classOfUnidentified": null
+   },
+   {
+    "label": "MoonVeil",
+    "files": 76,
+    "parsed": 76,
+    "expected": "moonveil",
+    "identified": 76,
+    "unidentified": 0,
+    "classOfUnidentified": null
+   },
+   {
+    "label": "PSU",
+    "files": 8,
+    "parsed": 8,
+    "expected": "psu",
+    "identified": 8,
+    "unidentified": 0,
+    "classOfUnidentified": null
+   },
+   {
+    "label": "Prometheus",
+    "files": 238,
+    "parsed": 236,
+    "expected": "prometheus",
+    "identified": 230,
+    "unidentified": 8,
+    "classOfUnidentified": null
+   },
+   {
+    "label": "SynapseXen",
+    "files": 5,
+    "parsed": 5,
+    "expected": "synapse_xen",
+    "identified": 0,
+    "unidentified": 3,
+    "classOfUnidentified": null
+   },
+   {
+    "label": "Unknown",
+    "files": 24,
+    "parsed": 24,
+    "expected": "unlabelled",
+    "identified": 0,
+    "unidentified": 20,
+    "classOfUnidentified": null
+   },
+   {
+    "label": "VM Compressed",
+    "files": 23,
+    "parsed": 23,
+    "expected": "unlabelled",
+    "identified": 0,
+    "unidentified": 21,
+    "classOfUnidentified": null
+   },
+   {
+    "label": "wYnFuscate",
+    "files": 15,
+    "parsed": 15,
+    "expected": "wynfuscate",
+    "identified": 15,
+    "unidentified": 0,
+    "classOfUnidentified": null
+   }
+  ]
+ },
+ "backlog": [
+  {
+   "id": "ix-unknown-collection",
+   "item": "Unknown / VM Compressed / MinifiedLua folders of the public collection",
+   "state": "classified",
+   "detail": "every file now has a class (remote loader, remote-library script, plain or minified script, numeric-array loader, Luarmor bootstrap, credit entry ...) instead of 'unidentified'; see data/research/corpus-eval.json classOfUnidentified"
+  },
+  {
+   "id": "ix-numeric-array-loader",
+   "item": "A program stored as an array of numbers and run through a local alias of loadstring",
+   "state": "recovered",
+   "detail": "layers.js accepts an alias of loadstring and an indirect final call (`if type(f) == 'function' then ... P() end`); the payload of the sampled file is itself a remote loader"
+  },
+  {
+   "id": "ix-nested-flattened",
+   "item": "Flattened functions inside other function bodies (KNOWN-ISSUES 27)",
+   "state": "recovered for the shapes seen",
+   "detail": "Obscura level-2/3 and LuaXen AST stage; MoonVeil's nested case is unchanged"
+  },
+  {
+   "id": "ix-luraph-no-banner",
+   "item": "Luraph files without a version banner (15 of 218)",
+   "state": "classified, not identified",
+   "detail": "12 of the 15 are classified as minified scripts and 2 as plain scripts, which supports the earlier finding that some files filed under Luraph are other scripts; no new Luraph signature was added"
+  },
+  {
+   "id": "ix-vm-families",
+   "item": "Per-build bytecode VMs (Obscura VM, Zartha, FusGato, IronBrikked, RealObfuscator vm)",
+   "state": "identified, not recovered",
+   "detail": "each is flagged unrecoverable so that the report cannot say 'recovered'; none has a lifter"
+  }
+ ]
+}

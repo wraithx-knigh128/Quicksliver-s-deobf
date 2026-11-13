@@ -112,6 +112,40 @@ function propagate(chunk) {
   return replace.size;
 }
 
+// ---- the global table under a local name ---------------------------------------------------------------
+
+const LUA_KEYWORDS = new Set(['and', 'break', 'do', 'else', 'elseif', 'end', 'false', 'for', 'function', 'goto', 'if', 'in', 'local', 'nil', 'not', 'or', 'repeat', 'return', 'then', 'true', 'until', 'while', 'continue']);
+
+/**
+ * `local G = _G` (or getfenv()) read only as `G.name` / `G["name"]`: the reads are the globals themselves, `print` for `G.print`. Obfuscators route every global through such an alias,
+ * and spell the names with string decoders. Done only when every read has that shape and no local of the same name could capture the global.
+ */
+function inlineGlobalAlias(chunk) {
+  const info = analyze(chunk);
+  const localNames = new Set(info.vars.filter((v) => !v.isGlobal).map((v) => v.name));
+  const parentOf = new Map();
+  walk(chunk, (n, parent) => { if (n.type === 'Name') parentOf.set(n, parent); });
+  const replace = new Map();
+  for (const v of info.vars) {
+    if (v.kind !== 'local' || v.writes.length || !v.hasInit || !v.init || !v.reads.length) continue;
+    const init = v.init;
+    if (init.type !== 'Name' || init.name !== '_G') continue;
+    const g = info.varOf.get(init);
+    if (!g || !g.isGlobal || g.writes.length) continue;
+    const uses = [];
+    let ok = true;
+    for (const r of v.reads) {
+      const p = parentOf.get(r);
+      if (!p || p.type !== 'Index' || p.obj !== r || p.key.type !== 'String' || !/^[A-Za-z_][A-Za-z0-9_]*$/.test(p.key.value) || LUA_KEYWORDS.has(p.key.value) || localNames.has(p.key.value)) { ok = false; break; }
+      uses.push(p);
+    }
+    if (ok) for (const p of uses) replace.set(p, p.key.value);
+  }
+  if (!replace.size) return 0;
+  transform(chunk, { expr(e) { return replace.has(e) ? { type: 'Name', name: replace.get(e) } : undefined; } });
+  return replace.size;
+}
+
 // ---- reduce ----------------------------------------------------------------------
 
 function namesDeclared(body) {
@@ -648,7 +682,7 @@ export function simplifyPass(chunk, ctx = {}) {
   for (let round = 0; round < 24; round++) {
     const k = sinkDeclarations(chunk) + sinkIntoBlocks(chunk);
     const t = inlineConstTables(chunk);
-    const p = propagate(chunk);
+    const p = propagate(chunk) + inlineGlobalAlias(chunk);
     const r = reduce(chunk);
     const d = removeDead(chunk, deadState);
     const u = unrollOnce(chunk);

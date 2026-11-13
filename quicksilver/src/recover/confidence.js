@@ -68,6 +68,8 @@ export function assessConfidence(before, output, ctx) {
   }
   if ((after.metrics.mangledRatio || 0) > 0.6 && (before.metrics.mangledRatio || 0) > 0.6) note(-0.08, 'Most identifiers are still machine generated (renaming is off or found no better names).');
 
+  // A script that only downloads and runs code has no program in it: whatever was done to the file, what it runs is somewhere else.
+  if ((before.classes || []).some((c) => c.id === 'remote-loader' || c.id === 'cached-remote-loader')) note(-0.55, 'The program this script runs is downloaded when it runs; it is not in this file, so nothing of it was recovered.');
   // What the passes themselves reported as left: each is a place where the control flow or a value is still the obfuscator's.
   const residual = ctx.adaptive && ctx.adaptive.residual ? ctx.adaptive.residual.length : 0;
   if (residual) note(-Math.min(0.5, 0.05 * residual), `${residual} place(s) were found and could not be resolved (listed in the report).`);

@@ -71,9 +71,16 @@ export function buildReport({ detection, steps, confidence, adaptive }) {
   const families = (detection.families || []).filter((f) => f.confidence >= 0.5);
 
   const lines = [START];
-  lines.push(...wrap(`Result: ${LABEL[level] || LABEL.none} (confidence ${level}, ${Number(confidence.score || 0).toFixed(2)}). This is a reconstruction, not the original source: names, comments and layout are not recovered.`, '-- ', '--   '));
+  const remoteOnly = (detection.classes || []).some((c) => c.id === 'remote-loader' || c.id === 'cached-remote-loader');
+  lines.push(...wrap(`Result: ${remoteOnly ? 'THE PROGRAM IS NOT IN THIS FILE' : (LABEL[level] || LABEL.none)} (confidence ${level}, ${Number(confidence.score || 0).toFixed(2)}). This is a reconstruction, not the original source: names, comments and layout are not recovered.`, '-- ', '--   '));
   if (families.length) {
     lines.push(...wrap(`Recognised from the structure of the code (a header comment is not taken as proof): ${families.map((f) => `${f.name}${f.version ? ` ${f.version}` : ''}`).join(', ')}.`, '-- ', '--   '));
+  }
+  else if ((detection.classes || []).length && !['plain-script', 'known-tool'].includes(detection.classes[0].id)) {
+    // no rule knows the tool: say what the script is made of, and what that means for what could be recovered
+    const c = detection.classes[0];
+    lines.push(...wrap(`No known tool matches; by what it is made of this is ${c.label}.${c.note ? ` ${c.note}` : ''}`, '-- ', '--   '));
+    for (const e of (c.evidence || []).slice(0, 4)) lines.push(...wrap(`* ${e}`, '--   ', '--     '));
   }
   if (applied.length) {
     lines.push(...wrap(`Done: ${applied.slice(0, 8).map((s) => `${s.id} (${s.changed})`).join(', ')}${applied.length > 8 ? `, and ${applied.length - 8} more` : ''}.`, '-- ', '--   '));

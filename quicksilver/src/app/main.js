@@ -15,7 +15,7 @@ import { DiffView } from './diffview.js';
 import { TreeView } from './tree.js';
 import { loadSettings, saveSettings, recoverOptions, indentString, DEFAULTS } from './settings.js';
 import { LicenseState, showLicenseDialog } from './license-ui.js';
-import { loadCompat, CompatDashboard } from './compat.js';
+import { loadCompat, loadFormatDb, CompatDashboard } from './compat.js';
 import { detectionView, analysisView, recoverySummary, detectionSummary, statusBadge, STATUS_LABEL } from './views.js';
 import { makeZip } from './zip.js';
 import { showHelp } from './help.js';
@@ -1695,7 +1695,7 @@ async function start() {
   try {
     compat = await loadCompat();
     compatById = new Map(compat.families.map((f) => [f.id, f]));
-    dashboard = new CompatDashboard(compat);
+    dashboard = new CompatDashboard(compat, { db: await loadFormatDb() });
     replace(views.compat, dashboard.root);
     setCount('compat', String(compat.families.length));
     renderSidebar();

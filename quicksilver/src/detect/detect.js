@@ -216,6 +216,10 @@ const RULES = {
   luraph: [
     rule('banner', 'banner', 0.97, (c) => { const m = /This file was (?:protected|generated) using Luraph Obfuscator v?([0-9][0-9.]*)/i.exec(c.src); return m ? { text: `Luraph banner (v${m[1]})`, version: m[1] } : false; }),
     rule('mention', 'banner', 0.5, (c) => /lura\.ph/i.test(c.src) && 'mentions lura.ph'),
+    // the macro names Luraph defines for its own build flags (read on files of the public collection that carry no banner)
+    rule('macros', 'structure', 0.85, (c) => /\bLPH_(?:NO_VIRTUALIZE|OBFUSCATED|JIT|ENCSTR|CRASH|NO_UPVALUES|SKIP)\b/.test(c.src) && 'the build-flag macros Luraph defines (LPH_NO_VIRTUALIZE, LPH_OBFUSCATED, ...)'),
+    // the shape of a Luraph 14.x script without its banner: one `return({ name = function(...) ... })` table of VM handlers, and number literals spelled with capital 0X / 0B prefixes and underscores
+    rule('handler-table', 'structure', 0.8, (c) => c.src.length > 20000 && /^(?:\s*--[^\n]*\n|\s)*return\s*\(\s*\{\s*[A-Za-z_][A-Za-z0-9_]{0,3}\s*=/.test(c.src.slice(0, 600)) && (c.src.slice(0, 40000).match(/\b0[XB][0-9A-Fa-f_]+/g) || []).length >= 20 && 'a returned table of short-named handler functions with number literals spelled 0X.. / 0B.. (the shape of a Luraph 14.x VM)', true),
   ],
   moonsec_v3: [
     rule('banner', 'banner', 0.97, (c) => { const m = /This file was protected with MoonSec V(\d)/i.exec(c.src); return m ? { text: `MoonSec banner (V${m[1]}): a VM loader (all 24 scripts of the public collection were)`, version: `V${m[1]}` } : false; }, true),
@@ -301,6 +305,8 @@ const RULES = {
     rule('banner', 'banner', 0.97, (c) => { const m = /^--!nocheck\r?\n--!nolint\r?\n-- Obscura( VM)? \[([^\]\n]{1,24})\]/.exec(c.src.slice(0, 200)); return m ? { text: `Obscura header${m[1] ? ' (VM build)' : ''}, build ${m[2]}` } : false; }),
     // the XOR fallback its VM and its string decoder carry, written the same way in every revision read
     rule('bxor-fallback', 'structure', 0.8, (c) => c.src.includes('(bit32 and bit32.bxor) or (bit and bit.bxor) or (function() local function _x(a,b) local r,p=0,1 for _=1,8 do local ab,bb=a%2,b%2') && 'the bit32.bxor / bit.bxor / arithmetic fallback chain written on one line'),
+    // the string cipher of levels 1 to 3 and of the lightweight mode: text rebuilt with string.char(bit32.bxor(...)) by a decoder the sandbox has to run
+    rule('encrypt-strings', 'structure', 0.5, (c) => /^--!nocheck\r?\n--!nolint\r?\n-- Obscura \[/.test(c.src.slice(0, 200)) && /string\.char\(bit32\.bxor\(/.test(c.src) && 'strings rebuilt with string.char(bit32.bxor(...)) by a decoder function'),
     rule('vm', 'structure', 0.9, (c) => /^--!nocheck\r?\n--!nolint\r?\n-- Obscura VM \[/.test(c.src.slice(0, 200)) && 'the VM build header: the program is bytecode for an interpreter generated into the script', true),
   ],
   realobfuscator: [
@@ -554,6 +560,7 @@ export function detect(source, knownAst = null) {
     if (!known) result.traits.push({ id: 'vendor-banner', text: `The header comment names a tool: "${banner}". No rule knows it, so the script is analysed by what it is made of.` });
   }
   result.metrics.bytes = source.length;
-  result.classes = classify(source, ast, result);
+  // a class is an addition to the verdict: if classifying a strange tree fails, the detection stands without it
+  try { result.classes = classify(source, ast, result); } catch { result.classes = []; }
   return result;
 }

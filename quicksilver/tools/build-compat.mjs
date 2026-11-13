@@ -88,7 +88,8 @@ const families = familyRegistry().map((f) => {
   const vrows = scorecard.results.filter((r) => r.tool === f.id && r.version);
   for (const version of [...new Set(vrows.map((r) => r.version))]) {
     const rs = vrows.filter((r) => r.version === version);
-    const meta = JSON.parse(fs.readFileSync(path.join(root, `tests/corpus/obfuscated/${f.id}-${version}/manifest.json`), 'utf8'));
+    const metaPath = ['obfuscated', 'obfuscated-local'].map((d) => path.join(root, `tests/corpus/${d}/${f.id}-${version}/manifest.json`)).find((p) => fs.existsSync(p));
+    const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
     const usable = rs.filter((r) => r.fidelityAfter != null);
     const checked = rs.filter((r) => r.behaviorOriginal != null);
     const configs = [...new Set(rs.map((r) => r.config))].map((config) => {

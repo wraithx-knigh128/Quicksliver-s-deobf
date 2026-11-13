@@ -397,15 +397,25 @@ function evaluateOnce(chunk, ctx = {}) {
   body.push({ type: 'Return', values: [rn('__qs_r')] });
   const synthetic = { type: 'Chunk', body, endComments: [], features: new Set() };
 
+  // A decoder written for LuaJIT or Garry's Mod asks for the `bit` library, which Luau does not have (it has bit32): when the run fails on exactly that, it is
+  // run again as LuaJIT, where `bit` exists. The dialect only decides which libraries are present.
+  let dialect = opts.dialect || 'luau';
   const execute = (numMode) => {
-    const m = createMachine({ fuel: opts.fuel ?? 60_000_000, timeMs: opts.timeMs ?? 10_000, dialect: opts.dialect || 'luau', numMode });
+    const m = createMachine({ fuel: opts.fuel ?? 60_000_000, timeMs: opts.timeMs ?? 10_000, dialect, numMode });
     const t = callValue(m, compileAst(m, synthetic, 'decoder', m.globals), [], '')[0];
     return { table: t, loss: m.precisionLoss };
   };
   let table;
   let precisionLoss = 0;
   try {
-    ({ table, loss: precisionLoss } = execute('watch'));
+    try {
+      ({ table, loss: precisionLoss } = execute('watch'));
+    } catch (e) {
+      const c0 = classify(e);
+      let mentionsBit = /field 'bit'|global 'bit'/.test(String(c0.error || ''));
+      if (!mentionsBit && c0.kind === 'lua') walk(chunk, (n) => { if ((n.type === 'Name' && n.name === 'bit') || (n.type === 'String' && n.value === 'bit') || (n.type === 'Index' && n.key.type === 'String' && n.key.value === 'bit')) mentionsBit = true; return undefined; });
+      if (dialect === 'luau' && mentionsBit) { dialect = 'luajit'; ({ table, loss: precisionLoss } = execute('watch')); } else throw e;
+    }
   } catch (e) {
     const c = classify(e);
     result.error = c.error || 'evaluation failed';
