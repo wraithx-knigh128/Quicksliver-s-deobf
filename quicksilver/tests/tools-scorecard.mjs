@@ -83,7 +83,8 @@ for (const [tool, dir] of tools) {
       entry.unresolved = r.report ? r.report.unresolved.length : null;       // what the engine itself says is left (completeness needs both)
       entry.level = r.confidence ? r.confidence.level : null;
       // a virtual machine that was read but not lifted: what its data tells (see src/recover/vmprofile.js)
-      if (r.vm) {
+      if (r.vm && r.vm.lifted) entry.vmLifted = true;
+      else if (r.vm) {
         let recall = null;
         try { recall = vmConstantsRecall(original, r.vm.constants); } catch { recall = null; }
         entry.vm = { functions: r.vm.functions.length, bytes: r.vm.instructionBytes, constants: r.vm.constants ? r.vm.constants.length : null, hardened: r.vm.hardened, constantsRecall: recall };

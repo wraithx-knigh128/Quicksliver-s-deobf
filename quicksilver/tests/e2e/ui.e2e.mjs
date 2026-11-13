@@ -558,8 +558,8 @@ const WORKFLOW = [
     bar: [/MoonVeil 2\.1\.0/, /Confidence \d+% \((medium|low|minimal)\)/], out: [/table of lifted functions|MoonVeil/], notBar: [/\(high\)/] },
   { name: 'SnowVeil v1 (local sample, not stored)', file: path.join(root, 'local/snowveil/sample2.lua'), optional: true,
     bar: [/SnowVeil 1/, /Still protected by a virtual machine/], out: [/not recovered|still present/] },
-  { name: 'Obscura 1.1.0 VM build (committed fixture): identified, and reported as not recovered', file: path.join(corpus, 'obfuscated/obscura-1.1.0/s01_minify_basic__vm.lua'),
-    bar: [/Obscura/, /Confidence \d+% \((low|minimal)\)/], out: [/QuickSilver recovery report/, /Obscura/] },
+  { name: 'Obscura 1.1.0 plain VM build (committed fixture): without the sandbox it is profiled and the page offers the sandbox', file: path.join(corpus, 'obfuscated/obscura-1.1.0/s01_minify_basic__vm.lua'),
+    bar: [/Obscura/, /Recover with sandbox/], out: [/NOT lifted back to source/, /switch on sandboxed evaluation/] },
   { name: 'LuaXen AST stage (committed fixture): numbers evaluated and the state loops rebuilt without the sandbox', file: path.join(corpus, 'obfuscated/luaxen/s02_renamed_vars__ast.lua'),
     bar: [/LuaXen/], out: [/addItem/, /totalWeight/], notOut: [/while 0\.\d+ do/, /state ==/] },
   { name: 'a script that only downloads its program (written for the tests): the page says the program is not in the file', file: path.join(corpus, 'classes/remote-loader.lua'),
@@ -586,6 +586,7 @@ for (const w of WORKFLOW) {
 
 for (const w of [
   { name: 'Obscura 1.1.0 level 3', file: 'obfuscated/obscura-1.1.0/s03_encoded_strings__level-3.lua', before: /Sandboxed evaluation is off|sandboxed evaluation is not enabled/, out: /Hello, QuickSilver!/, notOut: /getgenv|CFF Error|math\.floor\(\d+\)/ },
+  { name: 'Obscura 1.1.0 plain VM build', file: 'obfuscated/obscura-1.1.0/s01_minify_basic__vm.lua', before: /the constants are encrypted; switch on sandboxed evaluation/, out: /lifted back to source from its bytecode[\s\S]*"primes: "[\s\S]*gcd\(84, 36\)/, notOut: /NOT lifted|Obscura VM \[/ },
   { name: 'Obscura 1.1.0 hardened VM build', file: 'obfuscated/obscura-1.1.0/s01_minify_basic__vm-max.lua', before: /the constants are encrypted; switch on sandboxed evaluation/, out: /Virtual machine, NOT lifted back to source[\s\S]*"primes: "/, notOut: /the constants are encrypted/, page: /Virtual machine \(not lifted\)[\s\S]*Strings the program uses/ },
   { name: 'a program stored as an array of numbers', file: 'classes/numeric-array-loader.lua', before: /loader whose text is computed/, out: /hello from the payload/, notOut: /loader whose text is computed/ },
   { name: 'a packed script', file: 'obfuscated/mixed/s03_encoded_strings__hercules-light+base64.lua', before: /loader whose text is computed/, out: /Hello, QuickSilver!/, notOut: /loader whose text is computed/ },

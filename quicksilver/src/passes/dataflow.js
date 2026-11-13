@@ -605,7 +605,9 @@ function forwardTemps(stmts, ctx) {
     if (effectBefore && !isTrivialValue(value, v)) continue;
     if (replaceNode(b, use.node, value)) {
       info.varOf.delete?.(use.node);
-      stmts.splice(i, 1);
+      // the declaration stays when the variable is still written or read somewhere else (the next statement may assign it again): only its first value was forwarded
+      if (isLocal && (x.writes.length > 0 || x.reads.length > 1)) a.values = [];
+      else stmts.splice(i, 1);
       changed++;
       i = Math.max(-1, i - 2);
     }

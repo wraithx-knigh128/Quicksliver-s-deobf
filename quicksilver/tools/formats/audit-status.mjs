@@ -21,7 +21,8 @@ const mean = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : nu
 
 // target -> the project in the database, a filter on configs, the modules a recovery of it needs, and the KNOWN-ISSUES rows that name it
 const TARGETS = [
-  { label: 'Obscura, VM modes (vm, vm-cached, vm-max)', project: 'obscura', config: /^vm/, code: ['src/recover/obscura.js', 'src/recover/vmprofile.js'], rows: [28, 24] },
+  { label: 'Obscura, plain VM (vm) \u2014 lifted since Prompt XI', project: 'obscura', config: /^vm$/, code: ['src/recover/obscura-vm.js', 'src/recover/vmprofile.js'], rows: [37, 43, 44] },
+  { label: 'Obscura, hardened VM (vm-max, vm-cached)', project: 'obscura', config: /^vm-/, code: ['src/recover/vmprofile.js'], rows: [37, 43] },
   { label: 'Obscura, other modes (lightweight, level-1..3)', project: 'obscura', config: /^(?!vm)/, code: ['src/recover/obscura.js', 'src/adaptive/strategies/dispatch.js'], rows: [27, 33] },
   { label: 'RealObfuscator (lightweight, native, vm)', project: 'realobfuscator', code: ['src/detect/families.js'], rows: [24, 31] },
   { label: 'XFuscator (character / constant recovery)', project: 'xfuscator', code: ['src/recover/xfuscator.js'], rows: [29, 33] },

@@ -42,6 +42,10 @@ function describeVm(vm) {
   const bits = [];
   if (fns.length) bits.push(`${plural(fns.length, 'function')} with ${plural(vm.instructionBytes, 'byte')} of instructions`);
   if (vm.constants) bits.push(`${plural(vm.constants.length, 'constant')} read${vm.hardened ? ' from the keyed function records' : ''}`);
+  if (vm.lifted) {
+    lines.push(...wrap(`Virtual machine, lifted back to source from its bytecode (${bits.join('; ')}). Names and layout are not recovered; the control flow and the expressions were rebuilt by the Lua 5.1 decompiler from the instructions this build's own interpreter defines.`, '-- ', '--   '));
+    return lines;
+  }
   lines.push(...wrap(`Virtual machine, NOT lifted back to source (profile of its data${vm.hardened ? ', hardened build' : ''}): ${bits.join('; ') || 'the data was found'}. Control flow, locals and expressions are not recovered.`, '-- ', '--   '));
   const shown = (vm.strings || []).filter((x) => x.length >= 3).slice(0, 8).map((x) => JSON.stringify(x.length > 40 ? `${x.slice(0, 37)}...` : x));
   if (shown.length) lines.push(...wrap(`Constants it uses: ${shown.join(', ')}.`, '--   ', '--     '));

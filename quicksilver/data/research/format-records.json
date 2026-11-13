@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-11-13T13:13:29.089Z",
+ "generatedAt": "2026-11-13T14:19:31.172Z",
  "engine": "src/recover/pipeline.js",
  "records": [
   {
@@ -89,14 +89,14 @@
    "versionMatches": true,
    "ok": true,
    "confidence": {
-    "score": 0.6,
+    "score": 0.7,
     "level": "medium"
    },
    "steps": [
     {
      "id": "fold",
      "status": "applied",
-     "changed": 944
+     "changed": 936
     },
     {
      "id": "moonveil.constants",
@@ -120,35 +120,55 @@
      "changed": 202
     },
     {
+     "id": "moonveil.join",
+     "status": "applied",
+     "changed": 30
+    },
+    {
      "id": "simplify",
      "status": "applied",
-     "changed": 111
+     "changed": 108
     },
     {
      "id": "dataflow",
      "status": "applied",
-     "changed": 455
+     "changed": 397
     },
     {
      "id": "idioms.whiles",
      "status": "applied",
-     "changed": 11
+     "changed": 7
     },
     {
      "id": "evaluate",
      "status": "skipped",
      "changed": 0,
-     "why": "no top-level definitions"
+     "why": "no decoder-like function calls with constant arguments"
     },
     {
      "id": "webs",
      "status": "applied",
-     "changed": 122
+     "changed": 280
     },
     {
      "id": "idioms.shortcircuit",
      "status": "applied",
-     "changed": 16
+     "changed": 14
+    },
+    {
+     "id": "moonveil.unbox",
+     "status": "applied",
+     "changed": 209
+    },
+    {
+     "id": "stable",
+     "status": "applied",
+     "changed": 138
+    },
+    {
+     "id": "idioms.nil",
+     "status": "applied",
+     "changed": 1
     },
     {
      "id": "varargs",
@@ -158,15 +178,20 @@
     {
      "id": "rename",
      "status": "applied",
-     "changed": 447
+     "changed": 342
+    },
+    {
+     "id": "idioms.functions",
+     "status": "applied",
+     "changed": 3
     }
    ],
    "unresolved": 0,
-   "outputBytes": 52729,
+   "outputBytes": 45109,
    "reference": {
     "literals": 81,
     "found": 77,
-    "fidelity": 0.207
+    "fidelity": 0.338
    }
   },
   {
@@ -220,14 +245,20 @@
      "changed": 333
     },
     {
+     "id": "moonveil.join",
+     "status": "skipped",
+     "changed": 0,
+     "why": "the factory k does something else than return a closure"
+    },
+    {
      "id": "simplify",
      "status": "applied",
-     "changed": 198
+     "changed": 216
     },
     {
      "id": "dataflow",
      "status": "applied",
-     "changed": 692
+     "changed": 696
     },
     {
      "id": "idioms.whiles",
@@ -243,7 +274,7 @@
     {
      "id": "webs",
      "status": "applied",
-     "changed": 137
+     "changed": 149
     },
     {
      "id": "idioms.shortcircuit",
@@ -258,11 +289,11 @@
     {
      "id": "rename",
      "status": "applied",
-     "changed": 823
+     "changed": 852
     }
    ],
    "unresolved": 0,
-   "outputBytes": 75414
+   "outputBytes": 76553
   },
   {
    "id": "moonveil-2.1.0-sample7",
@@ -315,9 +346,15 @@
      "changed": 300
     },
     {
+     "id": "moonveil.join",
+     "status": "skipped",
+     "changed": 0,
+     "why": "the factory m does something else than return a closure"
+    },
+    {
      "id": "simplify",
      "status": "applied",
-     "changed": 168
+     "changed": 177
     },
     {
      "id": "dataflow",
@@ -338,7 +375,7 @@
     {
      "id": "webs",
      "status": "applied",
-     "changed": 111
+     "changed": 121
     },
     {
      "id": "idioms.shortcircuit",
@@ -358,11 +395,11 @@
     {
      "id": "rename",
      "status": "applied",
-     "changed": 680
+     "changed": 714
     }
    ],
    "unresolved": 0,
-   "outputBytes": 65684
+   "outputBytes": 66951
   },
   {
    "id": "snowveil-1-sample2",

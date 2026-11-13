@@ -16,10 +16,10 @@ import { createMachine } from '../sandbox/sandbox.js';
 import { compileAst, callValue } from '../sandbox/interp.js';
 import { LuaTable } from '../sandbox/value.js';
 
-const unparen = (e) => (e && e.type === 'Paren' ? unparen(e.expr) : e);
+export const unparen = (e) => (e && e.type === 'Paren' ? unparen(e.expr) : e);
 
 /** The statements of the function the whole script is wrapped in (`return (function(...) ... end)(...)`), or the chunk's own. */
-function bodyOf(chunk) {
+export function bodyOf(chunk) {
   if (chunk.body.length === 1) {
     const s = chunk.body[0];
     const call = s.type === 'Return' && s.values.length === 1 ? unparen(s.values[0]) : s.type === 'CallStmt' ? s.call : null;
@@ -29,7 +29,7 @@ function bodyOf(chunk) {
   return chunk.body;
 }
 
-const fieldOf = (table, name) => table.fields.find((f) => (f.kind === 'named' && f.key === name) || (f.kind === 'keyed' && unparen(f.key).type === 'String' && unparen(f.key).value === name));
+export const fieldOf = (table, name) => table.fields.find((f) => (f.kind === 'named' && f.key === name) || (f.kind === 'keyed' && unparen(f.key).type === 'String' && unparen(f.key).value === name));
 
 /** Function records: `T[k] = { bc = {...}, np = ..., va = ..., nuv = ..., ms = ... }`. */
 function functions(body) {
@@ -59,7 +59,7 @@ function constantsTable(body) {
   return lists.length ? lists[0] : null;
 }
 
-const contains = (node, test) => { let hit = false; const visit = (n) => { if (!n || typeof n !== 'object' || hit) return; if (Array.isArray(n)) { n.forEach(visit); return; } if (test(n)) { hit = true; return; } for (const k of Object.keys(n)) if (k !== 'line' && n[k] && typeof n[k] === 'object') visit(n[k]); }; visit(node); return hit; };
+export const contains = (node, test) => { let hit = false; const visit = (n) => { if (!n || typeof n !== 'object' || hit) return; if (Array.isArray(n)) { n.forEach(visit); return; } if (test(n)) { hit = true; return; } for (const k of Object.keys(n)) if (k !== 'line' && n[k] && typeof n[k] === 'object') visit(n[k]); }; visit(node); return hit; };
 
 /**
  * The first top-level statement that holds the interpreter: a loop (`while true do`, or `while pc <= #code do` in the stack machine of the first revision) around a long chain

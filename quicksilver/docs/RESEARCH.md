@@ -360,6 +360,16 @@ generated interpreter, the rolling-XOR bytecode decode and the hardened record k
 
 **Not reachable or not done.** `kosuke14/ByteLuaObfuscator` could not be cloned (not a public repository from this environment); no other new obfuscator was found whose output is not already covered.
 
+## Prompt XI: lifting what could be lifted, joining what was never bytecode (November 2026)
+
+**Obscura plain VM, lifted.** The source of the tool (MIT, read as text) says the VM is a Lua-5.1-like register machine with boxes for captured locals, byte jumps, per-build opcode aliases and a rolling-XOR key. Nothing is a table of opcode numbers: each handler of the script's own interpreter is split into the operands it reads and a canonical body (names by first appearance, operands by first use), recognised against 46 templates, decoded with the script's own key, and the Lua 5.1 chunk goes to the decompiler that already reads IronBrew 2. All 13 plain builds read with no handler left over. Measured against the originals (structure / semantic / runtime): 1.1.0 vm 6%→98% / 4%→91% / 7 of 7 identical on Luau; 1.0.1 vm 3%→97% / 3%→89% / 2 of 2 judged identical (four of the six 1.0.1 outputs are wrong in the tool itself, see KNOWN-ISSUES 45). Confidence for these is high, because nothing is left unresolved and the output runs like the original; the hardened builds stay at low and say so.
+
+**MoonVeil 2.0.26 was never a bytecode VM.** The reference sat at 21% because the three-step diagnosis stopped at the wrong place: the VM reader's first check failed ("the interpreter does not have the expected shape"), but the largest "interpreter" it picked was the script's own program, a table of control-flow-flattened factories `function(ctx, cells) return function(...) ... end end` that build each other through `ctx:NAME{cells}`. `src/recover/moonveil-join.js` puts them back: the names of the table's positions are read before the builder is rewritten, every site becomes the closure of its factory (cells become the enclosing variables, `ctx._.x` the global `x`), and boxed cells that closures do not share across loop iterations become variables. Reference: structure 0.2%→67%, fidelity 21%→34%, 77 of 81 of its literals found. MoonVeil 2.1.0 is a bytecode VM again (KNOWN-ISSUES 46), so the reference-less samples are unchanged.
+
+**A generic bug found on the way.** The dataflow pass dropped the declaration of a variable whose first value it forwarded even when the next statement assigned it again, leaving an undeclared global (`value, d = Instance.new, "ScreenGui"`) in the output of every register-style recovery. It now keeps `local d`. No fixture row changed, which is why it had survived.
+
+**Not done, and why.** Hardened Obscura (four obstacles, KNOWN-ISSUES 43), Obscura 1.0.0 (a stack machine), Zartha, FusGato, IronBrikked, RealObfuscator vm (each its own format), MoonVeil 2.1.0 (reader written for 2.0.25), SnowVeil (the key stream's seed depends on probed engine answers). Luraph: structure names the era (78% leave-one-out) and not the version (37%): no change to what the report claims. No new third-party tool was run this iteration; the Obscura source was read as text.
+
 ## Technique taxonomy and what each needs
 
 | Technique | Seen in | Static recovery | Needs execution | Notes |

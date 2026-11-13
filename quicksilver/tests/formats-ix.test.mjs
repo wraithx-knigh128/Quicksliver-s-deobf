@@ -189,11 +189,15 @@ for (const [config, floor, samples] of [['level-1', 0.95, ['s01_minify_basic', '
   }
 }
 
-test('obscura VM builds are identified and reported as not recovered, and the report says so', { skip: !obscuraOk && 'no Obscura fixtures' }, () => {
-  const r = run(read(path.join(OBSCURA_DIR, 's01_minify_basic__vm.lua')));
-  assert.ok(r.detection.families.some((f) => f.id === 'obscura'));
-  assert.notEqual(r.confidence.level, 'high');
-  assert.match(r.output, /QuickSilver recovery report/);
+test('obscura VM builds: the plain build is lifted back to source (Prompt XI); the hardened builds are identified and reported as not recovered, and the report says so', { skip: !obscuraOk && 'no Obscura fixtures' }, () => {
+  const plainBuild = run(read(path.join(OBSCURA_DIR, 's01_minify_basic__vm.lua')));
+  assert.ok(plainBuild.detection.families.some((f) => f.id === 'obscura'));
+  assert.equal(plainBuild.vm.lifted, true);
+  assert.equal(plainBuild.confidence.level, 'high');
+  const hardened = run(read(path.join(OBSCURA_DIR, 's01_minify_basic__vm-max.lua')));
+  assert.ok(hardened.detection.families.some((f) => f.id === 'obscura'));
+  assert.notEqual(hardened.confidence.level, 'high');
+  assert.match(hardened.output, /QuickSilver recovery report/);
 });
 
 // ---- XFuscator ----------------------------------------------------------------------------------------------------------------------------

@@ -1,0 +1,39 @@
+{
+  "method": "leave-one-out nearest neighbour over bags of abstracted token 4-grams (first 60000 tokens, banner comment dropped); labels are the collection’s own folder names",
+  "labelledFiles": 198,
+  "exactVersion": {
+    "correct": 74,
+    "of": 198
+  },
+  "sameMajorMinor": {
+    "correct": 101,
+    "of": 198
+  },
+  "sameEra": {
+    "correct": 155,
+    "of": 198,
+    "eras": {
+      "13 and earlier": {
+        "files": 11,
+        "correct": 9
+      },
+      "14.0-14.3": {
+        "files": 36,
+        "correct": 32
+      },
+      "14.4-14.5": {
+        "files": 84,
+        "correct": 69
+      },
+      "14.6-14.9": {
+        "files": 59,
+        "correct": 40
+      },
+      "15+": {
+        "files": 8,
+        "correct": 5
+      }
+    }
+  },
+  "reading": "the era of a bannerless script can be named with leave-one-out accuracy of about 78%, its exact version cannot (about 37%): minor revisions share their templates"
+}

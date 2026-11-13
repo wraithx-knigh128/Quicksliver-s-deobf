@@ -101,19 +101,30 @@
           "tests": [
             "tests/formats-x.test.mjs: vm profile"
           ]
+        },
+        {
+          "id": "vm-lift",
+          "summary": "the plain VM build (1.0.1 and 1.1.0) is lifted back to source: every handler of the build's own interpreter is taken apart into the operands it reads and a canonical body (names by first appearance, operands by first use, so a build that shuffles its operand order writes the same text) and recognised against a template list; the program's functions are decoded with the script's own key, boxes become the variables they stand for, byte jumps become instruction jumps, and the Lua 5.1 chunk goes to the decompiler that reads IronBrew 2 and Hercules. Every one of the 13 plain builds reads completely (no handler left unrecognised); where the tool's own output is right the lifted program runs like the original on Luau (7 of 7 in 1.1.0, 2 of 2 in 1.0.1)",
+          "files": [
+            "src/recover/obscura-vm.js",
+            "src/recover/pipeline.js",
+            "src/recover/annotate.js"
+          ],
+          "tests": [
+            "tests/obscura-vm.test.mjs"
+          ]
         }
       ],
       "failurePatterns": [
         {
           "id": "vm",
           "configs": [
-            "vm",
             "vm-max",
             "vm-cached"
           ],
-          "status": "open",
-          "summary": "the VM builds keep the program as bytecode (encrypted constant pool, rolling reads) for a generated interpreter. Identified from the \"Obscura VM\" header and reported as not recovered: no lifter was written. A profile of the data IS read, without running the program: the number of functions, the bytes of instructions of each, and the decrypted constants (all three revisions, plain and hardened builds), see improvements/vm-profile",
-          "evidence": "semantic fidelity 3% before and after on all three revisions (the VM is still in the output); the report header says so; the profile reads the strings the program prints"
+          "status": "partly open",
+          "summary": "the hardened builds (vm-max, vm-cached; 1.1.0, and 1.0.1 vm-max) are profiled, not lifted: they keep instruction bytes encrypted per function record (rolling PRNG, salted with the hash of the record), choose an operand order and a byte order per operation, dispatch through a tree of range tests instead of a flat chain, and fuse several operations into one generated handler (BLOCKn). The plain vm build is lifted since Prompt XI (improvements/vm-lift)",
+          "evidence": "tests/obscura-vm.test.mjs (hardened builds are reported as not lifted); docs/AUDIT.md (vm-max, vm-cached: semantic 2% to 4%, complete 0)"
         },
         {
           "id": "names",
@@ -139,6 +150,15 @@
           ],
           "status": "tool defect",
           "summary": "Obscura 1.0.0 fails with a Lexer error on one sample (s03); recorded as tool-error in its manifest, never counted as a recovery"
+        },
+        {
+          "id": "tool-defect-1.0.1-vm",
+          "configs": [
+            "vm"
+          ],
+          "status": "tool defect",
+          "summary": "four of the six 1.0.1 VM outputs (s02, s04, s05, s06) do not behave like the original program even on the reference runtime. s05 shows why: the compiler places a numeric loop's variable one register above where the FORLOOP handler writes it (the lifted program reads an unset register), and the VM itself fails earlier with a different error. The lifted program follows the bytecode; it is not expected to match an output the tool got wrong, and those fixtures are not judged",
+          "evidence": "tests/corpus/obfuscated/obscura-1.0.1/manifest.json (behavior); tests/obscura-vm.test.mjs"
         }
       ],
       "assumptions": [
@@ -582,8 +602,20 @@
     {
       "id": "x-vm-lifter",
       "item": "A lifter that rebuilds source from Obscura VM bytecode",
-      "state": "not started",
-      "detail": "the profile reads the data; a lifter additionally needs the per-build opcode aliases and shuffled operand layouts read from the generated interpreter (they differ in every build), the rolling-XOR bytecode decode, and the hardened record keys. Zartha, FusGato and IronBrikked need the same three things for their own formats. Blocked by scope, not by a missing permission"
+      "state": "plain Obscura VM done; hardened Obscura, Zartha, FusGato, IronBrikked, RealObfuscator vm not started",
+      "detail": "the Obscura lifter reads each build's handlers from its own interpreter and decodes with its own key (src/recover/obscura-vm.js). The hardened Obscura builds additionally need: the instruction bytes opened in the sandbox (they are encrypted per record), an operand reader per byte order and offset style, the tree of range tests flattened to its leaves, and the fused BLOCK handlers split back into the operations they were made from. Zartha, FusGato and IronBrikked are different formats and need their own handler readers."
+    },
+    {
+      "id": "xi-moonveil-join",
+      "item": "MoonVeil 2.0.26: the table of factories joined into one program",
+      "state": "done for 2.0.26; 2.1.0 is a different design",
+      "detail": "2.0.26 does not keep its program as bytecode: it is a table of control-flow-flattened factories that build each other through a context object. They are now put back together (src/recover/moonveil-join.js): reference structure 0.2% -> 67%, fidelity 21% -> 34% on the one hand-made reference. 2.1.0 samples are a bytecode VM again (a serialized program run by a new interpreter whose outer function takes two parameters and whose inner takes none); the VM reader's first check, written for 2.0.25, stops there (\"the interpreter does not have the expected shape\")"
+    },
+    {
+      "id": "xi-luraph-era",
+      "item": "Luraph version from structure, without a banner",
+      "state": "measured; not in the pipeline",
+      "detail": "leave-one-out over the 198 labelled files of the public collection: the era (13 and earlier / 14.0-14.3 / 14.4-14.5 / 14.6-14.9 / 15+) is named correctly 78% of the time, the exact version 37%, the major.minor 51%. Minor revisions share their templates, so no rule can read the version reliably; the experiment is tools/research/luraph-era.mjs and its numbers data/research/luraph-era-eval.json"
     }
   ]
 }

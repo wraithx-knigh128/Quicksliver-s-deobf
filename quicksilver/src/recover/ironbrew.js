@@ -606,7 +606,7 @@ function rebuildProto(proto, handlers) {
   return cleanControlFlow(code);
 }
 
-function encode(ins) {
+export function encode(ins) {
   const op = OP51[ins.op];
   if (BX.has(ins.op)) return (op | (ins.a << 6) | (ins.b << 14)) >>> 0;
   if (SBX.has(ins.op)) return (op | (ins.a << 6) | ((ins.b + 131071) << 14)) >>> 0;
@@ -614,7 +614,7 @@ function encode(ins) {
   return (op | (ins.a << 6) | (ins.c << 14) | (ins.b << 23)) >>> 0;
 }
 
-function maxStack(code) {
+export function maxStack(code) {
   let m = 2;
   for (const ins of code) {
     const regs = [ins.a + 2];

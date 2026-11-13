@@ -23,6 +23,8 @@ import { removeAntiTamper, removeGuardFlag, undoProxifyLocals } from './promethe
 import { propagateStable } from '../passes/stable.js';
 import { buildReport, annotate, stripReport } from './annotate.js';
 import { profileVm } from './vmprofile.js';
+import { liftObscuraVm, ObscuraVmError } from './obscura-vm.js';
+import { snapshotNames, joinMoonVeil, unboxCells, JoinError } from './moonveil-join.js';
 import { removeHerculesAntiTamper, removeHerculesAntiTamperFunction, removeHerculesCoinGuard, restoreMethodSelf } from './hercules.js';
 import { uninlinePass } from '../passes/uninline.js';
 import { splitWebs } from '../passes/webs.js';
@@ -128,6 +130,26 @@ function rebuildVmify(ast, run) {
 }
 
 /**
+ * Obscura's virtual machine: the handlers the script carries say what each opcode of this build does, the program's functions are decoded with the script's own key, and the
+ * result goes through the decompiler. Needs the constants, which the profile read in the sandbox. The AST is replaced in place.
+ */
+function rebuildObscuraVm(ast, vm) {
+  if (!vm || vm.kind !== 'obscura') return { skipped: 'not an Obscura virtual machine' };
+  if (!vm.constants) return { skipped: 'the constants of the virtual machine need the sandbox' };
+  let r;
+  try { r = liftObscuraVm(ast, { constants: vm.constants }); } catch (e) {
+    if (e instanceof ObscuraVmError) return { skipped: e.message };
+    throw e;
+  }
+  const out = decompile(parseChunk(r.bytes));
+  if (out.failures.length) return { skipped: `the decompiler could not structure ${out.failures.length} function(s): ${out.failures[0]}` };
+  ast.body = out.ast.body;
+  ast.features = out.ast.features || ast.features;
+  vm.lifted = true;
+  return { changed: r.stats.instructions, ...r.stats };
+}
+
+/**
  * IronBrew 2: read the program back out of the VM's own data and decompile it. The AST is replaced in place so that
  * the ordinary passes (folding, clean-up, renaming) go on to work on the recovered program.
  */
@@ -207,9 +229,14 @@ export function recover(source, userOptions = {}) {
   let vmified = false;
   let vmTried = false;
   let vmLifted = false;
+  let mvJoined = false;
   if (detection.families.some((f) => f.id === 'ironbrew2' && f.confidence >= 0.5)) {
     // a rebuilt program has no author-written dead code to preserve
     if (run.step('ironbrew2', 'Rebuild the program from the IronBrew 2 VM data', rebuildIronBrew)) { unusedAtStart = new WeakSet(); decompiled = true; }
+  }
+
+  if (vm && vm.kind === 'obscura' && vm.constants) {
+    if (run.step('obscura.vm', 'Lift the Obscura virtual machine back to source', (a) => rebuildObscuraVm(a, vm))) { unusedAtStart = new WeakSet(); decompiled = true; }
   }
 
   const maybeVmify = detection.families.some((f) => f.id === 'prometheus' && f.confidence >= 0.5);
@@ -286,8 +313,19 @@ export function recover(source, userOptions = {}) {
       if (lifted) { vmLifted = true; return total + lifted; }
     }
     // a rebuilt function has no author-written dead code to preserve, and the clean-ups for rebuilt programs apply to it
+    // the names of the table's positions are read while the builder still has its original shape; the factories are put back together once their control flow is rebuilt
+    let mvNames = null;
+    if (!mvJoined && options.moonveilJoin !== false && detection.families.some((f) => f.id === 'moonveil' && f.confidence >= 0.5)) { try { mvNames = snapshotNames(run.ast); } catch { mvNames = null; } }
     const nCff = run.step('moonveil.cff', 'Take MoonVeil\u2019s control-flow flattening apart', (a) => unflattenMoonVeil(a, { gotoFallback: true }), { quiet: true });
     if (nCff) { total += nCff; unusedAtStart = new WeakSet(); decompiled = true; }
+    if (mvNames) {
+      mvJoined = true;
+      const joined = run.step('moonveil.join', 'Join MoonVeil\u2019s table of factories into one program', (a) => {
+        try { return joinMoonVeil(a, mvNames); } catch (e) { if (e instanceof JoinError) return { skipped: e.message }; throw e; }
+      });
+      if (joined) { total += joined; unusedAtStart = new WeakSet(); decompiled = true; }
+    }
+    if (mvJoined) total += run.step('moonveil.unbox', 'Read MoonVeil cells as the variables they stand for', (a) => unboxCells(a), { quiet: true });
     total += run.step('simplify', 'Simplify control flow and remove dead code', (a) => simplifyPass(a, { unusedAtStart }));
     if (vmified) total += run.step('prometheus.env', 'Read globals from the environment table again', (a) => envToGlobals(a), { quiet: true });
     if (decompiled) total += run.step('regions', 'Evaluate closed constant computations', (a) => regionPass(a), { quiet: true });
