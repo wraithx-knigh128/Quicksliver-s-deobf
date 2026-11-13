@@ -19,11 +19,12 @@ import { unwrapLayers } from '../passes/layers.js';
 import { dataflowPass } from '../passes/dataflow.js';
 import { regionPass } from '../passes/regions.js';
 import { booleanResults, orientComparisons, shortCircuits, tableConstructors, methodCalls, bareNils, functionForms, multiResults, numericLoops, loopForms, unsetLocals } from '../passes/idioms.js';
-import { removeAntiTamper, removeGuardFlag, undoProxifyLocals } from './prometheus.js';
+import { removeAntiTamper, removeGuardFlag, undoProxifyLocals, removeOrphanDecoders } from './prometheus.js';
 import { propagateStable } from '../passes/stable.js';
 import { buildReport, annotate, stripReport } from './annotate.js';
 import { profileVm } from './vmprofile.js';
 import { liftObscuraVm, ObscuraVmError } from './obscura-vm.js';
+import { liftIronbrikkedVm, IronbrikkedVmError, looksLikeIronbrikked } from './ironbrikked-vm.js';
 import { liftFusgatoVm, FusgatoVmError, looksLikeFusgato } from './fusgato-vm.js';
 import { liftZarthaVm, ZarthaVmError, looksLikeZartha, removeZarthaGuards, repairZarthaSource } from './zartha-vm.js';
 import { snapshotNames, joinMoonVeil, unboxCells, JoinError } from './moonveil-join.js';
@@ -170,6 +171,21 @@ function rebuildZarthaVm(ast, state) {
   return { changed: r.stats.instructions, ...r.stats };
 }
 
+/** LuaXen's IronBrikked virtual machine: compressed bytes, a dispatch over the opcode whose handlers are read from the script, the decompiler. Nothing runs. */
+function rebuildIronbrikkedVm(ast, state) {
+  let r;
+  try { r = liftIronbrikkedVm(ast); } catch (e) {
+    if (e instanceof IronbrikkedVmError) return { skipped: e.message };
+    throw e;
+  }
+  const out = decompile(parseChunk(r.bytes));
+  if (out.failures.length) return { skipped: `the decompiler could not structure ${out.failures.length} function(s): ${out.failures[0]}` };
+  ast.body = out.ast.body;
+  ast.features = out.ast.features || ast.features;
+  state.stats = r.stats;
+  return { changed: r.stats.instructions, ...r.stats };
+}
+
 /** FusGato's virtual machine: each instruction is told by its handler's text and its operands by the decoded bits; the result goes through the decompiler. Nothing runs. */
 function rebuildFusgatoVm(ast, state) {
   let r;
@@ -274,6 +290,7 @@ export function recover(source, userOptions = {}) {
   let vmified = false;
   let vmTried = false;
   let vmLifted = false;
+  let ikTried = false;
   let mvJoined = false;
   if (detection.families.some((f) => f.id === 'ironbrew2' && f.confidence >= 0.5)) {
     // a rebuilt program has no author-written dead code to preserve
@@ -297,6 +314,14 @@ export function recover(source, userOptions = {}) {
     if (run.step('fusgato.vm', 'Lift the FusGato virtual machine back to source', (a) => rebuildFusgatoVm(a, fg))) {
       unusedAtStart = new WeakSet(); decompiled = true;
       vm = { kind: 'fusgato', lifted: true, functions: [], instructionBytes: 0, constants: null, stats: fg.stats };
+    }
+  }
+
+  if (!vm && !zartha.zarthaLifted && !decompiled && looksLikeIronbrikked(parsed.ast)) {
+    const ik = { stats: null };
+    if (run.step('ironbrikked.vm', 'Lift the IronBrikked virtual machine back to source', (a) => rebuildIronbrikkedVm(a, ik))) {
+      unusedAtStart = new WeakSet(); decompiled = true;
+      vm = { kind: 'ironbrikked', lifted: true, functions: [], instructionBytes: 0, constants: null, stats: ik.stats };
     }
   }
 
@@ -407,6 +432,14 @@ export function recover(source, userOptions = {}) {
       run.record('evaluate', 'Evaluate string decoders (sandbox)', { status: 'skipped', changed: 0, detail: 'sandboxed evaluation is not enabled', ms: 0 });
     }
     total += run.step('strtable.inline', 'Replace reads of a self-decrypting string table by its strings', (a) => inlineStringTable(a), { quiet: true });
+    // a program that was first obfuscated at the syntax level (LuaXen `both`): the compressed bytes of its VM are a literal only once the layer above has been undone
+    if (!vm && !decompiled && !ikTried && looksLikeIronbrikked(run.ast)) {
+      ikTried = true;
+      const ik = { stats: null };
+      const n = run.step('ironbrikked.vm', 'Lift the IronBrikked virtual machine back to source', (a) => rebuildIronbrikkedVm(a, ik), { quiet: true });
+      if (n) { unusedAtStart = new WeakSet(); decompiled = true; vm = { kind: 'ironbrikked', lifted: true, functions: [], instructionBytes: 0, constants: null, stats: ik.stats }; total += n; }
+    }
+    total += run.step('prometheus.orphans', 'Remove the string-decryption machinery nothing reads any more', (a) => removeOrphanDecoders(a), { quiet: true });
     total += run.step('constants.inline', 'Replace reads of a machine-named table of constants by the constants', (a) => inlineConstantTable(a), { quiet: true });
     // once decoded names are plain strings, `obj.method(obj, ...)` (what tools that route every call through a lookup write) is `obj:method(...)` again
     if (!decompiled) total += run.step('idioms.method.plain', 'Write o.m(o, ...) as o:m(...)', (a) => methodCalls(a), { quiet: true });

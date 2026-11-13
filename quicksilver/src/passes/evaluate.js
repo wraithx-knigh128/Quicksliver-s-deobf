@@ -309,7 +309,14 @@ function evaluateOnce(chunk, ctx = {}) {
   // the environment table (`local env = getfenv and getfenv() or _ENV`) is indexed with decoded names all over a program, but a
   // lookup in it yields a function: never a decoder result, and not a table whose state the slice has to reproduce
   const envLike = (e) => isEnvName(e);
-  const noCall = (e) => { const c = closed(e); return c.ok && !c.call && !envLike(e); };
+  // `local cache = setmetatable({}, { __index = store })`: reading it only looks into the store, which the decoder fills
+  const proxyName = (e) => {
+    if (e.type !== 'Name') return false;
+    const v = info.varOf.get(e);
+    const init = v && v.init;
+    return !!init && init.type === 'Call' && init.fn.type === 'Name' && init.fn.name === 'setmetatable' && init.args.length === 2 && init.args.every((a) => a.type === 'Table') && v.writes.length === 0;
+  };
+  const noCall = (e) => { const c = closed(e); return (c.ok && !c.call && !envLike(e)) || proxyName(e); };
   const unparen = (e) => (e.type === 'Paren' ? unparen(e.expr) : e);
   sites = [];
   owner = new Map();

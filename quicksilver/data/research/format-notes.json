@@ -276,6 +276,18 @@
           "tests": [
             "tests/formats-ix.test.mjs: dispatch"
           ]
+        },
+        {
+          "id": "ironbrikked-lifter",
+          "summary": "the IronBrikked VM (base-36 LZW bytes: constants, instructions with mode and opcode bytes, nested functions; an opcode tree over Lua's own 38 operations plus an expansion by constant/register operands) is read from the script and lifted, alone and under the LuaXen syntax layer (14 of 14 fixtures lifted and structured). It is NOT claimed to run like the original: the generator's own output errors on all 14, its compiler writes counts the program did not have (results of calls, returns, method calls without their object) and its SETGLOBAL / SETUPVAL / TEST / TFORLOOP handlers read the wrong fields. The lifter reads each as the instruction it stands for, repairs the result count of calls from the registers read afterwards, and the confidence is capped",
+          "files": [
+            "src/recover/ironbrikked-vm.js",
+            "src/recover/pipeline.js",
+            "src/recover/confidence.js"
+          ],
+          "tests": [
+            "tests/ironbrikked-vm.test.mjs"
+          ]
         }
       ],
       "failurePatterns": [
@@ -306,6 +318,16 @@
           "status": "tool defect",
           "summary": "the tool's own IronBrikked output (14 fixtures, with and without the AST layer) does not run on any reference runtime available here: Lua 5.1, 5.2 and LuaJIT stop inside the generated VM with \"attempt to compare nil with number\" (the generated wrapper masks it as \"LuaXen: (internal)\"; the real message was read by replacing that string in a copy), Lua 5.3 / 5.4 have no math.ldexp, Luau stops with \"attempt to call a nil value\". They are excluded from runtime judgement, not counted for or against the engine",
           "evidence": "tests/corpus/obfuscated/luaxen/manifest.json (behaviors, 2026-11-13 run: 5 equivalent, 1 diverged, 16 errored of 22)"
+        },
+        {
+          "id": "ironbrikked-compiler",
+          "configs": [
+            "ironbrikked",
+            "both"
+          ],
+          "status": "tool defect",
+          "summary": "calls whose results are used are written with a result count of 0 or 1, RETURN carries a count that is not the number of values, a method call loses its object, a forward jump of 256 or more reads as a backward one: runs error; lifted output follows the encoded instructions and does not run like the original (the audit status is partial: structure and semantic gains are measured, runtime is not judged because the tool\u2019s own output does not run)",
+          "evidence": "tests/ironbrikked-vm.test.mjs"
         }
       ],
       "assumptions": [
@@ -627,6 +649,79 @@
       "assumptions": [
         "The bootstrap shape was read on seven files; other Luarmor builds may differ"
       ]
+    },
+    "hercules": {
+      "licence": "GPL-3.0 (output kept as fixtures under the project's own rules)",
+      "research": [
+        "Hercules 1.6 VirtualMachine output read as text next to 1.6.2: the VM data text uses another separator and no backslash after each byte"
+      ],
+      "improvements": [
+        {
+          "id": "vm-1.6-data",
+          "summary": "1.6's VM data is written with the one character its alphabet leaves free as separator and as plain bytes (1.6.2 uses `_` and a backslash after every byte): both are read; control-flow junk with jumps of its own (unreachable code) is removed before the structure is read. 1.6 default and VirtualMachine went from 0 of 14 lifted to every build the generator wrote valid Lua for (4 default builds are invalid Lua, s06 leaves constants out of its own output), each behaving like the original on Lua 5.4",
+          "files": [
+            "src/recover/hercules-vm.js",
+            "src/decompile/decompile.js"
+          ],
+          "tests": [
+            "tests/xiii-targets.test.mjs"
+          ]
+        }
+      ],
+      "failurePatterns": [
+        {
+          "id": "1.6-invalid-lua",
+          "configs": [
+            "default"
+          ],
+          "status": "tool defect",
+          "summary": "four 1.6 default builds are not valid Lua (`unexpected symbol near 'and'`); the parser rejects them, as does the reference runtime"
+        },
+        {
+          "id": "nil-constants-dropped",
+          "configs": [
+            "mod-VirtualMachine",
+            "mod-virtual_machine"
+          ],
+          "status": "tool defect",
+          "summary": "the generator measures the constant pool with `#`, which stops at a nil constant, so s06 has constants missing from its own output; the reader refuses rather than guess"
+        }
+      ],
+      "assumptions": [
+        "Per-version rows are on 7 sample programs each"
+      ]
+    },
+    "prometheus": {
+      "licence": "MIT",
+      "research": [
+        "EncryptStrings: a PRNG seeded per string, a shuffled lookup table and a cache read through a proxy; the decryptor returns the seed, so the program reads `cache[decrypt(text, seed)]`"
+      ],
+      "improvements": [
+        {
+          "id": "orphan-decoders",
+          "summary": "once every read is replaced by its text, the decryptor, its generator and the shuffle loop (a machine that works only on state nothing else reads) are removed; the same pass refuses anything that prints, calls through an unknown name, writes what other code reads or has no state of its own (a first version removed a whole Hercules program and was caught by the layered-chain test). Strong/Medium s02 and s04 went from medium to high with structure 0.55 -> 0.74",
+          "files": [
+            "src/recover/prometheus.js",
+            "src/passes/evaluate.js",
+            "src/recover/pipeline.js"
+          ],
+          "tests": [
+            "tests/xiii-targets.test.mjs"
+          ]
+        }
+      ],
+      "failurePatterns": [
+        {
+          "id": "strong-residual",
+          "configs": [
+            "Strong",
+            "Medium"
+          ],
+          "status": "partial",
+          "summary": "s05, s06 and s07 keep one undecoded read of the cache (a lookup through a proxy inside a nested function) and stay at medium confidence"
+        }
+      ],
+      "assumptions": []
     }
   },
   "backlog": [

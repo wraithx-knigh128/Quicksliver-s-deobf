@@ -42,6 +42,11 @@ function describeVm(vm) {
   const bits = [];
   if (fns.length) bits.push(`${plural(fns.length, 'function')} with ${plural(vm.instructionBytes, 'byte')} of instructions`);
   if (vm.constants) bits.push(`${plural(vm.constants.length, 'constant')} read${vm.hardened ? ' from the keyed function records' : ''}`);
+  if (vm.lifted && vm.kind === 'ironbrikked') {
+    const st = vm.stats || {};
+    lines.push(...wrap(`Virtual machine (LuaXen IronBrikked), lifted back to source from its compressed bytecode (${plural(st.functions || 0, 'function')}, ${plural(st.instructions || 0, 'instruction')}, ${plural(st.constants || 0, 'constant')}). Names, comments and layout are not recovered; the instructions were read from the handlers the build carries and the decompiler rebuilt the control flow and expressions.`, '-- ', '--   '));
+    return lines;
+  }
   if (vm.lifted && vm.kind === 'fusgato') {
     const st = vm.stats || {};
     lines.push(...wrap(`Virtual machine (FusGato), lifted back to source from its bit-string program (${plural(st.functions || 0, 'function')}, ${plural(st.instructions || 0, 'instruction')}, ${plural(st.constants || 0, 'constant')}). Names, comments and layout are not recovered; every instruction was read from the handler the build wrote for it and the operands it decoded, and the control flow and expressions were rebuilt by the Lua 5.1 decompiler.`, '-- ', '--   '));

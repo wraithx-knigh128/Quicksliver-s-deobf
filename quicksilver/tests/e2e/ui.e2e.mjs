@@ -268,6 +268,38 @@ test('a script flattened by no known tool is rebuilt, and the page says what it 
   await ctx.close();
 });
 
+test('Custom format: the page reads an unfamiliar VM build, plans, recovers and explains what is left, and says how well the examples predict', { skip }, async () => {
+  const { page, ctx, problems } = await newPage();
+  await loadFile(page, path.join(corpus, 'obfuscated/zartha/s05_nested_functions__flatten.lua'));
+  await page.click('#tab-custom');
+  assert.equal(await activeTab(page), 'tab-custom');
+  assert.match(await page.textContent('#view-custom'), /Analyse this script/);
+  await page.click('#view-custom button:has-text("Analyse this script")');
+  await page.waitForFunction(() => /What it shows/.test(document.querySelector('#view-custom').textContent), null, { timeout: 120_000 });
+  const text = await page.textContent('#view-custom');
+  assert.match(text, /bytecode-vm/);
+  assert.match(text, /per-instruction/);
+  assert.match(text, /Explanation/);
+  assert.match(text, /Readers of virtual-machine formats, tried on this script/);
+  assert.match(text, /Zartha \(per-instruction templates\)\s*read the program/);
+  assert.match(text, /Closest validated examples/);
+  assert.match(text, /unfamiliar format/);
+  assert.deepEqual(problems, []);
+  await ctx.close();
+});
+
+test('Obfuscators tab: the five primary targets are shown version by version, with their measured categories and failure patterns', { skip }, async () => {
+  const { page, ctx, problems } = await newPage();
+  await page.click('#tab-compat');
+  await page.waitForFunction(() => /Primary targets, version by version/.test(document.querySelector('#view-compat').textContent), null, { timeout: 30_000 });
+  const text = await page.textContent('#view-compat');
+  for (const t of ['MoonVeil', 'Hercules', 'Luraph', 'Prometheus', 'IronBrew']) assert.match(text, new RegExp(t));
+  assert.match(text, /IronBrikked/);
+  assert.match(text, /Known failure patterns/);
+  assert.deepEqual(problems, []);
+  await ctx.close();
+});
+
 test('the structure reader can be switched off in the settings', { skip }, async () => {
   const { page, ctx } = await newPage();
   await loadFile(page, path.join(root, 'data/samples/transformed__a05_simulation__flatten-chain.lua'));

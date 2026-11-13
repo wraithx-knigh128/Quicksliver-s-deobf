@@ -1,0 +1,4800 @@
+{
+ "schema": "quicksilver/primary-matrix@1",
+ "generated": "2026-11-13",
+ "note": "One row per version and configuration. Status words: verified, partial, experimental, unsupported (format-db) and, for Luraph, the engine registry’s own (partially-tested ...). A cell with a note is one that cannot be measured for that row.",
+ "sources": [
+  "data/research/format-db.json",
+  "data/research/format-records.json",
+  "data/research/luraph-compat.json",
+  "data/research/luraph-era-eval.json",
+  "data/compat.json"
+ ],
+ "luraphCollection": {
+  "files": 218,
+  "identified": 206,
+  "unidentified": 4,
+  "versionFiles": 195,
+  "versionRight": 195
+ },
+ "luraphEra": {
+  "labelled": 198,
+  "exactVersion": {
+   "correct": 74,
+   "of": 198
+  },
+  "majorMinor": {
+   "correct": 101,
+   "of": 198
+  },
+  "era": {
+   "correct": 155,
+   "of": 198,
+   "eras": {
+    "13 and earlier": {
+     "files": 11,
+     "correct": 9
+    },
+    "14.0-14.3": {
+     "files": 36,
+     "correct": 32
+    },
+    "14.4-14.5": {
+     "files": 84,
+     "correct": 69
+    },
+    "14.6-14.9": {
+     "files": 59,
+     "correct": 40
+    },
+    "15+": {
+     "files": 8,
+     "correct": 5
+    }
+   }
+  }
+ },
+ "rows": [
+  {
+   "target": "Hercules",
+   "version": "current",
+   "config": "light",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules",
+    "count": 7,
+    "id": "hercules/light"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 96,
+    "after": 100
+   },
+   "semantic": {
+    "before": 64,
+    "after": 96
+   },
+   "runtime": {
+    "same": 6,
+    "judged": 6,
+    "notJudged": 1
+   },
+   "completeness": {
+    "complete": 6,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "current",
+   "config": "balanced",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules",
+    "count": 7,
+    "id": "hercules/balanced"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 50,
+    "after": 98
+   },
+   "semantic": {
+    "before": 37,
+    "after": 95
+   },
+   "runtime": {
+    "same": 6,
+    "judged": 6,
+    "notJudged": 1
+   },
+   "completeness": {
+    "complete": 6,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "current",
+   "config": "heavy",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules",
+    "count": 7,
+    "id": "hercules/heavy"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 10,
+    "after": 97
+   },
+   "semantic": {
+    "before": 7,
+    "after": 77
+   },
+   "runtime": {
+    "same": 5,
+    "judged": 5,
+    "notJudged": 2
+   },
+   "completeness": {
+    "complete": 5,
+    "of": 6
+   },
+   "failurePatterns": [],
+   "status": "partial",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "current",
+   "config": "maximum",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules",
+    "count": 3,
+    "id": "hercules/maximum"
+   },
+   "identification": {
+    "detected": 3,
+    "of": 3
+   },
+   "structure": {
+    "before": 27,
+    "after": 97
+   },
+   "semantic": {
+    "before": 20,
+    "after": 66
+   },
+   "runtime": {
+    "same": 2,
+    "judged": 2,
+    "notJudged": 1
+   },
+   "completeness": {
+    "complete": 2,
+    "of": 2
+   },
+   "failurePatterns": [],
+   "status": "partial",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "current",
+   "config": "mod-virtual_machine",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules",
+    "count": 7,
+    "id": "hercules/mod-virtual_machine"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 15,
+    "after": 87
+   },
+   "semantic": {
+    "before": 8,
+    "after": 83
+   },
+   "runtime": {
+    "same": 5,
+    "judged": 5,
+    "notJudged": 2
+   },
+   "completeness": {
+    "complete": 5,
+    "of": 7
+   },
+   "failurePatterns": [
+    "tool defect: the generator measures the constant pool with `#`, which stops at a nil constant, so s06 has constants missing from its own output; the reader refuses rather than guess"
+   ],
+   "status": "partial",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "current",
+   "config": "mod-antitamper",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules",
+    "count": 7,
+    "id": "hercules/mod-antitamper"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 64,
+    "after": 100
+   },
+   "semantic": {
+    "before": 37,
+    "after": 100
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "current",
+   "config": "mod-control_flow",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules",
+    "count": 7,
+    "id": "hercules/mod-control_flow"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 81,
+    "after": 98
+   },
+   "semantic": {
+    "before": 63,
+    "after": 98
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "current",
+   "config": "mod-string_to_expressions",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules",
+    "count": 7,
+    "id": "hercules/mod-string_to_expressions"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 42,
+    "after": 100
+   },
+   "semantic": {
+    "before": 34,
+    "after": 100
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "current",
+   "config": "mod-string_encoding",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules",
+    "count": 7,
+    "id": "hercules/mod-string_encoding"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 65,
+    "after": 100
+   },
+   "semantic": {
+    "before": 47,
+    "after": 100
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "current",
+   "config": "mod-wrap_in_function",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules",
+    "count": 7,
+    "id": "hercules/mod-wrap_in_function"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 87,
+    "after": 100
+   },
+   "semantic": {
+    "before": 99,
+    "after": 100
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "current",
+   "config": "mod-variable_renaming",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules",
+    "count": 7,
+    "id": "hercules/mod-variable_renaming"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 96,
+    "after": 100
+   },
+   "semantic": {
+    "before": 64,
+    "after": 96
+   },
+   "runtime": {
+    "same": 6,
+    "judged": 6,
+    "notJudged": 1
+   },
+   "completeness": {
+    "complete": 6,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "current",
+   "config": "mod-garbage_code",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules",
+    "count": 7,
+    "id": "hercules/mod-garbage_code"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 75,
+    "after": 100
+   },
+   "semantic": {
+    "before": 53,
+    "after": 100
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "current",
+   "config": "mod-opaque_predicates",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules",
+    "count": 7,
+    "id": "hercules/mod-opaque_predicates"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 86,
+    "after": 100
+   },
+   "semantic": {
+    "before": 93,
+    "after": 100
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "current",
+   "config": "mod-function_inlining",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules",
+    "count": 7,
+    "id": "hercules/mod-function_inlining"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 90,
+    "after": 100
+   },
+   "semantic": {
+    "before": 71,
+    "after": 97
+   },
+   "runtime": {
+    "same": 4,
+    "judged": 4,
+    "notJudged": 3
+   },
+   "completeness": {
+    "complete": 5,
+    "of": 5
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "current",
+   "config": "mod-dynamic_code",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules",
+    "count": 7,
+    "id": "hercules/mod-dynamic_code"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 78,
+    "after": 100
+   },
+   "semantic": {
+    "before": 90,
+    "after": 100
+   },
+   "runtime": {
+    "same": 6,
+    "judged": 6,
+    "notJudged": 1
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "current",
+   "config": "mod-bytecode_encoding",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules",
+    "count": 7,
+    "id": "hercules/mod-bytecode_encoding"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 23,
+    "after": 97
+   },
+   "semantic": {
+    "before": 18,
+    "after": 93
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "current",
+   "config": "mod-compressor",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules",
+    "count": 7,
+    "id": "hercules/mod-compressor"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 100,
+    "after": 100
+   },
+   "semantic": {
+    "before": 100,
+    "after": 100
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "1.5",
+   "config": "default",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-1.5",
+    "count": 7,
+    "id": "hercules-1.5/default"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 19,
+    "after": 84
+   },
+   "semantic": {
+    "before": 6,
+    "after": 63
+   },
+   "runtime": {
+    "same": 2,
+    "judged": 2,
+    "notJudged": 5
+   },
+   "completeness": {
+    "complete": 5,
+    "of": 7
+   },
+   "failurePatterns": [
+    "tool defect: four 1.6 default builds are not valid Lua (`unexpected symbol near 'and'`); the parser rejects them, as does the reference runtime"
+   ],
+   "status": "partial",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "1.5",
+   "config": "mod-StringToExpressions",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-1.5",
+    "count": 7,
+    "id": "hercules-1.5/mod-StringToExpressions"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 38,
+    "after": 93
+   },
+   "semantic": {
+    "before": 45,
+    "after": 95
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "1.5",
+   "config": "mod-VirtualMachine",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-1.5",
+    "count": 7,
+    "id": "hercules-1.5/mod-VirtualMachine"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 39,
+    "after": 97
+   },
+   "semantic": {
+    "before": 10,
+    "after": 98
+   },
+   "runtime": {
+    "same": 4,
+    "judged": 4,
+    "notJudged": 3
+   },
+   "completeness": {
+    "complete": 6,
+    "of": 7
+   },
+   "failurePatterns": [
+    "tool defect: the generator measures the constant pool with `#`, which stops at a nil constant, so s06 has constants missing from its own output; the reader refuses rather than guess"
+   ],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "1.5",
+   "config": "mod-WrapInFunction",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-1.5",
+    "count": 7,
+    "id": "hercules-1.5/mod-WrapInFunction"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 86,
+    "after": 100
+   },
+   "semantic": {
+    "before": 99,
+    "after": 100
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "1.5",
+   "config": "mod-bytecode_encoding",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-1.5",
+    "count": 7,
+    "id": "hercules-1.5/mod-bytecode_encoding"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 24,
+    "after": 97
+   },
+   "semantic": {
+    "before": 18,
+    "after": 93
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "1.5",
+   "config": "mod-compressor",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-1.5",
+    "count": 7,
+    "id": "hercules-1.5/mod-compressor"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 100,
+    "after": 100
+   },
+   "semantic": {
+    "before": 100,
+    "after": 100
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "1.5",
+   "config": "mod-control_flow",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-1.5",
+    "count": 7,
+    "id": "hercules-1.5/mod-control_flow"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 94,
+    "after": 100
+   },
+   "semantic": {
+    "before": 68,
+    "after": 100
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "1.5",
+   "config": "mod-function_inlining",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-1.5",
+    "count": 7,
+    "id": "hercules-1.5/mod-function_inlining"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 100,
+    "after": 98
+   },
+   "semantic": {
+    "before": 100,
+    "after": 99
+   },
+   "runtime": {
+    "same": 1,
+    "judged": 1,
+    "notJudged": 6
+   },
+   "completeness": {
+    "complete": 1,
+    "of": 1
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "1.5",
+   "config": "mod-garbage_code",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-1.5",
+    "count": 7,
+    "id": "hercules-1.5/mod-garbage_code"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 95,
+    "after": 100
+   },
+   "semantic": {
+    "before": 68,
+    "after": 100
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "1.5",
+   "config": "mod-opaque_predicates",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-1.5",
+    "count": 7,
+    "id": "hercules-1.5/mod-opaque_predicates"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 100,
+    "after": 100
+   },
+   "semantic": {
+    "before": 100,
+    "after": 100
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "1.5",
+   "config": "mod-string_encoding",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-1.5",
+    "count": 7,
+    "id": "hercules-1.5/mod-string_encoding"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 64,
+    "after": 100
+   },
+   "semantic": {
+    "before": 46,
+    "after": 100
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "1.5",
+   "config": "mod-variable_renaming",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-1.5",
+    "count": 7,
+    "id": "hercules-1.5/mod-variable_renaming"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 96,
+    "after": 100
+   },
+   "semantic": {
+    "before": 60,
+    "after": 94
+   },
+   "runtime": {
+    "same": 0,
+    "judged": 0,
+    "notJudged": 7
+   },
+   "completeness": {
+    "complete": 5,
+    "of": 6
+   },
+   "failurePatterns": [],
+   "status": "partial",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "1.5-early",
+   "config": "default",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-1.5-early",
+    "count": 7,
+    "id": "hercules-1.5-early/default"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": null,
+   "semantic": {
+    "before": null,
+    "after": null
+   },
+   "runtime": {
+    "same": 0,
+    "judged": 0,
+    "notJudged": 7
+   },
+   "completeness": null,
+   "failurePatterns": [
+    "tool defect: four 1.6 default builds are not valid Lua (`unexpected symbol near 'and'`); the parser rejects them, as does the reference runtime"
+   ],
+   "status": "identification-only",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "1.5-early",
+   "config": "all",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-1.5-early",
+    "count": 7,
+    "id": "hercules-1.5-early/all"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": null,
+   "semantic": {
+    "before": null,
+    "after": null
+   },
+   "runtime": {
+    "same": 0,
+    "judged": 0,
+    "notJudged": 7
+   },
+   "completeness": null,
+   "failurePatterns": [],
+   "status": "identification-only",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "1.5-early",
+   "config": "mod-bytecode_encoding",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-1.5-early",
+    "count": 7,
+    "id": "hercules-1.5-early/mod-bytecode_encoding"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 100,
+    "after": 100
+   },
+   "semantic": {
+    "before": 100,
+    "after": 100
+   },
+   "runtime": {
+    "same": 6,
+    "judged": 6,
+    "notJudged": 1
+   },
+   "completeness": {
+    "complete": 6,
+    "of": 6
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "1.5-early",
+   "config": "mod-control_flow",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-1.5-early",
+    "count": 7,
+    "id": "hercules-1.5-early/mod-control_flow"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 95,
+    "after": 100
+   },
+   "semantic": {
+    "before": 67,
+    "after": 100
+   },
+   "runtime": {
+    "same": 6,
+    "judged": 6,
+    "notJudged": 1
+   },
+   "completeness": {
+    "complete": 6,
+    "of": 6
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "1.5-early",
+   "config": "mod-dynamic_code",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-1.5-early",
+    "count": 7,
+    "id": "hercules-1.5-early/mod-dynamic_code"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": null,
+   "semantic": {
+    "before": null,
+    "after": null
+   },
+   "runtime": {
+    "same": 0,
+    "judged": 0,
+    "notJudged": 7
+   },
+   "completeness": null,
+   "failurePatterns": [],
+   "status": "identification-only",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "1.5-early",
+   "config": "mod-function_inlining",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-1.5-early",
+    "count": 7,
+    "id": "hercules-1.5-early/mod-function_inlining"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": null,
+   "semantic": {
+    "before": null,
+    "after": null
+   },
+   "runtime": {
+    "same": 0,
+    "judged": 0,
+    "notJudged": 7
+   },
+   "completeness": null,
+   "failurePatterns": [],
+   "status": "identification-only",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "1.5-early",
+   "config": "mod-garbage_code",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-1.5-early",
+    "count": 7,
+    "id": "hercules-1.5-early/mod-garbage_code"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 96,
+    "after": 100
+   },
+   "semantic": {
+    "before": 68,
+    "after": 100
+   },
+   "runtime": {
+    "same": 6,
+    "judged": 6,
+    "notJudged": 1
+   },
+   "completeness": {
+    "complete": 6,
+    "of": 6
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "1.5-early",
+   "config": "mod-opaque_predicates",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-1.5-early",
+    "count": 7,
+    "id": "hercules-1.5-early/mod-opaque_predicates"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 100,
+    "after": 100
+   },
+   "semantic": {
+    "before": 100,
+    "after": 100
+   },
+   "runtime": {
+    "same": 6,
+    "judged": 6,
+    "notJudged": 1
+   },
+   "completeness": {
+    "complete": 6,
+    "of": 6
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "1.5-early",
+   "config": "mod-string_encoding",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-1.5-early",
+    "count": 7,
+    "id": "hercules-1.5-early/mod-string_encoding"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 100,
+    "after": 100
+   },
+   "semantic": {
+    "before": 97,
+    "after": 97
+   },
+   "runtime": {
+    "same": 0,
+    "judged": 0,
+    "notJudged": 7
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "partial",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "1.5-early",
+   "config": "mod-variable_renaming",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-1.5-early",
+    "count": 7,
+    "id": "hercules-1.5-early/mod-variable_renaming"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 100,
+    "after": 100
+   },
+   "semantic": {
+    "before": 89,
+    "after": 89
+   },
+   "runtime": {
+    "same": 0,
+    "judged": 0,
+    "notJudged": 7
+   },
+   "completeness": {
+    "complete": 6,
+    "of": 6
+   },
+   "failurePatterns": [],
+   "status": "partial",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "1.6",
+   "config": "default",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-1.6",
+    "count": 7,
+    "id": "hercules-1.6/default"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 11,
+    "after": 93
+   },
+   "semantic": {
+    "before": 7,
+    "after": 83
+   },
+   "runtime": {
+    "same": 1,
+    "judged": 1,
+    "notJudged": 6
+   },
+   "completeness": {
+    "complete": 2,
+    "of": 3
+   },
+   "failurePatterns": [
+    "tool defect: four 1.6 default builds are not valid Lua (`unexpected symbol near 'and'`); the parser rejects them, as does the reference runtime"
+   ],
+   "status": "partial",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "1.6",
+   "config": "mod-StringToExpressions",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-1.6",
+    "count": 7,
+    "id": "hercules-1.6/mod-StringToExpressions"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 38,
+    "after": 93
+   },
+   "semantic": {
+    "before": 45,
+    "after": 95
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "1.6",
+   "config": "mod-VirtualMachine",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-1.6",
+    "count": 7,
+    "id": "hercules-1.6/mod-VirtualMachine"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 16,
+    "after": 88
+   },
+   "semantic": {
+    "before": 8,
+    "after": 83
+   },
+   "runtime": {
+    "same": 3,
+    "judged": 3,
+    "notJudged": 4
+   },
+   "completeness": {
+    "complete": 5,
+    "of": 7
+   },
+   "failurePatterns": [
+    "tool defect: the generator measures the constant pool with `#`, which stops at a nil constant, so s06 has constants missing from its own output; the reader refuses rather than guess"
+   ],
+   "status": "partial",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "1.6",
+   "config": "mod-WrapInFunction",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-1.6",
+    "count": 7,
+    "id": "hercules-1.6/mod-WrapInFunction"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 86,
+    "after": 100
+   },
+   "semantic": {
+    "before": 99,
+    "after": 100
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "1.6",
+   "config": "mod-bytecode_encoding",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-1.6",
+    "count": 7,
+    "id": "hercules-1.6/mod-bytecode_encoding"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": null,
+   "semantic": {
+    "before": null,
+    "after": null
+   },
+   "runtime": {
+    "same": 0,
+    "judged": 0,
+    "notJudged": 7
+   },
+   "completeness": null,
+   "failurePatterns": [],
+   "status": "identification-only",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "1.6",
+   "config": "mod-compressor",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-1.6",
+    "count": 7,
+    "id": "hercules-1.6/mod-compressor"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 100,
+    "after": 100
+   },
+   "semantic": {
+    "before": 100,
+    "after": 100
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "1.6",
+   "config": "mod-control_flow",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-1.6",
+    "count": 7,
+    "id": "hercules-1.6/mod-control_flow"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 94,
+    "after": 100
+   },
+   "semantic": {
+    "before": 68,
+    "after": 100
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "1.6",
+   "config": "mod-function_inlining",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-1.6",
+    "count": 7,
+    "id": "hercules-1.6/mod-function_inlining"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 100,
+    "after": 98
+   },
+   "semantic": {
+    "before": 100,
+    "after": 99
+   },
+   "runtime": {
+    "same": 1,
+    "judged": 1,
+    "notJudged": 6
+   },
+   "completeness": {
+    "complete": 1,
+    "of": 1
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "1.6",
+   "config": "mod-garbage_code",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-1.6",
+    "count": 7,
+    "id": "hercules-1.6/mod-garbage_code"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 71,
+    "after": 100
+   },
+   "semantic": {
+    "before": 50,
+    "after": 100
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "1.6",
+   "config": "mod-opaque_predicates",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-1.6",
+    "count": 7,
+    "id": "hercules-1.6/mod-opaque_predicates"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 100,
+    "after": 100
+   },
+   "semantic": {
+    "before": 100,
+    "after": 100
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "1.6",
+   "config": "mod-string_encoding",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-1.6",
+    "count": 7,
+    "id": "hercules-1.6/mod-string_encoding"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 62,
+    "after": 100
+   },
+   "semantic": {
+    "before": 45,
+    "after": 100
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "1.6",
+   "config": "mod-variable_renaming",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-1.6",
+    "count": 7,
+    "id": "hercules-1.6/mod-variable_renaming"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 96,
+    "after": 98
+   },
+   "semantic": {
+    "before": 59,
+    "after": 93
+   },
+   "runtime": {
+    "same": 0,
+    "judged": 0,
+    "notJudged": 7
+   },
+   "completeness": {
+    "complete": 4,
+    "of": 5
+   },
+   "failurePatterns": [],
+   "status": "partial",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "1.6.2",
+   "config": "mod-StringToExpressions",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-1.6.2",
+    "count": 7,
+    "id": "hercules-1.6.2/mod-StringToExpressions"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 42,
+    "after": 100
+   },
+   "semantic": {
+    "before": 34,
+    "after": 100
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "1.6.2",
+   "config": "mod-VirtualMachine",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-1.6.2",
+    "count": 7,
+    "id": "hercules-1.6.2/mod-VirtualMachine"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 15,
+    "after": 87
+   },
+   "semantic": {
+    "before": 8,
+    "after": 83
+   },
+   "runtime": {
+    "same": 5,
+    "judged": 5,
+    "notJudged": 2
+   },
+   "completeness": {
+    "complete": 5,
+    "of": 7
+   },
+   "failurePatterns": [
+    "tool defect: the generator measures the constant pool with `#`, which stops at a nil constant, so s06 has constants missing from its own output; the reader refuses rather than guess"
+   ],
+   "status": "partial",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "1.6.2",
+   "config": "mod-WrapInFunction",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-1.6.2",
+    "count": 7,
+    "id": "hercules-1.6.2/mod-WrapInFunction"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 86,
+    "after": 100
+   },
+   "semantic": {
+    "before": 99,
+    "after": 100
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "1.6.2",
+   "config": "mod-antitamper",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-1.6.2",
+    "count": 7,
+    "id": "hercules-1.6.2/mod-antitamper"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 59,
+    "after": 100
+   },
+   "semantic": {
+    "before": 39,
+    "after": 100
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "1.6.2",
+   "config": "mod-bytecode_encoding",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-1.6.2",
+    "count": 7,
+    "id": "hercules-1.6.2/mod-bytecode_encoding"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 23,
+    "after": 97
+   },
+   "semantic": {
+    "before": 18,
+    "after": 93
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "1.6.2",
+   "config": "mod-compressor",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-1.6.2",
+    "count": 7,
+    "id": "hercules-1.6.2/mod-compressor"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 100,
+    "after": 100
+   },
+   "semantic": {
+    "before": 100,
+    "after": 100
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "1.6.2",
+   "config": "mod-control_flow",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-1.6.2",
+    "count": 7,
+    "id": "hercules-1.6.2/mod-control_flow"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 81,
+    "after": 98
+   },
+   "semantic": {
+    "before": 63,
+    "after": 98
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "1.6.2",
+   "config": "mod-dynamic_code",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-1.6.2",
+    "count": 7,
+    "id": "hercules-1.6.2/mod-dynamic_code"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 83,
+    "after": 100
+   },
+   "semantic": {
+    "before": 91,
+    "after": 100
+   },
+   "runtime": {
+    "same": 3,
+    "judged": 3,
+    "notJudged": 4
+   },
+   "completeness": {
+    "complete": 4,
+    "of": 4
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "1.6.2",
+   "config": "mod-function_inlining",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-1.6.2",
+    "count": 7,
+    "id": "hercules-1.6.2/mod-function_inlining"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 100,
+    "after": 100
+   },
+   "semantic": {
+    "before": 100,
+    "after": 100
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "1.6.2",
+   "config": "mod-garbage_code",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-1.6.2",
+    "count": 7,
+    "id": "hercules-1.6.2/mod-garbage_code"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 58,
+    "after": 100
+   },
+   "semantic": {
+    "before": 42,
+    "after": 100
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "1.6.2",
+   "config": "mod-opaque_predicates",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-1.6.2",
+    "count": 7,
+    "id": "hercules-1.6.2/mod-opaque_predicates"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 61,
+    "after": 100
+   },
+   "semantic": {
+    "before": 75,
+    "after": 100
+   },
+   "runtime": {
+    "same": 4,
+    "judged": 4,
+    "notJudged": 3
+   },
+   "completeness": {
+    "complete": 4,
+    "of": 4
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "1.6.2",
+   "config": "mod-string_encoding",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-1.6.2",
+    "count": 7,
+    "id": "hercules-1.6.2/mod-string_encoding"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 62,
+    "after": 100
+   },
+   "semantic": {
+    "before": 45,
+    "after": 100
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "1.6.2",
+   "config": "mod-variable_renaming",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-1.6.2",
+    "count": 7,
+    "id": "hercules-1.6.2/mod-variable_renaming"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 96,
+    "after": 100
+   },
+   "semantic": {
+    "before": 61,
+    "after": 96
+   },
+   "runtime": {
+    "same": 6,
+    "judged": 6,
+    "notJudged": 1
+   },
+   "completeness": {
+    "complete": 6,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "2.0.0",
+   "config": "mod-StringToExpressions",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-2.0.0",
+    "count": 7,
+    "id": "hercules-2.0.0/mod-StringToExpressions"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 42,
+    "after": 100
+   },
+   "semantic": {
+    "before": 34,
+    "after": 100
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "2.0.0",
+   "config": "mod-VirtualMachine",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-2.0.0",
+    "count": 7,
+    "id": "hercules-2.0.0/mod-VirtualMachine"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 15,
+    "after": 87
+   },
+   "semantic": {
+    "before": 8,
+    "after": 83
+   },
+   "runtime": {
+    "same": 5,
+    "judged": 5,
+    "notJudged": 2
+   },
+   "completeness": {
+    "complete": 5,
+    "of": 7
+   },
+   "failurePatterns": [
+    "tool defect: the generator measures the constant pool with `#`, which stops at a nil constant, so s06 has constants missing from its own output; the reader refuses rather than guess"
+   ],
+   "status": "partial",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "2.0.0",
+   "config": "mod-WrapInFunction",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-2.0.0",
+    "count": 7,
+    "id": "hercules-2.0.0/mod-WrapInFunction"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 87,
+    "after": 100
+   },
+   "semantic": {
+    "before": 99,
+    "after": 100
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "2.0.0",
+   "config": "mod-antitamper",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-2.0.0",
+    "count": 7,
+    "id": "hercules-2.0.0/mod-antitamper"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 64,
+    "after": 100
+   },
+   "semantic": {
+    "before": 37,
+    "after": 100
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "2.0.0",
+   "config": "mod-bytecode_encoding",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-2.0.0",
+    "count": 7,
+    "id": "hercules-2.0.0/mod-bytecode_encoding"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 23,
+    "after": 97
+   },
+   "semantic": {
+    "before": 18,
+    "after": 93
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "2.0.0",
+   "config": "mod-compressor",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-2.0.0",
+    "count": 7,
+    "id": "hercules-2.0.0/mod-compressor"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 100,
+    "after": 100
+   },
+   "semantic": {
+    "before": 100,
+    "after": 100
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "2.0.0",
+   "config": "mod-control_flow",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-2.0.0",
+    "count": 7,
+    "id": "hercules-2.0.0/mod-control_flow"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 81,
+    "after": 98
+   },
+   "semantic": {
+    "before": 63,
+    "after": 98
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "2.0.0",
+   "config": "mod-dynamic_code",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-2.0.0",
+    "count": 7,
+    "id": "hercules-2.0.0/mod-dynamic_code"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 78,
+    "after": 100
+   },
+   "semantic": {
+    "before": 90,
+    "after": 100
+   },
+   "runtime": {
+    "same": 6,
+    "judged": 6,
+    "notJudged": 1
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "2.0.0",
+   "config": "mod-function_inlining",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-2.0.0",
+    "count": 7,
+    "id": "hercules-2.0.0/mod-function_inlining"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 90,
+    "after": 100
+   },
+   "semantic": {
+    "before": 71,
+    "after": 97
+   },
+   "runtime": {
+    "same": 4,
+    "judged": 4,
+    "notJudged": 3
+   },
+   "completeness": {
+    "complete": 5,
+    "of": 5
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "2.0.0",
+   "config": "mod-garbage_code",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-2.0.0",
+    "count": 7,
+    "id": "hercules-2.0.0/mod-garbage_code"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 74,
+    "after": 100
+   },
+   "semantic": {
+    "before": 53,
+    "after": 100
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "2.0.0",
+   "config": "mod-opaque_predicates",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-2.0.0",
+    "count": 7,
+    "id": "hercules-2.0.0/mod-opaque_predicates"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 86,
+    "after": 100
+   },
+   "semantic": {
+    "before": 93,
+    "after": 100
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "2.0.0",
+   "config": "mod-string_encoding",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-2.0.0",
+    "count": 7,
+    "id": "hercules-2.0.0/mod-string_encoding"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 65,
+    "after": 100
+   },
+   "semantic": {
+    "before": 47,
+    "after": 100
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "2.0.0",
+   "config": "mod-variable_renaming",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-2.0.0",
+    "count": 7,
+    "id": "hercules-2.0.0/mod-variable_renaming"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 96,
+    "after": 100
+   },
+   "semantic": {
+    "before": 64,
+    "after": 96
+   },
+   "runtime": {
+    "same": 6,
+    "judged": 6,
+    "notJudged": 1
+   },
+   "completeness": {
+    "complete": 6,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "2.0.0",
+   "config": "default",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-2.0.0",
+    "count": 1,
+    "id": "hercules-2.0.0/default"
+   },
+   "identification": {
+    "detected": 1,
+    "of": 1
+   },
+   "structure": null,
+   "semantic": {
+    "before": null,
+    "after": null
+   },
+   "runtime": {
+    "same": 0,
+    "judged": 0,
+    "notJudged": 1
+   },
+   "completeness": null,
+   "failurePatterns": [
+    "tool defect: four 1.6 default builds are not valid Lua (`unexpected symbol near 'and'`); the parser rejects them, as does the reference runtime"
+   ],
+   "status": "identification-only",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Hercules",
+   "version": "2.0.0",
+   "config": "all",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/hercules-2.0.0",
+    "count": 1,
+    "id": "hercules-2.0.0/all"
+   },
+   "identification": {
+    "detected": 1,
+    "of": 1
+   },
+   "structure": null,
+   "semantic": {
+    "before": null,
+    "after": null
+   },
+   "runtime": {
+    "same": 0,
+    "judged": 0,
+    "notJudged": 1
+   },
+   "completeness": null,
+   "failurePatterns": [],
+   "status": "identification-only",
+   "implementation": [
+    "src/recover/hercules.js",
+    "src/recover/hercules-vm.js"
+   ]
+  },
+  {
+   "target": "Prometheus",
+   "version": "current",
+   "config": "Minify",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/prometheus",
+    "count": 7,
+    "id": "prometheus/Minify"
+   },
+   "identification": {
+    "detected": 0,
+    "of": 7
+   },
+   "structure": {
+    "before": 99,
+    "after": 99
+   },
+   "semantic": {
+    "before": 96,
+    "after": 96
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/prometheus.js",
+    "src/passes/evaluate.js"
+   ]
+  },
+  {
+   "target": "Prometheus",
+   "version": "current",
+   "config": "Weak",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/prometheus",
+    "count": 7,
+    "id": "prometheus/Weak"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 11,
+    "after": 75
+   },
+   "semantic": {
+    "before": 6,
+    "after": 58
+   },
+   "runtime": {
+    "same": 6,
+    "judged": 6,
+    "notJudged": 1
+   },
+   "completeness": {
+    "complete": 6,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "partial",
+   "implementation": [
+    "src/recover/prometheus.js",
+    "src/passes/evaluate.js"
+   ]
+  },
+  {
+   "target": "Prometheus",
+   "version": "current",
+   "config": "Medium",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/prometheus",
+    "count": 7,
+    "id": "prometheus/Medium"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 2,
+    "after": 78
+   },
+   "semantic": {
+    "before": 3,
+    "after": 54
+   },
+   "runtime": {
+    "same": 6,
+    "judged": 6,
+    "notJudged": 1
+   },
+   "completeness": {
+    "complete": 6,
+    "of": 7
+   },
+   "failurePatterns": [
+    "partial: s05, s06 and s07 keep one undecoded read of the cache (a lookup through a proxy inside a nested function) and stay at medium confidence"
+   ],
+   "status": "partial",
+   "implementation": [
+    "src/recover/prometheus.js",
+    "src/passes/evaluate.js"
+   ]
+  },
+  {
+   "target": "Prometheus",
+   "version": "current",
+   "config": "Strong",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/prometheus",
+    "count": 7,
+    "id": "prometheus/Strong"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 1,
+    "after": 66
+   },
+   "semantic": {
+    "before": 3,
+    "after": 49
+   },
+   "runtime": {
+    "same": 6,
+    "judged": 6,
+    "notJudged": 1
+   },
+   "completeness": {
+    "complete": 5,
+    "of": 7
+   },
+   "failurePatterns": [
+    "partial: s05, s06 and s07 keep one undecoded read of the cache (a lookup through a proxy inside a nested function) and stay at medium confidence"
+   ],
+   "status": "partial",
+   "implementation": [
+    "src/recover/prometheus.js",
+    "src/passes/evaluate.js"
+   ]
+  },
+  {
+   "target": "Prometheus",
+   "version": "current",
+   "config": "step-EncryptStrings",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/prometheus",
+    "count": 7,
+    "id": "prometheus/step-EncryptStrings"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 49,
+    "after": 94
+   },
+   "semantic": {
+    "before": 32,
+    "after": 88
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 6,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/prometheus.js",
+    "src/passes/evaluate.js"
+   ]
+  },
+  {
+   "target": "Prometheus",
+   "version": "current",
+   "config": "step-ConstantArray",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/prometheus",
+    "count": 7,
+    "id": "prometheus/step-ConstantArray"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 39,
+    "after": 98
+   },
+   "semantic": {
+    "before": 21,
+    "after": 92
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/prometheus.js",
+    "src/passes/evaluate.js"
+   ]
+  },
+  {
+   "target": "Prometheus",
+   "version": "current",
+   "config": "step-SplitStrings",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/prometheus",
+    "count": 7,
+    "id": "prometheus/step-SplitStrings"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 94,
+    "after": 99
+   },
+   "semantic": {
+    "before": 66,
+    "after": 92
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 6,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/prometheus.js",
+    "src/passes/evaluate.js"
+   ]
+  },
+  {
+   "target": "Prometheus",
+   "version": "current",
+   "config": "step-NumbersToExpressions",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/prometheus",
+    "count": 7,
+    "id": "prometheus/step-NumbersToExpressions"
+   },
+   "identification": {
+    "detected": 0,
+    "of": 7
+   },
+   "structure": {
+    "before": 79,
+    "after": 99
+   },
+   "semantic": {
+    "before": 80,
+    "after": 96
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/prometheus.js",
+    "src/passes/evaluate.js"
+   ]
+  },
+  {
+   "target": "Prometheus",
+   "version": "current",
+   "config": "step-ProxifyLocals",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/prometheus",
+    "count": 7,
+    "id": "prometheus/step-ProxifyLocals"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 50,
+    "after": 95
+   },
+   "semantic": {
+    "before": 39,
+    "after": 95
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/prometheus.js",
+    "src/passes/evaluate.js"
+   ]
+  },
+  {
+   "target": "Prometheus",
+   "version": "current",
+   "config": "step-WrapInFunction",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/prometheus",
+    "count": 7,
+    "id": "prometheus/step-WrapInFunction"
+   },
+   "identification": {
+    "detected": 0,
+    "of": 7
+   },
+   "structure": {
+    "before": 86,
+    "after": 99
+   },
+   "semantic": {
+    "before": 95,
+    "after": 96
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/prometheus.js",
+    "src/passes/evaluate.js"
+   ]
+  },
+  {
+   "target": "Prometheus",
+   "version": "current",
+   "config": "step-AddVararg",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/prometheus",
+    "count": 7,
+    "id": "prometheus/step-AddVararg"
+   },
+   "identification": {
+    "detected": 0,
+    "of": 7
+   },
+   "structure": {
+    "before": 99,
+    "after": 99
+   },
+   "semantic": {
+    "before": 96,
+    "after": 96
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/prometheus.js",
+    "src/passes/evaluate.js"
+   ]
+  },
+  {
+   "target": "Prometheus",
+   "version": "current",
+   "config": "step-AntiTamper",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/prometheus",
+    "count": 7,
+    "id": "prometheus/step-AntiTamper"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 62,
+    "after": 99
+   },
+   "semantic": {
+    "before": 39,
+    "after": 96
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/prometheus.js",
+    "src/passes/evaluate.js"
+   ]
+  },
+  {
+   "target": "Prometheus",
+   "version": "current",
+   "config": "step-Vmify",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/prometheus",
+    "count": 7,
+    "id": "prometheus/step-Vmify"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 13,
+    "after": 80
+   },
+   "semantic": {
+    "before": 10,
+    "after": 64
+   },
+   "runtime": {
+    "same": 6,
+    "judged": 6,
+    "notJudged": 1
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 7
+   },
+   "failurePatterns": [],
+   "status": "partial",
+   "implementation": [
+    "src/recover/prometheus.js",
+    "src/passes/evaluate.js"
+   ]
+  },
+  {
+   "target": "Prometheus",
+   "version": "lennyobf",
+   "config": "Minify",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated-local/prometheus-lennyobf",
+    "count": 8,
+    "id": "tests/corpus/obfuscated-local/prometheus-lennyobf/Minify"
+   },
+   "identification": {
+    "detected": 0,
+    "of": 8
+   },
+   "structure": {
+    "before": 99,
+    "after": 99
+   },
+   "semantic": {
+    "before": 97,
+    "after": 94
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 1
+   },
+   "completeness": {
+    "complete": 8,
+    "of": 8
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/prometheus.js",
+    "src/passes/evaluate.js"
+   ]
+  },
+  {
+   "target": "Prometheus",
+   "version": "lennyobf",
+   "config": "Weak",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated-local/prometheus-lennyobf",
+    "count": 8,
+    "id": "tests/corpus/obfuscated-local/prometheus-lennyobf/Weak"
+   },
+   "identification": {
+    "detected": 8,
+    "of": 8
+   },
+   "structure": {
+    "before": 6,
+    "after": 71
+   },
+   "semantic": {
+    "before": 4,
+    "after": 50
+   },
+   "runtime": {
+    "same": 5,
+    "judged": 5,
+    "notJudged": 3
+   },
+   "completeness": {
+    "complete": 8,
+    "of": 8
+   },
+   "failurePatterns": [],
+   "status": "partial",
+   "implementation": [
+    "src/recover/prometheus.js",
+    "src/passes/evaluate.js"
+   ]
+  },
+  {
+   "target": "Prometheus",
+   "version": "lennyobf",
+   "config": "Medium",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated-local/prometheus-lennyobf",
+    "count": 8,
+    "id": "tests/corpus/obfuscated-local/prometheus-lennyobf/Medium"
+   },
+   "identification": {
+    "detected": 8,
+    "of": 8
+   },
+   "structure": {
+    "before": 1,
+    "after": 48
+   },
+   "semantic": {
+    "before": 2,
+    "after": 34
+   },
+   "runtime": {
+    "same": 5,
+    "judged": 5,
+    "notJudged": 3
+   },
+   "completeness": {
+    "complete": 2,
+    "of": 8
+   },
+   "failurePatterns": [
+    "partial: s05, s06 and s07 keep one undecoded read of the cache (a lookup through a proxy inside a nested function) and stay at medium confidence"
+   ],
+   "status": "partial",
+   "implementation": [
+    "src/recover/prometheus.js",
+    "src/passes/evaluate.js"
+   ]
+  },
+  {
+   "target": "Prometheus",
+   "version": "lennyobf",
+   "config": "Strong",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated-local/prometheus-lennyobf",
+    "count": 8,
+    "id": "tests/corpus/obfuscated-local/prometheus-lennyobf/Strong"
+   },
+   "identification": {
+    "detected": 8,
+    "of": 8
+   },
+   "structure": {
+    "before": 1,
+    "after": 48
+   },
+   "semantic": {
+    "before": 2,
+    "after": 34
+   },
+   "runtime": {
+    "same": 5,
+    "judged": 5,
+    "notJudged": 3
+   },
+   "completeness": {
+    "complete": 2,
+    "of": 8
+   },
+   "failurePatterns": [
+    "partial: s05, s06 and s07 keep one undecoded read of the cache (a lookup through a proxy inside a nested function) and stay at medium confidence"
+   ],
+   "status": "partial",
+   "implementation": [
+    "src/recover/prometheus.js",
+    "src/passes/evaluate.js"
+   ]
+  },
+  {
+   "target": "Prometheus",
+   "version": "lennyobf",
+   "config": "step-EncryptStrings",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated-local/prometheus-lennyobf",
+    "count": 8,
+    "id": "tests/corpus/obfuscated-local/prometheus-lennyobf/step-EncryptStrings"
+   },
+   "identification": {
+    "detected": 8,
+    "of": 8
+   },
+   "structure": {
+    "before": 48,
+    "after": 95
+   },
+   "semantic": {
+    "before": 32,
+    "after": 89
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 1
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 8
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/prometheus.js",
+    "src/passes/evaluate.js"
+   ]
+  },
+  {
+   "target": "Prometheus",
+   "version": "lennyobf",
+   "config": "step-ConstantArray",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated-local/prometheus-lennyobf",
+    "count": 8,
+    "id": "tests/corpus/obfuscated-local/prometheus-lennyobf/step-ConstantArray"
+   },
+   "identification": {
+    "detected": 8,
+    "of": 8
+   },
+   "structure": {
+    "before": 49,
+    "after": 98
+   },
+   "semantic": {
+    "before": 29,
+    "after": 93
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 1
+   },
+   "completeness": {
+    "complete": 8,
+    "of": 8
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/prometheus.js",
+    "src/passes/evaluate.js"
+   ]
+  },
+  {
+   "target": "Prometheus",
+   "version": "lennyobf",
+   "config": "step-SplitStrings",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated-local/prometheus-lennyobf",
+    "count": 8,
+    "id": "tests/corpus/obfuscated-local/prometheus-lennyobf/step-SplitStrings"
+   },
+   "identification": {
+    "detected": 8,
+    "of": 8
+   },
+   "structure": {
+    "before": 93,
+    "after": 99
+   },
+   "semantic": {
+    "before": 65,
+    "after": 93
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 1
+   },
+   "completeness": {
+    "complete": 7,
+    "of": 8
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/prometheus.js",
+    "src/passes/evaluate.js"
+   ]
+  },
+  {
+   "target": "Prometheus",
+   "version": "lennyobf",
+   "config": "step-NumbersToExpressions",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated-local/prometheus-lennyobf",
+    "count": 8,
+    "id": "tests/corpus/obfuscated-local/prometheus-lennyobf/step-NumbersToExpressions"
+   },
+   "identification": {
+    "detected": 0,
+    "of": 8
+   },
+   "structure": {
+    "before": 76,
+    "after": 99
+   },
+   "semantic": {
+    "before": 79,
+    "after": 97
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 1
+   },
+   "completeness": {
+    "complete": 8,
+    "of": 8
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/prometheus.js",
+    "src/passes/evaluate.js"
+   ]
+  },
+  {
+   "target": "Prometheus",
+   "version": "lennyobf",
+   "config": "step-ProxifyLocals",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated-local/prometheus-lennyobf",
+    "count": 8,
+    "id": "tests/corpus/obfuscated-local/prometheus-lennyobf/step-ProxifyLocals"
+   },
+   "identification": {
+    "detected": 8,
+    "of": 8
+   },
+   "structure": {
+    "before": 49,
+    "after": 94
+   },
+   "semantic": {
+    "before": 39,
+    "after": 93
+   },
+   "runtime": {
+    "same": 6,
+    "judged": 6,
+    "notJudged": 2
+   },
+   "completeness": {
+    "complete": 8,
+    "of": 8
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/prometheus.js",
+    "src/passes/evaluate.js"
+   ]
+  },
+  {
+   "target": "Prometheus",
+   "version": "lennyobf",
+   "config": "step-WrapInFunction",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated-local/prometheus-lennyobf",
+    "count": 8,
+    "id": "tests/corpus/obfuscated-local/prometheus-lennyobf/step-WrapInFunction"
+   },
+   "identification": {
+    "detected": 0,
+    "of": 8
+   },
+   "structure": {
+    "before": 85,
+    "after": 99
+   },
+   "semantic": {
+    "before": 96,
+    "after": 97
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 1
+   },
+   "completeness": {
+    "complete": 8,
+    "of": 8
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/prometheus.js",
+    "src/passes/evaluate.js"
+   ]
+  },
+  {
+   "target": "Prometheus",
+   "version": "lennyobf",
+   "config": "step-AddVararg",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated-local/prometheus-lennyobf",
+    "count": 8,
+    "id": "tests/corpus/obfuscated-local/prometheus-lennyobf/step-AddVararg"
+   },
+   "identification": {
+    "detected": 0,
+    "of": 8
+   },
+   "structure": {
+    "before": 99,
+    "after": 99
+   },
+   "semantic": {
+    "before": 97,
+    "after": 97
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 1
+   },
+   "completeness": {
+    "complete": 8,
+    "of": 8
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/prometheus.js",
+    "src/passes/evaluate.js"
+   ]
+  },
+  {
+   "target": "Prometheus",
+   "version": "lennyobf",
+   "config": "step-AntiTamper",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated-local/prometheus-lennyobf",
+    "count": 8,
+    "id": "tests/corpus/obfuscated-local/prometheus-lennyobf/step-AntiTamper"
+   },
+   "identification": {
+    "detected": 0,
+    "of": 8
+   },
+   "structure": {
+    "before": 64,
+    "after": 99
+   },
+   "semantic": {
+    "before": 40,
+    "after": 97
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 1
+   },
+   "completeness": {
+    "complete": 8,
+    "of": 8
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/prometheus.js",
+    "src/passes/evaluate.js"
+   ]
+  },
+  {
+   "target": "Prometheus",
+   "version": "lennyobf",
+   "config": "step-Vmify",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated-local/prometheus-lennyobf",
+    "count": 8,
+    "id": "tests/corpus/obfuscated-local/prometheus-lennyobf/step-Vmify"
+   },
+   "identification": {
+    "detected": 8,
+    "of": 8
+   },
+   "structure": {
+    "before": 12,
+    "after": 80
+   },
+   "semantic": {
+    "before": 9,
+    "after": 62
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 7,
+    "notJudged": 1
+   },
+   "completeness": {
+    "complete": 8,
+    "of": 8
+   },
+   "failurePatterns": [],
+   "status": "partial",
+   "implementation": [
+    "src/recover/prometheus.js",
+    "src/passes/evaluate.js"
+   ]
+  },
+  {
+   "target": "IronBrew",
+   "version": "current",
+   "config": "default",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/ironbrew2",
+    "count": 8,
+    "id": "ironbrew2/default"
+   },
+   "identification": {
+    "detected": 8,
+    "of": 8
+   },
+   "structure": {
+    "before": 6,
+    "after": 96
+   },
+   "semantic": {
+    "before": 4,
+    "after": 88
+   },
+   "runtime": {
+    "same": 8,
+    "judged": 8,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 8,
+    "of": 8
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/ironbrew.js",
+    "src/recover/ib2-templates.js"
+   ]
+  },
+  {
+   "target": "IronBrew",
+   "version": "current",
+   "config": "plain",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/ironbrew2",
+    "count": 8,
+    "id": "ironbrew2/plain"
+   },
+   "identification": {
+    "detected": 8,
+    "of": 8
+   },
+   "structure": {
+    "before": 14,
+    "after": 98
+   },
+   "semantic": {
+    "before": 8,
+    "after": 90
+   },
+   "runtime": {
+    "same": 8,
+    "judged": 8,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 8,
+    "of": 8
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/ironbrew.js",
+    "src/recover/ib2-templates.js"
+   ]
+  },
+  {
+   "target": "IronBrew",
+   "version": "current",
+   "config": "mutate",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/ironbrew2",
+    "count": 8,
+    "id": "ironbrew2/mutate"
+   },
+   "identification": {
+    "detected": 8,
+    "of": 8
+   },
+   "structure": {
+    "before": 10,
+    "after": 98
+   },
+   "semantic": {
+    "before": 6,
+    "after": 90
+   },
+   "runtime": {
+    "same": 8,
+    "judged": 8,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 8,
+    "of": 8
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/ironbrew.js",
+    "src/recover/ib2-templates.js"
+   ]
+  },
+  {
+   "target": "IronBrew",
+   "version": "current",
+   "config": "super",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/ironbrew2",
+    "count": 8,
+    "id": "ironbrew2/super"
+   },
+   "identification": {
+    "detected": 8,
+    "of": 8
+   },
+   "structure": {
+    "before": 7,
+    "after": 98
+   },
+   "semantic": {
+    "before": 5,
+    "after": 90
+   },
+   "runtime": {
+    "same": 8,
+    "judged": 8,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 8,
+    "of": 8
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/ironbrew.js",
+    "src/recover/ib2-templates.js"
+   ]
+  },
+  {
+   "target": "IronBrew",
+   "version": "current",
+   "config": "flow",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/ironbrew2",
+    "count": 8,
+    "id": "ironbrew2/flow"
+   },
+   "identification": {
+    "detected": 8,
+    "of": 8
+   },
+   "structure": {
+    "before": 14,
+    "after": 96
+   },
+   "semantic": {
+    "before": 8,
+    "after": 88
+   },
+   "runtime": {
+    "same": 3,
+    "judged": 3,
+    "notJudged": 5
+   },
+   "completeness": {
+    "complete": 8,
+    "of": 8
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/ironbrew.js",
+    "src/recover/ib2-templates.js"
+   ]
+  },
+  {
+   "target": "IronBrew",
+   "version": "current",
+   "config": "strings",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/ironbrew2",
+    "count": 8,
+    "id": "ironbrew2/strings"
+   },
+   "identification": {
+    "detected": 8,
+    "of": 8
+   },
+   "structure": {
+    "before": 3,
+    "after": 94
+   },
+   "semantic": {
+    "before": 3,
+    "after": 84
+   },
+   "runtime": {
+    "same": 8,
+    "judged": 8,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 8,
+    "of": 8
+   },
+   "failurePatterns": [],
+   "status": "partial",
+   "implementation": [
+    "src/recover/ironbrew.js",
+    "src/recover/ib2-templates.js"
+   ]
+  },
+  {
+   "target": "IronBrew",
+   "version": "current",
+   "config": "lineinfo",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/ironbrew2",
+    "count": 8,
+    "id": "ironbrew2/lineinfo"
+   },
+   "identification": {
+    "detected": 8,
+    "of": 8
+   },
+   "structure": {
+    "before": 6,
+    "after": 96
+   },
+   "semantic": {
+    "before": 4,
+    "after": 88
+   },
+   "runtime": {
+    "same": 8,
+    "judged": 8,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 8,
+    "of": 8
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/ironbrew.js",
+    "src/recover/ib2-templates.js"
+   ]
+  },
+  {
+   "target": "IronBrew",
+   "version": "current",
+   "config": "nocompress",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/ironbrew2",
+    "count": 8,
+    "id": "ironbrew2/nocompress"
+   },
+   "identification": {
+    "detected": 8,
+    "of": 8
+   },
+   "structure": {
+    "before": 6,
+    "after": 96
+   },
+   "semantic": {
+    "before": 4,
+    "after": 88
+   },
+   "runtime": {
+    "same": 8,
+    "judged": 8,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 8,
+    "of": 8
+   },
+   "failurePatterns": [],
+   "status": "verified",
+   "implementation": [
+    "src/recover/ironbrew.js",
+    "src/recover/ib2-templates.js"
+   ]
+  },
+  {
+   "target": "IronBrew",
+   "version": "current",
+   "config": "IronBrikked (LuaXen): ironbrikked",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/luaxen",
+    "count": 7,
+    "id": "luaxen/ironbrikked"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 7,
+    "after": 74
+   },
+   "semantic": {
+    "before": 5,
+    "after": 51
+   },
+   "runtime": {
+    "same": 0,
+    "judged": 0,
+    "notJudged": 7
+   },
+   "completeness": {
+    "complete": 0,
+    "of": 7
+   },
+   "failurePatterns": [
+    "open: IronBrikked, the VM stage (LZW-compressed encoded prototype and an interpreter), is identified and reported as not recovered; with `both` the AST layer over it is peeled and the VM remains",
+    "tool defect: the tool raised `No loop to break` on s04 in both configurations; recorded as tool-error",
+    "tool defect: the tool's own IronBrikked output (14 fixtures, with and without the AST layer) does not run on any reference runtime available here: Lua 5.1, 5.2 and LuaJIT stop inside the generated VM with \"attempt to compare nil with number\" (the generated wra",
+    "tool defect: calls whose results are used are written with a result count of 0 or 1, RETURN carries a count that is not the number of values, a method call loses its object, a forward jump of 256 or more reads as a backward one: runs error; lifted output follo"
+   ],
+   "status": "partial",
+   "implementation": [
+    "src/recover/ironbrikked-vm.js"
+   ]
+  },
+  {
+   "target": "IronBrew",
+   "version": "current",
+   "config": "IronBrikked (LuaXen): both",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/luaxen",
+    "count": 7,
+    "id": "luaxen/both"
+   },
+   "identification": {
+    "detected": 7,
+    "of": 7
+   },
+   "structure": {
+    "before": 2,
+    "after": 74
+   },
+   "semantic": {
+    "before": 3,
+    "after": 51
+   },
+   "runtime": {
+    "same": 0,
+    "judged": 0,
+    "notJudged": 7
+   },
+   "completeness": {
+    "complete": 0,
+    "of": 7
+   },
+   "failurePatterns": [
+    "open: IronBrikked, the VM stage (LZW-compressed encoded prototype and an interpreter), is identified and reported as not recovered; with `both` the AST layer over it is peeled and the VM remains",
+    "tool defect: the tool raised `No loop to break` on s04 in both configurations; recorded as tool-error",
+    "tool defect: the tool's own IronBrikked output (14 fixtures, with and without the AST layer) does not run on any reference runtime available here: Lua 5.1, 5.2 and LuaJIT stop inside the generated VM with \"attempt to compare nil with number\" (the generated wra",
+    "tool defect: calls whose results are used are written with a result count of 0 or 1, RETURN carries a count that is not the number of values, a method call loses its object, a forward jump of 256 or more reads as a backward one: runs error; lifted output follo"
+   ],
+   "status": "partial",
+   "implementation": [
+    "src/recover/ironbrikked-vm.js"
+   ]
+  },
+  {
+   "target": "MoonVeil",
+   "version": "1.4.5",
+   "config": "script 1.4.5-raw3",
+   "fixtures": {
+    "dir": "public third-party scripts, not stored (sha256 in data/research/format-records.json)",
+    "count": 1,
+    "id": "moonveil-1.4.5-raw3"
+   },
+   "identification": {
+    "detected": 1,
+    "of": 1
+   },
+   "structure": {
+    "note": "no original program exists to compare with"
+   },
+   "semantic": {
+    "note": "no original program exists to compare with"
+   },
+   "runtime": {
+    "note": "not checkable: the program needs Roblox objects and its original is not available"
+   },
+   "completeness": {
+    "unresolved": 4
+   },
+   "failurePatterns": [
+    "three dispatcher loops (8, 135 and 259 blocks) and a 28888-character blob remain (KNOWN-ISSUES 19)"
+   ],
+   "status": "partial",
+   "confidence": {
+    "score": 0.7,
+    "level": "medium"
+   },
+   "implementation": [
+    "src/recover/moonveil-join.js",
+    "src/recover/moonveil-vm/",
+    "src/recover/moonveil-cff.js",
+    "src/recover/moonveil.js"
+   ]
+  },
+  {
+   "target": "MoonVeil",
+   "version": "2.0.26",
+   "config": "script 2.0.26-rideafish",
+   "fixtures": {
+    "dir": "public third-party scripts, not stored (sha256 in data/research/format-records.json)",
+    "count": 1,
+    "id": "moonveil-2.0.26-rideafish"
+   },
+   "identification": {
+    "detected": 1,
+    "of": 1
+   },
+   "structure": {
+    "note": "against the hand-made reconstruction of that script",
+    "after": null
+   },
+   "semantic": {
+    "before": null,
+    "after": 34
+   },
+   "runtime": {
+    "note": "not checkable: the program needs Roblox objects and its original is not available"
+   },
+   "completeness": {
+    "unresolved": 0
+   },
+   "failurePatterns": [
+    "joined from a table of factories, not recovered: names are lost, register-style temporaries remain (KNOWN-ISSUES 47)"
+   ],
+   "status": "partial",
+   "confidence": {
+    "score": 0.7,
+    "level": "medium"
+   },
+   "implementation": [
+    "src/recover/moonveil-join.js",
+    "src/recover/moonveil-vm/",
+    "src/recover/moonveil-cff.js",
+    "src/recover/moonveil.js"
+   ]
+  },
+  {
+   "target": "MoonVeil",
+   "version": "2.1.0",
+   "config": "script 2.1.0-sample6",
+   "fixtures": {
+    "dir": "public third-party scripts, not stored (sha256 in data/research/format-records.json)",
+    "count": 1,
+    "id": "moonveil-2.1.0-sample6"
+   },
+   "identification": {
+    "detected": 1,
+    "of": 1
+   },
+   "structure": {
+    "note": "no original program exists to compare with"
+   },
+   "semantic": {
+    "note": "no original program exists to compare with"
+   },
+   "runtime": {
+    "note": "not checkable: the program needs Roblox objects and its original is not available"
+   },
+   "completeness": {
+    "unresolved": 0
+   },
+   "failurePatterns": [
+    "a bytecode VM again: the VM reader written for 2.0.25 stops at its first shape check (KNOWN-ISSUES 46)"
+   ],
+   "status": "partial",
+   "confidence": {
+    "score": 0.6,
+    "level": "medium"
+   },
+   "implementation": [
+    "src/recover/moonveil-join.js",
+    "src/recover/moonveil-vm/",
+    "src/recover/moonveil-cff.js",
+    "src/recover/moonveil.js"
+   ]
+  },
+  {
+   "target": "MoonVeil",
+   "version": "2.1.0",
+   "config": "script 2.1.0-sample7",
+   "fixtures": {
+    "dir": "public third-party scripts, not stored (sha256 in data/research/format-records.json)",
+    "count": 1,
+    "id": "moonveil-2.1.0-sample7"
+   },
+   "identification": {
+    "detected": 1,
+    "of": 1
+   },
+   "structure": {
+    "note": "no original program exists to compare with"
+   },
+   "semantic": {
+    "note": "no original program exists to compare with"
+   },
+   "runtime": {
+    "note": "not checkable: the program needs Roblox objects and its original is not available"
+   },
+   "completeness": {
+    "unresolved": 0
+   },
+   "failurePatterns": [
+    "a bytecode VM again: the VM reader written for 2.0.25 stops at its first shape check (KNOWN-ISSUES 46)"
+   ],
+   "status": "partial",
+   "confidence": {
+    "score": 0.6,
+    "level": "medium"
+   },
+   "implementation": [
+    "src/recover/moonveil-join.js",
+    "src/recover/moonveil-vm/",
+    "src/recover/moonveil-cff.js",
+    "src/recover/moonveil.js"
+   ]
+  },
+  {
+   "target": "Luraph",
+   "version": "13",
+   "config": "VM",
+   "fixtures": {
+    "dir": "public collection of labelled scripts; engine runs on the supplied reference samples",
+    "count": 0,
+    "id": "luraph-13"
+   },
+   "identification": {
+    "note": "by banner; without a banner the era is named correctly 78% of the time and the exact version 37% (leave-one-out, tools/research/luraph-era.mjs)"
+   },
+   "structure": {
+    "note": "no original program exists for these scripts"
+   },
+   "semantic": {
+    "note": "no original program exists for these scripts"
+   },
+   "runtime": {
+    "same": 0,
+    "judged": 0,
+    "notJudged": 0
+   },
+   "completeness": {
+    "lifted": 0,
+    "runs": 0,
+    "traceOnly": 0
+   },
+   "failurePatterns": [
+    "no engine exists for this version"
+   ],
+   "status": "unsupported",
+   "implementation": [
+    "src/reconstruct/",
+    "api/reconstruct.py"
+   ]
+  },
+  {
+   "target": "Luraph",
+   "version": "14-early",
+   "config": "VM",
+   "fixtures": {
+    "dir": "public collection of labelled scripts; engine runs on the supplied reference samples",
+    "count": 0,
+    "id": "luraph-14-early"
+   },
+   "identification": {
+    "note": "by banner; without a banner the era is named correctly 78% of the time and the exact version 37% (leave-one-out, tools/research/luraph-era.mjs)"
+   },
+   "structure": {
+    "note": "no original program exists for these scripts"
+   },
+   "semantic": {
+    "note": "no original program exists for these scripts"
+   },
+   "runtime": {
+    "same": 0,
+    "judged": 0,
+    "notJudged": 0
+   },
+   "completeness": {
+    "lifted": 0,
+    "runs": 0,
+    "traceOnly": 0
+   },
+   "failurePatterns": [
+    "no engine exists for this version"
+   ],
+   "status": "unsupported",
+   "implementation": [
+    "src/reconstruct/",
+    "api/reconstruct.py"
+   ]
+  },
+  {
+   "target": "Luraph",
+   "version": "14.7",
+   "config": "VM",
+   "fixtures": {
+    "dir": "public collection of labelled scripts; engine runs on the supplied reference samples",
+    "count": 1,
+    "id": "luraph-14.7"
+   },
+   "identification": {
+    "note": "by banner; without a banner the era is named correctly 78% of the time and the exact version 37% (leave-one-out, tools/research/luraph-era.mjs)"
+   },
+   "structure": {
+    "note": "no original program exists for these scripts"
+   },
+   "semantic": {
+    "note": "no original program exists for these scripts"
+   },
+   "runtime": {
+    "same": 0,
+    "judged": 0,
+    "notJudged": 1
+   },
+   "completeness": {
+    "lifted": 0,
+    "runs": 1,
+    "traceOnly": 1
+   },
+   "failurePatterns": [
+    "1 input tried; the engine lifted none (1 ended as a behaviour trace)"
+   ],
+   "status": "experimental",
+   "implementation": [
+    "src/reconstruct/",
+    "api/reconstruct.py"
+   ]
+  },
+  {
+   "target": "Luraph",
+   "version": "14.8",
+   "config": "VM",
+   "fixtures": {
+    "dir": "public collection of labelled scripts; engine runs on the supplied reference samples",
+    "count": 1,
+    "id": "luraph-14.8"
+   },
+   "identification": {
+    "note": "by banner; without a banner the era is named correctly 78% of the time and the exact version 37% (leave-one-out, tools/research/luraph-era.mjs)"
+   },
+   "structure": {
+    "note": "no original program exists for these scripts"
+   },
+   "semantic": {
+    "note": "no original program exists for these scripts"
+   },
+   "runtime": {
+    "same": 0,
+    "judged": 0,
+    "notJudged": 1
+   },
+   "completeness": {
+    "lifted": 0,
+    "runs": 1,
+    "traceOnly": 1
+   },
+   "failurePatterns": [
+    "1 input tried; the engine lifted none (1 ended as a behaviour trace)"
+   ],
+   "status": "experimental",
+   "implementation": [
+    "src/reconstruct/",
+    "api/reconstruct.py"
+   ]
+  },
+  {
+   "target": "Luraph",
+   "version": "14.9",
+   "config": "VM",
+   "fixtures": {
+    "dir": "public collection of labelled scripts; engine runs on the supplied reference samples",
+    "count": 1,
+    "id": "luraph-14.9"
+   },
+   "identification": {
+    "note": "by banner; without a banner the era is named correctly 78% of the time and the exact version 37% (leave-one-out, tools/research/luraph-era.mjs)"
+   },
+   "structure": {
+    "note": "no original program exists for these scripts"
+   },
+   "semantic": {
+    "note": "no original program exists for these scripts"
+   },
+   "runtime": {
+    "same": 0,
+    "judged": 0,
+    "notJudged": 1
+   },
+   "completeness": {
+    "lifted": 0,
+    "runs": 1,
+    "traceOnly": 1
+   },
+   "failurePatterns": [
+    "1 input tried; the engine lifted none (1 ended as a behaviour trace)"
+   ],
+   "status": "experimental",
+   "implementation": [
+    "src/reconstruct/",
+    "api/reconstruct.py"
+   ]
+  },
+  {
+   "target": "Luraph",
+   "version": "14-late",
+   "config": "VM",
+   "fixtures": {
+    "dir": "public collection of labelled scripts; engine runs on the supplied reference samples",
+    "count": 0,
+    "id": "luraph-14-late"
+   },
+   "identification": {
+    "note": "by banner; without a banner the era is named correctly 78% of the time and the exact version 37% (leave-one-out, tools/research/luraph-era.mjs)"
+   },
+   "structure": {
+    "note": "no original program exists for these scripts"
+   },
+   "semantic": {
+    "note": "no original program exists for these scripts"
+   },
+   "runtime": {
+    "same": 0,
+    "judged": 0,
+    "notJudged": 0
+   },
+   "completeness": {
+    "lifted": 0,
+    "runs": 0,
+    "traceOnly": 0
+   },
+   "failurePatterns": [
+    "no engine exists for this version"
+   ],
+   "status": "unsupported",
+   "implementation": [
+    "src/reconstruct/",
+    "api/reconstruct.py"
+   ]
+  },
+  {
+   "target": "Luraph",
+   "version": "15.0",
+   "config": "VM",
+   "fixtures": {
+    "dir": "public collection of labelled scripts; engine runs on the supplied reference samples",
+    "count": 1,
+    "id": "luraph-15.0"
+   },
+   "identification": {
+    "note": "by banner; without a banner the era is named correctly 78% of the time and the exact version 37% (leave-one-out, tools/research/luraph-era.mjs)"
+   },
+   "structure": {
+    "note": "no original program exists for these scripts"
+   },
+   "semantic": {
+    "note": "no original program exists for these scripts"
+   },
+   "runtime": {
+    "same": 1,
+    "judged": 1,
+    "notJudged": 0
+   },
+   "completeness": {
+    "lifted": 1,
+    "runs": 1,
+    "traceOnly": 0
+   },
+   "failurePatterns": [
+    "1 lifted run compared identical with the original; 10 are needed (with a lower bound of 70%) for \"fully tested\""
+   ],
+   "status": "partially-tested",
+   "implementation": [
+    "src/reconstruct/",
+    "api/reconstruct.py"
+   ]
+  },
+  {
+   "target": "Luraph",
+   "version": "15.1",
+   "config": "VM",
+   "fixtures": {
+    "dir": "public collection of labelled scripts; engine runs on the supplied reference samples",
+    "count": 0,
+    "id": "luraph-15.1"
+   },
+   "identification": {
+    "note": "by banner; without a banner the era is named correctly 78% of the time and the exact version 37% (leave-one-out, tools/research/luraph-era.mjs)"
+   },
+   "structure": {
+    "note": "no original program exists for these scripts"
+   },
+   "semantic": {
+    "note": "no original program exists for these scripts"
+   },
+   "runtime": {
+    "same": 0,
+    "judged": 0,
+    "notJudged": 0
+   },
+   "completeness": {
+    "lifted": 0,
+    "runs": 0,
+    "traceOnly": 0
+   },
+   "failurePatterns": [
+    "no engine exists for this version"
+   ],
+   "status": "unsupported",
+   "implementation": [
+    "src/reconstruct/",
+    "api/reconstruct.py"
+   ]
+  },
+  {
+   "target": "Luraph",
+   "version": "ironbrew-1",
+   "config": "VM",
+   "fixtures": {
+    "dir": "public collection of labelled scripts; engine runs on the supplied reference samples",
+    "count": 1,
+    "id": "ironbrew-1"
+   },
+   "identification": {
+    "note": "by banner; without a banner the era is named correctly 78% of the time and the exact version 37% (leave-one-out, tools/research/luraph-era.mjs)"
+   },
+   "structure": {
+    "note": "no original program exists for these scripts"
+   },
+   "semantic": {
+    "note": "no original program exists for these scripts"
+   },
+   "runtime": {
+    "same": 1,
+    "judged": 1,
+    "notJudged": 0
+   },
+   "completeness": {
+    "lifted": 1,
+    "runs": 1,
+    "traceOnly": 0
+   },
+   "failurePatterns": [
+    "1 lifted run compared identical with the original; 10 are needed (with a lower bound of 70%) for \"fully tested\""
+   ],
+   "status": "partially-tested",
+   "implementation": [
+    "src/reconstruct/",
+    "api/reconstruct.py"
+   ]
+  }
+ ]
+}

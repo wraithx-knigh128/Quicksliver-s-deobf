@@ -27,12 +27,15 @@ export function decodeText(text, alphabet) {
     if (digit.has(alphabet[i])) fail('the alphabet repeats a character');
     digit.set(alphabet[i], i);
   }
+  // the pieces are separated by the one character the alphabet does not hold (`_` in 1.6.2 and later; another in 1.6, whose alphabet has `_` among its digits)
+  const outside = [...new Set(text)].filter((c) => !digit.has(c));
+  const sep = outside.length === 1 ? outside[0] : '_';
   const chars = [];
   let n = 0;
   let any = false;
   for (let i = 0; i <= text.length; i++) {
     const c = text[i];
-    if (i === text.length || c === '_') {
+    if (i === text.length || c === sep) {
       if (any) { if (n > 255) fail('a decoded character is larger than a byte'); chars.push(n); }
       n = 0; any = false;
       continue;
@@ -42,12 +45,15 @@ export function decodeText(text, alphabet) {
     n = n * base + d; any = true;
     if (n > 0xffff) fail('a decoded character is larger than a byte');
   }
-  if (chars.length % 2) fail('the decoded text is not a sequence of (byte, "\\") pairs');
-  const bytes = new Uint8Array(chars.length / 2);
-  for (let i = 0; i < chars.length; i += 2) {
-    if (chars[i + 1] !== 92) fail('the decoded text is not a sequence of (byte, "\\") pairs');
-    bytes[i / 2] = chars[i];
+  // 1.6.2 and later write every byte followed by a backslash (the text was once the body of a string literal); 1.6 writes the bytes alone
+  const paired = chars.length % 2 === 0 && chars.every((c, i) => i % 2 === 0 || c === 92);
+  if (!paired) {
+    if (sep === '_') fail('the decoded text is not a sequence of (byte, "\\") pairs');
+    if (chars.some((c) => c > 255)) fail('a decoded character is larger than a byte');
+    return Uint8Array.from(chars);
   }
+  const bytes = new Uint8Array(chars.length / 2);
+  for (let i = 0; i < chars.length; i += 2) bytes[i / 2] = chars[i];
   return bytes;
 }
 

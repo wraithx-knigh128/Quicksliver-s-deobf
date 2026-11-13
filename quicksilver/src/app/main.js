@@ -15,12 +15,13 @@ import { DiffView } from './diffview.js';
 import { TreeView } from './tree.js';
 import { loadSettings, saveSettings, recoverOptions, indentString, DEFAULTS } from './settings.js';
 import { LicenseState, showLicenseDialog } from './license-ui.js';
-import { loadCompat, loadFormatDb, CompatDashboard } from './compat.js';
+import { loadCompat, loadFormatDb, loadPrimaryMatrix, matrixSection, CompatDashboard } from './compat.js';
 import { detectionView, analysisView, recoverySummary, detectionSummary, statusBadge, STATUS_LABEL } from './views.js';
 import { makeZip } from './zip.js';
 import { showHelp } from './help.js';
 import { originView } from './origin-view.js';
 import { loadResearch, researchView } from './research-view.js';
+import { customView, loadExamples } from './custom-view.js';
 import { createReconstructView } from './reconstruct-view.js';
 import { buildMarkdownReport } from './report-md.js';
 import { planOptions } from '../research/plans.js';
@@ -83,6 +84,7 @@ const TABS = [
   { id: 'luast', label: 'Luast' },
   { id: 'examples', label: 'Examples' },
   { id: 'compat', label: 'Obfuscators' },
+  { id: 'custom', label: 'Custom format' },
   { id: 'research', label: 'Research' },
 ];
 
@@ -350,6 +352,8 @@ views.luast = h('div.view', { id: 'view-luast' },
   h('div#luast-body.view', tree.root), h('div#luast-empty.view'));
 views.compat = h('div.view', { id: 'view-compat' }, emptyState('Loading', 'Reading data/compat.json'));
 views.research = h('div.view', { id: 'view-research' }, emptyState('Loading', 'Reading data/research'));
+views.custom = h('div.view', { id: 'view-custom' });
+const customState = { result: null, examples: null, busy: false };
 const recon = createReconstructView({ getEditorBytes: () => getInputBytes(), getEditorName: () => S.name || 'script.lua', toast });
 views.reconstruct = recon.root;
 let research = null;      // { summary, knowledge, families } from data/research, once loaded
@@ -404,6 +408,7 @@ function switchTab(id) {
   if (id === 'luast') ensureLuast();
   if (id === 'examples') board.show();
   if (id === 'research') renderResearch();
+  if (id === 'custom') { renderCustom(); ensureExamples(); }
   if (id === 'reconstruct') recon.show();
   if (id === 'detection' && !S.detection && inputPresent()) runDetect({ quiet: true });
   if (id === 'analysis' && !S.analysis && inputPresent()) runAnalyze({ quiet: true });
@@ -1672,6 +1677,28 @@ function renderResearch() {
   replace(views.research, researchView(research, { advice: S.advice, observed: S.observed, identification: S.identification }));
 }
 
+function renderCustom() {
+  replace(views.custom, customView(customState, {
+    onAnalyze: runCustom,
+    onCopy: (text) => { navigator.clipboard.writeText(text).then(() => toast('Copied'), () => toast('Copy was blocked by the browser')); },
+  }));
+}
+
+async function ensureExamples() {
+  if (customState.examples) return;
+  try { customState.examples = await loadExamples(); renderCustom(); } catch { /* the analysis works without the examples */ }
+}
+
+async function runCustom() {
+  if (!inputPresent()) { toast('Nothing to analyse. Paste code or open a file first.'); switchTab('work'); editor.focus(); return; }
+  customState.busy = true; renderCustom();
+  const allowSandbox = lic.allow('sandbox') && settings.sandbox;
+  const r = await run('custom', { sandbox: { enabled: !!allowSandbox }, examples: customState.examples }, 'Analysing', { limits: { timeoutMs: 180_000 }, needsText: true });
+  customState.busy = false;
+  customState.result = r;
+  renderCustom();
+}
+
 async function ensureResearch() {
   if (research) return research;
   try {
@@ -1696,7 +1723,7 @@ async function start() {
     compat = await loadCompat();
     compatById = new Map(compat.families.map((f) => [f.id, f]));
     dashboard = new CompatDashboard(compat, { db: await loadFormatDb() });
-    replace(views.compat, dashboard.root);
+    replace(views.compat, matrixSection(await loadPrimaryMatrix()), dashboard.root);
     setCount('compat', String(compat.families.length));
     renderSidebar();
     renderInspector();

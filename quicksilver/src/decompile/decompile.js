@@ -125,6 +125,7 @@ class FunctionDecompiler {
     const l = lift(f, { envUps: opts.envUps });
     this.ir = l.ir;
     this.n = this.ir.length;
+    if (opts.prune) this.pruneUnreachable();
     this.nregs = f.maxStack + 2;
     this.P = new Map();       // register -> pending entry
     this.topEntry = null;     // pending multi-value (call / vararg with open result count)
@@ -138,6 +139,34 @@ class FunctionDecompiler {
   }
 
   // ---- analysis ---------------------------------------------------------------------------------------------------------------------
+
+  /**
+   * Instructions nothing can reach (the junk an obfuscator puts after a jump, with jumps of its own among them) are removed, so that a jump over them is a jump over nothing and
+   * the structure of what is left is not confused by targets that no run can arrive at.
+   */
+  pruneUnreachable() {
+    const { ir } = this;
+    const n = ir.length;
+    if (!n) return;
+    const seen = new Uint8Array(n + 1);
+    const stack = [0];
+    while (stack.length) {
+      const i = stack.pop();
+      if (i < 0 || i >= n || seen[i]) continue;
+      seen[i] = 1;
+      for (const s of this.succs(i)) stack.push(s);
+    }
+    seen[n] = 1;
+    if (seen.every((x) => x)) { return; }
+    const at = new Array(n + 1);
+    let k = 0;
+    for (let i = 0; i <= n; i++) { at[i] = k; if (seen[i] && i < n) k++; }
+    const kept = ir.filter((_, i) => seen[i]);
+    for (const o of kept) if (o.t !== undefined) o.t = at[o.t];
+    this.ir = kept;
+    this.n = kept.length;
+    this.pruned = true;
+  }
 
   prepare() {
     const { ir, n, f } = this;
@@ -1003,6 +1032,7 @@ class FunctionDecompiler {
       case 'close': return i + 1;
       case 'jmp': {
         if (simple) throw new Unstructured('jump inside a condition');
+        if (o.t === i + 1) return i + 1;                         // a jump to the next instruction does nothing (what is left of a jump over removed junk)
         if (ctx.exit !== null && o.t === ctx.exit) { this.flushAll(out); out.push({ type: 'Break' }); return i + 1; }
         if (o.t > i + 1 && o.t <= hi) {
           // a jump over code that nothing else can reach (the compiler's LOADBOOL pairs): skip it
@@ -1307,8 +1337,15 @@ function failedFunction(proto, reason) {
 }
 
 export function decompileFunction(f, opts) {
-  const d = new FunctionDecompiler(f, opts);
-  return d.decompile();
+  try {
+    return new FunctionDecompiler(f, opts).decompile();
+  } catch (e) {
+    if (!(e instanceof Unstructured) || opts.prune) throw e;
+    // code nothing can reach (the junk an obfuscator leaves after a jump, with jumps of its own) can stop the structure from being read: try again without it
+    const again = new FunctionDecompiler(f, { ...opts, prune: true });
+    if (again.n === again.ir.length && !again.pruned) throw e;
+    return again.decompile();
+  }
 }
 
 /**

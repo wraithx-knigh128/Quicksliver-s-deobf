@@ -12,6 +12,7 @@ const OPS = {
   nexus: api.nexusSource,
   advise: api.adviseSource,
   identify: api.identifySource,
+  custom: api.customAnalyzeSource,
   luast: api.luast,
   trace: api.traceSource,
   rename: api.renameScript,

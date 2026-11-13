@@ -263,4 +263,94 @@ export function undoProxifyLocals(chunk) {
   return { changed: reads + writes, reads, writes, proxies: proxies.size, leftover };
 }
 
+
+// ---- decryption machinery nothing reads any more ------------------------------------------------------------------------------------------
+
+const PURE_STD = /^(string|math|table)$/;
+
+/**
+ * Prometheus' EncryptStrings keeps the text of every string encrypted and a cache that the program reads through the decryptor. Once every read has been replaced by its text, what is
+ * left is calls of the decryptor as statements (a call whose result nothing uses), the decryptor, its pseudo-random generator and a loop that shuffles a lookup table: a machine that
+ * only ever works on its own state. It is removed when
+ *   * a local function is referenced only as the callee of call statements (their result is discarded),
+ *   * it, and the local functions it calls, call nothing but the standard string, math and table libraries, and
+ *   * every variable they write is read only by them and by top-level statements that write nothing else.
+ */
+export function removeOrphanDecoders(chunk) {
+  const info = analyze(chunk);
+  const top = new Set(chunk.body);
+  const funcOf = new Map();                       // Var -> the function node of `local function f`
+  const declId = (s) => (s.type === 'LocalFunction' ? s.id : s.type === 'Local' && s.ids.length === 1 && s.values.length === 1 && s.values[0].type === 'Func' ? s.ids[0] : null);
+  for (const s of chunk.body) { const id = declId(s); const v = id && info.varOf.get(id); if (v) funcOf.set(v, s); }
+  const inside = (node, target) => { let hit = false; walk(node, (n) => { if (n === target) hit = true; return hit ? false : undefined; }); return hit; };
+  const callStmtsOf = (v) => { const out = []; walk(chunk, (n) => { if (n.type === 'CallStmt' && n.call.fn && n.call.fn.type === 'Name' && info.varOf.get(n.call.fn) === v) out.push(n); return undefined; }); return out; };
+  let changed = 0;
+  for (const [v, decl] of funcOf) {
+    const calls = callStmtsOf(v);
+    if (!calls.length || v.reads.length !== calls.length || v.writes.length) continue;
+    // the group: this function and the local functions it calls
+    const group = new Map([[v, decl]]);
+    let ok = true;
+    const gather = (fnNode) => {
+      walk(fnNode, (n) => {
+        if (n.type === 'MethodCall') ok = false;
+        if (n.type === 'Call') {
+          const f = n.fn;
+          if (f.type === 'Name') {
+            const w = info.varOf.get(f);
+            if (w && funcOf.has(w)) { if (!group.has(w)) { group.set(w, funcOf.get(w)); gather(funcOf.get(w)); } }
+            // a local that is an alias of a standard function is as pure as the function; any other callee (a parameter, a global, an upvalue of unknown value) is not known to be
+            else if (!w || w.kind === 'global' || !(w.init && w.init.type === 'Index' && w.init.obj.type === 'Name' && PURE_STD.test(w.init.obj.name) && w.writes.length === 0)) ok = false;
+          } else if (!(f.type === 'Index' && f.obj.type === 'Name' && PURE_STD.test(f.obj.name))) ok = false;
+        }
+        return undefined;
+      });
+    };
+    gather(decl);
+    if (!ok) continue;
+    // the state they write
+    const state = new Set();
+    for (const g of group.values()) {
+      walk(g, (n) => {
+        if (n.type === 'Assign') for (const t of n.targets) { const base = t.type === 'Index' ? t.obj : t; if (base.type === 'Name') { const w = info.varOf.get(base); if (w && w.kind !== 'global' && !group.has(w)) state.add(w); } }
+        return undefined;
+      });
+    }
+    // a variable local to the group's own bodies is not state of the chunk
+    const owned = new Set();
+    for (const w of state) if (w.funcDepth > 0 && !chunk.body.includes(w.declStmt)) owned.add(w);
+    for (const w of owned) state.delete(w);
+    // top-level statements that work on that state and nothing else
+    const feeders = new Set();
+    for (const s of chunk.body) {
+      if (s === decl || [...group.values()].includes(s) || s.type === 'Local' || s.type === 'LocalFunction' || s.type === 'CallStmt') continue;
+      const writes = [];
+      let impure = false;
+      walk(s, (n) => {
+        if (n.type === 'Assign') for (const t of n.targets) { const base = t.type === 'Index' ? t.obj : t; if (base.type === 'Name') writes.push(info.varOf.get(base)); }
+        if (n.type === 'Call' && !(n.fn.type === 'Index' && n.fn.obj.type === 'Name' && PURE_STD.test(n.fn.obj.name))) impure = true;
+        return undefined;
+      });
+      if (writes.length && !impure && writes.every((w) => w && state.has(w))) feeders.add(s);
+    }
+    // a machine that works on no state of its own is a program, not a decoder
+    if (!state.size) continue;
+    // every read of the state lies in the group or in a feeder
+    for (const w of state) {
+      for (const r of w.reads) {
+        const inGroup = [...group.values()].some((g) => inside(g, r)) || [...feeders].some((f) => inside(f, r));
+        if (!inGroup) { ok = false; break; }
+      }
+      if (!ok) break;
+    }
+    if (!ok) continue;
+    const drop = new Set([...calls, ...group.values(), ...feeders]);
+    for (const w of state) if (w.declStmt && top.has(w.declStmt) && w.declStmt.type === 'Local' && w.declStmt.ids.length === 1 && w.declStmt.values.every((x) => x.type === 'Table' || x.type === 'Number' || x.type === 'Nil')) drop.add(w.declStmt);
+    transform(chunk, { block: (stmts) => (stmts.some((x) => drop.has(x)) ? stmts.filter((x) => !drop.has(x)) : undefined) });
+    changed += drop.size;
+    break;                                        // the analysis is stale; the next round looks again
+  }
+  return { changed };
+}
+
 export { makeConst, constOf, NOT_CONST };

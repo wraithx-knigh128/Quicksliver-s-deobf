@@ -251,3 +251,46 @@ export class CompatDashboard {
     ]);
   }
 }
+
+// ---- the five primary targets, version by version -----------------------------------------------------------------------------------------------
+
+export async function loadPrimaryMatrix() {
+  try {
+    const res = await fetch('data/research/primary-matrix.json', { cache: 'no-cache' });
+    return res.ok ? await res.json() : null;
+  } catch { return null; }
+}
+
+const mcell = (c, kind) => {
+  if (!c) return '—';
+  if (c.note) return 'n/a';
+  if (kind === 'id') return `${c.detected}/${c.of}`;
+  if (kind === 'sa') return `${c.before == null ? '' : `${c.before}%→`}${c.after == null ? '—' : `${c.after}%`}`;
+  if (kind === 'rt') return `${c.same}/${c.judged}${c.notJudged ? ` (${c.notJudged})` : ''}`;
+  return c.complete != null ? `${c.complete}/${c.of}` : c.lifted != null ? `${c.lifted}/${c.runs} lifted` : `${c.unresolved} unresolved`;
+};
+const STATUS_CLASS = { verified: 'ok', supported: 'ok', partial: 'warn', experimental: 'warn', 'partially-tested': 'warn', unsupported: 'bad' };
+
+/** One table per target: a row per version and configuration, in the categories of src/core/metrics.js, with the failure patterns and the fixtures the row stands on. */
+export function matrixSection(matrix) {
+  if (!matrix) return null;
+  const targets = ['MoonVeil', 'Hercules', 'Luraph', 'Prometheus', 'IronBrew'];
+  return h('section.section.matrix',
+    h('h3', h('span', 'Primary targets, version by version')),
+    h('div.body',
+      h('p.note', matrix.note),
+      ...targets.map((t) => {
+        const rows = matrix.rows.filter((r) => r.target === t);
+        const by = {};
+        rows.forEach((r) => { by[r.status] = (by[r.status] || 0) + 1; });
+        return h('details', { class: 'matrix-target' },
+          h('summary', h('b', t), ` — ${rows.length} rows: ${Object.entries(by).map(([k, v]) => `${v} ${k}`).join(', ')}`),
+          h('div.table-wrap', h('table.table',
+            h('thead', h('tr', ['Version', 'Configuration', 'Fixtures', 'Identified', 'Structure', 'Semantic', 'Runtime', 'Complete', 'Status', 'Known failure patterns'].map((x) => h('th', x)))),
+            h('tbody', rows.map((r) => h('tr',
+              h('td', r.version), h('td', r.config), h('td', { title: r.fixtures.dir }, `${r.fixtures.count} · ${r.fixtures.id}`),
+              h('td', mcell(r.identification, 'id')), h('td', mcell(r.structure, 'sa')), h('td', mcell(r.semantic, 'sa')), h('td', mcell(r.runtime, 'rt')), h('td', mcell(r.completeness, 'cmp')),
+              h('td', h('span.badge.' + (STATUS_CLASS[r.status] || ''), r.status)),
+              h('td', r.failurePatterns.length ? r.failurePatterns.join(' · ') : '—')))))));
+      })));
+}

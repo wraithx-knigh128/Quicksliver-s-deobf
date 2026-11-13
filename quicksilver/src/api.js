@@ -20,6 +20,7 @@ import { traceScript } from './trace/trace.js';
 import { renamePass } from './passes/rename.js';
 import { originAnalysis } from './origin/index.js';
 import { verifyRecovery } from './adaptive/verify.js';
+import { analyzeCustom } from './custom/analyze.js';
 
 export const ENGINE_VERSION = '1.0.0';
 
@@ -114,6 +115,11 @@ export function identifySource(source, options = {}) {
     const detection = options.detection || detect(source);
     return { ok: true, ...identify(source, { detection, profiles: options.profiles, capabilities: options.capabilities || null }) };
   });
+}
+
+/** Custom-format analysis: what the script was made into, the plan, the recovery and what is left (see src/custom/analyze.js). */
+export function customAnalyzeSource(source, options = {}) {
+  return timed(() => analyzeCustom(source, options));
 }
 
 /** The NEXUS pipeline on its own, with its own options (see src/nexus/pipeline.js). */
