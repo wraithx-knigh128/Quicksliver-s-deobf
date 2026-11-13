@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-11-12T08:50:42.025Z",
+ "generatedAt": "2026-11-13T13:13:29.089Z",
  "engine": "src/recover/pipeline.js",
  "records": [
   {
@@ -21,8 +21,8 @@
    "versionMatches": true,
    "ok": true,
    "confidence": {
-    "score": 0.5,
-    "level": "low"
+    "score": 0.7,
+    "level": "medium"
    },
    "steps": [
     {
@@ -56,13 +56,18 @@
      "changed": 168
     },
     {
+     "id": "idioms.method.plain",
+     "status": "applied",
+     "changed": 1
+    },
+    {
      "id": "rename",
      "status": "applied",
      "changed": 317
     }
    ],
    "unresolved": 4,
-   "outputBytes": 168248
+   "outputBytes": 168185
   },
   {
    "id": "moonveil-2.0.26-rideafish",
@@ -405,13 +410,18 @@
      "why": "no decoder-like function calls with constant arguments"
     },
     {
+     "id": "idioms.method.plain",
+     "status": "applied",
+     "changed": 4
+    },
+    {
      "id": "rename",
      "status": "applied",
      "changed": 780
     }
    ],
    "unresolved": 0,
-   "outputBytes": 66933
+   "outputBytes": 66928
   }
  ]
 }

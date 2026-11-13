@@ -188,6 +188,7 @@ export function nexusRecover(source, userOptions = {}) {
   const roles = new Roles();
   const alpha = [];
   let adaptiveWork = null;
+  let vmProfile = null;
   let strippedComments = 0;
   const rec = stage('reconstruct', 'Reconstruct', (s) => {
     // comments: only when they were read as fragments, and only after the program is shown to be the same with and without them
@@ -232,6 +233,7 @@ export function nexusRecover(source, userOptions = {}) {
       const residual = residualOf(profile);
       passes.push({ n, changed, residual: Math.round(residual * 100) / 100, steps: r.steps.filter((x) => x.status === 'applied' && x.changed).length, ms: Math.round(r.ms) });
       inner = r;
+      if (!vmProfile && r.vm) vmProfile = r.vm;
       if (!adaptiveWork && r.adaptive && r.adaptive.ran && r.adaptive.hypotheses.length) adaptiveWork = r.adaptive;
       // a pass can make the next one possible (renaming removes the name clash that kept a block from being unwrapped), so go on until a pass changes nothing
       const stop = !changed || n >= options.passes;
@@ -311,10 +313,10 @@ export function nexusRecover(source, userOptions = {}) {
   stage('generate', 'Generate the result', (s) => {
     let finalAst = null;
     try { finalAst = parse(code); } catch { /* the validation above already says so */ }
-    const base = assessConfidence(detection, code, { steps, validation, ast: finalAst, adaptive });
+    const base = assessConfidence(detection, code, { steps, validation, ast: finalAst, adaptive, vm: vmProfile });
     const lowered = ledger.level(base);
     confidence = { ...base, level: lowered.level, score: Math.round(lowered.score * 100) / 100, base: { score: base.score, level: base.level }, loweredBy: lowered.lowered };
-    report = buildReport({ detection, steps, confidence, adaptive });
+    report = buildReport({ detection, steps, confidence, adaptive, vm: vmProfile });
 
     const extra = [];
     if (strippedComments) {
@@ -351,6 +353,7 @@ export function nexusRecover(source, userOptions = {}) {
     validation,
     confidence,
     adaptive,
+    vm: vmProfile,
     report,
     warnings: inner.warnings.concat(state.failed ? [`NEXUS stage "${state.failed.stage}" failed: ${state.failed.error}`] : []),
     ms: now() - t0,

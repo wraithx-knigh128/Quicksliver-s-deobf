@@ -190,6 +190,36 @@ export class CompatDashboard {
           ]))),
         ]) : null,
       ]));
+      // the six categories (src/core/metrics.js), one row per configuration, never averaged into one number; the heading says how each is measured
+      const cats = rec.versions.flatMap((v) => v.configs.filter((c) => c.categories).map((c) => ({ version: v.version, c })));
+      if (cats.length && this.db.methods) {
+        const M = this.db.methods;
+        const frac = (a, b) => (b ? `${a}/${b}` : '\u2014');
+        parts.push(h('div', { style: { gridColumn: '1 / -1' } }, [
+          h('h4', 'Measured in separate categories'),
+          h('p.dim', { style: { margin: '0 0 4px' } }, 'Identification, structure, semantic, runtime, completeness and stability are never combined into one number. Hover a heading for how it is measured. Runtime counts only fixtures where the tool\u2019s own output behaved like the original; the figure in brackets is how many it did not.'),
+          h('table.grid', { style: { marginTop: '4px' } }, [
+            h('thead', h('tr', [
+              h('th', 'Version'), h('th', 'Configuration'), h('th', { title: M.identification }, 'Identified'), h('th', { title: M.structure }, 'Structure'), h('th', { title: M.semantic }, 'Semantic'),
+              h('th', { title: M.runtime }, 'Runtime same/judged'), h('th', { title: M.completeness }, 'Complete'), h('th', { title: M.vmConstants }, 'VM strings'), h('th', { title: M.stability }, 'ms (failures)'), h('th', 'Status'),
+            ])),
+            h('tbody', cats.map(({ version, c }) => {
+              const k = c.categories;
+              return h('tr', [
+                h('td', version), h('td', c.config),
+                h('td.num', frac(k.identification.detected, k.identification.of)),
+                h('td.num', k.structure ? `${pct(k.structure.before)} \u2192 ${pct(k.structure.after)}` : '\u2014'),
+                h('td.num', `${pct(k.semantic.before)} \u2192 ${pct(k.semantic.after)}`),
+                h('td.num', `${frac(k.runtime.same, k.runtime.judged)}${k.runtime.notJudged ? ` (${k.runtime.notJudged})` : ''}`),
+                h('td.num', k.completeness ? frac(k.completeness.complete, k.completeness.of) : '\u2014'),
+                h('td.num', k.vmConstants ? pct(k.vmConstants.recall) : '\u2014'),
+                h('td.num', k.stability.msMean == null ? '\u2014' : `${k.stability.msMean}${k.stability.failures ? ` (${k.stability.failures})` : ''}`),
+                h('td', statusBadge(c.status === 'verified' ? 'supported' : c.status)),
+              ]);
+            })),
+          ]),
+        ]));
+      }
       const list = (title, items, row) => h('div', [h('h4', title), h('ul', items.map(row))]);
       if (rec.failurePatterns.length) {
         parts.push(list('Failure patterns', rec.failurePatterns, (x) => h('li', [

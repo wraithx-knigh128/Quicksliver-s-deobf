@@ -11,6 +11,8 @@ import { fileURLToPath } from 'node:url';
 import { bytesToBinary } from '../src/core/bytes.js';
 import { recover } from '../src/recover/pipeline.js';
 import { fidelity } from '../src/core/fidelity.js';
+import { structureScore, residualIndicators, vmConstantsRecall } from '../src/core/metrics.js';
+import { parse } from '../src/core/parser.js';
 import * as oracle from './helpers/lua-oracle.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -39,7 +41,7 @@ for (const d of fs.readdirSync(path.join(corpus, 'obfuscated')).filter((x) => /^
 // Revisions of tools whose output cannot be committed (zynaa/LuaObfuscator: no licence; RealObfuscator: GPL, and a fixture is only reproducible with the same build) are
 // generated into obfuscated-local/<tool>-<version> by gen_zynaa.py / gen_realobf.py and measured when present.
 if (fs.existsSync(path.join(corpus, 'obfuscated-local'))) {
-  for (const d of fs.readdirSync(path.join(corpus, 'obfuscated-local')).filter((x) => /^(zynaa|realobfuscator)-/.test(x)).sort()) {
+  for (const d of fs.readdirSync(path.join(corpus, 'obfuscated-local')).filter((x) => /^(zynaa|realobfuscator|prometheus)-/.test(x)).sort()) {
     if (!fs.existsSync(path.join(corpus, 'obfuscated-local', d, 'manifest.json'))) continue;
     const [tool, ...ver] = d.split('-');
     tools.push([tool, `obfuscated-local/${d}`]);
@@ -73,8 +75,22 @@ for (const [tool, dir] of tools) {
     if (r.output) {
       try { entry.fidelityAfter = fidelity(original, r.output).score; } catch { entry.fidelityAfter = null; }
       entry.outputBytes = r.output.length;
+      // the other categories of src/core/metrics.js: structure, what is left of the obfuscator, and whether the text parses
+      try { entry.structureBefore = structureScore(original, input); } catch { entry.structureBefore = null; }
+      try { parse(r.output); entry.parses = true; } catch { entry.parses = false; }
+      try { entry.structureAfter = entry.parses ? structureScore(original, r.output) : null; } catch { entry.structureAfter = null; }
+      entry.residual = entry.parses ? residualIndicators(r.output) : ['unparsable'];
+      entry.unresolved = r.report ? r.report.unresolved.length : null;       // what the engine itself says is left (completeness needs both)
+      entry.level = r.confidence ? r.confidence.level : null;
+      // a virtual machine that was read but not lifted: what its data tells (see src/recover/vmprofile.js)
+      if (r.vm) {
+        let recall = null;
+        try { recall = vmConstantsRecall(original, r.vm.constants); } catch { recall = null; }
+        entry.vm = { functions: r.vm.functions.length, bytes: r.vm.instructionBytes, constants: r.vm.constants ? r.vm.constants.length : null, hardened: r.vm.hardened, constantsRecall: recall };
+      }
       if (oracle.available) {
         const rt = Object.entries(e.behaviors || {}).find(([, v]) => v !== 'errored')?.[0] || 'lua51';
+        entry.behaviorRuntime = rt;
         const after = await oracle.runLua(r.output, rt);
         // against the obfuscated script (what recovery must not change) ...
         if (e.behavior !== 'errored') {

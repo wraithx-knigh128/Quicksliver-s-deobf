@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "generatedAt": "2026-11-13T08:05:23.906Z",
+ "generatedAt": "2026-11-13T13:14:14.714Z",
  "gates": {
   "real": {
    "minFixtures": 8,
@@ -846,7 +846,7 @@
      "results": {
       "fixtures": 91,
       "syntheticFixtures": 0,
-      "behaviourChecked": 91,
+      "behaviourChecked": 87,
       "behaviourSame": 87,
       "traceChecked": 87,
       "traceIdentical": 87,
@@ -855,7 +855,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-13T07:24:11.953Z"
+       "measuredAt": "2026-11-13T13:12:47.156Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -877,7 +877,7 @@
    "claims": {
     "unversioned": {
      "claim": "supported",
-     "why": "87 of 91 real-tool fixtures reconstructed with identical behaviour on a reference runtime (lower bound 89%)."
+     "why": "87 of 87 real-tool fixtures reconstructed with identical behaviour on a reference runtime (lower bound 96%)."
     }
    }
   },
@@ -1016,8 +1016,8 @@
      "results": {
       "fixtures": 115,
       "syntheticFixtures": 0,
-      "behaviourChecked": 111,
-      "behaviourSame": 110,
+      "behaviourChecked": 103,
+      "behaviourSame": 103,
       "traceChecked": 103,
       "traceIdentical": 103,
       "toolBroken": 12,
@@ -1025,7 +1025,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-13T07:24:11.953Z"
+       "measuredAt": "2026-11-13T13:12:47.156Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -1050,7 +1050,7 @@
    "claims": {
     "unversioned": {
      "claim": "supported",
-     "why": "110 of 111 real-tool fixtures reconstructed with identical behaviour on a reference runtime (lower bound 95%)."
+     "why": "103 of 103 real-tool fixtures reconstructed with identical behaviour on a reference runtime (lower bound 96%)."
     }
    }
   },
@@ -1724,7 +1724,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-13T07:24:11.953Z"
+       "measuredAt": "2026-11-13T13:12:47.156Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -1852,7 +1852,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-13T07:24:11.953Z"
+       "measuredAt": "2026-11-13T13:12:47.156Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -1958,7 +1958,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-13T07:24:11.953Z"
+       "measuredAt": "2026-11-13T13:12:47.156Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -2153,7 +2153,7 @@
      "results": {
       "fixtures": 40,
       "syntheticFixtures": 0,
-      "behaviourChecked": 40,
+      "behaviourChecked": 32,
       "behaviourSame": 32,
       "traceChecked": 0,
       "traceIdentical": 0,
@@ -2162,7 +2162,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-13T07:24:11.953Z"
+       "measuredAt": "2026-11-13T13:12:47.156Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -2182,8 +2182,8 @@
    ],
    "claims": {
     "unversioned": {
-     "claim": "partial",
-     "why": "32 of 40 reconstructed with identical behaviour (lower bound 65%)."
+     "claim": "supported",
+     "why": "32 of 32 real-tool fixtures reconstructed with identical behaviour on a reference runtime (lower bound 89%)."
     }
    }
   },
@@ -2273,16 +2273,16 @@
      "results": {
       "fixtures": 54,
       "syntheticFixtures": 0,
-      "behaviourChecked": 49,
+      "behaviourChecked": 16,
       "behaviourSame": 16,
       "traceChecked": 0,
       "traceIdentical": 0,
-      "toolBroken": 0,
+      "toolBroken": 38,
       "fidelityAfter": 0.035,
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-13T07:24:11.953Z"
+       "measuredAt": "2026-11-13T13:12:47.156Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -2301,8 +2301,8 @@
    ],
    "claims": {
     "unversioned": {
-     "claim": "identification-only",
-     "why": "Verified, but only 16 of 49 reconstructed with identical behaviour."
+     "claim": "supported",
+     "why": "16 of 16 real-tool fixtures reconstructed with identical behaviour on a reference runtime (lower bound 81%)."
     }
    }
   },
@@ -2378,7 +2378,7 @@
      "results": {
       "fixtures": 4,
       "syntheticFixtures": 0,
-      "behaviourChecked": 4,
+      "behaviourChecked": 0,
       "behaviourSame": 0,
       "traceChecked": 0,
       "traceIdentical": 0,
@@ -2387,7 +2387,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-13T07:24:11.953Z"
+       "measuredAt": "2026-11-13T13:12:47.156Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -2483,16 +2483,16 @@
      "results": {
       "fixtures": 22,
       "syntheticFixtures": 0,
-      "behaviourChecked": 22,
+      "behaviourChecked": 5,
       "behaviourSame": 5,
       "traceChecked": 0,
       "traceIdentical": 0,
-      "toolBroken": 0,
+      "toolBroken": 17,
       "fidelityAfter": 0.383,
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-13T07:24:11.953Z"
+       "measuredAt": "2026-11-13T13:12:47.156Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -2505,15 +2505,15 @@
       "The tool raised an error on one sample in the two VM configurations (recorded as tool errors)."
      ],
      "verification": {
-      "status": "real-output-verified",
-      "basis": "fixtures made by the real tool, behaviour decided on reference runtimes"
+      "status": "internally-tested",
+      "basis": "recovery measured on examples that are not real tool output"
      }
     }
    ],
    "claims": {
     "unversioned": {
      "claim": "identification-only",
-     "why": "Verified, but only 5 of 22 reconstructed with identical behaviour."
+     "why": "The output can be recognised. No reconstruction has been verified against real or authorised samples."
     }
    }
   },
@@ -2598,7 +2598,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-13T07:24:11.953Z"
+       "measuredAt": "2026-11-13T13:12:47.156Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -2916,8 +2916,8 @@
      "results": {
       "fixtures": 64,
       "syntheticFixtures": 0,
-      "behaviourChecked": 64,
-      "behaviourSame": 64,
+      "behaviourChecked": 59,
+      "behaviourSame": 59,
       "traceChecked": 59,
       "traceIdentical": 59,
       "toolBroken": 5,
@@ -2925,7 +2925,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-13T07:24:11.953Z"
+       "measuredAt": "2026-11-13T13:12:47.156Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -2948,7 +2948,7 @@
    "claims": {
     "unversioned": {
      "claim": "supported",
-     "why": "64 of 64 real-tool fixtures reconstructed with identical behaviour on a reference runtime (lower bound 94%)."
+     "why": "59 of 59 real-tool fixtures reconstructed with identical behaviour on a reference runtime (lower bound 94%)."
     }
    }
   },
@@ -3314,7 +3314,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-13T07:24:11.953Z"
+       "measuredAt": "2026-11-13T13:12:47.156Z"
       },
       "reproduction": null
      },
@@ -3439,7 +3439,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-13T07:24:11.953Z"
+       "measuredAt": "2026-11-13T13:12:47.156Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -3552,7 +3552,7 @@
      "results": {
       "fixtures": 8,
       "syntheticFixtures": 0,
-      "behaviourChecked": 8,
+      "behaviourChecked": 2,
       "behaviourSame": 2,
       "traceChecked": 2,
       "traceIdentical": 2,
@@ -3561,7 +3561,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-13T07:24:11.953Z"
+       "measuredAt": "2026-11-13T13:12:47.156Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -3574,15 +3574,15 @@
       "Zenfus’s own output misbehaves for six of the eight programs (see the \"tool broken\" column); those fixtures are excluded from behaviour claims."
      ],
      "verification": {
-      "status": "real-output-verified",
-      "basis": "fixtures made by the real tool, behaviour decided on reference runtimes"
+      "status": "identified",
+      "basis": "recognised from signatures; no reconstruction measured"
      }
     }
    ],
    "claims": {
     "unversioned": {
      "claim": "identification-only",
-     "why": "Verified, but only 2 of 8 reconstructed with identical behaviour."
+     "why": "The output can be recognised. No reconstruction has been verified against real or authorised samples."
     }
    }
   },
@@ -3667,7 +3667,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-13T07:24:11.953Z"
+       "measuredAt": "2026-11-13T13:12:47.156Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -4253,7 +4253,7 @@
      "results": {
       "fixtures": 48,
       "syntheticFixtures": 0,
-      "behaviourChecked": 48,
+      "behaviourChecked": 47,
       "behaviourSame": 47,
       "traceChecked": 47,
       "traceIdentical": 47,
@@ -4262,7 +4262,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-13T07:24:11.953Z"
+       "measuredAt": "2026-11-13T13:12:47.156Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -4284,7 +4284,7 @@
    "claims": {
     "unversioned": {
      "claim": "supported",
-     "why": "47 of 48 real-tool fixtures reconstructed with identical behaviour on a reference runtime (lower bound 89%)."
+     "why": "47 of 47 real-tool fixtures reconstructed with identical behaviour on a reference runtime (lower bound 92%)."
     }
    }
   },
@@ -4374,7 +4374,7 @@
      "results": {
       "fixtures": 8,
       "syntheticFixtures": 0,
-      "behaviourChecked": 8,
+      "behaviourChecked": 5,
       "behaviourSame": 5,
       "traceChecked": 5,
       "traceIdentical": 5,
@@ -4383,7 +4383,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-13T07:24:11.953Z"
+       "measuredAt": "2026-11-13T13:12:47.156Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -4396,15 +4396,15 @@
       "The author says in the page itself that it gives no meaningful protection. The numbers here measure how much of the original is recovered, not how strong the tool is."
      ],
      "verification": {
-      "status": "real-output-verified",
-      "basis": "fixtures made by the real tool, behaviour decided on reference runtimes"
+      "status": "internally-tested",
+      "basis": "recovery measured on examples that are not real tool output"
      }
     }
    ],
    "claims": {
     "unversioned": {
-     "claim": "partial",
-     "why": "5 of 8 reconstructed with identical behaviour (lower bound 31%)."
+     "claim": "identification-only",
+     "why": "The output can be recognised. No reconstruction has been verified against real or authorised samples."
     }
    }
   },
@@ -4494,7 +4494,7 @@
      "results": {
       "fixtures": 25,
       "syntheticFixtures": 0,
-      "behaviourChecked": 25,
+      "behaviourChecked": 24,
       "behaviourSame": 24,
       "traceChecked": 24,
       "traceIdentical": 24,
@@ -4503,7 +4503,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-13T07:24:11.953Z"
+       "measuredAt": "2026-11-13T13:12:47.156Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -4524,7 +4524,7 @@
    "claims": {
     "unversioned": {
      "claim": "supported",
-     "why": "24 of 25 real-tool fixtures reconstructed with identical behaviour on a reference runtime (lower bound 80%)."
+     "why": "24 of 24 real-tool fixtures reconstructed with identical behaviour on a reference runtime (lower bound 86%)."
     }
    }
   },

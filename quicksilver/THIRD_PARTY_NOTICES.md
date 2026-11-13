@@ -348,6 +348,10 @@ XFuscator (efrederickson, no licence stated), zynaa/LuaObfuscator (no licence st
 repository. Their measured results are in `data/compat.json`; the tests that need their fixtures skip when the folder is absent. RealObfuscator was built offline in the sandbox from sources downloaded with
 `cargo vendor` and run only there.
 
+LennyObf (asstralnetwork, a renamed copy of Prometheus whose LICENSE file is AGPL-3.0) was cloned as text and run the same way, through the unmodified `tests/corpus/tools/gen_prometheus.py`, to find out
+whether recognition and recovery depend on the original tool's exact text. Nothing of its source is in this repository, and its output is written only to the git-ignored
+`tests/corpus/obfuscated-local/prometheus-lennyobf/`.
+
 
 ## Development and test tooling (not shipped)
 

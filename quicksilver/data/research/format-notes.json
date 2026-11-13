@@ -89,6 +89,18 @@
             "tests/sandbox.test.mjs",
             "tests/formats-ix.test.mjs: obscura 1.1.0 ..."
           ]
+        },
+        {
+          "id": "vm-profile",
+          "summary": "what is inside a VM that was not lifted: the function records (instruction bytes, parameters, registers), and the constants, read by running only the statements that set them up in the sandbox (never the interpreter); the hardened 1.1.0 build keeps its constants in keyed per-function records, which are opened one record at a time after the set-up loop that salts each record with the hash of its code. Reported in the output header as a profile, never as a recovery",
+          "files": [
+            "src/recover/vmprofile.js",
+            "src/recover/annotate.js",
+            "src/core/metrics.js"
+          ],
+          "tests": [
+            "tests/formats-x.test.mjs: vm profile"
+          ]
         }
       ],
       "failurePatterns": [
@@ -100,8 +112,8 @@
             "vm-cached"
           ],
           "status": "open",
-          "summary": "the VM builds keep the program as bytecode (encrypted constant pool, rolling reads) for a generated interpreter. Identified from the \"Obscura VM\" header, reported as not recovered; no lifter was written",
-          "evidence": "fidelity 3% before and after on all three revisions; the report header says so"
+          "summary": "the VM builds keep the program as bytecode (encrypted constant pool, rolling reads) for a generated interpreter. Identified from the \"Obscura VM\" header and reported as not recovered: no lifter was written. A profile of the data IS read, without running the program: the number of functions, the bytes of instructions of each, and the decrypted constants (all three revisions, plain and hardened builds), see improvements/vm-profile",
+          "evidence": "semantic fidelity 3% before and after on all three revisions (the VM is still in the output); the report header says so; the profile reads the strings the program prints"
         },
         {
           "id": "names",
@@ -253,6 +265,16 @@
           ],
           "status": "tool defect",
           "summary": "the tool raised `No loop to break` on s04 in both configurations; recorded as tool-error"
+        },
+        {
+          "id": "tool-output-all-runtimes",
+          "configs": [
+            "ironbrikked",
+            "both"
+          ],
+          "status": "tool defect",
+          "summary": "the tool's own IronBrikked output (14 fixtures, with and without the AST layer) does not run on any reference runtime available here: Lua 5.1, 5.2 and LuaJIT stop inside the generated VM with \"attempt to compare nil with number\" (the generated wrapper masks it as \"LuaXen: (internal)\"; the real message was read by replacing that string in a copy), Lua 5.3 / 5.4 have no math.ldexp, Luau stops with \"attempt to call a nil value\". They are excluded from runtime judgement, not counted for or against the engine",
+          "evidence": "tests/corpus/obfuscated/luaxen/manifest.json (behaviors, 2026-11-13 run: 5 equivalent, 1 diverged, 16 errored of 22)"
         }
       ],
       "assumptions": [
@@ -301,6 +323,21 @@
           ],
           "status": "tool defect",
           "summary": "on s06 the tool writes `\\n\\t` as literal characters into the code of one opcode handler, which PUC Lua 5.1 and LuaJIT reject (\"unexpected symbol near '\\'\"); QuickSilver's parser rejects it too, so those outputs are counted as unparsed, not as recovery failures"
+        },
+        {
+          "id": "tool-output-measured",
+          "configs": [
+            "default",
+            "minify",
+            "encryptstrings",
+            "flatten",
+            "antitamper",
+            "constants",
+            "all"
+          ],
+          "status": "tool defect",
+          "summary": "measured on Lua 5.1 and LuaJIT in an isolated runner with a wall-clock limit: 16 of 54 outputs behave like the original, 8 do not (s01 and s02 in default / minify / encryptstrings / flatten: the compiled program prints a wrong list of primes and nil where the original prints booleans), antitamper stops no run within 15 s, constants and all fail with \"attempt to call field ?\" (a nil value), and s06 / s08 are rejected by the runtime. None of these is counted against the engine",
+          "evidence": "tests/corpus/obfuscated/zartha/manifest.json (behaviors, 2026-11-13 run)"
         }
       ],
       "assumptions": [
@@ -540,7 +577,13 @@
       "id": "ix-vm-families",
       "item": "Per-build bytecode VMs (Obscura VM, Zartha, FusGato, IronBrikked, RealObfuscator vm)",
       "state": "identified, not recovered",
-      "detail": "each is flagged unrecoverable so that the report cannot say 'recovered'; none has a lifter"
+      "detail": "each is flagged unrecoverable so that the report cannot say \"recovered\"; none has a lifter. Since Prompt X the Obscura VM (all three revisions, plain and hardened) has a profile of its data (functions, instruction bytes, decrypted constants; on all 39 Obscura VM fixtures every string of two or more characters of the original program is among the constants read: recall 1.00, `categories.vmConstants` in the database), shown in the report as NOT lifted"
+    },
+    {
+      "id": "x-vm-lifter",
+      "item": "A lifter that rebuilds source from Obscura VM bytecode",
+      "state": "not started",
+      "detail": "the profile reads the data; a lifter additionally needs the per-build opcode aliases and shuffled operand layouts read from the generated interpreter (they differ in every build), the rolling-XOR bytecode decode, and the hardened record keys. Zartha, FusGato and IronBrikked need the same three things for their own formats. Blocked by scope, not by a missing permission"
     }
   ]
 }

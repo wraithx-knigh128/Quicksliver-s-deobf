@@ -19,6 +19,8 @@ const staticCard = JSON.parse(fs.readFileSync(path.join(root, 'tests/results/sco
 // the behavioural trace compared with the trace of the original program (tests/trace-scorecard.mjs)
 const traceCard = JSON.parse(fs.readFileSync(path.join(root, 'tests/results/trace.json'), 'utf8'));
 
+/** A run whose recovered script can be judged against the original program: the obfuscator's own output behaved like the original (or was never run, which says nothing about it). */
+const judgeable = (r) => r.behaviorOriginal != null && (r.toolBehavior === undefined || r.toolBehavior === 'equivalent');
 const mean = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
 const round = (x, d = 3) => (x === null ? null : Math.round(x * 10 ** d) / 10 ** d);
 
@@ -50,7 +52,7 @@ const families = familyRegistry().map((f) => {
       const tr = traceCard.results.filter((r) => r.tool === f.id && r.config === config && r.toolBehavior === 'equivalent');
       const st = staticCard.results.filter((r) => r.tool === f.id && r.config === config && r.fidelityAfter != null);
       // behaviour is judged against the original program the fixture was made from
-      const checked = rs.filter((r) => r.behaviorOriginal != null);
+      const checked = rs.filter(judgeable);
       const agg = {
         config,
         samples: rs.length,
@@ -93,11 +95,11 @@ const families = familyRegistry().map((f) => {
     const metaPath = ['obfuscated', 'obfuscated-local'].map((d) => path.join(root, `tests/corpus/${d}/${f.id}-${version}/manifest.json`)).find((p) => fs.existsSync(p));
     const meta = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
     const usable = rs.filter((r) => r.fidelityAfter != null);
-    const checked = rs.filter((r) => r.behaviorOriginal != null);
+    const checked = rs.filter(judgeable);
     const configs = [...new Set(rs.map((r) => r.config))].map((config) => {
       const cs = rs.filter((r) => r.config === config);
       const u = cs.filter((r) => r.fidelityAfter != null);
-      const ck = cs.filter((r) => r.behaviorOriginal != null);
+      const ck = cs.filter(judgeable);
       const agg = { config, samples: cs.length, fidelityBefore: round(mean(u.map((r) => r.fidelityBefore ?? 0))), fidelityAfter: round(mean(u.map((r) => r.fidelityAfter))), behaviourChecked: ck.length, behaviourSame: ck.filter((r) => r.behaviorOriginal === 'same').length, toolBroken: cs.filter((r) => r.toolBehavior !== 'equivalent').length, unparsed: cs.length - u.length };
       agg.status = u.length ? deriveChecked(agg) : 'unsupported';
       return agg;

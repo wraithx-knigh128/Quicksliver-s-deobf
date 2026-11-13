@@ -8,7 +8,7 @@
     "compatibility-profile",
     "integration"
   ],
-  "generatedAt": "2026-11-13T07:19:34.716Z",
+  "generatedAt": "2026-11-13T13:19:07.724Z",
   "report": [
     {
       "system": "luraph",
@@ -307,7 +307,7 @@
           "stage": "verification",
           "reached": true,
           "evidence": [
-            "reference runtime: 91 real-output fixtures"
+            "reference runtime: 87 real-output fixtures"
           ],
           "missing": []
         },
@@ -368,7 +368,7 @@
           "stage": "verification",
           "reached": true,
           "evidence": [
-            "reference runtime: 111 real-output fixtures"
+            "reference runtime: 103 real-output fixtures"
           ],
           "missing": []
         },
@@ -1062,7 +1062,7 @@
           "stage": "verification",
           "reached": false,
           "evidence": [
-            "reference runtime: 40 real-output fixtures"
+            "reference runtime: 32 real-output fixtures"
           ],
           "missing": [
             "an earlier stage is not reached"
@@ -1129,7 +1129,7 @@
           "stage": "verification",
           "reached": false,
           "evidence": [
-            "reference runtime: 49 real-output fixtures"
+            "reference runtime: 16 real-output fixtures"
           ],
           "missing": [
             "an earlier stage is not reached"
@@ -1260,18 +1260,16 @@
         {
           "stage": "verification",
           "reached": false,
-          "evidence": [
-            "reference runtime: 22 real-output fixtures"
-          ],
+          "evidence": [],
           "missing": [
-            "an earlier stage is not reached"
+            "needs a reference-runtime behaviour check on at least 8 real-output fixtures"
           ]
         },
         {
           "stage": "compatibility-profile",
           "reached": false,
           "evidence": [
-            "status real-output-verified"
+            "status internally-tested"
           ],
           "missing": [
             "an earlier stage is not reached"
@@ -1519,7 +1517,7 @@
           "stage": "verification",
           "reached": true,
           "evidence": [
-            "reference runtime: 64 real-output fixtures"
+            "reference runtime: 59 real-output fixtures"
           ],
           "missing": []
         },
@@ -1893,30 +1891,34 @@
         },
         {
           "stage": "verification",
-          "reached": true,
-          "evidence": [
-            "reference runtime: 8 real-output fixtures"
-          ],
-          "missing": []
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "needs a reference-runtime behaviour check on at least 8 real-output fixtures"
+          ]
         },
         {
           "stage": "compatibility-profile",
-          "reached": true,
+          "reached": false,
           "evidence": [
-            "status real-output-verified"
+            "status identified"
           ],
-          "missing": []
+          "missing": [
+            "an earlier stage is not reached"
+          ]
         },
         {
           "stage": "integration",
-          "reached": true,
+          "reached": false,
           "evidence": [
             "identification wired to the page"
           ],
-          "missing": []
+          "missing": [
+            "an earlier stage is not reached"
+          ]
         }
       ],
-      "reached": "integration",
+      "reached": "experimental-analysis",
       "integration": {
         "identify": true,
         "reconstruct": false
@@ -2397,7 +2399,7 @@
           "stage": "verification",
           "reached": true,
           "evidence": [
-            "reference runtime: 48 real-output fixtures"
+            "reference runtime: 47 real-output fixtures"
           ],
           "missing": []
         },
@@ -2457,34 +2459,37 @@
         },
         {
           "stage": "verification",
-          "reached": true,
-          "evidence": [
-            "reference runtime: 8 real-output fixtures"
-          ],
-          "missing": []
+          "reached": false,
+          "evidence": [],
+          "missing": [
+            "needs a reference-runtime behaviour check on at least 8 real-output fixtures"
+          ]
         },
         {
           "stage": "compatibility-profile",
-          "reached": true,
+          "reached": false,
           "evidence": [
-            "status real-output-verified"
+            "status internally-tested"
           ],
-          "missing": []
+          "missing": [
+            "an earlier stage is not reached"
+          ]
         },
         {
           "stage": "integration",
-          "reached": true,
+          "reached": false,
           "evidence": [
-            "identification wired to the page",
-            "reconstruction claim allowed"
+            "identification wired to the page"
           ],
-          "missing": []
+          "missing": [
+            "an earlier stage is not reached"
+          ]
         }
       ],
-      "reached": "integration",
+      "reached": "experimental-analysis",
       "integration": {
         "identify": true,
-        "reconstruct": true
+        "reconstruct": false
       }
     },
     {
@@ -2520,7 +2525,7 @@
           "stage": "verification",
           "reached": true,
           "evidence": [
-            "reference runtime: 25 real-output fixtures"
+            "reference runtime: 24 real-output fixtures"
           ],
           "missing": []
         },

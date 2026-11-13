@@ -19,9 +19,10 @@ import { unwrapLayers } from '../passes/layers.js';
 import { dataflowPass } from '../passes/dataflow.js';
 import { regionPass } from '../passes/regions.js';
 import { booleanResults, orientComparisons, shortCircuits, tableConstructors, methodCalls, bareNils, functionForms, multiResults, numericLoops, loopForms, unsetLocals } from '../passes/idioms.js';
-import { removeAntiTamper, undoProxifyLocals } from './prometheus.js';
+import { removeAntiTamper, removeGuardFlag, undoProxifyLocals } from './prometheus.js';
 import { propagateStable } from '../passes/stable.js';
 import { buildReport, annotate, stripReport } from './annotate.js';
+import { profileVm } from './vmprofile.js';
 import { removeHerculesAntiTamper, removeHerculesAntiTamperFunction, removeHerculesCoinGuard, restoreMethodSelf } from './hercules.js';
 import { uninlinePass } from '../passes/uninline.js';
 import { splitWebs } from '../passes/webs.js';
@@ -188,6 +189,9 @@ export function recover(source, userOptions = {}) {
     return { ok: false, stage: 'parse', error: parsed.error, output: null, steps: [], detection: detect(source), warnings: [] };
   }
   let detection = detect(source, parsed.ast);
+  // a script that keeps its program as bytecode for a generated interpreter: what the bytecode holds is read before any pass touches the tree (nothing of the program runs)
+  let vm = null;
+  try { vm = profileVm(parsed.ast, { sandbox: options.sandbox }); } catch { vm = null; }
   const run = new Run(parsed.ast, options);
   // after a layer is unwrapped: add what the payload shows to what the wrapper showed
   const refreshDetection = () => {
@@ -214,6 +218,7 @@ export function recover(source, userOptions = {}) {
     let total = 0;
     total += run.step('unwrap', 'Unwrap outer wrapper function', (a) => unwrapWrapper(a), { quiet: true });
     total += run.step('prometheus.antitamper', 'Remove Prometheus anti-tamper block', (a) => removeAntiTamper(a), { quiet: true });
+    total += run.step('prometheus.guardflag', 'Remove an anti-tamper guard that wraps the program in `if flag then`', (a) => removeGuardFlag(a), { quiet: true });
     total += run.step('hercules.coinguard', 'Remove the Hercules 1.x coin-flip guard loop', (a) => removeHerculesCoinGuard(a), { quiet: true });
     total += run.step('hercules.antitamper', 'Remove Hercules anti-tamper block', (a) => removeHerculesAntiTamper(a), { quiet: true });
     if (decompiled || detection.families.some((f) => f.id === 'hercules' && f.confidence >= 0.5)) total += run.step('hercules.antitamper.compiled', 'Remove the Hercules anti-tamper check that was compiled with the script', (a) => removeHerculesAntiTamperFunction(a), { quiet: true });
@@ -302,6 +307,8 @@ export function recover(source, userOptions = {}) {
       run.record('evaluate', 'Evaluate string decoders (sandbox)', { status: 'skipped', changed: 0, detail: 'sandboxed evaluation is not enabled', ms: 0 });
     }
     total += run.step('strtable.inline', 'Replace reads of a self-decrypting string table by its strings', (a) => inlineStringTable(a), { quiet: true });
+    // once decoded names are plain strings, `obj.method(obj, ...)` (what tools that route every call through a lookup write) is `obj:method(...)` again
+    if (!decompiled) total += run.step('idioms.method.plain', 'Write o.m(o, ...) as o:m(...)', (a) => methodCalls(a), { quiet: true });
     return total;
   };
 
@@ -355,11 +362,12 @@ export function recover(source, userOptions = {}) {
   const validation = validateOutput(output, run.ast, options);
   if (!validation.ok) run.warnings.push(validation.message);
   const steps = [...run.steps.values()];
-  const confidence = assessConfidence(detection, output, { steps, validation, ast: run.ast, adaptive });
-  const report = buildReport({ detection, steps, confidence, adaptive });
+  const confidence = assessConfidence(detection, output, { steps, validation, ast: run.ast, adaptive, vm });
+  const report = buildReport({ detection, steps, confidence, adaptive, vm });
 
   return {
     adaptive,
+    vm,
     report,
     ok: validation.ok,
     output: options.annotate ? annotate(output, report) : output,

@@ -323,6 +323,43 @@ Two things from the reading changed the code rather than the tables. First, the 
 
 The collection's **Unknown**, **VM Compressed** and **MinifiedLua** folders (and the Luraph files without a version banner) were looked at one by one. They are mostly not obfuscated by a tool with a signature: remote loaders, scripts that fetch a UI library, plain and minified scripts, a program stored as an array of numbers (a numeric-array encoding with a small permutation, run through an alias of `loadstring`), a spelled-out credit entry, and seven bootstraps of Luarmor (a key service that downloads its init script and caches it with `writefile`). They are now classified (`src/detect/classify.js`) instead of "unidentified", and the page says when the program is not in the file.
 
+## Prompt X: audit, measurement, and what a derivative of a known tool showed (November 2026)
+
+**Audit.** The status of every target named in the prompt is generated, not written: `node tools/formats/audit-status.mjs --write` produces `docs/AUDIT.md` from the measured database
+(`data/research/format-db.json`), the public-sample records, the collection evaluation, the source tree (does the module a capability needs exist?) and `docs/KNOWN-ISSUES.md`. A target with no
+measurement says so.
+
+**Measurement.** A result is described in six categories that are never averaged into one (`src/core/metrics.js`, one definition each, shown on the dashboard and in `format-db.json`): identification,
+structural recovery (F1 of the parent>child node-type edges of the two syntax trees), semantic recovery (the existing token-stream fidelity), runtime equivalence (counted only where the tool's own output
+behaved like the original, so a tool defect is charged to nobody), completeness, and stability. Completeness was first defined by the detector alone and read 39 of 39 for Obscura VM builds that still hold
+the VM; the first full run showed it, and the definition is now both "the output shows no obfuscation evidence, a leftover VM included (found by its function records and its interpreter, not by a name)"
+and "the engine's own report lists nothing unresolved". Runtime equivalence is necessary, not sufficient: a VM left in place runs like the original.
+
+**Tool-output verification, redone with bounds.** The earlier verification runs of LuaXen and Zartha hung (an instruction-count hook cannot interrupt a hang inside a C function); they were run again as
+one subprocess per fixture with a wall-clock limit. LuaXen: 5 of 22 outputs equivalent; the IronBrikked and "both" outputs (14) do not run on any of the six reference runtimes (Lua 5.1/5.2/LuaJIT stop in the
+generated VM with "attempt to compare nil with number", which the wrapper masks as "LuaXen: (internal)" until the message is read out of a copy; 5.3/5.4 have no `math.ldexp`; Luau stops with "attempt to call
+a nil value"). Zartha: 16 of 54 equivalent; in s01 and s02 the compiled program prints a wrong list of primes and `nil` for booleans; `antitamper` runs do not finish in 15 s; `constants` and `all` fail with
+"attempt to call field '?' (a nil value)". None of this is charged to the engine.
+
+**A verification artefact fixed.** The isolated runner removed `os.exit`, `dofile` and `loadfile`, and Hercules' anti-tamper block (which only asks whether they are functions) read that as tampering, so all seven 1.6.2 `mod-antitamper` outputs counted as the tool's own errors. The runner now provides them as inert stubs that raise when called (the rest of the isolation is unchanged); the outputs are equivalent to the original on Lua 5.1 and 5.4, and the configuration is judged at runtime again.
+
+**What a derivative showed.** LennyObf (a renamed copy of Prometheus with its own watermark and its own anti-tamper block) was run in isolation through the unmodified generator. It is found by structure
+(Prometheus is named without the original's banner), yet recovery fell apart, which the original's fixtures could never have shown: Weak 4%, Medium and Strong 3%, AntiTamper 40% (the original tool: 58%, 54%, 44%, 96%).
+Three causes, each a rule that was written for the exact text of the first tool, each now generalised and tested on synthetic inputs (and the negative cases): the outer-wrapper reader required the wrapper
+to be the only statement (the fork puts a watermark statement before it; a preamble is now passed over only when it declares no local, which would otherwise capture names); the anti-tamper remover
+required one writing of the block (it is now recognised by the marker message plus self-containment: it reads nothing of the program, so with the script untouched it changes nothing); the
+ProxifyLocals reader required inline accessor functions and `name = value` fields (accessors declared apart and fields written as strings, which the evaluator produces, are now read). A compiled guard
+(the program under `if flag then ... return end`, the failure path after it) is taken apart by the same assumption. After: Weak 50%, Medium and Strong 34%, AntiTamper 97%. Medium and Strong stay below the
+original tool's numbers: the string decoder of the fork's EncryptStrings is still reached through objects the evaluator does not run (KNOWN-ISSUES 38).
+
+**VM profile.** The Obscura VM (all three revisions, plain and hardened builds) is still not lifted, but what its data holds is now read without running the program: functions, bytes of instructions, and the
+decrypted constants, by running only the statements that set the constants up (`src/recover/vmprofile.js`). The hardened 1.1.0 build keeps constants in per-function records opened by a function that
+takes the record; its set-up includes a loop that salts each record with the hash of its code, without which the opener fails (found by running it). On all 39 Obscura VM fixtures every string of two or
+more characters of the original program is among the constants read. It is reported in the output header as "NOT lifted". A lifter needs the per-build opcode aliases and operand layouts read out of the
+generated interpreter, the rolling-XOR bytecode decode and the hardened record keys; Zartha, FusGato and IronBrikked need the same three things for their own formats.
+
+**Not reachable or not done.** `kosuke14/ByteLuaObfuscator` could not be cloned (not a public repository from this environment); no other new obfuscator was found whose output is not already covered.
+
 ## Technique taxonomy and what each needs
 
 | Technique | Seen in | Static recovery | Needs execution | Notes |

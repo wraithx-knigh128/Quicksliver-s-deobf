@@ -1,6 +1,6 @@
 // Structural clean-ups that are independent of any one obfuscator.
 //
-//   unwrapWrapper       `return (function(...) BODY end)(...)` -> BODY
+//   unwrapWrapper       `[preamble] return (function(...) BODY end)(...)` -> `[preamble] BODY`
 //   removeUnusedVararg  `function(a, ...)` where `...` is never read -> `function(a)`
 //   tidyIfs             `if c then else B end` -> `if not c then B end` (left behind when a test was flipped)
 //   whileToIf           `while c do ... return end` -> `if c then ... end` (a loop whose body always leaves it runs at most once)
@@ -14,9 +14,13 @@ import { transform, walk } from '../core/walk.js';
 export function unwrapWrapper(chunk) {
   let unwrapped = 0;
   for (let guard = 0; guard < 4; guard++) {
-    // allow a leading comment-only prefix; the wrapper must be the only statement
-    if (chunk.body.length !== 1) break;
-    const s = chunk.body[0];
+    // The wrapper is the last statement. A `return` wrapper may follow a preamble of statements that declare nothing (a watermark call, an assignment to a global): the body then runs
+    // after those statements, in the same scope, which is where it was called from. A wrapper called as a statement must be alone, since its own `return` would end the chunk early.
+    if (!chunk.body.length) break;
+    const s = chunk.body[chunk.body.length - 1];
+    if (chunk.body.length !== 1 && s.type !== 'Return') break;
+    // a preamble that declares a local would capture names the wrapper body reads as globals once the body is spliced in beside it: it is only passed over when it declares none
+    if (chunk.body.slice(0, -1).some((p) => p.type === 'Local' || p.type === 'LocalFunction' || p.type === 'Label')) break;
     let call = null;
     if (s.type === 'Return' && s.values.length === 1 && s.values[0].type === 'Call') call = s.values[0];
     else if (s.type === 'CallStmt' && s.call.type === 'Call') call = s.call;
@@ -26,9 +30,10 @@ export function unwrapWrapper(chunk) {
     // The wrapper is called with `...` (or nothing); either way the body can run at chunk level.
     const argsOk = call.args.length === 0 || (call.args.length === 1 && call.args[0].type === 'Vararg');
     if (!argsOk) break;
-    const comments = [...(s.comments || []), ...(chunk.body[0].trailing ? [] : [])];
-    chunk.body = fn.body;
-    if (comments.length && chunk.body[0]) chunk.body[0].comments = [...comments, ...(chunk.body[0].comments || [])];
+    const comments = [...(s.comments || [])];
+    const preamble = chunk.body.slice(0, -1);
+    chunk.body = [...preamble, ...fn.body];
+    if (comments.length && fn.body[0]) fn.body[0].comments = [...comments, ...(fn.body[0].comments || [])];
     unwrapped++;
   }
   return { changed: unwrapped };

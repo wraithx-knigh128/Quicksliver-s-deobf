@@ -531,7 +531,7 @@ test('the Obfuscators tab shows the research record: versions run, failure patte
   page.on('pageerror', (e) => problems.push(e.message));
   await page.goto(`${base}/index.html?tab=compat`);
   await page.waitForSelector('#view-compat table.grid tr.row-main');
-  for (const [name, expect] of [['Obscura', [/1\.1\.0/, /Failure patterns/, /vm/, /Improvements made because of them/, /nested-flattening/, /Assumed, not shown/]],
+  for (const [name, expect] of [['Obscura', [/1\.1\.0/, /Failure patterns/, /vm/, /Improvements made because of them/, /nested-flattening/, /vm-profile/, /Assumed, not shown/, /Measured in separate categories/, /Runtime same\/judged/, /VM strings/]],
     ['XFuscator', [/precompile/, /step2-array/, /local only \(licence\)/]], ['LuaXen', [/metamethod-numbers/, /ironbrikked-vm/]]]) {
     await page.locator('#view-compat tr.row-main', { hasText: name }).first().dispatchEvent('click');
     const detail = await page.textContent('#view-compat');
@@ -586,6 +586,7 @@ for (const w of WORKFLOW) {
 
 for (const w of [
   { name: 'Obscura 1.1.0 level 3', file: 'obfuscated/obscura-1.1.0/s03_encoded_strings__level-3.lua', before: /Sandboxed evaluation is off|sandboxed evaluation is not enabled/, out: /Hello, QuickSilver!/, notOut: /getgenv|CFF Error|math\.floor\(\d+\)/ },
+  { name: 'Obscura 1.1.0 hardened VM build', file: 'obfuscated/obscura-1.1.0/s01_minify_basic__vm-max.lua', before: /the constants are encrypted; switch on sandboxed evaluation/, out: /Virtual machine, NOT lifted back to source[\s\S]*"primes: "/, notOut: /the constants are encrypted/, page: /Virtual machine \(not lifted\)[\s\S]*Strings the program uses/ },
   { name: 'a program stored as an array of numbers', file: 'classes/numeric-array-loader.lua', before: /loader whose text is computed/, out: /hello from the payload/, notOut: /loader whose text is computed/ },
   { name: 'a packed script', file: 'obfuscated/mixed/s03_encoded_strings__hercules-light+base64.lua', before: /loader whose text is computed/, out: /Hello, QuickSilver!/, notOut: /loader whose text is computed/ },
   { name: 'Hercules heavy preset', file: 'obfuscated/hercules/s07_roblox_style__heavy.lua', before: /Sandboxed evaluation is off|sandboxed evaluation is not enabled/, out: /GetService\("Players"\)/, notOut: /Tamper Detected/ },
@@ -605,6 +606,7 @@ for (const w of [
     const out = await page.textContent('#out-body');
     assert.match(out, w.out);
     assert.doesNotMatch(out, w.notOut);
+    if (w.page) assert.match(await page.textContent('body'), w.page);
     await ctx.close();
   });
 }

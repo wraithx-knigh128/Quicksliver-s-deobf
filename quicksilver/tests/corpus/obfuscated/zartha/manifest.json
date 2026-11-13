@@ -14,7 +14,12 @@
       "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
       "status": "ok",
       "bytes": 26089,
-      "seconds": 0.01
+      "seconds": 0.01,
+      "behaviors": {
+        "lua51": "diverged",
+        "luajit": "diverged"
+      },
+      "behavior": "diverged"
     },
     {
       "file": "s01_minify_basic__minify.lua",
@@ -24,7 +29,12 @@
       "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
       "status": "ok",
       "bytes": 13367,
-      "seconds": 0.03
+      "seconds": 0.03,
+      "behaviors": {
+        "lua51": "diverged",
+        "luajit": "diverged"
+      },
+      "behavior": "diverged"
     },
     {
       "file": "s01_minify_basic__encryptstrings.lua",
@@ -34,7 +44,12 @@
       "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
       "status": "ok",
       "bytes": 26542,
-      "seconds": 0.01
+      "seconds": 0.01,
+      "behaviors": {
+        "lua51": "diverged",
+        "luajit": "diverged"
+      },
+      "behavior": "diverged"
     },
     {
       "file": "s01_minify_basic__flatten.lua",
@@ -44,7 +59,12 @@
       "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
       "status": "ok",
       "bytes": 45082,
-      "seconds": 0.02
+      "seconds": 0.02,
+      "behaviors": {
+        "lua51": "diverged",
+        "luajit": "diverged"
+      },
+      "behavior": "diverged"
     },
     {
       "file": "s01_minify_basic__antitamper.lua",
@@ -54,7 +74,13 @@
       "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
       "status": "ok",
       "bytes": 34330,
-      "seconds": 0.02
+      "seconds": 0.02,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "no result after 15 s"
     },
     {
       "file": "s01_minify_basic__constants.lua",
@@ -64,7 +90,13 @@
       "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
       "status": "ok",
       "bytes": 25465,
-      "seconds": 0.01
+      "seconds": 0.01,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:389: attempt to index field '?' (a nil value)"
     },
     {
       "file": "s01_minify_basic__all.lua",
@@ -74,7 +106,13 @@
       "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
       "status": "ok",
       "bytes": 32232,
-      "seconds": 0.08
+      "seconds": 0.08,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:1: attempt to call field '?' (a nil value)"
     },
     {
       "file": "s02_renamed_vars__default.lua",
@@ -84,7 +122,12 @@
       "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
       "status": "ok",
       "bytes": 25547,
-      "seconds": 0.01
+      "seconds": 0.01,
+      "behaviors": {
+        "lua51": "diverged",
+        "luajit": "diverged"
+      },
+      "behavior": "diverged"
     },
     {
       "file": "s02_renamed_vars__minify.lua",
@@ -94,7 +137,12 @@
       "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
       "status": "ok",
       "bytes": 12971,
-      "seconds": 0.03
+      "seconds": 0.03,
+      "behaviors": {
+        "lua51": "diverged",
+        "luajit": "diverged"
+      },
+      "behavior": "diverged"
     },
     {
       "file": "s02_renamed_vars__encryptstrings.lua",
@@ -104,7 +152,12 @@
       "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
       "status": "ok",
       "bytes": 26575,
-      "seconds": 0.01
+      "seconds": 0.01,
+      "behaviors": {
+        "lua51": "diverged",
+        "luajit": "diverged"
+      },
+      "behavior": "diverged"
     },
     {
       "file": "s02_renamed_vars__flatten.lua",
@@ -114,7 +167,12 @@
       "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
       "status": "ok",
       "bytes": 48403,
-      "seconds": 0.01
+      "seconds": 0.01,
+      "behaviors": {
+        "lua51": "diverged",
+        "luajit": "diverged"
+      },
+      "behavior": "diverged"
     },
     {
       "file": "s02_renamed_vars__antitamper.lua",
@@ -124,7 +182,13 @@
       "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
       "status": "ok",
       "bytes": 34425,
-      "seconds": 0.02
+      "seconds": 0.02,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "no result after 15 s"
     },
     {
       "file": "s02_renamed_vars__constants.lua",
@@ -134,7 +198,13 @@
       "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
       "status": "ok",
       "bytes": 25587,
-      "seconds": 0.01
+      "seconds": 0.01,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:684: attempt to call field '?' (a nil value)"
     },
     {
       "file": "s02_renamed_vars__all.lua",
@@ -144,7 +214,13 @@
       "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
       "status": "ok",
       "bytes": 34297,
-      "seconds": 0.07
+      "seconds": 0.07,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:1: attempt to call field '?' (a nil value)"
     },
     {
       "file": "s03_encoded_strings__default.lua",
@@ -154,7 +230,12 @@
       "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
       "status": "ok",
       "bytes": 19040,
-      "seconds": 0.01
+      "seconds": 0.01,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent"
+      },
+      "behavior": "equivalent"
     },
     {
       "file": "s03_encoded_strings__minify.lua",
@@ -164,7 +245,12 @@
       "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
       "status": "ok",
       "bytes": 10126,
-      "seconds": 0.02
+      "seconds": 0.02,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent"
+      },
+      "behavior": "equivalent"
     },
     {
       "file": "s03_encoded_strings__encryptstrings.lua",
@@ -174,7 +260,12 @@
       "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
       "status": "ok",
       "bytes": 20082,
-      "seconds": 0.01
+      "seconds": 0.01,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent"
+      },
+      "behavior": "equivalent"
     },
     {
       "file": "s03_encoded_strings__flatten.lua",
@@ -184,7 +275,12 @@
       "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
       "status": "ok",
       "bytes": 39011,
-      "seconds": 0.01
+      "seconds": 0.01,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent"
+      },
+      "behavior": "equivalent"
     },
     {
       "file": "s03_encoded_strings__antitamper.lua",
@@ -194,7 +290,13 @@
       "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
       "status": "ok",
       "bytes": 28515,
-      "seconds": 0.01
+      "seconds": 0.01,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "no result after 15 s"
     },
     {
       "file": "s03_encoded_strings__constants.lua",
@@ -204,7 +306,13 @@
       "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
       "status": "ok",
       "bytes": 19057,
-      "seconds": 0.01
+      "seconds": 0.01,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:167: attempt to call field '?' (a nil value)"
     },
     {
       "file": "s03_encoded_strings__all.lua",
@@ -214,7 +322,13 @@
       "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
       "status": "ok",
       "bytes": 30034,
-      "seconds": 0.06
+      "seconds": 0.06,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:1: attempt to call field '?' (a nil value)"
     },
     {
       "file": "s04_control_flow__default.lua",
@@ -224,7 +338,12 @@
       "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
       "status": "ok",
       "bytes": 32559,
-      "seconds": 0.01
+      "seconds": 0.01,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent"
+      },
+      "behavior": "equivalent"
     },
     {
       "file": "s04_control_flow__minify.lua",
@@ -234,7 +353,12 @@
       "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
       "status": "ok",
       "bytes": 16213,
-      "seconds": 0.04
+      "seconds": 0.04,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent"
+      },
+      "behavior": "equivalent"
     },
     {
       "file": "s04_control_flow__encryptstrings.lua",
@@ -244,7 +368,12 @@
       "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
       "status": "ok",
       "bytes": 33665,
-      "seconds": 0.01
+      "seconds": 0.01,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent"
+      },
+      "behavior": "equivalent"
     },
     {
       "file": "s04_control_flow__flatten.lua",
@@ -254,7 +383,12 @@
       "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
       "status": "ok",
       "bytes": 60577,
-      "seconds": 0.02
+      "seconds": 0.02,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent"
+      },
+      "behavior": "equivalent"
     },
     {
       "file": "s04_control_flow__antitamper.lua",
@@ -264,7 +398,13 @@
       "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
       "status": "ok",
       "bytes": 42169,
-      "seconds": 0.02
+      "seconds": 0.02,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "no result after 15 s"
     },
     {
       "file": "s04_control_flow__constants.lua",
@@ -274,7 +414,13 @@
       "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
       "status": "ok",
       "bytes": 32405,
-      "seconds": 0.01
+      "seconds": 0.01,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:849: attempt to call field '?' (a nil value)"
     },
     {
       "file": "s04_control_flow__all.lua",
@@ -284,7 +430,13 @@
       "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
       "status": "ok",
       "bytes": 41801,
-      "seconds": 0.09
+      "seconds": 0.09,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:1: attempt to call field '?' (a nil value)"
     },
     {
       "file": "s05_nested_functions__default.lua",
@@ -294,7 +446,12 @@
       "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
       "status": "ok",
       "bytes": 52329,
-      "seconds": 0.03
+      "seconds": 0.03,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent"
+      },
+      "behavior": "equivalent"
     },
     {
       "file": "s05_nested_functions__minify.lua",
@@ -304,7 +461,12 @@
       "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
       "status": "ok",
       "bytes": 25707,
-      "seconds": 0.07
+      "seconds": 0.07,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent"
+      },
+      "behavior": "equivalent"
     },
     {
       "file": "s05_nested_functions__encryptstrings.lua",
@@ -314,7 +476,12 @@
       "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
       "status": "ok",
       "bytes": 53107,
-      "seconds": 0.03
+      "seconds": 0.03,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent"
+      },
+      "behavior": "equivalent"
     },
     {
       "file": "s05_nested_functions__flatten.lua",
@@ -324,7 +491,12 @@
       "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
       "status": "ok",
       "bytes": 84139,
-      "seconds": 0.04
+      "seconds": 0.04,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent"
+      },
+      "behavior": "equivalent"
     },
     {
       "file": "s05_nested_functions__antitamper.lua",
@@ -334,7 +506,13 @@
       "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
       "status": "ok",
       "bytes": 61234,
-      "seconds": 0.04
+      "seconds": 0.04,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "no result after 15 s"
     },
     {
       "file": "s05_nested_functions__constants.lua",
@@ -344,7 +522,13 @@
       "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
       "status": "ok",
       "bytes": 52282,
-      "seconds": 0.03
+      "seconds": 0.03,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:1140: attempt to call field '?' (a nil value)"
     },
     {
       "file": "s05_nested_functions__all.lua",
@@ -354,7 +538,13 @@
       "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
       "status": "ok",
       "bytes": 50920,
-      "seconds": 0.15
+      "seconds": 0.15,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:1: attempt to call field '?' (a nil value)"
     },
     {
       "file": "s06_combined__default.lua",
@@ -364,7 +554,13 @@
       "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
       "status": "ok",
       "bytes": 55410,
-      "seconds": 0.03
+      "seconds": 0.03,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:1777: unexpected symbol near '\\'"
     },
     {
       "file": "s06_combined__minify.lua",
@@ -373,7 +569,8 @@
       "runtime": "lua51",
       "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
       "status": "tool-error",
-      "error": "luasrcdiet/lparser.lua:96: (source):1777: unexpected symbol near '\\'"
+      "error": "luasrcdiet/lparser.lua:96: (source):1777: unexpected symbol near '\\'",
+      "behavior": "skipped"
     },
     {
       "file": "s06_combined__encryptstrings.lua",
@@ -383,7 +580,13 @@
       "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
       "status": "ok",
       "bytes": 56319,
-      "seconds": 0.03
+      "seconds": 0.03,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:1777: unexpected symbol near '\\'"
     },
     {
       "file": "s06_combined__flatten.lua",
@@ -393,7 +596,13 @@
       "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
       "status": "ok",
       "bytes": 95726,
-      "seconds": 0.04
+      "seconds": 0.04,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:3761: unexpected symbol near '\\'"
     },
     {
       "file": "s06_combined__antitamper.lua",
@@ -403,7 +612,13 @@
       "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
       "status": "ok",
       "bytes": 64867,
-      "seconds": 0.04
+      "seconds": 0.04,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:2094: unexpected symbol near '\\'"
     },
     {
       "file": "s06_combined__constants.lua",
@@ -413,7 +628,13 @@
       "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
       "status": "ok",
       "bytes": 55810,
-      "seconds": 0.03
+      "seconds": 0.03,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:1777: unexpected symbol near '\\'"
     },
     {
       "file": "s06_combined__all.lua",
@@ -422,7 +643,8 @@
       "runtime": "lua51",
       "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
       "status": "tool-error",
-      "error": "luasrcdiet/lparser.lua:96: (source):4472: unexpected symbol near '\\'"
+      "error": "luasrcdiet/lparser.lua:96: (source):4472: unexpected symbol near '\\'",
+      "behavior": "skipped"
     },
     {
       "file": "s07_roblox_style__default.lua",
@@ -432,7 +654,12 @@
       "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
       "status": "ok",
       "bytes": 17400,
-      "seconds": 0.01
+      "seconds": 0.01,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent"
+      },
+      "behavior": "equivalent"
     },
     {
       "file": "s07_roblox_style__minify.lua",
@@ -442,7 +669,12 @@
       "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
       "status": "ok",
       "bytes": 9441,
-      "seconds": 0.02
+      "seconds": 0.02,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent"
+      },
+      "behavior": "equivalent"
     },
     {
       "file": "s07_roblox_style__encryptstrings.lua",
@@ -452,7 +684,12 @@
       "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
       "status": "ok",
       "bytes": 18551,
-      "seconds": 0.01
+      "seconds": 0.01,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent"
+      },
+      "behavior": "equivalent"
     },
     {
       "file": "s07_roblox_style__flatten.lua",
@@ -462,7 +699,12 @@
       "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
       "status": "ok",
       "bytes": 29523,
-      "seconds": 0.01
+      "seconds": 0.01,
+      "behaviors": {
+        "lua51": "equivalent",
+        "luajit": "equivalent"
+      },
+      "behavior": "equivalent"
     },
     {
       "file": "s07_roblox_style__antitamper.lua",
@@ -472,7 +714,13 @@
       "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
       "status": "ok",
       "bytes": 26439,
-      "seconds": 0.01
+      "seconds": 0.01,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "no result after 15 s"
     },
     {
       "file": "s07_roblox_style__constants.lua",
@@ -482,7 +730,13 @@
       "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
       "status": "ok",
       "bytes": 17053,
-      "seconds": 0.01
+      "seconds": 0.01,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:121: attempt to call field '?' (a nil value)"
     },
     {
       "file": "s07_roblox_style__all.lua",
@@ -492,7 +746,13 @@
       "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
       "status": "ok",
       "bytes": 25553,
-      "seconds": 0.05
+      "seconds": 0.05,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:1: attempt to call field '?' (a nil value)"
     },
     {
       "file": "s08_ironbrew_macros__default.lua",
@@ -502,7 +762,13 @@
       "sampleSha256": "5d2ba22d895713dd1a955c8310b1e77d7a5961e854ea58fa77a1089a4041880f",
       "status": "ok",
       "bytes": 26817,
-      "seconds": 0.01
+      "seconds": 0.01,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:442: attempt to call field '?' (a string value)"
     },
     {
       "file": "s08_ironbrew_macros__minify.lua",
@@ -512,7 +778,13 @@
       "sampleSha256": "5d2ba22d895713dd1a955c8310b1e77d7a5961e854ea58fa77a1089a4041880f",
       "status": "ok",
       "bytes": 13715,
-      "seconds": 0.03
+      "seconds": 0.03,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:1: attempt to call field '?' (a string value)"
     },
     {
       "file": "s08_ironbrew_macros__encryptstrings.lua",
@@ -522,7 +794,13 @@
       "sampleSha256": "5d2ba22d895713dd1a955c8310b1e77d7a5961e854ea58fa77a1089a4041880f",
       "status": "ok",
       "bytes": 27713,
-      "seconds": 0.01
+      "seconds": 0.01,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:442: attempt to call field '?' (a string value)"
     },
     {
       "file": "s08_ironbrew_macros__flatten.lua",
@@ -532,7 +810,13 @@
       "sampleSha256": "5d2ba22d895713dd1a955c8310b1e77d7a5961e854ea58fa77a1089a4041880f",
       "status": "ok",
       "bytes": 42716,
-      "seconds": 0.02
+      "seconds": 0.02,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:551: attempt to call field '?' (a string value)"
     },
     {
       "file": "s08_ironbrew_macros__antitamper.lua",
@@ -542,7 +826,13 @@
       "sampleSha256": "5d2ba22d895713dd1a955c8310b1e77d7a5961e854ea58fa77a1089a4041880f",
       "status": "ok",
       "bytes": 36416,
-      "seconds": 0.02
+      "seconds": 0.02,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "no result after 15 s"
     },
     {
       "file": "s08_ironbrew_macros__constants.lua",
@@ -552,7 +842,13 @@
       "sampleSha256": "5d2ba22d895713dd1a955c8310b1e77d7a5961e854ea58fa77a1089a4041880f",
       "status": "ok",
       "bytes": 26936,
-      "seconds": 0.01
+      "seconds": 0.01,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:442: attempt to call field '?' (a nil value)"
     },
     {
       "file": "s08_ironbrew_macros__all.lua",
@@ -562,7 +858,13 @@
       "sampleSha256": "5d2ba22d895713dd1a955c8310b1e77d7a5961e854ea58fa77a1089a4041880f",
       "status": "ok",
       "bytes": 31307,
-      "seconds": 0.07
+      "seconds": 0.07,
+      "behaviors": {
+        "lua51": "errored",
+        "luajit": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:1: attempt to call field '?' (a nil value)"
     }
   ]
 }

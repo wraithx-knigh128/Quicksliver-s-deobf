@@ -82,7 +82,13 @@ export function assessConfidence(before, output, ctx) {
   for (const s of steps) if (s.status === 'applied' && s.detail && s.detail.inferred) note(-0.15, `Inferred, not read: ${s.detail.inferred}.`);
   for (const s of steps.filter((x) => x.status === 'failed')) note(-0.1, `Pass "${s.label}" failed and was skipped: ${s.error}`);
   const evalStep = steps.find((s) => s.id === 'evaluate');
-  if (evalStep && evalStep.detail && evalStep.detail.rejected > 0) note(-Math.min(0.2, 0.04 * evalStep.detail.rejected), `${evalStep.detail.rejected} decoder call(s) could not be evaluated safely and were left as they are.`);
+  // The evaluator counts the calls it rejected while it ran; a statement holding one can be dropped afterwards (dead code, a spent decoder). When the structure reader ran on the final
+  // tree and finds no string decoder in it, there is nothing "left as it is": the note would describe a state the output is no longer in.
+  const decoderRemains = ctx.adaptive && ctx.adaptive.ran ? (ctx.adaptive.residual || []).some((x) => x.kind === 'string-decoder') : true;
+  const leftBehind = evalStep && evalStep.detail && decoderRemains ? evalStep.detail.rejected : 0;
+  if (leftBehind > 0) note(-Math.min(0.2, 0.04 * leftBehind), `${leftBehind} decoder call(s) could not be evaluated safely and were left as they are.`);
+  // a virtual machine whose constants stayed unread because the sandbox is off: the report says so, and the page offers the sandbox the same way it does for a string decoder
+  if (ctx.vm && !ctx.vm.constants && /sandbox/.test(String(ctx.vm.note || ''))) hints.push('sandbox');
   const needsDecoder = before.families.some((f) => f.evidence.some((e) => ['encrypt-strings', 'constant-array', 'caesar-decoder', 'split-strings'].includes(e.rule)))
     || before.traits.some((t) => t.id === 'string-table');
   if (evalStep && evalStep.status === 'skipped' && /not enabled/.test(String(evalStep.detail)) && needsDecoder) {

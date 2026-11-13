@@ -112,6 +112,25 @@ function propagate(chunk) {
   return replace.size;
 }
 
+// ---- statements after one that always leaves --------------------------------------------------------------
+
+/**
+ * Nothing after a `return`, `break` or `continue` of the same block can run. Flatteners leave such statements behind (`found = d break break`), and Lua 5.1 and Luau do not even
+ * accept them (`break` must end its block there). A block that holds a label is left alone: code after a jump can be reached by a goto.
+ */
+function dropUnreachable(chunk) {
+  let changed = 0;
+  transform(chunk, {
+    block(stmts) {
+      const at = stmts.findIndex((s) => s.type === 'Return' || s.type === 'Break' || s.type === 'Continue');
+      if (at < 0 || at === stmts.length - 1 || stmts.some((s) => s.type === 'Label')) return undefined;
+      changed += stmts.length - at - 1;
+      return stmts.slice(0, at + 1);
+    },
+  });
+  return changed;
+}
+
 // ---- the global table under a local name ---------------------------------------------------------------
 
 const LUA_KEYWORDS = new Set(['and', 'break', 'do', 'else', 'elseif', 'end', 'false', 'for', 'function', 'goto', 'if', 'in', 'local', 'nil', 'not', 'or', 'repeat', 'return', 'then', 'true', 'until', 'while', 'continue']);
@@ -697,7 +716,7 @@ export function simplifyPass(chunk, ctx = {}) {
     const r = reduce(chunk);
     const d = removeDead(chunk, deadState);
     const u = unrollOnce(chunk);
-    const c = collapseConstClosures(chunk);
+    const c = collapseConstClosures(chunk) + dropUnreachable(chunk);
     stats.tables += t; stats.closures = (stats.closures || 0) + c;
     stats.sunk += k; stats.propagated += p; stats.reduced += r; stats.dead += d; stats.unrolled += u;
     if (!(k + t + p + r + d + u + c)) break;

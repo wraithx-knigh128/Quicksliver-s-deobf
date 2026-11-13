@@ -183,6 +183,25 @@ export function structureSection(st, { onGoto } = {}) {
   ], h('span.faint.mono', `opacity ${st.score}`));
 }
 
+/** A virtual machine that was read but not lifted: what its data holds. A profile, never a recovery, and the section says so. */
+export function vmSummary(vm) {
+  if (!vm) return [];
+  const strings = (vm.strings || []).filter((x) => x.length >= 3);
+  return [section('Virtual machine (not lifted)', [
+    note('warn', 'The program is bytecode for an interpreter generated into the script. It was not turned back into source: control flow, locals and expressions are not recovered. This is what its data holds.'),
+    kv([
+      ['Functions', vm.functions && vm.functions.length ? String(vm.functions.length) : null],
+      ['Bytes of instructions', vm.instructionBytes ? String(vm.instructionBytes) : null],
+      ['Constants read', vm.constants ? `${vm.constants.length}${vm.hardened ? ' (hardened build: opened record by record)' : ''}` : 'none'],
+    ]),
+    strings.length ? h('details', [
+      h('summary', `Strings the program uses (${strings.length})`),
+      h('ul.list', strings.slice(0, 80).map((x) => h('li.mono', JSON.stringify(x.length > 120 ? `${x.slice(0, 117)}...` : x)))),
+    ]) : null,
+    vm.note ? note('', vm.note) : null,
+  ], h('span.faint.mono', 'profile'))];
+}
+
 /** The inspector, after a recovery: what the adaptive engine saw, did and left, and the behaviour check. */
 export function adaptiveSummary(ad, { onGoto, onVerify, verify, canVerify } = {}) {
   if (!ad || !ad.ran) return [];
@@ -347,6 +366,7 @@ export function recoverySummary(r, helpers = {}) {
     c ? h('ul.list', { style: { marginTop: '8px' } }, c.reasons.map((x) => h('li', [h('span.mono.faint', x.effect ? (x.effect > 0 ? `+${Math.round(x.effect * 100)}` : `${Math.round(x.effect * 100)}`).padStart(4) : '   ·'), '  ', x.text]))) : null,
     note('', 'Confidence is derived from what is still visible in the output. It is not a guarantee that the result equals the original program.'),
   ]));
+  out.push(...vmSummary(r.vm));
   out.push(...nexusSummary(r.nexus, helpers));
   out.push(...adaptiveSummary(r.adaptive, { ...helpers, canVerify: helpers.canVerify && r.output != null }));
   const steps = r.steps || [];

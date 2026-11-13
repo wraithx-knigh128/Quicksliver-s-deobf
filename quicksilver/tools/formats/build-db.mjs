@@ -13,9 +13,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { familyRegistry, ENGINE_VERSION } from '../../src/api.js';
+import { METHODS } from '../../src/core/metrics.js';
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const readJson = (p) => JSON.parse(fs.readFileSync(path.join(root, p), 'utf8'));
+/** A run whose recovered script can be judged against the original program: the obfuscator's own output behaved like the original (or was never run, which says nothing about it). */
+const judgeable = (r) => r.behaviorOriginal != null && (r.toolBehavior === undefined || r.toolBehavior === 'equivalent');
 const mean = (xs) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
 const round = (x, d = 3) => (x === null || x === undefined ? null : Math.round(x * 10 ** d) / 10 ** d);
 
@@ -55,6 +58,25 @@ function manifests() {
 
 const norm = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 
+/** The six categories of src/core/metrics.js for the fixtures of one configuration (null where the scorecard row predates the category). */
+function categories(rows, tool, judged) {
+  const parsed = rows.filter((r) => r.parses !== false && r.fidelityAfter != null);
+  const has = rows.filter((r) => r.structureAfter !== undefined);
+  const ms = rows.map((r) => r.ms).filter((x) => typeof x === 'number');
+  const residual = new Map();
+  for (const r of rows) for (const x of r.residual || []) residual.set(x, (residual.get(x) || 0) + 1);
+  return {
+    identification: { detected: rows.filter((r) => r.detected && r.detected.some((d) => d.startsWith(`${tool}:`))).length, of: rows.length },
+    structure: has.length ? { before: round(mean(has.map((r) => r.structureBefore).filter((x) => x != null))), after: round(mean(has.filter((r) => r.structureAfter != null).map((r) => r.structureAfter))) } : null,
+    semantic: { before: round(mean(parsed.map((r) => r.fidelityBefore ?? 0))), after: round(mean(parsed.map((r) => r.fidelityAfter))) },
+    runtime: { same: judged.filter((r) => r.behaviorOriginal === 'same').length, judged: judged.length, notJudged: rows.length - judged.length },
+    completeness: has.length ? { complete: has.filter((r) => r.parses !== false && (r.residual || []).length === 0 && !r.unresolved).length, of: has.length, residual: Object.fromEntries([...residual].sort((a, b) => b[1] - a[1]).slice(0, 4)) } : null,
+    // only for builds read as VM data and not lifted: the share of the original's strings found among the constants read from the VM data
+    vmConstants: (() => { const vm = rows.filter((r) => r.vm && r.vm.constantsRecall != null); return vm.length ? { recall: round(mean(vm.map((r) => r.vm.constantsRecall))), fixtures: vm.length, functions: round(mean(vm.map((r) => r.vm.functions))), bytes: round(mean(vm.map((r) => r.vm.bytes))) } : null; })(),
+    stability: { msMean: ms.length ? Math.round(mean(ms)) : null, msMax: ms.length ? Math.max(...ms) : null, failures: rows.filter((r) => r.crash || r.ok === false || r.parses === false).length },
+  };
+}
+
 export function buildDb() {
   const scorecard = readJson('tests/results/scorecard.json');
   const notes = readJson('data/research/format-notes.json');
@@ -81,7 +103,7 @@ export function buildDb() {
       for (const config of [...new Set(rs.map((r) => r.config))]) {
         const cs = rs.filter((r) => r.config === config);
         const u = cs.filter((r) => r.fidelityAfter != null);
-        const ck = cs.filter((r) => r.behaviorOriginal != null);
+        const ck = cs.filter(judgeable);
         const agg = {
           config,
           samples: cs.length,
@@ -94,6 +116,7 @@ export function buildDb() {
           unparsed: cs.length - u.length,
         };
         agg.status = level(agg);
+        agg.categories = categories(cs, tool, ck);
         configs.push(agg);
       }
       const entries = (meta.entries || []);
@@ -143,7 +166,8 @@ export function buildDb() {
   } : null;
 
   return {
-    schema: 'format-db/1',
+    schema: 'format-db/2',
+    methods: METHODS,
     engine: ENGINE_VERSION,
     inputs: { scorecard: scorecard.generatedAt, scorecardFixtures: scorecard.results.length, notes: notes.schema },
     calibration: { pairs: pairs.length, pearson: round(pearson(pairs)) },

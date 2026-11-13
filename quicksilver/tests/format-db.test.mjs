@@ -88,3 +88,45 @@ test('format-db: the public-collection block counts every file and shows a class
   }
   assert.ok(scorecard.results.length > 1000);
 });
+
+// ---- Prompt X: the categories ------------------------------------------------------------------------------------------------------
+
+test('format-db: every measured configuration carries the six categories, inside their bounds, and the definitions are the ones in src/core/metrics.js', async () => {
+  const { METHODS } = await import('../src/core/metrics.js');
+  assert.deepEqual(committed.methods, METHODS);
+  const within = (x, lo, hi, what) => assert.ok(x === null || (typeof x === 'number' && x >= lo && x <= hi), what);
+  let rows = 0;
+  for (const p of committed.projects) {
+    for (const v of p.versions) {
+      for (const c of v.configs) {
+        const k = c.categories;
+        assert.ok(k, `${p.id} ${v.version} ${c.config}: categories`);
+        rows++;
+        const w = `${p.id} ${v.version} ${c.config}`;
+        assert.ok(k.identification.detected <= k.identification.of && k.identification.of === c.samples, `${w}: identification`);
+        assert.ok(k.runtime.same <= k.runtime.judged && k.runtime.judged + k.runtime.notJudged === c.samples, `${w}: runtime ${JSON.stringify(k.runtime)}`);
+        within(k.semantic.before, 0, 1, `${w}: semantic before`); within(k.semantic.after, 0, 1, `${w}: semantic after`);
+        if (k.structure) { within(k.structure.before, 0, 1, `${w}: structure before`); within(k.structure.after, 0, 1, `${w}: structure after`); }
+        if (k.completeness) assert.ok(k.completeness.complete <= k.completeness.of, `${w}: completeness`);
+        assert.ok(k.stability.failures >= 0 && k.stability.failures <= c.samples, `${w}: stability`);
+      }
+    }
+  }
+  assert.ok(rows > 100, `${rows} configurations`);
+});
+
+test('format-db: a build recovered to under 30% cannot be complete, and one that reports a VM profile is never complete', () => {
+  for (const p of committed.projects) {
+    for (const v of p.versions) {
+      for (const c of v.configs) {
+        const k = c.categories;
+        if (!k || !k.completeness) continue;
+        if (c.fidelityAfter !== null && c.fidelityAfter < 0.3) assert.ok(k.completeness.complete < k.completeness.of, `${p.id} ${v.version} ${c.config}: ${c.fidelityAfter} but complete ${k.completeness.complete}/${k.completeness.of}`);
+        if (k.vmConstants) {
+          assert.equal(k.completeness.complete, 0, `${p.id} ${v.version} ${c.config}: a VM left in the output is not complete`);
+          assert.ok(k.vmConstants.recall >= 0 && k.vmConstants.recall <= 1);
+        }
+      }
+    }
+  }
+});

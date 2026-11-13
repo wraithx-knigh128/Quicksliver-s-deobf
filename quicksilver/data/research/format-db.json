@@ -1,14 +1,23 @@
 {
- "schema": "format-db/1",
+ "schema": "format-db/2",
+ "methods": {
+  "identification": "The detector names the tool with confidence >= 0.5 on the obfuscated fixture (and, where the fixture records a version, the version it reads equals it). Reported as detected / fixtures.",
+  "structure": "structureScore(original, recovered): F1 of the multiset of parent>child node-type edges of the two syntax trees; names, literal values, comments, parentheses and sibling order are ignored. 1.0 = the same shape of program. Mean over fixtures whose output parses.",
+  "semantic": "fidelity(original, recovered): Dice coefficient of the longest common subsequence of the semantic-token streams (node kinds, operators, literal values, locals by order of declaration, globals by name), over the first 6000 tokens of each. Mean over fixtures whose output parses.",
+  "runtime": "The recovered script and the original program are run on the same real runtime (PUC Lua 5.1 / LuaJIT / Lua 5.4 through lupa, or Luau 0.739) and their captured output compared. Counted only where the obfuscator’s own output behaved like the original, so a tool defect is never charged to the engine. same / judged.",
+  "completeness": "Both of: residualIndicators(recovered) is empty (the detector finds in the recovered text no tool with unrecoverable evidence, none of the traits state-machine, bytecode-blob, string-table, junk-code, opaque-predicates, escape-encoded-strings, and no virtual machine’s function records and interpreter), and the engine’s own report lists nothing left unresolved. complete / fixtures.",
+  "vmConstants": "Only for builds that keep the program as VM bytecode and were not lifted: vmConstantsRecall(original, vm.constants), the share of the original’s string literals (two characters or more) that appear among the constants read from the script’s own decryptor, with none of the program run. A profile of the data, not a reconstruction. Mean over VM fixtures.",
+  "stability": "Wall-clock milliseconds of one recover() call (sandboxed evaluation on) on the reference machine; failures = fixtures whose recovery threw or whose output does not parse."
+ },
  "engine": "1.0.0",
  "inputs": {
-  "scorecard": "2026-11-13T07:24:11.953Z",
-  "scorecardFixtures": 1298,
+  "scorecard": "2026-11-13T13:12:47.156Z",
+  "scorecardFixtures": 1402,
   "notes": "format-notes/1"
  },
  "calibration": {
-  "pairs": 1210,
-  "pearson": 0.924
+  "pairs": 1314,
+  "pearson": 0.915
  },
  "projects": [
   {
@@ -51,7 +60,37 @@
        "behaviourChecked": 8,
        "behaviourSame": 8,
        "unparsed": 0,
-       "status": "unsupported"
+       "status": "unsupported",
+       "categories": {
+        "identification": {
+         "detected": 8,
+         "of": 8
+        },
+        "structure": {
+         "before": 0.092,
+         "after": 0.101
+        },
+        "semantic": {
+         "before": 0.048,
+         "after": 0.047
+        },
+        "runtime": {
+         "same": 8,
+         "judged": 8,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 0,
+         "of": 8,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 258,
+         "msMax": 329,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "Balanced",
@@ -60,10 +99,40 @@
        "fidelityBefore": 0.026,
        "fidelityAfter": 0.602,
        "confidence": 0.881,
-       "behaviourChecked": 8,
+       "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "partial"
+       "status": "partial",
+       "categories": {
+        "identification": {
+         "detected": 8,
+         "of": 8
+        },
+        "structure": {
+         "before": 0.033,
+         "after": 0.776
+        },
+        "semantic": {
+         "before": 0.026,
+         "after": 0.602
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 1
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 8,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 480,
+         "msMax": 751,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "Luraph",
@@ -75,7 +144,37 @@
        "behaviourChecked": 8,
        "behaviourSame": 8,
        "unparsed": 0,
-       "status": "unsupported"
+       "status": "unsupported",
+       "categories": {
+        "identification": {
+         "detected": 8,
+         "of": 8
+        },
+        "structure": {
+         "before": 0.08,
+         "after": 0.087
+        },
+        "semantic": {
+         "before": 0.042,
+         "after": 0.041
+        },
+        "runtime": {
+         "same": 8,
+         "judged": 8,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 0,
+         "of": 8,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 353,
+         "msMax": 508,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "Luraph14",
@@ -87,7 +186,37 @@
        "behaviourChecked": 8,
        "behaviourSame": 8,
        "unparsed": 0,
-       "status": "unsupported"
+       "status": "unsupported",
+       "categories": {
+        "identification": {
+         "detected": 8,
+         "of": 8
+        },
+        "structure": {
+         "before": 0.079,
+         "after": 0.086
+        },
+        "semantic": {
+         "before": 0.041,
+         "after": 0.041
+        },
+        "runtime": {
+         "same": 8,
+         "judged": 8,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 0,
+         "of": 8,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 301,
+         "msMax": 379,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "AzureGod15",
@@ -99,7 +228,37 @@
        "behaviourChecked": 8,
        "behaviourSame": 8,
        "unparsed": 0,
-       "status": "unsupported"
+       "status": "unsupported",
+       "categories": {
+        "identification": {
+         "detected": 8,
+         "of": 8
+        },
+        "structure": {
+         "before": 0.071,
+         "after": 0.078
+        },
+        "semantic": {
+         "before": 0.037,
+         "after": 0.037
+        },
+        "runtime": {
+         "same": 8,
+         "judged": 8,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 0,
+         "of": 8,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 370,
+         "msMax": 502,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "AzureGodUltra",
@@ -111,7 +270,37 @@
        "behaviourChecked": 8,
        "behaviourSame": 8,
        "unparsed": 0,
-       "status": "unsupported"
+       "status": "unsupported",
+       "categories": {
+        "identification": {
+         "detected": 8,
+         "of": 8
+        },
+        "structure": {
+         "before": 0.064,
+         "after": 0.07
+        },
+        "semantic": {
+         "before": 0.035,
+         "after": 0.035
+        },
+        "runtime": {
+         "same": 8,
+         "judged": 8,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 0,
+         "of": 8,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 587,
+         "msMax": 789,
+         "failures": 0
+        }
+       }
       }
      ],
      "summary": {
@@ -166,7 +355,37 @@
        "behaviourChecked": 8,
        "behaviourSame": 8,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 0,
+         "of": 8
+        },
+        "structure": {
+         "before": 1,
+         "after": 0.997
+        },
+        "semantic": {
+         "before": 1,
+         "after": 0.998
+        },
+        "runtime": {
+         "same": 8,
+         "judged": 8,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 8,
+         "of": 8,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 11,
+         "msMax": 22,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "strings-flow",
@@ -178,7 +397,37 @@
        "behaviourChecked": 8,
        "behaviourSame": 8,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 8,
+         "of": 8
+        },
+        "structure": {
+         "before": 0.68,
+         "after": 0.984
+        },
+        "semantic": {
+         "before": 0.452,
+         "after": 0.944
+        },
+        "runtime": {
+         "same": 8,
+         "judged": 8,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 8,
+         "of": 8,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 19,
+         "msMax": 36,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "vm",
@@ -190,7 +439,39 @@
        "behaviourChecked": 8,
        "behaviourSame": 8,
        "unparsed": 0,
-       "status": "unsupported"
+       "status": "unsupported",
+       "categories": {
+        "identification": {
+         "detected": 8,
+         "of": 8
+        },
+        "structure": {
+         "before": 0.091,
+         "after": 0.093
+        },
+        "semantic": {
+         "before": 0.033,
+         "after": 0.033
+        },
+        "runtime": {
+         "same": 8,
+         "judged": 8,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 0,
+         "of": 8,
+         "residual": {
+          "family:clyde": 8
+         }
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 397,
+         "msMax": 514,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "vm-max",
@@ -199,10 +480,42 @@
        "fidelityBefore": 0.125,
        "fidelityAfter": 0.125,
        "confidence": 0.1,
-       "behaviourChecked": 1,
+       "behaviourChecked": 0,
        "behaviourSame": 0,
        "unparsed": 0,
-       "status": "unsupported"
+       "status": "unsupported",
+       "categories": {
+        "identification": {
+         "detected": 1,
+         "of": 1
+        },
+        "structure": {
+         "before": 0.227,
+         "after": 0.227
+        },
+        "semantic": {
+         "before": 0.125,
+         "after": 0.125
+        },
+        "runtime": {
+         "same": 0,
+         "judged": 0,
+         "notJudged": 1
+        },
+        "completeness": {
+         "complete": 0,
+         "of": 1,
+         "residual": {
+          "family:clyde": 1
+         }
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 94,
+         "msMax": 94,
+         "failures": 0
+        }
+       }
       }
      ],
      "summary": {
@@ -256,10 +569,40 @@
        "fidelityBefore": 0.023,
        "fidelityAfter": 0.023,
        "confidence": 0.3,
-       "behaviourChecked": 2,
+       "behaviourChecked": 0,
        "behaviourSame": 0,
        "unparsed": 0,
-       "status": "unsupported"
+       "status": "unsupported",
+       "categories": {
+        "identification": {
+         "detected": 2,
+         "of": 2
+        },
+        "structure": {
+         "before": 0.027,
+         "after": 0.03
+        },
+        "semantic": {
+         "before": 0.023,
+         "after": 0.023
+        },
+        "runtime": {
+         "same": 0,
+         "judged": 0,
+         "notJudged": 2
+        },
+        "completeness": {
+         "complete": 0,
+         "of": 2,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 442,
+         "msMax": 595,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "noconstants",
@@ -268,10 +611,40 @@
        "fidelityBefore": 0.023,
        "fidelityAfter": 0.023,
        "confidence": 0.3,
-       "behaviourChecked": 2,
+       "behaviourChecked": 0,
        "behaviourSame": 0,
        "unparsed": 0,
-       "status": "unsupported"
+       "status": "unsupported",
+       "categories": {
+        "identification": {
+         "detected": 2,
+         "of": 2
+        },
+        "structure": {
+         "before": 0.027,
+         "after": 0.03
+        },
+        "semantic": {
+         "before": 0.023,
+         "after": 0.023
+        },
+        "runtime": {
+         "same": 0,
+         "judged": 0,
+         "notJudged": 2
+        },
+        "completeness": {
+         "complete": 0,
+         "of": 2,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 315,
+         "msMax": 366,
+         "failures": 0
+        }
+       }
       }
      ],
      "summary": {
@@ -359,10 +732,40 @@
        "fidelityBefore": 0.64,
        "fidelityAfter": 0.964,
        "confidence": 0.879,
-       "behaviourChecked": 7,
-       "behaviourSame": 7,
+       "behaviourChecked": 6,
+       "behaviourSame": 6,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.964,
+         "after": 0.995
+        },
+        "semantic": {
+         "before": 0.64,
+         "after": 0.964
+        },
+        "runtime": {
+         "same": 6,
+         "judged": 6,
+         "notJudged": 1
+        },
+        "completeness": {
+         "complete": 6,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 17,
+         "msMax": 28,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "balanced",
@@ -371,10 +774,40 @@
        "fidelityBefore": 0.374,
        "fidelityAfter": 0.951,
        "confidence": 0.879,
-       "behaviourChecked": 7,
-       "behaviourSame": 7,
+       "behaviourChecked": 6,
+       "behaviourSame": 6,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.497,
+         "after": 0.982
+        },
+        "semantic": {
+         "before": 0.374,
+         "after": 0.951
+        },
+        "runtime": {
+         "same": 6,
+         "judged": 6,
+         "notJudged": 1
+        },
+        "completeness": {
+         "complete": 6,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 32,
+         "msMax": 38,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "heavy",
@@ -383,10 +816,40 @@
        "fidelityBefore": 0.073,
        "fidelityAfter": 0.772,
        "confidence": 0.75,
-       "behaviourChecked": 6,
-       "behaviourSame": 6,
+       "behaviourChecked": 5,
+       "behaviourSame": 5,
        "unparsed": 1,
-       "status": "partial"
+       "status": "partial",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.096,
+         "after": 0.974
+        },
+        "semantic": {
+         "before": 0.073,
+         "after": 0.772
+        },
+        "runtime": {
+         "same": 5,
+         "judged": 5,
+         "notJudged": 2
+        },
+        "completeness": {
+         "complete": 5,
+         "of": 6,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 71,
+         "msMax": 155,
+         "failures": 1
+        }
+       }
       },
       {
        "config": "maximum",
@@ -398,7 +861,37 @@
        "behaviourChecked": 2,
        "behaviourSame": 2,
        "unparsed": 1,
-       "status": "partial"
+       "status": "partial",
+       "categories": {
+        "identification": {
+         "detected": 3,
+         "of": 3
+        },
+        "structure": {
+         "before": 0.266,
+         "after": 0.97
+        },
+        "semantic": {
+         "before": 0.198,
+         "after": 0.655
+        },
+        "runtime": {
+         "same": 2,
+         "judged": 2,
+         "notJudged": 1
+        },
+        "completeness": {
+         "complete": 2,
+         "of": 2,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 1910,
+         "msMax": 2877,
+         "failures": 1
+        }
+       }
       },
       {
        "config": "mod-virtual_machine",
@@ -407,10 +900,42 @@
        "fidelityBefore": 0.076,
        "fidelityAfter": 0.834,
        "confidence": 0.793,
-       "behaviourChecked": 7,
-       "behaviourSame": 6,
+       "behaviourChecked": 5,
+       "behaviourSame": 5,
        "unparsed": 0,
-       "status": "partial"
+       "status": "partial",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.152,
+         "after": 0.874
+        },
+        "semantic": {
+         "before": 0.076,
+         "after": 0.834
+        },
+        "runtime": {
+         "same": 5,
+         "judged": 5,
+         "notJudged": 2
+        },
+        "completeness": {
+         "complete": 5,
+         "of": 7,
+         "residual": {
+          "family:hercules": 1
+         }
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 108,
+         "msMax": 152,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "mod-antitamper",
@@ -422,7 +947,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.638,
+         "after": 0.997
+        },
+        "semantic": {
+         "before": 0.372,
+         "after": 0.998
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 19,
+         "msMax": 28,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "mod-control_flow",
@@ -434,7 +989,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.809,
+         "after": 0.981
+        },
+        "semantic": {
+         "before": 0.632,
+         "after": 0.983
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 16,
+         "msMax": 29,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "mod-string_to_expressions",
@@ -446,7 +1031,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.424,
+         "after": 0.997
+        },
+        "semantic": {
+         "before": 0.336,
+         "after": 0.998
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 27,
+         "msMax": 47,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "mod-string_encoding",
@@ -458,7 +1073,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.654,
+         "after": 0.997
+        },
+        "semantic": {
+         "before": 0.468,
+         "after": 0.998
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 23,
+         "msMax": 49,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "mod-wrap_in_function",
@@ -470,7 +1115,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.874,
+         "after": 0.997
+        },
+        "semantic": {
+         "before": 0.993,
+         "after": 0.998
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 10,
+         "msMax": 16,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "mod-variable_renaming",
@@ -479,10 +1154,40 @@
        "fidelityBefore": 0.64,
        "fidelityAfter": 0.964,
        "confidence": 0.879,
-       "behaviourChecked": 7,
-       "behaviourSame": 7,
+       "behaviourChecked": 6,
+       "behaviourSame": 6,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.964,
+         "after": 0.995
+        },
+        "semantic": {
+         "before": 0.64,
+         "after": 0.964
+        },
+        "runtime": {
+         "same": 6,
+         "judged": 6,
+         "notJudged": 1
+        },
+        "completeness": {
+         "complete": 6,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 15,
+         "msMax": 18,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "mod-garbage_code",
@@ -494,7 +1199,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.745,
+         "after": 0.997
+        },
+        "semantic": {
+         "before": 0.534,
+         "after": 0.998
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 16,
+         "msMax": 21,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "mod-opaque_predicates",
@@ -506,7 +1241,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.858,
+         "after": 0.997
+        },
+        "semantic": {
+         "before": 0.926,
+         "after": 0.998
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 15,
+         "msMax": 25,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "mod-function_inlining",
@@ -515,10 +1280,40 @@
        "fidelityBefore": 0.707,
        "fidelityAfter": 0.965,
        "confidence": 0.643,
-       "behaviourChecked": 5,
-       "behaviourSame": 5,
+       "behaviourChecked": 4,
+       "behaviourSame": 4,
        "unparsed": 2,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.899,
+         "after": 0.996
+        },
+        "semantic": {
+         "before": 0.707,
+         "after": 0.965
+        },
+        "runtime": {
+         "same": 4,
+         "judged": 4,
+         "notJudged": 3
+        },
+        "completeness": {
+         "complete": 5,
+         "of": 5,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 8,
+         "msMax": 17,
+         "failures": 2
+        }
+       }
       },
       {
        "config": "mod-dynamic_code",
@@ -527,10 +1322,40 @@
        "fidelityBefore": 0.902,
        "fidelityAfter": 0.998,
        "confidence": 0.9,
-       "behaviourChecked": 7,
-       "behaviourSame": 7,
+       "behaviourChecked": 6,
+       "behaviourSame": 6,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.783,
+         "after": 0.997
+        },
+        "semantic": {
+         "before": 0.902,
+         "after": 0.998
+        },
+        "runtime": {
+         "same": 6,
+         "judged": 6,
+         "notJudged": 1
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 18,
+         "msMax": 28,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "mod-bytecode_encoding",
@@ -542,7 +1367,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.233,
+         "after": 0.973
+        },
+        "semantic": {
+         "before": 0.18,
+         "after": 0.929
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 65,
+         "msMax": 100,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "mod-compressor",
@@ -554,7 +1409,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 1,
+         "after": 0.997
+        },
+        "semantic": {
+         "before": 1,
+         "after": 0.998
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 12,
+         "msMax": 18,
+         "failures": 0
+        }
+       }
       }
      ],
      "summary": {
@@ -591,10 +1476,40 @@
        "fidelityBefore": 0.06,
        "fidelityAfter": 0.633,
        "confidence": 0.857,
-       "behaviourChecked": 7,
+       "behaviourChecked": 2,
        "behaviourSame": 2,
        "unparsed": 0,
-       "status": "partial"
+       "status": "partial",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.185,
+         "after": 0.843
+        },
+        "semantic": {
+         "before": 0.06,
+         "after": 0.633
+        },
+        "runtime": {
+         "same": 2,
+         "judged": 2,
+         "notJudged": 5
+        },
+        "completeness": {
+         "complete": 5,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 87,
+         "msMax": 155,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "mod-StringToExpressions",
@@ -606,7 +1521,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.381,
+         "after": 0.926
+        },
+        "semantic": {
+         "before": 0.445,
+         "after": 0.945
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 16,
+         "msMax": 29,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "mod-VirtualMachine",
@@ -615,10 +1560,40 @@
        "fidelityBefore": 0.095,
        "fidelityAfter": 0.977,
        "confidence": 0.893,
-       "behaviourChecked": 7,
+       "behaviourChecked": 4,
        "behaviourSame": 4,
        "unparsed": 0,
-       "status": "partial"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.386,
+         "after": 0.972
+        },
+        "semantic": {
+         "before": 0.095,
+         "after": 0.977
+        },
+        "runtime": {
+         "same": 4,
+         "judged": 4,
+         "notJudged": 3
+        },
+        "completeness": {
+         "complete": 6,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 50,
+         "msMax": 90,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "mod-WrapInFunction",
@@ -630,7 +1605,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.863,
+         "after": 0.997
+        },
+        "semantic": {
+         "before": 0.991,
+         "after": 0.998
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 13,
+         "msMax": 19,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "mod-bytecode_encoding",
@@ -642,7 +1647,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.236,
+         "after": 0.973
+        },
+        "semantic": {
+         "before": 0.184,
+         "after": 0.929
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 72,
+         "msMax": 110,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "mod-compressor",
@@ -654,7 +1689,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 1,
+         "after": 0.997
+        },
+        "semantic": {
+         "before": 1,
+         "after": 0.998
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 13,
+         "msMax": 27,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "mod-control_flow",
@@ -666,7 +1731,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.942,
+         "after": 0.997
+        },
+        "semantic": {
+         "before": 0.675,
+         "after": 0.998
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 14,
+         "msMax": 37,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "mod-function_inlining",
@@ -678,7 +1773,37 @@
        "behaviourChecked": 1,
        "behaviourSame": 1,
        "unparsed": 6,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 1,
+         "after": 0.978
+        },
+        "semantic": {
+         "before": 1,
+         "after": 0.987
+        },
+        "runtime": {
+         "same": 1,
+         "judged": 1,
+         "notJudged": 6
+        },
+        "completeness": {
+         "complete": 1,
+         "of": 1,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 3,
+         "msMax": 16,
+         "failures": 6
+        }
+       }
       },
       {
        "config": "mod-garbage_code",
@@ -690,7 +1815,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.953,
+         "after": 0.997
+        },
+        "semantic": {
+         "before": 0.675,
+         "after": 0.998
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 14,
+         "msMax": 27,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "mod-opaque_predicates",
@@ -702,7 +1857,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 1,
+         "after": 0.997
+        },
+        "semantic": {
+         "before": 1,
+         "after": 0.998
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 13,
+         "msMax": 24,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "mod-string_encoding",
@@ -714,7 +1899,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.642,
+         "after": 0.997
+        },
+        "semantic": {
+         "before": 0.463,
+         "after": 0.998
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 21,
+         "msMax": 36,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "mod-variable_renaming",
@@ -723,15 +1938,45 @@
        "fidelityBefore": 0.603,
        "fidelityAfter": 0.939,
        "confidence": 0.75,
-       "behaviourChecked": 6,
+       "behaviourChecked": 0,
        "behaviourSame": 0,
        "unparsed": 1,
-       "status": "partial"
+       "status": "partial",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.962,
+         "after": 0.995
+        },
+        "semantic": {
+         "before": 0.603,
+         "after": 0.939
+        },
+        "runtime": {
+         "same": 0,
+         "judged": 0,
+         "notJudged": 7
+        },
+        "completeness": {
+         "complete": 5,
+         "of": 6,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 13,
+         "msMax": 22,
+         "failures": 1
+        }
+       }
       }
      ],
      "summary": {
-      "verified": 9,
-      "partial": 3,
+      "verified": 10,
+      "partial": 2,
       "unsupported": 0
      }
     },
@@ -766,7 +2011,30 @@
        "behaviourChecked": 0,
        "behaviourSame": 0,
        "unparsed": 7,
-       "status": "identification-only"
+       "status": "identification-only",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": null,
+        "semantic": {
+         "before": null,
+         "after": null
+        },
+        "runtime": {
+         "same": 0,
+         "judged": 0,
+         "notJudged": 7
+        },
+        "completeness": null,
+        "vmConstants": null,
+        "stability": {
+         "msMean": 1,
+         "msMax": 1,
+         "failures": 7
+        }
+       }
       },
       {
        "config": "all",
@@ -778,7 +2046,30 @@
        "behaviourChecked": 0,
        "behaviourSame": 0,
        "unparsed": 7,
-       "status": "identification-only"
+       "status": "identification-only",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": null,
+        "semantic": {
+         "before": null,
+         "after": null
+        },
+        "runtime": {
+         "same": 0,
+         "judged": 0,
+         "notJudged": 7
+        },
+        "completeness": null,
+        "vmConstants": null,
+        "stability": {
+         "msMean": 0,
+         "msMax": 1,
+         "failures": 7
+        }
+       }
       },
       {
        "config": "mod-bytecode_encoding",
@@ -790,7 +2081,37 @@
        "behaviourChecked": 6,
        "behaviourSame": 6,
        "unparsed": 1,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 1,
+         "after": 1
+        },
+        "semantic": {
+         "before": 1,
+         "after": 1
+        },
+        "runtime": {
+         "same": 6,
+         "judged": 6,
+         "notJudged": 1
+        },
+        "completeness": {
+         "complete": 6,
+         "of": 6,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 15,
+         "msMax": 31,
+         "failures": 1
+        }
+       }
       },
       {
        "config": "mod-control_flow",
@@ -802,7 +2123,37 @@
        "behaviourChecked": 6,
        "behaviourSame": 6,
        "unparsed": 1,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.945,
+         "after": 1
+        },
+        "semantic": {
+         "before": 0.673,
+         "after": 1
+        },
+        "runtime": {
+         "same": 6,
+         "judged": 6,
+         "notJudged": 1
+        },
+        "completeness": {
+         "complete": 6,
+         "of": 6,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 14,
+         "msMax": 29,
+         "failures": 1
+        }
+       }
       },
       {
        "config": "mod-dynamic_code",
@@ -814,7 +2165,30 @@
        "behaviourChecked": 0,
        "behaviourSame": 0,
        "unparsed": 7,
-       "status": "identification-only"
+       "status": "identification-only",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": null,
+        "semantic": {
+         "before": null,
+         "after": null
+        },
+        "runtime": {
+         "same": 0,
+         "judged": 0,
+         "notJudged": 7
+        },
+        "completeness": null,
+        "vmConstants": null,
+        "stability": {
+         "msMean": 1,
+         "msMax": 1,
+         "failures": 7
+        }
+       }
       },
       {
        "config": "mod-function_inlining",
@@ -826,7 +2200,30 @@
        "behaviourChecked": 0,
        "behaviourSame": 0,
        "unparsed": 7,
-       "status": "identification-only"
+       "status": "identification-only",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": null,
+        "semantic": {
+         "before": null,
+         "after": null
+        },
+        "runtime": {
+         "same": 0,
+         "judged": 0,
+         "notJudged": 7
+        },
+        "completeness": null,
+        "vmConstants": null,
+        "stability": {
+         "msMean": 1,
+         "msMax": 3,
+         "failures": 7
+        }
+       }
       },
       {
        "config": "mod-garbage_code",
@@ -838,7 +2235,37 @@
        "behaviourChecked": 6,
        "behaviourSame": 6,
        "unparsed": 1,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.956,
+         "after": 1
+        },
+        "semantic": {
+         "before": 0.682,
+         "after": 1
+        },
+        "runtime": {
+         "same": 6,
+         "judged": 6,
+         "notJudged": 1
+        },
+        "completeness": {
+         "complete": 6,
+         "of": 6,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 14,
+         "msMax": 27,
+         "failures": 1
+        }
+       }
       },
       {
        "config": "mod-opaque_predicates",
@@ -850,7 +2277,37 @@
        "behaviourChecked": 6,
        "behaviourSame": 6,
        "unparsed": 1,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 1,
+         "after": 1
+        },
+        "semantic": {
+         "before": 1,
+         "after": 1
+        },
+        "runtime": {
+         "same": 6,
+         "judged": 6,
+         "notJudged": 1
+        },
+        "completeness": {
+         "complete": 6,
+         "of": 6,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 13,
+         "msMax": 20,
+         "failures": 1
+        }
+       }
       },
       {
        "config": "mod-string_encoding",
@@ -859,10 +2316,40 @@
        "fidelityBefore": 0.972,
        "fidelityAfter": 0.971,
        "confidence": 0.9,
-       "behaviourChecked": 7,
+       "behaviourChecked": 0,
        "behaviourSame": 0,
        "unparsed": 0,
-       "status": "partial"
+       "status": "partial",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 1,
+         "after": 0.997
+        },
+        "semantic": {
+         "before": 0.972,
+         "after": 0.971
+        },
+        "runtime": {
+         "same": 0,
+         "judged": 0,
+         "notJudged": 7
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 14,
+         "msMax": 20,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "mod-variable_renaming",
@@ -871,10 +2358,40 @@
        "fidelityBefore": 0.891,
        "fidelityAfter": 0.891,
        "confidence": 0.771,
-       "behaviourChecked": 6,
+       "behaviourChecked": 0,
        "behaviourSame": 0,
        "unparsed": 1,
-       "status": "partial"
+       "status": "partial",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 1,
+         "after": 1
+        },
+        "semantic": {
+         "before": 0.891,
+         "after": 0.891
+        },
+        "runtime": {
+         "same": 0,
+         "judged": 0,
+         "notJudged": 7
+        },
+        "completeness": {
+         "complete": 6,
+         "of": 6,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 12,
+         "msMax": 23,
+         "failures": 1
+        }
+       }
       }
      ],
      "summary": {
@@ -911,10 +2428,42 @@
        "fidelityBefore": 0.065,
        "fidelityAfter": 0.066,
        "confidence": 0.129,
-       "behaviourChecked": 3,
+       "behaviourChecked": 1,
        "behaviourSame": 1,
        "unparsed": 4,
-       "status": "unsupported"
+       "status": "unsupported",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.105,
+         "after": 0.114
+        },
+        "semantic": {
+         "before": 0.065,
+         "after": 0.066
+        },
+        "runtime": {
+         "same": 1,
+         "judged": 1,
+         "notJudged": 6
+        },
+        "completeness": {
+         "complete": 0,
+         "of": 3,
+         "residual": {
+          "family:hercules": 3
+         }
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 85,
+         "msMax": 221,
+         "failures": 4
+        }
+       }
       },
       {
        "config": "mod-StringToExpressions",
@@ -926,7 +2475,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.381,
+         "after": 0.926
+        },
+        "semantic": {
+         "before": 0.445,
+         "after": 0.945
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 18,
+         "msMax": 32,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "mod-VirtualMachine",
@@ -935,10 +2514,42 @@
        "fidelityBefore": 0.078,
        "fidelityAfter": 0.079,
        "confidence": 0.307,
-       "behaviourChecked": 7,
+       "behaviourChecked": 3,
        "behaviourSame": 0,
        "unparsed": 0,
-       "status": "unsupported"
+       "status": "unsupported",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.158,
+         "after": 0.157
+        },
+        "semantic": {
+         "before": 0.078,
+         "after": 0.079
+        },
+        "runtime": {
+         "same": 0,
+         "judged": 3,
+         "notJudged": 4
+        },
+        "completeness": {
+         "complete": 0,
+         "of": 7,
+         "residual": {
+          "family:hercules": 7
+         }
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 120,
+         "msMax": 188,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "mod-WrapInFunction",
@@ -950,7 +2561,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.863,
+         "after": 0.997
+        },
+        "semantic": {
+         "before": 0.991,
+         "after": 0.998
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 13,
+         "msMax": 29,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "mod-bytecode_encoding",
@@ -962,7 +2603,30 @@
        "behaviourChecked": 0,
        "behaviourSame": 0,
        "unparsed": 7,
-       "status": "identification-only"
+       "status": "identification-only",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": null,
+        "semantic": {
+         "before": null,
+         "after": null
+        },
+        "runtime": {
+         "same": 0,
+         "judged": 0,
+         "notJudged": 7
+        },
+        "completeness": null,
+        "vmConstants": null,
+        "stability": {
+         "msMean": 0,
+         "msMax": 1,
+         "failures": 7
+        }
+       }
       },
       {
        "config": "mod-compressor",
@@ -974,7 +2638,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 1,
+         "after": 0.997
+        },
+        "semantic": {
+         "before": 1,
+         "after": 0.998
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 10,
+         "msMax": 17,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "mod-control_flow",
@@ -986,7 +2680,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.942,
+         "after": 0.997
+        },
+        "semantic": {
+         "before": 0.675,
+         "after": 0.998
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 11,
+         "msMax": 17,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "mod-function_inlining",
@@ -998,7 +2722,37 @@
        "behaviourChecked": 1,
        "behaviourSame": 1,
        "unparsed": 6,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 1,
+         "after": 0.978
+        },
+        "semantic": {
+         "before": 1,
+         "after": 0.987
+        },
+        "runtime": {
+         "same": 1,
+         "judged": 1,
+         "notJudged": 6
+        },
+        "completeness": {
+         "complete": 1,
+         "of": 1,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 2,
+         "msMax": 8,
+         "failures": 6
+        }
+       }
       },
       {
        "config": "mod-garbage_code",
@@ -1010,7 +2764,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.706,
+         "after": 0.997
+        },
+        "semantic": {
+         "before": 0.503,
+         "after": 0.998
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 15,
+         "msMax": 22,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "mod-opaque_predicates",
@@ -1022,7 +2806,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 1,
+         "after": 0.997
+        },
+        "semantic": {
+         "before": 1,
+         "after": 0.998
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 12,
+         "msMax": 22,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "mod-string_encoding",
@@ -1034,7 +2848,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.623,
+         "after": 0.997
+        },
+        "semantic": {
+         "before": 0.448,
+         "after": 0.998
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 21,
+         "msMax": 35,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "mod-variable_renaming",
@@ -1043,10 +2887,40 @@
        "fidelityBefore": 0.588,
        "fidelityAfter": 0.926,
        "confidence": 0.621,
-       "behaviourChecked": 5,
+       "behaviourChecked": 0,
        "behaviourSame": 0,
        "unparsed": 2,
-       "status": "partial"
+       "status": "partial",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.956,
+         "after": 0.982
+        },
+        "semantic": {
+         "before": 0.588,
+         "after": 0.926
+        },
+        "runtime": {
+         "same": 0,
+         "judged": 0,
+         "notJudged": 7
+        },
+        "completeness": {
+         "complete": 4,
+         "of": 5,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 16,
+         "msMax": 41,
+         "failures": 2
+        }
+       }
       }
      ],
      "summary": {
@@ -1069,8 +2943,8 @@
       "written": 91,
       "toolErrors": 14,
       "omittedLarge": 0,
-      "toolOutputEquivalent": 74,
-      "toolOutputErrored": 17,
+      "toolOutputEquivalent": 81,
+      "toolOutputErrored": 10,
       "toolOutputDiverged": 0
      },
      "fidelityBefore": 0.579,
@@ -1086,7 +2960,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.424,
+         "after": 0.997
+        },
+        "semantic": {
+         "before": 0.336,
+         "after": 0.998
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 20,
+         "msMax": 26,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "mod-VirtualMachine",
@@ -1095,10 +2999,43 @@
        "fidelityBefore": 0.076,
        "fidelityAfter": 0.834,
        "confidence": 0.793,
-       "behaviourChecked": 7,
-       "behaviourSame": 6,
+       "behaviourChecked": 5,
+       "behaviourSame": 5,
        "unparsed": 0,
-       "status": "partial"
+       "status": "partial",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.152,
+         "after": 0.874
+        },
+        "semantic": {
+         "before": 0.076,
+         "after": 0.834
+        },
+        "runtime": {
+         "same": 5,
+         "judged": 5,
+         "notJudged": 2
+        },
+        "completeness": {
+         "complete": 5,
+         "of": 7,
+         "residual": {
+          "trait:escape-encoded-strings": 1,
+          "family:hercules": 1
+         }
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 74,
+         "msMax": 136,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "mod-WrapInFunction",
@@ -1110,7 +3047,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.863,
+         "after": 0.997
+        },
+        "semantic": {
+         "before": 0.991,
+         "after": 0.998
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 13,
+         "msMax": 21,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "mod-antitamper",
@@ -1122,7 +3089,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.594,
+         "after": 0.997
+        },
+        "semantic": {
+         "before": 0.391,
+         "after": 0.998
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 13,
+         "msMax": 17,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "mod-bytecode_encoding",
@@ -1134,7 +3131,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.233,
+         "after": 0.973
+        },
+        "semantic": {
+         "before": 0.18,
+         "after": 0.929
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 69,
+         "msMax": 118,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "mod-compressor",
@@ -1146,7 +3173,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 1,
+         "after": 0.997
+        },
+        "semantic": {
+         "before": 1,
+         "after": 0.998
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 10,
+         "msMax": 17,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "mod-control_flow",
@@ -1158,7 +3215,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.808,
+         "after": 0.978
+        },
+        "semantic": {
+         "before": 0.63,
+         "after": 0.98
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 13,
+         "msMax": 25,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "mod-dynamic_code",
@@ -1167,10 +3254,40 @@
        "fidelityBefore": 0.914,
        "fidelityAfter": 0.997,
        "confidence": 0.514,
-       "behaviourChecked": 4,
-       "behaviourSame": 4,
+       "behaviourChecked": 3,
+       "behaviourSame": 3,
        "unparsed": 3,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.832,
+         "after": 0.995
+        },
+        "semantic": {
+         "before": 0.914,
+         "after": 0.997
+        },
+        "runtime": {
+         "same": 3,
+         "judged": 3,
+         "notJudged": 4
+        },
+        "completeness": {
+         "complete": 4,
+         "of": 4,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 7,
+         "msMax": 13,
+         "failures": 3
+        }
+       }
       },
       {
        "config": "mod-function_inlining",
@@ -1182,7 +3299,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 1,
+         "after": 0.997
+        },
+        "semantic": {
+         "before": 1,
+         "after": 0.998
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 11,
+         "msMax": 21,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "mod-garbage_code",
@@ -1194,7 +3341,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.578,
+         "after": 0.997
+        },
+        "semantic": {
+         "before": 0.418,
+         "after": 0.998
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 16,
+         "msMax": 30,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "mod-opaque_predicates",
@@ -1206,7 +3383,37 @@
        "behaviourChecked": 4,
        "behaviourSame": 4,
        "unparsed": 3,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.613,
+         "after": 0.995
+        },
+        "semantic": {
+         "before": 0.748,
+         "after": 0.997
+        },
+        "runtime": {
+         "same": 4,
+         "judged": 4,
+         "notJudged": 3
+        },
+        "completeness": {
+         "complete": 4,
+         "of": 4,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 7,
+         "msMax": 15,
+         "failures": 3
+        }
+       }
       },
       {
        "config": "mod-string_encoding",
@@ -1218,7 +3425,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.623,
+         "after": 0.997
+        },
+        "semantic": {
+         "before": 0.448,
+         "after": 0.998
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 18,
+         "msMax": 22,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "mod-variable_renaming",
@@ -1227,10 +3464,40 @@
        "fidelityBefore": 0.612,
        "fidelityAfter": 0.959,
        "confidence": 0.879,
-       "behaviourChecked": 7,
-       "behaviourSame": 7,
+       "behaviourChecked": 6,
+       "behaviourSame": 6,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.963,
+         "after": 0.995
+        },
+        "semantic": {
+         "before": 0.612,
+         "after": 0.959
+        },
+        "runtime": {
+         "same": 6,
+         "judged": 6,
+         "notJudged": 1
+        },
+        "completeness": {
+         "complete": 6,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 12,
+         "msMax": 17,
+         "failures": 0
+        }
+       }
       }
      ],
      "summary": {
@@ -1270,7 +3537,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.424,
+         "after": 0.997
+        },
+        "semantic": {
+         "before": 0.336,
+         "after": 0.998
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 22,
+         "msMax": 28,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "mod-VirtualMachine",
@@ -1279,10 +3576,43 @@
        "fidelityBefore": 0.076,
        "fidelityAfter": 0.834,
        "confidence": 0.793,
-       "behaviourChecked": 7,
-       "behaviourSame": 6,
+       "behaviourChecked": 5,
+       "behaviourSame": 5,
        "unparsed": 0,
-       "status": "partial"
+       "status": "partial",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.152,
+         "after": 0.874
+        },
+        "semantic": {
+         "before": 0.076,
+         "after": 0.834
+        },
+        "runtime": {
+         "same": 5,
+         "judged": 5,
+         "notJudged": 2
+        },
+        "completeness": {
+         "complete": 5,
+         "of": 7,
+         "residual": {
+          "trait:escape-encoded-strings": 1,
+          "family:hercules": 1
+         }
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 81,
+         "msMax": 119,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "mod-WrapInFunction",
@@ -1294,7 +3624,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.874,
+         "after": 0.997
+        },
+        "semantic": {
+         "before": 0.993,
+         "after": 0.998
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 13,
+         "msMax": 17,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "mod-antitamper",
@@ -1306,7 +3666,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.638,
+         "after": 0.997
+        },
+        "semantic": {
+         "before": 0.372,
+         "after": 0.998
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 14,
+         "msMax": 20,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "mod-bytecode_encoding",
@@ -1318,7 +3708,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.233,
+         "after": 0.973
+        },
+        "semantic": {
+         "before": 0.18,
+         "after": 0.929
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 63,
+         "msMax": 106,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "mod-compressor",
@@ -1330,7 +3750,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 1,
+         "after": 0.997
+        },
+        "semantic": {
+         "before": 1,
+         "after": 0.998
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 12,
+         "msMax": 18,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "mod-control_flow",
@@ -1342,7 +3792,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.811,
+         "after": 0.978
+        },
+        "semantic": {
+         "before": 0.634,
+         "after": 0.98
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 14,
+         "msMax": 18,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "mod-dynamic_code",
@@ -1351,10 +3831,40 @@
        "fidelityBefore": 0.902,
        "fidelityAfter": 0.998,
        "confidence": 0.9,
-       "behaviourChecked": 7,
-       "behaviourSame": 7,
+       "behaviourChecked": 6,
+       "behaviourSame": 6,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.783,
+         "after": 0.997
+        },
+        "semantic": {
+         "before": 0.902,
+         "after": 0.998
+        },
+        "runtime": {
+         "same": 6,
+         "judged": 6,
+         "notJudged": 1
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 14,
+         "msMax": 17,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "mod-function_inlining",
@@ -1363,10 +3873,40 @@
        "fidelityBefore": 0.707,
        "fidelityAfter": 0.965,
        "confidence": 0.643,
-       "behaviourChecked": 5,
-       "behaviourSame": 5,
+       "behaviourChecked": 4,
+       "behaviourSame": 4,
        "unparsed": 2,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.899,
+         "after": 0.996
+        },
+        "semantic": {
+         "before": 0.707,
+         "after": 0.965
+        },
+        "runtime": {
+         "same": 4,
+         "judged": 4,
+         "notJudged": 3
+        },
+        "completeness": {
+         "complete": 5,
+         "of": 5,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 9,
+         "msMax": 18,
+         "failures": 2
+        }
+       }
       },
       {
        "config": "mod-garbage_code",
@@ -1378,7 +3918,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.741,
+         "after": 0.997
+        },
+        "semantic": {
+         "before": 0.532,
+         "after": 0.998
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 14,
+         "msMax": 22,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "mod-opaque_predicates",
@@ -1390,7 +3960,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.858,
+         "after": 0.997
+        },
+        "semantic": {
+         "before": 0.926,
+         "after": 0.998
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 12,
+         "msMax": 22,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "mod-string_encoding",
@@ -1402,7 +4002,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.654,
+         "after": 0.997
+        },
+        "semantic": {
+         "before": 0.468,
+         "after": 0.998
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 19,
+         "msMax": 32,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "mod-variable_renaming",
@@ -1411,10 +4041,40 @@
        "fidelityBefore": 0.64,
        "fidelityAfter": 0.964,
        "confidence": 0.879,
-       "behaviourChecked": 7,
-       "behaviourSame": 7,
+       "behaviourChecked": 6,
+       "behaviourSame": 6,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.964,
+         "after": 0.995
+        },
+        "semantic": {
+         "before": 0.64,
+         "after": 0.964
+        },
+        "runtime": {
+         "same": 6,
+         "judged": 6,
+         "notJudged": 1
+        },
+        "completeness": {
+         "complete": 6,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 13,
+         "msMax": 23,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "default",
@@ -1426,7 +4086,30 @@
        "behaviourChecked": 0,
        "behaviourSame": 0,
        "unparsed": 1,
-       "status": "identification-only"
+       "status": "identification-only",
+       "categories": {
+        "identification": {
+         "detected": 1,
+         "of": 1
+        },
+        "structure": null,
+        "semantic": {
+         "before": null,
+         "after": null
+        },
+        "runtime": {
+         "same": 0,
+         "judged": 0,
+         "notJudged": 1
+        },
+        "completeness": null,
+        "vmConstants": null,
+        "stability": {
+         "msMean": 2,
+         "msMax": 2,
+         "failures": 1
+        }
+       }
       },
       {
        "config": "all",
@@ -1438,7 +4121,30 @@
        "behaviourChecked": 0,
        "behaviourSame": 0,
        "unparsed": 1,
-       "status": "identification-only"
+       "status": "identification-only",
+       "categories": {
+        "identification": {
+         "detected": 1,
+         "of": 1
+        },
+        "structure": null,
+        "semantic": {
+         "before": null,
+         "after": null
+        },
+        "runtime": {
+         "same": 0,
+         "judged": 0,
+         "notJudged": 1
+        },
+        "completeness": null,
+        "vmConstants": null,
+        "stability": {
+         "msMean": 4,
+         "msMax": 4,
+         "failures": 1
+        }
+       }
       }
      ],
      "summary": {
@@ -1493,7 +4199,37 @@
        "behaviourChecked": 8,
        "behaviourSame": 8,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 8,
+         "of": 8
+        },
+        "structure": {
+         "before": 0.061,
+         "after": 0.956
+        },
+        "semantic": {
+         "before": 0.039,
+         "after": 0.884
+        },
+        "runtime": {
+         "same": 8,
+         "judged": 8,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 8,
+         "of": 8,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 76,
+         "msMax": 105,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "plain",
@@ -1505,7 +4241,37 @@
        "behaviourChecked": 8,
        "behaviourSame": 8,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 8,
+         "of": 8
+        },
+        "structure": {
+         "before": 0.139,
+         "after": 0.977
+        },
+        "semantic": {
+         "before": 0.081,
+         "after": 0.896
+        },
+        "runtime": {
+         "same": 8,
+         "judged": 8,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 8,
+         "of": 8,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 57,
+         "msMax": 96,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "mutate",
@@ -1517,7 +4283,37 @@
        "behaviourChecked": 8,
        "behaviourSame": 8,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 8,
+         "of": 8
+        },
+        "structure": {
+         "before": 0.103,
+         "after": 0.977
+        },
+        "semantic": {
+         "before": 0.062,
+         "after": 0.896
+        },
+        "runtime": {
+         "same": 8,
+         "judged": 8,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 8,
+         "of": 8,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 72,
+         "msMax": 152,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "super",
@@ -1529,7 +4325,37 @@
        "behaviourChecked": 8,
        "behaviourSame": 8,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 8,
+         "of": 8
+        },
+        "structure": {
+         "before": 0.073,
+         "after": 0.977
+        },
+        "semantic": {
+         "before": 0.045,
+         "after": 0.896
+        },
+        "runtime": {
+         "same": 8,
+         "judged": 8,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 8,
+         "of": 8,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 78,
+         "msMax": 142,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "flow",
@@ -1538,10 +4364,40 @@
        "fidelityBefore": 0.081,
        "fidelityAfter": 0.884,
        "confidence": 0.9,
-       "behaviourChecked": 8,
-       "behaviourSame": 8,
+       "behaviourChecked": 3,
+       "behaviourSame": 3,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 8,
+         "of": 8
+        },
+        "structure": {
+         "before": 0.139,
+         "after": 0.956
+        },
+        "semantic": {
+         "before": 0.081,
+         "after": 0.884
+        },
+        "runtime": {
+         "same": 3,
+         "judged": 3,
+         "notJudged": 5
+        },
+        "completeness": {
+         "complete": 8,
+         "of": 8,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 61,
+         "msMax": 101,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "strings",
@@ -1553,7 +4409,37 @@
        "behaviourChecked": 8,
        "behaviourSame": 8,
        "unparsed": 0,
-       "status": "partial"
+       "status": "partial",
+       "categories": {
+        "identification": {
+         "detected": 8,
+         "of": 8
+        },
+        "structure": {
+         "before": 0.028,
+         "after": 0.937
+        },
+        "semantic": {
+         "before": 0.03,
+         "after": 0.842
+        },
+        "runtime": {
+         "same": 8,
+         "judged": 8,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 8,
+         "of": 8,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 531,
+         "msMax": 1193,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "lineinfo",
@@ -1565,7 +4451,37 @@
        "behaviourChecked": 8,
        "behaviourSame": 8,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 8,
+         "of": 8
+        },
+        "structure": {
+         "before": 0.062,
+         "after": 0.956
+        },
+        "semantic": {
+         "before": 0.039,
+         "after": 0.884
+        },
+        "runtime": {
+         "same": 8,
+         "judged": 8,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 8,
+         "of": 8,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 84,
+         "msMax": 122,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "nocompress",
@@ -1577,7 +4493,37 @@
        "behaviourChecked": 8,
        "behaviourSame": 8,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 8,
+         "of": 8
+        },
+        "structure": {
+         "before": 0.061,
+         "after": 0.956
+        },
+        "semantic": {
+         "before": 0.04,
+         "after": 0.884
+        },
+        "runtime": {
+         "same": 8,
+         "judged": 8,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 8,
+         "of": 8,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 81,
+         "msMax": 145,
+         "failures": 0
+        }
+       }
       }
      ],
      "summary": {
@@ -1630,7 +4576,37 @@
        "behaviourChecked": 6,
        "behaviourSame": 6,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 0,
+         "of": 6
+        },
+        "structure": {
+         "before": 0.209,
+         "after": 0.996
+        },
+        "semantic": {
+         "before": 0.149,
+         "after": 0.998
+        },
+        "runtime": {
+         "same": 6,
+         "judged": 6,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 6,
+         "of": 6,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 20,
+         "msMax": 30,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "hex",
@@ -1642,7 +4618,37 @@
        "behaviourChecked": 6,
        "behaviourSame": 6,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 0,
+         "of": 6
+        },
+        "structure": {
+         "before": 0.13,
+         "after": 0.996
+        },
+        "semantic": {
+         "before": 0.103,
+         "after": 0.998
+        },
+        "runtime": {
+         "same": 6,
+         "judged": 6,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 6,
+         "of": 6,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 20,
+         "msMax": 24,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "binary",
@@ -1654,7 +4660,37 @@
        "behaviourChecked": 6,
        "behaviourSame": 6,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 0,
+         "of": 6
+        },
+        "structure": {
+         "before": 0.216,
+         "after": 0.996
+        },
+        "semantic": {
+         "before": 0.149,
+         "after": 0.998
+        },
+        "runtime": {
+         "same": 6,
+         "judged": 6,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 6,
+         "of": 6,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 21,
+         "msMax": 29,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "url",
@@ -1666,7 +4702,37 @@
        "behaviourChecked": 6,
        "behaviourSame": 6,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 0,
+         "of": 6
+        },
+        "structure": {
+         "before": 0.13,
+         "after": 0.996
+        },
+        "semantic": {
+         "before": 0.103,
+         "after": 0.998
+        },
+        "runtime": {
+         "same": 6,
+         "judged": 6,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 6,
+         "of": 6,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 25,
+         "msMax": 36,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "base64",
@@ -1678,7 +4744,37 @@
        "behaviourChecked": 6,
        "behaviourSame": 6,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 0,
+         "of": 6
+        },
+        "structure": {
+         "before": 0.293,
+         "after": 0.996
+        },
+        "semantic": {
+         "before": 0.228,
+         "after": 0.998
+        },
+        "runtime": {
+         "same": 6,
+         "judged": 6,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 6,
+         "of": 6,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 22,
+         "msMax": 35,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "xor",
@@ -1690,7 +4786,37 @@
        "behaviourChecked": 6,
        "behaviourSame": 6,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 0,
+         "of": 6
+        },
+        "structure": {
+         "before": 0.254,
+         "after": 0.996
+        },
+        "semantic": {
+         "before": 0.048,
+         "after": 0.998
+        },
+        "runtime": {
+         "same": 6,
+         "judged": 6,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 6,
+         "of": 6,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 43,
+         "msMax": 61,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "reverse",
@@ -1702,7 +4828,37 @@
        "behaviourChecked": 6,
        "behaviourSame": 6,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 0,
+         "of": 6
+        },
+        "structure": {
+         "before": 0.05,
+         "after": 0.996
+        },
+        "semantic": {
+         "before": 0.03,
+         "after": 0.998
+        },
+        "runtime": {
+         "same": 6,
+         "judged": 6,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 6,
+         "of": 6,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 20,
+         "msMax": 29,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "escapes",
@@ -1714,7 +4870,37 @@
        "behaviourChecked": 6,
        "behaviourSame": 6,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 0,
+         "of": 6
+        },
+        "structure": {
+         "before": 0.055,
+         "after": 0.996
+        },
+        "semantic": {
+         "before": 0.028,
+         "after": 0.998
+        },
+        "runtime": {
+         "same": 6,
+         "judged": 6,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 6,
+         "of": 6,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 15,
+         "msMax": 21,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "charcodes",
@@ -1726,7 +4912,37 @@
        "behaviourChecked": 6,
        "behaviourSame": 6,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 0,
+         "of": 6
+        },
+        "structure": {
+         "before": 0.031,
+         "after": 0.996
+        },
+        "semantic": {
+         "before": 0.033,
+         "after": 0.998
+        },
+        "runtime": {
+         "same": 6,
+         "judged": 6,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 6,
+         "of": 6,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 23,
+         "msMax": 39,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "pieces",
@@ -1738,7 +4954,37 @@
        "behaviourChecked": 6,
        "behaviourSame": 6,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 0,
+         "of": 6
+        },
+        "structure": {
+         "before": 0.087,
+         "after": 0.996
+        },
+        "semantic": {
+         "before": 0.047,
+         "after": 0.998
+        },
+        "runtime": {
+         "same": 6,
+         "judged": 6,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 6,
+         "of": 6,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 15,
+         "msMax": 23,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "layered",
@@ -1750,7 +4996,37 @@
        "behaviourChecked": 6,
        "behaviourSame": 6,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 0,
+         "of": 6
+        },
+        "structure": {
+         "before": 0.293,
+         "after": 0.996
+        },
+        "semantic": {
+         "before": 0.228,
+         "after": 0.998
+        },
+        "runtime": {
+         "same": 6,
+         "judged": 6,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 6,
+         "of": 6,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 31,
+         "msMax": 37,
+         "failures": 0
+        }
+       }
       }
      ],
      "summary": {
@@ -1786,16 +5062,16 @@
      "licence": "MIT",
      "fixtures": {
       "measured": 22,
-      "toolOutputVerified": 0,
+      "toolOutputVerified": 24,
       "written": 22,
       "toolErrors": 2,
       "omittedLarge": 0,
-      "toolOutputEquivalent": 0,
-      "toolOutputErrored": 0,
-      "toolOutputDiverged": 0
+      "toolOutputEquivalent": 5,
+      "toolOutputErrored": 16,
+      "toolOutputDiverged": 1
      },
      "fidelityBefore": 0.064,
-     "fidelityAfter": 0.382,
+     "fidelityAfter": 0.383,
      "configs": [
       {
        "config": "ironbrikked",
@@ -1804,10 +5080,40 @@
        "fidelityBefore": 0.048,
        "fidelityAfter": 0.05,
        "confidence": 0.35,
-       "behaviourChecked": 7,
+       "behaviourChecked": 0,
        "behaviourSame": 0,
        "unparsed": 0,
-       "status": "unsupported"
+       "status": "unsupported",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.067,
+         "after": 0.072
+        },
+        "semantic": {
+         "before": 0.048,
+         "after": 0.05
+        },
+        "runtime": {
+         "same": 0,
+         "judged": 0,
+         "notJudged": 7
+        },
+        "completeness": {
+         "complete": 0,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 249,
+         "msMax": 368,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "ast",
@@ -1816,10 +5122,40 @@
        "fidelityBefore": 0.105,
        "fidelityAfter": 0.965,
        "confidence": 0.894,
-       "behaviourChecked": 8,
+       "behaviourChecked": 5,
        "behaviourSame": 5,
        "unparsed": 0,
-       "status": "partial"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 8,
+         "of": 8
+        },
+        "structure": {
+         "before": 0.39,
+         "after": 0.975
+        },
+        "semantic": {
+         "before": 0.105,
+         "after": 0.965
+        },
+        "runtime": {
+         "same": 5,
+         "judged": 5,
+         "notJudged": 3
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 8,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 71,
+         "msMax": 122,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "both",
@@ -1828,15 +5164,45 @@
        "fidelityBefore": 0.032,
        "fidelityAfter": 0.05,
        "confidence": 0.35,
-       "behaviourChecked": 7,
+       "behaviourChecked": 0,
        "behaviourSame": 0,
        "unparsed": 0,
-       "status": "unsupported"
+       "status": "unsupported",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.022,
+         "after": 0.072
+        },
+        "semantic": {
+         "before": 0.032,
+         "after": 0.05
+        },
+        "runtime": {
+         "same": 0,
+         "judged": 0,
+         "notJudged": 7
+        },
+        "completeness": {
+         "complete": 0,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 1089,
+         "msMax": 1362,
+         "failures": 0
+        }
+       }
       }
      ],
      "summary": {
-      "verified": 0,
-      "partial": 1,
+      "verified": 1,
+      "partial": 0,
       "unsupported": 2
      }
     }
@@ -1891,13 +5257,23 @@
      ],
      "status": "tool defect",
      "summary": "the tool raised `No loop to break` on s04 in both configurations; recorded as tool-error"
+    },
+    {
+     "id": "tool-output-all-runtimes",
+     "configs": [
+      "ironbrikked",
+      "both"
+     ],
+     "status": "tool defect",
+     "summary": "the tool's own IronBrikked output (14 fixtures, with and without the AST layer) does not run on any reference runtime available here: Lua 5.1, 5.2 and LuaJIT stop inside the generated VM with \"attempt to compare nil with number\" (the generated wrapper masks it as \"LuaXen: (internal)\"; the real message was read by replacing that string in a copy), Lua 5.3 / 5.4 have no math.ldexp, Luau stops with \"attempt to call a nil value\". They are excluded from runtime judgement, not counted for or against the engine",
+     "evidence": "tests/corpus/obfuscated/luaxen/manifest.json (behaviors, 2026-11-13 run: 5 equivalent, 1 diverged, 16 errored of 22)"
     }
    ],
    "assumptions": [
     "Only the single commit of the repository was run; `legacy/` was not touched",
     "The tool's own output was NOT verified on the reference runtimes (the verification did not finish inside its budget, twice, including for the AST stage); `toolOutputVerified` is 0, so the behaviour rows for LuaXen compare the recovered script with the original program only, and nothing is claimed about the obfuscated file itself"
    ],
-   "support": "experimental"
+   "support": "mixed"
   },
   {
    "id": "mixed",
@@ -1934,10 +5310,40 @@
        "fidelityBefore": 0.236,
        "fidelityAfter": 0.964,
        "confidence": 0.879,
-       "behaviourChecked": 7,
-       "behaviourSame": 7,
+       "behaviourChecked": 6,
+       "behaviourSame": 6,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 0,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.301,
+         "after": 0.995
+        },
+        "semantic": {
+         "before": 0.236,
+         "after": 0.964
+        },
+        "runtime": {
+         "same": 6,
+         "judged": 6,
+         "notJudged": 1
+        },
+        "completeness": {
+         "complete": 6,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 23,
+         "msMax": 39,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "hercules-balanced+xor",
@@ -1946,10 +5352,40 @@
        "fidelityBefore": 0.025,
        "fidelityAfter": 0.91,
        "confidence": 0.9,
-       "behaviourChecked": 7,
+       "behaviourChecked": 6,
        "behaviourSame": 6,
        "unparsed": 0,
-       "status": "partial"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 0,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.258,
+         "after": 0.978
+        },
+        "semantic": {
+         "before": 0.025,
+         "after": 0.91
+        },
+        "runtime": {
+         "same": 6,
+         "judged": 6,
+         "notJudged": 1
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 71,
+         "msMax": 91,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "hercules-vm+base64",
@@ -1958,10 +5394,43 @@
        "fidelityBefore": 0.236,
        "fidelityAfter": 0.834,
        "confidence": 0.793,
-       "behaviourChecked": 7,
-       "behaviourSame": 6,
+       "behaviourChecked": 5,
+       "behaviourSame": 5,
        "unparsed": 0,
-       "status": "partial"
+       "status": "partial",
+       "categories": {
+        "identification": {
+         "detected": 0,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.301,
+         "after": 0.874
+        },
+        "semantic": {
+         "before": 0.236,
+         "after": 0.834
+        },
+        "runtime": {
+         "same": 5,
+         "judged": 5,
+         "notJudged": 2
+        },
+        "completeness": {
+         "complete": 5,
+         "of": 7,
+         "residual": {
+          "trait:escape-encoded-strings": 1,
+          "family:hercules": 1
+         }
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 193,
+         "msMax": 380,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "xor+hercules-strings",
@@ -1973,7 +5442,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 0,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.295,
+         "after": 0.997
+        },
+        "semantic": {
+         "before": 0.06,
+         "after": 0.998
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 46,
+         "msMax": 71,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "base64+hercules-renaming",
@@ -1985,7 +5484,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 0,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.332,
+         "after": 0.997
+        },
+        "semantic": {
+         "before": 0.235,
+         "after": 0.998
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 22,
+         "msMax": 41,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "hercules-heavy+light",
@@ -1994,10 +5523,40 @@
        "fidelityBefore": 0.068,
        "fidelityAfter": 0.581,
        "confidence": 0.75,
-       "behaviourChecked": 6,
-       "behaviourSame": 6,
+       "behaviourChecked": 5,
+       "behaviourSame": 5,
        "unparsed": 1,
-       "status": "partial"
+       "status": "partial",
+       "categories": {
+        "identification": {
+         "detected": 0,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.092,
+         "after": 0.839
+        },
+        "semantic": {
+         "before": 0.068,
+         "after": 0.581
+        },
+        "runtime": {
+         "same": 5,
+         "judged": 5,
+         "notJudged": 2
+        },
+        "completeness": {
+         "complete": 5,
+         "of": 6,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 72,
+         "msMax": 142,
+         "failures": 1
+        }
+       }
       },
       {
        "config": "hercules-1.6.2+head",
@@ -2006,10 +5565,40 @@
        "fidelityBefore": 0.213,
        "fidelityAfter": 0.87,
        "confidence": 0.857,
-       "behaviourChecked": 7,
-       "behaviourSame": 7,
+       "behaviourChecked": 6,
+       "behaviourSame": 6,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 0,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.289,
+         "after": 0.949
+        },
+        "semantic": {
+         "before": 0.213,
+         "after": 0.87
+        },
+        "runtime": {
+         "same": 6,
+         "judged": 6,
+         "notJudged": 1
+        },
+        "completeness": {
+         "complete": 5,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 31,
+         "msMax": 52,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "hercules-1.5+head-inlining",
@@ -2018,10 +5607,40 @@
        "fidelityBefore": 0.381,
        "fidelityAfter": 0.724,
        "confidence": 0.75,
-       "behaviourChecked": 6,
+       "behaviourChecked": 0,
        "behaviourSame": 0,
        "unparsed": 1,
-       "status": "partial"
+       "status": "partial",
+       "categories": {
+        "identification": {
+         "detected": 0,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.613,
+         "after": 0.979
+        },
+        "semantic": {
+         "before": 0.381,
+         "after": 0.724
+        },
+        "runtime": {
+         "same": 0,
+         "judged": 0,
+         "notJudged": 7
+        },
+        "completeness": {
+         "complete": 5,
+         "of": 6,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 21,
+         "msMax": 36,
+         "failures": 1
+        }
+       }
       },
       {
        "config": "lab-rename-strings+hercules",
@@ -2033,7 +5652,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "partial"
+       "status": "partial",
+       "categories": {
+        "identification": {
+         "detected": 0,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.647,
+         "after": 0.962
+        },
+        "semantic": {
+         "before": 0.465,
+         "after": 0.761
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 20,
+         "msMax": 31,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "hercules-s2e+lab-flatten",
@@ -2041,11 +5690,41 @@
        "detected": 0,
        "fidelityBefore": 0.216,
        "fidelityAfter": 0.607,
-       "confidence": 0.777,
-       "behaviourChecked": 7,
-       "behaviourSame": 7,
+       "confidence": 0.914,
+       "behaviourChecked": 6,
+       "behaviourSame": 6,
        "unparsed": 0,
-       "status": "partial"
+       "status": "partial",
+       "categories": {
+        "identification": {
+         "detected": 0,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.256,
+         "after": 0.749
+        },
+        "semantic": {
+         "before": 0.216,
+         "after": 0.607
+        },
+        "runtime": {
+         "same": 6,
+         "judged": 6,
+         "notJudged": 1
+        },
+        "completeness": {
+         "complete": 6,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 86,
+         "msMax": 155,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "lab-tabledispatch+hercules-inlining",
@@ -2054,10 +5733,40 @@
        "fidelityBefore": 0.617,
        "fidelityAfter": 0.915,
        "confidence": 0.879,
-       "behaviourChecked": 7,
-       "behaviourSame": 7,
+       "behaviourChecked": 6,
+       "behaviourSame": 6,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 0,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.879,
+         "after": 0.995
+        },
+        "semantic": {
+         "before": 0.617,
+         "after": 0.915
+        },
+        "runtime": {
+         "same": 6,
+         "judged": 6,
+         "notJudged": 1
+        },
+        "completeness": {
+         "complete": 6,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 16,
+         "msMax": 25,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "lab-xorpack-loadwrap+layered",
@@ -2069,7 +5778,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 0,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.301,
+         "after": 0.982
+        },
+        "semantic": {
+         "before": 0.236,
+         "after": 0.939
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 98,
+         "msMax": 137,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "lab-flatten-opaque+hercules",
@@ -2081,7 +5820,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 0,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.331,
+         "after": 0.951
+        },
+        "semantic": {
+         "before": 0.21,
+         "after": 0.883
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 81,
+         "msMax": 142,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "lab+hercules+base64",
@@ -2090,10 +5859,42 @@
        "fidelityBefore": 0.236,
        "fidelityAfter": 0.86,
        "confidence": 0.9,
-       "behaviourChecked": 7,
+       "behaviourChecked": 1,
        "behaviourSame": 1,
        "unparsed": 0,
-       "status": "partial"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 0,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.301,
+         "after": 0.952
+        },
+        "semantic": {
+         "before": 0.236,
+         "after": 0.86
+        },
+        "runtime": {
+         "same": 1,
+         "judged": 1,
+         "notJudged": 6
+        },
+        "completeness": {
+         "complete": 6,
+         "of": 7,
+         "residual": {
+          "trait:escape-encoded-strings": 1
+         }
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 37,
+         "msMax": 62,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "base64+hercules-vm+hercules-light",
@@ -2105,12 +5906,42 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 0,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.142,
+         "after": 0.993
+        },
+        "semantic": {
+         "before": 0.073,
+         "after": 0.997
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 74,
+         "msMax": 85,
+         "failures": 0
+        }
+       }
       }
      ],
      "summary": {
-      "verified": 8,
-      "partial": 7,
+      "verified": 10,
+      "partial": 5,
       "unsupported": 0
      }
     }
@@ -2163,7 +5994,37 @@
        "behaviourChecked": 6,
        "behaviourSame": 6,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 6,
+         "of": 6
+        },
+        "structure": {
+         "before": 0.223,
+         "after": 0.987
+        },
+        "semantic": {
+         "before": 0.148,
+         "after": 0.852
+        },
+        "runtime": {
+         "same": 6,
+         "judged": 6,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 6,
+         "of": 6,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 53,
+         "msMax": 71,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "level-2",
@@ -2172,10 +6033,40 @@
        "fidelityBefore": 0.119,
        "fidelityAfter": 0.892,
        "confidence": 0.9,
-       "behaviourChecked": 6,
-       "behaviourSame": 6,
+       "behaviourChecked": 5,
+       "behaviourSame": 5,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 6,
+         "of": 6
+        },
+        "structure": {
+         "before": 0.169,
+         "after": 0.987
+        },
+        "semantic": {
+         "before": 0.119,
+         "after": 0.892
+        },
+        "runtime": {
+         "same": 5,
+         "judged": 5,
+         "notJudged": 1
+        },
+        "completeness": {
+         "complete": 6,
+         "of": 6,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 72,
+         "msMax": 113,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "level-3",
@@ -2184,10 +6075,40 @@
        "fidelityBefore": 0.09,
        "fidelityAfter": 0.892,
        "confidence": 0.9,
-       "behaviourChecked": 6,
-       "behaviourSame": 6,
+       "behaviourChecked": 5,
+       "behaviourSame": 5,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 6,
+         "of": 6
+        },
+        "structure": {
+         "before": 0.131,
+         "after": 0.987
+        },
+        "semantic": {
+         "before": 0.09,
+         "after": 0.892
+        },
+        "runtime": {
+         "same": 5,
+         "judged": 5,
+         "notJudged": 1
+        },
+        "completeness": {
+         "complete": 6,
+         "of": 6,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 110,
+         "msMax": 196,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "lightweight",
@@ -2199,7 +6120,37 @@
        "behaviourChecked": 6,
        "behaviourSame": 6,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 6,
+         "of": 6
+        },
+        "structure": {
+         "before": 0.668,
+         "after": 0.998
+        },
+        "semantic": {
+         "before": 0.466,
+         "after": 0.96
+        },
+        "runtime": {
+         "same": 6,
+         "judged": 6,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 6,
+         "of": 6,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 18,
+         "msMax": 26,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "vm",
@@ -2208,10 +6159,47 @@
        "fidelityBefore": 0.095,
        "fidelityAfter": 0.095,
        "confidence": 0.3,
-       "behaviourChecked": 6,
+       "behaviourChecked": 0,
        "behaviourSame": 0,
        "unparsed": 0,
-       "status": "unsupported"
+       "status": "unsupported",
+       "categories": {
+        "identification": {
+         "detected": 6,
+         "of": 6
+        },
+        "structure": {
+         "before": 0.178,
+         "after": 0.181
+        },
+        "semantic": {
+         "before": 0.095,
+         "after": 0.095
+        },
+        "runtime": {
+         "same": 0,
+         "judged": 0,
+         "notJudged": 6
+        },
+        "completeness": {
+         "complete": 0,
+         "of": 6,
+         "residual": {
+          "vm:interpreter": 6
+         }
+        },
+        "vmConstants": {
+         "recall": 1,
+         "fixtures": 6,
+         "functions": 0,
+         "bytes": 0
+        },
+        "stability": {
+         "msMean": 68,
+         "msMax": 79,
+         "failures": 0
+        }
+       }
       }
      ],
      "summary": {
@@ -2251,7 +6239,37 @@
        "behaviourChecked": 6,
        "behaviourSame": 6,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 6,
+         "of": 6
+        },
+        "structure": {
+         "before": 0.186,
+         "after": 0.987
+        },
+        "semantic": {
+         "before": 0.121,
+         "after": 0.852
+        },
+        "runtime": {
+         "same": 6,
+         "judged": 6,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 6,
+         "of": 6,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 65,
+         "msMax": 135,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "level-2",
@@ -2263,7 +6281,37 @@
        "behaviourChecked": 6,
        "behaviourSame": 6,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 6,
+         "of": 6
+        },
+        "structure": {
+         "before": 0.135,
+         "after": 0.987
+        },
+        "semantic": {
+         "before": 0.094,
+         "after": 0.892
+        },
+        "runtime": {
+         "same": 6,
+         "judged": 6,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 6,
+         "of": 6,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 83,
+         "msMax": 121,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "level-3",
@@ -2275,7 +6323,37 @@
        "behaviourChecked": 6,
        "behaviourSame": 6,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 6,
+         "of": 6
+        },
+        "structure": {
+         "before": 0.093,
+         "after": 0.987
+        },
+        "semantic": {
+         "before": 0.066,
+         "after": 0.892
+        },
+        "runtime": {
+         "same": 6,
+         "judged": 6,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 6,
+         "of": 6,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 132,
+         "msMax": 206,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "lightweight",
@@ -2287,7 +6365,37 @@
        "behaviourChecked": 6,
        "behaviourSame": 6,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 6,
+         "of": 6
+        },
+        "structure": {
+         "before": 0.492,
+         "after": 0.998
+        },
+        "semantic": {
+         "before": 0.349,
+         "after": 0.96
+        },
+        "runtime": {
+         "same": 6,
+         "judged": 6,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 6,
+         "of": 6,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 23,
+         "msMax": 40,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "vm",
@@ -2296,10 +6404,47 @@
        "fidelityBefore": 0.033,
        "fidelityAfter": 0.033,
        "confidence": 0.35,
-       "behaviourChecked": 6,
+       "behaviourChecked": 2,
        "behaviourSame": 2,
        "unparsed": 0,
-       "status": "unsupported"
+       "status": "unsupported",
+       "categories": {
+        "identification": {
+         "detected": 6,
+         "of": 6
+        },
+        "structure": {
+         "before": 0.029,
+         "after": 0.029
+        },
+        "semantic": {
+         "before": 0.033,
+         "after": 0.033
+        },
+        "runtime": {
+         "same": 2,
+         "judged": 2,
+         "notJudged": 4
+        },
+        "completeness": {
+         "complete": 0,
+         "of": 6,
+         "residual": {
+          "vm:interpreter": 6
+         }
+        },
+        "vmConstants": {
+         "recall": 1,
+         "fixtures": 6,
+         "functions": 8,
+         "bytes": 1208.667
+        },
+        "stability": {
+         "msMean": 451,
+         "msMax": 599,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "vm-max",
@@ -2308,10 +6453,47 @@
        "fidelityBefore": 0.032,
        "fidelityAfter": 0.033,
        "confidence": 0.35,
-       "behaviourChecked": 6,
+       "behaviourChecked": 0,
        "behaviourSame": 0,
        "unparsed": 0,
-       "status": "unsupported"
+       "status": "unsupported",
+       "categories": {
+        "identification": {
+         "detected": 6,
+         "of": 6
+        },
+        "structure": {
+         "before": 0.029,
+         "after": 0.03
+        },
+        "semantic": {
+         "before": 0.032,
+         "after": 0.033
+        },
+        "runtime": {
+         "same": 0,
+         "judged": 0,
+         "notJudged": 6
+        },
+        "completeness": {
+         "complete": 0,
+         "of": 6,
+         "residual": {
+          "vm:interpreter": 6
+         }
+        },
+        "vmConstants": {
+         "recall": 1,
+         "fixtures": 6,
+         "functions": 8,
+         "bytes": 1208.667
+        },
+        "stability": {
+         "msMean": 514,
+         "msMax": 615,
+         "failures": 0
+        }
+       }
       }
      ],
      "summary": {
@@ -2351,7 +6533,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.434,
+         "after": 0.995
+        },
+        "semantic": {
+         "before": 0.295,
+         "after": 0.964
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 33,
+         "msMax": 50,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "level-2",
@@ -2363,7 +6575,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.143,
+         "after": 0.988
+        },
+        "semantic": {
+         "before": 0.102,
+         "after": 0.946
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 77,
+         "msMax": 111,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "level-3",
@@ -2375,7 +6617,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.094,
+         "after": 0.988
+        },
+        "semantic": {
+         "before": 0.07,
+         "after": 0.946
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 107,
+         "msMax": 154,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "lightweight",
@@ -2387,7 +6659,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.535,
+         "after": 0.981
+        },
+        "semantic": {
+         "before": 0.377,
+         "after": 0.92
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 25,
+         "msMax": 37,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "rename",
@@ -2399,7 +6701,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 1,
+         "after": 0.995
+        },
+        "semantic": {
+         "before": 1,
+         "after": 0.964
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 12,
+         "msMax": 24,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "native",
@@ -2411,7 +6743,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.094,
+         "after": 0.988
+        },
+        "semantic": {
+         "before": 0.07,
+         "after": 0.946
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 125,
+         "msMax": 199,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "vm",
@@ -2423,7 +6785,44 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "unsupported"
+       "status": "unsupported",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.054,
+         "after": 0.058
+        },
+        "semantic": {
+         "before": 0.035,
+         "after": 0.035
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 0,
+         "of": 7,
+         "residual": {
+          "vm:interpreter": 7
+         }
+        },
+        "vmConstants": {
+         "recall": 1,
+         "fixtures": 7,
+         "functions": 7,
+         "bytes": 1164.143
+        },
+        "stability": {
+         "msMean": 223,
+         "msMax": 334,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "vm-max",
@@ -2435,7 +6834,44 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "unsupported"
+       "status": "unsupported",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.015,
+         "after": 0.016
+        },
+        "semantic": {
+         "before": 0.033,
+         "after": 0.033
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 0,
+         "of": 7,
+         "residual": {
+          "vm:interpreter": 7
+         }
+        },
+        "vmConstants": {
+         "recall": 1,
+         "fixtures": 7,
+         "functions": 7,
+         "bytes": 1069.857
+        },
+        "stability": {
+         "msMean": 1992,
+         "msMax": 3381,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "vm-cached",
@@ -2447,7 +6883,44 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "unsupported"
+       "status": "unsupported",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.026,
+         "after": 0.029
+        },
+        "semantic": {
+         "before": 0.034,
+         "after": 0.034
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 0,
+         "of": 7,
+         "residual": {
+          "vm:interpreter": 7
+         }
+        },
+        "vmConstants": {
+         "recall": 1,
+         "fixtures": 7,
+         "functions": 7,
+         "bytes": 1069.857
+        },
+        "stability": {
+         "msMean": 1297,
+         "msMax": 1947,
+         "failures": 0
+        }
+       }
       }
      ],
      "summary": {
@@ -2539,6 +7012,18 @@
       "tests/sandbox.test.mjs",
       "tests/formats-ix.test.mjs: obscura 1.1.0 ..."
      ]
+    },
+    {
+     "id": "vm-profile",
+     "summary": "what is inside a VM that was not lifted: the function records (instruction bytes, parameters, registers), and the constants, read by running only the statements that set them up in the sandbox (never the interpreter); the hardened 1.1.0 build keeps its constants in keyed per-function records, which are opened one record at a time after the set-up loop that salts each record with the hash of its code. Reported in the output header as a profile, never as a recovery",
+     "files": [
+      "src/recover/vmprofile.js",
+      "src/recover/annotate.js",
+      "src/core/metrics.js"
+     ],
+     "tests": [
+      "tests/formats-x.test.mjs: vm profile"
+     ]
     }
    ],
    "failurePatterns": [
@@ -2550,8 +7035,8 @@
       "vm-cached"
      ],
      "status": "open",
-     "summary": "the VM builds keep the program as bytecode (encrypted constant pool, rolling reads) for a generated interpreter. Identified from the \"Obscura VM\" header, reported as not recovered; no lifter was written",
-     "evidence": "fidelity 3% before and after on all three revisions; the report header says so"
+     "summary": "the VM builds keep the program as bytecode (encrypted constant pool, rolling reads) for a generated interpreter. Identified from the \"Obscura VM\" header and reported as not recovered: no lifter was written. A profile of the data IS read, without running the program: the number of functions, the bytes of instructions of each, and the decrypted constants (all three revisions, plain and hardened builds), see improvements/vm-profile",
+     "evidence": "semantic fidelity 3% before and after on all three revisions (the VM is still in the output); the report header says so; the profile reads the strings the program prints"
     },
     {
      "id": "names",
@@ -2625,7 +7110,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 0,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.993,
+         "after": 0.993
+        },
+        "semantic": {
+         "before": 0.961,
+         "after": 0.962
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 19,
+         "msMax": 61,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "Weak",
@@ -2633,11 +7148,43 @@
        "detected": 7,
        "fidelityBefore": 0.064,
        "fidelityAfter": 0.58,
-       "confidence": 0.856,
-       "behaviourChecked": 7,
+       "confidence": 0.879,
+       "behaviourChecked": 6,
        "behaviourSame": 6,
        "unparsed": 0,
-       "status": "partial"
+       "status": "partial",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.111,
+         "after": 0.746
+        },
+        "semantic": {
+         "before": 0.064,
+         "after": 0.58
+        },
+        "runtime": {
+         "same": 6,
+         "judged": 6,
+         "notJudged": 1
+        },
+        "completeness": {
+         "complete": 6,
+         "of": 7,
+         "residual": {
+          "trait:string-table": 1
+         }
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 250,
+         "msMax": 470,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "Medium",
@@ -2646,10 +7193,40 @@
        "fidelityBefore": 0.026,
        "fidelityAfter": 0.54,
        "confidence": 0.879,
-       "behaviourChecked": 7,
+       "behaviourChecked": 6,
        "behaviourSame": 6,
        "unparsed": 0,
-       "status": "partial"
+       "status": "partial",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.023,
+         "after": 0.78
+        },
+        "semantic": {
+         "before": 0.026,
+         "after": 0.54
+        },
+        "runtime": {
+         "same": 6,
+         "judged": 6,
+         "notJudged": 1
+        },
+        "completeness": {
+         "complete": 6,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 665,
+         "msMax": 989,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "Strong",
@@ -2657,11 +7234,41 @@
        "detected": 7,
        "fidelityBefore": 0.026,
        "fidelityAfter": 0.435,
-       "confidence": 0.759,
-       "behaviourChecked": 7,
+       "confidence": 0.793,
+       "behaviourChecked": 6,
        "behaviourSame": 6,
        "unparsed": 0,
-       "status": "partial"
+       "status": "partial",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.01,
+         "after": 0.59
+        },
+        "semantic": {
+         "before": 0.026,
+         "after": 0.435
+        },
+        "runtime": {
+         "same": 6,
+         "judged": 6,
+         "notJudged": 1
+        },
+        "completeness": {
+         "complete": 2,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 2067,
+         "msMax": 2943,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "step-EncryptStrings",
@@ -2673,7 +7280,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.494,
+         "after": 0.943
+        },
+        "semantic": {
+         "before": 0.318,
+         "after": 0.877
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 6,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 39,
+         "msMax": 52,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "step-ConstantArray",
@@ -2681,11 +7318,41 @@
        "detected": 7,
        "fidelityBefore": 0.208,
        "fidelityAfter": 0.919,
-       "confidence": 0.843,
+       "confidence": 0.9,
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.385,
+         "after": 0.982
+        },
+        "semantic": {
+         "before": 0.208,
+         "after": 0.919
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 40,
+         "msMax": 57,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "step-SplitStrings",
@@ -2697,7 +7364,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.939,
+         "after": 0.985
+        },
+        "semantic": {
+         "before": 0.658,
+         "after": 0.915
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 6,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 13,
+         "msMax": 19,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "step-NumbersToExpressions",
@@ -2709,7 +7406,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 0,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.785,
+         "after": 0.993
+        },
+        "semantic": {
+         "before": 0.804,
+         "after": 0.962
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 12,
+         "msMax": 21,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "step-ProxifyLocals",
@@ -2721,7 +7448,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.502,
+         "after": 0.948
+        },
+        "semantic": {
+         "before": 0.392,
+         "after": 0.948
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 20,
+         "msMax": 30,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "step-WrapInFunction",
@@ -2733,7 +7490,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 0,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.857,
+         "after": 0.993
+        },
+        "semantic": {
+         "before": 0.952,
+         "after": 0.962
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 11,
+         "msMax": 20,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "step-AddVararg",
@@ -2745,7 +7532,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 0,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.993,
+         "after": 0.993
+        },
+        "semantic": {
+         "before": 0.961,
+         "after": 0.962
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 12,
+         "msMax": 22,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "step-AntiTamper",
@@ -2757,7 +7574,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.618,
+         "after": 0.993
+        },
+        "semantic": {
+         "before": 0.389,
+         "after": 0.962
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 12,
+         "msMax": 17,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "step-Vmify",
@@ -2766,10 +7613,614 @@
        "fidelityBefore": 0.096,
        "fidelityAfter": 0.641,
        "confidence": 0.9,
-       "behaviourChecked": 7,
+       "behaviourChecked": 6,
        "behaviourSame": 6,
        "unparsed": 0,
-       "status": "partial"
+       "status": "partial",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.125,
+         "after": 0.796
+        },
+        "semantic": {
+         "before": 0.096,
+         "after": 0.641
+        },
+        "runtime": {
+         "same": 6,
+         "judged": 6,
+         "notJudged": 1
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 110,
+         "msMax": 175,
+         "failures": 0
+        }
+       }
+      }
+     ],
+     "summary": {
+      "verified": 9,
+      "partial": 4,
+      "unsupported": 0
+     }
+    },
+    {
+     "version": "lennyobf",
+     "revision": "c76494236a43cb4730c4af8654f524a44c92b087",
+     "revisionDate": "2025-01-13",
+     "note": "A renamed copy of Prometheus with its own watermark (\"Lenny Obfuscator\" stamped as code that a later check reads) and its own anti-tamper block. Run to find out whether recognition and recovery depend on the original tool's exact text: they did (see KNOWN-ISSUES, Phase X).",
+     "fixtureDir": "tests/corpus/obfuscated-local/prometheus-lennyobf",
+     "committed": false,
+     "licence": "AGPL-3.0 (the fork's LICENSE file; it is a renamed copy of Prometheus, whose own licence is different): output stays on this machine",
+     "fixtures": {
+      "measured": 104,
+      "toolOutputVerified": 104,
+      "written": 104,
+      "toolErrors": 0,
+      "omittedLarge": 0,
+      "toolOutputEquivalent": 84,
+      "toolOutputErrored": 3,
+      "toolOutputDiverged": 17
+     },
+     "fidelityBefore": 0.453,
+     "fidelityAfter": 0.791,
+     "configs": [
+      {
+       "config": "Minify",
+       "samples": 8,
+       "detected": 0,
+       "fidelityBefore": 0.966,
+       "fidelityAfter": 0.936,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 0,
+         "of": 8
+        },
+        "structure": {
+         "before": 0.993,
+         "after": 0.993
+        },
+        "semantic": {
+         "before": 0.966,
+         "after": 0.936
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 1
+        },
+        "completeness": {
+         "complete": 8,
+         "of": 8,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 11,
+         "msMax": 16,
+         "failures": 0
+        }
+       }
+      },
+      {
+       "config": "Weak",
+       "samples": 8,
+       "detected": 8,
+       "fidelityBefore": 0.036,
+       "fidelityAfter": 0.499,
+       "confidence": 0.9,
+       "behaviourChecked": 5,
+       "behaviourSame": 5,
+       "unparsed": 0,
+       "status": "partial",
+       "categories": {
+        "identification": {
+         "detected": 8,
+         "of": 8
+        },
+        "structure": {
+         "before": 0.055,
+         "after": 0.711
+        },
+        "semantic": {
+         "before": 0.036,
+         "after": 0.499
+        },
+        "runtime": {
+         "same": 5,
+         "judged": 5,
+         "notJudged": 3
+        },
+        "completeness": {
+         "complete": 8,
+         "of": 8,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 271,
+         "msMax": 347,
+         "failures": 0
+        }
+       }
+      },
+      {
+       "config": "Medium",
+       "samples": 8,
+       "detected": 8,
+       "fidelityBefore": 0.024,
+       "fidelityAfter": 0.339,
+       "confidence": 0.788,
+       "behaviourChecked": 5,
+       "behaviourSame": 5,
+       "unparsed": 0,
+       "status": "partial",
+       "categories": {
+        "identification": {
+         "detected": 8,
+         "of": 8
+        },
+        "structure": {
+         "before": 0.014,
+         "after": 0.484
+        },
+        "semantic": {
+         "before": 0.024,
+         "after": 0.339
+        },
+        "runtime": {
+         "same": 5,
+         "judged": 5,
+         "notJudged": 3
+        },
+        "completeness": {
+         "complete": 2,
+         "of": 8,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 1352,
+         "msMax": 2027,
+         "failures": 0
+        }
+       }
+      },
+      {
+       "config": "Strong",
+       "samples": 8,
+       "detected": 8,
+       "fidelityBefore": 0.024,
+       "fidelityAfter": 0.339,
+       "confidence": 0.788,
+       "behaviourChecked": 5,
+       "behaviourSame": 5,
+       "unparsed": 0,
+       "status": "partial",
+       "categories": {
+        "identification": {
+         "detected": 8,
+         "of": 8
+        },
+        "structure": {
+         "before": 0.014,
+         "after": 0.484
+        },
+        "semantic": {
+         "before": 0.024,
+         "after": 0.339
+        },
+        "runtime": {
+         "same": 5,
+         "judged": 5,
+         "notJudged": 3
+        },
+        "completeness": {
+         "complete": 2,
+         "of": 8,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 1389,
+         "msMax": 1882,
+         "failures": 0
+        }
+       }
+      },
+      {
+       "config": "step-EncryptStrings",
+       "samples": 8,
+       "detected": 8,
+       "fidelityBefore": 0.316,
+       "fidelityAfter": 0.893,
+       "confidence": 0.881,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 8,
+         "of": 8
+        },
+        "structure": {
+         "before": 0.476,
+         "after": 0.949
+        },
+        "semantic": {
+         "before": 0.316,
+         "after": 0.893
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 1
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 8,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 40,
+         "msMax": 73,
+         "failures": 0
+        }
+       }
+      },
+      {
+       "config": "step-ConstantArray",
+       "samples": 8,
+       "detected": 8,
+       "fidelityBefore": 0.286,
+       "fidelityAfter": 0.929,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 8,
+         "of": 8
+        },
+        "structure": {
+         "before": 0.493,
+         "after": 0.984
+        },
+        "semantic": {
+         "before": 0.286,
+         "after": 0.929
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 1
+        },
+        "completeness": {
+         "complete": 8,
+         "of": 8,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 27,
+         "msMax": 44,
+         "failures": 0
+        }
+       }
+      },
+      {
+       "config": "step-SplitStrings",
+       "samples": 8,
+       "detected": 8,
+       "fidelityBefore": 0.654,
+       "fidelityAfter": 0.926,
+       "confidence": 0.881,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 8,
+         "of": 8
+        },
+        "structure": {
+         "before": 0.934,
+         "after": 0.987
+        },
+        "semantic": {
+         "before": 0.654,
+         "after": 0.926
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 1
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 8,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 14,
+         "msMax": 26,
+         "failures": 0
+        }
+       }
+      },
+      {
+       "config": "step-NumbersToExpressions",
+       "samples": 8,
+       "detected": 0,
+       "fidelityBefore": 0.787,
+       "fidelityAfter": 0.966,
+       "confidence": 0.913,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 0,
+         "of": 8
+        },
+        "structure": {
+         "before": 0.762,
+         "after": 0.994
+        },
+        "semantic": {
+         "before": 0.787,
+         "after": 0.966
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 1
+        },
+        "completeness": {
+         "complete": 8,
+         "of": 8,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 10,
+         "msMax": 19,
+         "failures": 0
+        }
+       }
+      },
+      {
+       "config": "step-ProxifyLocals",
+       "samples": 8,
+       "detected": 8,
+       "fidelityBefore": 0.387,
+       "fidelityAfter": 0.933,
+       "confidence": 0.9,
+       "behaviourChecked": 6,
+       "behaviourSame": 6,
+       "unparsed": 0,
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 8,
+         "of": 8
+        },
+        "structure": {
+         "before": 0.49,
+         "after": 0.935
+        },
+        "semantic": {
+         "before": 0.387,
+         "after": 0.933
+        },
+        "runtime": {
+         "same": 6,
+         "judged": 6,
+         "notJudged": 2
+        },
+        "completeness": {
+         "complete": 8,
+         "of": 8,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 21,
+         "msMax": 30,
+         "failures": 0
+        }
+       }
+      },
+      {
+       "config": "step-WrapInFunction",
+       "samples": 8,
+       "detected": 0,
+       "fidelityBefore": 0.956,
+       "fidelityAfter": 0.966,
+       "confidence": 0.906,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 0,
+         "of": 8
+        },
+        "structure": {
+         "before": 0.85,
+         "after": 0.994
+        },
+        "semantic": {
+         "before": 0.956,
+         "after": 0.966
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 1
+        },
+        "completeness": {
+         "complete": 8,
+         "of": 8,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 10,
+         "msMax": 22,
+         "failures": 0
+        }
+       }
+      },
+      {
+       "config": "step-AddVararg",
+       "samples": 8,
+       "detected": 0,
+       "fidelityBefore": 0.966,
+       "fidelityAfter": 0.966,
+       "confidence": 0.906,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 0,
+         "of": 8
+        },
+        "structure": {
+         "before": 0.993,
+         "after": 0.994
+        },
+        "semantic": {
+         "before": 0.966,
+         "after": 0.966
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 1
+        },
+        "completeness": {
+         "complete": 8,
+         "of": 8,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 10,
+         "msMax": 27,
+         "failures": 0
+        }
+       }
+      },
+      {
+       "config": "step-AntiTamper",
+       "samples": 8,
+       "detected": 0,
+       "fidelityBefore": 0.399,
+       "fidelityAfter": 0.966,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 0,
+         "of": 8
+        },
+        "structure": {
+         "before": 0.64,
+         "after": 0.994
+        },
+        "semantic": {
+         "before": 0.399,
+         "after": 0.966
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 1
+        },
+        "completeness": {
+         "complete": 8,
+         "of": 8,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 12,
+         "msMax": 22,
+         "failures": 0
+        }
+       }
+      },
+      {
+       "config": "step-Vmify",
+       "samples": 8,
+       "detected": 8,
+       "fidelityBefore": 0.089,
+       "fidelityAfter": 0.618,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "partial",
+       "categories": {
+        "identification": {
+         "detected": 8,
+         "of": 8
+        },
+        "structure": {
+         "before": 0.116,
+         "after": 0.798
+        },
+        "semantic": {
+         "before": 0.089,
+         "after": 0.618
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 1
+        },
+        "completeness": {
+         "complete": 8,
+         "of": 8,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 100,
+         "msMax": 216,
+         "failures": 0
+        }
+       }
       }
      ],
      "summary": {
@@ -2826,7 +8277,37 @@
        "behaviourChecked": 8,
        "behaviourSame": 8,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 8,
+         "of": 8
+        },
+        "structure": {
+         "before": 0.025,
+         "after": 0.997
+        },
+        "semantic": {
+         "before": 0.033,
+         "after": 0.998
+        },
+        "runtime": {
+         "same": 8,
+         "judged": 8,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 8,
+         "of": 8,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 325,
+         "msMax": 408,
+         "failures": 0
+        }
+       }
       }
      ],
      "summary": {
@@ -2884,7 +8365,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 1,
+         "after": 0.995
+        },
+        "semantic": {
+         "before": 1,
+         "after": 0.964
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 19,
+         "msMax": 33,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "lightweight",
@@ -2896,7 +8407,37 @@
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.653,
+         "after": 0.995
+        },
+        "semantic": {
+         "before": 0.407,
+         "after": 0.964
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 29,
+         "msMax": 38,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "native",
@@ -2904,11 +8445,41 @@
        "detected": 7,
        "fidelityBefore": 0.223,
        "fidelityAfter": 0.956,
-       "confidence": 0.831,
+       "confidence": 0.9,
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "verified"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.369,
+         "after": 0.985
+        },
+        "semantic": {
+         "before": 0.223,
+         "after": 0.956
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 7,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 61,
+         "msMax": 91,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "vm",
@@ -2916,11 +8487,43 @@
        "detected": 7,
        "fidelityBefore": 0.028,
        "fidelityAfter": 0.044,
-       "confidence": 0.279,
+       "confidence": 0.336,
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "unsupported"
+       "status": "unsupported",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.075,
+         "after": 0.077
+        },
+        "semantic": {
+         "before": 0.028,
+         "after": 0.044
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 0,
+         "of": 7,
+         "residual": {
+          "trait:escape-encoded-strings": 1
+         }
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 528,
+         "msMax": 718,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "vm-max",
@@ -2928,11 +8531,43 @@
        "detected": 7,
        "fidelityBefore": 0.028,
        "fidelityAfter": 0.044,
-       "confidence": 0.279,
+       "confidence": 0.336,
        "behaviourChecked": 7,
        "behaviourSame": 7,
        "unparsed": 0,
-       "status": "unsupported"
+       "status": "unsupported",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.075,
+         "after": 0.077
+        },
+        "semantic": {
+         "before": 0.028,
+         "after": 0.044
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 0,
+         "of": 7,
+         "residual": {
+          "trait:escape-encoded-strings": 1
+         }
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 505,
+         "msMax": 709,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "vm-cached",
@@ -2940,11 +8575,41 @@
        "detected": 6,
        "fidelityBefore": 0.018,
        "fidelityAfter": 0.016,
-       "confidence": 0.317,
+       "confidence": 0.35,
        "behaviourChecked": 6,
        "behaviourSame": 6,
        "unparsed": 0,
-       "status": "unsupported"
+       "status": "unsupported",
+       "categories": {
+        "identification": {
+         "detected": 6,
+         "of": 6
+        },
+        "structure": {
+         "before": 0.069,
+         "after": 0.068
+        },
+        "semantic": {
+         "before": 0.018,
+         "after": 0.016
+        },
+        "runtime": {
+         "same": 6,
+         "judged": 6,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 0,
+         "of": 6,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 2520,
+         "msMax": 4013,
+         "failures": 0
+        }
+       }
       }
      ],
      "summary": {
@@ -3050,15 +8715,45 @@
        "fidelityBefore": 0.345,
        "fidelityAfter": 0.993,
        "confidence": 0.9,
-       "behaviourChecked": 8,
+       "behaviourChecked": 5,
        "behaviourSame": 5,
        "unparsed": 0,
-       "status": "partial"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 8,
+         "of": 8
+        },
+        "structure": {
+         "before": 0.602,
+         "after": 0.997
+        },
+        "semantic": {
+         "before": 0.345,
+         "after": 0.993
+        },
+        "runtime": {
+         "same": 5,
+         "judged": 5,
+         "notJudged": 3
+        },
+        "completeness": {
+         "complete": 8,
+         "of": 8,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 23,
+         "msMax": 43,
+         "failures": 0
+        }
+       }
       }
      ],
      "summary": {
-      "verified": 0,
-      "partial": 1,
+      "verified": 1,
+      "partial": 0,
       "unsupported": 0
      }
     }
@@ -3066,7 +8761,7 @@
    "improvements": [],
    "failurePatterns": [],
    "assumptions": [],
-   "support": "experimental"
+   "support": "verified"
   },
   {
    "id": "xfuscator",
@@ -3094,8 +8789,8 @@
       "toolErrors": 24,
       "omittedLarge": 0,
       "toolOutputEquivalent": 32,
-      "toolOutputErrored": 8,
-      "toolOutputDiverged": 0
+      "toolOutputErrored": 3,
+      "toolOutputDiverged": 5
      },
      "fidelityBefore": 0.017,
      "fidelityAfter": 0.811,
@@ -3110,7 +8805,37 @@
        "behaviourChecked": 8,
        "behaviourSame": 8,
        "unparsed": 0,
-       "status": "partial"
+       "status": "partial",
+       "categories": {
+        "identification": {
+         "detected": 8,
+         "of": 8
+        },
+        "structure": {
+         "before": 0.226,
+         "after": 0.898
+        },
+        "semantic": {
+         "before": 0.014,
+         "after": 0.82
+        },
+        "runtime": {
+         "same": 8,
+         "judged": 8,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 8,
+         "of": 8,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 94,
+         "msMax": 161,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "uglify",
@@ -3122,7 +8847,37 @@
        "behaviourChecked": 8,
        "behaviourSame": 8,
        "unparsed": 0,
-       "status": "partial"
+       "status": "partial",
+       "categories": {
+        "identification": {
+         "detected": 8,
+         "of": 8
+        },
+        "structure": {
+         "before": 0.226,
+         "after": 0.898
+        },
+        "semantic": {
+         "before": 0.014,
+         "after": 0.82
+        },
+        "runtime": {
+         "same": 8,
+         "judged": 8,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 8,
+         "of": 8,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 94,
+         "msMax": 135,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "encrypt",
@@ -3131,10 +8886,42 @@
        "fidelityBefore": 0.013,
        "fidelityAfter": 0.775,
        "confidence": 0.9,
-       "behaviourChecked": 8,
+       "behaviourChecked": 0,
        "behaviourSame": 0,
        "unparsed": 0,
-       "status": "partial"
+       "status": "partial",
+       "categories": {
+        "identification": {
+         "detected": 8,
+         "of": 8
+        },
+        "structure": {
+         "before": 0.226,
+         "after": 0.898
+        },
+        "semantic": {
+         "before": 0.013,
+         "after": 0.775
+        },
+        "runtime": {
+         "same": 0,
+         "judged": 0,
+         "notJudged": 8
+        },
+        "completeness": {
+         "complete": 6,
+         "of": 8,
+         "residual": {
+          "trait:escape-encoded-strings": 2
+         }
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 595,
+         "msMax": 963,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "nostep2",
@@ -3146,7 +8933,37 @@
        "behaviourChecked": 8,
        "behaviourSame": 8,
        "unparsed": 0,
-       "status": "partial"
+       "status": "partial",
+       "categories": {
+        "identification": {
+         "detected": 0,
+         "of": 8
+        },
+        "structure": {
+         "before": 0.034,
+         "after": 0.898
+        },
+        "semantic": {
+         "before": 0.028,
+         "after": 0.82
+        },
+        "runtime": {
+         "same": 8,
+         "judged": 8,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 8,
+         "of": 8,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 34,
+         "msMax": 44,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "notamper",
@@ -3158,7 +8975,37 @@
        "behaviourChecked": 8,
        "behaviourSame": 8,
        "unparsed": 0,
-       "status": "partial"
+       "status": "partial",
+       "categories": {
+        "identification": {
+         "detected": 8,
+         "of": 8
+        },
+        "structure": {
+         "before": 0.225,
+         "after": 0.898
+        },
+        "semantic": {
+         "before": 0.014,
+         "after": 0.82
+        },
+        "runtime": {
+         "same": 8,
+         "judged": 8,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 8,
+         "of": 8,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 90,
+         "msMax": 114,
+         "failures": 0
+        }
+       }
       }
      ],
      "summary": {
@@ -3249,13 +9096,13 @@
      "licence": "MIT",
      "fixtures": {
       "measured": 54,
-      "toolOutputVerified": 0,
+      "toolOutputVerified": 56,
       "written": 54,
       "toolErrors": 2,
       "omittedLarge": 0,
-      "toolOutputEquivalent": 0,
-      "toolOutputErrored": 0,
-      "toolOutputDiverged": 0
+      "toolOutputEquivalent": 16,
+      "toolOutputErrored": 30,
+      "toolOutputDiverged": 8
      },
      "fidelityBefore": 0.035,
      "fidelityAfter": 0.035,
@@ -3267,10 +9114,40 @@
        "fidelityBefore": 0.038,
        "fidelityAfter": 0.038,
        "confidence": 0.306,
-       "behaviourChecked": 7,
+       "behaviourChecked": 4,
        "behaviourSame": 4,
        "unparsed": 1,
-       "status": "unsupported"
+       "status": "unsupported",
+       "categories": {
+        "identification": {
+         "detected": 8,
+         "of": 8
+        },
+        "structure": {
+         "before": 0.047,
+         "after": 0.047
+        },
+        "semantic": {
+         "before": 0.038,
+         "after": 0.038
+        },
+        "runtime": {
+         "same": 4,
+         "judged": 4,
+         "notJudged": 4
+        },
+        "completeness": {
+         "complete": 0,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 315,
+         "msMax": 773,
+         "failures": 1
+        }
+       }
       },
       {
        "config": "minify",
@@ -3279,10 +9156,40 @@
        "fidelityBefore": 0.038,
        "fidelityAfter": 0.039,
        "confidence": 0.35,
-       "behaviourChecked": 7,
+       "behaviourChecked": 4,
        "behaviourSame": 4,
        "unparsed": 0,
-       "status": "unsupported"
+       "status": "unsupported",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.047,
+         "after": 0.047
+        },
+        "semantic": {
+         "before": 0.038,
+         "after": 0.039
+        },
+        "runtime": {
+         "same": 4,
+         "judged": 4,
+         "notJudged": 3
+        },
+        "completeness": {
+         "complete": 0,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 311,
+         "msMax": 686,
+         "failures": 0
+        }
+       }
       },
       {
        "config": "encryptstrings",
@@ -3291,10 +9198,40 @@
        "fidelityBefore": 0.038,
        "fidelityAfter": 0.038,
        "confidence": 0.306,
-       "behaviourChecked": 7,
+       "behaviourChecked": 4,
        "behaviourSame": 4,
        "unparsed": 1,
-       "status": "unsupported"
+       "status": "unsupported",
+       "categories": {
+        "identification": {
+         "detected": 8,
+         "of": 8
+        },
+        "structure": {
+         "before": 0.045,
+         "after": 0.045
+        },
+        "semantic": {
+         "before": 0.038,
+         "after": 0.038
+        },
+        "runtime": {
+         "same": 4,
+         "judged": 4,
+         "notJudged": 4
+        },
+        "completeness": {
+         "complete": 0,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 273,
+         "msMax": 547,
+         "failures": 1
+        }
+       }
       },
       {
        "config": "flatten",
@@ -3303,10 +9240,40 @@
        "fidelityBefore": 0.031,
        "fidelityAfter": 0.031,
        "confidence": 0.306,
-       "behaviourChecked": 7,
+       "behaviourChecked": 4,
        "behaviourSame": 4,
        "unparsed": 1,
-       "status": "unsupported"
+       "status": "unsupported",
+       "categories": {
+        "identification": {
+         "detected": 8,
+         "of": 8
+        },
+        "structure": {
+         "before": 0.024,
+         "after": 0.025
+        },
+        "semantic": {
+         "before": 0.031,
+         "after": 0.031
+        },
+        "runtime": {
+         "same": 4,
+         "judged": 4,
+         "notJudged": 4
+        },
+        "completeness": {
+         "complete": 0,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 564,
+         "msMax": 1051,
+         "failures": 1
+        }
+       }
       },
       {
        "config": "antitamper",
@@ -3315,10 +9282,40 @@
        "fidelityBefore": 0.033,
        "fidelityAfter": 0.033,
        "confidence": 0.306,
-       "behaviourChecked": 7,
+       "behaviourChecked": 0,
        "behaviourSame": 0,
        "unparsed": 1,
-       "status": "unsupported"
+       "status": "unsupported",
+       "categories": {
+        "identification": {
+         "detected": 8,
+         "of": 8
+        },
+        "structure": {
+         "before": 0.036,
+         "after": 0.036
+        },
+        "semantic": {
+         "before": 0.033,
+         "after": 0.033
+        },
+        "runtime": {
+         "same": 0,
+         "judged": 0,
+         "notJudged": 8
+        },
+        "completeness": {
+         "complete": 0,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 367,
+         "msMax": 851,
+         "failures": 1
+        }
+       }
       },
       {
        "config": "constants",
@@ -3327,10 +9324,40 @@
        "fidelityBefore": 0.038,
        "fidelityAfter": 0.038,
        "confidence": 0.306,
-       "behaviourChecked": 7,
+       "behaviourChecked": 0,
        "behaviourSame": 0,
        "unparsed": 1,
-       "status": "unsupported"
+       "status": "unsupported",
+       "categories": {
+        "identification": {
+         "detected": 8,
+         "of": 8
+        },
+        "structure": {
+         "before": 0.047,
+         "after": 0.047
+        },
+        "semantic": {
+         "before": 0.038,
+         "after": 0.038
+        },
+        "runtime": {
+         "same": 0,
+         "judged": 0,
+         "notJudged": 8
+        },
+        "completeness": {
+         "complete": 0,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 268,
+         "msMax": 584,
+         "failures": 1
+        }
+       }
       },
       {
        "config": "all",
@@ -3339,10 +9366,40 @@
        "fidelityBefore": 0.03,
        "fidelityAfter": 0.03,
        "confidence": 0.35,
-       "behaviourChecked": 7,
+       "behaviourChecked": 0,
        "behaviourSame": 0,
        "unparsed": 0,
-       "status": "unsupported"
+       "status": "unsupported",
+       "categories": {
+        "identification": {
+         "detected": 7,
+         "of": 7
+        },
+        "structure": {
+         "before": 0.017,
+         "after": 0.018
+        },
+        "semantic": {
+         "before": 0.03,
+         "after": 0.03
+        },
+        "runtime": {
+         "same": 0,
+         "judged": 0,
+         "notJudged": 7
+        },
+        "completeness": {
+         "complete": 0,
+         "of": 7,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 924,
+         "msMax": 1471,
+         "failures": 0
+        }
+       }
       }
      ],
      "summary": {
@@ -3388,6 +9445,21 @@
      ],
      "status": "tool defect",
      "summary": "on s06 the tool writes `\\n\\t` as literal characters into the code of one opcode handler, which PUC Lua 5.1 and LuaJIT reject (\"unexpected symbol near '\\'\"); QuickSilver's parser rejects it too, so those outputs are counted as unparsed, not as recovery failures"
+    },
+    {
+     "id": "tool-output-measured",
+     "configs": [
+      "default",
+      "minify",
+      "encryptstrings",
+      "flatten",
+      "antitamper",
+      "constants",
+      "all"
+     ],
+     "status": "tool defect",
+     "summary": "measured on Lua 5.1 and LuaJIT in an isolated runner with a wall-clock limit: 16 of 54 outputs behave like the original, 8 do not (s01 and s02 in default / minify / encryptstrings / flatten: the compiled program prints a wrong list of primes and nil where the original prints booleans), antitamper stops no run within 15 s, constants and all fail with \"attempt to call field ?\" (a nil value), and s06 / s08 are rejected by the runtime. None of these is counted against the engine",
+     "evidence": "tests/corpus/obfuscated/zartha/manifest.json (behaviors, 2026-11-13 run)"
     }
    ],
    "assumptions": [
@@ -3433,10 +9505,42 @@
        "fidelityBefore": 0.038,
        "fidelityAfter": 0.038,
        "confidence": 0.194,
-       "behaviourChecked": 8,
+       "behaviourChecked": 2,
        "behaviourSame": 2,
        "unparsed": 0,
-       "status": "unsupported"
+       "status": "unsupported",
+       "categories": {
+        "identification": {
+         "detected": 8,
+         "of": 8
+        },
+        "structure": {
+         "before": 0.057,
+         "after": 0.057
+        },
+        "semantic": {
+         "before": 0.038,
+         "after": 0.038
+        },
+        "runtime": {
+         "same": 2,
+         "judged": 2,
+         "notJudged": 6
+        },
+        "completeness": {
+         "complete": 0,
+         "of": 8,
+         "residual": {
+          "family:zenfus": 8
+         }
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 398,
+         "msMax": 812,
+         "failures": 0
+        }
+       }
       }
      ],
      "summary": {
@@ -3481,60 +9585,180 @@
       "toolOutputDiverged": 0
      },
      "fidelityBefore": 0.43,
-     "fidelityAfter": 0.755,
+     "fidelityAfter": 0.888,
      "configs": [
       {
        "config": "level-0",
        "samples": 6,
        "detected": 6,
        "fidelityBefore": 0.504,
-       "fidelityAfter": 0.778,
-       "confidence": 0.742,
-       "behaviourChecked": 5,
+       "fidelityAfter": 0.888,
+       "confidence": 0.75,
+       "behaviourChecked": 4,
        "behaviourSame": 4,
        "unparsed": 1,
-       "status": "partial"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 6,
+         "of": 6
+        },
+        "structure": {
+         "before": 0.663,
+         "after": 0.925
+        },
+        "semantic": {
+         "before": 0.504,
+         "after": 0.888
+        },
+        "runtime": {
+         "same": 4,
+         "judged": 4,
+         "notJudged": 2
+        },
+        "completeness": {
+         "complete": 5,
+         "of": 5,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 18,
+         "msMax": 29,
+         "failures": 1
+        }
+       }
       },
       {
        "config": "level-1",
        "samples": 6,
        "detected": 6,
        "fidelityBefore": 0.407,
-       "fidelityAfter": 0.748,
+       "fidelityAfter": 0.888,
        "confidence": 0.75,
-       "behaviourChecked": 5,
+       "behaviourChecked": 4,
        "behaviourSame": 4,
        "unparsed": 1,
-       "status": "partial"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 6,
+         "of": 6
+        },
+        "structure": {
+         "before": 0.626,
+         "after": 0.925
+        },
+        "semantic": {
+         "before": 0.407,
+         "after": 0.888
+        },
+        "runtime": {
+         "same": 4,
+         "judged": 4,
+         "notJudged": 2
+        },
+        "completeness": {
+         "complete": 5,
+         "of": 5,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 19,
+         "msMax": 32,
+         "failures": 1
+        }
+       }
       },
       {
        "config": "level-2",
        "samples": 6,
        "detected": 6,
        "fidelityBefore": 0.409,
-       "fidelityAfter": 0.747,
+       "fidelityAfter": 0.888,
        "confidence": 0.75,
-       "behaviourChecked": 5,
+       "behaviourChecked": 4,
        "behaviourSame": 4,
        "unparsed": 1,
-       "status": "partial"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 6,
+         "of": 6
+        },
+        "structure": {
+         "before": 0.628,
+         "after": 0.925
+        },
+        "semantic": {
+         "before": 0.409,
+         "after": 0.888
+        },
+        "runtime": {
+         "same": 4,
+         "judged": 4,
+         "notJudged": 2
+        },
+        "completeness": {
+         "complete": 5,
+         "of": 5,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 18,
+         "msMax": 35,
+         "failures": 1
+        }
+       }
       },
       {
        "config": "level-3",
        "samples": 6,
        "detected": 6,
        "fidelityBefore": 0.401,
-       "fidelityAfter": 0.746,
-       "confidence": 0.725,
-       "behaviourChecked": 5,
+       "fidelityAfter": 0.888,
+       "confidence": 0.75,
+       "behaviourChecked": 4,
        "behaviourSame": 4,
        "unparsed": 1,
-       "status": "partial"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 6,
+         "of": 6
+        },
+        "structure": {
+         "before": 0.616,
+         "after": 0.925
+        },
+        "semantic": {
+         "before": 0.401,
+         "after": 0.888
+        },
+        "runtime": {
+         "same": 4,
+         "judged": 4,
+         "notJudged": 2
+        },
+        "completeness": {
+         "complete": 5,
+         "of": 5,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 31,
+         "msMax": 46,
+         "failures": 1
+        }
+       }
       }
      ],
      "summary": {
-      "verified": 0,
-      "partial": 4,
+      "verified": 4,
+      "partial": 0,
       "unsupported": 0
      }
     },
@@ -3557,60 +9781,180 @@
       "toolOutputDiverged": 0
      },
      "fidelityBefore": 0.43,
-     "fidelityAfter": 0.755,
+     "fidelityAfter": 0.888,
      "configs": [
       {
        "config": "level-0",
        "samples": 6,
        "detected": 6,
        "fidelityBefore": 0.504,
-       "fidelityAfter": 0.778,
-       "confidence": 0.742,
-       "behaviourChecked": 5,
+       "fidelityAfter": 0.888,
+       "confidence": 0.75,
+       "behaviourChecked": 4,
        "behaviourSame": 4,
        "unparsed": 1,
-       "status": "partial"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 6,
+         "of": 6
+        },
+        "structure": {
+         "before": 0.663,
+         "after": 0.925
+        },
+        "semantic": {
+         "before": 0.504,
+         "after": 0.888
+        },
+        "runtime": {
+         "same": 4,
+         "judged": 4,
+         "notJudged": 2
+        },
+        "completeness": {
+         "complete": 5,
+         "of": 5,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 13,
+         "msMax": 21,
+         "failures": 1
+        }
+       }
       },
       {
        "config": "level-1",
        "samples": 6,
        "detected": 6,
        "fidelityBefore": 0.407,
-       "fidelityAfter": 0.748,
+       "fidelityAfter": 0.888,
        "confidence": 0.75,
-       "behaviourChecked": 5,
+       "behaviourChecked": 4,
        "behaviourSame": 4,
        "unparsed": 1,
-       "status": "partial"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 6,
+         "of": 6
+        },
+        "structure": {
+         "before": 0.626,
+         "after": 0.925
+        },
+        "semantic": {
+         "before": 0.407,
+         "after": 0.888
+        },
+        "runtime": {
+         "same": 4,
+         "judged": 4,
+         "notJudged": 2
+        },
+        "completeness": {
+         "complete": 5,
+         "of": 5,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 15,
+         "msMax": 25,
+         "failures": 1
+        }
+       }
       },
       {
        "config": "level-2",
        "samples": 6,
        "detected": 6,
        "fidelityBefore": 0.409,
-       "fidelityAfter": 0.747,
+       "fidelityAfter": 0.888,
        "confidence": 0.75,
-       "behaviourChecked": 5,
+       "behaviourChecked": 4,
        "behaviourSame": 4,
        "unparsed": 1,
-       "status": "partial"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 6,
+         "of": 6
+        },
+        "structure": {
+         "before": 0.628,
+         "after": 0.925
+        },
+        "semantic": {
+         "before": 0.409,
+         "after": 0.888
+        },
+        "runtime": {
+         "same": 4,
+         "judged": 4,
+         "notJudged": 2
+        },
+        "completeness": {
+         "complete": 5,
+         "of": 5,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 15,
+         "msMax": 24,
+         "failures": 1
+        }
+       }
       },
       {
        "config": "level-3",
        "samples": 6,
        "detected": 6,
        "fidelityBefore": 0.401,
-       "fidelityAfter": 0.746,
-       "confidence": 0.725,
-       "behaviourChecked": 5,
+       "fidelityAfter": 0.888,
+       "confidence": 0.75,
+       "behaviourChecked": 4,
        "behaviourSame": 4,
        "unparsed": 1,
-       "status": "partial"
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 6,
+         "of": 6
+        },
+        "structure": {
+         "before": 0.616,
+         "after": 0.925
+        },
+        "semantic": {
+         "before": 0.401,
+         "after": 0.888
+        },
+        "runtime": {
+         "same": 4,
+         "judged": 4,
+         "notJudged": 2
+        },
+        "completeness": {
+         "complete": 5,
+         "of": 5,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 27,
+         "msMax": 41,
+         "failures": 1
+        }
+       }
       }
      ],
      "summary": {
-      "verified": 0,
-      "partial": 4,
+      "verified": 4,
+      "partial": 0,
       "unsupported": 0
      }
     }
@@ -3674,7 +10018,7 @@
    "assumptions": [
     "The tool was written for Garry's Mod; Roblox-style samples are outside what it was made for"
    ],
-   "support": "experimental"
+   "support": "verified"
   },
   {
    "id": "luarmor",
@@ -3933,7 +10277,13 @@
    "id": "ix-vm-families",
    "item": "Per-build bytecode VMs (Obscura VM, Zartha, FusGato, IronBrikked, RealObfuscator vm)",
    "state": "identified, not recovered",
-   "detail": "each is flagged unrecoverable so that the report cannot say 'recovered'; none has a lifter"
+   "detail": "each is flagged unrecoverable so that the report cannot say \"recovered\"; none has a lifter. Since Prompt X the Obscura VM (all three revisions, plain and hardened) has a profile of its data (functions, instruction bytes, decrypted constants; on all 39 Obscura VM fixtures every string of two or more characters of the original program is among the constants read: recall 1.00, `categories.vmConstants` in the database), shown in the report as NOT lifted"
+  },
+  {
+   "id": "x-vm-lifter",
+   "item": "A lifter that rebuilds source from Obscura VM bytecode",
+   "state": "not started",
+   "detail": "the profile reads the data; a lifter additionally needs the per-build opcode aliases and shuffled operand layouts read from the generated interpreter (they differ in every build), the rolling-XOR bytecode decode, and the hardened record keys. Zartha, FusGato and IronBrikked need the same three things for their own formats. Blocked by scope, not by a missing permission"
   }
  ]
 }

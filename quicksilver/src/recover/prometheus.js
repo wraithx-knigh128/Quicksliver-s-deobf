@@ -23,17 +23,109 @@ function isAntiTamperBlock(stmt) {
   return marker;
 }
 
+// A tool derived from Prometheus keeps the message ("Tamper Detected!") and the idea (random calls whose error messages carry line numbers, checked against each other) but
+// writes the block differently (no leading string, no numeric loop in front). The block is then recognised by what it does, not by how this version writes it: it holds the
+// marker message, and it depends on nothing outside itself except standard globals (and globals nothing outside reads), so with the script untouched it changes nothing.
+const GUARD_STD = new Set(['pcall', 'error', 'math', 'string', 'table', 'tostring', 'tonumber', 'select', 'unpack', 'setmetatable', 'getmetatable', 'rawget', 'rawset', 'type', 'assert', 'ipairs', 'pairs', 'next']);
+
+function isSelfContainedGuard(stmt, info) {
+  if (stmt.type !== 'Do' || stmt.body.length < 3) return false;
+  let marker = false;
+  const ids = new Set();
+  const names = new Set();
+  walk(stmt, (n) => {
+    if (n.type === 'String' && n.value === 'Tamper Detected!') marker = true;
+    if (n.type === 'Id') ids.add(n);
+    if (n.type === 'Name') names.add(n);
+  });
+  if (!marker) return false;
+  for (const n of names) {
+    const v = info.varOf.get(n);
+    if (!v) return false;
+    if (v.isGlobal) {
+      if (GUARD_STD.has(v.name)) continue;
+      if ([...v.reads, ...v.writes].every((m) => names.has(m))) continue;      // a global only this block touches (the loop that never ends writes two)
+      return false;
+    }
+    if (!ids.has(v.decl)) return false;                                      // a local of the program: the block reads the program's state
+  }
+  return true;
+}
+
 export function removeAntiTamper(chunk) {
   let removed = 0;
+  const info = analyze(chunk);
+  const isGuard = (s) => isAntiTamperBlock(s) || isSelfContainedGuard(s, info);
   transform(chunk, {
     block(stmts) {
-      if (!stmts.some(isAntiTamperBlock)) return undefined;
-      const out = stmts.filter((s) => !isAntiTamperBlock(s));
+      if (!stmts.some(isGuard)) return undefined;
+      const out = stmts.filter((s) => !isGuard(s));
       removed += stmts.length - out.length;
       return out;
     },
   });
   return { changed: removed };
+}
+
+/**
+ * The same guard after a compiler has taken the `do` block apart (Vmify compiles the guard together with the program, and the rebuilt text has the guard's statements at the
+ * top of the chunk and the rest of the program under one `if flag then ... end`):
+ *
+ *   local flag = true  ...statements that only decide `flag` (the marker message among them)...  flag = flag and <check> ...  if flag then PROGRAM end
+ *
+ * With the script untouched every check passes, so the program is PROGRAM. Whatever follows the `if` is the failure path (a loop that never ends), reached only when PROGRAM has
+ * returned, which it does when the check failed. This is taken only when the statements from `local flag = true` to the `if` hold the marker, write `flag` only as
+ * `flag = flag and ...`, and when nothing they declare is used by the program: nothing outside the guard can notice that it is gone.
+ */
+export function removeGuardFlag(chunk) {
+  const body = chunk.body;
+  let at = -1;
+  for (let i = body.length - 1; i >= 0; i--) {
+    const s = body[i];
+    if (s.type === 'If' && s.clauses.length === 1 && !s.orelse && s.clauses[0].cond.type === 'Name') { at = i; break; }
+  }
+  if (at < 0) return { changed: 0 };
+  const info = analyze(chunk);
+  const test = body[at].clauses[0].cond;
+  const flag = info.varOf.get(test);
+  if (!flag || flag.isGlobal || !flag.init || flag.init.type !== 'True') return { changed: 0 };
+  const from = body.findIndex((s) => s.type === 'Local' && s.ids.length === 1 && info.varOf.get(s.ids[0]) === flag);
+  if (from < 0 || from >= at) return { changed: 0 };
+  // after the `if`: nothing (the rest of the program was inside it), or the failure path, which is only reached when the program under `if` has returned (it ends in a bare `return`)
+  const inner = body[at].clauses[0].body;
+  const tail = body.slice(at + 1);
+  const last = inner[inner.length - 1];
+  const returns = !!last && last.type === 'Return' && last.values.length === 0;
+  if (tail.length && !returns) return { changed: 0 };
+  const segment = [...body.slice(from, at), ...tail];
+  const names = new Set();
+  const ids = new Set();
+  let marker = false;
+  for (const st of segment) walk(st, (n) => { if (n.type === 'Name') names.add(n); if (n.type === 'Id') ids.add(n); if (n.type === 'String' && n.value === 'Tamper Detected!') marker = true; });
+  if (!marker) return { changed: 0 };
+  // `flag` is written only as `flag = flag and X`
+  let writesOk = true;
+  for (const st of segment) walk(st, (n) => {
+    if (n.type === 'Assign' && n.targets.some((t) => t.type === 'Name' && info.varOf.get(t) === flag)) {
+      const v = n.values[0];
+      const ok = n.targets.length === 1 && n.values.length === 1 && v.type === 'Binary' && v.op === 'and' && v.left.type === 'Name' && info.varOf.get(v.left) === flag;
+      if (!ok) writesOk = false;
+    }
+  });
+  if (!writesOk) return { changed: 0 };
+  // nothing declared in the segment is used outside it, and the segment depends on nothing of the program
+  for (const v of info.vars) {
+    if (!ids.has(v.decl)) continue;
+    if ([...v.reads, ...v.writes].some((m) => !names.has(m) && m !== test)) return { changed: 0 };
+  }
+  for (const n of names) {
+    const v = info.varOf.get(n);
+    if (!v) return { changed: 0 };
+    if (v.isGlobal) { if (!GUARD_STD.has(v.name) && [...v.reads, ...v.writes].some((m) => !names.has(m))) return { changed: 0 }; continue; }
+    if (!ids.has(v.decl)) return { changed: 0 };
+  }
+  chunk.body = [...body.slice(0, from), ...(returns ? inner.slice(0, -1) : inner)];
+  return { changed: segment.length + 1 };
 }
 
 // ---- ProxifyLocals ------------------------------------------------------------------------------------
@@ -87,16 +179,43 @@ export function undoProxifyLocals(chunk) {
       isSet = !!(fv && fv.init && fv.writes.length === 0 && fv.init.type === 'Name' && fv.init.name === 'setmetatable');
     }
     if (!isSet) return;
-    const [data, meta] = call.args;
-    if (data.type !== 'Table' || data.fields.length !== 1 || data.fields[0].kind !== 'named') return;
-    if (meta.type !== 'Table' || meta.fields.length !== 2 || !meta.fields.every((f) => f.kind === 'named' && OP_OF_META[f.key])) return;
-    const key = data.fields[0].key;
-    const roles = meta.fields.map((f) => ({ meta: f.key, role: proxyAccessor(f.value, key) }));
+    // a tool derived from this one declares the table and the accessors apart (`local t = { K = f }`, `local function get(r, q) ... end`, `setmetatable(t, { __sub = get, ... })`):
+    // a name bound once to a value stands for that value
+    const through = (e) => {
+      let x = e;
+      for (let i = 0; i < 3 && x.type === 'Name'; i++) {
+        const v = info.varOf.get(x);
+        if (!v || v.isGlobal || v.writes.length || !v.init) break;
+        x = v.init;
+      }
+      return x;
+    };
+    // `{ K = v }` and `{ ["K"] = v }` are the same field: a decoded name is a string constant, which is written the second way until the printer chooses
+    const fieldName = (f) => (f.kind === 'named' ? f.key : f.kind === 'keyed' && f.key.type === 'String' ? f.key.value : null);
+    const data = through(call.args[0]);
+    const meta = through(call.args[1]);
+    if (data.type !== 'Table' || data.fields.length !== 1 || fieldName(data.fields[0]) === null) return;
+    if (meta.type !== 'Table' || meta.fields.length !== 2 || !meta.fields.every((f) => OP_OF_META[fieldName(f)])) return;
+    const key = fieldName(data.fields[0]);
+    const roles = meta.fields.map((f) => ({ meta: fieldName(f), role: proxyAccessor(through(f.value), key) }));
     const set = roles.find((r) => r.role === 'set');
     const get = roles.find((r) => r.role === 'get');
     if (!set || !get) return;
     proxies.set(info.varOf.get(n.ids[0]), { key, get: OP_OF_META[get.meta], set: OP_OF_META[set.meta], declStmt: n, init: data.fields[0].value });
   });
+  // A proxy is undone only when every use of its variable is one this pass rewrites. A copy of the proxy (`local q = P`, which a rebuilt program makes for a register) or a use as an
+  // argument would be left reading a table whose declaration is gone, and the program would no longer run.
+  const unsafe = new Set();
+  walk(chunk, (n, parent) => {
+    if (n.type !== 'Name') return;
+    const v = info.varOf.get(n);
+    const p = v && proxies.get(v);
+    if (!p) return;
+    const asOperand = parent && parent.type === 'Binary' && parent.left === n && (parent.op === p.get || parent.op === p.set);
+    const asIndex = parent && parent.type === 'Index' && parent.obj === n && (p.get === 'index' || p.set === 'index' || (parent.key.type === 'String' && parent.key.value === p.key));
+    if (!asOperand && !asIndex) unsafe.add(v);
+  });
+  for (const v of unsafe) proxies.delete(v);
   if (!proxies.size) return { changed: 0 };
 
   // A read `P <get> literal` becomes the bare name `P`. That name stands for the proxy's *value*, not the proxy,

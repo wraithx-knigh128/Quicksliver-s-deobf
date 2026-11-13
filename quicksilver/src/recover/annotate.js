@@ -35,11 +35,25 @@ function wrap(text, first, rest) {
 
 const plural = (n, one, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 
+/** What the virtual machine's data holds, in the words of what was measured. It is a profile, not a lifted program, and the lines say so. */
+function describeVm(vm) {
+  const lines = [];
+  const fns = vm.functions || [];
+  const bits = [];
+  if (fns.length) bits.push(`${plural(fns.length, 'function')} with ${plural(vm.instructionBytes, 'byte')} of instructions`);
+  if (vm.constants) bits.push(`${plural(vm.constants.length, 'constant')} read${vm.hardened ? ' from the keyed function records' : ''}`);
+  lines.push(...wrap(`Virtual machine, NOT lifted back to source (profile of its data${vm.hardened ? ', hardened build' : ''}): ${bits.join('; ') || 'the data was found'}. Control flow, locals and expressions are not recovered.`, '-- ', '--   '));
+  const shown = (vm.strings || []).filter((x) => x.length >= 3).slice(0, 8).map((x) => JSON.stringify(x.length > 40 ? `${x.slice(0, 37)}...` : x));
+  if (shown.length) lines.push(...wrap(`Constants it uses: ${shown.join(', ')}.`, '--   ', '--     '));
+  if (vm.note) lines.push(...wrap(vm.note, '--   ', '--     '));
+  return lines;
+}
+
 /**
- * @param {{detection: object, steps: object[], confidence: object, adaptive: object|null}} run
+ * @param {{detection: object, steps: object[], confidence: object, adaptive: object|null, vm?: object|null}} run
  * @returns {{show: boolean, label: string, level: string, lines: string[], unresolved: object[], applied: object[], notApplied: object[]}}
  */
-export function buildReport({ detection, steps, confidence, adaptive }) {
+export function buildReport({ detection, steps, confidence, adaptive, vm = null }) {
   const level = confidence.level || 'none';
   const unresolved = [];
   for (const r of confidence.reasons || []) if (r.effect < 0) unresolved.push({ source: 'confidence', text: r.text });
@@ -67,7 +81,7 @@ export function buildReport({ detection, steps, confidence, adaptive }) {
     .filter((s) => s.status === 'skipped' || s.status === 'failed')
     .map((s) => ({ id: s.id, label: s.label, status: s.status, why: s.detail && typeof s.detail === 'string' ? s.detail : s.error || '' }));
 
-  const show = level !== 'high' || unresolved.length > 0;
+  const show = level !== 'high' || unresolved.length > 0 || !!vm;
   const families = (detection.families || []).filter((f) => f.confidence >= 0.5);
 
   const lines = [START];
@@ -88,6 +102,7 @@ export function buildReport({ detection, steps, confidence, adaptive }) {
   if (notApplied.length) {
     lines.push(...wrap(`Not done: ${notApplied.slice(0, 5).map((s) => `${s.id}${s.why ? ` (${String(s.why).slice(0, 80)})` : ''}`).join('; ')}.`, '-- ', '--   '));
   }
+  if (vm) lines.push(...describeVm(vm));
   if (unresolved.length) {
     lines.push('-- Left unresolved:');
     for (const u of unresolved.slice(0, 6)) lines.push(...wrap(`* ${u.text}`, '--   ', '--     '));

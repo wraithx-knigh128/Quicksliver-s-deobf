@@ -118,7 +118,23 @@ function evaluateOnce(chunk, ctx = {}) {
 
   // A top-level statement can be run in the sandbox if all it needs is standard globals and
   // other runnable top-level definitions.
-  const foreignGlobal = (s) => [...refsOf(s).globals].find((g) => !STDLIB_GLOBALS.has(g)) || null;
+  // The environment table under any name (`_G`, `_ENV`, `local env = getfenv()`): reading a field of it by a name that is not a standard global (`env["game"]`) yields the host's
+  // value, which nothing here knows, so such a read is never a closed expression (it used to be, and the statement that holds it was run outside any protection).
+  const isEnvName = (e) => {
+    const x = e.type === 'Paren' ? e.expr : e;
+    if (x.type !== 'Name') return false;
+    const v = info.varOf.get(x);
+    if (!v) return false;
+    if (v.isGlobal) return x.name === '_G' || x.name === '_ENV';
+    const st = declOf.get(v);
+    if (!st || st.type !== 'Local') return false;
+    let hit = false;
+    walk(st, (n) => { if (n.type === 'Name' && (n.name === 'getfenv' || n.name === '_ENV' || n.name === '_G')) { const w = info.varOf.get(n); if (w && w.isGlobal) hit = true; } });
+    return hit;
+  };
+  // a statement that reads the host's value out of the environment table, or names a global that is not standard
+  const hostRead = (s) => { let hit = false; walk(s, (n) => { if (n.type === 'Index' && isEnvName(n.obj) && !(n.key.type === 'String' && STDLIB_GLOBALS.has(n.key.value))) hit = true; return hit ? false : undefined; }); return hit; };
+  const foreignGlobal = (s) => [...refsOf(s).globals].find((g) => !STDLIB_GLOBALS.has(g)) || (hostRead(s) ? '(a field of the environment table)' : null);
   const viable = new Set(declOf.keys());
   const settle = (consumers) => {
     for (let changed = true; changed;) {
@@ -163,7 +179,8 @@ function evaluateOnce(chunk, ctx = {}) {
       case 'Index': {
         const a = closed(e.obj);
         const b = e.key.type === 'String' ? { ok: true, call: false } : closed(e.key);
-        r = { ok: a.ok && b.ok, call: a.call || b.call };
+        const hostValue = isEnvName(e.obj) && !(e.key.type === 'String' && STDLIB_GLOBALS.has(e.key.value));
+        r = { ok: a.ok && b.ok && !hostValue, call: a.call || b.call };
         break;
       }
       case 'Call': {
@@ -291,20 +308,12 @@ function evaluateOnce(chunk, ctx = {}) {
   };
   // the environment table (`local env = getfenv and getfenv() or _ENV`) is indexed with decoded names all over a program, but a
   // lookup in it yields a function: never a decoder result, and not a table whose state the slice has to reproduce
-  const envLike = (e) => {
-    const x = e.type === 'Paren' ? e.expr : e;
-    if (x.type !== 'Name') return false;
-    const v = info.varOf.get(x);
-    const st = v && declOf.get(v);
-    if (!st || st.type !== 'Local') return false;
-    let hit = false;
-    walk(st, (n) => { if (n.type === 'Name' && (n.name === 'getfenv' || n.name === '_ENV' || n.name === '_G')) { const w = info.varOf.get(n); if (w && w.isGlobal) hit = true; } });
-    return hit;
-  };
+  const envLike = (e) => isEnvName(e);
   const noCall = (e) => { const c = closed(e); return c.ok && !c.call && !envLike(e); };
   const unparen = (e) => (e.type === 'Paren' ? unparen(e.expr) : e);
   sites = [];
   owner = new Map();
+  const keyOf = new Map();      // decoder call used as a key -> the lookup around it (a fallback site: replaced only when the lookup itself is not and the call returns text)
   const late = new Set();       // sites inside a function body: they run when the function is called, after the set-up
   for (const stmt of top) {
     const visit = (e, inFunc = false) => {
@@ -312,7 +321,12 @@ function evaluateOnce(chunk, ctx = {}) {
       let hit = false;
       if (!ctx.keysOnly && e.type === 'Index' && e.key.type !== 'String' && isDecoderCall(unparen(e.key)) && noCall(e.obj)) hit = true;
       else if (isDecoderCall(e)) hit = true;
-      if (hit) { sites.push(e); owner.set(e, stmt); if (inFunc) late.add(e); return; }
+      if (hit) {
+        sites.push(e); owner.set(e, stmt); if (inFunc) late.add(e);
+        // `t[decode("name")]`: when the lookup itself cannot be replaced (a table of numbers, a function), the decoded key still can be
+        if (e.type === 'Index') { const k = unparen(e.key); if (isDecoderCall(k)) { sites.push(k); owner.set(k, stmt); keyOf.set(k, e); if (inFunc) late.add(k); } }
+        return;
+      }
       forEachChild(e, (c) => visit(c, inFunc || e.type === 'Func'));
     };
     visit(stmt);
@@ -454,6 +468,7 @@ function evaluateOnce(chunk, ctx = {}) {
   const perDecoder = new Map(); // Var -> { strings, others }
   const decoderOf = (e) => { let found = null; walk(e, (n) => { if (!found && n.type === 'Call' && n.fn.type === 'Name' && decoders.has(info.varOf.get(n.fn))) found = info.varOf.get(n.fn); }); return found; };
   const candidates = [];
+  const fallbacks = [];
   const byteArgs = new Set();
   walk(chunk, (n) => {
     if (n.type === 'Call' && n.fn.type === 'Index' && n.fn.obj.type === 'Name' && n.fn.obj.name === 'string' && n.fn.key.type === 'String' && n.fn.key.value === 'char'
@@ -463,6 +478,7 @@ function evaluateOnce(chunk, ctx = {}) {
     const a = table.get(ids.get(e));
     const b = table.get(ids.get(e) + n);
     if (unresolved.has(ids.get(e)) || !single(a) || !single(b) || a.get(2) !== b.get(2) || !usable(a.get(2))) { result.rejected++; continue; }
+    if (keyOf.has(e)) { if (typeof a.get(2) === 'string') fallbacks.push([e, a.get(2)]); continue; }
     const v = decoderOf(e);
     const tally = perDecoder.get(v) || { strings: 0, others: 0 };
     // a byte decoder (`string.char(d(19))`, `d(n)` = n xor key) returns numbers, and what it decodes is the text those make
@@ -480,6 +496,7 @@ function evaluateOnce(chunk, ctx = {}) {
     else if (!stringy) result.notDecoder = (result.notDecoder || 0) + 1; // mostly numbers: the program's own helper, not a decoder that failed
     else result.rejected++;
   }
+  for (const [k, value] of fallbacks) if (!accepted.has(keyOf.get(k))) accepted.set(k, value);
   if (accepted.size) {
     transform(chunk, { expr(e) { return accepted.has(e) ? makeConst(accepted.get(e)) : undefined; } });
     // a decoder called only for its side effect leaves a constant where the statement was; nothing is left to run

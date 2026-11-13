@@ -73,9 +73,16 @@ test('oracle: errors are reported with the runtime\'s own message, not swallowed
 });
 
 test('oracle: the program gets no files, no processes and no packages', { skip: need('lua51') }, async () => {
-  const r = await oracle().run('lua51', 'print(io, os.execute, os.remove, package, require, loadfile, dofile, io and io.open)');
+  const r = await oracle().run('lua51', 'print(io, os.execute, os.remove, package, require, io and io.open)');
   assert.equal(r.ok, true);
-  assert.equal(r.stdout.trim(), 'nil\tnil\tnil\tnil\tnil\tnil\tnil\tnil');
+  assert.equal(r.stdout.trim(), 'nil\tnil\tnil\tnil\tnil\tnil');
+  // `loadfile`, `dofile` and `os.exit` are present but inert (an integrity check that only asks whether they are functions, as Hercules' anti-tamper does, must find them): a call reads no file and ends nothing
+  const inert = await oracle().run('lua51', 'print(type(loadfile), type(dofile), type(os.exit)); print(pcall(loadfile, "/etc/passwd")); print(pcall(dofile, "/etc/passwd")); print(pcall(os.exit, 3)); print("still running")');
+  assert.equal(inert.ok, true);
+  const lines = inert.stdout.trim().split('\n');
+  assert.equal(lines[0], 'function\tfunction\tfunction');
+  for (const l of lines.slice(1, 4)) assert.match(l, /^false\t.*is disabled in the isolated runner/);
+  assert.equal(lines[4], 'still running');
 });
 
 test('oracle: an infinite loop is stopped, and the oracle is usable afterwards', { skip: need('lua51'), timeout: 60_000 }, async () => {

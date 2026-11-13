@@ -36,6 +36,9 @@ until the person edits the text.
      and tidies them (`recover/cfg-opt.js`, `moonveil-idioms.js`); `assemble.js` structures the graph (`decompile/cfg.js`), names registers by nesting depth, and writes closures in place (child prototypes as nested functions, natives from their factories by `natives.js`). Progress is reported by instruction.
      Speed: an instruction is lifted once per kind (its op and fields, and the following words if its handler reads them) at a program counter no function has, and every other one like it is that result with the places it can go to moved (`lift.js`); an instruction that only goes on to another is not a block at all. The liveness the clean-up passes ask for is a bit-set over the names a graph mentions (`cfg-opt.js`), statements keep their identity when nothing in them changed so what is known about them is kept, handlers that rewrite the program are run against the real row and the changes are read off the tables, and the key search tries the combination the program's own use of its constants points to first. The result is the same as lifting every instruction (`reuseInstructions: false`), which a test compares.
      It reads only the file's own data and code: no environment probe is evaluated and no script code is run. The key search is bounded; when it finds nothing, or any part of the interpreter does not have the shape the reader knows, `VmUnsupported` says which and the general passes take over.
+   * **VM profile** (`recover/vmprofile.js`, read before any pass touches the tree): a script that keeps its program as bytecode for a generated interpreter (Obscura's VM, all revisions) is **not lifted**, but its data is read: the function records
+     (instruction bytes, parameters, registers) and, in the sandbox, the constants, by running only the statements that set them up (never the interpreter). The hardened build keeps constants in keyed per-function records opened by a function that
+     takes the record, after a loop that salts each record with the hash of its code; the set-up includes that loop. The result is `r.vm`, the report header ("NOT lifted") and the inspector section; it is a profile, never a recovery;
 4. **Generic passes**, repeated until nothing changes or the round limit is reached: constant folding, simplification and dead-code removal, dataflow (copy propagation, dead stores, temporaries), idiom recovery
    (multi-results, `for` loops, short-circuit forms), renaming of machine-made names, and **decoder evaluation**.
 5. **Decoder evaluation** (`passes/evaluate.js`), only when the sandbox is switched on: calls to a decoder (`decode(12)`, `list[n + 52430]`) with constant arguments are evaluated together with the slice of top-level code the decoder depends on, in
@@ -44,6 +47,9 @@ until the person edits the text.
    (`numMode: 'watch'`), and when there are any it runs the slice again with exact integers (`'int64'`, BigInt only where a result leaves the range doubles hold). Where the two agree nothing is decided; where they differ the reading that
    produces text is kept (`sandbox/numeric.js`), and if neither does the sites are left alone and the step says so. The trace does the same for a whole script.
 6. **Validate and score** (`recover/confidence.js`): the output must parse; confidence is derived from what is still visible in the output (leftover decoders, VM shapes), not from how many passes ran.
+
+**Measuring** (not a pipeline step) (`core/metrics.js`, used by the scorecard, the database and the dashboard, not by the recovery itself): identification, structure (F1 of the parent>child node-type edges), semantic fidelity, runtime equivalence, completeness
+   (`residualIndicators`: the detector finds nothing in the output, a leftover VM included, and the report lists nothing unresolved) and stability, each with one definition (`METHODS`), never averaged into one number.
 
 ## The adaptive engine (`src/adaptive/`)
 

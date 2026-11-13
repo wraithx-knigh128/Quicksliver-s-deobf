@@ -89,10 +89,10 @@
       "status": "ok",
       "bytes": 4719,
       "behaviors": {
-        "lua51": "errored",
-        "lua54": "errored"
+        "lua51": "equivalent",
+        "lua54": "equivalent"
       },
-      "behavior": "errored",
+      "behavior": "equivalent",
       "behaviorError": "sample:18: Tamper Detected! Reason: Critical function removed: os.exit"
     },
     {
@@ -278,10 +278,10 @@
       "status": "ok",
       "bytes": 5146,
       "behaviors": {
-        "lua51": "errored",
-        "lua54": "errored"
+        "lua51": "equivalent",
+        "lua54": "equivalent"
       },
-      "behavior": "errored",
+      "behavior": "equivalent",
       "behaviorError": "sample:18: Tamper Detected! Reason: Critical function removed: loadfile"
     },
     {
@@ -467,10 +467,10 @@
       "status": "ok",
       "bytes": 4706,
       "behaviors": {
-        "lua51": "errored",
-        "lua54": "errored"
+        "lua51": "equivalent",
+        "lua54": "equivalent"
       },
-      "behavior": "errored",
+      "behavior": "equivalent",
       "behaviorError": "sample:18: Tamper Detected! Reason: Critical function removed: os.exit"
     },
     {
@@ -656,10 +656,10 @@
       "status": "ok",
       "bytes": 5294,
       "behaviors": {
-        "lua51": "errored",
-        "lua54": "errored"
+        "lua51": "equivalent",
+        "lua54": "equivalent"
       },
-      "behavior": "errored",
+      "behavior": "equivalent",
       "behaviorError": "sample:18: Tamper Detected! Reason: Critical function removed: dofile"
     },
     {
@@ -846,10 +846,10 @@
       "status": "ok",
       "bytes": 5159,
       "behaviors": {
-        "lua51": "errored",
-        "lua54": "errored"
+        "lua51": "equivalent",
+        "lua54": "equivalent"
       },
-      "behavior": "errored",
+      "behavior": "equivalent",
       "behaviorError": "sample:18: Tamper Detected! Reason: Critical function removed: os.exit"
     },
     {
@@ -1037,10 +1037,10 @@
       "status": "ok",
       "bytes": 5902,
       "behaviors": {
-        "lua51": "errored",
-        "lua54": "errored"
+        "lua51": "equivalent",
+        "lua54": "equivalent"
       },
-      "behavior": "errored",
+      "behavior": "equivalent",
       "behaviorError": "sample:18: Tamper Detected! Reason: Critical function removed: dofile"
     },
     {
@@ -1229,10 +1229,10 @@
       "status": "ok",
       "bytes": 4871,
       "behaviors": {
-        "lua51": "errored",
-        "lua54": "errored"
+        "lua51": "equivalent",
+        "lua54": "equivalent"
       },
-      "behavior": "errored",
+      "behavior": "equivalent",
       "behaviorError": "sample:18: Tamper Detected! Reason: Critical function removed: os.exit"
     },
     {

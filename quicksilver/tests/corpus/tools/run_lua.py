@@ -23,7 +23,38 @@ import os
 import sys
 
 # lua52 is here for its bit32, which Luau scripts (Clyde's output, for one) expect and Lua 5.1 / LuaJIT / 5.4 do not have
-RUNTIMES = {"luau": None, "lua51": "lupa.lua51", "lua52": "lupa.lua52", "lua53": "lupa.lua53", "luajit": "lupa.luajit21", "lua54": "lupa.lua54", "lua54c": "lupa.lua54"}
+RUNTIMES = {"luau": None, "lua51": "lupa.lua51", "lua51b": "lupa.lua51", "lua52": "lupa.lua52", "lua53": "lupa.lua53", "luajit": "lupa.luajit21", "lua54": "lupa.lua54", "lua54c": "lupa.lua54"}
+
+# "lua51b" = Lua 5.1 + a pure-Lua bit32 (Roblox's Lua 5.1 dialect has one; plain 5.1 does not). Output of tools that ask for `bit or bit32` needs it.
+POLYFILL_51B = r'''
+if not bit32 then
+  local M = 4294967296
+  local function bw(op, a, b)
+    a, b = a % M, b % M
+    local r, p = 0, 1
+    for _ = 1, 32 do
+      local x, y = a % 2, b % 2
+      if op(x, y) then r = r + p end
+      a, b, p = (a - x) / 2, (b - y) / 2, p * 2
+    end
+    return r
+  end
+  local function fold(op, ...)
+    local t = { ... }
+    local r = t[1] or 0
+    for i = 2, #t do r = bw(op, r, t[i]) end
+    return r
+  end
+  bit32 = {
+    bxor = function(...) return fold(function(x, y) return x ~= y end, ...) end,
+    band = function(...) return fold(function(x, y) return x == 1 and y == 1 end, ...) end,
+    bor = function(...) return fold(function(x, y) return x == 1 or y == 1 end, ...) end,
+    bnot = function(x) return M - 1 - (x % M) end,
+    lshift = function(x, n) if n < 0 or n >= 32 then return 0 end return ((x % M) * 2 ^ n) % M end,
+    rshift = function(x, n) if n < 0 or n >= 32 then return 0 end return math.floor((x % M) / 2 ^ n) end,
+  }
+end
+'''
 
 # "lua54c" = Lua 5.4 + the math.ldexp / math.frexp polyfills that Hercules' own CLI installs
 # (Lua 5.3+ dropped them unless built with LUA_COMPAT_MATHLIB). Some Hercules VM output needs them.
@@ -39,8 +70,12 @@ end
 HARNESS = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "mock_env.lua"), "rb").read().decode("utf-8")
 
 STRIP = r'''
-io = nil; package = nil; require = nil; dofile = nil; loadfile = nil
-if os then os.execute = nil; os.remove = nil; os.rename = nil; os.exit = nil; os.getenv = nil; os.tmpname = nil end
+io = nil; package = nil; require = nil
+if os then os.execute = nil; os.remove = nil; os.rename = nil; os.getenv = nil; os.tmpname = nil end
+-- Present but inert: an integrity check that only asks whether `os.exit`, `dofile` or `loadfile` are functions (Hercules' anti-tamper block does) must find them, while a call can do nothing.
+local function disabled(name) return function() error(name .. ' is disabled in the isolated runner', 2) end end
+dofile = disabled('dofile'); loadfile = disabled('loadfile')
+if os then os.exit = disabled('os.exit') end
 '''
 
 
@@ -131,6 +166,8 @@ def run(code, runtime="lua51", budget=20_000_000):
         rt.execute(HARNESS.encode("latin-1"))
         if runtime == "lua54c":
             rt.execute(POLYFILL_54C.encode("latin-1"))
+        if runtime == "lua51b":
+            rt.execute(POLYFILL_51B.encode("latin-1"))
         rt.execute(STRIP.encode("latin-1"))
         runner = rt.eval(RUNNER)
         ok, err = runner(to_bytes(code), budget)
