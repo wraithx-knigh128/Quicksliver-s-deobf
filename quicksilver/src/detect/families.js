@@ -93,6 +93,15 @@ export const FAMILIES = {
     techniques: ['credit string as the entry', 'opaque state loops', 'VM'],
     sources: ['https://github.com/vyxonq-dev/obfuscator-samples'],
   },
+  obscura: {
+    name: 'Obscura',
+    kind: 'open-source',
+    evidence: 'source',
+    maxConfidence: 0.97,
+    summary: 'Open-source (MIT) Luau obfuscator in Python (vo3pal). Output starts "--!nocheck / --!nolint / -- Obscura [seed or development]" (VM builds say "Obscura VM"). Layers: identifier renaming, string encryption, number expressions, control-flow flattening, opaque predicates, dead code, table indirection, anti-tamper (environment checks), and a VM with encrypted constants and rolling bytecode reads. Revisions 1.0.0, 1.0.1 and 1.1.0 were run in a sandbox.',
+    techniques: ['identifier renaming', 'string encryption', 'number expressions', 'control-flow flattening', 'opaque predicates', 'dead code', 'table indirection', 'anti-tamper', 'bytecode VM with encrypted constants'],
+    sources: ['https://github.com/vo3pal/obscura'],
+  },
   rbxlua: {
     name: 'RBXLuaObfuscator',
     kind: 'open-source',

@@ -294,6 +294,13 @@ const RULES = {
     rule('banner', 'banner', 0.97, (c) => { const m = /protected by Kirus obfuscator v?([0-9][0-9.]*)/i.exec(c.src); return m ? { text: `Kirus banner (v${m[1]})`, version: m[1] } : false; }),
     rule('vm-entry', 'structure', 0.9, (c) => c.facts && c.facts.kirusEntries > 0 && 'VM entry call setmetatable({...}, {}):name(bit32, string, table, math, type, error, pcall, getfenv, setfenv, tonumber)', true),
   ],
+  obscura: [
+    // the two header lines and the credit line every Obscura output starts with; the bracket holds the seed (a number) or "development"
+    rule('banner', 'banner', 0.97, (c) => { const m = /^--!nocheck\r?\n--!nolint\r?\n-- Obscura( VM)? \[([^\]\n]{1,24})\]/.exec(c.src.slice(0, 200)); return m ? { text: `Obscura header${m[1] ? ' (VM build)' : ''}, build ${m[2]}` } : false; }),
+    // the XOR fallback its VM and its string decoder carry, written the same way in every revision read
+    rule('bxor-fallback', 'structure', 0.8, (c) => c.src.includes('(bit32 and bit32.bxor) or (bit and bit.bxor) or (function() local function _x(a,b) local r,p=0,1 for _=1,8 do local ab,bb=a%2,b%2') && 'the bit32.bxor / bit.bxor / arithmetic fallback chain written on one line'),
+    rule('vm', 'structure', 0.9, (c) => /^--!nocheck\r?\n--!nolint\r?\n-- Obscura VM \[/.test(c.src.slice(0, 200)) && 'the VM build header: the program is bytecode for an interpreter generated into the script', true),
+  ],
   rbxlua: [
     rule('embedded-compiler', 'structure', 0.9, (c) => { const f = c.ast && findCharListLoader(c.ast); return f ? `the program is a list of ${f.items} one-character strings run by a Lua compiler the script carries (${f.keywords} of Lua's keywords in its lexer): no loadstring is called` : false; }),
   ],

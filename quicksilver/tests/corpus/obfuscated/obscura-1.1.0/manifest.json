@@ -1,0 +1,1020 @@
+{
+  "tool": "Obscura",
+  "version": "1.1.0",
+  "source": "https://github.com/vo3pal/obscura",
+  "sourceRevision": "5657a739fee56b342f3a0cfdd149144b2d3f6d79",
+  "revisionDate": "2026-10-08",
+  "note": "v1.1.0 (2026-10-08): --mode lightweight/rename/native/vm, rolling bytecode reads by default",
+  "runtime": "Python 3 + click, run in tests/corpus/tools/sandbox_run.py; the output is Luau",
+  "seed": 1337,
+  "entries": [
+    {
+      "file": "s01_minify_basic__level-1.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "level-1",
+      "flags": [
+        "--level",
+        "1"
+      ],
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 3601,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__level-2.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "level-2",
+      "flags": [
+        "--level",
+        "2"
+      ],
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 7857,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__level-3.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "level-3",
+      "flags": [
+        "--level",
+        "3"
+      ],
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 10548,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__lightweight.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "lightweight",
+      "flags": [
+        "--mode",
+        "lightweight"
+      ],
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 2752,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__rename.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "rename",
+      "flags": [
+        "--mode",
+        "rename"
+      ],
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 1182,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__native.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "native",
+      "flags": [
+        "--mode",
+        "native"
+      ],
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 10548,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__vm.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "vm",
+      "flags": [
+        "--vm"
+      ],
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 20932,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__vm-max.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "vm-max",
+      "flags": [
+        "--mode",
+        "vm"
+      ],
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 76581,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__vm-cached.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "vm-cached",
+      "flags": [
+        "--mode",
+        "vm",
+        "--vm-cached"
+      ],
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 51599,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__level-1.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "level-1",
+      "flags": [
+        "--level",
+        "1"
+      ],
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 3944,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__level-2.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "level-2",
+      "flags": [
+        "--level",
+        "2"
+      ],
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 10317,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__level-3.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "level-3",
+      "flags": [
+        "--level",
+        "3"
+      ],
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 13637,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__lightweight.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "lightweight",
+      "flags": [
+        "--mode",
+        "lightweight"
+      ],
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 3334,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__rename.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "rename",
+      "flags": [
+        "--mode",
+        "rename"
+      ],
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 1485,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__native.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "native",
+      "flags": [
+        "--mode",
+        "native"
+      ],
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 13637,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__vm.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "vm",
+      "flags": [
+        "--vm"
+      ],
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 26020,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__vm-max.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "vm-max",
+      "flags": [
+        "--mode",
+        "vm"
+      ],
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 101929,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__vm-cached.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "vm-cached",
+      "flags": [
+        "--mode",
+        "vm",
+        "--vm-cached"
+      ],
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 65579,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__level-1.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "level-1",
+      "flags": [
+        "--level",
+        "1"
+      ],
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 4166,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__level-2.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "level-2",
+      "flags": [
+        "--level",
+        "2"
+      ],
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 11265,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__level-3.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "level-3",
+      "flags": [
+        "--level",
+        "3"
+      ],
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 15978,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__lightweight.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "lightweight",
+      "flags": [
+        "--mode",
+        "lightweight"
+      ],
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 3778,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__rename.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "rename",
+      "flags": [
+        "--mode",
+        "rename"
+      ],
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 1068,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__native.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "native",
+      "flags": [
+        "--mode",
+        "native"
+      ],
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 15978,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__vm.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "vm",
+      "flags": [
+        "--vm"
+      ],
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 19829,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__vm-max.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "vm-max",
+      "flags": [
+        "--mode",
+        "vm"
+      ],
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 91122,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__vm-cached.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "vm-cached",
+      "flags": [
+        "--mode",
+        "vm",
+        "--vm-cached"
+      ],
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 60918,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__level-1.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "level-1",
+      "flags": [
+        "--level",
+        "1"
+      ],
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 5440,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__level-2.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "level-2",
+      "flags": [
+        "--level",
+        "2"
+      ],
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 11461,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__level-3.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "level-3",
+      "flags": [
+        "--level",
+        "3"
+      ],
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 15595,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__lightweight.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "lightweight",
+      "flags": [
+        "--mode",
+        "lightweight"
+      ],
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 4372,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__rename.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "rename",
+      "flags": [
+        "--mode",
+        "rename"
+      ],
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 1752,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__native.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "native",
+      "flags": [
+        "--mode",
+        "native"
+      ],
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 15595,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__vm.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "vm",
+      "flags": [
+        "--vm"
+      ],
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 29210,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__vm-max.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "vm-max",
+      "flags": [
+        "--mode",
+        "vm"
+      ],
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 96798,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__vm-cached.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "vm-cached",
+      "flags": [
+        "--mode",
+        "vm",
+        "--vm-cached"
+      ],
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 64285,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__level-1.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "level-1",
+      "flags": [
+        "--level",
+        "1"
+      ],
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 3940,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__level-2.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "level-2",
+      "flags": [
+        "--level",
+        "2"
+      ],
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 10609,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__level-3.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "level-3",
+      "flags": [
+        "--level",
+        "3"
+      ],
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 14182,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__lightweight.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "lightweight",
+      "flags": [
+        "--mode",
+        "lightweight"
+      ],
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 2947,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__rename.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "rename",
+      "flags": [
+        "--mode",
+        "rename"
+      ],
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 1924,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__native.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "native",
+      "flags": [
+        "--mode",
+        "native"
+      ],
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 14182,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__vm.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "vm",
+      "flags": [
+        "--vm"
+      ],
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 31190,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__vm-max.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "vm-max",
+      "flags": [
+        "--mode",
+        "vm"
+      ],
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 134810,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__vm-cached.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "vm-cached",
+      "flags": [
+        "--mode",
+        "vm",
+        "--vm-cached"
+      ],
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 90210,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__level-1.lua",
+      "sample": "s06_combined.lua",
+      "config": "level-1",
+      "flags": [
+        "--level",
+        "1"
+      ],
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 4735,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__level-2.lua",
+      "sample": "s06_combined.lua",
+      "config": "level-2",
+      "flags": [
+        "--level",
+        "2"
+      ],
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 15000,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__level-3.lua",
+      "sample": "s06_combined.lua",
+      "config": "level-3",
+      "flags": [
+        "--level",
+        "3"
+      ],
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 20023,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__lightweight.lua",
+      "sample": "s06_combined.lua",
+      "config": "lightweight",
+      "flags": [
+        "--mode",
+        "lightweight"
+      ],
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 4396,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__rename.lua",
+      "sample": "s06_combined.lua",
+      "config": "rename",
+      "flags": [
+        "--mode",
+        "rename"
+      ],
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 2447,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__native.lua",
+      "sample": "s06_combined.lua",
+      "config": "native",
+      "flags": [
+        "--mode",
+        "native"
+      ],
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 20023,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__vm.lua",
+      "sample": "s06_combined.lua",
+      "config": "vm",
+      "flags": [
+        "--vm"
+      ],
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 35492,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__vm-max.lua",
+      "sample": "s06_combined.lua",
+      "config": "vm-max",
+      "flags": [
+        "--mode",
+        "vm"
+      ],
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 158851,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__vm-cached.lua",
+      "sample": "s06_combined.lua",
+      "config": "vm-cached",
+      "flags": [
+        "--mode",
+        "vm",
+        "--vm-cached"
+      ],
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 105731,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__level-1.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "level-1",
+      "flags": [
+        "--level",
+        "1"
+      ],
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 3490,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__level-2.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "level-2",
+      "flags": [
+        "--level",
+        "2"
+      ],
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 5739,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__level-3.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "level-3",
+      "flags": [
+        "--level",
+        "3"
+      ],
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 8210,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__lightweight.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "lightweight",
+      "flags": [
+        "--mode",
+        "lightweight"
+      ],
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 3227,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__rename.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "rename",
+      "flags": [
+        "--mode",
+        "rename"
+      ],
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 1041,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__native.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "native",
+      "flags": [
+        "--mode",
+        "native"
+      ],
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 8210,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__vm.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "vm",
+      "flags": [
+        "--vm"
+      ],
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 19261,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__vm-max.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "vm-max",
+      "flags": [
+        "--mode",
+        "vm"
+      ],
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 65413,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__vm-cached.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "vm-cached",
+      "flags": [
+        "--mode",
+        "vm",
+        "--vm-cached"
+      ],
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 43383,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    }
+  ]
+}

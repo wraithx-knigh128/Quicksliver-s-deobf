@@ -29,11 +29,14 @@ for (const [tool, dir] of [['colisseum', 'obfuscated-local/colisseum'], ['simple
 // Hercules revisions older than the current one (each its own folder, tests/corpus/tools/gen_hercules_versions.py) and the layered (mixed) chains
 // (gen_mixed.py): measured with the same pipeline, kept apart in the results by `version` / the tool name `mixed`.
 const versions = new Map();
-for (const d of fs.readdirSync(path.join(corpus, 'obfuscated')).filter((x) => /^hercules-\d/.test(x)).sort()) {
+for (const d of fs.readdirSync(path.join(corpus, 'obfuscated')).filter((x) => /^(hercules|obscura)-\d/.test(x)).sort()) {
   if (!fs.existsSync(path.join(corpus, 'obfuscated', d, 'manifest.json'))) continue;
-  tools.push(['hercules', `obfuscated/${d}`]);
-  versions.set(`obfuscated/${d}`, d.replace(/^hercules-/, ''));
+  const [tool, ...ver] = d.split('-');
+  tools.push([tool, `obfuscated/${d}`]);
+  versions.set(`obfuscated/${d}`, ver.join('-'));
 }
+// the newest revision of a tool whose revisions live in <tool>-<version> folders has no folder of its own: it is the version the folder named current stands for
+
 if (fs.existsSync(path.join(corpus, 'obfuscated/mixed/manifest.json'))) tools.push(['mixed', 'obfuscated/mixed']);
 const results = [];
 const read = (p) => bytesToBinary(fs.readFileSync(p));

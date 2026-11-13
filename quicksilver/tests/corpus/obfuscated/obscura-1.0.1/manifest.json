@@ -1,0 +1,675 @@
+{
+  "tool": "Obscura",
+  "version": "1.0.1",
+  "source": "https://github.com/vo3pal/obscura",
+  "sourceRevision": "abd77f07d9c7a843a45aa3c14c208bd5d2aa10f9",
+  "revisionDate": "2026-04-30",
+  "note": "v1.0.1 (2026-04-30): VM hardening (lazy constants, split keys, integrity checks), --vm-hardening",
+  "runtime": "Python 3 + click, run in tests/corpus/tools/sandbox_run.py; the output is Luau",
+  "seed": 1337,
+  "entries": [
+    {
+      "file": "s01_minify_basic__level-1.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "level-1",
+      "flags": [
+        "--level",
+        "1"
+      ],
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 6094,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__level-2.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "level-2",
+      "flags": [
+        "--level",
+        "2"
+      ],
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 8261,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__level-3.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "level-3",
+      "flags": [
+        "--level",
+        "3"
+      ],
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 11120,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__lightweight.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "lightweight",
+      "flags": [
+        "--lightweight"
+      ],
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 3358,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__vm.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "vm",
+      "flags": [
+        "--vm",
+        "--vm-hardening",
+        "basic"
+      ],
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 48647,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__vm-max.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "vm-max",
+      "flags": [
+        "--vm",
+        "--vm-hardening",
+        "max"
+      ],
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 49361,
+      "behaviors": {
+        "luau": "diverged"
+      },
+      "behavior": "diverged"
+    },
+    {
+      "file": "s02_renamed_vars__level-1.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "level-1",
+      "flags": [
+        "--level",
+        "1"
+      ],
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 8094,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__level-2.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "level-2",
+      "flags": [
+        "--level",
+        "2"
+      ],
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 10608,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__level-3.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "level-3",
+      "flags": [
+        "--level",
+        "3"
+      ],
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 14440,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__lightweight.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "lightweight",
+      "flags": [
+        "--lightweight"
+      ],
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 3834,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__vm.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "vm",
+      "flags": [
+        "--vm",
+        "--vm-hardening",
+        "basic"
+      ],
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 51060,
+      "behaviors": {
+        "luau": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:4: attempt to index nil with 'quantity'"
+    },
+    {
+      "file": "s02_renamed_vars__vm-max.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "vm-max",
+      "flags": [
+        "--vm",
+        "--vm-hardening",
+        "max"
+      ],
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 51755,
+      "behaviors": {
+        "luau": "diverged"
+      },
+      "behavior": "diverged"
+    },
+    {
+      "file": "s03_encoded_strings__level-1.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "level-1",
+      "flags": [
+        "--level",
+        "1"
+      ],
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "tool-error",
+      "error": "  [x] Failed: in.lua -- Obfuscation failed: Lexer error at line 3, col 19: Unterminated string ",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s03_encoded_strings__level-2.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "level-2",
+      "flags": [
+        "--level",
+        "2"
+      ],
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "tool-error",
+      "error": "  [x] Failed: in.lua -- Obfuscation failed: Lexer error at line 3, col 19: Unterminated string ",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s03_encoded_strings__level-3.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "level-3",
+      "flags": [
+        "--level",
+        "3"
+      ],
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "tool-error",
+      "error": "  [x] Failed: in.lua -- Obfuscation failed: Lexer error at line 3, col 19: Unterminated string ",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s03_encoded_strings__lightweight.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "lightweight",
+      "flags": [
+        "--lightweight"
+      ],
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "tool-error",
+      "error": "  [x] Failed: in.lua -- Obfuscation failed: Lexer error at line 3, col 19: Unterminated string ",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s03_encoded_strings__vm.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "vm",
+      "flags": [
+        "--vm",
+        "--vm-hardening",
+        "basic"
+      ],
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "tool-error",
+      "error": "  [x] Failed: in.lua -- Obfuscation failed: Lexer error at line 3, col 19: Unterminated string ",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s03_encoded_strings__vm-max.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "vm-max",
+      "flags": [
+        "--vm",
+        "--vm-hardening",
+        "max"
+      ],
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "tool-error",
+      "error": "  [x] Failed: in.lua -- Obfuscation failed: Lexer error at line 3, col 19: Unterminated string ",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s04_control_flow__level-1.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "level-1",
+      "flags": [
+        "--level",
+        "1"
+      ],
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 9645,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__level-2.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "level-2",
+      "flags": [
+        "--level",
+        "2"
+      ],
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 12179,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__level-3.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "level-3",
+      "flags": [
+        "--level",
+        "3"
+      ],
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 16724,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__lightweight.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "lightweight",
+      "flags": [
+        "--lightweight"
+      ],
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 5476,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__vm.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "vm",
+      "flags": [
+        "--vm",
+        "--vm-hardening",
+        "basic"
+      ],
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 49398,
+      "behaviors": {
+        "luau": "diverged"
+      },
+      "behavior": "diverged"
+    },
+    {
+      "file": "s04_control_flow__vm-max.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "vm-max",
+      "flags": [
+        "--vm",
+        "--vm-hardening",
+        "max"
+      ],
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 50188,
+      "behaviors": {
+        "luau": "diverged"
+      },
+      "behavior": "diverged"
+    },
+    {
+      "file": "s05_nested_functions__level-1.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "level-1",
+      "flags": [
+        "--level",
+        "1"
+      ],
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 7393,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__level-2.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "level-2",
+      "flags": [
+        "--level",
+        "2"
+      ],
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 10788,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__level-3.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "level-3",
+      "flags": [
+        "--level",
+        "3"
+      ],
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 13845,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__lightweight.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "lightweight",
+      "flags": [
+        "--lightweight"
+      ],
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 3602,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__vm.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "vm",
+      "flags": [
+        "--vm",
+        "--vm-hardening",
+        "basic"
+      ],
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 48245,
+      "behaviors": {
+        "luau": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:4: attempt to index number with number"
+    },
+    {
+      "file": "s05_nested_functions__vm-max.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "vm-max",
+      "flags": [
+        "--vm",
+        "--vm-hardening",
+        "max"
+      ],
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 49091,
+      "behaviors": {
+        "luau": "diverged"
+      },
+      "behavior": "diverged"
+    },
+    {
+      "file": "s06_combined__level-1.lua",
+      "sample": "s06_combined.lua",
+      "config": "level-1",
+      "flags": [
+        "--level",
+        "1"
+      ],
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 11230,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__level-2.lua",
+      "sample": "s06_combined.lua",
+      "config": "level-2",
+      "flags": [
+        "--level",
+        "2"
+      ],
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 15525,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__level-3.lua",
+      "sample": "s06_combined.lua",
+      "config": "level-3",
+      "flags": [
+        "--level",
+        "3"
+      ],
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 19938,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__lightweight.lua",
+      "sample": "s06_combined.lua",
+      "config": "lightweight",
+      "flags": [
+        "--lightweight"
+      ],
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 4644,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__vm.lua",
+      "sample": "s06_combined.lua",
+      "config": "vm",
+      "flags": [
+        "--vm",
+        "--vm-hardening",
+        "basic"
+      ],
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 55879,
+      "behaviors": {
+        "luau": "diverged"
+      },
+      "behavior": "diverged"
+    },
+    {
+      "file": "s06_combined__vm-max.lua",
+      "sample": "s06_combined.lua",
+      "config": "vm-max",
+      "flags": [
+        "--vm",
+        "--vm-hardening",
+        "max"
+      ],
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 56696,
+      "behaviors": {
+        "luau": "diverged"
+      },
+      "behavior": "diverged"
+    },
+    {
+      "file": "s07_roblox_style__level-1.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "level-1",
+      "flags": [
+        "--level",
+        "1"
+      ],
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 6843,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__level-2.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "level-2",
+      "flags": [
+        "--level",
+        "2"
+      ],
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 11038,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__level-3.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "level-3",
+      "flags": [
+        "--level",
+        "3"
+      ],
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 15097,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__lightweight.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "lightweight",
+      "flags": [
+        "--lightweight"
+      ],
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 3443,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__vm.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "vm",
+      "flags": [
+        "--vm",
+        "--vm-hardening",
+        "basic"
+      ],
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 52560,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__vm-max.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "vm-max",
+      "flags": [
+        "--vm",
+        "--vm-hardening",
+        "max"
+      ],
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 53339,
+      "behaviors": {
+        "luau": "diverged"
+      },
+      "behavior": "diverged"
+    }
+  ]
+}

@@ -1,0 +1,551 @@
+{
+  "tool": "Obscura",
+  "version": "1.0.0",
+  "source": "https://github.com/vo3pal/obscura",
+  "sourceRevision": "1439a3dbf6c1075971a9d5e53e6573ff8a5b8527",
+  "revisionDate": "2026-04-29",
+  "note": "the state before the VM hardening release (2026-04-29): VM with an encrypted constant pool, --level 1-4, --vm",
+  "runtime": "Python 3 + click, run in tests/corpus/tools/sandbox_run.py; the output is Luau",
+  "seed": 1337,
+  "entries": [
+    {
+      "file": "s01_minify_basic__level-1.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "level-1",
+      "flags": [
+        "--level",
+        "1"
+      ],
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 4797,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__level-2.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "level-2",
+      "flags": [
+        "--level",
+        "2"
+      ],
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 6660,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__level-3.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "level-3",
+      "flags": [
+        "--level",
+        "3"
+      ],
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 8445,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__lightweight.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "lightweight",
+      "flags": [
+        "--lightweight"
+      ],
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 2283,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__vm.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "vm",
+      "flags": [
+        "--vm"
+      ],
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 7208,
+      "behaviors": {
+        "luau": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:4: attempt to compare nil < number"
+    },
+    {
+      "file": "s02_renamed_vars__level-1.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "level-1",
+      "flags": [
+        "--level",
+        "1"
+      ],
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 6708,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__level-2.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "level-2",
+      "flags": [
+        "--level",
+        "2"
+      ],
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 8513,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__level-3.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "level-3",
+      "flags": [
+        "--level",
+        "3"
+      ],
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 10775,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__lightweight.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "lightweight",
+      "flags": [
+        "--lightweight"
+      ],
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 2680,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__vm.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "vm",
+      "flags": [
+        "--vm"
+      ],
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 7405,
+      "behaviors": {
+        "luau": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:4: attempt to call a nil value"
+    },
+    {
+      "file": "s03_encoded_strings__level-1.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "level-1",
+      "flags": [
+        "--level",
+        "1"
+      ],
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "tool-error",
+      "error": "  [x] Failed: in.lua -- Obfuscation failed: Lexer error at line 3, col 19: Unterminated string ",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s03_encoded_strings__level-2.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "level-2",
+      "flags": [
+        "--level",
+        "2"
+      ],
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "tool-error",
+      "error": "  [x] Failed: in.lua -- Obfuscation failed: Lexer error at line 3, col 19: Unterminated string ",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s03_encoded_strings__level-3.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "level-3",
+      "flags": [
+        "--level",
+        "3"
+      ],
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "tool-error",
+      "error": "  [x] Failed: in.lua -- Obfuscation failed: Lexer error at line 3, col 19: Unterminated string ",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s03_encoded_strings__lightweight.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "lightweight",
+      "flags": [
+        "--lightweight"
+      ],
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "tool-error",
+      "error": "  [x] Failed: in.lua -- Obfuscation failed: Lexer error at line 3, col 19: Unterminated string ",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s03_encoded_strings__vm.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "vm",
+      "flags": [
+        "--vm"
+      ],
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "tool-error",
+      "error": "  [x] Failed: in.lua -- Obfuscation failed: Lexer error at line 3, col 19: Unterminated string ",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s04_control_flow__level-1.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "level-1",
+      "flags": [
+        "--level",
+        "1"
+      ],
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 7385,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__level-2.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "level-2",
+      "flags": [
+        "--level",
+        "2"
+      ],
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 9579,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__level-3.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "level-3",
+      "flags": [
+        "--level",
+        "3"
+      ],
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 11830,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__lightweight.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "lightweight",
+      "flags": [
+        "--lightweight"
+      ],
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 3436,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__vm.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "vm",
+      "flags": [
+        "--vm"
+      ],
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 8104,
+      "behaviors": {
+        "luau": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:4: attempt to call a nil value"
+    },
+    {
+      "file": "s05_nested_functions__level-1.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "level-1",
+      "flags": [
+        "--level",
+        "1"
+      ],
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 6321,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__level-2.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "level-2",
+      "flags": [
+        "--level",
+        "2"
+      ],
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 9048,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__level-3.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "level-3",
+      "flags": [
+        "--level",
+        "3"
+      ],
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 11234,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__lightweight.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "lightweight",
+      "flags": [
+        "--lightweight"
+      ],
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 2848,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__vm.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "vm",
+      "flags": [
+        "--vm"
+      ],
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 7951,
+      "behaviors": {
+        "luau": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:4: attempt to call a nil value"
+    },
+    {
+      "file": "s06_combined__level-1.lua",
+      "sample": "s06_combined.lua",
+      "config": "level-1",
+      "flags": [
+        "--level",
+        "1"
+      ],
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 9769,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__level-2.lua",
+      "sample": "s06_combined.lua",
+      "config": "level-2",
+      "flags": [
+        "--level",
+        "2"
+      ],
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 13410,
+      "behaviors": {
+        "luau": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:4: Expected 'end' (to close 'then' at column 12338), got 'if'"
+    },
+    {
+      "file": "s06_combined__level-3.lua",
+      "sample": "s06_combined.lua",
+      "config": "level-3",
+      "flags": [
+        "--level",
+        "3"
+      ],
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 16184,
+      "behaviors": {
+        "luau": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "syntax: sample:4: Expected 'end' (to close 'then' at column 14969), got 'if'"
+    },
+    {
+      "file": "s06_combined__lightweight.lua",
+      "sample": "s06_combined.lua",
+      "config": "lightweight",
+      "flags": [
+        "--lightweight"
+      ],
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 3572,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__vm.lua",
+      "sample": "s06_combined.lua",
+      "config": "vm",
+      "flags": [
+        "--vm"
+      ],
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 9277,
+      "behaviors": {
+        "luau": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:4: attempt to call a nil value"
+    },
+    {
+      "file": "s07_roblox_style__level-1.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "level-1",
+      "flags": [
+        "--level",
+        "1"
+      ],
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 5236,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__level-2.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "level-2",
+      "flags": [
+        "--level",
+        "2"
+      ],
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 8171,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__level-3.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "level-3",
+      "flags": [
+        "--level",
+        "3"
+      ],
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 10169,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__lightweight.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "lightweight",
+      "flags": [
+        "--lightweight"
+      ],
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 2266,
+      "behaviors": {
+        "luau": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__vm.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "vm",
+      "flags": [
+        "--vm"
+      ],
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 7343,
+      "behaviors": {
+        "luau": "errored"
+      },
+      "behavior": "errored",
+      "behaviorError": "sample:4: attempt to call a nil value"
+    }
+  ]
+}

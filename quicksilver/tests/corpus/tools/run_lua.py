@@ -60,6 +60,16 @@ end"""
 LUAU_BIN = os.environ.get("QS_LUAU_BIN") or os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "api", "_engine", "luraph", "deobf", "bin", "luau"))
 
 
+def to_bytes(text):
+    """The bytes of a source text. A binary string (every code point below 256) is its own bytes; a text that holds real Unicode (a recovered
+    file whose report comment says "doesn\u2019t") is what the file would hold when saved, which is UTF-8. Never an exception: the oracle is a
+    long-lived server and one such file must not take the later requests down with it."""
+    try:
+        return text.encode("latin-1")
+    except UnicodeEncodeError:
+        return text.encode("utf-8", "replace")
+
+
 def run_luau(code, budget=0):
     """Luau (Roblox's dialect) through the vendored standalone `luau` binary: the same mock environment and print capture as the lupa runtimes, the script loaded with
     loadstring so that its own `return`, `...` and local count are its own. Wall-clock limited; the binary is run without a network namespace only where the host allows it."""
@@ -86,7 +96,7 @@ def run_luau(code, budget=0):
     with tempfile.TemporaryDirectory() as d:
         path = os.path.join(d, "run.lua")
         with open(path, "wb") as fh:
-            fh.write(prog.encode("latin-1"))
+            fh.write(to_bytes(prog))
         try:
             p = subprocess.run([LUAU_BIN, path], capture_output=True, timeout=int(os.environ.get("QS_LUAU_TIMEOUT", "60")))
         except subprocess.TimeoutExpired:
@@ -123,7 +133,7 @@ def run(code, runtime="lua51", budget=20_000_000):
             rt.execute(POLYFILL_54C.encode("latin-1"))
         rt.execute(STRIP.encode("latin-1"))
         runner = rt.eval(RUNNER)
-        ok, err = runner(code.encode("latin-1"), budget)
+        ok, err = runner(to_bytes(code), budget)
         out, n = rt.eval(b"QS_OUT"), rt.eval(b"QS_N")
         stdout = b"".join(out[i] for i in range(1, int(n) + 1)).decode("latin-1")
         return {"ok": bool(ok), "stdout": stdout,
@@ -152,7 +162,10 @@ def main(argv):
             if not line:
                 continue
             req = json.loads(line)
-            res = run(req["code"], req.get("runtime", "lua51"), req.get("budget", 20_000_000))
+            try:
+                res = run(req["code"], req.get("runtime", "lua51"), req.get("budget", 20_000_000))
+            except Exception as exc:  # a request that breaks the harness is answered, not fatal to the server
+                res = {"ok": False, "stdout": "", "error": "harness: " + repr(exc)[:300]}
             res["id"] = req.get("id")
             sys.stdout.write(json.dumps(res) + "\n")
             sys.stdout.flush()
