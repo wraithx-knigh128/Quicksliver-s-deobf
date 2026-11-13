@@ -155,7 +155,7 @@ export class CompatDashboard {
             h('td', t.needsSandbox ? `yes (${pct(t.fidelityStatic)} without)` : 'no'),
             h('td.num', t.behaviourChecked ? `${t.behaviourSame}/${t.behaviourChecked} same` : '—'),
             h('td.num', t.traceChecked ? `${t.traceIdentical}/${t.traceChecked}` : '—'),
-            h('td', [t.note || '', t.toolBroken ? h('div.faint', `the tool's own output was wrong for ${t.toolBroken} of ${t.samples} samples`) : null]),
+            h('td', [t.note || '', t.toolBroken ? h('div.faint', `the tool's own output was wrong for ${t.toolBroken} of ${t.samples} samples`) : null, t.toolUnverified ? h('div.faint', `the tool's own output was not run on a reference runtime for ${t.toolUnverified} of ${t.samples} samples`) : null]),
           ]))),
         ]),
       ]));

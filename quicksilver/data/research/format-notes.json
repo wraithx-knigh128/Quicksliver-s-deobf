@@ -256,7 +256,8 @@
         }
       ],
       "assumptions": [
-        "Only the single commit of the repository was run; `legacy/` was not touched"
+        "Only the single commit of the repository was run; `legacy/` was not touched",
+        "The tool's own output was NOT verified on the reference runtimes (the verification did not finish inside its budget, twice, including for the AST stage); `toolOutputVerified` is 0, so the behaviour rows for LuaXen compare the recovered script with the original program only, and nothing is claimed about the obfuscated file itself"
       ]
     },
     "zartha": {
@@ -303,7 +304,8 @@
         }
       ],
       "assumptions": [
-        "The watermark text is a setting (`File generated using [Zartha]` is the default), so it is evidence and not proof; the prelude rule is the structural one"
+        "The watermark text is a setting (`File generated using [Zartha]` is the default), so it is evidence and not proof; the prelude rule is the structural one",
+        "The tool's own output was NOT run on the reference runtimes (the VM builds did not finish inside the verification budget on lupa, twice); `toolOutputVerified` is 0 for these fixtures, and nothing is claimed about whether the generated VMs reproduce the originals. The one sample whose output PUC 5.1 and LuaJIT reject at parse time (s06) is the only behaviour fact known"
       ]
     },
     "fusgato": {
@@ -531,8 +533,8 @@
     {
       "id": "ix-luraph-no-banner",
       "item": "Luraph files without a version banner (15 of 218)",
-      "state": "classified, not identified",
-      "detail": "12 of the 15 are classified as minified scripts and 2 as plain scripts, which supports the earlier finding that some files filed under Luraph are other scripts; no new Luraph signature was added"
+      "state": "11 of 15 identified by structure; 4 remain unidentified",
+      "detail": "the 15 files were read one by one: 11 are Luraph 14.x-shaped VMs without their banner (a returned table of short-named handlers with 0X / 0B literals, or the LPH_ build-flag macros) and are now identified by those two structural rules (flagged unrecoverable); the other 4 are not Luraph VMs (two request-function scripts, a hub script, a plain script) and are classified, not identified. Luraph's version still cannot be read without its banner"
     },
     {
       "id": "ix-vm-families",

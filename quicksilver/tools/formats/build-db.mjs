@@ -106,7 +106,7 @@ export function buildDb() {
         fixtureDir: folder ? folder.dir : null,
         committed: folder ? folder.committed : null,
         licence: meta.licence || (n.licence || null),
-        fixtures: { measured: rs.length, written: count('ok'), toolErrors: count('tool-error'), omittedLarge: count('omitted-large'), toolOutputEquivalent: entries.filter((e) => e.behavior === 'equivalent').length, toolOutputErrored: entries.filter((e) => e.behavior === 'errored').length, toolOutputDiverged: entries.filter((e) => e.behavior === 'diverged').length },
+        fixtures: { measured: rs.length, toolOutputVerified: entries.filter((e) => e.behavior !== undefined).length, written: count('ok'), toolErrors: count('tool-error'), omittedLarge: count('omitted-large'), toolOutputEquivalent: entries.filter((e) => e.behavior === 'equivalent').length, toolOutputErrored: entries.filter((e) => e.behavior === 'errored').length, toolOutputDiverged: entries.filter((e) => e.behavior === 'diverged').length },
         fidelityBefore: round(mean(rs.filter((r) => r.fidelityAfter != null).map((r) => r.fidelityBefore ?? 0))),
         fidelityAfter: round(mean(rs.filter((r) => r.fidelityAfter != null).map((r) => r.fidelityAfter))),
         configs,

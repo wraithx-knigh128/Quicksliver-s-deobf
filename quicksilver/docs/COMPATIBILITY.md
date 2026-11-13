@@ -368,13 +368,13 @@ Open-source (MIT) Lua 5.1 VM obfuscator (TimOdemchuk). Compiles with luac, parse
 
 | Configuration | Status | Fidelity before → after | Same behaviour | Mean time |
 |---|---|---|---|---|
-| default (preset) | unsupported | 4% → 4% | 4 / 7 (8 tool output broken) | 217 ms |
-| minify (preset) | unsupported | 4% → 4% | 4 / 7 (7 tool output broken) | 246 ms |
-| encryptstrings (preset) | unsupported | 4% → 4% | 4 / 7 (8 tool output broken) | 214 ms |
-| flatten (preset) | unsupported | 3% → 3% | 4 / 7 (8 tool output broken) | 435 ms |
-| antitamper (preset) | unsupported | 3% → 3% | 0 / 7 (8 tool output broken) | 300 ms |
-| constants (preset) | unsupported | 4% → 4% | 0 / 7 (8 tool output broken) | 208 ms |
-| all (preset) | unsupported | 3% → 3% | 0 / 7 (7 tool output broken) | 682 ms |
+| default (preset) | unsupported | 4% → 4% | 4 / 7 (tool output not run: 8) | 217 ms |
+| minify (preset) | unsupported | 4% → 4% | 4 / 7 (tool output not run: 7) | 246 ms |
+| encryptstrings (preset) | unsupported | 4% → 4% | 4 / 7 (tool output not run: 8) | 214 ms |
+| flatten (preset) | unsupported | 3% → 3% | 4 / 7 (tool output not run: 8) | 435 ms |
+| antitamper (preset) | unsupported | 3% → 3% | 0 / 7 (tool output not run: 8) | 300 ms |
+| constants (preset) | unsupported | 4% → 4% | 0 / 7 (tool output not run: 8) | 208 ms |
+| all (preset) | unsupported | 3% → 3% | 0 / 7 (tool output not run: 7) | 682 ms |
 
 **Limits**
 
@@ -407,9 +407,9 @@ Open-source (MIT) Lua obfuscator suite (luauminati). IronBrikked: a VM with LZW-
 
 | Configuration | Status | Fidelity before → after | Same behaviour | Mean time |
 |---|---|---|---|---|
-| ironbrikked (preset) | unsupported | 5% → 5% | 0 / 7 (7 tool output broken) | 166 ms |
-| ast (preset) | partial | 11% → 97% (needs sandbox) | 5 / 8 (8 tool output broken) | 37 ms |
-| both (preset) | unsupported | 3% → 5% | 0 / 7 (7 tool output broken) | 749 ms |
+| ironbrikked (preset) | unsupported | 5% → 5% | 0 / 7 (tool output not run: 7) | 166 ms |
+| ast (preset) | partial | 11% → 97% (needs sandbox) | 5 / 8 (tool output not run: 8) | 37 ms |
+| both (preset) | unsupported | 3% → 5% | 0 / 7 (tool output not run: 7) | 749 ms |
 
 **Limits**
 

@@ -62,7 +62,9 @@ const families = familyRegistry().map((f) => {
         behaviourSame: checked.filter((r) => r.behaviorOriginal === 'same').length,
         traceIdentical: tr.filter((r) => r.outcome === 'identical').length,
         traceChecked: tr.length,
-        toolBroken: rs.filter((r) => r.toolBehavior !== 'equivalent').length,
+        toolBroken: rs.filter((r) => r.toolBehavior !== undefined && r.toolBehavior !== 'equivalent').length,
+        // the tool's own output was never run on the reference runtimes (the generated VM did not finish inside the verification budget): not the same as broken
+        toolUnverified: rs.filter((r) => r.toolBehavior === undefined).length,
         ms: Math.round(mean(rs.map((r) => r.ms || 0))),
       };
       const ov = (OVERRIDES[f.id] || {})[config];
@@ -181,7 +183,7 @@ for (const f of families) {
   if (f.techniques.length) {
     md.push('', '| Configuration | Status | Fidelity before → after | Same behaviour | Mean time |', '|---|---|---|---|---|');
     for (const t of f.techniques) {
-      md.push(`| ${t.label} (${t.kind}) | ${t.status}${t.note ? ` – ${t.note}` : ''} | ${pc(t.fidelityBefore)} → ${pc(t.fidelityAfter)}${t.needsSandbox ? ' (needs sandbox)' : ''} | ${t.behaviourSame} / ${t.behaviourChecked}${t.toolBroken ? ` (${t.toolBroken} tool output broken)` : ''} | ${t.ms} ms |`);
+      md.push(`| ${t.label} (${t.kind}) | ${t.status}${t.note ? ` – ${t.note}` : ''} | ${pc(t.fidelityBefore)} → ${pc(t.fidelityAfter)}${t.needsSandbox ? ' (needs sandbox)' : ''} | ${t.behaviourSame} / ${t.behaviourChecked}${t.toolBroken ? ` (${t.toolBroken} tool output broken)` : ''}${t.toolUnverified ? ` (tool output not run: ${t.toolUnverified})` : ''} | ${t.ms} ms |`);
     }
   }
   if (f.corpus) md.push('', `**Detection on real scripts:** ${f.corpus.identified} of ${f.corpus.files} files filed under ${f.corpus.labels.join(', ')} in the public collection (${f.corpus.source}, commit \`${String(f.corpus.commit).slice(0, 10)}\`) were identified as ${f.name}${f.corpus.versionFiles ? `; the version read from the script matched the collection's version directory in ${f.corpus.versionRight} of ${f.corpus.versionFiles}` : ''}. The collection's labels are its uploaders' and are noisy; a file our rules call something else was looked at before being counted as a miss.`);

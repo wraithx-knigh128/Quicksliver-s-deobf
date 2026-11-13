@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "generatedAt": "2026-11-13T07:29:19.796Z",
+ "generatedAt": "2026-11-13T08:05:23.906Z",
  "gates": {
   "real": {
    "minFixtures": 8,
@@ -2277,7 +2277,7 @@
       "behaviourSame": 16,
       "traceChecked": 0,
       "traceIdentical": 0,
-      "toolBroken": 54,
+      "toolBroken": 0,
       "fidelityAfter": 0.035,
       "runtime": {
        "source": "reference",
@@ -2487,7 +2487,7 @@
       "behaviourSame": 5,
       "traceChecked": 0,
       "traceIdentical": 0,
-      "toolBroken": 22,
+      "toolBroken": 0,
       "fidelityAfter": 0.383,
       "runtime": {
        "source": "reference",
