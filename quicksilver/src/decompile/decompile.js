@@ -523,13 +523,16 @@ class FunctionDecompiler {
     for (const lv of lvs) lv.declared = true;
     const names = lvs.map((lv) => idNode(this.nameOf(lv)));
     // a call that produced several values into consecutive registers
-    if (this.multi && lvs.length >= 1 && lvs[0].reg === this.multi.base && lvs.length <= this.multi.n) {
+    // (results the program never reads leave no local behind: `local _, e = pcall(f)` has only `e`; the first ones are named `_`)
+    if (this.multi && lvs.length >= 1 && lvs[0].reg >= this.multi.base && lvs[0].reg - this.multi.base + lvs.length <= this.multi.n
+      && lvs.every((lv, k) => lv.reg === lvs[0].reg + k)) {
       const m = this.multi;
       this.multi = null;
       const rest = [];
       for (let k = lvs.length; k < m.n; k++) rest.push(m.base + k);
       this.flushAll(out);
-      out.push({ type: 'Local', ids: names, values: [m.expr] });
+      const lead = Array.from({ length: lvs[0].reg - m.base }, () => idNode('_'));
+      out.push({ type: 'Local', ids: [...lead, ...names], values: [m.expr] });
       void rest;
       return;
     }
@@ -624,7 +627,9 @@ class FunctionDecompiler {
         return { P, t: o.t, start: i, end: k, next: k + 1, assign };
       }
       if (!setupOps.has(o.op)) return fail();
-      if (o.op === 'call' && (o.tail || o.nres < 0 || o.nres > 1)) return fail();
+      // a call whose results are all passed on to the next call (`f(g(x))`) is part of the condition; any other open result is not
+      const passesOn = o.op === 'call' && o.nres < 0 && !o.tail && this.ir[k + 1] && this.ir[k + 1].op === 'call' && this.ir[k + 1].nargs === -1;
+      if (o.op === 'call' && (o.tail || (o.nres < 0 && !passesOn) || o.nres > 1)) return fail();
       try { this.stepSimple(k, scratch); } catch (e) { if (e instanceof Unstructured) return fail(); throw e; }
       if (scratch.length) return fail();
       k++;
@@ -729,8 +734,15 @@ class FunctionDecompiler {
         i = this.loop(i, loop, out, ctx);
         continue;
       }
-      // conditions
-      const g = this.parseGroup(i, hi);
+      // conditions (without debug names, the results of a call nothing has named are written out first: they cannot be part of one)
+      let g = this.parseGroup(i, hi);
+      if (!g && this.multi && !this.hasDebug) {
+        const saved = this.multi;
+        const written = [];
+        this.flushMulti(written);
+        const again = this.parseGroup(i, hi);
+        if (again) { out.push(...written); g = again; } else this.multi = saved;
+      }
       if (g) {
         if (ctx.until >= 0 && g.end === ctx.until) { return { stmts: out, until: g, stop: i }; }
         i = this.branch(g, hi, out, ctx);
@@ -908,7 +920,7 @@ class FunctionDecompiler {
         this.define(out, i, o.d, false, () => nameNode(this.upName(o.u)));
         return i + 1;
       case 'getglobal':
-        this.define(out, i, o.d, false, () => nameNode(this.safeGlobal(o.name)));
+        this.define(out, i, o.d, false, () => this.globalRef(o.name));
         return i + 1;
       case 'index':
         this.define(out, i, o.d, false, (c) => {
@@ -984,7 +996,7 @@ class FunctionDecompiler {
         this.assignStmt(out, (c) => ({ target: nameNode(this.upName(o.u)), value: c(o.val, pc) }));
         return i + 1;
       case 'setglobal':
-        this.assignStmt(out, (c) => ({ target: nameNode(this.safeGlobal(o.name)), value: c(o.val, pc) }));
+        this.assignStmt(out, (c) => ({ target: this.globalRef(o.name), value: c(o.val, pc) }));
         return i + 1;
       case 'setindex': return this.stepSetIndex(i, out);
       case 'setlist': return this.stepSetList(i, out);
@@ -1010,9 +1022,10 @@ class FunctionDecompiler {
     }
   }
 
-  safeGlobal(name) {
-    if (typeof name !== 'string' || !isIdentifier(name)) return name;
-    return name;
+  /** A global is a name when it can be one; a global whose name is not an identifier (or is a keyword) is a field of `_G`. */
+  globalRef(name) {
+    if (typeof name === 'string' && isIdentifier(name) && !KEYWORDS.has(name)) return nameNode(name);
+    return { type: 'Index', obj: nameNode('_G'), key: { type: 'String', value: String(name), raw: JSON.stringify(String(name)), long: false }, dot: false };
   }
 
   takeTop() {
@@ -1170,7 +1183,9 @@ class FunctionDecompiler {
       }
       if (o.nargs === -1) args.push(this.takeTop());
       fixTail(args);
-      if (method) return { type: 'MethodCall', obj: method.obj, name: method.key.value, args, sugar: null };
+      if (method && method.key.type === 'String' && isIdentifier(method.key.value) && !KEYWORDS.has(method.key.value)) return { type: 'MethodCall', obj: method.obj, name: method.key.value, args, sugar: null };
+      // a method whose name is not an identifier cannot be written with a colon: the object is passed as the first argument
+      if (method) return { type: 'Call', fn: this.indexNode(method.obj, method.key), args: [method.obj, ...args], sugar: null };
       return { type: 'Call', fn: fnE, args, sugar: null };
     };
     // a method lookup whose object entry is consumed together with it

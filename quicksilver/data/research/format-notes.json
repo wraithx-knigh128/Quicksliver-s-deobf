@@ -192,6 +192,17 @@
           "tests": [
             "tests/formats-ix.test.mjs: evaluate: a byte decoder"
           ]
+        },
+        {
+          "id": "constants-table",
+          "summary": "the constants of the program (numbers, strings, booleans, `[k] = nil` where the program had nil) kept in one table written key by key are read back as the constants and the table goes; XFuscator default / uglify / nostep2 / notamper s02 and s06 went from fidelity 0.48 / 0.60 to 0.76 / 1.00 (the s02 remainder is the names, which the tool drops by design)",
+          "files": [
+            "src/passes/strtable.js",
+            "src/recover/pipeline.js"
+          ],
+          "tests": [
+            "tests/xii-passes.test.mjs: constants.inline"
+          ]
         }
       ],
       "failurePatterns": [
@@ -307,7 +318,34 @@
       "research": [
         "README, Main.lua, Pipeline.lua and the Vm tree read as text; run through run_isolated.py with drivers/zartha.lua, which does in memory what Pipeline.lua does (luac replaced by string.dump)"
       ],
-      "improvements": [],
+      "improvements": [
+        {
+          "id": "vm-lifter",
+          "summary": "every build (default, minify, encryptstrings, flatten, antitamper, constants, all; 54 fixtures) is lifted back to Lua 5.1 instructions and decompiled: each function's dispatch is evaluated for every value of the counter (the control-flow-flattening predicates fold), the scratch-cell indirection is resolved, the text of each piece is recognised as the instruction it was made from, the upvalue maps become the MOVE / GETUPVAL words after CLOSURE, constants are decoded with the script's own decryptor and shift, parameters are read from what the code does. 39 builds (every build whose strings are readable) behave like the ORIGINAL program on Lua 5.1, among them 8 whose own output prints a wrong list of primes and 15 where it errors or does not finish; 15 builds mask strings with a per-constant key the generator never stores and are reported as not recoverable",
+          "files": [
+            "src/recover/zartha-vm.js",
+            "src/recover/pipeline.js",
+            "src/recover/confidence.js",
+            "src/recover/annotate.js",
+            "src/decompile/decompile.js"
+          ],
+          "tests": [
+            "tests/zartha-vm.test.mjs",
+            "tests/xii-passes.test.mjs"
+          ]
+        },
+        {
+          "id": "generator-defects-read-as-intended",
+          "summary": "the generator's SETGLOBAL stores the name instead of the value and its LOADBOOL reads a scratch cell it never wrote, so builds that use them do not run like the program; the lifter reads them as the instruction they were made from (the register is the one number nothing read; the boolean is the test written next to the cell). Its LOADBOOL template also writes `\\n\\t` as text, which makes the script invalid Lua (s06): only that text is mended, and the report says so",
+          "files": [
+            "src/recover/zartha-vm.js",
+            "src/recover/pipeline.js"
+          ],
+          "tests": [
+            "tests/zartha-vm.test.mjs"
+          ]
+        }
+      ],
       "failurePatterns": [
         {
           "id": "vm",
@@ -358,6 +396,16 @@
           "status": "tool defect",
           "summary": "measured on Lua 5.1 and LuaJIT in an isolated runner with a wall-clock limit: 16 of 54 outputs behave like the original, 8 do not (s01 and s02 in default / minify / encryptstrings / flatten: the compiled program prints a wrong list of primes and nil where the original prints booleans), antitamper stops no run within 15 s, constants and all fail with \"attempt to call field ?\" (a nil value), and s06 / s08 are rejected by the runtime. None of these is counted against the engine",
           "evidence": "tests/corpus/obfuscated/zartha/manifest.json (behaviors, 2026-11-13 run)"
+        },
+        {
+          "id": "constant-protection",
+          "configs": [
+            "constants",
+            "all"
+          ],
+          "status": "not recoverable (information is not in the file)",
+          "summary": "the constant-protection option XORs every string with a key drawn per constant (2..30), and the decoder for it is a stub (`return opcode -- to do`): the key is written nowhere, which is also why the tool's own output errors. The structure of the program is rebuilt, the strings are not; the engine counts the masked constants and says so instead of reporting a recovery",
+          "evidence": "tests/zartha-vm.test.mjs: strings masked with a per-constant key"
         }
       ],
       "assumptions": [
@@ -596,13 +644,13 @@
     {
       "id": "ix-vm-families",
       "item": "Per-build bytecode VMs (Obscura VM, Zartha, FusGato, IronBrikked, RealObfuscator vm)",
-      "state": "identified, not recovered",
+      "state": "Zartha lifted (Prompt XII); FusGato, IronBrikked, RealObfuscator vm identified, not recovered",
       "detail": "each is flagged unrecoverable so that the report cannot say \"recovered\"; none has a lifter. Since Prompt X the Obscura VM (all three revisions, plain and hardened) has a profile of its data (functions, instruction bytes, decrypted constants; on all 39 Obscura VM fixtures every string of two or more characters of the original program is among the constants read: recall 1.00, `categories.vmConstants` in the database), shown in the report as NOT lifted"
     },
     {
       "id": "x-vm-lifter",
       "item": "A lifter that rebuilds source from Obscura VM bytecode",
-      "state": "plain Obscura VM done; hardened Obscura, Zartha, FusGato, IronBrikked, RealObfuscator vm not started",
+      "state": "plain Obscura VM and Zartha done; hardened Obscura, FusGato, IronBrikked, RealObfuscator vm not started",
       "detail": "the Obscura lifter reads each build's handlers from its own interpreter and decodes with its own key (src/recover/obscura-vm.js). The hardened Obscura builds additionally need: the instruction bytes opened in the sandbox (they are encrypted per record), an operand reader per byte order and offset style, the tree of range tests flattened to its leaves, and the fused BLOCK handlers split back into the operations they were made from. Zartha, FusGato and IronBrikked are different formats and need their own handler readers."
     },
     {
@@ -616,6 +664,18 @@
       "item": "Luraph version from structure, without a banner",
       "state": "measured; not in the pipeline",
       "detail": "leave-one-out over the 198 labelled files of the public collection: the era (13 and earlier / 14.0-14.3 / 14.4-14.5 / 14.6-14.9 / 15+) is named correctly 78% of the time, the exact version 37%, the major.minor 51%. Minor revisions share their templates, so no rule can read the version reliably; the experiment is tools/research/luraph-era.mjs and its numbers data/research/luraph-era-eval.json"
+    },
+    {
+      "id": "xii-zartha-lifter",
+      "item": "Zartha: a generated VM of per-instruction code lifted back to source",
+      "state": "done; constant-protection strings are not recoverable",
+      "detail": "src/recover/zartha-vm.js. 54 of 54 fixtures lifted and decompiled; the 39 builds with readable strings behave like the original program on Lua 5.1 (checked with the reference runtime, not with the sandbox); 15 mask their strings. Generic work it needed: an open call chain is part of a condition, the results of a call nothing named are written out before a condition (stripped chunks only), globals and methods whose names are not identifiers, a table of constants that is only read"
+    },
+    {
+      "id": "xii-fusgato-architecture",
+      "item": "FusGato: what it is, from reading its output",
+      "state": "investigated, not lifted",
+      "detail": "an IronBrew 2 fork (it prints the IronBrew credit line) with a bit-string container (26-bit instruction words read with rshift/band, a table of constants and nested prototypes) and an interpreter that is NOT an opcode switch: it is `if e == 1 then ... elseif e == 2 then ...` on the instruction index, each leaf the handler of that instruction written with operands read from the decoded instruction table (`n[l[e][1]] = o[l[e][4]]`). That is Zartha's shape with operands in data, so the leaf reader of src/recover/zartha-vm.js plus a reader of the bit-string container would lift it; not started"
     }
   ]
 }

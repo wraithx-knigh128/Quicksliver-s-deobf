@@ -24,6 +24,7 @@ import { propagateStable } from '../passes/stable.js';
 import { buildReport, annotate, stripReport } from './annotate.js';
 import { profileVm } from './vmprofile.js';
 import { liftObscuraVm, ObscuraVmError } from './obscura-vm.js';
+import { liftZarthaVm, ZarthaVmError, looksLikeZartha, removeZarthaGuards, repairZarthaSource } from './zartha-vm.js';
 import { snapshotNames, joinMoonVeil, unboxCells, JoinError } from './moonveil-join.js';
 import { removeHerculesAntiTamper, removeHerculesAntiTamperFunction, removeHerculesCoinGuard, restoreMethodSelf } from './hercules.js';
 import { uninlinePass } from '../passes/uninline.js';
@@ -38,7 +39,7 @@ import { unflattenMoonVeil } from './moonveil-cff.js';
 import { removeObscuraGuards } from './obscura.js';
 import { unwrapXFuscator } from './xfuscator.js';
 import { foldMetaArithmetic } from '../passes/metaarith.js';
-import { seedDecoderCalls, inlineStringTable } from '../passes/strtable.js';
+import { seedDecoderCalls, inlineStringTable, inlineConstantTable } from '../passes/strtable.js';
 import { liftMoonVeilVm, VmUnsupported } from './moonveil-vm/index.js';
 import { decodeMoonVeilConstants, simplifyCells, moonveilShape } from './moonveil.js';
 import { assessConfidence } from './confidence.js';
@@ -150,6 +151,25 @@ function rebuildObscuraVm(ast, vm) {
 }
 
 /**
+ * Zartha's virtual machine: its functions are chains of per-instruction code written from templates. Each is read as the Lua 5.1 instruction it stands for, the program's constants are
+ * decoded with the script's own decryptor, and the result goes through the decompiler. Nothing of the program runs.
+ */
+function rebuildZarthaVm(ast, state) {
+  let r;
+  try { r = liftZarthaVm(ast); } catch (e) {
+    if (e instanceof ZarthaVmError) return { skipped: e.message };
+    throw e;
+  }
+  const out = decompile(parseChunk(r.bytes));
+  if (out.failures.length) return { skipped: `the decompiler could not structure ${out.failures.length} function(s): ${out.failures[0]}` };
+  ast.body = out.ast.body;
+  ast.features = out.ast.features || ast.features;
+  state.zarthaLifted = true;
+  state.stats = r.stats;
+  return { changed: r.stats.instructions, ...r.stats };
+}
+
+/**
  * IronBrew 2: read the program back out of the VM's own data and decompile it. The AST is replaced in place so that
  * the ordinary passes (folding, clean-up, renaming) go on to work on the recovered program.
  */
@@ -206,7 +226,15 @@ export function recover(source, userOptions = {}) {
   const options = { ...DEFAULT_OPTIONS, ...userOptions, sandbox: { ...DEFAULT_OPTIONS.sandbox, ...(userOptions.sandbox || {}) }, format: { ...DEFAULT_OPTIONS.format, ...(userOptions.format || {}) } };
   const t0 = now();
   source = stripReport(source);      // a result of ours that is recovered again: its report is replaced, not repeated
-  const parsed = tryParse(source);
+  let parsed = tryParse(source);
+  let zarthaRepair = 0;
+  if (!parsed.ok) {
+    const mended = repairZarthaSource(source);
+    if (mended.count) {
+      const again = tryParse(mended.source);
+      if (again.ok) { parsed = again; source = mended.source; zarthaRepair = mended.count; }
+    }
+  }
   if (!parsed.ok) {
     return { ok: false, stage: 'parse', error: parsed.error, output: null, steps: [], detection: detect(source), warnings: [] };
   }
@@ -215,6 +243,7 @@ export function recover(source, userOptions = {}) {
   let vm = null;
   try { vm = profileVm(parsed.ast, { sandbox: options.sandbox }); } catch { vm = null; }
   const run = new Run(parsed.ast, options);
+  if (zarthaRepair) run.record('zartha.repair', 'Mend the line breaks the Zartha generator wrote as text', { status: 'applied', changed: zarthaRepair, detail: { places: zarthaRepair, note: 'the LOADBOOL template writes `\\n\\t` inside a string where it means a line break, so the script is not valid Lua as shipped' }, ms: 0 });
   // after a layer is unwrapped: add what the payload shows to what the wrapper showed
   const refreshDetection = () => {
     const inner = detect(print(run.ast), run.ast);
@@ -239,6 +268,14 @@ export function recover(source, userOptions = {}) {
     if (run.step('obscura.vm', 'Lift the Obscura virtual machine back to source', (a) => rebuildObscuraVm(a, vm))) { unusedAtStart = new WeakSet(); decompiled = true; }
   }
 
+  const zartha = { zarthaLifted: false, stats: null };
+  if (!vm && (detection.families.some((f) => f.id === 'zartha' && f.confidence >= 0.5) || looksLikeZartha(parsed.ast))) {
+    if (run.step('zartha.vm', 'Lift the Zartha virtual machine back to source', (a) => rebuildZarthaVm(a, zartha))) {
+      unusedAtStart = new WeakSet(); decompiled = true;
+      vm = { kind: 'zartha', lifted: true, functions: [], instructionBytes: 0, constants: null, stats: zartha.stats };
+    }
+  }
+
   const maybeVmify = detection.families.some((f) => f.id === 'prometheus' && f.confidence >= 0.5);
 
   const generic = () => {
@@ -250,6 +287,7 @@ export function recover(source, userOptions = {}) {
     total += run.step('hercules.antitamper', 'Remove Hercules anti-tamper block', (a) => removeHerculesAntiTamper(a), { quiet: true });
     if (decompiled || detection.families.some((f) => f.id === 'hercules' && f.confidence >= 0.5)) total += run.step('hercules.antitamper.compiled', 'Remove the Hercules anti-tamper check that was compiled with the script', (a) => removeHerculesAntiTamperFunction(a), { quiet: true });
     total += run.step('colisseum.guard', 'Remove the Colisseum tamper guard', (a) => removeColisseumGuard(a), { quiet: true });
+    if (zartha.zarthaLifted) total += run.step('zartha.guards', 'Remove the marker and the anti-tamper block the Zartha generator adds', (a) => removeZarthaGuards(a), { quiet: true });
     total += run.step('obscura.guards', 'Remove the executor-detection guards Obscura puts at the top', (a) => removeObscuraGuards(a), { quiet: true });
     if (detection.families.some((f) => f.id === 'hercules' && f.confidence >= 0.5)) {
       total += run.step('hercules.self', 'Read the renamed `self` of methods as `self` again', (a) => restoreMethodSelf(a, analyzeScopes(a)), { quiet: true });
@@ -345,6 +383,7 @@ export function recover(source, userOptions = {}) {
       run.record('evaluate', 'Evaluate string decoders (sandbox)', { status: 'skipped', changed: 0, detail: 'sandboxed evaluation is not enabled', ms: 0 });
     }
     total += run.step('strtable.inline', 'Replace reads of a self-decrypting string table by its strings', (a) => inlineStringTable(a), { quiet: true });
+    total += run.step('constants.inline', 'Replace reads of a machine-named table of constants by the constants', (a) => inlineConstantTable(a), { quiet: true });
     // once decoded names are plain strings, `obj.method(obj, ...)` (what tools that route every call through a lookup write) is `obj:method(...)` again
     if (!decompiled) total += run.step('idioms.method.plain', 'Write o.m(o, ...) as o:m(...)', (a) => methodCalls(a), { quiet: true });
     return total;

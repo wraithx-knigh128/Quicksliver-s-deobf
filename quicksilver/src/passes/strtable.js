@@ -166,3 +166,87 @@ export function inlineStringTable(chunk) {
   }
   return { changed };
 }
+
+// ---- a table of constants that is only read ------------------------------------------------------------------------------------------------------
+
+const literalOf = (e) => {
+  if (!e) return null;
+  if (e.type === 'Number' || e.type === 'String' || e.type === 'True' || e.type === 'False' || e.type === 'Nil') return e;
+  if (e.type === 'Unary' && e.op === '-' && e.arg.type === 'Number') return e;
+  if (e.type === 'Paren') return literalOf(e.expr);
+  return null;
+};
+
+/** key -> literal node for a constructor of constants under positional or `[number] =` keys, else null. */
+function constantEntries(table) {
+  const out = new Map();
+  let pos = 1;
+  for (const f of table.fields) {
+    const v = literalOf(f.value);
+    if (!v) return null;
+    let key;
+    if (f.kind === 'item') key = pos++;
+    else if (f.kind === 'keyed') { key = constOf(f.key); if (typeof key !== 'number') return null; }
+    else return null;
+    out.set(key, v);
+  }
+  return out;
+}
+
+/**
+ * A local table of numbers, strings, booleans and nils, machine-named or written key by key, that is only ever read with a constant number as the key is a list of constants: each
+ * read is the constant and the table goes. (XFuscator keeps every constant of the program in one such table, with `[k] = nil` entries where the program had nil, which is why it is written key by key.)
+ */
+export function inlineConstantTable(chunk) {
+  const info = analyze(chunk);
+  const parentOf = new Map();
+  const stored = new Set();                         // the indexed places something is assigned to
+  walk(chunk, (n, parent) => {
+    if (n.type === 'Name') parentOf.set(n, parent);
+    if (n.type === 'Assign') for (const t of n.targets) stored.add(t);
+  });
+  const swap = new Map();
+  const drop = new Set();
+  walk(chunk, (n) => {
+    if (n.type !== 'Local' || n.ids.length !== 1 || n.values.length !== 1 || n.values[0].type !== 'Table') return undefined;
+    const v = info.varOf.get(n.ids[0]);
+    if (!v || v.kind !== 'local' || v.writes.length || !v.reads.length) return undefined;
+    const entries = constantEntries(n.values[0]);
+    if (!entries || entries.size < 3) return undefined;
+    // a machine-named table, or one written key by key (`[1] = ..., [2] = ...`, the way a program that has nil among its constants has to): nobody writes a list like that by hand
+    if (!isMachineName(v.name) && !(entries.size >= 5 && n.values[0].fields.every((f) => f.kind === 'keyed'))) return undefined;
+    const sites = [];
+    for (const r of v.reads) {
+      const p = parentOf.get(r);
+      if (!p || p.type !== 'Index' || p.obj !== r || stored.has(p)) return undefined;
+      const k = constOf(p.key);
+      if (typeof k !== 'number') return undefined;
+      sites.push({ index: p, key: k });
+    }
+    for (const s of sites) swap.set(s.index, entries.get(s.key) || { type: 'Nil' });
+    drop.add(n);
+    return undefined;
+  });
+  if (!swap.size) return { changed: 0 };
+  let changed = 0;
+  const rewrite = (node) => {
+    if (!node || typeof node !== 'object') return;
+    if (Array.isArray(node)) {
+      for (let i = node.length - 1; i >= 0; i--) {
+        if (drop.has(node[i])) { node.splice(i, 1); changed++; }
+        else if (swap.has(node[i])) { node[i] = JSON.parse(JSON.stringify(swap.get(node[i]))); changed++; }
+        else rewrite(node[i]);
+      }
+      return;
+    }
+    for (const k of Object.keys(node)) {
+      if (k === 'line' || k === 'comments' || k === 'trailing') continue;
+      const child = node[k];
+      if (child && typeof child === 'object') {
+        if (swap.has(child)) { node[k] = JSON.parse(JSON.stringify(swap.get(child))); changed++; } else rewrite(child);
+      }
+    }
+  };
+  rewrite(chunk);
+  return { changed };
+}

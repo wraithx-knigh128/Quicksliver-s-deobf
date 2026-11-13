@@ -51,7 +51,7 @@ export function assessConfidence(before, output, ctx) {
   }
   // A VM the input showed and no pass rebuilt. Clean-up can rewrite the signature away (an inlined alias is gone) while the program is still
   // inside the VM, so the verdict cannot depend on the signature surviving.
-  const REBUILT_BY = { ironbrew2: ['ironbrew2'], hercules: ['layers', 'hercules.vm'], moonveil: ['moonveil.vm'], obscura: ['obscura.vm'] };
+  const REBUILT_BY = { ironbrew2: ['ironbrew2'], hercules: ['layers', 'hercules.vm'], moonveil: ['moonveil.vm'], obscura: ['obscura.vm'], zartha: ['zartha.vm'] };
   for (const f of before.families) {
     const hard = f.confidence >= 0.5 && f.evidence.find((e) => e.unrecoverable);
     if (!hard) continue;
@@ -100,6 +100,8 @@ export function assessConfidence(before, output, ctx) {
   if (loaderSkipped) { note(-0.55, 'The script is a loader whose text is computed: that text is the program, and it was not read (sandboxed evaluation is off).'); if (!hints.includes('sandbox')) hints.push('sandbox'); }
   const joined = steps.find((s) => s.id === 'moonveil.join' && s.status === 'applied');
   if (joined) note(-0.2, `The program was put together from MoonVeil's table of ${joined.detail && joined.detail.factories ? `${joined.detail.factories} ` : ''}factories by following the places they build each other, without running anything. It has not been compared with a run of the original, and cells that closures share between loop iterations stay as cells.`);
+  const zl = steps.find((s) => s.id === 'zartha.vm' && s.status === 'applied');
+  if (zl && zl.detail && zl.detail.masked > 0) note(-0.5, `${zl.detail.masked} string constant(s) of the VM program are masked with a key per constant that the generator never stores (the constant-protection option of this generator is unfinished and its own output does not run), so they cannot be read back: the structure of the program is rebuilt, those strings are not.`);
   const lifted = steps.find((s) => s.id === 'moonveil.vm' && s.status === 'applied');
   if (lifted) reasons.push({ effect: 0, text: `The program was rebuilt from the VM's own data without running anything: ${lifted.detail && lifted.detail.protos ? `${lifted.detail.protos} functions, ${lifted.detail.instructions} instructions` : 'every instruction'} read through the interpreter's handlers. It has not been compared with a run of the original.` });
   if (lifted && lifted.detail && lifted.detail.validation) {

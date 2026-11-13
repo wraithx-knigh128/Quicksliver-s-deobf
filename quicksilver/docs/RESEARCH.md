@@ -401,3 +401,40 @@ generated interpreter, the rolling-XOR bytecode decode and the hardened record k
   (190 files, including the VM and bytecode modules), the trace of the obfuscated script equals the trace of the original program (`tests/trace-scorecard.mjs`).
   A trace describes one run; it is not source.
 * **Luraph v15.1.** No public description and no sample output were available. QuickSilver detects a Luraph banner and offers the trace; it does not claim more.
+
+## Prompt XII: Zartha lifted, XFuscator's constants, and what the near-gate partials really were
+
+**Zartha (MIT, Lua 5.1).** Read as text: `Vm/TreeGenerator.lua` (how each instruction becomes a leaf, how the constants are shuffled, padded with junk and encrypted, how closures carry an upvalue map, which instruction pairs are merged),
+`Vm/OpCodes/*.lua` (one template per Lua 5.1 opcode, with random scratch-cell indirection in MOVE / LOADK / GETGLOBAL / SETGLOBAL / LOADBOOL), `Vm/Resources/ControlFlowFlattening.lua` (arithmetic predicates and a binary search of them around the leaves),
+`Vm/Resources/ModifyInstructions.lua` (the `_CRASH()` macro, the blanked instruction in front of it) and `ConstantEncryption.lua` (a stub). The generated fixtures (isolated runner, seed 1337) were then read leaf by leaf.
+
+*Technique.* The dispatch of each function is evaluated for every value of the counter (`src/recover/zartha-vm.js`): a test that depends on nothing but the counter is decided, which is all the flattening is; what is left is the code of instruction p. The
+scratch cells that hold a number or a name of the machine are replaced by what they hold, names are replaced by their roles (`Stack`, `Temp`, `Constants`... whatever the build called them), and the text of what remains is recognised as one Lua 5.1 instruction
+(or two, where the generator merged a pair). The upvalue map of a closure becomes the MOVE / GETUPVAL words after CLOSURE; the constants are decoded with the script's own decryptor, shift and tag bytes; the number of parameters is read from the registers
+the code reads before it writes them. The chunk goes to the decompiler that already reads IronBrew 2, Obscura and Hercules. Nothing of the program runs.
+
+*Measured.* 54 of 54 fixtures lifted and structured. The 39 builds whose strings are readable behave like the **original** program on Lua 5.1 (stdout equal, reference runtime); 16 of them are builds the tool's own output gets right, 8 are builds
+where its output prints a wrong list of primes (the generator's SETGLOBAL stores the name, its LOADBOOL reads a cell it never wrote), and 15 are builds where its output errors or does not finish (the anti-tamper macro, s08). The 15 `constants` / `all` builds
+mask each string with a key drawn per constant that is written nowhere; they are lifted with their strings masked, the masked constants are counted (identifiers that are not identifiers, control characters in text) and the confidence stays below high.
+The comparison with the original is stronger than the audit's rule (runtime equivalence is judged only where the tool's own output is right): that rule is unchanged and keeps its numbers.
+
+*What the work needed beyond the format:* the decompiler folds an open call chain (`tonumber(e:match("%d+"))`) into a condition; the results of a call nothing named are written out before a condition when the chunk has no local names; a global or a
+method whose name is not an identifier is written as `_G["x"]` or with the object passed first; and a generic pass reads a table of constants that is only read as the constants (`constants.inline`). The new unit test of that pass caught a real fault
+in its first version (a store into the table was treated as a read).
+
+**Near-gate partials, one by one.** XFuscator default / uglify / nostep2 / notamper: the constants table was the residual (s02 fidelity 0.48 -> 0.76, s06 0.60 -> 1.00; the s02 remainder is names the tool drops by design). Hercules `mod-VirtualMachine` s06: the
+tool's own output leaves two constants out (it measures the pool with `#`); the reader refuses rather than guess, which is the right answer. IronBrew 2 `strings`: the remainder is IronBrew's own inlining and constant folding plus the local names a stripped
+chunk does not have; the output is the program that was compiled. None of the three is a recovery gap that more work on the recoverer would close.
+
+**FusGato (investigated, not lifted).** An IronBrew 2 fork (it prints the credit line) with a bit-string container and an interpreter that switches on the instruction index, one handler per instruction, operands read from the decoded table. That is Zartha's
+shape with the operands in data; the leaf reader plus a container reader would lift it. Recorded as `xii-fusgato-architecture` in `data/research/format-notes.json`.
+
+
+**Before and after (`docs/AUDIT.md`, same fixtures, regenerated).**
+
+| Target | Structure | Semantic | Complete (detector finds nothing, engine lists nothing unresolved) | Runtime same/judged (not judged) | Status |
+|---|---|---|---|---|---|
+| Zartha | 4% -> 92% | 4% -> 80% | 0/49 -> 39/54 | 16/16 (38), unchanged: the audit judges only builds whose own output is right; the lifted program matches the original on 39 | unsupported -> mixed (verified, partial) |
+| XFuscator | 19% -> 100% (after of the previous audit: 90%) | 81% -> 96% | 38/40, unchanged | 32/32 (8) | partial -> mixed (verified, partial) |
+
+The 15 Zartha builds that are not complete are the ones whose strings are masked with a key the generator never writes; they stay below high confidence on purpose.
