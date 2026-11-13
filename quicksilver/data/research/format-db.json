@@ -11,13 +11,13 @@
  },
  "engine": "1.0.0",
  "inputs": {
-  "scorecard": "2026-11-13T17:55:34.429Z",
+  "scorecard": "2026-11-13T18:16:25.458Z",
   "scorecardFixtures": 1402,
   "notes": "format-notes/1"
  },
  "calibration": {
   "pairs": 1319,
-  "pearson": 0.886
+  "pearson": 0.883
  },
  "projects": [
   {
@@ -86,8 +86,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 206,
-         "msMax": 295,
+         "msMean": 197,
+         "msMax": 302,
          "failures": 0
         }
        }
@@ -128,8 +128,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 279,
-         "msMax": 457,
+         "msMean": 289,
+         "msMax": 449,
          "failures": 0
         }
        }
@@ -170,8 +170,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 217,
-         "msMax": 241,
+         "msMean": 218,
+         "msMax": 271,
          "failures": 0
         }
        }
@@ -212,8 +212,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 248,
-         "msMax": 291,
+         "msMean": 252,
+         "msMax": 340,
          "failures": 0
         }
        }
@@ -254,8 +254,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 284,
-         "msMax": 335,
+         "msMean": 247,
+         "msMax": 289,
          "failures": 0
         }
        }
@@ -296,8 +296,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 460,
-         "msMax": 554,
+         "msMean": 450,
+         "msMax": 604,
          "failures": 0
         }
        }
@@ -382,7 +382,7 @@
         "vmConstants": null,
         "stability": {
          "msMean": 8,
-         "msMax": 15,
+         "msMax": 16,
          "failures": 0
         }
        }
@@ -424,7 +424,7 @@
         "vmConstants": null,
         "stability": {
          "msMean": 12,
-         "msMax": 21,
+         "msMax": 18,
          "failures": 0
         }
        }
@@ -467,8 +467,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 309,
-         "msMax": 339,
+         "msMean": 312,
+         "msMax": 409,
          "failures": 0
         }
        }
@@ -511,8 +511,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 74,
-         "msMax": 74,
+         "msMean": 60,
+         "msMax": 60,
          "failures": 0
         }
        }
@@ -560,19 +560,19 @@
       "toolOutputDiverged": 4
      },
      "fidelityBefore": 0.023,
-     "fidelityAfter": 0.023,
+     "fidelityAfter": 0.979,
      "configs": [
       {
        "config": "default",
        "samples": 2,
        "detected": 2,
        "fidelityBefore": 0.023,
-       "fidelityAfter": 0.023,
-       "confidence": 0.3,
+       "fidelityAfter": 0.979,
+       "confidence": 0.9,
        "behaviourChecked": 0,
        "behaviourSame": 0,
        "unparsed": 0,
-       "status": "unsupported",
+       "status": "partial",
        "categories": {
         "identification": {
          "detected": 2,
@@ -580,11 +580,11 @@
         },
         "structure": {
          "before": 0.027,
-         "after": 0.03
+         "after": 0.981
         },
         "semantic": {
          "before": 0.023,
-         "after": 0.023
+         "after": 0.979
         },
         "runtime": {
          "same": 0,
@@ -592,14 +592,14 @@
          "notJudged": 2
         },
         "completeness": {
-         "complete": 0,
+         "complete": 2,
          "of": 2,
          "residual": {}
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 176,
-         "msMax": 221,
+         "msMean": 52,
+         "msMax": 64,
          "failures": 0
         }
        }
@@ -609,12 +609,12 @@
        "samples": 2,
        "detected": 2,
        "fidelityBefore": 0.023,
-       "fidelityAfter": 0.023,
-       "confidence": 0.3,
+       "fidelityAfter": 0.979,
+       "confidence": 0.9,
        "behaviourChecked": 0,
        "behaviourSame": 0,
        "unparsed": 0,
-       "status": "unsupported",
+       "status": "partial",
        "categories": {
         "identification": {
          "detected": 2,
@@ -622,11 +622,11 @@
         },
         "structure": {
          "before": 0.027,
-         "after": 0.03
+         "after": 0.981
         },
         "semantic": {
          "before": 0.023,
-         "after": 0.023
+         "after": 0.979
         },
         "runtime": {
          "same": 0,
@@ -634,14 +634,14 @@
          "notJudged": 2
         },
         "completeness": {
-         "complete": 0,
+         "complete": 2,
          "of": 2,
          "residual": {}
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 190,
-         "msMax": 250,
+         "msMean": 43,
+         "msMax": 53,
          "failures": 0
         }
        }
@@ -649,8 +649,8 @@
      ],
      "summary": {
       "verified": 0,
-      "partial": 0,
-      "unsupported": 2
+      "partial": 2,
+      "unsupported": 0
      }
     }
    ],
@@ -663,6 +663,18 @@
      ],
      "tests": [
       "tests/formats-ix.test.mjs: luaxen IronBrikked, zartha and fusgato"
+     ]
+    },
+    {
+     "id": "vm-lifter",
+     "summary": "the bit-string program is decoded (items introduced by a 3-bit code; instruction words of 26 bits with fields A, B, C and no opcode), the interpreter's `if pc == n` handlers are evaluated for every n and recognised by their text, the global accesses the generator turned into an index of the register that holds the environment are read back as GETGLOBAL / SETGLOBAL, closures keep their upvalue links as the words after them. All 4 fixtures the generator produced a file for are lifted and behave like the ORIGINAL program on Lua 5.1, among them the ones whose own output does not (its comparison handlers ignore the A field; the A its word carries is used)",
+     "files": [
+      "src/recover/fusgato-vm.js",
+      "src/recover/zartha-vm.js",
+      "src/recover/pipeline.js"
+     ],
+     "tests": [
+      "tests/fusgato-vm.test.mjs"
      ]
     }
    ],
@@ -687,9 +699,10 @@
     }
    ],
    "assumptions": [
-    "The relative-require resolution of the driver (every module directory tried when a tail call hides the caller) is ours; it was checked on the one build that completes"
+    "The relative-require resolution of the driver (every module directory tried when a tail call hides the caller) is ours; it was checked on the one build that completes",
+    "Only the handlers that occur in the four working fixtures (two programs) are recognised: MOVE, LOADK, LOADBOOL, NEWTABLE, GETTABLE, SETTABLE, ADD (the other arithmetic operators are read from the same text but were not seen), CONCAT, LEN, JMP, TEST, comparisons, CALL, RETURN, SETLIST, TFORLOOP, CLOSURE, GETUPVAL, SETUPVAL; an operation not seen is reported with its text. 12 of the 16 generator runs ended in its own errors, so there is no wider evidence"
    ],
-   "support": "unsupported"
+   "support": "experimental"
   },
   {
    "id": "hercules",
@@ -761,8 +774,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 13,
-         "msMax": 18,
+         "msMean": 11,
+         "msMax": 17,
          "failures": 0
         }
        }
@@ -803,8 +816,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 21,
-         "msMax": 33,
+         "msMean": 20,
+         "msMax": 27,
          "failures": 0
         }
        }
@@ -845,8 +858,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 44,
-         "msMax": 77,
+         "msMean": 46,
+         "msMax": 86,
          "failures": 1
         }
        }
@@ -887,8 +900,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 1334,
-         "msMax": 2056,
+         "msMean": 1340,
+         "msMax": 2066,
          "failures": 1
         }
        }
@@ -931,8 +944,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 77,
-         "msMax": 187,
+         "msMean": 67,
+         "msMax": 166,
          "failures": 0
         }
        }
@@ -973,8 +986,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 12,
-         "msMax": 20,
+         "msMean": 11,
+         "msMax": 15,
          "failures": 0
         }
        }
@@ -1016,7 +1029,7 @@
         "vmConstants": null,
         "stability": {
          "msMean": 12,
-         "msMax": 20,
+         "msMax": 18,
          "failures": 0
         }
        }
@@ -1057,8 +1070,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 18,
-         "msMax": 31,
+         "msMean": 16,
+         "msMax": 21,
          "failures": 0
         }
        }
@@ -1100,7 +1113,7 @@
         "vmConstants": null,
         "stability": {
          "msMean": 15,
-         "msMax": 26,
+         "msMax": 31,
          "failures": 0
         }
        }
@@ -1141,7 +1154,7 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 11,
+         "msMean": 10,
          "msMax": 14,
          "failures": 0
         }
@@ -1183,8 +1196,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 13,
-         "msMax": 23,
+         "msMean": 12,
+         "msMax": 19,
          "failures": 0
         }
        }
@@ -1225,8 +1238,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 15,
-         "msMax": 26,
+         "msMean": 12,
+         "msMax": 18,
          "failures": 0
         }
        }
@@ -1267,8 +1280,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 13,
-         "msMax": 23,
+         "msMean": 12,
+         "msMax": 20,
          "failures": 0
         }
        }
@@ -1309,8 +1322,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 10,
-         "msMax": 28,
+         "msMean": 7,
+         "msMax": 13,
          "failures": 2
         }
        }
@@ -1351,8 +1364,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 15,
-         "msMax": 33,
+         "msMean": 10,
+         "msMax": 16,
          "failures": 0
         }
        }
@@ -1393,8 +1406,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 55,
-         "msMax": 119,
+         "msMean": 38,
+         "msMax": 60,
          "failures": 0
         }
        }
@@ -1435,8 +1448,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 10,
-         "msMax": 20,
+         "msMean": 7,
+         "msMax": 13,
          "failures": 0
         }
        }
@@ -1505,8 +1518,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 60,
-         "msMax": 97,
+         "msMean": 55,
+         "msMax": 83,
          "failures": 0
         }
        }
@@ -1589,8 +1602,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 37,
-         "msMax": 61,
+         "msMean": 39,
+         "msMax": 63,
          "failures": 0
         }
        }
@@ -1631,8 +1644,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 9,
-         "msMax": 14,
+         "msMean": 10,
+         "msMax": 15,
          "failures": 0
         }
        }
@@ -1673,8 +1686,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 45,
-         "msMax": 82,
+         "msMean": 43,
+         "msMax": 66,
          "failures": 0
         }
        }
@@ -1716,7 +1729,7 @@
         "vmConstants": null,
         "stability": {
          "msMean": 8,
-         "msMax": 14,
+         "msMax": 13,
          "failures": 0
         }
        }
@@ -1757,8 +1770,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 9,
-         "msMax": 14,
+         "msMean": 11,
+         "msMax": 24,
          "failures": 0
         }
        }
@@ -1800,7 +1813,7 @@
         "vmConstants": null,
         "stability": {
          "msMean": 1,
-         "msMax": 5,
+         "msMax": 6,
          "failures": 6
         }
        }
@@ -1841,8 +1854,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 12,
-         "msMax": 24,
+         "msMean": 9,
+         "msMax": 15,
          "failures": 0
         }
        }
@@ -1884,7 +1897,7 @@
         "vmConstants": null,
         "stability": {
          "msMean": 8,
-         "msMax": 12,
+         "msMax": 14,
          "failures": 0
         }
        }
@@ -1925,8 +1938,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 13,
-         "msMax": 20,
+         "msMean": 14,
+         "msMax": 22,
          "failures": 0
         }
        }
@@ -1968,7 +1981,7 @@
         "vmConstants": null,
         "stability": {
          "msMean": 9,
-         "msMax": 17,
+         "msMax": 16,
          "failures": 1
         }
        }
@@ -2107,8 +2120,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 9,
-         "msMax": 19,
+         "msMean": 7,
+         "msMax": 13,
          "failures": 1
         }
        }
@@ -2149,8 +2162,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 9,
-         "msMax": 18,
+         "msMean": 7,
+         "msMax": 13,
          "failures": 1
         }
        }
@@ -2184,7 +2197,7 @@
         "completeness": null,
         "vmConstants": null,
         "stability": {
-         "msMean": 0,
+         "msMean": 1,
          "msMax": 1,
          "failures": 7
         }
@@ -2219,7 +2232,7 @@
         "completeness": null,
         "vmConstants": null,
         "stability": {
-         "msMean": 0,
+         "msMean": 1,
          "msMax": 1,
          "failures": 7
         }
@@ -2261,8 +2274,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 9,
-         "msMax": 19,
+         "msMean": 8,
+         "msMax": 14,
          "failures": 1
         }
        }
@@ -2303,8 +2316,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 8,
-         "msMax": 17,
+         "msMean": 6,
+         "msMax": 11,
          "failures": 1
         }
        }
@@ -2346,7 +2359,7 @@
         "vmConstants": null,
         "stability": {
          "msMean": 8,
-         "msMax": 15,
+         "msMax": 13,
          "failures": 0
         }
        }
@@ -2387,8 +2400,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 9,
-         "msMax": 20,
+         "msMean": 8,
+         "msMax": 14,
          "failures": 1
         }
        }
@@ -2459,8 +2472,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 59,
-         "msMax": 144,
+         "msMean": 51,
+         "msMax": 136,
          "failures": 4
         }
        }
@@ -2502,7 +2515,7 @@
         "vmConstants": null,
         "stability": {
          "msMean": 11,
-         "msMax": 14,
+         "msMax": 17,
          "failures": 0
         }
        }
@@ -2545,8 +2558,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 85,
-         "msMax": 113,
+         "msMean": 70,
+         "msMax": 85,
          "failures": 0
         }
        }
@@ -2588,7 +2601,7 @@
         "vmConstants": null,
         "stability": {
          "msMean": 9,
-         "msMax": 12,
+         "msMax": 16,
          "failures": 0
         }
        }
@@ -2665,7 +2678,7 @@
         "vmConstants": null,
         "stability": {
          "msMean": 7,
-         "msMax": 12,
+         "msMax": 11,
          "failures": 0
         }
        }
@@ -2706,8 +2719,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 10,
-         "msMax": 16,
+         "msMean": 8,
+         "msMax": 12,
          "failures": 0
         }
        }
@@ -2749,7 +2762,7 @@
         "vmConstants": null,
         "stability": {
          "msMean": 1,
-         "msMax": 7,
+         "msMax": 4,
          "failures": 6
         }
        }
@@ -2790,8 +2803,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 11,
-         "msMax": 14,
+         "msMean": 10,
+         "msMax": 12,
          "failures": 0
         }
        }
@@ -2832,8 +2845,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 8,
-         "msMax": 15,
+         "msMean": 7,
+         "msMax": 10,
          "failures": 0
         }
        }
@@ -2874,7 +2887,7 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 15,
+         "msMean": 14,
          "msMax": 19,
          "failures": 0
         }
@@ -2916,8 +2929,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 9,
-         "msMax": 20,
+         "msMean": 8,
+         "msMax": 18,
          "failures": 2
         }
        }
@@ -2986,8 +2999,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 17,
-         "msMax": 24,
+         "msMean": 14,
+         "msMax": 21,
          "failures": 0
         }
        }
@@ -3031,8 +3044,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 62,
-         "msMax": 101,
+         "msMean": 53,
+         "msMax": 100,
          "failures": 0
         }
        }
@@ -3074,7 +3087,7 @@
         "vmConstants": null,
         "stability": {
          "msMean": 12,
-         "msMax": 19,
+         "msMax": 26,
          "failures": 0
         }
        }
@@ -3115,8 +3128,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 12,
-         "msMax": 24,
+         "msMean": 11,
+         "msMax": 15,
          "failures": 0
         }
        }
@@ -3157,8 +3170,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 44,
-         "msMax": 66,
+         "msMean": 46,
+         "msMax": 85,
          "failures": 0
         }
        }
@@ -3199,8 +3212,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 7,
-         "msMax": 10,
+         "msMean": 9,
+         "msMax": 16,
          "failures": 0
         }
        }
@@ -3241,8 +3254,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 10,
-         "msMax": 13,
+         "msMean": 11,
+         "msMax": 19,
          "failures": 0
         }
        }
@@ -3284,7 +3297,7 @@
         "vmConstants": null,
         "stability": {
          "msMean": 6,
-         "msMax": 11,
+         "msMax": 16,
          "failures": 3
         }
        }
@@ -3325,8 +3338,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 8,
-         "msMax": 16,
+         "msMean": 7,
+         "msMax": 13,
          "failures": 0
         }
        }
@@ -3367,8 +3380,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 12,
-         "msMax": 14,
+         "msMean": 11,
+         "msMax": 17,
          "failures": 0
         }
        }
@@ -3410,7 +3423,7 @@
         "vmConstants": null,
         "stability": {
          "msMean": 5,
-         "msMax": 12,
+         "msMax": 10,
          "failures": 3
         }
        }
@@ -3451,8 +3464,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 15,
-         "msMax": 28,
+         "msMean": 17,
+         "msMax": 23,
          "failures": 0
         }
        }
@@ -3493,8 +3506,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 14,
-         "msMax": 30,
+         "msMean": 11,
+         "msMax": 15,
          "failures": 0
         }
        }
@@ -3563,8 +3576,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 16,
-         "msMax": 27,
+         "msMean": 17,
+         "msMax": 30,
          "failures": 0
         }
        }
@@ -3608,8 +3621,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 57,
-         "msMax": 107,
+         "msMean": 56,
+         "msMax": 86,
          "failures": 0
         }
        }
@@ -3650,8 +3663,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 8,
-         "msMax": 13,
+         "msMean": 7,
+         "msMax": 11,
          "failures": 0
         }
        }
@@ -3692,7 +3705,7 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 10,
+         "msMean": 9,
          "msMax": 14,
          "failures": 0
         }
@@ -3734,8 +3747,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 45,
-         "msMax": 85,
+         "msMean": 38,
+         "msMax": 64,
          "failures": 0
         }
        }
@@ -3776,8 +3789,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 8,
-         "msMax": 13,
+         "msMean": 7,
+         "msMax": 11,
          "failures": 0
         }
        }
@@ -3819,7 +3832,7 @@
         "vmConstants": null,
         "stability": {
          "msMean": 10,
-         "msMax": 15,
+         "msMax": 14,
          "failures": 0
         }
        }
@@ -3860,8 +3873,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 10,
-         "msMax": 15,
+         "msMean": 11,
+         "msMax": 22,
          "failures": 0
         }
        }
@@ -3903,7 +3916,7 @@
         "vmConstants": null,
         "stability": {
          "msMean": 8,
-         "msMax": 20,
+         "msMax": 17,
          "failures": 2
         }
        }
@@ -3944,8 +3957,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 11,
-         "msMax": 16,
+         "msMean": 10,
+         "msMax": 19,
          "failures": 0
         }
        }
@@ -3986,8 +3999,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 9,
-         "msMax": 15,
+         "msMean": 10,
+         "msMax": 17,
          "failures": 0
         }
        }
@@ -4029,7 +4042,7 @@
         "vmConstants": null,
         "stability": {
          "msMean": 15,
-         "msMax": 24,
+         "msMax": 18,
          "failures": 0
         }
        }
@@ -4071,7 +4084,7 @@
         "vmConstants": null,
         "stability": {
          "msMean": 10,
-         "msMax": 16,
+         "msMax": 15,
          "failures": 0
         }
        }
@@ -4105,8 +4118,8 @@
         "completeness": null,
         "vmConstants": null,
         "stability": {
-         "msMean": 1,
-         "msMax": 1,
+         "msMean": 3,
+         "msMax": 3,
          "failures": 1
         }
        }
@@ -4140,8 +4153,8 @@
         "completeness": null,
         "vmConstants": null,
         "stability": {
-         "msMean": 1,
-         "msMax": 1,
+         "msMean": 3,
+         "msMax": 3,
          "failures": 1
         }
        }
@@ -4225,8 +4238,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 53,
-         "msMax": 82,
+         "msMean": 52,
+         "msMax": 106,
          "failures": 0
         }
        }
@@ -4267,8 +4280,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 40,
-         "msMax": 70,
+         "msMean": 41,
+         "msMax": 83,
          "failures": 0
         }
        }
@@ -4309,8 +4322,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 43,
-         "msMax": 98,
+         "msMean": 42,
+         "msMax": 81,
          "failures": 0
         }
        }
@@ -4351,8 +4364,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 53,
-         "msMax": 139,
+         "msMean": 46,
+         "msMax": 86,
          "failures": 0
         }
        }
@@ -4393,8 +4406,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 42,
-         "msMax": 84,
+         "msMean": 41,
+         "msMax": 70,
          "failures": 0
         }
        }
@@ -4435,8 +4448,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 402,
-         "msMax": 912,
+         "msMean": 386,
+         "msMax": 904,
          "failures": 0
         }
        }
@@ -4477,8 +4490,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 53,
-         "msMax": 119,
+         "msMean": 49,
+         "msMax": 67,
          "failures": 0
         }
        }
@@ -4519,8 +4532,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 51,
-         "msMax": 108,
+         "msMean": 54,
+         "msMax": 102,
          "failures": 0
         }
        }
@@ -4602,8 +4615,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 16,
-         "msMax": 24,
+         "msMean": 15,
+         "msMax": 23,
          "failures": 0
         }
        }
@@ -4644,8 +4657,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 16,
-         "msMax": 26,
+         "msMean": 13,
+         "msMax": 15,
          "failures": 0
         }
        }
@@ -4686,8 +4699,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 16,
-         "msMax": 26,
+         "msMean": 14,
+         "msMax": 16,
          "failures": 0
         }
        }
@@ -4728,8 +4741,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 16,
-         "msMax": 22,
+         "msMean": 12,
+         "msMax": 15,
          "failures": 0
         }
        }
@@ -4771,7 +4784,7 @@
         "vmConstants": null,
         "stability": {
          "msMean": 16,
-         "msMax": 21,
+         "msMax": 22,
          "failures": 0
         }
        }
@@ -4812,8 +4825,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 30,
-         "msMax": 45,
+         "msMean": 25,
+         "msMax": 36,
          "failures": 0
         }
        }
@@ -4854,8 +4867,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 13,
-         "msMax": 24,
+         "msMean": 11,
+         "msMax": 18,
          "failures": 0
         }
        }
@@ -4896,8 +4909,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 14,
-         "msMax": 22,
+         "msMean": 11,
+         "msMax": 17,
          "failures": 0
         }
        }
@@ -4938,8 +4951,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 23,
-         "msMax": 25,
+         "msMean": 16,
+         "msMax": 21,
          "failures": 0
         }
        }
@@ -4980,8 +4993,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 14,
-         "msMax": 16,
+         "msMean": 10,
+         "msMax": 14,
          "failures": 0
         }
        }
@@ -5022,8 +5035,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 25,
-         "msMax": 41,
+         "msMean": 18,
+         "msMax": 24,
          "failures": 0
         }
        }
@@ -5109,8 +5122,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 212,
-         "msMax": 277,
+         "msMean": 160,
+         "msMax": 203,
          "failures": 0
         }
        }
@@ -5151,8 +5164,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 41,
-         "msMax": 85,
+         "msMean": 37,
+         "msMax": 70,
          "failures": 0
         }
        }
@@ -5193,8 +5206,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 683,
-         "msMax": 737,
+         "msMean": 706,
+         "msMax": 897,
          "failures": 0
         }
        }
@@ -5339,8 +5352,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 20,
-         "msMax": 38,
+         "msMean": 15,
+         "msMax": 22,
          "failures": 0
         }
        }
@@ -5381,8 +5394,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 56,
-         "msMax": 104,
+         "msMean": 52,
+         "msMax": 71,
          "failures": 0
         }
        }
@@ -5426,8 +5439,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 153,
-         "msMax": 275,
+         "msMean": 140,
+         "msMax": 247,
          "failures": 0
         }
        }
@@ -5468,8 +5481,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 28,
-         "msMax": 38,
+         "msMean": 31,
+         "msMax": 72,
          "failures": 0
         }
        }
@@ -5510,8 +5523,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 13,
-         "msMax": 18,
+         "msMean": 14,
+         "msMax": 28,
          "failures": 0
         }
        }
@@ -5552,8 +5565,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 53,
-         "msMax": 124,
+         "msMean": 51,
+         "msMax": 91,
          "failures": 1
         }
        }
@@ -5594,8 +5607,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 24,
-         "msMax": 50,
+         "msMean": 23,
+         "msMax": 38,
          "failures": 0
         }
        }
@@ -5636,8 +5649,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 14,
-         "msMax": 24,
+         "msMean": 16,
+         "msMax": 28,
          "failures": 1
         }
        }
@@ -5678,8 +5691,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 14,
-         "msMax": 20,
+         "msMean": 15,
+         "msMax": 23,
          "failures": 0
         }
        }
@@ -5720,8 +5733,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 60,
-         "msMax": 92,
+         "msMean": 64,
+         "msMax": 94,
          "failures": 0
         }
        }
@@ -5762,8 +5775,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 13,
-         "msMax": 22,
+         "msMean": 15,
+         "msMax": 30,
          "failures": 0
         }
        }
@@ -5804,8 +5817,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 80,
-         "msMax": 105,
+         "msMean": 81,
+         "msMax": 150,
          "failures": 0
         }
        }
@@ -5846,8 +5859,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 63,
-         "msMax": 95,
+         "msMean": 66,
+         "msMax": 124,
          "failures": 0
         }
        }
@@ -5890,8 +5903,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 25,
-         "msMax": 37,
+         "msMean": 28,
+         "msMax": 51,
          "failures": 0
         }
        }
@@ -5932,8 +5945,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 60,
-         "msMax": 92,
+         "msMean": 56,
+         "msMax": 68,
          "failures": 0
         }
        }
@@ -6020,8 +6033,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 50,
-         "msMax": 83,
+         "msMean": 44,
+         "msMax": 79,
          "failures": 0
         }
        }
@@ -6063,7 +6076,7 @@
         "vmConstants": null,
         "stability": {
          "msMean": 58,
-         "msMax": 99,
+         "msMax": 105,
          "failures": 0
         }
        }
@@ -6104,8 +6117,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 82,
-         "msMax": 144,
+         "msMean": 94,
+         "msMax": 137,
          "failures": 0
         }
        }
@@ -6146,8 +6159,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 11,
-         "msMax": 14,
+         "msMean": 14,
+         "msMax": 18,
          "failures": 0
         }
        }
@@ -6195,8 +6208,8 @@
          "bytes": 0
         },
         "stability": {
-         "msMean": 51,
-         "msMax": 59,
+         "msMean": 66,
+         "msMax": 79,
          "failures": 0
         }
        }
@@ -6265,8 +6278,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 50,
-         "msMax": 80,
+         "msMean": 55,
+         "msMax": 91,
          "failures": 0
         }
        }
@@ -6307,8 +6320,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 62,
-         "msMax": 93,
+         "msMean": 64,
+         "msMax": 90,
          "failures": 0
         }
        }
@@ -6349,8 +6362,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 105,
-         "msMax": 172,
+         "msMean": 115,
+         "msMax": 162,
          "failures": 0
         }
        }
@@ -6391,7 +6404,7 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 18,
+         "msMean": 19,
          "msMax": 26,
          "failures": 0
         }
@@ -6433,8 +6446,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 82,
-         "msMax": 100,
+         "msMean": 84,
+         "msMax": 115,
          "failures": 0
         }
        }
@@ -6482,8 +6495,8 @@
          "bytes": 1208.667
         },
         "stability": {
-         "msMean": 397,
-         "msMax": 421,
+         "msMean": 384,
+         "msMax": 501,
          "failures": 0
         }
        }
@@ -6552,8 +6565,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 22,
-         "msMax": 30,
+         "msMean": 23,
+         "msMax": 47,
          "failures": 0
         }
        }
@@ -6595,7 +6608,7 @@
         "vmConstants": null,
         "stability": {
          "msMean": 61,
-         "msMax": 107,
+         "msMax": 131,
          "failures": 0
         }
        }
@@ -6636,8 +6649,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 90,
-         "msMax": 141,
+         "msMean": 98,
+         "msMax": 152,
          "failures": 0
         }
        }
@@ -6678,8 +6691,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 21,
-         "msMax": 29,
+         "msMean": 24,
+         "msMax": 35,
          "failures": 0
         }
        }
@@ -6721,7 +6734,7 @@
         "vmConstants": null,
         "stability": {
          "msMean": 9,
-         "msMax": 13,
+         "msMax": 11,
          "failures": 0
         }
        }
@@ -6762,8 +6775,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 79,
-         "msMax": 148,
+         "msMean": 85,
+         "msMax": 116,
          "failures": 0
         }
        }
@@ -6804,8 +6817,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 71,
-         "msMax": 110,
+         "msMean": 65,
+         "msMax": 88,
          "failures": 0
         }
        }
@@ -6853,8 +6866,8 @@
          "bytes": 1069.857
         },
         "stability": {
-         "msMean": 1615,
-         "msMax": 2607,
+         "msMean": 1552,
+         "msMax": 2446,
          "failures": 0
         }
        }
@@ -6902,8 +6915,8 @@
          "bytes": 1069.857
         },
         "stability": {
-         "msMean": 936,
-         "msMax": 1412,
+         "msMean": 953,
+         "msMax": 1473,
          "failures": 0
         }
        }
@@ -7142,8 +7155,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 18,
-         "msMax": 49,
+         "msMean": 16,
+         "msMax": 53,
          "failures": 0
         }
        }
@@ -7186,8 +7199,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 171,
-         "msMax": 332,
+         "msMean": 153,
+         "msMax": 314,
          "failures": 0
         }
        }
@@ -7228,8 +7241,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 505,
-         "msMax": 677,
+         "msMean": 442,
+         "msMax": 572,
          "failures": 0
         }
        }
@@ -7270,8 +7283,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 1428,
-         "msMax": 2142,
+         "msMean": 1350,
+         "msMax": 2041,
          "failures": 0
         }
        }
@@ -7312,8 +7325,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 27,
-         "msMax": 40,
+         "msMean": 21,
+         "msMax": 28,
          "failures": 0
         }
        }
@@ -7354,8 +7367,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 29,
-         "msMax": 47,
+         "msMean": 27,
+         "msMax": 44,
          "failures": 0
         }
        }
@@ -7397,7 +7410,7 @@
         "vmConstants": null,
         "stability": {
          "msMean": 10,
-         "msMax": 14,
+         "msMax": 16,
          "failures": 0
         }
        }
@@ -7439,7 +7452,7 @@
         "vmConstants": null,
         "stability": {
          "msMean": 10,
-         "msMax": 13,
+         "msMax": 21,
          "failures": 0
         }
        }
@@ -7481,7 +7494,7 @@
         "vmConstants": null,
         "stability": {
          "msMean": 16,
-         "msMax": 20,
+         "msMax": 26,
          "failures": 0
         }
        }
@@ -7607,7 +7620,7 @@
         "vmConstants": null,
         "stability": {
          "msMean": 11,
-         "msMax": 20,
+         "msMax": 14,
          "failures": 0
         }
        }
@@ -7648,8 +7661,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 85,
-         "msMax": 163,
+         "msMean": 82,
+         "msMax": 124,
          "failures": 0
         }
        }
@@ -7719,7 +7732,7 @@
         "vmConstants": null,
         "stability": {
          "msMean": 9,
-         "msMax": 14,
+         "msMax": 12,
          "failures": 0
         }
        }
@@ -7760,8 +7773,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 209,
-         "msMax": 314,
+         "msMean": 256,
+         "msMax": 370,
          "failures": 0
         }
        }
@@ -7802,8 +7815,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 1033,
-         "msMax": 1398,
+         "msMean": 1206,
+         "msMax": 1633,
          "failures": 0
         }
        }
@@ -7844,8 +7857,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 1004,
-         "msMax": 1320,
+         "msMean": 1119,
+         "msMax": 1545,
          "failures": 0
         }
        }
@@ -7886,8 +7899,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 20,
-         "msMax": 29,
+         "msMean": 21,
+         "msMax": 32,
          "failures": 0
         }
        }
@@ -7928,8 +7941,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 22,
-         "msMax": 43,
+         "msMean": 19,
+         "msMax": 30,
          "failures": 0
         }
        }
@@ -7970,8 +7983,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 9,
-         "msMax": 15,
+         "msMean": 10,
+         "msMax": 21,
          "failures": 0
         }
        }
@@ -8012,7 +8025,7 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 9,
+         "msMean": 8,
          "msMax": 14,
          "failures": 0
         }
@@ -8054,8 +8067,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 14,
-         "msMax": 22,
+         "msMean": 15,
+         "msMax": 24,
          "failures": 0
         }
        }
@@ -8096,8 +8109,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 10,
-         "msMax": 27,
+         "msMean": 8,
+         "msMax": 17,
          "failures": 0
         }
        }
@@ -8139,7 +8152,7 @@
         "vmConstants": null,
         "stability": {
          "msMean": 8,
-         "msMax": 14,
+         "msMax": 15,
          "failures": 0
         }
        }
@@ -8180,8 +8193,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 8,
-         "msMax": 14,
+         "msMean": 9,
+         "msMax": 16,
          "failures": 0
         }
        }
@@ -8222,8 +8235,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 80,
-         "msMax": 136,
+         "msMean": 75,
+         "msMax": 127,
          "failures": 0
         }
        }
@@ -8309,8 +8322,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 199,
-         "msMax": 234,
+         "msMean": 211,
+         "msMax": 257,
          "failures": 0
         }
        }
@@ -8397,8 +8410,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 14,
-         "msMax": 38,
+         "msMean": 12,
+         "msMax": 19,
          "failures": 0
         }
        }
@@ -8439,8 +8452,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 26,
-         "msMax": 42,
+         "msMean": 20,
+         "msMax": 38,
          "failures": 0
         }
        }
@@ -8481,8 +8494,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 50,
-         "msMax": 71,
+         "msMean": 41,
+         "msMax": 49,
          "failures": 0
         }
        }
@@ -8525,8 +8538,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 468,
-         "msMax": 777,
+         "msMean": 404,
+         "msMax": 608,
          "failures": 0
         }
        }
@@ -8569,8 +8582,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 424,
-         "msMax": 597,
+         "msMean": 397,
+         "msMax": 679,
          "failures": 0
         }
        }
@@ -8611,8 +8624,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 1923,
-         "msMax": 3354,
+         "msMean": 1904,
+         "msMax": 3358,
          "failures": 0
         }
        }
@@ -8750,8 +8763,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 10,
-         "msMax": 14,
+         "msMean": 13,
+         "msMax": 24,
          "failures": 0
         }
        }
@@ -8837,8 +8850,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 54,
-         "msMax": 78,
+         "msMean": 58,
+         "msMax": 79,
          "failures": 0
         }
        }
@@ -8879,8 +8892,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 48,
-         "msMax": 69,
+         "msMean": 56,
+         "msMax": 83,
          "failures": 0
         }
        }
@@ -8923,8 +8936,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 384,
-         "msMax": 608,
+         "msMean": 358,
+         "msMax": 574,
          "failures": 0
         }
        }
@@ -8965,8 +8978,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 17,
-         "msMax": 27,
+         "msMean": 14,
+         "msMax": 29,
          "failures": 0
         }
        }
@@ -9007,8 +9020,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 55,
-         "msMax": 84,
+         "msMean": 60,
+         "msMax": 94,
          "failures": 0
         }
        }
@@ -9161,7 +9174,7 @@
         "vmConstants": null,
         "stability": {
          "msMean": 73,
-         "msMax": 170,
+         "msMax": 156,
          "failures": 0
         }
        }
@@ -9202,8 +9215,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 54,
-         "msMax": 83,
+         "msMean": 50,
+         "msMax": 69,
          "failures": 0
         }
        }
@@ -9244,8 +9257,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 58,
-         "msMax": 102,
+         "msMean": 70,
+         "msMax": 147,
          "failures": 0
         }
        }
@@ -9286,8 +9299,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 70,
-         "msMax": 118,
+         "msMean": 82,
+         "msMax": 189,
          "failures": 0
         }
        }
@@ -9328,8 +9341,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 74,
-         "msMax": 125,
+         "msMean": 75,
+         "msMax": 118,
          "failures": 0
         }
        }
@@ -9370,8 +9383,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 58,
-         "msMax": 107,
+         "msMean": 62,
+         "msMax": 102,
          "failures": 0
         }
        }
@@ -9412,8 +9425,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 86,
-         "msMax": 101,
+         "msMean": 87,
+         "msMax": 121,
          "failures": 0
         }
        }
@@ -9590,8 +9603,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 291,
-         "msMax": 647,
+         "msMean": 289,
+         "msMax": 602,
          "failures": 0
         }
        }
@@ -9678,7 +9691,7 @@
         "vmConstants": null,
         "stability": {
          "msMean": 12,
-         "msMax": 17,
+         "msMax": 19,
          "failures": 1
         }
        }
@@ -9719,7 +9732,7 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 14,
+         "msMean": 13,
          "msMax": 20,
          "failures": 1
         }
@@ -9762,7 +9775,7 @@
         "vmConstants": null,
         "stability": {
          "msMean": 14,
-         "msMax": 20,
+         "msMax": 19,
          "failures": 1
         }
        }
@@ -9804,7 +9817,7 @@
         "vmConstants": null,
         "stability": {
          "msMean": 25,
-         "msMax": 38,
+         "msMax": 39,
          "failures": 1
         }
        }
@@ -9873,8 +9886,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 14,
-         "msMax": 30,
+         "msMean": 11,
+         "msMax": 16,
          "failures": 1
         }
        }
@@ -9915,8 +9928,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 13,
-         "msMax": 18,
+         "msMean": 12,
+         "msMax": 16,
          "failures": 1
         }
        }
@@ -9957,8 +9970,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 13,
-         "msMax": 20,
+         "msMean": 12,
+         "msMax": 16,
          "failures": 1
         }
        }
@@ -9999,8 +10012,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 27,
-         "msMax": 45,
+         "msMean": 19,
+         "msMax": 27,
          "failures": 1
         }
        }
@@ -10330,13 +10343,13 @@
   {
    "id": "ix-vm-families",
    "item": "Per-build bytecode VMs (Obscura VM, Zartha, FusGato, IronBrikked, RealObfuscator vm)",
-   "state": "Zartha lifted (Prompt XII); FusGato, IronBrikked, RealObfuscator vm identified, not recovered",
+   "state": "Zartha and FusGato lifted (Prompt XII); IronBrikked, RealObfuscator vm identified, not recovered",
    "detail": "each is flagged unrecoverable so that the report cannot say \"recovered\"; none has a lifter. Since Prompt X the Obscura VM (all three revisions, plain and hardened) has a profile of its data (functions, instruction bytes, decrypted constants; on all 39 Obscura VM fixtures every string of two or more characters of the original program is among the constants read: recall 1.00, `categories.vmConstants` in the database), shown in the report as NOT lifted"
   },
   {
    "id": "x-vm-lifter",
    "item": "A lifter that rebuilds source from Obscura VM bytecode",
-   "state": "plain Obscura VM and Zartha done; hardened Obscura, FusGato, IronBrikked, RealObfuscator vm not started",
+   "state": "plain Obscura VM, Zartha and FusGato done; hardened Obscura, IronBrikked, RealObfuscator vm not started",
    "detail": "the Obscura lifter reads each build's handlers from its own interpreter and decodes with its own key (src/recover/obscura-vm.js). The hardened Obscura builds additionally need: the instruction bytes opened in the sandbox (they are encrypted per record), an operand reader per byte order and offset style, the tree of range tests flattened to its leaves, and the fused BLOCK handlers split back into the operations they were made from. Zartha, FusGato and IronBrikked are different formats and need their own handler readers."
   },
   {
@@ -10360,8 +10373,8 @@
   {
    "id": "xii-fusgato-architecture",
    "item": "FusGato: what it is, from reading its output",
-   "state": "investigated, not lifted",
-   "detail": "an IronBrew 2 fork (it prints the IronBrew credit line) with a bit-string container (26-bit instruction words read with rshift/band, a table of constants and nested prototypes) and an interpreter that is NOT an opcode switch: it is `if e == 1 then ... elseif e == 2 then ...` on the instruction index, each leaf the handler of that instruction written with operands read from the decoded instruction table (`n[l[e][1]] = o[l[e][4]]`). That is Zartha's shape with operands in data, so the leaf reader of src/recover/zartha-vm.js plus a reader of the bit-string container would lift it; not started"
+   "state": "lifted (4 of 4 working fixtures)",
+   "detail": "an IronBrew 2 fork with a bit-string container (instruction words of 26 bits: A, B, C, no opcode) and an interpreter that is `if pc == n` with the handler of instruction n written out and its operands read from the decoded table; the leaf reader of the Zartha lifter plus a container reader lift it (src/recover/fusgato-vm.js). Evidence is two programs only"
   }
  ]
 }

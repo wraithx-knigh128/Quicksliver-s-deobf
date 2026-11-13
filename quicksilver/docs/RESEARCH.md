@@ -426,8 +426,7 @@ in its first version (a store into the table was treated as a read).
 tool's own output leaves two constants out (it measures the pool with `#`); the reader refuses rather than guess, which is the right answer. IronBrew 2 `strings`: the remainder is IronBrew's own inlining and constant folding plus the local names a stripped
 chunk does not have; the output is the program that was compiled. None of the three is a recovery gap that more work on the recoverer would close.
 
-**FusGato (investigated, not lifted).** An IronBrew 2 fork (it prints the credit line) with a bit-string container and an interpreter that switches on the instruction index, one handler per instruction, operands read from the decoded table. That is Zartha's
-shape with the operands in data; the leaf reader plus a container reader would lift it. Recorded as `xii-fusgato-architecture` in `data/research/format-notes.json`.
+**FusGato (lifted).** An IronBrew 2 fork (it prints the credit line) with a bit-string container (3-bit item codes; instruction words of 26 bits holding A, B and C and no opcode) and an interpreter that switches on the instruction index: one handler per instruction, operands read from the decoded table. That is Zartha's shape with the operands in data, so `src/recover/fusgato-vm.js` reuses the dispatch evaluation of the Zartha reader, recognises each handler by its text, reads the operands from the decoded bits, turns the environment-register indexing back into GETGLOBAL / SETGLOBAL and keeps closures' upvalue links as the words after them. 4 of 4 working fixtures (two programs) are lifted and behave like the original on Lua 5.1, including the two whose own output does not (its comparison handlers ignore the A field). The evidence is narrow: 12 of the generator's 16 runs ended in its own errors, and only handlers those two programs use are recognised.
 
 
 **Before and after (`docs/AUDIT.md`, same fixtures, regenerated).**
@@ -436,5 +435,6 @@ shape with the operands in data; the leaf reader plus a container reader would l
 |---|---|---|---|---|---|
 | Zartha | 4% -> 92% | 4% -> 80% | 0/49 -> 39/54 | 16/16 (38), unchanged: the audit judges only builds whose own output is right; the lifted program matches the original on 39 | unsupported -> mixed (verified, partial) |
 | XFuscator | 19% -> 100% (after of the previous audit: 90%) | 81% -> 96% | 38/40, unchanged | 32/32 (8) | partial -> mixed (verified, partial) |
+| FusGato | 3% -> 98% | 2% -> 98% | 0/4 -> 4/4 | 0/0 (4), unchanged; the lifted program matches the original on 4 of 4 | unsupported -> partial (four fixtures, two programs) |
 
 The 15 Zartha builds that are not complete are the ones whose strings are masked with a key the generator never writes; they stay below high confidence on purpose.

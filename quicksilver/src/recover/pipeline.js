@@ -24,6 +24,7 @@ import { propagateStable } from '../passes/stable.js';
 import { buildReport, annotate, stripReport } from './annotate.js';
 import { profileVm } from './vmprofile.js';
 import { liftObscuraVm, ObscuraVmError } from './obscura-vm.js';
+import { liftFusgatoVm, FusgatoVmError, looksLikeFusgato } from './fusgato-vm.js';
 import { liftZarthaVm, ZarthaVmError, looksLikeZartha, removeZarthaGuards, repairZarthaSource } from './zartha-vm.js';
 import { snapshotNames, joinMoonVeil, unboxCells, JoinError } from './moonveil-join.js';
 import { removeHerculesAntiTamper, removeHerculesAntiTamperFunction, removeHerculesCoinGuard, restoreMethodSelf } from './hercules.js';
@@ -169,6 +170,21 @@ function rebuildZarthaVm(ast, state) {
   return { changed: r.stats.instructions, ...r.stats };
 }
 
+/** FusGato's virtual machine: each instruction is told by its handler's text and its operands by the decoded bits; the result goes through the decompiler. Nothing runs. */
+function rebuildFusgatoVm(ast, state) {
+  let r;
+  try { r = liftFusgatoVm(ast); } catch (e) {
+    if (e instanceof FusgatoVmError) return { skipped: e.message };
+    throw e;
+  }
+  const out = decompile(parseChunk(r.bytes));
+  if (out.failures.length) return { skipped: `the decompiler could not structure ${out.failures.length} function(s): ${out.failures[0]}` };
+  ast.body = out.ast.body;
+  ast.features = out.ast.features || ast.features;
+  state.stats = r.stats;
+  return { changed: r.stats.instructions, ...r.stats };
+}
+
 /**
  * IronBrew 2: read the program back out of the VM's own data and decompile it. The AST is replaced in place so that
  * the ordinary passes (folding, clean-up, renaming) go on to work on the recovered program.
@@ -273,6 +289,14 @@ export function recover(source, userOptions = {}) {
     if (run.step('zartha.vm', 'Lift the Zartha virtual machine back to source', (a) => rebuildZarthaVm(a, zartha))) {
       unusedAtStart = new WeakSet(); decompiled = true;
       vm = { kind: 'zartha', lifted: true, functions: [], instructionBytes: 0, constants: null, stats: zartha.stats };
+    }
+  }
+
+  if (!vm && !zartha.zarthaLifted && (detection.families.some((f) => f.id === 'fusgato' && f.confidence >= 0.5) || looksLikeFusgato(parsed.ast))) {
+    const fg = { stats: null };
+    if (run.step('fusgato.vm', 'Lift the FusGato virtual machine back to source', (a) => rebuildFusgatoVm(a, fg))) {
+      unusedAtStart = new WeakSet(); decompiled = true;
+      vm = { kind: 'fusgato', lifted: true, functions: [], instructionBytes: 0, constants: null, stats: fg.stats };
     }
   }
 

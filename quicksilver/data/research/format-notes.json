@@ -428,6 +428,18 @@
           "tests": [
             "tests/formats-ix.test.mjs: luaxen IronBrikked, zartha and fusgato"
           ]
+        },
+        {
+          "id": "vm-lifter",
+          "summary": "the bit-string program is decoded (items introduced by a 3-bit code; instruction words of 26 bits with fields A, B, C and no opcode), the interpreter's `if pc == n` handlers are evaluated for every n and recognised by their text, the global accesses the generator turned into an index of the register that holds the environment are read back as GETGLOBAL / SETGLOBAL, closures keep their upvalue links as the words after them. All 4 fixtures the generator produced a file for are lifted and behave like the ORIGINAL program on Lua 5.1, among them the ones whose own output does not (its comparison handlers ignore the A field; the A its word carries is used)",
+          "files": [
+            "src/recover/fusgato-vm.js",
+            "src/recover/zartha-vm.js",
+            "src/recover/pipeline.js"
+          ],
+          "tests": [
+            "tests/fusgato-vm.test.mjs"
+          ]
         }
       ],
       "failurePatterns": [
@@ -451,7 +463,8 @@
         }
       ],
       "assumptions": [
-        "The relative-require resolution of the driver (every module directory tried when a tail call hides the caller) is ours; it was checked on the one build that completes"
+        "The relative-require resolution of the driver (every module directory tried when a tail call hides the caller) is ours; it was checked on the one build that completes",
+        "Only the handlers that occur in the four working fixtures (two programs) are recognised: MOVE, LOADK, LOADBOOL, NEWTABLE, GETTABLE, SETTABLE, ADD (the other arithmetic operators are read from the same text but were not seen), CONCAT, LEN, JMP, TEST, comparisons, CALL, RETURN, SETLIST, TFORLOOP, CLOSURE, GETUPVAL, SETUPVAL; an operation not seen is reported with its text. 12 of the 16 generator runs ended in its own errors, so there is no wider evidence"
       ]
     },
     "realobfuscator": {
@@ -644,13 +657,13 @@
     {
       "id": "ix-vm-families",
       "item": "Per-build bytecode VMs (Obscura VM, Zartha, FusGato, IronBrikked, RealObfuscator vm)",
-      "state": "Zartha lifted (Prompt XII); FusGato, IronBrikked, RealObfuscator vm identified, not recovered",
+      "state": "Zartha and FusGato lifted (Prompt XII); IronBrikked, RealObfuscator vm identified, not recovered",
       "detail": "each is flagged unrecoverable so that the report cannot say \"recovered\"; none has a lifter. Since Prompt X the Obscura VM (all three revisions, plain and hardened) has a profile of its data (functions, instruction bytes, decrypted constants; on all 39 Obscura VM fixtures every string of two or more characters of the original program is among the constants read: recall 1.00, `categories.vmConstants` in the database), shown in the report as NOT lifted"
     },
     {
       "id": "x-vm-lifter",
       "item": "A lifter that rebuilds source from Obscura VM bytecode",
-      "state": "plain Obscura VM and Zartha done; hardened Obscura, FusGato, IronBrikked, RealObfuscator vm not started",
+      "state": "plain Obscura VM, Zartha and FusGato done; hardened Obscura, IronBrikked, RealObfuscator vm not started",
       "detail": "the Obscura lifter reads each build's handlers from its own interpreter and decodes with its own key (src/recover/obscura-vm.js). The hardened Obscura builds additionally need: the instruction bytes opened in the sandbox (they are encrypted per record), an operand reader per byte order and offset style, the tree of range tests flattened to its leaves, and the fused BLOCK handlers split back into the operations they were made from. Zartha, FusGato and IronBrikked are different formats and need their own handler readers."
     },
     {
@@ -674,8 +687,8 @@
     {
       "id": "xii-fusgato-architecture",
       "item": "FusGato: what it is, from reading its output",
-      "state": "investigated, not lifted",
-      "detail": "an IronBrew 2 fork (it prints the IronBrew credit line) with a bit-string container (26-bit instruction words read with rshift/band, a table of constants and nested prototypes) and an interpreter that is NOT an opcode switch: it is `if e == 1 then ... elseif e == 2 then ...` on the instruction index, each leaf the handler of that instruction written with operands read from the decoded instruction table (`n[l[e][1]] = o[l[e][4]]`). That is Zartha's shape with operands in data, so the leaf reader of src/recover/zartha-vm.js plus a reader of the bit-string container would lift it; not started"
+      "state": "lifted (4 of 4 working fixtures)",
+      "detail": "an IronBrew 2 fork with a bit-string container (instruction words of 26 bits: A, B, C, no opcode) and an interpreter that is `if pc == n` with the handler of instruction n written out and its operands read from the decoded table; the leaf reader of the Zartha lifter plus a container reader lift it (src/recover/fusgato-vm.js). Evidence is two programs only"
     }
   ]
 }

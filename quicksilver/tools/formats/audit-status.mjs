@@ -29,7 +29,7 @@ const TARGETS = [
   { label: 'LuaXen, AST stage', project: 'luaxen', config: /ast/, code: ['src/adaptive/strategies/dispatch.js'], rows: [27, 28] },
   { label: 'LuaXen, IronBrikked VM stage', project: 'luaxen', config: /ironbrikked|both/, code: ['src/recover/ironbrew.js'], rows: [28] },
   { label: 'Zartha \u2014 lifted since Prompt XII', project: 'zartha', code: ['src/recover/zartha-vm.js'], rows: [36, 51, 52] },
-  { label: 'FusGato', project: 'fusgato', code: [], rows: [28, 55] },
+  { label: 'FusGato \u2014 lifted since Prompt XII (two programs)', project: 'fusgato', code: ['src/recover/fusgato-vm.js'], rows: [28, 55] },
   { label: 'zynaa / LuaObfuscator', project: 'zynaa', code: ['src/passes/evaluate.js', 'src/passes/strtable.js'], rows: [30, 32] },
   { label: 'IronBrew 2', project: 'ironbrew2', code: ['src/recover/ironbrew.js', 'src/recover/ib2-templates.js'], rows: [] },
   { label: 'Hercules (1.5 .. 2.0.0)', project: 'hercules', code: ['src/recover/hercules.js', 'src/recover/hercules-vm.js'], rows: [15, 16, 17] },

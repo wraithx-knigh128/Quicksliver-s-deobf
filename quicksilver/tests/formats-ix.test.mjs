@@ -255,13 +255,13 @@ for (const sample of ['s01_minify_basic', 's02_renamed_vars', 's03_encoded_strin
   });
 }
 
-test('luaxen IronBrikked and fusgato: identified (and never called recovered); zartha is identified and, since Prompt XII, lifted (tests/zartha-vm.test.mjs); their fixtures are the tools’ real output', { skip: !luaxenOk && 'no fixtures' }, () => {
+test('luaxen IronBrikked: identified (and never called recovered); zartha and fusgato are identified and, since Prompt XII, lifted (tests/zartha-vm.test.mjs, tests/fusgato-vm.test.mjs); their fixtures are the tools’ real output', { skip: !luaxenOk && 'no fixtures' }, () => {
   for (const [dir, file, family] of [['luaxen', 's01_minify_basic__ironbrikked.lua', 'luaxen'], ['zartha', 's01_minify_basic__default.lua', 'zartha'], ['fusgato', 's03_encoded_strings__default.lua', 'fusgato']]) {
     const p = path.join(corpus, 'obfuscated', dir, file);
     if (!fs.existsSync(p)) continue;
     const r = run(read(p));
     assert.ok(r.detection.families.some((f) => f.id === family && f.confidence >= 0.85), `${dir} identified`);
-    if (dir === 'zartha') assert.equal(r.steps.find((s) => s.id === 'zartha.vm').status, 'applied', 'zartha is lifted, not only identified');
+    if (dir === 'zartha' || dir === 'fusgato') assert.equal(r.steps.find((s) => s.id === `${dir}.vm`).status, 'applied', `${dir} is lifted, not only identified`);
     else assert.notEqual(r.confidence.level, 'high', `${dir} is a VM: not high confidence`);
   }
   const fusgato = path.join(corpus, 'obfuscated/fusgato/s03_encoded_strings__default.lua');

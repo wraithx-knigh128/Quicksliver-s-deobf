@@ -31,9 +31,9 @@ export class ZarthaVmError extends Error {}
 const fail = (m) => { throw new ZarthaVmError(m); };
 
 const clone = (x) => JSON.parse(JSON.stringify(x));
-const text = (stmts) => print({ type: 'Chunk', body: stmts, endComments: [], features: new Set() }).replace(/\s*\n\s*/g, ' ').replace(/([(\[{]) /g, '$1').replace(/ ([)\]}])/g, '$1').trim();
+export const text = (stmts) => print({ type: 'Chunk', body: stmts, endComments: [], features: new Set() }).replace(/\s*\n\s*/g, ' ').replace(/([(\[{]) /g, '$1').replace(/ ([)\]}])/g, '$1').trim();
 
-const find = (n, f, out = []) => {
+export const find = (n, f, out = []) => {
   if (!n || typeof n !== 'object') return out;
   if (Array.isArray(n)) { n.forEach((x) => find(x, f, out)); return out; }
   if (f(n)) out.push(n);
@@ -68,10 +68,11 @@ const protoDecl = (s) => s.type === 'Local' && s.ids.length === 7 && s.values.le
 // ---- evaluation of the dispatch ----------------------------------------------------------------------------------------------
 
 /** The value of an expression made of numbers and the counter only, or undefined. */
-function evalExpr(e, P, p) {
+export function evalExpr(e, P, p) {
   if (!e) return undefined;
   switch (e.type) {
     case 'Number': return e.value;
+    case 'String': return e.value;
     case 'True': return true;
     case 'False': return false;
     case 'Name': return e.name === P ? p : undefined;
@@ -80,6 +81,7 @@ function evalExpr(e, P, p) {
       const a = evalExpr(e.arg, P, p);
       if (a === undefined) return undefined;
       if (e.op === '-' && typeof a === 'number') return -a;
+      if (e.op === '#' && typeof a === 'string') return a.length;
       if (e.op === 'not') return !a;
       return undefined;
     }
@@ -100,7 +102,7 @@ function evalExpr(e, P, p) {
 }
 
 /** What runs when `pointer` is p: tests that depend on nothing but p are decided, the rest of the code is kept. */
-function partial(stmts, P, p) {
+export function partial(stmts, P, p) {
   const out = [];
   for (const s of stmts) {
     if (s.type === 'Do') { out.push(...partial(s.body, P, p)); continue; }
@@ -129,7 +131,7 @@ function headerNames(ast) {
 // ---- names -------------------------------------------------------------------------------------------------------------------
 
 /** Names introduced inside a leaf (loop variables, locals) are given numbered names of their own so that no role can be mistaken for them. */
-function alphaRename(stmts) {
+export function alphaRename(stmts) {
   let n = 0;
   const fresh = () => `$${++n}`;
   const expr = (e, sc) => {
@@ -169,7 +171,7 @@ function alphaRename(stmts) {
 }
 
 /** Machine names (`Stack`, `Temp`, whatever the build called them) replaced by their roles. Functions are left as they are: they are other machines. */
-function applyRoles(node, roles) {
+export function applyRoles(node, roles) {
   if (!node || typeof node !== 'object') return node;
   if (Array.isArray(node)) return node.map((x) => applyRoles(x, roles));
   if (node.type === 'Func') return node;
@@ -188,7 +190,7 @@ const bindable = (v) => v.type === 'Number'
   || (v.type === 'Paren' && bindable(v.expr));
 
 /** The scratch cells that hold a number or a name of the machine are replaced by what they hold. Returns the statements left and the values that nothing read. */
-function resolveSlice(stmts) {
+export function resolveSlice(stmts) {
   const bound = new Map();
   const used = new Set();
   const subst = (e) => {
@@ -220,7 +222,7 @@ function resolveSlice(stmts) {
 }
 
 /** Canonical text: locals numbered by first appearance. */
-function canon(stmts) {
+export function canon(stmts) {
   const seen = new Map();
   return text(stmts).replace(/\$\d+/g, (m) => { if (!seen.has(m)) seen.set(m, `v${seen.size + 1}`); return seen.get(m); });
 }
