@@ -4,6 +4,7 @@
   python -I gen_external.py --tool zenfus    --root /path/to/Zenfus    --out ../obfuscated/zenfus --commit <git sha>
   python -I gen_external.py --tool azurevm   --root /path/to/AzureVM   --out ../obfuscated/azurevm --commit <git sha>
   python -I gen_external.py --tool rbxlua --root /path/to/RBXLuaObfuscator --out ../obfuscated-local/rbxlua --commit <git sha>
+  python -I gen_external.py --tool panda     --root /path/to/Prometheus-Modified --out ../obfuscated/panda --commit <git sha>
   python -I gen_external.py --tool simple_lua --root /path/to/dir-with-tool.lua --out ../obfuscated-local/simple_lua --commit <git sha>
   python -I gen_external.py --tool xfuscator --root /path/to/XFuscator --out ../obfuscated-local/xfuscator --commit <git sha>
   python -I gen_external.py --tool zartha    --root /path/to/Zartha-Obfuscator --out ../obfuscated/zartha --commit <git sha>
@@ -63,6 +64,12 @@ TOOLS = {
     "luaxen": {
         "name": "LuaXen", "source": "https://github.com/luauminati/LuaXen", "licence": "MIT", "driver": "drivers/luaxen.lua",
         "configs": [("ironbrikked", {"mode": "ironbrikked"}, "lua51"), ("ast", {"mode": "ast"}, "lua51"), ("both", {"mode": "both"}, "lua51")],
+    },
+    "panda": {
+        "name": "Panda Obfuscator (Prometheus-Modified)", "source": "https://github.com/Panda-Repositories/Prometheus-Modified",
+        "licence": "Prometheus licence (derivative of Prometheus)", "driver": "drivers/panda.lua",
+        # the presets of its src/presets.lua; the LuaU ones produce Luau and are checked on Luau
+        "configs": [(n, {"preset": n}, "lua51") for n in ("Minify", "Weak", "Medium", "Strong", "LuaU-Safe", "Panda-Xenon", "Panda-Roblox-Strong")],
     },
     "simple_lua": {
         "name": "Simple-Lua-Obfuscator", "source": "https://github.com/CloudHub111/Simple-Lua-Obfuscator", "licence": "none stated", "driver": "drivers/simple_lua.lua",

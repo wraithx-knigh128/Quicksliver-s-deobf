@@ -137,26 +137,81 @@ function freeTables(f, info) {
 
 // ---- 2. the dispatcher --------------------------------------------------------------------------------------------
 
-/** Evaluate `pos OP number` for a concrete pos, or undefined if the condition is not that shape. */
-function testPos(cond, posVar, id, info) {
-  const c = stripParens(cond);
-  if (!c || c.type !== 'Binary') return undefined;
-  const l = stripParens(c.left);
-  const r = stripParens(c.right);
-  let a;
-  let b;
-  if (isName(l, posVar, info) && r.type === 'Number') { a = id; b = r.value; }
-  else if (isName(r, posVar, info) && l.type === 'Number') { a = l.value; b = id; }
-  else return undefined;
-  switch (c.op) {
-    case '<': return a < b;
-    case '>': return a > b;
-    case '<=': return a <= b;
-    case '>=': return a >= b;
-    case '==': return a === b;
-    case '~=': return a !== b;
-    default: return undefined;
-  }
+/**
+ * Evaluate a dispatcher test for a concrete pos, or undefined if the condition is not one. Prometheus writes `pos < N`; derivatives disguise
+ * the same test (Panda: `pos + -N < 0 and pos == pos`, `not (N <= pos)`, `N > pos`, `pos - N < 0`). Any and / or / not of comparisons between
+ * arithmetic on pos and numbers is evaluated: pos is a block id, a finite number, so `pos == pos` is true and the arithmetic is exact.
+ */
+function testPos(cond, posVar, id, info, temps = null) {
+  let usesPos = false;
+  // a temporary the dispatcher computed from pos (`local a = pos + -N`, `local b = a < 0`): its value for this pos, and that it came from pos
+  const temp = (e) => { if (!temps || e.type !== 'Name') return undefined; const v = info.varOf.get(e); return v && temps.has(v) ? temps.get(v) : undefined; };
+  const arith = (e) => {
+    e = stripParens(e);
+    if (!e) return undefined;
+    if (e.type === 'Number') return e.value;
+    if (isName(e, posVar, info)) { usesPos = true; return id; }
+    { const t = temp(e); if (typeof t === 'number') { usesPos = true; return t; } }
+    if (e.type === 'Unary' && e.op === '-') { const v = arith(e.arg); return v === undefined ? undefined : -v; }
+    if (e.type === 'Binary' && ['+', '-', '*'].includes(e.op)) {
+      const a = arith(e.left);
+      const b = a === undefined ? undefined : arith(e.right);
+      if (b === undefined) return undefined;
+      return e.op === '+' ? a + b : e.op === '-' ? a - b : a * b;
+    }
+    return undefined;
+  };
+  const test = (e) => {
+    e = stripParens(e);
+    if (!e) return undefined;
+    { const t = temp(e); if (typeof t === 'boolean') { usesPos = true; return t; } }
+    if (e.type === 'Unary' && e.op === 'not') { const r = test(e.arg); return r === undefined ? undefined : !r; }
+    if (e.type !== 'Binary') return undefined;
+    if (e.op === 'and' || e.op === 'or') {
+      const a = test(e.left);
+      const b = a === undefined ? undefined : test(e.right);
+      if (b === undefined) return undefined;
+      return e.op === 'and' ? a && b : a || b;
+    }
+    const a = arith(e.left);
+    const b = a === undefined ? undefined : arith(e.right);
+    if (b === undefined) return undefined;
+    switch (e.op) {
+      case '<': return a < b;
+      case '>': return a > b;
+      case '<=': return a <= b;
+      case '>=': return a >= b;
+      case '==': return a === b;
+      case '~=': return a !== b;
+      default: return undefined;
+    }
+  };
+  const r = test(cond);
+  return usesPos ? r : undefined;
+}
+
+/** The value of a dispatcher temporary for this pos: a number (arithmetic on pos) or a boolean (a test), or undefined. */
+function posValue(e, posVar, id, info, temps) {
+  const b = testPos(e, posVar, id, info, temps);
+  if (b !== undefined) return b;
+  let usesPos = false;
+  const arith = (x) => {
+    x = stripParens(x);
+    if (!x) return undefined;
+    if (x.type === 'Number') return x.value;
+    if (isName(x, posVar, info)) { usesPos = true; return id; }
+    if (x.type === 'Name') { const v = info.varOf.get(x); const t = v && temps.has(v) ? temps.get(v) : undefined; if (typeof t === 'number') { usesPos = true; return t; } return undefined; }
+    if (x.type === 'Unary' && x.op === '-') { const v = arith(x.arg); return v === undefined ? undefined : -v; }
+    if (x.type === 'Binary' && ['+', '-', '*'].includes(x.op)) {
+      const a = arith(x.left);
+      const c = a === undefined ? undefined : arith(x.right);
+      if (c === undefined) return undefined;
+      return x.op === '+' ? a + c : x.op === '-' ? a - c : a * c;
+    }
+    return undefined;
+  };
+  const n = arith(e);
+  return usesPos ? n : undefined;                       // a test on numbers alone is the program's, not the dispatcher's
 }
 
 /**
@@ -169,12 +224,13 @@ function testPos(cond, posVar, id, info) {
 function blockOf(tree, posVar, id, info) {
   let body = tree;
   const temps = new Map();
+  const carried = [];
   const evalCond = (cond) => {
     const c = stripParens(cond);
     if (!c) return undefined;
-    if (c.type === 'Name') { const v = info.varOf.get(c); return v && temps.has(v) ? temps.get(v) : undefined; }
+    if (c.type === 'Name') { const v = info.varOf.get(c); const t = v && temps.has(v) ? temps.get(v) : undefined; return typeof t === 'boolean' ? t : undefined; }
     if (c.type === 'Unary' && c.op === 'not') { const r = evalCond(c.arg); return r === undefined ? undefined : !r; }
-    return testPos(c, posVar, id, info);
+    return testPos(c, posVar, id, info, temps);
   };
   for (let guard = 0; guard < 64; guard++) {
     let i = 0;
@@ -184,8 +240,30 @@ function blockOf(tree, posVar, id, info) {
       const single = (s.type === 'Local' && s.ids.length === 1 && s.values.length === 1) ? [s.ids[0], s.values[0]]
         : (s.type === 'Assign' && s.targets.length === 1 && s.values.length === 1 && s.targets[0].type === 'Name') ? [s.targets[0], s.values[0]] : null;
       if (single) {
-        const r = evalCond(single[1]);
+        const r = posValue(single[1], posVar, id, info, temps);
         if (r !== undefined) { const v = info.varOf.get(single[0]); if (v) temps.set(v, r); continue; }
+      }
+      // `and` / `or` of two tests after a register machine: `local u = t` then `if t then u = B end` (or `if not t then ...`): part of the temporary, not a branch
+      if (s.type === 'If' && s.clauses.length === 1 && !s.orelse && s.clauses[0].body.length === 1) {
+        const a = s.clauses[0].body[0];
+        const tv = a.type === 'Assign' && a.targets.length === 1 && a.values.length === 1 && a.targets[0].type === 'Name' ? info.varOf.get(a.targets[0]) : null;
+        const c = evalCond(s.clauses[0].cond);
+        if (tv && temps.has(tv) && c !== undefined) {
+          if (c) { const r = posValue(a.values[0], posVar, id, info, temps); if (r === undefined) break; temps.set(tv, r); }
+          continue;
+        }
+      }
+      // a statement the register machine left between a test's temporary and its `if` (`t = r5` ... `if t2 then`): it runs for every block under that
+      // test, so it goes in front of the one chosen. Only when a test on pos follows at this level, after statements that are neither tests nor branches.
+      if (s.type !== 'If') {
+        let j = i;
+        while (j < body.length && body[j].type !== 'If' && !['Return', 'Break', 'Goto', 'While', 'Repeat', 'NumFor', 'GenFor', 'Do'].includes(body[j].type)) j++;
+        if (j < body.length && body[j].type === 'If' && evalCond(body[j].clauses[0].cond) !== undefined
+            && !body.slice(i, j).some((x) => { let hit = false; walk(x, (n) => { if (n.type === 'Name' && isName(n, posVar, info)) hit = true; }); return hit; })) {
+          carried.push(...body.slice(i, j));
+          i = j - 1;
+          continue;
+        }
       }
       if (s.type === 'If') {
         if (evalCond(s.clauses[0].cond) === undefined) break;          // an `if` of the leaf's own
@@ -199,7 +277,7 @@ function blockOf(tree, posVar, id, info) {
       }
       break;
     }
-    if (chosen === null) return body.slice(i);
+    if (chosen === null) return [...carried, ...body.slice(i)];
     body = chosen;
   }
   return fail('dispatcher tree too deep');

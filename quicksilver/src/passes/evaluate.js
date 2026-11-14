@@ -58,8 +58,56 @@ function fingerprint(v) {
   });
 }
 
+/**
+ * `local k = dec("...", 123)` ... `cache[k]`, where `cache` is `setmetatable({}, { __index = store })` and k is read only there: the call is put where its key is
+ * used, so the lookup is one site the evaluator can read (inside a function, where k is no top-level definition the slice could follow). Taken only when k is
+ * declared in the same block, read exactly once, written never, and the statements in between call nothing: moving a call that only touches its own state past
+ * statements that call nothing changes nothing.
+ */
+function foldCacheKeys(chunk) {
+  const info = analyze(chunk);
+  const isProxy = (e) => {
+    if (e.type !== 'Name') return false;
+    const v = info.varOf.get(e);
+    const init = v && !v.isGlobal && v.writes.length === 0 ? v.init : null;
+    return !!init && init.type === 'Call' && init.fn.type === 'Name' && init.fn.name === 'setmetatable' && init.args.length === 2 && init.args[1].type === 'Table'
+      && init.args[1].fields.some((f) => (f.kind === 'named' && f.key === '__index') || (f.kind === 'keyed' && f.key && f.key.type === 'String' && f.key.value === '__index'));
+  };
+  const calls = (n) => { let hit = false; walk(n, (m) => { if (m.type === 'Call' || m.type === 'MethodCall') hit = true; return hit ? false : undefined; }); return hit; };
+  let changed = 0;
+  transform(chunk, {
+    block(stmts) {
+      let out = null;
+      for (let i = 0; i < stmts.length; i++) {
+        const s = stmts[i];
+        if (s.type !== 'Local' || s.ids.length !== 1 || s.values.length !== 1) continue;
+        const call = s.values[0];
+        if (call.type !== 'Call' || call.fn.type !== 'Name' || !call.args.length || !call.args.every((a) => a.type === 'String' || a.type === 'Number')) continue;
+        const v = info.varOf.get(s.ids[0]);
+        if (!v || v.writes.length || v.reads.length !== 1) continue;
+        const use = v.reads[0];
+        let at = -1;
+        let site = null;
+        for (let j = i + 1; j < stmts.length && j <= i + 4; j++) {
+          walk(stmts[j], (n) => { if (!site && n.type === 'Index' && n.key === use && isProxy(n.obj)) site = n; return site ? false : undefined; });
+          if (site) { at = j; break; }
+        }
+        if (!site || stmts.slice(i + 1, at).some(calls)) continue;
+        site.key = call;
+        out = out || stmts.slice();
+        out[i] = null;
+        changed++;
+      }
+      return out ? out.filter(Boolean) : undefined;
+    },
+  });
+  return changed;
+}
+
 export function evaluatePass(chunk, ctx = {}) {
+  const folded = foldCacheKeys(chunk);
   const first = evaluateOnce(chunk, ctx);
+  if (folded) first.changed += folded;
   if (!first.indexRejected || ctx.keysOnly) return first;
   // what remains are a few calls of the decoder found the first time; a function called once with constant arguments is not a decoder
   const second = evaluateOnce(chunk, { ...ctx, keysOnly: true, knownDecoders: new Set(first.decoders.map((d) => d.name)) });

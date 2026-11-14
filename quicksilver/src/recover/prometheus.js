@@ -26,6 +26,11 @@ function isAntiTamperBlock(stmt) {
 // A tool derived from Prometheus keeps the message ("Tamper Detected!") and the idea (random calls whose error messages carry line numbers, checked against each other) but
 // writes the block differently (no leading string, no numeric loop in front). The block is then recognised by what it does, not by how this version writes it: it holds the
 // marker message, and it depends on nothing outside itself except standard globals (and globals nothing outside reads), so with the script untouched it changes nothing.
+// The guard is recognised by its message where the tool keeps it, or by its mechanism where the message is random (Panda Obfuscator): error messages taken apart for their
+// line numbers, `string.gmatch(tostring(err), ":(%d*):")`, which only agree while the script keeps the layout the tool gave it.
+const LINE_PROBE = ':(%d*):';
+const isGuardMarker = (n) => n.type === 'String' && (n.value === 'Tamper Detected!' || n.value === LINE_PROBE);
+
 const GUARD_STD = new Set(['pcall', 'error', 'math', 'string', 'table', 'tostring', 'tonumber', 'select', 'unpack', 'setmetatable', 'getmetatable', 'rawget', 'rawset', 'type', 'assert', 'ipairs', 'pairs', 'next']);
 
 function isSelfContainedGuard(stmt, info) {
@@ -34,7 +39,7 @@ function isSelfContainedGuard(stmt, info) {
   const ids = new Set();
   const names = new Set();
   walk(stmt, (n) => {
-    if (n.type === 'String' && n.value === 'Tamper Detected!') marker = true;
+    if (isGuardMarker(n)) marker = true;
     if (n.type === 'Id') ids.add(n);
     if (n.type === 'Name') names.add(n);
   });
@@ -101,7 +106,7 @@ export function removeGuardFlag(chunk) {
   const names = new Set();
   const ids = new Set();
   let marker = false;
-  for (const st of segment) walk(st, (n) => { if (n.type === 'Name') names.add(n); if (n.type === 'Id') ids.add(n); if (n.type === 'String' && n.value === 'Tamper Detected!') marker = true; });
+  for (const st of segment) walk(st, (n) => { if (n.type === 'Name') names.add(n); if (n.type === 'Id') ids.add(n); if (isGuardMarker(n)) marker = true; });
   if (!marker) return { changed: 0 };
   // `flag` is written only as `flag = flag and X`
   let writesOk = true;
@@ -126,6 +131,66 @@ export function removeGuardFlag(chunk) {
   }
   chunk.body = [...body.slice(0, from), ...(returns ? inner.slice(0, -1) : inner)];
   return { changed: segment.length + 1 };
+}
+
+/**
+ * The guard once Vmify has compiled it with the program and the `do` block is gone, in the form Panda Obfuscator's AntiTamper takes (failure is a call, not a wrapping `if`):
+ *
+ *   local flag = true  ...statements that only decide `flag`...  if not flag then fail() end  PROGRAM
+ *
+ * Taken only when the statements from `local flag = true` to the `if` hold the line-number probe or the message, read nothing but standard globals and their own locals,
+ * write no global the program reads, and declare nothing the program uses, and when the failure branch only calls functions declared there or `error`: with the script
+ * untouched every check passes, so removing them leaves the program as it runs.
+ */
+export function removeGuardPrefix(chunk) {
+  const body = chunk.body;
+  const info = analyze(chunk);
+  for (let at = 0; at < body.length; at++) {
+    const s = body[at];
+    if (s.type !== 'If' || s.clauses.length !== 1 || s.orelse) continue;
+    const cond = s.clauses[0].cond;
+    if (cond.type !== 'Unary' || cond.op !== 'not' || cond.arg.type !== 'Name') continue;
+    const flag = info.varOf.get(cond.arg);
+    if (!flag || flag.isGlobal || !flag.init || flag.init.type !== 'True') continue;
+    let from = body.findIndex((x) => x.type === 'Local' && x.ids.some((id) => info.varOf.get(id) === flag));
+    if (from < 0 || from >= at) continue;
+    // the statements in front of `local flag = true` that declare what only the guard uses (`local function f() end` ... `pcall(f)`) are the guard's too
+    const inRange = (m, a, b) => body.slice(a, b + 1).some((st) => { let hit = false; walk(st, (n) => { if (n === m) hit = true; return hit ? false : undefined; }); return hit; });
+    while (from > 0) {
+      const prev = body[from - 1];
+      const declared = prev.type === 'LocalFunction' ? [prev.id] : prev.type === 'Local' ? prev.ids : null;
+      if (!declared) break;
+      const vars = declared.map((id) => info.varOf.get(id));
+      if (vars.some((v) => !v || [...v.reads, ...v.writes].some((m) => !inRange(m, from - 1, at)))) break;
+      from--;
+    }
+    const segment = body.slice(from, at + 1);
+    const names = new Set();
+    const ids = new Set();
+    let marker = false;
+    for (const st of segment) walk(st, (n) => { if (n.type === 'Name') names.add(n); if (n.type === 'Id') ids.add(n); if (isGuardMarker(n)) marker = true; });
+    if (!marker) continue;
+    // the failure branch: calls of the segment's own functions, or of error
+    const failOk = s.clauses[0].body.every((x) => x.type === 'CallStmt' && x.call.type === 'Call' && x.call.fn.type === 'Name'
+      && (() => { const v = info.varOf.get(x.call.fn); return v && (v.isGlobal ? v.name === 'error' : ids.has(v.decl)); })());
+    if (!failOk) continue;
+    let ok = true;
+    for (const v of info.vars) {
+      if (!ids.has(v.decl)) continue;
+      if ([...v.reads, ...v.writes].some((m) => !names.has(m))) { ok = false; break; }
+    }
+    if (!ok) continue;
+    for (const n of names) {
+      const v = info.varOf.get(n);
+      if (!v) { ok = false; break; }
+      if (v.isGlobal) { if (!GUARD_STD.has(v.name) && [...v.reads, ...v.writes].some((m) => !names.has(m))) { ok = false; break; } continue; }
+      if (!ids.has(v.decl)) { ok = false; break; }
+    }
+    if (!ok) continue;
+    chunk.body = [...body.slice(0, from), ...body.slice(at + 1)];
+    return { changed: segment.length };
+  }
+  return { changed: 0 };
 }
 
 // ---- ProxifyLocals ------------------------------------------------------------------------------------

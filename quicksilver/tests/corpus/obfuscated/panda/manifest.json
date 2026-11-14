@@ -1,0 +1,698 @@
+{
+  "tool": "Panda Obfuscator (Prometheus-Modified)",
+  "source": "https://github.com/Panda-Repositories/Prometheus-Modified",
+  "licence": "Prometheus licence (derivative of Prometheus)",
+  "sourceRevision": "26f69030594d813bbb778f1affcb4470c7bf9c91",
+  "seed": 1337,
+  "runner": "tests/corpus/tools/run_isolated.py (virtual files, no host access)",
+  "entries": [
+    {
+      "file": "s01_minify_basic__Minify.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "Minify",
+      "runtime": "lua51",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 626,
+      "seconds": 0.02,
+      "behaviors": {
+        "lua51": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__Weak.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "Weak",
+      "runtime": "lua51",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 6356,
+      "seconds": 0.05,
+      "behaviors": {
+        "lua51": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__Medium.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "Medium",
+      "runtime": "lua51",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 24604,
+      "seconds": 0.12,
+      "behaviors": {
+        "lua51": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__Strong.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "Strong",
+      "runtime": "lua51",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "ok",
+      "bytes": 67984,
+      "seconds": 0.26,
+      "behaviors": {
+        "lua51": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s01_minify_basic__LuaU-Safe.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "LuaU-Safe",
+      "runtime": "lua51",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "tool-error",
+      "error": "src/prometheus/parser.lua:208: attempt to call global 'is' (a nil value)",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s01_minify_basic__Panda-Xenon.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "Panda-Xenon",
+      "runtime": "lua51",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "tool-error",
+      "error": "src/prometheus/parser.lua:208: attempt to call global 'is' (a nil value)",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s01_minify_basic__Panda-Roblox-Strong.lua",
+      "sample": "s01_minify_basic.lua",
+      "config": "Panda-Roblox-Strong",
+      "runtime": "lua51",
+      "sampleSha256": "67215cec46658ebb5ebd59bfc87b154b00527f9d846569dd229aa409906acaea",
+      "status": "tool-error",
+      "error": "src/prometheus/parser.lua:208: attempt to call global 'is' (a nil value)",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s02_renamed_vars__Minify.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "Minify",
+      "runtime": "lua51",
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 726,
+      "seconds": 0.02,
+      "behaviors": {
+        "lua51": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__Weak.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "Weak",
+      "runtime": "lua51",
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 6084,
+      "seconds": 0.05,
+      "behaviors": {
+        "lua51": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__Medium.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "Medium",
+      "runtime": "lua51",
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 28047,
+      "seconds": 0.13,
+      "behaviors": {
+        "lua51": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__Strong.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "Strong",
+      "runtime": "lua51",
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "ok",
+      "bytes": 61313,
+      "seconds": 0.18,
+      "behaviors": {
+        "lua51": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s02_renamed_vars__LuaU-Safe.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "LuaU-Safe",
+      "runtime": "lua51",
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "tool-error",
+      "error": "src/prometheus/parser.lua:208: attempt to call global 'is' (a nil value)",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s02_renamed_vars__Panda-Xenon.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "Panda-Xenon",
+      "runtime": "lua51",
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "tool-error",
+      "error": "src/prometheus/parser.lua:208: attempt to call global 'is' (a nil value)",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s02_renamed_vars__Panda-Roblox-Strong.lua",
+      "sample": "s02_renamed_vars.lua",
+      "config": "Panda-Roblox-Strong",
+      "runtime": "lua51",
+      "sampleSha256": "e7a962f3eaff1b756998aebabae752e87bcacc77654c5cd1bb1b8954e75adc61",
+      "status": "tool-error",
+      "error": "src/prometheus/parser.lua:208: attempt to call global 'is' (a nil value)",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s03_encoded_strings__Minify.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "Minify",
+      "runtime": "lua51",
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 603,
+      "seconds": 0.01,
+      "behaviors": {
+        "lua51": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s03_encoded_strings__Weak.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "Weak",
+      "runtime": "lua51",
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 5450,
+      "seconds": 0.03,
+      "behaviors": {
+        "lua51": "diverged"
+      },
+      "behavior": "diverged"
+    },
+    {
+      "file": "s03_encoded_strings__Medium.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "Medium",
+      "runtime": "lua51",
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 26927,
+      "seconds": 0.11,
+      "behaviors": {
+        "lua51": "diverged"
+      },
+      "behavior": "diverged"
+    },
+    {
+      "file": "s03_encoded_strings__Strong.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "Strong",
+      "runtime": "lua51",
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "ok",
+      "bytes": 56944,
+      "seconds": 0.21,
+      "behaviors": {
+        "lua51": "diverged"
+      },
+      "behavior": "diverged"
+    },
+    {
+      "file": "s03_encoded_strings__LuaU-Safe.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "LuaU-Safe",
+      "runtime": "lua51",
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "tool-error",
+      "error": "src/prometheus/parser.lua:208: attempt to call global 'is' (a nil value)",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s03_encoded_strings__Panda-Xenon.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "Panda-Xenon",
+      "runtime": "lua51",
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "tool-error",
+      "error": "src/prometheus/parser.lua:208: attempt to call global 'is' (a nil value)",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s03_encoded_strings__Panda-Roblox-Strong.lua",
+      "sample": "s03_encoded_strings.lua",
+      "config": "Panda-Roblox-Strong",
+      "runtime": "lua51",
+      "sampleSha256": "d477a47490ba1a1f84d62bdabb3fc03601ac943b8b56479ddc58eb996a161cbd",
+      "status": "tool-error",
+      "error": "src/prometheus/parser.lua:208: attempt to call global 'is' (a nil value)",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s04_control_flow__Minify.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "Minify",
+      "runtime": "lua51",
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 946,
+      "seconds": 0.01,
+      "behaviors": {
+        "lua51": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__Weak.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "Weak",
+      "runtime": "lua51",
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 7965,
+      "seconds": 0.03,
+      "behaviors": {
+        "lua51": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__Medium.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "Medium",
+      "runtime": "lua51",
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 30651,
+      "seconds": 0.09,
+      "behaviors": {
+        "lua51": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__Strong.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "Strong",
+      "runtime": "lua51",
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "ok",
+      "bytes": 88016,
+      "seconds": 0.21,
+      "behaviors": {
+        "lua51": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s04_control_flow__LuaU-Safe.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "LuaU-Safe",
+      "runtime": "lua51",
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "tool-error",
+      "error": "src/prometheus/parser.lua:208: attempt to call global 'is' (a nil value)",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s04_control_flow__Panda-Xenon.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "Panda-Xenon",
+      "runtime": "lua51",
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "tool-error",
+      "error": "src/prometheus/parser.lua:208: attempt to call global 'is' (a nil value)",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s04_control_flow__Panda-Roblox-Strong.lua",
+      "sample": "s04_control_flow.lua",
+      "config": "Panda-Roblox-Strong",
+      "runtime": "lua51",
+      "sampleSha256": "3857dac9a3152e7bf5e4ded400c42a61d6f52d7680ca2334bfb40c62a42e7765",
+      "status": "tool-error",
+      "error": "src/prometheus/parser.lua:208: attempt to call global 'is' (a nil value)",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s05_nested_functions__Minify.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "Minify",
+      "runtime": "lua51",
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 894,
+      "seconds": 0.02,
+      "behaviors": {
+        "lua51": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__Weak.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "Weak",
+      "runtime": "lua51",
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 7262,
+      "seconds": 0.04,
+      "behaviors": {
+        "lua51": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__Medium.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "Medium",
+      "runtime": "lua51",
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 25000,
+      "seconds": 0.08,
+      "behaviors": {
+        "lua51": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__Strong.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "Strong",
+      "runtime": "lua51",
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "ok",
+      "bytes": 79150,
+      "seconds": 0.2,
+      "behaviors": {
+        "lua51": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s05_nested_functions__LuaU-Safe.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "LuaU-Safe",
+      "runtime": "lua51",
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "tool-error",
+      "error": "src/prometheus/parser.lua:208: attempt to call global 'is' (a nil value)",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s05_nested_functions__Panda-Xenon.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "Panda-Xenon",
+      "runtime": "lua51",
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "tool-error",
+      "error": "src/prometheus/parser.lua:208: attempt to call global 'is' (a nil value)",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s05_nested_functions__Panda-Roblox-Strong.lua",
+      "sample": "s05_nested_functions.lua",
+      "config": "Panda-Roblox-Strong",
+      "runtime": "lua51",
+      "sampleSha256": "9882fc384424d4827c13b1af4e06f4987c1b990ab34a20dbc40478c32d1752eb",
+      "status": "tool-error",
+      "error": "src/prometheus/parser.lua:208: attempt to call global 'is' (a nil value)",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s06_combined__Minify.lua",
+      "sample": "s06_combined.lua",
+      "config": "Minify",
+      "runtime": "lua51",
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 1397,
+      "seconds": 0.01,
+      "behaviors": {
+        "lua51": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__Weak.lua",
+      "sample": "s06_combined.lua",
+      "config": "Weak",
+      "runtime": "lua51",
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 8626,
+      "seconds": 0.04,
+      "behaviors": {
+        "lua51": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__Medium.lua",
+      "sample": "s06_combined.lua",
+      "config": "Medium",
+      "runtime": "lua51",
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 35257,
+      "seconds": 0.1,
+      "behaviors": {
+        "lua51": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__Strong.lua",
+      "sample": "s06_combined.lua",
+      "config": "Strong",
+      "runtime": "lua51",
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "ok",
+      "bytes": 106873,
+      "seconds": 0.26,
+      "behaviors": {
+        "lua51": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s06_combined__LuaU-Safe.lua",
+      "sample": "s06_combined.lua",
+      "config": "LuaU-Safe",
+      "runtime": "lua51",
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "tool-error",
+      "error": "src/prometheus/parser.lua:208: attempt to call global 'is' (a nil value)",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s06_combined__Panda-Xenon.lua",
+      "sample": "s06_combined.lua",
+      "config": "Panda-Xenon",
+      "runtime": "lua51",
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "tool-error",
+      "error": "src/prometheus/parser.lua:208: attempt to call global 'is' (a nil value)",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s06_combined__Panda-Roblox-Strong.lua",
+      "sample": "s06_combined.lua",
+      "config": "Panda-Roblox-Strong",
+      "runtime": "lua51",
+      "sampleSha256": "c4a2934367beb1096802dbd791bfeffd0615c236066d9c45a61a60ff0628f514",
+      "status": "tool-error",
+      "error": "src/prometheus/parser.lua:208: attempt to call global 'is' (a nil value)",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s07_roblox_style__Minify.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "Minify",
+      "runtime": "lua51",
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 620,
+      "seconds": 0.01,
+      "behaviors": {
+        "lua51": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__Weak.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "Weak",
+      "runtime": "lua51",
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 5066,
+      "seconds": 0.02,
+      "behaviors": {
+        "lua51": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__Medium.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "Medium",
+      "runtime": "lua51",
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 26274,
+      "seconds": 0.08,
+      "behaviors": {
+        "lua51": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__Strong.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "Strong",
+      "runtime": "lua51",
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "ok",
+      "bytes": 48523,
+      "seconds": 0.13,
+      "behaviors": {
+        "lua51": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s07_roblox_style__LuaU-Safe.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "LuaU-Safe",
+      "runtime": "lua51",
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "tool-error",
+      "error": "src/prometheus/parser.lua:208: attempt to call global 'is' (a nil value)",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s07_roblox_style__Panda-Xenon.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "Panda-Xenon",
+      "runtime": "lua51",
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "tool-error",
+      "error": "src/prometheus/parser.lua:208: attempt to call global 'is' (a nil value)",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s07_roblox_style__Panda-Roblox-Strong.lua",
+      "sample": "s07_roblox_style.lua",
+      "config": "Panda-Roblox-Strong",
+      "runtime": "lua51",
+      "sampleSha256": "aa922c9374f943b0d0aa8df4c10b7ba82b9dff818e41ec99456bd8c1d4104c95",
+      "status": "tool-error",
+      "error": "src/prometheus/parser.lua:208: attempt to call global 'is' (a nil value)",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s08_ironbrew_macros__Minify.lua",
+      "sample": "s08_ironbrew_macros.lua",
+      "config": "Minify",
+      "runtime": "lua51",
+      "sampleSha256": "5d2ba22d895713dd1a955c8310b1e77d7a5961e854ea58fa77a1089a4041880f",
+      "status": "ok",
+      "bytes": 546,
+      "seconds": 0.01,
+      "behaviors": {
+        "lua51": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s08_ironbrew_macros__Weak.lua",
+      "sample": "s08_ironbrew_macros.lua",
+      "config": "Weak",
+      "runtime": "lua51",
+      "sampleSha256": "5d2ba22d895713dd1a955c8310b1e77d7a5961e854ea58fa77a1089a4041880f",
+      "status": "ok",
+      "bytes": 5744,
+      "seconds": 0.02,
+      "behaviors": {
+        "lua51": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s08_ironbrew_macros__Medium.lua",
+      "sample": "s08_ironbrew_macros.lua",
+      "config": "Medium",
+      "runtime": "lua51",
+      "sampleSha256": "5d2ba22d895713dd1a955c8310b1e77d7a5961e854ea58fa77a1089a4041880f",
+      "status": "ok",
+      "bytes": 24038,
+      "seconds": 0.07,
+      "behaviors": {
+        "lua51": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s08_ironbrew_macros__Strong.lua",
+      "sample": "s08_ironbrew_macros.lua",
+      "config": "Strong",
+      "runtime": "lua51",
+      "sampleSha256": "5d2ba22d895713dd1a955c8310b1e77d7a5961e854ea58fa77a1089a4041880f",
+      "status": "ok",
+      "bytes": 55398,
+      "seconds": 0.13,
+      "behaviors": {
+        "lua51": "equivalent"
+      },
+      "behavior": "equivalent"
+    },
+    {
+      "file": "s08_ironbrew_macros__LuaU-Safe.lua",
+      "sample": "s08_ironbrew_macros.lua",
+      "config": "LuaU-Safe",
+      "runtime": "lua51",
+      "sampleSha256": "5d2ba22d895713dd1a955c8310b1e77d7a5961e854ea58fa77a1089a4041880f",
+      "status": "tool-error",
+      "error": "src/prometheus/parser.lua:208: attempt to call global 'is' (a nil value)",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s08_ironbrew_macros__Panda-Xenon.lua",
+      "sample": "s08_ironbrew_macros.lua",
+      "config": "Panda-Xenon",
+      "runtime": "lua51",
+      "sampleSha256": "5d2ba22d895713dd1a955c8310b1e77d7a5961e854ea58fa77a1089a4041880f",
+      "status": "tool-error",
+      "error": "src/prometheus/parser.lua:208: attempt to call global 'is' (a nil value)",
+      "behavior": "skipped"
+    },
+    {
+      "file": "s08_ironbrew_macros__Panda-Roblox-Strong.lua",
+      "sample": "s08_ironbrew_macros.lua",
+      "config": "Panda-Roblox-Strong",
+      "runtime": "lua51",
+      "sampleSha256": "5d2ba22d895713dd1a955c8310b1e77d7a5961e854ea58fa77a1089a4041880f",
+      "status": "tool-error",
+      "error": "src/prometheus/parser.lua:208: attempt to call global 'is' (a nil value)",
+      "behavior": "skipped"
+    }
+  ]
+}

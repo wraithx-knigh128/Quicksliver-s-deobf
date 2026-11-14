@@ -19,7 +19,7 @@ import { unwrapLayers } from '../passes/layers.js';
 import { dataflowPass } from '../passes/dataflow.js';
 import { regionPass } from '../passes/regions.js';
 import { booleanResults, orientComparisons, shortCircuits, tableConstructors, methodCalls, bareNils, functionForms, multiResults, numericLoops, loopForms, unsetLocals } from '../passes/idioms.js';
-import { removeAntiTamper, removeGuardFlag, undoProxifyLocals, removeOrphanDecoders, removeUnusedJoiner } from './prometheus.js';
+import { removeAntiTamper, removeGuardFlag, removeGuardPrefix, undoProxifyLocals, removeOrphanDecoders, removeUnusedJoiner } from './prometheus.js';
 import { propagateStable } from '../passes/stable.js';
 import { buildReport, annotate, stripReport } from './annotate.js';
 import { profileVm } from './vmprofile.js';
@@ -346,6 +346,7 @@ export function recover(source, userOptions = {}) {
     total += run.step('unwrap', 'Unwrap outer wrapper function', (a) => unwrapWrapper(a), { quiet: true });
     total += run.step('prometheus.antitamper', 'Remove Prometheus anti-tamper block', (a) => removeAntiTamper(a), { quiet: true });
     total += run.step('prometheus.guardflag', 'Remove an anti-tamper guard that wraps the program in `if flag then`', (a) => removeGuardFlag(a), { quiet: true });
+    total += run.step('prometheus.guardprefix', 'Remove an anti-tamper guard that ends in `if not flag then fail() end`', (a) => removeGuardPrefix(a), { quiet: true });
     total += run.step('hercules.coinguard', 'Remove the Hercules 1.x coin-flip guard loop', (a) => removeHerculesCoinGuard(a), { quiet: true });
     total += run.step('hercules.antitamper', 'Remove Hercules anti-tamper block', (a) => removeHerculesAntiTamper(a), { quiet: true });
     if (decompiled || detection.families.some((f) => f.id === 'hercules' && f.confidence >= 0.5)) total += run.step('hercules.antitamper.compiled', 'Remove the Hercules anti-tamper check that was compiled with the script', (a) => removeHerculesAntiTamperFunction(a), { quiet: true });
