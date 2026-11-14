@@ -27,7 +27,7 @@ Rows by status: partial 4.
 | current | balanced | 7 (hercules/balanced) | 7/7 | 50%→98% | 37%→95% | 6/6 (1) | 6/7 | verified | — | `src/recover/hercules.js`, `src/recover/hercules-vm.js` |
 | current | heavy | 7 (hercules/heavy) | 7/7 | 10%→97% | 7%→77% | 5/5 (2) | 5/6 | partial | — | `src/recover/hercules.js`, `src/recover/hercules-vm.js` |
 | current | maximum | 3 (hercules/maximum) | 3/3 | 27%→97% | 20%→66% | 2/2 (1) | 2/2 | partial | — | `src/recover/hercules.js`, `src/recover/hercules-vm.js` |
-| current | mod-virtual_machine | 7 (hercules/mod-virtual_machine) | 7/7 | 15%→87% | 8%→83% | 5/5 (2) | 5/7 | partial | tool defect: the generator measures the constant pool with `#`, which stops at a nil constant, so s06 has constants missing from its own output; the reader refuses rather than guess | `src/recover/hercules.js`, `src/recover/hercules-vm.js` |
+| current | mod-virtual_machine | 7 (hercules/mod-virtual_machine) | 7/7 | 15%→98% | 8%→96% | 5/5 (2) | 5/7 | verified | tool defect: the generator measures the constant pool with `#`, which stops at a nil constant, so s06 has constants missing from its own output; the reader refuses rather than guess | `src/recover/hercules.js`, `src/recover/hercules-vm.js` |
 | current | mod-antitamper | 7 (hercules/mod-antitamper) | 7/7 | 64%→100% | 37%→100% | 7/7 | 7/7 | verified | — | `src/recover/hercules.js`, `src/recover/hercules-vm.js` |
 | current | mod-control_flow | 7 (hercules/mod-control_flow) | 7/7 | 81%→98% | 63%→98% | 7/7 | 7/7 | verified | — | `src/recover/hercules.js`, `src/recover/hercules-vm.js` |
 | current | mod-string_to_expressions | 7 (hercules/mod-string_to_expressions) | 7/7 | 42%→100% | 34%→100% | 7/7 | 7/7 | verified | — | `src/recover/hercules.js`, `src/recover/hercules-vm.js` |
@@ -62,9 +62,9 @@ Rows by status: partial 4.
 | 1.5-early | mod-opaque_predicates | 7 (hercules-1.5-early/mod-opaque_predicates) | 7/7 | 100%→100% | 100%→100% | 6/6 (1) | 6/6 | verified | — | `src/recover/hercules.js`, `src/recover/hercules-vm.js` |
 | 1.5-early | mod-string_encoding | 7 (hercules-1.5-early/mod-string_encoding) | 7/7 | 100%→100% | 97%→97% | 0/0 (7) | 7/7 | partial | — | `src/recover/hercules.js`, `src/recover/hercules-vm.js` |
 | 1.5-early | mod-variable_renaming | 7 (hercules-1.5-early/mod-variable_renaming) | 7/7 | 100%→100% | 89%→89% | 0/0 (7) | 6/6 | partial | — | `src/recover/hercules.js`, `src/recover/hercules-vm.js` |
-| 1.6 | default | 7 (hercules-1.6/default) | 7/7 | 11%→93% | 7%→83% | 1/1 (6) | 2/3 | partial | tool defect: four 1.6 default builds are not valid Lua (`unexpected symbol near 'and'`); the parser rejects them, as does the reference runtime | `src/recover/hercules.js`, `src/recover/hercules-vm.js` |
+| 1.6 | default | 7 (hercules-1.6/default) | 7/7 | 11%→93% | 3%→75% | 1/1 (6) | 5/7 | partial | tool defect: four 1.6 default builds are not valid Lua (`unexpected symbol near 'and'`); the parser rejects them, as does the reference runtime | `src/recover/hercules.js`, `src/recover/hercules-vm.js` |
 | 1.6 | mod-StringToExpressions | 7 (hercules-1.6/mod-StringToExpressions) | 7/7 | 38%→93% | 45%→95% | 7/7 | 7/7 | verified | — | `src/recover/hercules.js`, `src/recover/hercules-vm.js` |
-| 1.6 | mod-VirtualMachine | 7 (hercules-1.6/mod-VirtualMachine) | 7/7 | 16%→88% | 8%→83% | 3/3 (4) | 5/7 | partial | tool defect: the generator measures the constant pool with `#`, which stops at a nil constant, so s06 has constants missing from its own output; the reader refuses rather than guess | `src/recover/hercules.js`, `src/recover/hercules-vm.js` |
+| 1.6 | mod-VirtualMachine | 7 (hercules-1.6/mod-VirtualMachine) | 7/7 | 16%→98% | 8%→96% | 3/3 (4) | 5/7 | verified | tool defect: the generator measures the constant pool with `#`, which stops at a nil constant, so s06 has constants missing from its own output; the reader refuses rather than guess | `src/recover/hercules.js`, `src/recover/hercules-vm.js` |
 | 1.6 | mod-WrapInFunction | 7 (hercules-1.6/mod-WrapInFunction) | 7/7 | 86%→100% | 99%→100% | 7/7 | 7/7 | verified | — | `src/recover/hercules.js`, `src/recover/hercules-vm.js` |
 | 1.6 | mod-bytecode_encoding | 7 (hercules-1.6/mod-bytecode_encoding) | 7/7 | — | — | 0/0 (7) | — | identification-only | — | `src/recover/hercules.js`, `src/recover/hercules-vm.js` |
 | 1.6 | mod-compressor | 7 (hercules-1.6/mod-compressor) | 7/7 | 100%→100% | 100%→100% | 7/7 | 7/7 | verified | — | `src/recover/hercules.js`, `src/recover/hercules-vm.js` |
@@ -75,7 +75,7 @@ Rows by status: partial 4.
 | 1.6 | mod-string_encoding | 7 (hercules-1.6/mod-string_encoding) | 7/7 | 62%→100% | 45%→100% | 7/7 | 7/7 | verified | — | `src/recover/hercules.js`, `src/recover/hercules-vm.js` |
 | 1.6 | mod-variable_renaming | 7 (hercules-1.6/mod-variable_renaming) | 7/7 | 96%→98% | 59%→93% | 0/0 (7) | 4/5 | partial | — | `src/recover/hercules.js`, `src/recover/hercules-vm.js` |
 | 1.6.2 | mod-StringToExpressions | 7 (hercules-1.6.2/mod-StringToExpressions) | 7/7 | 42%→100% | 34%→100% | 7/7 | 7/7 | verified | — | `src/recover/hercules.js`, `src/recover/hercules-vm.js` |
-| 1.6.2 | mod-VirtualMachine | 7 (hercules-1.6.2/mod-VirtualMachine) | 7/7 | 15%→87% | 8%→83% | 5/5 (2) | 5/7 | partial | tool defect: the generator measures the constant pool with `#`, which stops at a nil constant, so s06 has constants missing from its own output; the reader refuses rather than guess | `src/recover/hercules.js`, `src/recover/hercules-vm.js` |
+| 1.6.2 | mod-VirtualMachine | 7 (hercules-1.6.2/mod-VirtualMachine) | 7/7 | 15%→98% | 8%→96% | 5/5 (2) | 5/7 | verified | tool defect: the generator measures the constant pool with `#`, which stops at a nil constant, so s06 has constants missing from its own output; the reader refuses rather than guess | `src/recover/hercules.js`, `src/recover/hercules-vm.js` |
 | 1.6.2 | mod-WrapInFunction | 7 (hercules-1.6.2/mod-WrapInFunction) | 7/7 | 86%→100% | 99%→100% | 7/7 | 7/7 | verified | — | `src/recover/hercules.js`, `src/recover/hercules-vm.js` |
 | 1.6.2 | mod-antitamper | 7 (hercules-1.6.2/mod-antitamper) | 7/7 | 59%→100% | 39%→100% | 7/7 | 7/7 | verified | — | `src/recover/hercules.js`, `src/recover/hercules-vm.js` |
 | 1.6.2 | mod-bytecode_encoding | 7 (hercules-1.6.2/mod-bytecode_encoding) | 7/7 | 23%→97% | 18%→93% | 7/7 | 7/7 | verified | — | `src/recover/hercules.js`, `src/recover/hercules-vm.js` |
@@ -88,7 +88,7 @@ Rows by status: partial 4.
 | 1.6.2 | mod-string_encoding | 7 (hercules-1.6.2/mod-string_encoding) | 7/7 | 62%→100% | 45%→100% | 7/7 | 7/7 | verified | — | `src/recover/hercules.js`, `src/recover/hercules-vm.js` |
 | 1.6.2 | mod-variable_renaming | 7 (hercules-1.6.2/mod-variable_renaming) | 7/7 | 96%→100% | 61%→96% | 6/6 (1) | 6/7 | verified | — | `src/recover/hercules.js`, `src/recover/hercules-vm.js` |
 | 2.0.0 | mod-StringToExpressions | 7 (hercules-2.0.0/mod-StringToExpressions) | 7/7 | 42%→100% | 34%→100% | 7/7 | 7/7 | verified | — | `src/recover/hercules.js`, `src/recover/hercules-vm.js` |
-| 2.0.0 | mod-VirtualMachine | 7 (hercules-2.0.0/mod-VirtualMachine) | 7/7 | 15%→87% | 8%→83% | 5/5 (2) | 5/7 | partial | tool defect: the generator measures the constant pool with `#`, which stops at a nil constant, so s06 has constants missing from its own output; the reader refuses rather than guess | `src/recover/hercules.js`, `src/recover/hercules-vm.js` |
+| 2.0.0 | mod-VirtualMachine | 7 (hercules-2.0.0/mod-VirtualMachine) | 7/7 | 15%→98% | 8%→96% | 5/5 (2) | 5/7 | verified | tool defect: the generator measures the constant pool with `#`, which stops at a nil constant, so s06 has constants missing from its own output; the reader refuses rather than guess | `src/recover/hercules.js`, `src/recover/hercules-vm.js` |
 | 2.0.0 | mod-WrapInFunction | 7 (hercules-2.0.0/mod-WrapInFunction) | 7/7 | 87%→100% | 99%→100% | 7/7 | 7/7 | verified | — | `src/recover/hercules.js`, `src/recover/hercules-vm.js` |
 | 2.0.0 | mod-antitamper | 7 (hercules-2.0.0/mod-antitamper) | 7/7 | 64%→100% | 37%→100% | 7/7 | 7/7 | verified | — | `src/recover/hercules.js`, `src/recover/hercules-vm.js` |
 | 2.0.0 | mod-bytecode_encoding | 7 (hercules-2.0.0/mod-bytecode_encoding) | 7/7 | 23%→97% | 18%→93% | 7/7 | 7/7 | verified | — | `src/recover/hercules.js`, `src/recover/hercules-vm.js` |
@@ -103,7 +103,7 @@ Rows by status: partial 4.
 | 2.0.0 | default | 1 (hercules-2.0.0/default) | 1/1 | — | — | 0/0 (1) | — | identification-only | tool defect: four 1.6 default builds are not valid Lua (`unexpected symbol near 'and'`); the parser rejects them, as does the reference runtime | `src/recover/hercules.js`, `src/recover/hercules-vm.js` |
 | 2.0.0 | all | 1 (hercules-2.0.0/all) | 1/1 | — | — | 0/0 (1) | — | identification-only | — | `src/recover/hercules.js`, `src/recover/hercules-vm.js` |
 
-Rows by status: verified 60, partial 12, identification-only 7.
+Rows by status: verified 64, partial 8, identification-only 7.
 
 ## Luraph
 
@@ -126,12 +126,12 @@ Rows by status: unsupported 4, experimental 3, partially-tested 2.
 | Version | Configuration | Fixtures (id) | Ident. | Structure | Semantic | Runtime | Complete | Status | Failure patterns | Implementation |
 |---|---|---|---|---|---|---|---|---|---|---|
 | current | Minify | 7 (prometheus/Minify) | 0/7 | 99%→99% | 96%→96% | 7/7 | 7/7 | verified | — | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
-| current | Weak | 7 (prometheus/Weak) | 7/7 | 11%→75% | 6%→58% | 6/6 (1) | 6/7 | partial | — | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
-| current | Medium | 7 (prometheus/Medium) | 7/7 | 2%→78% | 3%→54% | 6/6 (1) | 6/7 | partial | partial: s05, s06 and s07 keep one undecoded read of the cache (a lookup through a proxy inside a nested function) and stay at medium confidence | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
-| current | Strong | 7 (prometheus/Strong) | 7/7 | 1%→66% | 3%→49% | 6/6 (1) | 5/7 | partial | partial: s05, s06 and s07 keep one undecoded read of the cache (a lookup through a proxy inside a nested function) and stay at medium confidence | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
-| current | step-EncryptStrings | 7 (prometheus/step-EncryptStrings) | 7/7 | 49%→94% | 32%→88% | 7/7 | 6/7 | verified | — | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
+| current | Weak | 7 (prometheus/Weak) | 7/7 | 11%→80% | 6%→64% | 6/6 (1) | 7/7 | partial | — | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
+| current | Medium | 7 (prometheus/Medium) | 7/7 | 2%→81% | 3%→56% | 6/6 (1) | 7/7 | partial | partial: s05, s06 and s07 keep one undecoded read of the cache (a lookup through a proxy inside a nested function) and stay at medium confidence | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
+| current | Strong | 7 (prometheus/Strong) | 7/7 | 1%→76% | 3%→59% | 6/6 (1) | 7/7 | partial | partial: s05, s06 and s07 keep one undecoded read of the cache (a lookup through a proxy inside a nested function) and stay at medium confidence | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
+| current | step-EncryptStrings | 7 (prometheus/step-EncryptStrings) | 7/7 | 49%→99% | 32%→96% | 7/7 | 7/7 | verified | — | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
 | current | step-ConstantArray | 7 (prometheus/step-ConstantArray) | 7/7 | 39%→98% | 21%→92% | 7/7 | 7/7 | verified | — | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
-| current | step-SplitStrings | 7 (prometheus/step-SplitStrings) | 7/7 | 94%→99% | 66%→92% | 7/7 | 6/7 | verified | — | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
+| current | step-SplitStrings | 7 (prometheus/step-SplitStrings) | 7/7 | 94%→99% | 66%→96% | 7/7 | 7/7 | verified | — | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
 | current | step-NumbersToExpressions | 7 (prometheus/step-NumbersToExpressions) | 0/7 | 79%→99% | 80%→96% | 7/7 | 7/7 | verified | — | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
 | current | step-ProxifyLocals | 7 (prometheus/step-ProxifyLocals) | 7/7 | 50%→95% | 39%→95% | 7/7 | 7/7 | verified | — | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
 | current | step-WrapInFunction | 7 (prometheus/step-WrapInFunction) | 0/7 | 86%→99% | 95%→96% | 7/7 | 7/7 | verified | — | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
@@ -140,11 +140,11 @@ Rows by status: unsupported 4, experimental 3, partially-tested 2.
 | current | step-Vmify | 7 (prometheus/step-Vmify) | 7/7 | 13%→80% | 10%→64% | 6/6 (1) | 7/7 | partial | — | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
 | lennyobf | Minify | 8 (tests/corpus/obfuscated-local/prometheus-lennyobf/Minify) | 0/8 | 99%→99% | 97%→94% | 7/7 (1) | 8/8 | verified | — | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
 | lennyobf | Weak | 8 (tests/corpus/obfuscated-local/prometheus-lennyobf/Weak) | 8/8 | 6%→71% | 4%→50% | 5/5 (3) | 8/8 | partial | — | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
-| lennyobf | Medium | 8 (tests/corpus/obfuscated-local/prometheus-lennyobf/Medium) | 8/8 | 1%→48% | 2%→34% | 5/5 (3) | 2/8 | partial | partial: s05, s06 and s07 keep one undecoded read of the cache (a lookup through a proxy inside a nested function) and stay at medium confidence | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
-| lennyobf | Strong | 8 (tests/corpus/obfuscated-local/prometheus-lennyobf/Strong) | 8/8 | 1%→48% | 2%→34% | 5/5 (3) | 2/8 | partial | partial: s05, s06 and s07 keep one undecoded read of the cache (a lookup through a proxy inside a nested function) and stay at medium confidence | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
-| lennyobf | step-EncryptStrings | 8 (tests/corpus/obfuscated-local/prometheus-lennyobf/step-EncryptStrings) | 8/8 | 48%→95% | 32%→89% | 7/7 (1) | 7/8 | verified | — | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
+| lennyobf | Medium | 8 (tests/corpus/obfuscated-local/prometheus-lennyobf/Medium) | 8/8 | 1%→61% | 2%→43% | 5/5 (3) | 6/8 | partial | partial: s05, s06 and s07 keep one undecoded read of the cache (a lookup through a proxy inside a nested function) and stay at medium confidence | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
+| lennyobf | Strong | 8 (tests/corpus/obfuscated-local/prometheus-lennyobf/Strong) | 8/8 | 1%→61% | 2%→43% | 5/5 (3) | 6/8 | partial | partial: s05, s06 and s07 keep one undecoded read of the cache (a lookup through a proxy inside a nested function) and stay at medium confidence | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
+| lennyobf | step-EncryptStrings | 8 (tests/corpus/obfuscated-local/prometheus-lennyobf/step-EncryptStrings) | 8/8 | 48%→99% | 32%→97% | 7/7 (1) | 8/8 | verified | — | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
 | lennyobf | step-ConstantArray | 8 (tests/corpus/obfuscated-local/prometheus-lennyobf/step-ConstantArray) | 8/8 | 49%→98% | 29%→93% | 7/7 (1) | 8/8 | verified | — | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
-| lennyobf | step-SplitStrings | 8 (tests/corpus/obfuscated-local/prometheus-lennyobf/step-SplitStrings) | 8/8 | 93%→99% | 65%→93% | 7/7 (1) | 7/8 | verified | — | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
+| lennyobf | step-SplitStrings | 8 (tests/corpus/obfuscated-local/prometheus-lennyobf/step-SplitStrings) | 8/8 | 93%→99% | 65%→97% | 7/7 (1) | 8/8 | verified | — | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
 | lennyobf | step-NumbersToExpressions | 8 (tests/corpus/obfuscated-local/prometheus-lennyobf/step-NumbersToExpressions) | 0/8 | 76%→99% | 79%→97% | 7/7 (1) | 8/8 | verified | — | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
 | lennyobf | step-ProxifyLocals | 8 (tests/corpus/obfuscated-local/prometheus-lennyobf/step-ProxifyLocals) | 8/8 | 49%→94% | 39%→93% | 6/6 (2) | 8/8 | verified | — | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
 | lennyobf | step-WrapInFunction | 8 (tests/corpus/obfuscated-local/prometheus-lennyobf/step-WrapInFunction) | 0/8 | 85%→99% | 96%→97% | 7/7 (1) | 8/8 | verified | — | `src/recover/prometheus.js`, `src/passes/evaluate.js` |

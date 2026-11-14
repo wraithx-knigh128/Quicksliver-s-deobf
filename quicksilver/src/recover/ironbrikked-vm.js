@@ -194,6 +194,11 @@ function buildFunction(p, ctx, label) {
       op = recognise(t, F);
       if (!op || (op.op === 'GetTable' && op.b === -1)) fail(`${label}: instruction ${idx + 1} (opcode ${op0}) is not one this reader recognises: ${t.slice(0, 160)}`);
     }
+    // LuaXen's compiler writes RETURN's B as first register + count + 1 (`(expressionRegisters[1] + #expressionRegisters) + 1`), where Lua means count + 1: the count is B - A
+    if (op.op === 'Return' && op.b > 0) {
+      if (op.b - op.a < 1) fail(`${label}: instruction ${idx + 1} returns from register ${op.a} with an end (${op.b}) before it`);
+      op.b -= op.a;
+    }
     // a jump is written with its distance when it goes forward and 256 plus its distance when it goes back
     if (op.op === 'Jmp' || op.op === 'ForLoop' || op.op === 'ForPrep') op.b = op.b > 256 ? -(op.b - 256) : op.b;
     if (op.op === 'Closure') {

@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "generatedAt": "2026-11-13T19:04:05.716Z",
+ "generatedAt": "2026-11-14T11:05:50.120Z",
  "gates": {
   "real": {
    "minFixtures": 8,
@@ -851,11 +851,11 @@
       "traceChecked": 87,
       "traceIdentical": 87,
       "toolBroken": 4,
-      "fidelityAfter": 0.824,
+      "fidelityAfter": 0.848,
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-13T19:02:05.170Z"
+       "measuredAt": "2026-11-14T11:02:47.666Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -1021,11 +1021,11 @@
       "traceChecked": 103,
       "traceIdentical": 103,
       "toolBroken": 12,
-      "fidelityAfter": 0.951,
+      "fidelityAfter": 0.959,
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-13T19:02:05.170Z"
+       "measuredAt": "2026-11-14T11:02:47.666Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -1724,7 +1724,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-13T19:02:05.170Z"
+       "measuredAt": "2026-11-14T11:02:47.666Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -1852,7 +1852,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-13T19:02:05.170Z"
+       "measuredAt": "2026-11-14T11:02:47.666Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -1958,7 +1958,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-13T19:02:05.170Z"
+       "measuredAt": "2026-11-14T11:02:47.666Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -2162,7 +2162,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-13T19:02:05.170Z"
+       "measuredAt": "2026-11-14T11:02:47.666Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -2282,7 +2282,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-13T19:02:05.170Z"
+       "measuredAt": "2026-11-14T11:02:47.666Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -2387,7 +2387,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-13T19:02:05.170Z"
+       "measuredAt": "2026-11-14T11:02:47.666Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -2492,7 +2492,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-13T19:02:05.170Z"
+       "measuredAt": "2026-11-14T11:02:47.666Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -2598,7 +2598,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-13T19:02:05.170Z"
+       "measuredAt": "2026-11-14T11:02:47.666Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -2925,7 +2925,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-13T19:02:05.170Z"
+       "measuredAt": "2026-11-14T11:02:47.666Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -3314,7 +3314,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-13T19:02:05.170Z"
+       "measuredAt": "2026-11-14T11:02:47.666Z"
       },
       "reproduction": null
      },
@@ -3439,7 +3439,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-13T19:02:05.170Z"
+       "measuredAt": "2026-11-14T11:02:47.666Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -3561,7 +3561,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-13T19:02:05.170Z"
+       "measuredAt": "2026-11-14T11:02:47.666Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -3667,7 +3667,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-13T19:02:05.170Z"
+       "measuredAt": "2026-11-14T11:02:47.666Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -4258,11 +4258,11 @@
       "traceChecked": 47,
       "traceIdentical": 47,
       "toolBroken": 1,
-      "fidelityAfter": 0.134,
+      "fidelityAfter": 0.136,
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-13T19:02:05.170Z"
+       "measuredAt": "2026-11-14T11:02:47.666Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -4383,7 +4383,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-13T19:02:05.170Z"
+       "measuredAt": "2026-11-14T11:02:47.666Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -4503,7 +4503,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-13T19:02:05.170Z"
+       "measuredAt": "2026-11-14T11:02:47.666Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",

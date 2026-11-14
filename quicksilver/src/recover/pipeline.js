@@ -8,7 +8,7 @@
 
 import { parse, LuaSyntaxError } from '../core/parser.js';
 import { print } from '../core/printer.js';
-import { clone, structuralKey } from '../core/walk.js';
+import { clone, structuralKey, walk } from '../core/walk.js';
 import { detect } from '../detect/detect.js';
 import { foldPass } from '../passes/fold.js';
 import { simplifyPass, snapshotUnused } from '../passes/simplify.js';
@@ -19,13 +19,14 @@ import { unwrapLayers } from '../passes/layers.js';
 import { dataflowPass } from '../passes/dataflow.js';
 import { regionPass } from '../passes/regions.js';
 import { booleanResults, orientComparisons, shortCircuits, tableConstructors, methodCalls, bareNils, functionForms, multiResults, numericLoops, loopForms, unsetLocals } from '../passes/idioms.js';
-import { removeAntiTamper, removeGuardFlag, undoProxifyLocals, removeOrphanDecoders } from './prometheus.js';
+import { removeAntiTamper, removeGuardFlag, undoProxifyLocals, removeOrphanDecoders, removeUnusedJoiner } from './prometheus.js';
 import { propagateStable } from '../passes/stable.js';
 import { buildReport, annotate, stripReport } from './annotate.js';
 import { profileVm } from './vmprofile.js';
 import { liftObscuraVm, ObscuraVmError } from './obscura-vm.js';
 import { liftIronbrikkedVm, IronbrikkedVmError, looksLikeIronbrikked } from './ironbrikked-vm.js';
 import { liftFusgatoVm, FusgatoVmError, looksLikeFusgato } from './fusgato-vm.js';
+import { repairRenamedKeyword } from './keyword-repair.js';
 import { liftZarthaVm, ZarthaVmError, looksLikeZartha, removeZarthaGuards, repairZarthaSource } from './zartha-vm.js';
 import { snapshotNames, joinMoonVeil, unboxCells, JoinError } from './moonveil-join.js';
 import { removeHerculesAntiTamper, removeHerculesAntiTamperFunction, removeHerculesCoinGuard, restoreMethodSelf } from './hercules.js';
@@ -43,6 +44,7 @@ import { unwrapXFuscator } from './xfuscator.js';
 import { foldMetaArithmetic } from '../passes/metaarith.js';
 import { seedDecoderCalls, inlineStringTable, inlineConstantTable } from '../passes/strtable.js';
 import { liftMoonVeilVm, VmUnsupported } from './moonveil-vm/index.js';
+import { readContainer21, findContainerCall, Container21Error } from './moonveil-vm/container21.js';
 import { decodeMoonVeilConstants, simplifyCells, moonveilShape } from './moonveil.js';
 import { assessConfidence } from './confidence.js';
 import { AdaptiveEngine } from '../adaptive/engine.js';
@@ -237,6 +239,11 @@ function rebuildHerculesVm(ast) {
   const detail = { changed: r.stats.instructions, ...r.stats, interpreterStatementsRemoved: removed };
   // the tool wrote no bytes for a nil constant; where more than one slot could have been the nil one the choice is a ranking, and is said to be
   if ((r.stats.nilReadings || []).some((n) => n > 1)) detail.inferred = `a nil constant the tool left out of its data was put back in ${r.stats.nilReadings.filter((n) => n > 1).length} function(s) by choosing the likeliest of ${Math.max(...r.stats.nilReadings)} possible slots`;
+  // `#` stopped at a nil in the middle of a pool: what came after it is not in the file. The program reads those constants as nil, as the shipped script does.
+  if ((r.stats.lostConstants || []).length) {
+    const l = r.stats.lostConstants;
+    detail.lost = `${l.length} constant(s) the tool never wrote (its serialiser measures the pool with #, which stops at a nil constant) are read as nil, as the shipped script reads them; ${l.map((x) => `slot ${x.slot} (${x.uses.map((u) => `${u.kind === 'number' ? 'an arithmetic operand' : u.kind === 'key' ? 'a table key' : 'a value'} at instruction ${u.pc}`).join(', ')})`).join('; ')}`;
+  }
   return detail;
 }
 
@@ -267,6 +274,11 @@ export function recover(source, userOptions = {}) {
       if (again.ok) { parsed = again; source = mended.source; zarthaRepair = mended.count; }
     }
   }
+  let keywordRepair = null;
+  if (!parsed.ok) {
+    const mended = repairRenamedKeyword(source);
+    if (mended.count) { parsed = tryParse(mended.source); source = mended.source; keywordRepair = mended; }
+  }
   if (!parsed.ok) {
     return { ok: false, stage: 'parse', error: parsed.error, output: null, steps: [], detection: detect(source), warnings: [] };
   }
@@ -275,6 +287,7 @@ export function recover(source, userOptions = {}) {
   let vm = null;
   try { vm = profileVm(parsed.ast, { sandbox: options.sandbox }); } catch { vm = null; }
   const run = new Run(parsed.ast, options);
+  if (keywordRepair) run.record('keyword.repair', 'Restore a keyword the generator renamed', { status: 'applied', changed: keywordRepair.count, detail: { keyword: keywordRepair.keyword, name: keywordRepair.name, places: keywordRepair.count, note: `the generator's renamer wrote every \`${keywordRepair.keyword}\` as ${keywordRepair.name}, so the script is not valid Lua as shipped; the name is never declared and stands exactly where \`${keywordRepair.keyword}\` is missing` }, ms: 0 });
   if (zarthaRepair) run.record('zartha.repair', 'Mend the line breaks the Zartha generator wrote as text', { status: 'applied', changed: zarthaRepair, detail: { places: zarthaRepair, note: 'the LOADBOOL template writes `\\n\\t` inside a string where it means a line break, so the script is not valid Lua as shipped' }, ms: 0 });
   // after a layer is unwrapped: add what the payload shows to what the wrapper showed
   const refreshDetection = () => {
@@ -291,6 +304,7 @@ export function recover(source, userOptions = {}) {
   let vmTried = false;
   let vmLifted = false;
   let ikTried = false;
+  const evalMemory = new Set();          // decoders found by an earlier round of evaluation
   let mvJoined = false;
   if (detection.families.some((f) => f.id === 'ironbrew2' && f.confidence >= 0.5)) {
     // a rebuilt program has no author-written dead code to preserve
@@ -398,6 +412,18 @@ export function recover(source, userOptions = {}) {
         try { return liftMoonVeilVm(a, { onProgress: options.onProgress || undefined, stubLimit: options.stubLimit, reuseInstructions: options.reuseInstructions }); } catch (e) { if (e instanceof VmUnsupported) return { skipped: e.message }; throw e; }
       }, { quiet: true });
       if (lifted) { vmLifted = true; return total + lifted; }
+      // 2.1.0: the reader above does not fit its interpreter. Its container (base 85, LZSS, string table, function header) is read, so the report can say how far the
+      // program is understood; the operand layout of its handlers is not read, so nothing is rebuilt from it
+      const mvStep = run.steps.get('moonveil.vm');
+      if (mvStep && mvStep.status === 'skipped') {
+        let c21 = null;
+        try { const call = findContainerCall(run.ast, walk); c21 = call && { call, ...readContainer21(call.data) }; } catch (e) { c21 = e instanceof Container21Error ? { error: e.message } : null; }
+        if (c21 && !c21.error) {
+          run.record('moonveil.container', 'Read MoonVeil 2.1.0\u2019s program container (not rebuilt)', { status: 'skipped', changed: 0, ms: 0, detail: `the container was read: base-85 text (${c21.call.data.length} digits) to ${c21.packedBytes} bytes, LZSS to ${c21.programBytes} bytes, a table of ${c21.strings.length} string(s) and a main function of ${c21.main.instructions} instruction(s). The operand layout of the interpreter\u2019s handlers is not read, so the program is not rebuilt from it` });
+        } else if (c21 && c21.error) {
+          run.record('moonveil.container', 'Read MoonVeil 2.1.0\u2019s program container (not rebuilt)', { status: 'skipped', changed: 0, ms: 0, detail: `a container call was found but did not read: ${c21.error}` });
+        }
+      }
     }
     // a rebuilt function has no author-written dead code to preserve, and the clean-ups for rebuilt programs apply to it
     // the names of the table's positions are read while the builder still has its original shape; the factories are put back together once their control flow is rebuilt
@@ -427,7 +453,7 @@ export function recover(source, userOptions = {}) {
     // a string table that decrypts itself in place: the decoder's first argument becomes the stored text so that the evaluator can run it
     total += run.step('strtable.seed', 'Read the strings of a self-decrypting table as the decoder\u2019s arguments', (a) => seedDecoderCalls(a), { quiet: true });
     if (options.sandbox.enabled) {
-      total += run.step('evaluate', 'Evaluate string decoders (sandbox)', (a) => evaluatePass(a, { sandbox: options.sandbox }));
+      total += run.step('evaluate', 'Evaluate string decoders (sandbox)', (a) => evaluatePass(a, { sandbox: options.sandbox, memory: evalMemory }));
     } else {
       run.record('evaluate', 'Evaluate string decoders (sandbox)', { status: 'skipped', changed: 0, detail: 'sandboxed evaluation is not enabled', ms: 0 });
     }
@@ -440,6 +466,7 @@ export function recover(source, userOptions = {}) {
       if (n) { unusedAtStart = new WeakSet(); decompiled = true; vm = { kind: 'ironbrikked', lifted: true, functions: [], instructionBytes: 0, constants: null, stats: ik.stats }; total += n; }
     }
     total += run.step('prometheus.orphans', 'Remove the string-decryption machinery nothing reads any more', (a) => removeOrphanDecoders(a), { quiet: true });
+    total += run.step('prometheus.joiner', 'Remove the SplitStrings joiner nothing calls any more', (a) => removeUnusedJoiner(a), { quiet: true });
     total += run.step('constants.inline', 'Replace reads of a machine-named table of constants by the constants', (a) => inlineConstantTable(a), { quiet: true });
     // once decoded names are plain strings, `obj.method(obj, ...)` (what tools that route every call through a lookup write) is `obj:method(...)` again
     if (!decompiled) total += run.step('idioms.method.plain', 'Write o.m(o, ...) as o:m(...)', (a) => methodCalls(a), { quiet: true });

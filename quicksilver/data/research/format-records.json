@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-11-13T19:02:45.968Z",
+ "generatedAt": "2026-11-14T11:13:47.758Z",
  "engine": "src/recover/pipeline.js",
  "records": [
   {
@@ -240,6 +240,12 @@
      "why": "the interpreter does not have the expected shape"
     },
     {
+     "id": "moonveil.container",
+     "status": "skipped",
+     "changed": 0,
+     "why": "the container was read: base-85 text (308 digits) to 246 bytes, LZSS to 232 bytes, a table of 6 string(s) and a main fun"
+    },
+    {
      "id": "moonveil.cff",
      "status": "applied",
      "changed": 333
@@ -293,7 +299,7 @@
     }
    ],
    "unresolved": 0,
-   "outputBytes": 76553
+   "outputBytes": 76661
   },
   {
    "id": "moonveil-2.1.0-sample7",
@@ -339,6 +345,12 @@
      "status": "skipped",
      "changed": 0,
      "why": "the interpreter does not have the expected shape"
+    },
+    {
+     "id": "moonveil.container",
+     "status": "skipped",
+     "changed": 0,
+     "why": "the container was read: base-85 text (222 digits) to 177 bytes, LZSS to 157 bytes, a table of 4 string(s) and a main fun"
     },
     {
      "id": "moonveil.cff",
@@ -399,7 +411,7 @@
     }
    ],
    "unresolved": 0,
-   "outputBytes": 66951
+   "outputBytes": 67059
   },
   {
    "id": "snowveil-1-sample2",

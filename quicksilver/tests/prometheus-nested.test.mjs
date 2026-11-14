@@ -72,11 +72,11 @@ test('Prometheus Strong, seed 101: the report in front of the result is the comp
   assert.equal(r.report.show, false);
 });
 
-test('Prometheus Strong, seeds 1337 and 77: what the engine could not finish is said in the result', () => {
+test('Prometheus Strong, seeds 1337 and 77: the decoder cache reads are resolved too, so nothing is left to report', () => {
+  // Prompt XIV: the cache proxy over a named empty table (1337) and a key held in a local of its own (77) used to leave the EncryptStrings machinery in place
   for (const seed of [1337, 77]) {
     const r = recover(read(`seed-${seed}/n01_nested_loops__Strong.lua`), { sandbox: { enabled: true } });
-    assert.equal(r.confidence.level, 'medium', `seed ${seed}`);
-    assert.match(r.output, /^-- QuickSilver recovery report/);
-    assert.match(r.output.split('(end of report)')[0], /Left unresolved/);
+    assert.equal(r.confidence.level, 'high', `seed ${seed}: ${JSON.stringify(r.report.unresolved)}`);
+    assert.doesNotMatch(r.output, /35184372088832/, `seed ${seed}: the EncryptStrings PRNG is gone`);
   }
 });

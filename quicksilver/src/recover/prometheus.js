@@ -353,4 +353,33 @@ export function removeOrphanDecoders(chunk) {
   return { changed };
 }
 
+/**
+ * SplitStrings' joiner, `local j = function(t) local L, g = t[#t], "" for i = 1, #L do g = g .. L[t[i]] end return g end`, is written into every program the step
+ * touches. When no string was split, or every split string has been joined back, nothing reads it: an unread local holding exactly that function is dropped.
+ */
+export function removeUnusedJoiner(chunk) {
+  const info = analyze(chunk);
+  const isJoiner = (f) => {
+    if (!f || f.type !== 'Func' || f.params.length !== 1 || f.vararg || f.body.length !== 3) return false;
+    const [decl, loop, ret] = f.body;
+    if (decl.type !== 'Local' || decl.ids.length !== 2 || decl.values.length !== 2) return false;
+    const [last, empty] = decl.values;
+    const p = f.params[0].name;
+    if (!(last.type === 'Index' && last.obj.type === 'Name' && last.obj.name === p && last.key.type === 'Unary' && last.key.op === '#')) return false;
+    if (empty.type !== 'String' || empty.value !== '') return false;
+    if (loop.type !== 'NumFor' || ret.type !== 'Return' || ret.values.length !== 1 || ret.values[0].type !== 'Name' || ret.values[0].name !== decl.ids[1].name) return false;
+    return loop.body.length === 1 && loop.body[0].type === 'Assign' && loop.body[0].values.length === 1 && loop.body[0].values[0].type === 'Binary' && loop.body[0].values[0].op === '..';
+  };
+  const drop = new Set();
+  for (const s of chunk.body) {
+    const fn = s.type === 'LocalFunction' ? s.func : s.type === 'Local' && s.ids.length === 1 && s.values.length === 1 ? s.values[0] : null;
+    const id = s.type === 'LocalFunction' ? s.id : s.type === 'Local' ? s.ids[0] : null;
+    const v = id && info.varOf.get(id);
+    if (v && isJoiner(fn) && v.writes.length === 0 && v.reads.filter((r) => !(s.type === 'LocalFunction' && (() => { let hit = false; walk(fn, (n) => { if (n === r) hit = true; }); return hit; })())).length === 0) drop.add(s);
+  }
+  if (!drop.size) return { changed: 0 };
+  chunk.body = chunk.body.filter((s) => !drop.has(s));
+  return { changed: drop.size };
+}
+
 export { makeConst, constOf, NOT_CONST };

@@ -79,6 +79,7 @@ export function assessConfidence(before, output, ctx) {
     try { root = findRoot(ctx.ast); } catch { root = null; }
     if (root) note(-0.3, 'The program is still MoonVeil\u2019s table of lifted functions: the functions are decoded and readable, but they are not joined into the script\u2019s own flow of control.');
   }
+  for (const s of steps) if (s.status === 'applied' && s.detail && s.detail.lost) note(-0.3, `Not in the file: ${s.detail.lost}. The original values are unknown, so this part of the program cannot match the original.`);
   for (const s of steps) if (s.status === 'applied' && s.detail && s.detail.inferred) note(-0.15, `Inferred, not read: ${s.detail.inferred}.`);
   for (const s of steps.filter((x) => x.status === 'failed')) note(-0.1, `Pass "${s.label}" failed and was skipped: ${s.error}`);
   const evalStep = steps.find((s) => s.id === 'evaluate');
@@ -101,7 +102,7 @@ export function assessConfidence(before, output, ctx) {
   const joined = steps.find((s) => s.id === 'moonveil.join' && s.status === 'applied');
   if (joined) note(-0.2, `The program was put together from MoonVeil's table of ${joined.detail && joined.detail.factories ? `${joined.detail.factories} ` : ''}factories by following the places they build each other, without running anything. It has not been compared with a run of the original, and cells that closures share between loop iterations stay as cells.`);
   const ikl = steps.find((s) => s.id === 'ironbrikked.vm' && s.status === 'applied');
-  if (ikl) note(-0.5, 'The VM program was read as the generator encoded it. That generator\u2019s compiler writes operand counts (results of calls, values of returns) the original program did not have, and its own output errored on every program tried, so the result follows the encoded instructions and is not expected to run like the original.');
+  if (ikl) note(-0.5, 'The VM program was read as the generator compiled it, and that is not the original program: LuaXen\u2019s compiler allocates temporaries over registers that still hold live values (parameters, call results), so expressions such as `a, b = b, a % b` and `t[#t + 1] = f(x)` compute something else; it also never stores a function\u2019s parameter count and writes return counts as absolute registers (both read back here). Its own output fails on every program tried, so the result follows the compiled instructions and cannot run like the original.');
   const zl = steps.find((s) => s.id === 'zartha.vm' && s.status === 'applied');
   if (zl && zl.detail && zl.detail.masked > 0) note(-0.5, `${zl.detail.masked} string constant(s) of the VM program are masked with a key per constant that the generator never stores (the constant-protection option of this generator is unfinished and its own output does not run), so they cannot be read back: the structure of the program is rebuilt, those strings are not.`);
   const lifted = steps.find((s) => s.id === 'moonveil.vm' && s.status === 'applied');

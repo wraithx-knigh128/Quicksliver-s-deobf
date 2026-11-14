@@ -91,17 +91,29 @@ function poolUses(code) {
 
 /**
  * Slots the instructions use but the data does not have. One such slot that only comparisons and stores use is the nil constant at the end
- * of the pool (the serialiser counted the pool with Lua's `#`, which stops before a trailing nil). Anything else means `#` stopped at a nil
- * in the middle and the constants after it were never written: their values are not in the file, and no reader can produce them.
+ * of the pool (the serialiser counted the pool with Lua's `#`, which stops before a trailing nil). When `#` stopped at a nil in the middle,
+ * the constants after it were never written: their values are not in the file and no reader can produce them. The shipped script reads each
+ * of them as nil, and so does the program read here; every such slot, and the instructions that use it, is recorded in `stats.lostConstants`
+ * so the report can say exactly which values are missing. A lost slot that has to be a name (a global, a method) cannot be written as nil:
+ * then the function is refused.
  */
-function checkMissing(code, k) {
+function checkMissing(code, k, stats) {
   const uses = poolUses(code);
   const beyond = [];
   for (let slot = k.length; slot < uses.length; slot++) if (uses[slot].length) beyond.push(slot);
   if (!beyond.length) return;
-  if (beyond.length > 1 || !uses[beyond[0]].every(([kind]) => kind === 'any')) {
-    fail(`the tool left ${beyond.length} constant(s) out of its own output (it measures the pool with #, which stops at a nil constant): their values are not in the file`);
+  if (beyond.length === 1 && uses[beyond[0]].every(([kind]) => kind === 'any')) return;
+  // `#` stopped at the nil: the first slot past the data is that nil and has to be used as one
+  const nilSlot = k.length;
+  if (uses[nilSlot].length && !uses[nilSlot].every(([kind]) => kind === 'any')) {
+    fail(`the tool left ${beyond.length} constant(s) out of its own output (it measures the pool with #, which stops at a nil constant), and the first of them is not used as a nil`);
   }
+  const lost = beyond.filter((slot) => slot !== nilSlot);
+  const named = lost.find((slot) => uses[slot].some(([kind]) => kind === 'string'));
+  if (named !== undefined) fail(`the tool left ${lost.length} constant(s) out of its own output (it measures the pool with #, which stops at a nil constant); one of them names a global or a method, which cannot be read as nil`);
+  while (k.length < uses.length) k.push(undefined);
+  stats.lostConstants = stats.lostConstants || [];
+  for (const slot of lost) stats.lostConstants.push({ slot, uses: uses[slot].map(([kind, pc]) => ({ kind, pc: pc + 1 })) });
 }
 
 function placeNil(code, k, ambiguity) {
@@ -195,7 +207,7 @@ function readChunkOnce(bytes, forceNil, accepted) {
         placeNil(code, k, (stats.nilReadings = stats.nilReadings || []));
       }
     }
-    checkMissing(code, k);
+    checkMissing(code, k, stats);
     const nP = u32();
     if (nP > 1 << 16) fail('implausible function count');
     const protos = [];

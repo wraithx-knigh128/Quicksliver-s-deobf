@@ -36,9 +36,11 @@ test('hercules 1.6 default and VirtualMachine: every fixture the generator wrote
   for (const e of entries) {
     const r = recover(read(path.join(dir, e.file)), { sandbox: { enabled: true } });
     const step = r.steps.find((s) => s.id === 'hercules.vm');
-    // the generator's own output is invalid Lua for four default builds and leaves constants out for s06: those are not lifted, and the report says why
+    // four default builds are invalid Lua as shipped (the renamer wrote every `if` as a name: repaired, Prompt XIV); s06 lost constants after a nil in its pool:
+    // those are lifted with the gap read as nil, as the shipped script reads it, and cannot behave like the original
     if (!r.ok || !step || step.status !== 'applied') continue;
     lifted++;
+    if (step.detail.lost) { assert.ok(r.confidence.reasons.some((x) => /Not in the file/.test(x.text)), e.file); continue; }
     assert.deepEqual(residualIndicators(r.output), [], e.file);
     if (!oracle.available) continue;
     const original = read(path.join(corpus, 'originals', e.sample));
@@ -47,7 +49,7 @@ test('hercules 1.6 default and VirtualMachine: every fixture the generator wrote
     assert.ok(want.ok && got.ok, `${e.file}: ${got.error}`);
     assert.equal(got.stdout, want.stdout, e.file);
   }
-  assert.ok(lifted >= 9, `${lifted} lifted`);
+  assert.ok(lifted >= 14, `${lifted} lifted`);
 });
 
 test('decompiler: junk after a jump, with jumps of its own, is removed before the structure is read', async () => {

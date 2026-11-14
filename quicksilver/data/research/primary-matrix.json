@@ -1,6 +1,6 @@
 {
  "schema": "quicksilver/primary-matrix@1",
- "generated": "2026-11-13",
+ "generated": "2026-11-14",
  "note": "One row per version and configuration. Status words: verified, partial, experimental, unsupported (format-db) and, for Luraph, the engine registry’s own (partially-tested ...). A cell with a note is one that cannot be measured for that row.",
  "sources": [
   "data/research/format-db.json",
@@ -217,11 +217,11 @@
    },
    "structure": {
     "before": 15,
-    "after": 87
+    "after": 98
    },
    "semantic": {
     "before": 8,
-    "after": 83
+    "after": 96
    },
    "runtime": {
     "same": 5,
@@ -235,7 +235,7 @@
    "failurePatterns": [
     "tool defect: the generator measures the constant pool with `#`, which stops at a nil constant, so s06 has constants missing from its own output; the reader refuses rather than guess"
    ],
-   "status": "partial",
+   "status": "verified",
    "implementation": [
     "src/recover/hercules.js",
     "src/recover/hercules-vm.js"
@@ -1499,8 +1499,8 @@
     "after": 93
    },
    "semantic": {
-    "before": 7,
-    "after": 83
+    "before": 3,
+    "after": 75
    },
    "runtime": {
     "same": 1,
@@ -1508,8 +1508,8 @@
     "notJudged": 6
    },
    "completeness": {
-    "complete": 2,
-    "of": 3
+    "complete": 5,
+    "of": 7
    },
    "failurePatterns": [
     "tool defect: four 1.6 default builds are not valid Lua (`unexpected symbol near 'and'`); the parser rejects them, as does the reference runtime"
@@ -1572,11 +1572,11 @@
    },
    "structure": {
     "before": 16,
-    "after": 88
+    "after": 98
    },
    "semantic": {
     "before": 8,
-    "after": 83
+    "after": 96
    },
    "runtime": {
     "same": 3,
@@ -1590,7 +1590,7 @@
    "failurePatterns": [
     "tool defect: the generator measures the constant pool with `#`, which stops at a nil constant, so s06 has constants missing from its own output; the reader refuses rather than guess"
    ],
-   "status": "partial",
+   "status": "verified",
    "implementation": [
     "src/recover/hercules.js",
     "src/recover/hercules-vm.js"
@@ -1975,11 +1975,11 @@
    },
    "structure": {
     "before": 15,
-    "after": 87
+    "after": 98
    },
    "semantic": {
     "before": 8,
-    "after": 83
+    "after": 96
    },
    "runtime": {
     "same": 5,
@@ -1993,7 +1993,7 @@
    "failurePatterns": [
     "tool defect: the generator measures the constant pool with `#`, which stops at a nil constant, so s06 has constants missing from its own output; the reader refuses rather than guess"
    ],
-   "status": "partial",
+   "status": "verified",
    "implementation": [
     "src/recover/hercules.js",
     "src/recover/hercules-vm.js"
@@ -2458,11 +2458,11 @@
    },
    "structure": {
     "before": 15,
-    "after": 87
+    "after": 98
    },
    "semantic": {
     "before": 8,
-    "after": 83
+    "after": 96
    },
    "runtime": {
     "same": 5,
@@ -2476,7 +2476,7 @@
    "failurePatterns": [
     "tool defect: the generator measures the constant pool with `#`, which stops at a nil constant, so s06 has constants missing from its own output; the reader refuses rather than guess"
    ],
-   "status": "partial",
+   "status": "verified",
    "implementation": [
     "src/recover/hercules.js",
     "src/recover/hercules-vm.js"
@@ -3005,11 +3005,11 @@
    },
    "structure": {
     "before": 11,
-    "after": 75
+    "after": 80
    },
    "semantic": {
     "before": 6,
-    "after": 58
+    "after": 64
    },
    "runtime": {
     "same": 6,
@@ -3017,7 +3017,7 @@
     "notJudged": 1
    },
    "completeness": {
-    "complete": 6,
+    "complete": 7,
     "of": 7
    },
    "failurePatterns": [],
@@ -3042,11 +3042,11 @@
    },
    "structure": {
     "before": 2,
-    "after": 78
+    "after": 81
    },
    "semantic": {
     "before": 3,
-    "after": 54
+    "after": 56
    },
    "runtime": {
     "same": 6,
@@ -3054,7 +3054,7 @@
     "notJudged": 1
    },
    "completeness": {
-    "complete": 6,
+    "complete": 7,
     "of": 7
    },
    "failurePatterns": [
@@ -3081,11 +3081,11 @@
    },
    "structure": {
     "before": 1,
-    "after": 66
+    "after": 76
    },
    "semantic": {
     "before": 3,
-    "after": 49
+    "after": 59
    },
    "runtime": {
     "same": 6,
@@ -3093,7 +3093,7 @@
     "notJudged": 1
    },
    "completeness": {
-    "complete": 5,
+    "complete": 7,
     "of": 7
    },
    "failurePatterns": [
@@ -3120,11 +3120,11 @@
    },
    "structure": {
     "before": 49,
-    "after": 94
+    "after": 99
    },
    "semantic": {
     "before": 32,
-    "after": 88
+    "after": 96
    },
    "runtime": {
     "same": 7,
@@ -3132,7 +3132,7 @@
     "notJudged": 0
    },
    "completeness": {
-    "complete": 6,
+    "complete": 7,
     "of": 7
    },
    "failurePatterns": [],
@@ -3198,7 +3198,7 @@
    },
    "semantic": {
     "before": 66,
-    "after": 92
+    "after": 96
    },
    "runtime": {
     "same": 7,
@@ -3206,7 +3206,7 @@
     "notJudged": 0
    },
    "completeness": {
-    "complete": 6,
+    "complete": 7,
     "of": 7
    },
    "failurePatterns": [],
@@ -3527,11 +3527,11 @@
    },
    "structure": {
     "before": 1,
-    "after": 48
+    "after": 61
    },
    "semantic": {
     "before": 2,
-    "after": 34
+    "after": 43
    },
    "runtime": {
     "same": 5,
@@ -3539,7 +3539,7 @@
     "notJudged": 3
    },
    "completeness": {
-    "complete": 2,
+    "complete": 6,
     "of": 8
    },
    "failurePatterns": [
@@ -3566,11 +3566,11 @@
    },
    "structure": {
     "before": 1,
-    "after": 48
+    "after": 61
    },
    "semantic": {
     "before": 2,
-    "after": 34
+    "after": 43
    },
    "runtime": {
     "same": 5,
@@ -3578,7 +3578,7 @@
     "notJudged": 3
    },
    "completeness": {
-    "complete": 2,
+    "complete": 6,
     "of": 8
    },
    "failurePatterns": [
@@ -3605,11 +3605,11 @@
    },
    "structure": {
     "before": 48,
-    "after": 95
+    "after": 99
    },
    "semantic": {
     "before": 32,
-    "after": 89
+    "after": 97
    },
    "runtime": {
     "same": 7,
@@ -3617,7 +3617,7 @@
     "notJudged": 1
    },
    "completeness": {
-    "complete": 7,
+    "complete": 8,
     "of": 8
    },
    "failurePatterns": [],
@@ -3683,7 +3683,7 @@
    },
    "semantic": {
     "before": 65,
-    "after": 93
+    "after": 97
    },
    "runtime": {
     "same": 7,
@@ -3691,7 +3691,7 @@
     "notJudged": 1
    },
    "completeness": {
-    "complete": 7,
+    "complete": 8,
     "of": 8
    },
    "failurePatterns": [],

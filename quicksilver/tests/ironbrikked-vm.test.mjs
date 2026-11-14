@@ -1,7 +1,9 @@
-// Prompt XII/XIII: LuaXen's IronBrikked VM is read back to source. The container (compressed bytes, then constants / instructions / nested functions) and the interpreter's
-// handlers (an opcode tree evaluated per opcode) are read from the script. What is NOT claimed: runtime equivalence. The generator's own output errors on every program tried
-// (14 of 14 fixtures), and its compiler writes operand counts the program did not have (results of calls, values of returns, method calls without their object), so the lifted
-// program follows the encoded instructions and does not run like the original. The audit status is partial: the structure and semantic gains are measured, the runtime is not judged.
+// Prompt XII/XIII/XIV: LuaXen's IronBrikked VM is read back to source. The container (compressed bytes, then constants / instructions / nested functions) and the interpreter's
+// handlers (an opcode tree evaluated per opcode) are read from the script. What is NOT claimed: runtime equivalence, and Prompt XIV found why it cannot be had from the file.
+// LuaXen's compiler (InstructionGenerator.lua) allocates temporaries over registers that still hold live values (parameters are kept in `takenRegisters`, the allocator
+// looks at `registers`), so the compiled program is not the source program; it stores the parameter count under a misspelt key (`numParmas`), so every function is
+// written with 0 parameters and the template's CLOSURE takes that 0 as its upvalue count; and it writes RETURN's B as an absolute register. The last two are read back
+// here; the first is a different program. Controlled programs without parameters fail the same way. The audit status is partial: structure and semantic gains are measured.
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -26,8 +28,17 @@ test('ironbrikked: every fixture (the VM alone and under the syntax layer) is li
     assert.ok(step && step.status === 'applied', `${f}: ${step && step.detail}`);
     assert.deepEqual(residualIndicators(r.output), [], f);
     assert.notEqual(r.confidence.level, 'high', f);
-    assert.ok(r.report.unresolved.some((u) => /generator encoded it/.test(u.text)), f);
+    assert.ok(r.report.unresolved.some((u) => /generator compiled it/.test(u.text) && /temporaries over registers/.test(u.text)), f);
   }
+});
+
+test('ironbrikked: RETURN counts are read as LuaXen\'s compiler writes them (first register + count + 1), so `return value` gives one value, not the registers after it', () => {
+  // the compiler: RETURN expressionRegisters[1], (expressionRegisters[1] + #expressionRegisters) + 1; Lua's B is count + 1
+  const r = recover(read(path.join(dir, 's01_minify_basic__ironbrikked.lua')), { sandbox: { enabled: true } });
+  const body = r.output.split('(end of report)').pop();
+  const clamp = body.slice(0, body.indexOf('\nend\n') + 5);
+  assert.match(clamp, /return param1\n/);
+  assert.doesNotMatch(clamp, /return \w+, \w+/, 'no register after the returned one is returned with it');
 });
 
 test('ironbrikked: the tool\'s own output of these programs does not run (the evidence behind the experimental status)', () => {

@@ -19,6 +19,7 @@
 //     run again with 5.4 integers and the two are compared: equal results are used, different ones only when exactly one
 //     of the two reads as text (see chooseArithmetic), otherwise those sites are left alone.
 
+import { print } from '../core/printer.js';
 import { walk, transform, forEachChild } from '../core/walk.js';
 import { analyze, STDLIB_GLOBALS } from '../core/scope.js';
 import { createMachine, classify } from '../sandbox/sandbox.js';
@@ -43,6 +44,20 @@ const rn = (name) => ({ type: 'Name', name });
  * give (`class[decode('__index')] = class` assigns to it, or the table is filled in later) the constant key inside it is still worth
  * having, so a second run offers the remaining keys on their own.
  */
+// A decoder is remembered by the shape of its body, not its name: the passes between two rounds of evaluation rename variables.
+const LUA_WORDS = new Set(['and', 'break', 'do', 'else', 'elseif', 'end', 'false', 'for', 'function', 'goto', 'if', 'in', 'local', 'nil', 'not', 'or', 'repeat', 'return', 'then', 'true', 'until', 'while', 'string', 'table', 'math', 'bit32', 'bit', 'select', 'unpack', 'tostring', 'tonumber', 'type', 'pairs', 'ipairs', 'setmetatable', 'getmetatable']);
+function fingerprint(v) {
+  const fn = v && v.init && v.init.type === 'Func' ? v.init : v && v.declStmt && v.declStmt.type === 'LocalFunction' ? (v.declStmt.func || v.declStmt.fn) : null;
+  if (!fn || fn.type !== 'Func') return null;
+  const seen = new Map();
+  const text = print({ type: 'Chunk', body: [{ type: 'Return', values: [fn] }], endComments: [], features: new Set() });
+  return text.replace(/"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|[A-Za-z_][A-Za-z0-9_]*/g, (m) => {
+    if (m[0] === '"' || m[0] === "'" || LUA_WORDS.has(m)) return m;
+    if (!seen.has(m)) seen.set(m, `n${seen.size}`);
+    return seen.get(m);
+  });
+}
+
 export function evaluatePass(chunk, ctx = {}) {
   const first = evaluateOnce(chunk, ctx);
   if (!first.indexRejected || ctx.keysOnly) return first;
@@ -290,13 +305,55 @@ function evaluateOnce(chunk, ctx = {}) {
     });
     if (seen.size === 3) cipher.add(v);
   }
+  // `local cache; ... cache = setmetatable(...)`: declared without a value and assigned once reads the same as an initialiser
+  const assigned = new Map();
+  walk(chunk, (n) => {
+    if (n.type === 'Assign' && n.targets.length === n.values.length) n.targets.forEach((t, i) => { if (t.type === 'Name') assigned.set(t, n.values[i]); });
+    return undefined;
+  });
+  const soleValue = (v) => {
+    if (!v) return null;
+    if (v.init && v.init.type !== 'Nil') return v.writes.length === 0 ? v.init : null;
+    return v.writes.length === 1 ? assigned.get(v.writes[0]) || null : null;
+  };
+  // `setmetatable({}, { __index = store })`, or the same with the empty table in a local of its own
+  const proxyInit = (init) => {
+    if (!init || init.type !== 'Call' || init.fn.type !== 'Name' || init.fn.name !== 'setmetatable' || init.args.length !== 2 || init.args[1].type !== 'Table') return false;
+    const a = init.args[0];
+    if (a.type === 'Table') return a.fields.length === 0;
+    if (a.type !== 'Name') return false;
+    const t = soleValue(info.varOf.get(a));
+    return !!t && t.type === 'Table' && t.fields.length === 0;
+  };
+  // the key of a lookup: the call itself, or a local that holds nothing but that call (`local k = decode(s, n)` ... `cache[k]`)
+  const keyCall = (k) => {
+    const x = k.type === 'Paren' ? k.expr : k;
+    if (x.type === 'Call') return x;
+    if (x.type !== 'Name') return null;
+    const v = info.varOf.get(x);
+    const val = v && declOf.has(v) ? soleValue(v) : null;
+    return val && val.type === 'Call' ? val : null;
+  };
+  // a function whose result is the key of a lookup through a `setmetatable({}, { __index = store })` proxy is a cache decoder whatever its name and however few calls are left
+  const proxyKeyed = new Set();
+  walk(chunk, (n) => {
+    if (n.type !== 'Index' || n.obj.type !== 'Name') return undefined;
+    const key = keyCall(n.key);
+    if (!key || key.fn.type !== 'Name') return undefined;
+    if (!proxyInit(soleValue(info.varOf.get(n.obj)))) return undefined;
+    const fv = info.varOf.get(key.fn);
+    if (fv && siteCount.has(fv)) proxyKeyed.add(fv);
+    return undefined;
+  });
   const decoders = new Set();
   for (const [v, n] of siteCount) {
     const machineName = looksObfuscated(v.name) || isShortName(v.name);
-    const threshold = (ctx.knownDecoders && ctx.knownDecoders.has(v.name)) || (offsetAccessor.has(v) && machineName) || keystream.has(v) || cipher.has(v) ? 1 : machineName ? minSites : (opts.minSitesReadable ?? MIN_SITES_READABLE_NAME);
+    // a decoder found in an earlier round stays one when only a few of its calls are left (`memory` is kept by the pipeline for one recovery)
+    const threshold = (ctx.knownDecoders && ctx.knownDecoders.has(v.name)) || (ctx.memory && ctx.memory.has(fingerprint(v))) || proxyKeyed.has(v) || (offsetAccessor.has(v) && machineName) || keystream.has(v) || cipher.has(v) ? 1 : machineName ? minSites : (opts.minSitesReadable ?? MIN_SITES_READABLE_NAME);
     if (n >= threshold) decoders.add(v);
   }
   result.decoders = [...decoders].map((v) => ({ name: v.name, sites: siteCount.get(v) }));
+  if (ctx.memory) for (const v of decoders) { const f = fingerprint(v); if (f) ctx.memory.add(f); }
   if (!decoders.size) { result.skipped = 'no decoder-like function calls with constant arguments'; return result; }
 
   // The sites to replace are the decoder calls themselves (and `table[decode(...)]` lookups), never
@@ -311,10 +368,8 @@ function evaluateOnce(chunk, ctx = {}) {
   const envLike = (e) => isEnvName(e);
   // `local cache = setmetatable({}, { __index = store })`: reading it only looks into the store, which the decoder fills
   const proxyName = (e) => {
-    if (e.type !== 'Name') return false;
-    const v = info.varOf.get(e);
-    const init = v && v.init;
-    return !!init && init.type === 'Call' && init.fn.type === 'Name' && init.fn.name === 'setmetatable' && init.args.length === 2 && init.args.every((a) => a.type === 'Table') && v.writes.length === 0;
+    if (!e || e.type !== 'Name') return false;
+    return proxyInit(soleValue(info.varOf.get(e)));
   };
   const noCall = (e) => { const c = closed(e); return (c.ok && !c.call && !envLike(e)) || proxyName(e); };
   const unparen = (e) => (e.type === 'Paren' ? unparen(e.expr) : e);
@@ -326,7 +381,8 @@ function evaluateOnce(chunk, ctx = {}) {
     const visit = (e, inFunc = false) => {
       if (!e || typeof e !== 'object') return;
       let hit = false;
-      if (!ctx.keysOnly && e.type === 'Index' && e.key.type !== 'String' && isDecoderCall(unparen(e.key)) && noCall(e.obj)) hit = true;
+      // a lookup through the decoder's own cache proxy is the decoded text, also in the second pass that otherwise replaces only keys
+      if (e.type === 'Index' && (!ctx.keysOnly || proxyName(e.obj)) && e.key.type !== 'String' && (isDecoderCall(unparen(e.key)) || (proxyName(e.obj) && unparen(e.key).type === 'Name' && keyCall(e.key) && isDecoderCall(keyCall(e.key)))) && noCall(e.obj)) hit = true;
       else if (isDecoderCall(e)) hit = true;
       if (hit) {
         sites.push(e); owner.set(e, stmt); if (inFunc) late.add(e);
@@ -353,38 +409,83 @@ function evaluateOnce(chunk, ctx = {}) {
 
   // ---- dependency slice -------------------------------------------------------------------------------
   const consumer = new Set(sites.map((e) => owner.get(e)));
-  const deps = new Set();
-  for (const e of sites) for (const v of refsOf(e).vars) if (declOf.has(v)) deps.add(v);
-  const slice = new Set();
-  for (let grew = true; grew;) {
-    grew = false;
-    for (const s of top) {
-      if (slice.has(s) || s.type === 'Return') continue;
-      const r = refsOf(s);
-      const declares = declOf.get(s) === undefined && s.type !== 'Local' && s.type !== 'LocalFunction'
-        ? []
-        : (s.type === 'Local' ? s.ids.map((id) => info.varOf.get(id)) : [info.varOf.get(s.id)]);
-      // `local a = list`: a second name for a table the decoder reads, through which it may be changed as well
-      const aliasesDep = s.type === 'Local' && s.values.length === s.ids.length
-        && s.values.some((x) => x.type === 'Name' && deps.has(info.varOf.get(x)) && dataTable(info.varOf.get(x)));
-      const declaresDep = declares.some((v) => deps.has(v)) || aliasesDep;
-      const mutatesDep = !consumer.has(s) && s.type !== 'Local' && s.type !== 'LocalFunction' && [...r.vars].some((v) => deps.has(v));
-      if (declaresDep || mutatesDep) {
-        slice.add(s);
-        grew = true;
-        for (const v of r.vars) if (declOf.has(v)) deps.add(v);
-        for (const v of declares) deps.add(v);
+  const sliceFrom = (seed, excluded) => {
+    const deps = new Set(seed);
+    const slice = new Set();
+    const why = new Map();                       // statement -> the dependencies it touched when it joined
+    const via = new Map();                       // dependency -> the statement whose reading of it made it one
+    for (let grew = true; grew;) {
+      grew = false;
+      for (const s of top) {
+        if (slice.has(s) || excluded.has(s) || s.type === 'Return') continue;
+        const r = refsOf(s);
+        const declares = declOf.get(s) === undefined && s.type !== 'Local' && s.type !== 'LocalFunction'
+          ? []
+          : (s.type === 'Local' ? s.ids.map((id) => info.varOf.get(id)) : [info.varOf.get(s.id)]);
+        // `local a = list`: a second name for a table the decoder reads, through which it may be changed as well
+        const aliasesDep = s.type === 'Local' && s.values.length === s.ids.length
+          && s.values.some((x) => x.type === 'Name' && deps.has(info.varOf.get(x)) && dataTable(info.varOf.get(x)));
+        const declaresDep = declares.some((v) => deps.has(v)) || aliasesDep;
+        const mutatesDep = !consumer.has(s) && s.type !== 'Local' && s.type !== 'LocalFunction' && [...r.vars].some((v) => deps.has(v));
+        if (declaresDep || mutatesDep) {
+          why.set(s, { mutates: !declaresDep, touched: [...r.vars].filter((v) => deps.has(v)) });
+          slice.add(s);
+          grew = true;
+          for (const v of r.vars) if (declOf.has(v) && !deps.has(v)) { deps.add(v); via.set(v, s); }
+          for (const v of declares) deps.add(v);
+        }
       }
     }
+    return { slice, deps, why, via };
+  };
+  // What the decoders themselves need. A statement outside it that reads the host (`print(env[name](s))`, where `s` is a decoded string) joined only because it is
+  // handed a decoder's result: it is left out, and so is every site whose value could depend on what it touches; the rest are evaluated.
+  const core = sliceFrom([...decoders], new Set());
+  for (const s of core.slice) {
+    const g = foreignGlobal(s);
+    if (g) { result.skipped = `the decoder depends on '${g}', whose value is not known here`; return result; }
   }
+  const excluded = new Set();
+  const tainted = new Set();
+  let slice, deps;
+  for (let round = 0; ; round++) {
+    const seed = new Set();
+    for (const e of sites) for (const v of refsOf(e).vars) if (declOf.has(v)) seed.add(v);
+    let why, via;
+    ({ slice, deps, why, via } = sliceFrom(seed, excluded));
+    const foreign = [...slice].filter((s) => foreignGlobal(s));
+    if (!foreign.length) break;
+    // the statement that brought a host-reading one in: itself when it joined by touching a dependency, else the one whose reading made what it declares a dependency
+    const culprit = (s, depth = 0) => {
+      if (core.slice.has(s) || depth > 50) return null;
+      if (why.get(s).mutates) return s;
+      const declared = s.type === 'Local' ? s.ids.map((id) => info.varOf.get(id)) : s.type === 'LocalFunction' ? [info.varOf.get(s.id)] : [];
+      const from = declared.map((v) => via.get(v)).find((x) => x && x !== s);
+      return from ? culprit(from, depth + 1) : null;
+    };
+    const culprits = foreign.map((s) => culprit(s));
+    if (culprits.some((c) => !c) || round > 8) { result.skipped = `the decoder depends on '${foreignGlobal(foreign[culprits.findIndex((c) => !c)] || foreign[0])}', whose value is not known here`; return result; }
+    for (const c of culprits) { excluded.add(c); for (const v of why.get(c).touched) tainted.add(v); }
+    // what is computed from a tainted value is tainted as well
+    for (let grew = true; grew;) {
+      grew = false;
+      for (const s of slice) {
+        if (excluded.has(s)) continue;
+        const r = refsOf(s);
+        if (![...r.vars].some((v) => tainted.has(v))) continue;
+        const declares = s.type === 'Local' ? s.ids.map((id) => info.varOf.get(id)) : s.type === 'LocalFunction' ? [info.varOf.get(s.id)] : [...r.vars].filter((v) => deps.has(v));
+        for (const v of declares) if (v && !tainted.has(v)) { tainted.add(v); grew = true; }
+      }
+    }
+    if ([...core.deps].some((v) => tainted.has(v))) { result.skipped = `the decoder depends on '${foreignGlobal(foreign[0])}', whose value is not known here`; return result; }
+    sites = sites.filter((e) => ![...refsOf(e).vars].some((v) => tainted.has(v)));
+    if (!sites.length) { result.skipped = 'every decoder call depends on a value the host provides'; return result; }
+  }
+  result.leftForHost = excluded.size ? excluded.size : undefined;
   const byName = new Map();
   for (const v of deps) {
     if (byName.has(v.name) && byName.get(v.name) !== v) { result.skipped = `two top-level variables are both called '${v.name}'`; return result; }
     byName.set(v.name, v);
-  }
-  for (const s of slice) {
-    const g = foreignGlobal(s);
-    if (g) { result.skipped = `the decoder depends on '${g}', whose value is not known here`; return result; }
   }
   for (const e of sites) {
     const g = [...refsOf(e).globals].find((x) => !STDLIB_GLOBALS.has(x));
@@ -481,12 +582,17 @@ function evaluateOnce(chunk, ctx = {}) {
     if (n.type === 'Call' && n.fn.type === 'Index' && n.fn.obj.type === 'Name' && n.fn.obj.name === 'string' && n.fn.key.type === 'String' && n.fn.key.value === 'char'
         && n.args.length === 1 && n.args[0].type === 'Call') byteArgs.add(n.args[0]);
   });
+  // `decode(s, key)` as a statement fills the cache and its result is thrown away: what it returns says nothing about the decoder
+  const discarded = new Set();
+  walk(chunk, (n) => { if (n.type === 'CallStmt') discarded.add(n.call); });
   for (const e of sites) {
     const a = table.get(ids.get(e));
     const b = table.get(ids.get(e) + n);
     if (unresolved.has(ids.get(e)) || !single(a) || !single(b) || a.get(2) !== b.get(2) || !usable(a.get(2))) { result.rejected++; continue; }
     if (keyOf.has(e)) { if (typeof a.get(2) === 'string') fallbacks.push([e, a.get(2)]); continue; }
     const v = decoderOf(e);
+    // a cache decoder returns the key it filled: its numbers are keys by design and say nothing about whether it decodes text
+    if ((discarded.has(e) || proxyKeyed.has(v)) && typeof a.get(2) !== 'string') { result.rejected++; continue; }
     const tally = perDecoder.get(v) || { strings: 0, others: 0 };
     // a byte decoder (`string.char(d(19))`, `d(n)` = n xor key) returns numbers, and what it decodes is the text those make
     const byteValue = typeof a.get(2) === 'number' && Number.isInteger(a.get(2)) && a.get(2) >= 0 && a.get(2) <= 255 && byteArgs.has(e);

@@ -67,12 +67,16 @@ test('hercules vm: a nil constant the tool left out of its data is put back when
   assert.equal((await oracle.runLua(r.output, 'lua54')).stdout, original.stdout);
 });
 
-test('hercules vm: constants that really are missing from the file are refused, not invented (s06)', () => {
+test('hercules vm: constants that really are missing from the file are read as nil, as the shipped script reads them, and never invented (s06)', () => {
   const r = run(read(path.join(corpus, 'obfuscated/hercules/s06_combined__mod-virtual_machine.lua')));
   const step = r.steps.find((s) => s.id === 'hercules.vm');
-  assert.equal(step.status, 'skipped');
-  assert.match(String(step.detail), /left \d+ constant\(s\) out|missing/);
-  assert.ok(r.confidence.score < 0.6, 'and the result says the VM was not recovered');
+  assert.equal(step.status, 'applied');
+  // Queue:pop's `self.first + 1`: the 1 came after the nil constant that stopped the tool's `#`, so it was never written
+  assert.deepEqual(step.detail.lostConstants.map((l) => l.uses.map((u) => u.kind)), [['number']]);
+  assert.match(r.output, /self\.first = self\.first \+ nil/, 'the gap is visible where it is');
+  assert.doesNotMatch(r.output, /self\.first = self\.first \+ 1\b/, 'the missing value is not made up');
+  assert.ok(r.confidence.reasons.some((x) => /Not in the file/.test(x.text)), 'the report names the missing constant');
+  assert.ok(r.confidence.score <= 0.6, 'and the result is not called fully recovered');
 });
 
 test('hercules vm: damaged data is a refusal with a reason, never a crash or a wrong program', () => {

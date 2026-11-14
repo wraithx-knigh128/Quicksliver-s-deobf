@@ -8,7 +8,7 @@ but short of that; **unsupported** otherwise. Families without fixtures are sign
 
 | Family | Status | Basis | Fixtures | Fidelity before → after | Trace identical |
 |---|---|---|---|---|---|
-| Prometheus | partial | real-output | 91 | 45% → 82% | 87 / 87 |
+| Prometheus | partial | real-output | 91 | 45% → 85% | 87 / 87 |
 | Hercules | partial | real-output | 115 | 55% → 96% | 103 / 103 |
 | Luraph | unsupported | signature | – | – | – |
 | MoonSec V3 | unsupported | signature | – | – | – |
@@ -42,7 +42,7 @@ but short of that; **unsupported** otherwise. Families without fixtures are sign
 | Strong FiveM Lua Obfuscator | unsupported | signature | – | – | – |
 | NeuroForge VM | unsupported | signature | – | – | – |
 | Stealth-X | unsupported | signature | – | – | – |
-| AzureVM | unsupported | real-output | 48 | 4% → 13% | 47 / 47 |
+| AzureVM | unsupported | real-output | 48 | 4% → 14% | 47 / 47 |
 | Simple Open source Lua Obfuscator (page) | partial | real-output | 8 | 35% → 99% | 5 / 5 |
 | Clyde | partial | real-output | 25 | 48% → 64% | 24 / 24 |
 | IronVeil | unsupported | signature | – | – | – |
@@ -59,19 +59,19 @@ Open-source Lua 5.1 / basic Luau obfuscator written in Lua (levno-710).
 
 | Configuration | Status | Fidelity before → after | Same behaviour | Mean time |
 |---|---|---|---|---|
-| Minify (preset) | supported | 96% → 96% | 7 / 7 | 19 ms |
-| Weak (preset) | partial | 6% → 58% (needs sandbox) | 6 / 6 (1 tool output broken) | 158 ms |
-| Medium (preset) | partial | 3% → 54% (needs sandbox) | 6 / 6 (1 tool output broken) | 482 ms |
-| Strong (preset) | partial | 3% → 49% (needs sandbox) | 6 / 6 (1 tool output broken) | 1397 ms |
-| EncryptStrings (step) | supported | 32% → 88% (needs sandbox) | 7 / 7 | 25 ms |
-| ConstantArray (step) | supported | 21% → 92% (needs sandbox) | 7 / 7 | 29 ms |
-| SplitStrings (step) | supported | 66% → 92% | 7 / 7 | 11 ms |
-| NumbersToExpressions (step) | supported | 80% → 96% | 7 / 7 | 8 ms |
-| ProxifyLocals (step) | supported | 39% → 95% | 7 / 7 | 15 ms |
-| WrapInFunction (step) | supported | 95% → 96% | 7 / 7 | 8 ms |
-| AddVararg (step) | supported | 96% → 96% | 7 / 7 | 9 ms |
-| AntiTamper (step) | supported | 39% → 96% | 7 / 7 | 11 ms |
-| Vmify (step) | partial | 10% → 64% | 6 / 6 (1 tool output broken) | 86 ms |
+| Minify (preset) | supported | 96% → 96% | 7 / 7 | 27 ms |
+| Weak (preset) | partial | 6% → 64% (needs sandbox) | 6 / 6 (1 tool output broken) | 294 ms |
+| Medium (preset) | partial | 3% → 56% (needs sandbox) | 6 / 6 (1 tool output broken) | 800 ms |
+| Strong (preset) | partial | 3% → 59% (needs sandbox) | 6 / 6 (1 tool output broken) | 2266 ms |
+| EncryptStrings (step) | supported | 32% → 96% (needs sandbox) | 7 / 7 | 41 ms |
+| ConstantArray (step) | supported | 21% → 92% (needs sandbox) | 7 / 7 | 46 ms |
+| SplitStrings (step) | supported | 66% → 96% | 7 / 7 | 15 ms |
+| NumbersToExpressions (step) | supported | 80% → 96% | 7 / 7 | 14 ms |
+| ProxifyLocals (step) | supported | 39% → 95% | 7 / 7 | 28 ms |
+| WrapInFunction (step) | supported | 95% → 96% | 7 / 7 | 14 ms |
+| AddVararg (step) | supported | 96% → 96% | 7 / 7 | 14 ms |
+| AntiTamper (step) | supported | 39% → 96% | 7 / 7 | 20 ms |
+| Vmify (step) | partial | 10% → 64% | 6 / 6 (1 tool output broken) | 149 ms |
 
 **Detection on real scripts:** 230 of 238 files filed under Prometheus in the public collection (https://github.com/vyxonq-dev/obfuscator-samples, commit `82e582fcdd`) were identified as Prometheus. The collection's labels are its uploaders' and are noisy; a file our rules call something else was looked at before being counted as a miss.
 
@@ -81,9 +81,9 @@ Each revision of the tool that can still be run, measured on its own fixtures (a
 
 | Version | Revision | Fixtures | Fidelity before → after | Same behaviour | Configurations (supported / partial / unsupported) |
 |---|---|---|---|---|---|
-| lennyobf | `c764942` 2025-01-13 | 104 | 45% → 79% | 84 / 84 | 9 / 4 / 0 |
+| lennyobf | `c764942` 2025-01-13 | 104 | 45% → 81% | 84 / 84 | 9 / 4 / 0 |
 
-* **lennyobf** not supported: Weak (partial, 50%); Medium (partial, 34%); Strong (partial, 34%); step-Vmify (partial, 62%)
+* **lennyobf** not supported: Weak (partial, 50%); Medium (partial, 43%); Strong (partial, 43%); step-Vmify (partial, 62%)
 
 **Limits**
 
@@ -100,23 +100,23 @@ Open-source Lua obfuscator with a module pipeline (zeusssz).
 
 | Configuration | Status | Fidelity before → after | Same behaviour | Mean time |
 |---|---|---|---|---|
-| light (preset) | supported | 64% → 96% | 6 / 6 (1 tool output broken) | 12 ms |
-| balanced (preset) | supported | 37% → 95% (needs sandbox) | 6 / 6 (1 tool output broken) | 27 ms |
-| heavy (preset) | partial | 7% → 77% (needs sandbox) | 5 / 5 (2 tool output broken) | 47 ms |
-| maximum (preset) | partial | 20% → 66% (needs sandbox) | 2 / 2 (1 tool output broken) | 1299 ms |
-| virtual machine (module) | partial | 8% → 83% | 5 / 5 (2 tool output broken) | 81 ms |
-| antitamper (module) | supported | 37% → 100% | 7 / 7 | 14 ms |
-| control flow (module) | supported | 63% → 98% | 7 / 7 | 14 ms |
-| string to expressions (module) | supported | 34% → 100% | 7 / 7 | 17 ms |
-| string encoding (module) | supported | 47% → 100% (needs sandbox) | 7 / 7 | 20 ms |
-| wrap in function (module) | supported | 99% → 100% | 7 / 7 | 10 ms |
-| variable renaming (module) | supported | 64% → 96% | 6 / 6 (1 tool output broken) | 13 ms |
-| garbage code (module) | supported | 53% → 100% | 7 / 7 | 16 ms |
-| opaque predicates (module) | supported | 93% → 100% | 7 / 7 | 15 ms |
-| function inlining (module) | supported | 71% → 97% | 4 / 4 (3 tool output broken) | 10 ms |
-| dynamic code (module) | supported | 90% → 100% | 6 / 6 (1 tool output broken) | 12 ms |
-| bytecode encoding (module) | supported | 18% → 93% (needs sandbox) | 7 / 7 | 46 ms |
-| compressor (module) | supported | 100% → 100% | 7 / 7 | 11 ms |
+| light (preset) | supported | 64% → 96% | 6 / 6 (1 tool output broken) | 20 ms |
+| balanced (preset) | supported | 37% → 95% (needs sandbox) | 6 / 6 (1 tool output broken) | 32 ms |
+| heavy (preset) | partial | 7% → 77% (needs sandbox) | 5 / 5 (2 tool output broken) | 71 ms |
+| maximum (preset) | partial | 20% → 66% (needs sandbox) | 2 / 2 (1 tool output broken) | 2119 ms |
+| virtual machine (module) | supported | 8% → 96% | 5 / 5 (2 tool output broken) | 88 ms |
+| antitamper (module) | supported | 37% → 100% | 7 / 7 | 17 ms |
+| control flow (module) | supported | 63% → 98% | 7 / 7 | 18 ms |
+| string to expressions (module) | supported | 34% → 100% | 7 / 7 | 29 ms |
+| string encoding (module) | supported | 47% → 100% (needs sandbox) | 7 / 7 | 26 ms |
+| wrap in function (module) | supported | 99% → 100% | 7 / 7 | 14 ms |
+| variable renaming (module) | supported | 64% → 96% | 6 / 6 (1 tool output broken) | 19 ms |
+| garbage code (module) | supported | 53% → 100% | 7 / 7 | 20 ms |
+| opaque predicates (module) | supported | 93% → 100% | 7 / 7 | 19 ms |
+| function inlining (module) | supported | 71% → 97% | 4 / 4 (3 tool output broken) | 14 ms |
+| dynamic code (module) | supported | 90% → 100% | 6 / 6 (1 tool output broken) | 23 ms |
+| bytecode encoding (module) | supported | 18% → 93% (needs sandbox) | 7 / 7 | 68 ms |
+| compressor (module) | supported | 100% → 100% | 7 / 7 | 13 ms |
 
 ### Versions
 
@@ -126,19 +126,17 @@ Each revision of the tool that can still be run, measured on its own fixtures (a
 |---|---|---|---|---|---|
 | 1.5 | `1723b42` 2024-11-03 | 84 | 57% → 95% | 63 / 63 | 10 / 2 / 0 |
 | 1.5-early | `9384974` 2024-09-22 | 70 | 87% → 98% | 24 / 24 | 4 / 2 / 4 |
-| 1.6 | `f8e5d38` 2025-01-25 | 84 | 62% → 96% | 54 / 54 | 8 / 3 / 1 |
-| 1.6.2 | `1b20510` 2026-04-30 | 91 | 58% → 97% | 81 / 81 | 12 / 1 / 0 |
-| 2.0.0 | `c4baf05` 2026-06-16 | 93 | 60% → 97% | 84 / 84 | 12 / 1 / 2 |
+| 1.6 | `f8e5d38` 2025-01-25 | 84 | 58% → 96% | 54 / 54 | 9 / 2 / 1 |
+| 1.6.2 | `1b20510` 2026-04-30 | 91 | 58% → 98% | 81 / 81 | 13 / 0 / 0 |
+| 2.0.0 | `c4baf05` 2026-06-16 | 93 | 60% → 98% | 84 / 84 | 13 / 0 / 2 |
 
 * **1.5** not supported: default (partial, 63%); mod-variable_renaming (partial, 94%, 1 output(s) the tool wrote that do not parse)
 
 * **1.5-early** not supported: default (unsupported, –, 7 output(s) the tool wrote that do not parse); all (unsupported, –, 7 output(s) the tool wrote that do not parse); mod-dynamic_code (unsupported, –, 7 output(s) the tool wrote that do not parse); mod-function_inlining (unsupported, –, 7 output(s) the tool wrote that do not parse); mod-string_encoding (partial, 97%); mod-variable_renaming (partial, 89%, 1 output(s) the tool wrote that do not parse)
 
-* **1.6** not supported: default (partial, 83%, 4 output(s) the tool wrote that do not parse); mod-VirtualMachine (partial, 83%); mod-bytecode_encoding (unsupported, –, 7 output(s) the tool wrote that do not parse); mod-variable_renaming (partial, 93%, 2 output(s) the tool wrote that do not parse)
+* **1.6** not supported: default (partial, 75%); mod-bytecode_encoding (unsupported, –, 7 output(s) the tool wrote that do not parse); mod-variable_renaming (partial, 93%, 2 output(s) the tool wrote that do not parse)
 
-* **1.6.2** not supported: mod-VirtualMachine (partial, 83%)
-
-* **2.0.0** not supported: mod-VirtualMachine (partial, 83%); default (unsupported, –, 1 output(s) the tool wrote that do not parse); all (unsupported, –, 1 output(s) the tool wrote that do not parse)
+* **2.0.0** not supported: default (unsupported, –, 1 output(s) the tool wrote that do not parse); all (unsupported, –, 1 output(s) the tool wrote that do not parse)
 
 **Limits**
 
@@ -352,11 +350,11 @@ Open-source Lua 5.1 obfuscator (efrederickson, 2013, no licence stated). Extract
 
 | Configuration | Status | Fidelity before → after | Same behaviour | Mean time |
 |---|---|---|---|---|
-| default (preset) | supported | 1% → 97% | 8 / 8 | 58 ms |
-| uglify (preset) | supported | 1% → 97% | 8 / 8 | 60 ms |
-| encrypt (preset) | supported | 1% → 94% (needs sandbox) | 0 / 0 (8 tool output broken) | 378 ms |
-| nostep2 (preset) | supported | 3% → 97% | 8 / 8 | 17 ms |
-| notamper (preset) | supported | 1% → 97% | 8 / 8 | 59 ms |
+| default (preset) | supported | 1% → 97% | 8 / 8 | 97 ms |
+| uglify (preset) | supported | 1% → 97% | 8 / 8 | 89 ms |
+| encrypt (preset) | supported | 1% → 94% (needs sandbox) | 0 / 0 (8 tool output broken) | 585 ms |
+| nostep2 (preset) | supported | 3% → 97% | 8 / 8 | 25 ms |
+| notamper (preset) | supported | 1% → 97% | 8 / 8 | 96 ms |
 
 **Limits**
 
@@ -374,13 +372,13 @@ Open-source (MIT) Lua 5.1 VM obfuscator (TimOdemchuk). Compiles with luac, parse
 
 | Configuration | Status | Fidelity before → after | Same behaviour | Mean time |
 |---|---|---|---|---|
-| default (preset) | supported | 3% → 90% | 4 / 4 (4 tool output broken) | 75 ms |
-| minify (preset) | supported | 4% → 89% | 4 / 4 (3 tool output broken) | 56 ms |
-| encryptstrings (preset) | supported | 3% → 90% | 4 / 4 (4 tool output broken) | 62 ms |
-| flatten (preset) | supported | 3% → 90% | 4 / 4 (4 tool output broken) | 86 ms |
-| antitamper (preset) | supported | 3% → 90% | 0 / 0 (8 tool output broken) | 80 ms |
-| constants (preset) | partial | 3% → 66% | 0 / 0 (8 tool output broken) | 62 ms |
-| all (preset) | partial | 3% → 43% | 0 / 0 (7 tool output broken) | 94 ms |
+| default (preset) | supported | 3% → 90% | 4 / 4 (4 tool output broken) | 109 ms |
+| minify (preset) | supported | 4% → 89% | 4 / 4 (3 tool output broken) | 76 ms |
+| encryptstrings (preset) | supported | 3% → 90% | 4 / 4 (4 tool output broken) | 91 ms |
+| flatten (preset) | supported | 3% → 90% | 4 / 4 (4 tool output broken) | 116 ms |
+| antitamper (preset) | supported | 3% → 90% | 0 / 0 (8 tool output broken) | 119 ms |
+| constants (preset) | partial | 3% → 66% | 0 / 0 (8 tool output broken) | 93 ms |
+| all (preset) | partial | 3% → 43% | 0 / 0 (7 tool output broken) | 133 ms |
 
 **Limits**
 
@@ -395,8 +393,8 @@ Open-source (MIT) Luvit program (adzwang, "half-working" by its author): compile
 
 | Configuration | Status | Fidelity before → after | Same behaviour | Mean time |
 |---|---|---|---|---|
-| default (preset) | supported | 2% → 98% | 0 / 0 (2 tool output broken) | 49 ms |
-| noconstants (preset) | supported | 2% → 98% | 0 / 0 (2 tool output broken) | 44 ms |
+| default (preset) | supported | 2% → 98% | 0 / 0 (2 tool output broken) | 93 ms |
+| noconstants (preset) | supported | 2% → 98% | 0 / 0 (2 tool output broken) | 102 ms |
 
 **Limits**
 
@@ -413,9 +411,9 @@ Open-source (MIT) Lua obfuscator suite (luauminati). IronBrikked: a VM with LZW-
 
 | Configuration | Status | Fidelity before → after | Same behaviour | Mean time |
 |---|---|---|---|---|
-| ironbrikked (preset) | partial | 5% → 51% | 0 / 0 (7 tool output broken) | 77 ms |
-| ast (preset) | supported | 11% → 97% (needs sandbox) | 5 / 5 (3 tool output broken) | 42 ms |
-| both (preset) | partial | 3% → 51% (needs sandbox) | 0 / 0 (7 tool output broken) | 345 ms |
+| ironbrikked (preset) | partial | 5% → 51% | 0 / 0 (7 tool output broken) | 112 ms |
+| ast (preset) | supported | 11% → 97% (needs sandbox) | 5 / 5 (3 tool output broken) | 63 ms |
+| both (preset) | partial | 3% → 51% (needs sandbox) | 0 / 0 (7 tool output broken) | 461 ms |
 
 **Limits**
 
@@ -433,7 +431,7 @@ Small Roblox-targeted obfuscator (kosuke14, no licence, 2022) that does not call
 
 | Configuration | Status | Fidelity before → after | Same behaviour | Mean time |
 |---|---|---|---|---|
-| default (preset) | supported | 3% → 100% | 8 / 8 | 210 ms |
+| default (preset) | supported | 3% → 100% | 8 / 8 | 280 ms |
 
 **Limits**
 
@@ -477,14 +475,14 @@ Open-source (MIT) Lua 5.1 obfuscator in C# that compiles a script with luac and 
 
 | Configuration | Status | Fidelity before → after | Same behaviour | Mean time |
 |---|---|---|---|---|
-| default (preset) | supported | 4% → 88% | 8 / 8 | 48 ms |
-| plain (preset) | supported | 8% → 90% | 8 / 8 | 36 ms |
-| mutate (preset) | supported | 6% → 90% | 8 / 8 | 37 ms |
-| super (preset) | supported | 5% → 90% | 8 / 8 | 44 ms |
-| flow (preset) | supported | 8% → 88% | 3 / 3 (5 tool output broken) | 41 ms |
-| strings (preset) | partial | 3% → 84% | 8 / 8 | 372 ms |
-| lineinfo (preset) | supported | 4% → 88% | 8 / 8 | 55 ms |
-| nocompress (preset) | supported | 4% → 88% | 8 / 8 | 47 ms |
+| default (preset) | supported | 4% → 88% | 8 / 8 | 71 ms |
+| plain (preset) | supported | 8% → 90% | 8 / 8 | 57 ms |
+| mutate (preset) | supported | 6% → 90% | 8 / 8 | 71 ms |
+| super (preset) | supported | 5% → 90% | 8 / 8 | 71 ms |
+| flow (preset) | supported | 8% → 88% | 3 / 3 (5 tool output broken) | 64 ms |
+| strings (preset) | partial | 3% → 84% | 8 / 8 | 566 ms |
+| lineinfo (preset) | supported | 4% → 88% | 8 / 8 | 73 ms |
+| nocompress (preset) | supported | 4% → 88% | 8 / 8 | 67 ms |
 
 **Detection on real scripts:** 7 of 8 files filed under IronBrew2 in the public collection (https://github.com/vyxonq-dev/obfuscator-samples, commit `82e582fcdd`) were identified as IronBrew 2. The collection's labels are its uploaders' and are noisy; a file our rules call something else was looked at before being counted as a miss.
 
@@ -542,17 +540,17 @@ A class of packers, not one tool: the program is encoded and handed to loadstrin
 
 | Configuration | Status | Fidelity before → after | Same behaviour | Mean time |
 |---|---|---|---|---|
-| ascii (preset) | supported | 15% → 100% (needs sandbox) | 6 / 6 | 13 ms |
-| hex (preset) | supported | 10% → 100% (needs sandbox) | 6 / 6 | 12 ms |
-| binary (preset) | supported | 15% → 100% (needs sandbox) | 6 / 6 | 13 ms |
-| url (preset) | supported | 10% → 100% (needs sandbox) | 6 / 6 | 12 ms |
-| base64 (preset) | supported | 23% → 100% (needs sandbox) | 6 / 6 | 15 ms |
-| xor (preset) | supported | 5% → 100% (needs sandbox) | 6 / 6 | 28 ms |
-| reverse (preset) | supported | 3% → 100% | 6 / 6 | 10 ms |
-| escapes (preset) | supported | 3% → 100% | 6 / 6 | 12 ms |
-| charcodes (preset) | supported | 3% → 100% | 6 / 6 | 15 ms |
-| pieces (preset) | supported | 5% → 100% | 6 / 6 | 11 ms |
-| layered (preset) | supported | 23% → 100% (needs sandbox) | 6 / 6 | 19 ms |
+| ascii (preset) | supported | 15% → 100% (needs sandbox) | 6 / 6 | 28 ms |
+| hex (preset) | supported | 10% → 100% (needs sandbox) | 6 / 6 | 26 ms |
+| binary (preset) | supported | 15% → 100% (needs sandbox) | 6 / 6 | 28 ms |
+| url (preset) | supported | 10% → 100% (needs sandbox) | 6 / 6 | 23 ms |
+| base64 (preset) | supported | 23% → 100% (needs sandbox) | 6 / 6 | 26 ms |
+| xor (preset) | supported | 5% → 100% (needs sandbox) | 6 / 6 | 52 ms |
+| reverse (preset) | supported | 3% → 100% | 6 / 6 | 21 ms |
+| escapes (preset) | supported | 3% → 100% | 6 / 6 | 21 ms |
+| charcodes (preset) | supported | 3% → 100% | 6 / 6 | 31 ms |
+| pieces (preset) | supported | 5% → 100% | 6 / 6 | 19 ms |
+| layered (preset) | supported | 23% → 100% (needs sandbox) | 6 / 6 | 36 ms |
 
 **Detection on real scripts:** 0 of 4 files filed under Base64Payload in the public collection (https://github.com/vyxonq-dev/obfuscator-samples, commit `82e582fcdd`) were identified as Loadstring packers. The collection's labels are its uploaders' and are noisy; a file our rules call something else was looked at before being counted as a miss.
 
@@ -589,7 +587,7 @@ Open-source (MIT) obfuscator based on IronBrew 2 (Zaenalos): the script is compi
 
 | Configuration | Status | Fidelity before → after | Same behaviour | Mean time |
 |---|---|---|---|---|
-| default (preset) | unsupported | 4% → 4% | 2 / 2 (6 tool output broken) | 272 ms |
+| default (preset) | unsupported | 4% → 4% | 2 / 2 (6 tool output broken) | 472 ms |
 
 **Limits**
 
@@ -687,12 +685,12 @@ Open-source (MIT) Lua 5.1 VM obfuscator by LionHub-Pino, built on Prometheus. Re
 
 | Configuration | Status | Fidelity before → after | Same behaviour | Mean time |
 |---|---|---|---|---|
-| Fast (preset) | unsupported | 5% → 5% | 8 / 8 | 194 ms |
-| Balanced (preset) | partial | 3% → 60% (needs sandbox) | 7 / 7 (1 tool output broken) | 275 ms |
-| Luraph (preset) | unsupported | 4% → 4% | 8 / 8 | 230 ms |
-| Luraph14 (preset) | unsupported | 4% → 4% | 8 / 8 | 234 ms |
-| AzureGod15 (preset) | unsupported | 4% → 4% | 8 / 8 | 274 ms |
-| AzureGodUltra (preset) | unsupported | 4% → 4% | 8 / 8 | 455 ms |
+| Fast (preset) | unsupported | 5% → 5% | 8 / 8 | 318 ms |
+| Balanced (preset) | partial | 3% → 62% (needs sandbox) | 7 / 7 (1 tool output broken) | 386 ms |
+| Luraph (preset) | unsupported | 4% → 4% | 8 / 8 | 360 ms |
+| Luraph14 (preset) | unsupported | 4% → 4% | 8 / 8 | 327 ms |
+| AzureGod15 (preset) | unsupported | 4% → 4% | 8 / 8 | 396 ms |
+| AzureGodUltra (preset) | unsupported | 4% → 4% | 8 / 8 | 617 ms |
 
 **Limits**
 
@@ -709,7 +707,7 @@ A single HTML page (iamsopotatoe, MIT) that strips comments, renames locals with
 
 | Configuration | Status | Fidelity before → after | Same behaviour | Mean time |
 |---|---|---|---|---|
-| default (preset) | supported | 35% → 99% | 5 / 5 (3 tool output broken) | 11 ms |
+| default (preset) | supported | 35% → 99% | 5 / 5 (3 tool output broken) | 18 ms |
 
 **Limits**
 
@@ -725,10 +723,10 @@ Open-source (MIT) Luau obfuscator written in TypeScript (sfr-development), also 
 
 | Configuration | Status | Fidelity before → after | Same behaviour | Mean time |
 |---|---|---|---|---|
-| rename (preset) | supported | 100% → 100% | 8 / 8 | 9 ms |
-| strings-flow (preset) | supported | 45% → 94% (needs sandbox) | 8 / 8 | 13 ms |
-| vm (preset) | unsupported | 3% → 3% | 8 / 8 | 330 ms |
-| vm-max (preset) | unsupported | 13% → 13% | 0 / 0 (1 tool output broken) | 120 ms |
+| rename (preset) | supported | 100% → 100% | 8 / 8 | 12 ms |
+| strings-flow (preset) | supported | 45% → 94% (needs sandbox) | 8 / 8 | 16 ms |
+| vm (preset) | unsupported | 3% → 3% | 8 / 8 | 472 ms |
+| vm-max (preset) | unsupported | 13% → 13% | 0 / 0 (1 tool output broken) | 98 ms |
 
 **Limits**
 
@@ -796,7 +794,7 @@ Real tools stacked with packers and with the laboratory’s transformations, in 
 |---|---|---|---|---|---|---|
 | hercules-light+base64 (hercules head [variable_renaming,compressor] → loader base64) | 2 | 7 / 7 | 24% → 96% | 6 / 6 | 88% | supported |
 | hercules-balanced+xor (hercules head [variable_renaming,control_flow,string_encoding,opaque_predicates,compressor] → loader xor) | 2 | 7 / 7 | 3% → 91% | 6 / 6 | 90% | supported |
-| hercules-vm+base64 (hercules head [virtual_machine] → loader base64) | 2 | 7 / 7 | 24% → 83% | 5 / 5 | 79% | partial |
+| hercules-vm+base64 (hercules head [virtual_machine] → loader base64) | 2 | 7 / 7 | 24% → 96% | 5 / 5 | 84% | supported |
 | xor+hercules-strings (loader xor → hercules head [string_encoding,compressor]) | 2 | 7 / 7 | 6% → 100% | 7 / 7 | 90% | supported |
 | base64+hercules-renaming (loader base64 → hercules head [variable_renaming,wrap_in_function]) | 2 | 7 / 7 | 24% → 100% | 7 / 7 | 90% | supported |
 | hercules-heavy+light (hercules head [variable_renaming,control_flow,string_encoding,string_to_expressions,opaque_predicates,garbage_code,function_inlining,wrap_in_function,antitamper,dynamic_code,compressor] → hercules head [variable_renaming,compressor]) | 2 | 7 / 7 | 7% → 58% | 5 / 5 | 75% | partial |
