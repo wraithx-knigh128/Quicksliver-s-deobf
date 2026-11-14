@@ -113,3 +113,27 @@ test('ironbrikked: `local r = f()` is compiled with the result thrown away and i
   const got = await oracle.runLua(r.output, 'lua51');
   assert.match(got.stdout, /^answer\t42\ntwice\tfunction/);
 });
+
+// ---- MoonVeil 2.1.0: the function layout is read off each build's own reader, and the data is read to its last byte -------------------------------
+
+const mv21 = (n) => path.join(here, '..', 'local', 'moonveil', `v2.1.0_sample${n}.lua`);
+for (const [n, marker, functions, instructions] of [[6, 192, 3, 40], [7, 93, 2, 28]]) {
+  test(`moonveil 2.1.0 sample ${n}: the build's schema is derived from its reader and the program data is read exactly (${functions} functions, ${instructions} instructions)`, { skip: !fs.existsSync(mv21(n)) && 'local MoonVeil samples are not in the repository' }, () => {
+    const r = recover(read(mv21(n)), { sandbox: { enabled: true } });
+    const st = r.steps.find((x) => x.id === 'moonveil.program21');
+    assert.ok(st, 'the step ran');
+    assert.match(String(st.detail), new RegExp(`read to its last byte .*function marker ${marker}.*${functions} function\\(s\\), ${instructions} instruction\\(s\\)`));
+    assert.notEqual(r.confidence.level, 'high', 'nothing is rebuilt from it');
+  });
+}
+
+import { readProgram21, Schema21Error } from '../src/recover/moonveil-vm/schema21.js';
+
+test('moonveil 2.1.0 program reader: a schema that does not fit the data is refused (bytes left over, or an opcode without a layout)', () => {
+  const schema = { marker: 192, stubStrings: 2, steps: [{ kind: 'varint' }, { kind: 'instructions', layouts: new Map([[0, [[26, 'B']]]]) }, { kind: 'varint' }, { kind: 'constants', tags: new Map() }, { kind: 'varint' }, { kind: 'functions' }] };
+  // 0 strings; marker; 1 instruction (op 0, one operand); 0 constants; 0 functions
+  const ok = Uint8Array.from([0, 192, 1, 0, 5, 0, 0]);
+  assert.equal(readProgram21(ok, schema).stats.instructions, 1);
+  assert.throws(() => readProgram21(Uint8Array.from([0, 192, 1, 0, 5, 0, 0, 9]), schema), Schema21Error, 'a byte left over');
+  assert.throws(() => readProgram21(Uint8Array.from([0, 192, 1, 7, 5, 0, 0]), schema), Schema21Error, 'opcode 7 has no layout');
+});

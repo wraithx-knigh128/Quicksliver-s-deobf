@@ -45,6 +45,7 @@ import { foldMetaArithmetic } from '../passes/metaarith.js';
 import { seedDecoderCalls, inlineStringTable, inlineConstantTable } from '../passes/strtable.js';
 import { liftMoonVeilVm, VmUnsupported } from './moonveil-vm/index.js';
 import { readContainer21, findContainerCall, Container21Error } from './moonveil-vm/container21.js';
+import { deriveSchema21, readProgram21, Schema21Error } from './moonveil-vm/schema21.js';
 import { decodeMoonVeilConstants, simplifyCells, moonveilShape } from './moonveil.js';
 import { assessConfidence } from './confidence.js';
 import { AdaptiveEngine } from '../adaptive/engine.js';
@@ -420,7 +421,8 @@ export function recover(source, userOptions = {}) {
         let c21 = null;
         try { const call = findContainerCall(run.ast, walk); c21 = call && { call, ...readContainer21(call.data) }; } catch (e) { c21 = e instanceof Container21Error ? { error: e.message } : null; }
         if (c21 && !c21.error) {
-          run.record('moonveil.container', 'Read MoonVeil 2.1.0\u2019s program container (not rebuilt)', { status: 'skipped', changed: 0, ms: 0, detail: `the container was read: base-85 text (${c21.call.data.length} digits) to ${c21.packedBytes} bytes, LZSS to ${c21.programBytes} bytes, a table of ${c21.strings.length} string(s) and a main function of ${c21.main.instructions} instruction(s). The operand layout of the interpreter\u2019s handlers is not read, so the program is not rebuilt from it` });
+          run.mv21 = c21;
+          run.record('moonveil.container', 'Read MoonVeil 2.1.0\u2019s program container (not rebuilt)', { status: 'skipped', changed: 0, ms: 0, detail: `the container was read: base-85 text (${c21.call.data.length} digits) to ${c21.packedBytes} bytes, LZSS to ${c21.programBytes} bytes, a table of ${c21.strings.length} string(s) and a main function of ${c21.main.instructions} instruction(s). Its functions are read in the step that reads the build\u2019s own function reader (moonveil.program21)` });
         } else if (c21 && c21.error) {
           run.record('moonveil.container', 'Read MoonVeil 2.1.0\u2019s program container (not rebuilt)', { status: 'skipped', changed: 0, ms: 0, detail: `a container call was found but did not read: ${c21.error}` });
         }
@@ -513,6 +515,21 @@ export function recover(source, userOptions = {}) {
   // the rebuilt program is already named and laid out; the later passes would only rename what was named on purpose
   if (options.rename !== 'off' && !vmLifted) run.step('rename', 'Give obfuscated locals readable names', (a) => renamePass(a, { mode: options.rename, roleHints: options.roleHints ? options.roleHints(a) : null }), { quiet: true });
   if (decompiled && !vmLifted) run.step('idioms.functions', 'Use function and method declarations', (a) => functionForms(a), { quiet: true });
+
+  // MoonVeil 2.1.0: with the reader's flattening undone and the passes done, the layout of a function is read off the build's own reader and the program data is read with it, to the last byte
+  if (run.mv21 && !run.mv21.schemaTried) {
+    run.mv21.schemaTried = true;
+    try {
+      const schema = deriveSchema21(run.ast);
+      const prog = readProgram21(run.mv21.program, schema);
+      run.mv21.read = prog;
+      const order = schema.steps.map((x) => x.kind).filter((k) => k !== 'varint' && k !== 'byte').join(', ');
+      run.record('moonveil.program21', 'Read MoonVeil 2.1.0\u2019s program with the layout its own reader uses (not rebuilt)', { status: 'skipped', changed: 0, ms: 0, detail: `the program data was read to its last byte with the layout derived from this build\u2019s reader (function marker ${schema.marker}; sections ${order}): ${prog.stats.functions} function(s), ${prog.stats.instructions} instruction(s), ${prog.stats.constants} constant(s), ${prog.strings.length} string(s). What each opcode does is decided by the interpreter\u2019s handler closures, which are not mapped yet, so the program is not rebuilt from it` });
+    } catch (e) {
+      if (!(e instanceof Schema21Error)) throw e;
+      run.record('moonveil.program21', 'Read MoonVeil 2.1.0\u2019s program with the layout its own reader uses (not rebuilt)', { status: 'skipped', changed: 0, ms: 0, detail: `the layout could not be read off this build\u2019s reader: ${e.message}` });
+    }
+  }
 
   // ---- output and validation --------------------------------------------------------------------------------
   let output;

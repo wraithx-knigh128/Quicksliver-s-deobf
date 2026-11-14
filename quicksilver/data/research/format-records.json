@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-11-14T11:27:40.380Z",
+ "generatedAt": "2026-11-14T15:45:51.554Z",
  "engine": "src/recover/pipeline.js",
  "records": [
   {
@@ -296,10 +296,16 @@
      "id": "rename",
      "status": "applied",
      "changed": 852
+    },
+    {
+     "id": "moonveil.program21",
+     "status": "skipped",
+     "changed": 0,
+     "why": "the program data was read to its last byte with the layout derived from this build’s reader (function marker 192; sectio"
     }
    ],
    "unresolved": 0,
-   "outputBytes": 76661
+   "outputBytes": 76769
   },
   {
    "id": "moonveil-2.1.0-sample7",
@@ -408,10 +414,16 @@
      "id": "rename",
      "status": "applied",
      "changed": 714
+    },
+    {
+     "id": "moonveil.program21",
+     "status": "skipped",
+     "changed": 0,
+     "why": "the program data was read to its last byte with the layout derived from this build’s reader (function marker 93; section"
     }
    ],
    "unresolved": 0,
-   "outputBytes": 67059
+   "outputBytes": 67167
   },
   {
    "id": "snowveil-1-sample2",
