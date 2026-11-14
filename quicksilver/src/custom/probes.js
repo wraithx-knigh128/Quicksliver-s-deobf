@@ -68,7 +68,9 @@ function conditionVariable(cond) {
 
 function loopsWithDispatch(ast) {
   const out = [];
-  find(ast, (n) => n.type === 'While' || n.type === 'Repeat' || n.type === 'NumFor').forEach((loop) => {
+  // a dispatch sits in a loop, or in a function a loop calls once per instruction (`while #stack > 0 do step(frame) end`, Vault-Obf): the step function's body is the
+  // interpreter's body. Only the function's own statements are looked at, not the functions inside it
+  find(ast, (n) => n.type === 'While' || n.type === 'Repeat' || n.type === 'NumFor' || n.type === 'Func').forEach((loop) => {
     // the first test of the dispatch: an If whose clauses compare one name with numbers
     const chains = find(loop.body, (n) => n.type === 'If' && n.clauses.length >= 1);
     for (const chain of chains) {
@@ -205,6 +207,36 @@ function interpreterFinding(ast) {
   }
   const coverage = instructionLike / 10;
   return { vm: { ...base, confidence: Math.min(0.98, 0.45 + coverage * 0.5 + Math.min(0.2, handlers.size / 200)), instructionClasses: instructionLike }, flatten: null };
+}
+
+// ---- an interpreter whose handlers are functions in a table: `H[op](...)`, `H[perm[op + 1]](...)` (Vault-Obf's table and indirect dispatch) -----------------
+
+function handlerTableFinding(ast) {
+  const tables = new Map();                              // name -> { fns: Func[], line }
+  const add = (name, fn, line) => { if (!tables.has(name)) tables.set(name, { fns: [], line }); tables.get(name).fns.push(fn); };
+  find(ast, (n) => n.type === 'Assign').forEach((n) => n.targets.forEach((t, i) => {
+    const v = n.values[i] && unparen(n.values[i]);
+    if (t.type === 'Index' && t.obj.type === 'Name' && unparen(t.key).type === 'Number' && v && v.type === 'Func') add(t.obj.name, v, n.line);
+  }));
+  find(ast, (n) => n.type === 'Local' && n.values.length === 1 && n.values[0].type === 'Table').forEach((n) => {
+    const fns = n.values[0].fields.filter((f) => f.value && f.value.type === 'Func' && (f.kind === 'keyed' ? unparen(f.key).type === 'Number' : true)).map((f) => f.value);
+    for (const fn of fns) add(n.ids[0].name, fn, n.line);
+  });
+  let best = null;
+  for (const [name, { fns, line }] of tables) {
+    if (fns.length < 8) continue;
+    // read with a key that is computed: the dispatch
+    const computed = find(ast, (n) => n.type === 'Index' && n.obj.type === 'Name' && n.obj.name === name && !['Number', 'String'].includes(unparen(n.key).type)).length;
+    if (!computed) continue;
+    const profile = {};
+    for (const fn of fns) {
+      const h = describeHandler(fn.body, null);
+      for (const [c, f] of Object.entries(CLASSES)) if (f(h)) profile[c] = (profile[c] || 0) + 1;
+    }
+    const instructionLike = Object.keys(profile).filter((c) => ['table-read', 'table-write', 'arithmetic', 'compare', 'jump', 'call', 'return', 'closure', 'concat', 'length'].includes(c)).length;
+    if (!best || fns.length > best.handlers) best = { variable: name, handlers: fns.length, profile, instructionClasses: instructionLike, line };
+  }
+  return best && best.instructionClasses >= 5 ? best : null;
 }
 
 // ---- a program shipped as data through a chain of calls ----------------------------------------------------------------------------------------------------
@@ -364,6 +396,13 @@ export function probe(source) {
       `${vm.handlers} distinct handlers; ${vm.instructionClasses} of the 10 operation classes of a register machine appear (${Object.keys(vm.profile).join(', ')})`,
       ...(vm.unclassified ? [`${vm.unclassified} handler(s) fit no operation class`] : []),
     ], { shape: vm.shape, handlers: vm.handlers, profile: vm.profile, variable: vm.variable, line: vm.line });
+  }
+  const ht = !(vm && vm.confidence >= 0.5) ? handlerTableFinding(ast) : null;
+  if (ht) {
+    add('bytecode-vm', Math.min(0.95, 0.45 + ht.instructionClasses / 20 + Math.min(0.2, ht.handlers / 200)), [
+      `a table \`${ht.variable}\` holds ${ht.handlers} functions under numbers and is read with a computed key: an interpreter whose handlers are functions (dispatch without comparisons)`,
+      `${ht.instructionClasses} of the 10 operation classes of a register machine appear in them (${Object.keys(ht.profile).join(', ')})`,
+    ], { shape: 'handler-table', handlers: ht.handlers, profile: ht.profile, variable: ht.variable, line: ht.line });
   }
   // a program shipped as data: a long string passed through a chain of calls (decode, unpack, run). Each stage that a known reader can take is evidence of its own;
   // the stages are what the analysis reports as identified, the program they hold is not claimed

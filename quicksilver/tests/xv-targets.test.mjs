@@ -11,6 +11,7 @@ import { print } from '../src/core/printer.js';
 import { recover } from '../src/recover/pipeline.js';
 import { evaluatePass } from '../src/passes/evaluate.js';
 import { removeGuardPrefix } from '../src/recover/prometheus.js';
+import { probe } from '../src/custom/probes.js';
 import * as oracle from './helpers/lua-oracle.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -136,4 +137,52 @@ test('moonveil 2.1.0 program reader: a schema that does not fit the data is refu
   assert.equal(readProgram21(ok, schema).stats.instructions, 1);
   assert.throws(() => readProgram21(Uint8Array.from([0, 192, 1, 0, 5, 0, 0, 9]), schema), Schema21Error, 'a byte left over');
   assert.throws(() => readProgram21(Uint8Array.from([0, 192, 1, 7, 5, 0, 0]), schema), Schema21Error, 'opcode 7 has no layout');
+});
+
+// ---- an interpreter whose handlers are functions in a table is seen by its shape, and a result that keeps one is never "high" ----------------------------
+
+const HANDLER_TABLE_VM = `
+local H, R, K = {}, {}, { 7, 5, "x" }
+H[1] = function(i) R[i[2]] = K[i[3]] end
+H[2] = function(i) R[i[2]] = R[i[3]] + R[i[4]] end
+H[3] = function(i) R[i[2]] = R[i[3]] - R[i[4]] end
+H[4] = function(i) R[i[2]] = R[i[3]] * R[i[4]] end
+H[5] = function(i) if R[i[2]] == R[i[3]] then return i[4] end end
+H[6] = function(i) R[i[2]] = R[i[3]][R[i[4]]] end
+H[7] = function(i) R[i[2]][R[i[3]]] = R[i[4]] end
+H[8] = function(i) R[i[2]] = R[i[3]](R[i[4]]) end
+H[9] = function(i) return R[i[2]] end
+H[10] = function(i) R[i[2]] = #R[i[3]] end
+H[11] = function(i) R[i[2]] = R[i[3]] .. R[i[4]] end
+local P = { { 1, 1, 1 }, { 1, 2, 2 }, { 2, 3, 1, 2 }, { 9, 3 } }
+local perm = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 }
+local pc = 1
+while P[pc] do
+  local ins = P[pc]
+  local h = H[perm[ins[1]]]
+  local r = h(ins)
+  if ins[1] == 9 then print(r) break end
+  pc = pc + 1
+end`;
+
+test('custom probes: a table of handler functions read with a computed key is an interpreter (dispatch without comparisons)', () => {
+  const vm = probe(HANDLER_TABLE_VM).transformations.find((t) => t.id === 'bytecode-vm');
+  assert.ok(vm, 'found');
+  assert.equal(vm.shape, 'handler-table');
+  assert.equal(vm.handlers, 11);
+});
+
+test('confidence: an interpreter no rule knows, left in the output, keeps the result from being called recovered', () => {
+  const r = run(HANDLER_TABLE_VM);
+  assert.notEqual(r.confidence.level, 'high');
+  assert.ok(r.confidence.reasons.some((x) => /generated interpreter is still in the output/.test(x.text)));
+});
+
+const vaultDir = path.join(corpus, 'obfuscated-local', 'vault');
+test('vault-obf (local fixtures): every build is seen as an interpreter and none is reported as recovered', { skip: !fs.existsSync(vaultDir) && 'Vault-Obf fixtures are local only (its licence does not allow redistribution)' }, () => {
+  const man = JSON.parse(fs.readFileSync(path.join(vaultDir, 'manifest.json'), 'utf8'));
+  for (const e of man.entries.filter((x) => x.status === 'ok')) {
+    const r = run(read(path.join(vaultDir, e.file)));
+    assert.notEqual(r.confidence.level, 'high', e.file);
+  }
 });
