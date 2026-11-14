@@ -166,8 +166,8 @@ Rows by status: verified 18, partial 8.
 | current | strings | 8 (ironbrew2/strings) | 8/8 | 3%→94% | 3%→84% | 8/8 | 8/8 | partial | — | `src/recover/ironbrew.js`, `src/recover/ib2-templates.js` |
 | current | lineinfo | 8 (ironbrew2/lineinfo) | 8/8 | 6%→96% | 4%→88% | 8/8 | 8/8 | verified | — | `src/recover/ironbrew.js`, `src/recover/ib2-templates.js` |
 | current | nocompress | 8 (ironbrew2/nocompress) | 8/8 | 6%→96% | 4%→88% | 8/8 | 8/8 | verified | — | `src/recover/ironbrew.js`, `src/recover/ib2-templates.js` |
-| current | IronBrikked (LuaXen): ironbrikked | 7 (luaxen/ironbrikked) | 7/7 | 7%→74% | 5%→51% | 0/0 (7) | 0/7 | partial | open: IronBrikked, the VM stage (LZW-compressed encoded prototype and an interpreter), is identified and reported as not recovered; with `both` the AST layer over it is peeled and the VM remains ; tool defect: the tool raised `No loop to br | `src/recover/ironbrikked-vm.js` |
-| current | IronBrikked (LuaXen): both | 7 (luaxen/both) | 7/7 | 2%→74% | 3%→51% | 0/0 (7) | 0/7 | partial | open: IronBrikked, the VM stage (LZW-compressed encoded prototype and an interpreter), is identified and reported as not recovered; with `both` the AST layer over it is peeled and the VM remains ; tool defect: the tool raised `No loop to br | `src/recover/ironbrikked-vm.js` |
+| current | IronBrikked (LuaXen): ironbrikked | 7 (luaxen/ironbrikked) | 7/7 | 7%→75% | 5%→59% | 0/0 (7) | 0/7 | partial | open: IronBrikked, the VM stage (LZW-compressed encoded prototype and an interpreter), is identified and reported as not recovered; with `both` the AST layer over it is peeled and the VM remains ; tool defect: the tool raised `No loop to br | `src/recover/ironbrikked-vm.js` |
+| current | IronBrikked (LuaXen): both | 7 (luaxen/both) | 7/7 | 2%→75% | 3%→59% | 0/0 (7) | 0/7 | partial | open: IronBrikked, the VM stage (LZW-compressed encoded prototype and an interpreter), is identified and reported as not recovered; with `both` the AST layer over it is peeled and the VM remains ; tool defect: the tool raised `No loop to br | `src/recover/ironbrikked-vm.js` |
 
 Rows by status: verified 7, partial 3.
 

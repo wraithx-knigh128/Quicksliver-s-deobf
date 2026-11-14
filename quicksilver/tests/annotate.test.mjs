@@ -18,11 +18,22 @@ const nested = (f) => fs.readFileSync(path.join(here, 'corpus', 'obfuscated', 'p
 
 // virtual machines the engine detects and does not rebuild (documented in README.md)
 const UNRECOVERED_VMS = [
-  'hercules__s06_combined__virtual_machine.lua',
   'zenfus__s06_combined__default.lua',
   'azurevm__s06_combined__Fast.lua',
   'clyde__s06_combined__vm.lua',
 ];
+
+// Prompt XIV: Hercules s06's VM is lifted, with the one constant its serialiser never wrote read as nil; the report says so and the result is not "high"
+test('hercules__s06_combined__virtual_machine.lua: the VM is lifted with a gap, and the report in the file names the gap', () => {
+  const r = recover(sample('hercules__s06_combined__virtual_machine.lua'), {});
+  assert.equal(r.ok, true);
+  assert.notEqual(r.confidence.level, 'high');
+  assert.equal(r.report.show, true);
+  assert.match(r.report.label, /^MOSTLY RECOVERED/);
+  assert.ok(r.report.unresolved.some((u) => /Not in the file/.test(u.text)));
+  assert.match(r.output.split('(end of report)')[0], /Not in the file/);
+  assert.doesNotThrow(() => parse(r.output));
+});
 
 for (const f of UNRECOVERED_VMS) {
   test(`${f}: a VM that stays is reported as partial, in the result and in the file`, () => {

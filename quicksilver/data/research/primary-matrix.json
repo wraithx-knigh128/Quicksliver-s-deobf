@@ -4234,11 +4234,11 @@
    },
    "structure": {
     "before": 7,
-    "after": 74
+    "after": 75
    },
    "semantic": {
     "before": 5,
-    "after": 51
+    "after": 59
    },
    "runtime": {
     "same": 0,
@@ -4275,11 +4275,11 @@
    },
    "structure": {
     "before": 2,
-    "after": 74
+    "after": 75
    },
    "semantic": {
     "before": 3,
-    "after": 51
+    "after": 59
    },
    "runtime": {
     "same": 0,

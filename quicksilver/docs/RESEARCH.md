@@ -478,3 +478,12 @@ Each item went through the same cycle: isolate the fixture, look at the intermed
 **Luraph.** A search for public Luraph output published with its original found none that could be verified. The matrix keeps runtime n/a for every row but the two pairs supplied with the engine; nothing is claimed beyond them.
 
 **New obfuscators.** A search for open-source Lua/Luau VM obfuscators found Panda Obfuscator (Prometheus-Modified v1.3, April 2026): a Prometheus derivative with a refactored VM compiler, hardened handler polymorphism and Luau presets. Its source was read as text; running it to produce fixtures was not permitted in this session, so it is recorded with an untested prediction (`data/research/format-notes.json`, KNOWN-ISSUES 61).
+
+Measured by the regenerated audit (`docs/AUDIT.md`, Prompt XIII -> Prompt XIV; the scorecard has no entry worse):
+
+| Target | Structure | Semantic | Runtime same/judged | Complete | Status |
+|---|---|---|---|---|---|
+| Prometheus | 89% -> 91% | 81% -> 83% | 171/171 (unchanged) | 175/195 -> 191/195 | mixed (verified, partial), unchanged |
+| Hercules (1.5 .. 2.0.0) | 98% -> 99% | 96% -> 97% | 409/409 (unchanged: the repaired builds' shipped scripts do not run, so they are not judged) | 444/464 -> 447/468 (four builds that did not parse are now measured) | mixed (verified, partial), unchanged |
+| LuaXen IronBrikked | 74% -> 75% | 51% -> 59% | 0/0 (14 not judged) | 0/14 | partial, unchanged (and not expected to change: see above) |
+| MoonVeil 2.1.0 | container read, program not rebuilt | | n/a (no original) | | unchanged |
