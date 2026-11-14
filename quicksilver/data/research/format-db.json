@@ -11,13 +11,13 @@
  },
  "engine": "1.0.0",
  "inputs": {
-  "scorecard": "2026-11-14T11:26:40.116Z",
-  "scorecardFixtures": 1402,
+  "scorecard": "2026-11-14T16:17:55.743Z",
+  "scorecardFixtures": 1458,
   "notes": "format-notes/1"
  },
  "calibration": {
-  "pairs": 1323,
-  "pearson": 0.839
+  "pairs": 1379,
+  "pearson": 0.84
  },
  "projects": [
   {
@@ -86,8 +86,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 317,
-         "msMax": 392,
+         "msMean": 269,
+         "msMax": 370,
          "failures": 0
         }
        }
@@ -128,8 +128,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 452,
-         "msMax": 813,
+         "msMean": 338,
+         "msMax": 574,
          "failures": 0
         }
        }
@@ -170,8 +170,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 374,
-         "msMax": 422,
+         "msMean": 315,
+         "msMax": 408,
          "failures": 0
         }
        }
@@ -212,8 +212,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 403,
-         "msMax": 489,
+         "msMean": 301,
+         "msMax": 431,
          "failures": 0
         }
        }
@@ -254,8 +254,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 462,
-         "msMax": 526,
+         "msMean": 371,
+         "msMax": 452,
          "failures": 0
         }
        }
@@ -296,8 +296,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 673,
-         "msMax": 990,
+         "msMean": 542,
+         "msMax": 647,
          "failures": 0
         }
        }
@@ -381,8 +381,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 14,
-         "msMax": 29,
+         "msMean": 12,
+         "msMax": 25,
          "failures": 0
         }
        }
@@ -423,8 +423,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 22,
-         "msMax": 33,
+         "msMean": 17,
+         "msMax": 27,
          "failures": 0
         }
        }
@@ -467,8 +467,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 504,
-         "msMax": 632,
+         "msMean": 390,
+         "msMax": 481,
          "failures": 0
         }
        }
@@ -511,8 +511,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 112,
-         "msMax": 112,
+         "msMean": 88,
+         "msMax": 88,
          "failures": 0
         }
        }
@@ -598,8 +598,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 89,
-         "msMax": 119,
+         "msMean": 54,
+         "msMax": 62,
          "failures": 0
         }
        }
@@ -640,8 +640,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 99,
-         "msMax": 113,
+         "msMean": 50,
+         "msMax": 54,
          "failures": 0
         }
        }
@@ -775,8 +775,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 16,
-         "msMax": 25,
+         "msMean": 15,
+         "msMax": 20,
          "failures": 0
         }
        }
@@ -817,8 +817,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 29,
-         "msMax": 45,
+         "msMean": 27,
+         "msMax": 32,
          "failures": 0
         }
        }
@@ -860,7 +860,7 @@
         "vmConstants": null,
         "stability": {
          "msMean": 60,
-         "msMax": 130,
+         "msMax": 118,
          "failures": 1
         }
        }
@@ -901,8 +901,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 1808,
-         "msMax": 2743,
+         "msMean": 1526,
+         "msMax": 2415,
          "failures": 1
         }
        }
@@ -943,8 +943,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 91,
-         "msMax": 132,
+         "msMean": 78,
+         "msMax": 97,
          "failures": 0
         }
        }
@@ -985,8 +985,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 17,
-         "msMax": 27,
+         "msMean": 14,
+         "msMax": 22,
          "failures": 0
         }
        }
@@ -1027,8 +1027,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 17,
-         "msMax": 26,
+         "msMean": 15,
+         "msMax": 21,
          "failures": 0
         }
        }
@@ -1069,8 +1069,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 27,
-         "msMax": 34,
+         "msMean": 23,
+         "msMax": 36,
          "failures": 0
         }
        }
@@ -1111,8 +1111,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 26,
-         "msMax": 43,
+         "msMean": 21,
+         "msMax": 35,
          "failures": 0
         }
        }
@@ -1153,7 +1153,7 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 17,
+         "msMean": 14,
          "msMax": 26,
          "failures": 0
         }
@@ -1195,8 +1195,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 19,
-         "msMax": 32,
+         "msMean": 16,
+         "msMax": 28,
          "failures": 0
         }
        }
@@ -1237,8 +1237,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 19,
-         "msMax": 32,
+         "msMean": 20,
+         "msMax": 40,
          "failures": 0
         }
        }
@@ -1279,8 +1279,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 19,
-         "msMax": 29,
+         "msMean": 17,
+         "msMax": 31,
          "failures": 0
         }
        }
@@ -1321,8 +1321,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 13,
-         "msMax": 25,
+         "msMean": 10,
+         "msMax": 18,
          "failures": 2
         }
        }
@@ -1363,8 +1363,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 17,
-         "msMax": 28,
+         "msMean": 15,
+         "msMax": 20,
          "failures": 0
         }
        }
@@ -1405,8 +1405,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 64,
-         "msMax": 91,
+         "msMean": 56,
+         "msMax": 97,
          "failures": 0
         }
        }
@@ -1447,8 +1447,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 12,
-         "msMax": 21,
+         "msMean": 11,
+         "msMax": 18,
          "failures": 0
         }
        }
@@ -1517,8 +1517,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 125,
-         "msMax": 219,
+         "msMean": 74,
+         "msMax": 128,
          "failures": 0
         }
        }
@@ -1559,8 +1559,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 27,
-         "msMax": 54,
+         "msMean": 17,
+         "msMax": 30,
          "failures": 0
         }
        }
@@ -1601,8 +1601,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 70,
-         "msMax": 137,
+         "msMean": 47,
+         "msMax": 90,
          "failures": 0
         }
        }
@@ -1643,8 +1643,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 19,
-         "msMax": 30,
+         "msMean": 12,
+         "msMax": 19,
          "failures": 0
         }
        }
@@ -1685,8 +1685,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 90,
-         "msMax": 131,
+         "msMean": 52,
+         "msMax": 84,
          "failures": 0
         }
        }
@@ -1727,8 +1727,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 19,
-         "msMax": 34,
+         "msMean": 10,
+         "msMax": 19,
          "failures": 0
         }
        }
@@ -1769,8 +1769,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 16,
-         "msMax": 30,
+         "msMean": 12,
+         "msMax": 18,
          "failures": 0
         }
        }
@@ -1811,8 +1811,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 3,
-         "msMax": 10,
+         "msMean": 2,
+         "msMax": 12,
          "failures": 6
         }
        }
@@ -1853,8 +1853,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 21,
-         "msMax": 34,
+         "msMean": 13,
+         "msMax": 22,
          "failures": 0
         }
        }
@@ -1895,8 +1895,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 18,
-         "msMax": 25,
+         "msMean": 11,
+         "msMax": 19,
          "failures": 0
         }
        }
@@ -1937,8 +1937,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 31,
-         "msMax": 49,
+         "msMean": 20,
+         "msMax": 34,
          "failures": 0
         }
        }
@@ -1979,7 +1979,7 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 16,
+         "msMean": 14,
          "msMax": 29,
          "failures": 1
         }
@@ -2077,7 +2077,7 @@
         "completeness": null,
         "vmConstants": null,
         "stability": {
-         "msMean": 0,
+         "msMean": 1,
          "msMax": 1,
          "failures": 7
         }
@@ -2119,8 +2119,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 14,
-         "msMax": 24,
+         "msMean": 11,
+         "msMax": 17,
          "failures": 1
         }
        }
@@ -2161,8 +2161,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 17,
-         "msMax": 31,
+         "msMean": 11,
+         "msMax": 20,
          "failures": 1
         }
        }
@@ -2196,7 +2196,7 @@
         "completeness": null,
         "vmConstants": null,
         "stability": {
-         "msMean": 1,
+         "msMean": 0,
          "msMax": 1,
          "failures": 7
         }
@@ -2232,7 +2232,7 @@
         "vmConstants": null,
         "stability": {
          "msMean": 1,
-         "msMax": 4,
+         "msMax": 2,
          "failures": 7
         }
        }
@@ -2273,8 +2273,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 18,
-         "msMax": 34,
+         "msMean": 11,
+         "msMax": 24,
          "failures": 1
         }
        }
@@ -2315,8 +2315,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 16,
-         "msMax": 39,
+         "msMean": 10,
+         "msMax": 25,
          "failures": 1
         }
        }
@@ -2357,8 +2357,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 18,
-         "msMax": 34,
+         "msMean": 12,
+         "msMax": 24,
          "failures": 0
         }
        }
@@ -2399,8 +2399,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 12,
-         "msMax": 20,
+         "msMean": 11,
+         "msMax": 26,
          "failures": 1
         }
        }
@@ -2469,8 +2469,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 185,
-         "msMax": 258,
+         "msMean": 102,
+         "msMax": 135,
          "failures": 0
         }
        }
@@ -2511,8 +2511,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 21,
-         "msMax": 27,
+         "msMean": 16,
+         "msMax": 23,
          "failures": 0
         }
        }
@@ -2553,8 +2553,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 110,
-         "msMax": 167,
+         "msMean": 55,
+         "msMax": 83,
          "failures": 0
         }
        }
@@ -2595,8 +2595,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 14,
-         "msMax": 19,
+         "msMean": 10,
+         "msMax": 16,
          "failures": 0
         }
        }
@@ -2630,7 +2630,7 @@
         "completeness": null,
         "vmConstants": null,
         "stability": {
-         "msMean": 1,
+         "msMean": 0,
          "msMax": 1,
          "failures": 7
         }
@@ -2672,8 +2672,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 14,
-         "msMax": 27,
+         "msMean": 9,
+         "msMax": 14,
          "failures": 0
         }
        }
@@ -2714,8 +2714,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 21,
-         "msMax": 40,
+         "msMean": 11,
+         "msMax": 20,
          "failures": 0
         }
        }
@@ -2756,8 +2756,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 3,
-         "msMax": 19,
+         "msMean": 2,
+         "msMax": 8,
          "failures": 6
         }
        }
@@ -2798,8 +2798,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 19,
-         "msMax": 29,
+         "msMean": 12,
+         "msMax": 18,
          "failures": 0
         }
        }
@@ -2840,8 +2840,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 12,
-         "msMax": 22,
+         "msMean": 10,
+         "msMax": 16,
          "failures": 0
         }
        }
@@ -2882,8 +2882,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 26,
-         "msMax": 43,
+         "msMean": 16,
+         "msMax": 22,
          "failures": 0
         }
        }
@@ -2924,8 +2924,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 16,
-         "msMax": 38,
+         "msMean": 10,
+         "msMax": 21,
          "failures": 2
         }
        }
@@ -2994,8 +2994,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 27,
-         "msMax": 57,
+         "msMean": 19,
+         "msMax": 28,
          "failures": 0
         }
        }
@@ -3036,8 +3036,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 87,
-         "msMax": 153,
+         "msMean": 59,
+         "msMax": 124,
          "failures": 0
         }
        }
@@ -3078,8 +3078,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 18,
-         "msMax": 40,
+         "msMean": 12,
+         "msMax": 23,
          "failures": 0
         }
        }
@@ -3120,8 +3120,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 23,
-         "msMax": 39,
+         "msMean": 14,
+         "msMax": 26,
          "failures": 0
         }
        }
@@ -3162,8 +3162,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 77,
-         "msMax": 115,
+         "msMean": 49,
+         "msMax": 110,
          "failures": 0
         }
        }
@@ -3204,8 +3204,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 15,
-         "msMax": 30,
+         "msMean": 11,
+         "msMax": 24,
          "failures": 0
         }
        }
@@ -3246,8 +3246,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 22,
-         "msMax": 34,
+         "msMean": 16,
+         "msMax": 27,
          "failures": 0
         }
        }
@@ -3288,8 +3288,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 13,
-         "msMax": 33,
+         "msMean": 11,
+         "msMax": 22,
          "failures": 3
         }
        }
@@ -3330,8 +3330,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 13,
-         "msMax": 22,
+         "msMean": 12,
+         "msMax": 25,
          "failures": 0
         }
        }
@@ -3372,8 +3372,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 21,
-         "msMax": 37,
+         "msMean": 15,
+         "msMax": 24,
          "failures": 0
         }
        }
@@ -3414,8 +3414,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 8,
-         "msMax": 15,
+         "msMean": 6,
+         "msMax": 12,
          "failures": 3
         }
        }
@@ -3456,8 +3456,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 24,
-         "msMax": 47,
+         "msMean": 16,
+         "msMax": 24,
          "failures": 0
         }
        }
@@ -3498,8 +3498,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 20,
-         "msMax": 35,
+         "msMean": 13,
+         "msMax": 19,
          "failures": 0
         }
        }
@@ -3568,8 +3568,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 29,
-         "msMax": 56,
+         "msMean": 22,
+         "msMax": 35,
          "failures": 0
         }
        }
@@ -3610,8 +3610,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 101,
-         "msMax": 170,
+         "msMean": 58,
+         "msMax": 95,
          "failures": 0
         }
        }
@@ -3652,8 +3652,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 17,
-         "msMax": 38,
+         "msMean": 11,
+         "msMax": 18,
          "failures": 0
         }
        }
@@ -3694,8 +3694,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 19,
-         "msMax": 47,
+         "msMean": 13,
+         "msMax": 25,
          "failures": 0
         }
        }
@@ -3736,8 +3736,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 80,
-         "msMax": 161,
+         "msMean": 47,
+         "msMax": 122,
          "failures": 0
         }
        }
@@ -3778,8 +3778,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 13,
-         "msMax": 20,
+         "msMean": 11,
+         "msMax": 27,
          "failures": 0
         }
        }
@@ -3820,8 +3820,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 19,
-         "msMax": 30,
+         "msMean": 13,
+         "msMax": 31,
          "failures": 0
         }
        }
@@ -3862,8 +3862,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 21,
-         "msMax": 27,
+         "msMean": 14,
+         "msMax": 29,
          "failures": 0
         }
        }
@@ -3904,7 +3904,7 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 12,
+         "msMean": 11,
          "msMax": 27,
          "failures": 2
         }
@@ -3946,8 +3946,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 19,
-         "msMax": 27,
+         "msMean": 16,
+         "msMax": 28,
          "failures": 0
         }
        }
@@ -3989,7 +3989,7 @@
         "vmConstants": null,
         "stability": {
          "msMean": 14,
-         "msMax": 25,
+         "msMax": 27,
          "failures": 0
         }
        }
@@ -4030,8 +4030,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 24,
-         "msMax": 43,
+         "msMean": 18,
+         "msMax": 30,
          "failures": 0
         }
        }
@@ -4072,8 +4072,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 23,
-         "msMax": 42,
+         "msMean": 16,
+         "msMax": 27,
          "failures": 0
         }
        }
@@ -4107,8 +4107,8 @@
         "completeness": null,
         "vmConstants": null,
         "stability": {
-         "msMean": 12,
-         "msMax": 12,
+         "msMean": 4,
+         "msMax": 4,
          "failures": 1
         }
        }
@@ -4142,8 +4142,8 @@
         "completeness": null,
         "vmConstants": null,
         "stability": {
-         "msMean": 7,
-         "msMax": 7,
+         "msMean": 5,
+         "msMax": 5,
          "failures": 1
         }
        }
@@ -4282,8 +4282,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 75,
-         "msMax": 154,
+         "msMean": 64,
+         "msMax": 136,
          "failures": 0
         }
        }
@@ -4324,8 +4324,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 61,
-         "msMax": 148,
+         "msMean": 45,
+         "msMax": 79,
          "failures": 0
         }
        }
@@ -4366,8 +4366,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 63,
-         "msMax": 145,
+         "msMean": 49,
+         "msMax": 78,
          "failures": 0
         }
        }
@@ -4408,8 +4408,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 59,
-         "msMax": 113,
+         "msMean": 53,
+         "msMax": 87,
          "failures": 0
         }
        }
@@ -4450,8 +4450,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 59,
-         "msMax": 110,
+         "msMean": 49,
+         "msMax": 68,
          "failures": 0
         }
        }
@@ -4492,8 +4492,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 523,
-         "msMax": 1162,
+         "msMean": 445,
+         "msMax": 944,
          "failures": 0
         }
        }
@@ -4534,8 +4534,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 73,
-         "msMax": 116,
+         "msMean": 62,
+         "msMax": 89,
          "failures": 0
         }
        }
@@ -4576,8 +4576,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 75,
-         "msMax": 132,
+         "msMean": 55,
+         "msMax": 92,
          "failures": 0
         }
        }
@@ -4660,7 +4660,7 @@
         "vmConstants": null,
         "stability": {
          "msMean": 20,
-         "msMax": 29,
+         "msMax": 32,
          "failures": 0
         }
        }
@@ -4701,8 +4701,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 21,
-         "msMax": 27,
+         "msMean": 18,
+         "msMax": 26,
          "failures": 0
         }
        }
@@ -4743,8 +4743,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 22,
-         "msMax": 32,
+         "msMean": 18,
+         "msMax": 24,
          "failures": 0
         }
        }
@@ -4785,8 +4785,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 22,
-         "msMax": 36,
+         "msMean": 16,
+         "msMax": 24,
          "failures": 0
         }
        }
@@ -4827,8 +4827,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 26,
-         "msMax": 36,
+         "msMean": 19,
+         "msMax": 28,
          "failures": 0
         }
        }
@@ -4869,8 +4869,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 46,
-         "msMax": 60,
+         "msMean": 45,
+         "msMax": 71,
          "failures": 0
         }
        }
@@ -4911,8 +4911,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 18,
-         "msMax": 24,
+         "msMean": 17,
+         "msMax": 31,
          "failures": 0
         }
        }
@@ -4954,7 +4954,7 @@
         "vmConstants": null,
         "stability": {
          "msMean": 19,
-         "msMax": 30,
+         "msMax": 31,
          "failures": 0
         }
        }
@@ -4995,8 +4995,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 27,
-         "msMax": 34,
+         "msMean": 25,
+         "msMax": 40,
          "failures": 0
         }
        }
@@ -5037,8 +5037,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 18,
-         "msMax": 24,
+         "msMean": 17,
+         "msMax": 30,
          "failures": 0
         }
        }
@@ -5079,8 +5079,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 31,
-         "msMax": 38,
+         "msMean": 32,
+         "msMax": 54,
          "failures": 0
         }
        }
@@ -5128,14 +5128,14 @@
       "toolOutputDiverged": 1
      },
      "fidelityBefore": 0.064,
-     "fidelityAfter": 0.728,
+     "fidelityAfter": 0.734,
      "configs": [
       {
        "config": "ironbrikked",
        "samples": 7,
        "detected": 7,
        "fidelityBefore": 0.048,
-       "fidelityAfter": 0.593,
+       "fidelityAfter": 0.601,
        "confidence": 0.4,
        "behaviourChecked": 0,
        "behaviourSame": 0,
@@ -5148,11 +5148,11 @@
         },
         "structure": {
          "before": 0.067,
-         "after": 0.748
+         "after": 0.752
         },
         "semantic": {
          "before": 0.048,
-         "after": 0.593
+         "after": 0.601
         },
         "runtime": {
          "same": 0,
@@ -5166,8 +5166,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 159,
-         "msMax": 229,
+         "msMean": 67,
+         "msMax": 112,
          "failures": 0
         }
        }
@@ -5208,8 +5208,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 88,
-         "msMax": 172,
+         "msMean": 46,
+         "msMax": 93,
          "failures": 0
         }
        }
@@ -5219,7 +5219,7 @@
        "samples": 7,
        "detected": 7,
        "fidelityBefore": 0.032,
-       "fidelityAfter": 0.593,
+       "fidelityAfter": 0.601,
        "confidence": 0.4,
        "behaviourChecked": 0,
        "behaviourSame": 0,
@@ -5232,11 +5232,11 @@
         },
         "structure": {
          "before": 0.022,
-         "after": 0.748
+         "after": 0.752
         },
         "semantic": {
          "before": 0.032,
-         "after": 0.593
+         "after": 0.601
         },
         "runtime": {
          "same": 0,
@@ -5250,8 +5250,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 779,
-         "msMax": 867,
+         "msMean": 359,
+         "msMax": 409,
          "failures": 0
         }
        }
@@ -5316,6 +5316,17 @@
      ],
      "tests": [
       "tests/ironbrikked-vm.test.mjs: RETURN counts"
+     ]
+    },
+    {
+     "id": "xv-ironbrikked-faults",
+     "summary": "closure links counted from what the child uses (the generator writes the parameter count, 0, where the template reads the link count); a loop body reading the counter R(A) and using R(A+3) as a temporary is renamed so the loop variable is read. Faults classified: encodings (read back) against miscompiles (temporaries over parameters, call results reused, assignments to globals and upvalues compiled as moves into register 0: the compiler has no SETGLOBAL/SETUPVAL path). A controlled program inside the subset the compiler handles is recovered exactly (tests/corpus/controlled/luaxen-subset)",
+     "files": [
+      "src/recover/ironbrikked-vm.js",
+      "src/recover/confidence.js"
+     ],
+     "tests": [
+      "tests/xv-targets.test.mjs"
      ]
     }
    ],
@@ -5429,8 +5440,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 28,
-         "msMax": 50,
+         "msMean": 25,
+         "msMax": 34,
          "failures": 0
         }
        }
@@ -5471,8 +5482,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 90,
-         "msMax": 106,
+         "msMean": 79,
+         "msMax": 102,
          "failures": 0
         }
        }
@@ -5513,8 +5524,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 238,
-         "msMax": 335,
+         "msMean": 206,
+         "msMax": 286,
          "failures": 0
         }
        }
@@ -5555,8 +5566,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 50,
-         "msMax": 80,
+         "msMean": 40,
+         "msMax": 51,
          "failures": 0
         }
        }
@@ -5597,8 +5608,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 31,
-         "msMax": 63,
+         "msMean": 18,
+         "msMax": 28,
          "failures": 0
         }
        }
@@ -5639,8 +5650,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 90,
-         "msMax": 126,
+         "msMean": 75,
+         "msMax": 125,
          "failures": 1
         }
        }
@@ -5681,7 +5692,7 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 38,
+         "msMean": 33,
          "msMax": 50,
          "failures": 0
         }
@@ -5723,8 +5734,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 29,
-         "msMax": 62,
+         "msMean": 23,
+         "msMax": 34,
          "failures": 1
         }
        }
@@ -5765,8 +5776,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 28,
-         "msMax": 49,
+         "msMean": 22,
+         "msMax": 39,
          "failures": 0
         }
        }
@@ -5807,8 +5818,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 100,
-         "msMax": 134,
+         "msMean": 87,
+         "msMax": 122,
          "failures": 0
         }
        }
@@ -5849,8 +5860,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 24,
-         "msMax": 40,
+         "msMean": 21,
+         "msMax": 38,
          "failures": 0
         }
        }
@@ -5891,8 +5902,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 118,
-         "msMax": 177,
+         "msMean": 119,
+         "msMax": 167,
          "failures": 0
         }
        }
@@ -5933,8 +5944,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 96,
-         "msMax": 144,
+         "msMean": 84,
+         "msMax": 150,
          "failures": 0
         }
        }
@@ -5977,8 +5988,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 48,
-         "msMax": 84,
+         "msMean": 40,
+         "msMax": 86,
          "failures": 0
         }
        }
@@ -6019,8 +6030,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 94,
-         "msMax": 136,
+         "msMean": 76,
+         "msMax": 109,
          "failures": 0
         }
        }
@@ -6107,8 +6118,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 80,
-         "msMax": 116,
+         "msMean": 52,
+         "msMax": 72,
          "failures": 0
         }
        }
@@ -6149,8 +6160,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 111,
-         "msMax": 205,
+         "msMean": 71,
+         "msMax": 125,
          "failures": 0
         }
        }
@@ -6191,8 +6202,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 182,
-         "msMax": 213,
+         "msMean": 103,
+         "msMax": 156,
          "failures": 0
         }
        }
@@ -6233,8 +6244,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 31,
-         "msMax": 42,
+         "msMean": 19,
+         "msMax": 29,
          "failures": 0
         }
        }
@@ -6282,8 +6293,8 @@
          "bytes": 0
         },
         "stability": {
-         "msMean": 101,
-         "msMax": 124,
+         "msMean": 85,
+         "msMax": 114,
          "failures": 0
         }
        }
@@ -6352,8 +6363,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 113,
-         "msMax": 243,
+         "msMean": 52,
+         "msMax": 74,
          "failures": 0
         }
        }
@@ -6394,8 +6405,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 154,
-         "msMax": 307,
+         "msMean": 83,
+         "msMax": 110,
          "failures": 0
         }
        }
@@ -6436,8 +6447,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 215,
-         "msMax": 359,
+         "msMean": 133,
+         "msMax": 179,
          "failures": 0
         }
        }
@@ -6478,8 +6489,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 42,
-         "msMax": 60,
+         "msMean": 24,
+         "msMax": 38,
          "failures": 0
         }
        }
@@ -6520,8 +6531,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 192,
-         "msMax": 252,
+         "msMean": 94,
+         "msMax": 149,
          "failures": 0
         }
        }
@@ -6569,8 +6580,8 @@
          "bytes": 1208.667
         },
         "stability": {
-         "msMean": 679,
-         "msMax": 817,
+         "msMean": 495,
+         "msMax": 634,
          "failures": 0
         }
        }
@@ -6639,8 +6650,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 51,
-         "msMax": 73,
+         "msMean": 26,
+         "msMax": 48,
          "failures": 0
         }
        }
@@ -6681,8 +6692,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 133,
-         "msMax": 224,
+         "msMean": 75,
+         "msMax": 134,
          "failures": 0
         }
        }
@@ -6723,8 +6734,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 196,
-         "msMax": 330,
+         "msMean": 117,
+         "msMax": 221,
          "failures": 0
         }
        }
@@ -6765,8 +6776,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 43,
-         "msMax": 53,
+         "msMean": 30,
+         "msMax": 45,
          "failures": 0
         }
        }
@@ -6807,8 +6818,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 17,
-         "msMax": 25,
+         "msMean": 13,
+         "msMax": 16,
          "failures": 0
         }
        }
@@ -6849,8 +6860,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 152,
-         "msMax": 233,
+         "msMean": 120,
+         "msMax": 172,
          "failures": 0
         }
        }
@@ -6891,8 +6902,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 120,
-         "msMax": 182,
+         "msMean": 83,
+         "msMax": 150,
          "failures": 0
         }
        }
@@ -6940,8 +6951,8 @@
          "bytes": 1069.857
         },
         "stability": {
-         "msMean": 2539,
-         "msMax": 3923,
+         "msMean": 1789,
+         "msMax": 2880,
          "failures": 0
         }
        }
@@ -6989,8 +7000,8 @@
          "bytes": 1069.857
         },
         "stability": {
-         "msMean": 1667,
-         "msMax": 2710,
+         "msMean": 1269,
+         "msMax": 1849,
          "failures": 0
         }
        }
@@ -7164,6 +7175,243 @@
    "support": "mixed"
   },
   {
+   "id": "panda",
+   "name": "panda",
+   "kind": null,
+   "sources": [],
+   "researchedFrom": [
+    "Prompt XIV: found by a web search for open-source Lua/Luau VM obfuscators. Commit 26f69030594d813bbb778f1affcb4470c7bf9c91 (2026-04-19) read as text: presets Minify/Weak/Medium/Strong/LuaU-Safe/LuaU-Typed/Panda-Xenon/Panda-Roblox-Strong, the Prometheus step set (Vmify, EncryptStrings, ConstantArray, SplitStrings, ...) plus Watermark, and a refactored VM compiler (src/prometheus/compiler, about 1600 lines)",
+    "running it in run_isolated.py was not permitted in this session: no fixtures, nothing measured",
+    "Prompt XV: run in run_isolated.py with drivers/panda.lua (32 Lua 5.1 fixtures; the 24 Luau builds stop in the tool: `is` used at parser.lua:208, declared at line 270)"
+   ],
+   "versions": [
+    {
+     "version": "current",
+     "revision": "26f69030594d813bbb778f1affcb4470c7bf9c91",
+     "revisionDate": null,
+     "note": null,
+     "fixtureDir": "tests/corpus/obfuscated/panda",
+     "committed": true,
+     "licence": "Prometheus licence (derivative of Prometheus)",
+     "fixtures": {
+      "measured": 32,
+      "toolOutputVerified": 56,
+      "written": 32,
+      "toolErrors": 24,
+      "omittedLarge": 0,
+      "toolOutputEquivalent": 29,
+      "toolOutputErrored": 0,
+      "toolOutputDiverged": 3
+     },
+     "fidelityBefore": 0.27,
+     "fidelityAfter": 0.683,
+     "configs": [
+      {
+       "config": "Minify",
+       "samples": 8,
+       "detected": 0,
+       "fidelityBefore": 0.966,
+       "fidelityAfter": 0.966,
+       "confidence": 0.906,
+       "behaviourChecked": 8,
+       "behaviourSame": 8,
+       "unparsed": 0,
+       "status": "verified",
+       "categories": {
+        "identification": {
+         "detected": 0,
+         "of": 8
+        },
+        "structure": {
+         "before": 0.993,
+         "after": 0.994
+        },
+        "semantic": {
+         "before": 0.966,
+         "after": 0.966
+        },
+        "runtime": {
+         "same": 8,
+         "judged": 8,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 8,
+         "of": 8,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 14,
+         "msMax": 25,
+         "failures": 0
+        }
+       }
+      },
+      {
+       "config": "Weak",
+       "samples": 8,
+       "detected": 0,
+       "fidelityBefore": 0.063,
+       "fidelityAfter": 0.614,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "partial",
+       "categories": {
+        "identification": {
+         "detected": 0,
+         "of": 8
+        },
+        "structure": {
+         "before": 0.106,
+         "after": 0.79
+        },
+        "semantic": {
+         "before": 0.063,
+         "after": 0.614
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 1
+        },
+        "completeness": {
+         "complete": 8,
+         "of": 8,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 153,
+         "msMax": 225,
+         "failures": 0
+        }
+       }
+      },
+      {
+       "config": "Medium",
+       "samples": 8,
+       "detected": 0,
+       "fidelityBefore": 0.025,
+       "fidelityAfter": 0.611,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "partial",
+       "categories": {
+        "identification": {
+         "detected": 0,
+         "of": 8
+        },
+        "structure": {
+         "before": 0.022,
+         "after": 0.803
+        },
+        "semantic": {
+         "before": 0.025,
+         "after": 0.611
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 1
+        },
+        "completeness": {
+         "complete": 8,
+         "of": 8,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 593,
+         "msMax": 894,
+         "failures": 0
+        }
+       }
+      },
+      {
+       "config": "Strong",
+       "samples": 8,
+       "detected": 0,
+       "fidelityBefore": 0.025,
+       "fidelityAfter": 0.541,
+       "confidence": 0.9,
+       "behaviourChecked": 7,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "partial",
+       "categories": {
+        "identification": {
+         "detected": 0,
+         "of": 8
+        },
+        "structure": {
+         "before": 0.009,
+         "after": 0.736
+        },
+        "semantic": {
+         "before": 0.025,
+         "after": 0.541
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 7,
+         "notJudged": 1
+        },
+        "completeness": {
+         "complete": 8,
+         "of": 8,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 1839,
+         "msMax": 3536,
+         "failures": 0
+        }
+       }
+      }
+     ],
+     "summary": {
+      "verified": 1,
+      "partial": 3,
+      "unsupported": 0
+     }
+    }
+   ],
+   "improvements": [
+    {
+     "id": "xv-panda",
+     "summary": "measured first, Prometheus's readers handled only Minify. Panda disguises the Vmify dispatcher tests (`pos + -N < 0 and pos == pos`, `not (N <= pos)`), its AntiTamper raises a random message (recognised now by its mechanism, the line-number probe, also in the form Vmify leaves: `local flag = true ... if not flag then fail() end`), and the second Vmify layer leaves numeric and boolean temporaries, lowered `and`, and register moves between a test and its `if`. 29 of 29 fixtures whose shipped build runs like the original run the same after recovery at high confidence; the 3 s03 builds run like the obfuscated script",
+     "files": [
+      "src/recover/vmify.js",
+      "src/recover/prometheus.js",
+      "src/passes/evaluate.js"
+     ],
+     "tests": [
+      "tests/xv-targets.test.mjs"
+     ]
+    }
+   ],
+   "failurePatterns": [
+    {
+     "id": "panda-luau-presets",
+     "configs": [
+      "LuaU-Safe",
+      "Panda-Xenon",
+      "Panda-Roblox-Strong"
+     ],
+     "status": "tool defect",
+     "summary": "the tool stops in its own parser before writing anything"
+    }
+   ],
+   "assumptions": [],
+   "support": "mixed"
+  },
+  {
    "id": "prometheus",
    "name": "Prometheus",
    "kind": "open-source",
@@ -7193,7 +7441,7 @@
       "toolOutputDiverged": 4
      },
      "fidelityBefore": 0.45,
-     "fidelityAfter": 0.848,
+     "fidelityAfter": 0.849,
      "configs": [
       {
        "config": "Minify",
@@ -7232,7 +7480,7 @@
         "vmConstants": null,
         "stability": {
          "msMean": 25,
-         "msMax": 87,
+         "msMax": 85,
          "failures": 0
         }
        }
@@ -7273,8 +7521,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 220,
-         "msMax": 456,
+         "msMean": 245,
+         "msMax": 576,
          "failures": 0
         }
        }
@@ -7315,8 +7563,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 658,
-         "msMax": 928,
+         "msMean": 575,
+         "msMax": 820,
          "failures": 0
         }
        }
@@ -7326,7 +7574,7 @@
        "samples": 7,
        "detected": 7,
        "fidelityBefore": 0.026,
-       "fidelityAfter": 0.586,
+       "fidelityAfter": 0.603,
        "confidence": 0.9,
        "behaviourChecked": 6,
        "behaviourSame": 6,
@@ -7339,11 +7587,11 @@
         },
         "structure": {
          "before": 0.01,
-         "after": 0.758
+         "after": 0.773
         },
         "semantic": {
          "before": 0.026,
-         "after": 0.586
+         "after": 0.603
         },
         "runtime": {
          "same": 6,
@@ -7357,8 +7605,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 1869,
-         "msMax": 2575,
+         "msMean": 1631,
+         "msMax": 2466,
          "failures": 0
         }
        }
@@ -7399,8 +7647,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 35,
-         "msMax": 66,
+         "msMean": 41,
+         "msMax": 72,
          "failures": 0
         }
        }
@@ -7441,8 +7689,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 38,
-         "msMax": 50,
+         "msMean": 40,
+         "msMax": 66,
          "failures": 0
         }
        }
@@ -7483,8 +7731,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 14,
-         "msMax": 21,
+         "msMean": 17,
+         "msMax": 30,
          "failures": 0
         }
        }
@@ -7525,8 +7773,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 14,
-         "msMax": 20,
+         "msMean": 15,
+         "msMax": 29,
          "failures": 0
         }
        }
@@ -7567,8 +7815,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 22,
-         "msMax": 36,
+         "msMean": 24,
+         "msMax": 39,
          "failures": 0
         }
        }
@@ -7610,7 +7858,7 @@
         "vmConstants": null,
         "stability": {
          "msMean": 13,
-         "msMax": 24,
+         "msMax": 18,
          "failures": 0
         }
        }
@@ -7651,8 +7899,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 12,
-         "msMax": 26,
+         "msMean": 13,
+         "msMax": 20,
          "failures": 0
         }
        }
@@ -7693,8 +7941,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 15,
-         "msMax": 23,
+         "msMean": 21,
+         "msMax": 50,
          "failures": 0
         }
        }
@@ -7735,8 +7983,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 119,
-         "msMax": 233,
+         "msMean": 115,
+         "msMax": 180,
          "failures": 0
         }
        }
@@ -7746,6 +7994,165 @@
       "verified": 9,
       "partial": 4,
       "unsupported": 0
+     }
+    },
+    {
+     "version": "2026-11",
+     "revision": "a98c501 (2026-11-09)",
+     "revisionDate": null,
+     "note": "the current upstream: its Vmify layout changed (value lists that carry their count, an environment threaded through closures); every build runs like the original on Lua 5.1",
+     "fixtureDir": "tests/corpus/obfuscated/prometheus-2026-11",
+     "committed": true,
+     "licence": "MIT",
+     "fixtures": {
+      "measured": 24,
+      "toolOutputVerified": 24,
+      "written": 24,
+      "toolErrors": 0,
+      "omittedLarge": 0,
+      "toolOutputEquivalent": 24,
+      "toolOutputErrored": 0,
+      "toolOutputDiverged": 0
+     },
+     "fidelityBefore": 0.034,
+     "fidelityAfter": 0.204,
+     "configs": [
+      {
+       "config": "Medium",
+       "samples": 8,
+       "detected": 8,
+       "fidelityBefore": 0.024,
+       "fidelityAfter": 0.026,
+       "confidence": 0.15,
+       "behaviourChecked": 8,
+       "behaviourSame": 0,
+       "unparsed": 0,
+       "status": "unsupported",
+       "categories": {
+        "identification": {
+         "detected": 8,
+         "of": 8
+        },
+        "structure": {
+         "before": 0.009,
+         "after": 0.021
+        },
+        "semantic": {
+         "before": 0.024,
+         "after": 0.026
+        },
+        "runtime": {
+         "same": 0,
+         "judged": 8,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 0,
+         "of": 8,
+         "residual": {
+          "trait:state-machine": 8
+         }
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 2704,
+         "msMax": 3958,
+         "failures": 0
+        }
+       }
+      },
+      {
+       "config": "Strong",
+       "samples": 8,
+       "detected": 8,
+       "fidelityBefore": 0.027,
+       "fidelityAfter": 0.028,
+       "confidence": 0.15,
+       "behaviourChecked": 8,
+       "behaviourSame": 7,
+       "unparsed": 0,
+       "status": "unsupported",
+       "categories": {
+        "identification": {
+         "detected": 8,
+         "of": 8
+        },
+        "structure": {
+         "before": 0.007,
+         "after": 0.014
+        },
+        "semantic": {
+         "before": 0.027,
+         "after": 0.028
+        },
+        "runtime": {
+         "same": 7,
+         "judged": 8,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 0,
+         "of": 8,
+         "residual": {
+          "trait:state-machine": 8,
+          "trait:string-table": 1
+         }
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 4413,
+         "msMax": 5404,
+         "failures": 0
+        }
+       }
+      },
+      {
+       "config": "Weak",
+       "samples": 8,
+       "detected": 8,
+       "fidelityBefore": 0.052,
+       "fidelityAfter": 0.559,
+       "confidence": 0.55,
+       "behaviourChecked": 8,
+       "behaviourSame": 2,
+       "unparsed": 0,
+       "status": "partial",
+       "categories": {
+        "identification": {
+         "detected": 8,
+         "of": 8
+        },
+        "structure": {
+         "before": 0.089,
+         "after": 0.759
+        },
+        "semantic": {
+         "before": 0.052,
+         "after": 0.559
+        },
+        "runtime": {
+         "same": 2,
+         "judged": 8,
+         "notJudged": 0
+        },
+        "completeness": {
+         "complete": 0,
+         "of": 8,
+         "residual": {}
+        },
+        "vmConstants": null,
+        "stability": {
+         "msMean": 250,
+         "msMax": 415,
+         "failures": 0
+        }
+       }
+      }
+     ],
+     "summary": {
+      "verified": 0,
+      "partial": 1,
+      "unsupported": 2
      }
     },
     {
@@ -7767,7 +8174,7 @@
       "toolOutputDiverged": 17
      },
      "fidelityBefore": 0.453,
-     "fidelityAfter": 0.814,
+     "fidelityAfter": 0.818,
      "configs": [
       {
        "config": "Minify",
@@ -7805,8 +8212,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 26,
-         "msMax": 45,
+         "msMean": 15,
+         "msMax": 33,
          "failures": 0
         }
        }
@@ -7847,8 +8254,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 494,
-         "msMax": 845,
+         "msMean": 292,
+         "msMax": 438,
          "failures": 0
         }
        }
@@ -7858,8 +8265,8 @@
        "samples": 8,
        "detected": 8,
        "fidelityBefore": 0.024,
-       "fidelityAfter": 0.432,
-       "confidence": 0.863,
+       "fidelityAfter": 0.461,
+       "confidence": 0.9,
        "behaviourChecked": 5,
        "behaviourSame": 5,
        "unparsed": 0,
@@ -7871,11 +8278,11 @@
         },
         "structure": {
          "before": 0.014,
-         "after": 0.613
+         "after": 0.66
         },
         "semantic": {
          "before": 0.024,
-         "after": 0.432
+         "after": 0.461
         },
         "runtime": {
          "same": 5,
@@ -7883,14 +8290,14 @@
          "notJudged": 3
         },
         "completeness": {
-         "complete": 6,
+         "complete": 8,
          "of": 8,
          "residual": {}
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 1892,
-         "msMax": 2689,
+         "msMean": 1266,
+         "msMax": 1670,
          "failures": 0
         }
        }
@@ -7900,8 +8307,8 @@
        "samples": 8,
        "detected": 8,
        "fidelityBefore": 0.024,
-       "fidelityAfter": 0.432,
-       "confidence": 0.863,
+       "fidelityAfter": 0.461,
+       "confidence": 0.9,
        "behaviourChecked": 5,
        "behaviourSame": 5,
        "unparsed": 0,
@@ -7913,11 +8320,11 @@
         },
         "structure": {
          "before": 0.014,
-         "after": 0.613
+         "after": 0.66
         },
         "semantic": {
          "before": 0.024,
-         "after": 0.432
+         "after": 0.461
         },
         "runtime": {
          "same": 5,
@@ -7925,14 +8332,14 @@
          "notJudged": 3
         },
         "completeness": {
-         "complete": 6,
+         "complete": 8,
          "of": 8,
          "residual": {}
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 2004,
-         "msMax": 2787,
+         "msMean": 1285,
+         "msMax": 1648,
          "failures": 0
         }
        }
@@ -7973,8 +8380,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 69,
-         "msMax": 130,
+         "msMean": 36,
+         "msMax": 65,
          "failures": 0
         }
        }
@@ -8015,8 +8422,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 42,
-         "msMax": 92,
+         "msMean": 26,
+         "msMax": 34,
          "failures": 0
         }
        }
@@ -8057,8 +8464,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 23,
-         "msMax": 58,
+         "msMean": 16,
+         "msMax": 24,
          "failures": 0
         }
        }
@@ -8099,8 +8506,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 13,
-         "msMax": 23,
+         "msMean": 14,
+         "msMax": 19,
          "failures": 0
         }
        }
@@ -8141,8 +8548,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 34,
-         "msMax": 71,
+         "msMean": 24,
+         "msMax": 34,
          "failures": 0
         }
        }
@@ -8183,8 +8590,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 21,
-         "msMax": 42,
+         "msMean": 12,
+         "msMax": 16,
          "failures": 0
         }
        }
@@ -8225,8 +8632,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 23,
-         "msMax": 62,
+         "msMean": 12,
+         "msMax": 17,
          "failures": 0
         }
        }
@@ -8267,8 +8674,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 26,
-         "msMax": 57,
+         "msMean": 14,
+         "msMax": 19,
          "failures": 0
         }
        }
@@ -8309,8 +8716,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 190,
-         "msMax": 413,
+         "msMean": 103,
+         "msMax": 174,
          "failures": 0
         }
        }
@@ -8431,8 +8838,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 420,
-         "msMax": 495,
+         "msMean": 225,
+         "msMax": 268,
          "failures": 0
         }
        }
@@ -8519,8 +8926,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 20,
-         "msMax": 24,
+         "msMean": 18,
+         "msMax": 35,
          "failures": 0
         }
        }
@@ -8561,8 +8968,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 37,
-         "msMax": 53,
+         "msMean": 27,
+         "msMax": 38,
          "failures": 0
         }
        }
@@ -8603,8 +9010,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 75,
-         "msMax": 115,
+         "msMean": 71,
+         "msMax": 100,
          "failures": 0
         }
        }
@@ -8647,8 +9054,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 741,
-         "msMax": 950,
+         "msMean": 583,
+         "msMax": 836,
          "failures": 0
         }
        }
@@ -8691,8 +9098,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 709,
-         "msMax": 1085,
+         "msMean": 581,
+         "msMax": 881,
          "failures": 0
         }
        }
@@ -8733,8 +9140,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 4156,
-         "msMax": 6864,
+         "msMean": 2535,
+         "msMax": 4065,
          "failures": 0
         }
        }
@@ -8872,8 +9279,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 16,
-         "msMax": 22,
+         "msMean": 21,
+         "msMax": 32,
          "failures": 0
         }
        }
@@ -8959,8 +9366,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 98,
-         "msMax": 193,
+         "msMean": 70,
+         "msMax": 84,
          "failures": 0
         }
        }
@@ -9001,8 +9408,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 104,
-         "msMax": 129,
+         "msMean": 65,
+         "msMax": 92,
          "failures": 0
         }
        }
@@ -9045,8 +9452,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 770,
-         "msMax": 1185,
+         "msMean": 459,
+         "msMax": 674,
          "failures": 0
         }
        }
@@ -9087,8 +9494,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 37,
-         "msMax": 72,
+         "msMean": 20,
+         "msMax": 29,
          "failures": 0
         }
        }
@@ -9129,8 +9536,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 104,
-         "msMax": 146,
+         "msMean": 73,
+         "msMax": 121,
          "failures": 0
         }
        }
@@ -9282,8 +9689,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 179,
-         "msMax": 485,
+         "msMean": 78,
+         "msMax": 142,
          "failures": 0
         }
        }
@@ -9324,8 +9731,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 154,
-         "msMax": 268,
+         "msMean": 66,
+         "msMax": 140,
          "failures": 0
         }
        }
@@ -9366,8 +9773,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 157,
-         "msMax": 259,
+         "msMean": 66,
+         "msMax": 109,
          "failures": 0
         }
        }
@@ -9408,8 +9815,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 156,
-         "msMax": 289,
+         "msMean": 95,
+         "msMax": 202,
          "failures": 0
         }
        }
@@ -9450,8 +9857,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 180,
-         "msMax": 325,
+         "msMean": 91,
+         "msMax": 147,
          "failures": 0
         }
        }
@@ -9492,8 +9899,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 152,
-         "msMax": 287,
+         "msMean": 79,
+         "msMax": 167,
          "failures": 0
         }
        }
@@ -9534,8 +9941,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 183,
-         "msMax": 247,
+         "msMean": 101,
+         "msMax": 138,
          "failures": 0
         }
        }
@@ -9712,8 +10119,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 405,
-         "msMax": 835,
+         "msMean": 413,
+         "msMax": 641,
          "failures": 0
         }
        }
@@ -9799,8 +10206,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 20,
-         "msMax": 29,
+         "msMean": 18,
+         "msMax": 34,
          "failures": 1
         }
        }
@@ -9841,7 +10248,7 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 23,
+         "msMean": 21,
          "msMax": 32,
          "failures": 1
         }
@@ -9925,8 +10332,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 42,
-         "msMax": 64,
+         "msMean": 31,
+         "msMax": 49,
          "failures": 1
         }
        }
@@ -9995,8 +10402,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 16,
-         "msMax": 23,
+         "msMean": 22,
+         "msMax": 40,
          "failures": 1
         }
        }
@@ -10037,8 +10444,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 18,
-         "msMax": 23,
+         "msMean": 19,
+         "msMax": 34,
          "failures": 1
         }
        }
@@ -10079,8 +10486,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 22,
-         "msMax": 38,
+         "msMean": 21,
+         "msMax": 33,
          "failures": 1
         }
        }
@@ -10121,8 +10528,8 @@
         },
         "vmConstants": null,
         "stability": {
-         "msMean": 33,
-         "msMax": 52,
+         "msMean": 36,
+         "msMax": 59,
          "failures": 1
         }
        }
@@ -10235,24 +10642,65 @@
    "support": "identification-only"
   },
   {
-   "id": "panda",
-   "name": "panda",
+   "id": "vault",
+   "name": "vault",
    "kind": null,
    "sources": [],
    "researchedFrom": [
-    "Prompt XIV: found by a web search for open-source Lua/Luau VM obfuscators. Commit 26f69030594d813bbb778f1affcb4470c7bf9c91 (2026-04-19) read as text: presets Minify/Weak/Medium/Strong/LuaU-Safe/LuaU-Typed/Panda-Xenon/Panda-Roblox-Strong, the Prometheus step set (Vmify, EncryptStrings, ConstantArray, SplitStrings, ...) plus Watermark, and a refactored VM compiler (src/prometheus/compiler, about 1600 lines)",
-    "running it in run_isolated.py was not permitted in this session: no fixtures, nothing measured"
+    "Prompt XV: found by a search for open-source Lua/Luau VM obfuscators; commit 4cf9664 read as text (Python: lexer, parser, IR, bytecode generator and encoder, Lua 5.1 and Luau targets, presets low/medium/strong, four VM families and four dispatch forms: cascade, tree, per-opcode closure table, indirect table) and run in sandbox_run.py (no network, no host files)"
+   ],
+   "versions": [],
+   "improvements": [
+    {
+     "id": "xv-handler-table-probe",
+     "summary": "its interpreters were not seen: the dispatch sits in a step function called by a loop over a call stack, or in a table of handler functions read with a computed key. Both shapes are now probes of the custom-format analysis, and the pipeline's confidence drops to low whenever a generated interpreter is still in the output (Vault's builds had been rated high)",
+     "files": [
+      "src/custom/probes.js",
+      "src/recover/confidence.js"
+     ],
+     "tests": [
+      "tests/xv-targets.test.mjs"
+     ]
+    }
+   ],
+   "failurePatterns": [
+    {
+     "id": "vault-vm",
+     "configs": [
+      "low",
+      "medium",
+      "strong"
+     ],
+     "status": "open",
+     "summary": "identified, not lifted: a bytecode image with LCG-scrambled constants and instructions, a base-45 alphabet or a byte container, per-build operand order"
+    },
+    {
+     "id": "vault-method-decl",
+     "configs": [
+      "low",
+      "medium",
+      "strong"
+     ],
+     "status": "tool defect",
+     "summary": "s06 fails in its parser on `function a:b()`"
+    }
+   ],
+   "assumptions": [],
+   "support": "identification-only"
+  },
+  {
+   "id": "luraph",
+   "name": "Luraph",
+   "kind": "commercial",
+   "sources": [
+    "https://lura.ph/"
+   ],
+   "researchedFrom": [
+    "Prompt XV: v15 is the newest version the vendor advertises (lura.ph); v14.4-v14.9 builds were in wide use into 2026. Two public v15 deobfuscators read as text: their only sample with a source is the v15 pair already verified here; their notes describe four dispatch modes per VM with randomised handlers, layered in-place XOR decryption of operands, flattening through jump registers, a stack-VM variant, register-resident arrays and a boolean store Luraph drops; other versions are untested there too. Nothing new could be measured: no further reference pair exists in public"
    ],
    "versions": [],
    "improvements": [],
-   "failurePatterns": [
-    {
-     "id": "panda-no-fixtures",
-     "configs": [],
-     "status": "open",
-     "summary": "untested prediction: the Prometheus readers apply to the Lua 5.1 presets; the Luau presets and the double Vmify of Panda-Roblox-Strong are unknown"
-    }
-   ],
+   "failurePatterns": [],
    "assumptions": [],
    "support": "identification-only"
   }
@@ -10518,6 +10966,12 @@
    "item": "Custom format: flattening against interpreter, staged containers",
    "state": "done",
    "detail": "a dispatch whose branches write their own state and seldom fetch from a table is flattening (MoonVeil 2.1.0's bootstrap had been read as a 452-handler opcode tree); a chain of three or more calls ending in a long string is a staged container, and each stage a known reader takes is evidence of its own. Prediction accuracy unchanged (0.81 leave-one-out, 0.722 leave-one-tool-out)"
+  },
+  {
+   "id": "xv-moonveil-21-schema",
+   "item": "MoonVeil 2.1.0: functions read with a schema derived from each build's reader",
+   "state": "program read to the last byte for both samples; handlers not mapped",
+   "detail": "src/recover/moonveil-vm/schema21.js: the reader factory is taken apart statement by statement (LEB128 integers, bytes, the marker test, counted lists typed by content: a decision tree means instructions, evaluated per opcode with partial() in two levels; \"<d\" means constants, each tag classified by what it computes; \"c\" .. means strings; a call of the reader means nested functions). Marker, section order, constant tags, opcode slot and operand layouts all differ between samples 6 and 7. Next: map the ~26 handler closures (flattened, permuted per build) to Lua operations"
   }
  ]
 }

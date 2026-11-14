@@ -3081,11 +3081,11 @@
    },
    "structure": {
     "before": 1,
-    "after": 76
+    "after": 77
    },
    "semantic": {
     "before": 3,
-    "after": 59
+    "after": 60
    },
    "runtime": {
     "same": 6,
@@ -3440,6 +3440,121 @@
   },
   {
    "target": "Prometheus",
+   "version": "2026-11",
+   "config": "Medium",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/prometheus-2026-11",
+    "count": 8,
+    "id": "prometheus-2026-11/Medium"
+   },
+   "identification": {
+    "detected": 8,
+    "of": 8
+   },
+   "structure": {
+    "before": 1,
+    "after": 2
+   },
+   "semantic": {
+    "before": 2,
+    "after": 3
+   },
+   "runtime": {
+    "same": 0,
+    "judged": 8,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 0,
+    "of": 8
+   },
+   "failurePatterns": [
+    "partial: s05, s06 and s07 keep one undecoded read of the cache (a lookup through a proxy inside a nested function) and stay at medium confidence"
+   ],
+   "status": "unsupported",
+   "implementation": [
+    "src/recover/prometheus.js",
+    "src/passes/evaluate.js"
+   ]
+  },
+  {
+   "target": "Prometheus",
+   "version": "2026-11",
+   "config": "Strong",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/prometheus-2026-11",
+    "count": 8,
+    "id": "prometheus-2026-11/Strong"
+   },
+   "identification": {
+    "detected": 8,
+    "of": 8
+   },
+   "structure": {
+    "before": 1,
+    "after": 1
+   },
+   "semantic": {
+    "before": 3,
+    "after": 3
+   },
+   "runtime": {
+    "same": 7,
+    "judged": 8,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 0,
+    "of": 8
+   },
+   "failurePatterns": [
+    "partial: s05, s06 and s07 keep one undecoded read of the cache (a lookup through a proxy inside a nested function) and stay at medium confidence"
+   ],
+   "status": "unsupported",
+   "implementation": [
+    "src/recover/prometheus.js",
+    "src/passes/evaluate.js"
+   ]
+  },
+  {
+   "target": "Prometheus",
+   "version": "2026-11",
+   "config": "Weak",
+   "fixtures": {
+    "dir": "tests/corpus/obfuscated/prometheus-2026-11",
+    "count": 8,
+    "id": "prometheus-2026-11/Weak"
+   },
+   "identification": {
+    "detected": 8,
+    "of": 8
+   },
+   "structure": {
+    "before": 9,
+    "after": 76
+   },
+   "semantic": {
+    "before": 5,
+    "after": 56
+   },
+   "runtime": {
+    "same": 2,
+    "judged": 8,
+    "notJudged": 0
+   },
+   "completeness": {
+    "complete": 0,
+    "of": 8
+   },
+   "failurePatterns": [],
+   "status": "partial",
+   "implementation": [
+    "src/recover/prometheus.js",
+    "src/passes/evaluate.js"
+   ]
+  },
+  {
+   "target": "Prometheus",
    "version": "lennyobf",
    "config": "Minify",
    "fixtures": {
@@ -3527,11 +3642,11 @@
    },
    "structure": {
     "before": 1,
-    "after": 61
+    "after": 66
    },
    "semantic": {
     "before": 2,
-    "after": 43
+    "after": 46
    },
    "runtime": {
     "same": 5,
@@ -3539,7 +3654,7 @@
     "notJudged": 3
    },
    "completeness": {
-    "complete": 6,
+    "complete": 8,
     "of": 8
    },
    "failurePatterns": [
@@ -3566,11 +3681,11 @@
    },
    "structure": {
     "before": 1,
-    "after": 61
+    "after": 66
    },
    "semantic": {
     "before": 2,
-    "after": 43
+    "after": 46
    },
    "runtime": {
     "same": 5,
@@ -3578,7 +3693,7 @@
     "notJudged": 3
    },
    "completeness": {
-    "complete": 6,
+    "complete": 8,
     "of": 8
    },
    "failurePatterns": [
@@ -4238,7 +4353,7 @@
    },
    "semantic": {
     "before": 5,
-    "after": 59
+    "after": 60
    },
    "runtime": {
     "same": 0,
@@ -4279,7 +4394,7 @@
    },
    "semantic": {
     "before": 3,
-    "after": 59
+    "after": 60
    },
    "runtime": {
     "same": 0,
