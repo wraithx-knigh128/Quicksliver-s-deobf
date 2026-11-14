@@ -928,12 +928,13 @@ async function runMoonveilTool() {
   const r = await runRecover();
   if (!r || version !== S.version) return;
   const vm = (r.steps || []).find((x) => x.id === 'moonveil.vm');
+  const container = (r.steps || []).find((x) => x.id === 'moonveil.container' && typeof x.detail === 'string');
   if (vm && vm.status === 'applied') {
     S.notes.unshift({ kind: 'info', text: `MoonVeil: the program was rebuilt from the VM's data without running anything (${vm.detail.protos} functions, ${vm.detail.instructions} instructions).` });
     renderAll();
     return;
   }
-  S.notes.unshift({ kind: 'warn', text: !mv && other ? `This does not look like MoonVeil: it matched ${other.name}. The general deobfuscator ran instead.` : vm && vm.status === 'skipped' ? `MoonVeil: the VM could not be read statically (${vm.detail}). The general deobfuscator ran instead.` : 'MoonVeil: no VM program was found in this script. The general deobfuscator ran instead.' });
+  S.notes.unshift({ kind: 'warn', text: !mv && other ? `This does not look like MoonVeil: it matched ${other.name}. The general deobfuscator ran instead.` : vm && vm.status === 'skipped' ? `MoonVeil: the VM could not be read statically (${vm.detail}).${container ? ` For 2.1.0, ${container.detail}.` : ''} The general deobfuscator ran instead.` : 'MoonVeil: no VM program was found in this script. The general deobfuscator ran instead.' });
   renderAll();
   // a VM that could not be read: running it in the sandbox is still possible, and asks first
   if (mv && vm && vm.status === 'skipped') await runVmTool('moonveil', 'MoonVeil');

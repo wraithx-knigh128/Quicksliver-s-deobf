@@ -17,6 +17,8 @@ const unparen = (e) => { while (e && e.type === 'Paren') e = e.expr; return e; }
 const lineOf = (n) => (n && (n.line || (n.key && n.key.line) || (n.cond && n.cond.line))) || null;
 const clip = (s, n = 70) => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
 
+import { readContainer21 } from '../recover/moonveil-vm/container21.js';
+
 export const TRANSFORMATIONS = {
   'bytecode-vm': 'The program is data run by a generated interpreter',
   'control-flow-flattening': 'Control flow goes through a state variable that a dispatcher loop switches on',
@@ -189,15 +191,50 @@ function interpreterFinding(ast) {
     if (!classes.length) { unclassified.push(value); continue; }
     for (const c of classes) profile[c] = (profile[c] || 0) + 1;
   }
-  const shape = counterAdvanced && eq >= ops ? 'per-instruction' : ops > eq && ops >= 6 ? 'opcode-tree' : fetched.length ? 'opcode-switch' : setToConstant >= d.tests * 0.5 ? 'state-machine' : 'opcode-switch';
+  // a flattened state machine writes its own variable in its branches (`i = 7`, `i = c and i + 3 or 12 - i`) and seldom reads a table by number; an interpreter
+  // fetches its operands from the instruction (`inst[2]`) far more often than it writes the variable it dispatches on
+  const writesState = find(d.loop.body, (n) => n.type === 'Assign' && n.targets.some((t) => t.type === 'Name' && t.name === d.variable)).length;
+  const selfWritten = !(counterAdvanced && eq >= ops) && writesState >= d.tests * 0.5 && fetched.length * 5 < writesState;
+  const shape = counterAdvanced && eq >= ops ? 'per-instruction' : selfWritten ? 'state-machine' : ops > eq && ops >= 6 ? 'opcode-tree' : fetched.length ? 'opcode-switch' : setToConstant >= d.tests * 0.5 ? 'state-machine' : 'opcode-switch';
   const instructionLike = Object.keys(profile).filter((c) => ['table-read', 'table-write', 'arithmetic', 'compare', 'jump', 'call', 'return', 'closure', 'concat', 'length'].includes(c)).length;
   const base = { variable: d.variable, tests: d.tests, depth: d.depth, handlers: handlers.size, shape, profile, unclassified: unclassified.length, line: lineOf(d.loop) };
   // a state machine that sets its variable to constants in its branches is control-flow flattening; a dispatch whose handlers cover the operations of a register machine is a VM
-  if (shape === 'state-machine' && instructionLike < 5) {
+  // a register machine for Lua has some forty to ninety operations; hundreds of distinct branches that write the state themselves are a program's own blocks, flattened
+  if (shape === 'state-machine' && (instructionLike < 5 || (selfWritten && handlers.size > 120))) {
     return { vm: null, flatten: { ...base, confidence: Math.min(0.95, 0.5 + setToConstant / Math.max(1, d.tests)) } };
   }
   const coverage = instructionLike / 10;
   return { vm: { ...base, confidence: Math.min(0.98, 0.45 + coverage * 0.5 + Math.min(0.2, handlers.size / 200)), instructionClasses: instructionLike }, flatten: null };
+}
+
+// ---- a program shipped as data through a chain of calls ----------------------------------------------------------------------------------------------------
+
+function stagedContainer(ast) {
+  let best = null;
+  const callee = (c) => (c.fn.type === 'Index' && c.fn.key.type === 'String' ? c.fn.key.value : c.fn.type === 'Name' ? c.fn.name : '?');
+  find(ast, (n) => n.type === 'Call').forEach((outer) => {
+    const names = [];
+    let c = outer;
+    while (c && c.type === 'Call') {
+      names.push(callee(c));
+      const a = c.args[0] && unparen(c.args[0]);
+      if (a && a.type === 'String') {
+        if (names.length >= 3 && a.value.length >= 100 && (!best || a.value.length > best.data.length)) best = { data: a.value, depth: names.length, names, line: outer.line };
+        return;
+      }
+      c = a;
+    }
+  });
+  if (!best) return null;
+  try {
+    const c = readContainer21(best.data);
+    best.stages = [
+      `stage 1: base 85 (RFC 1924 digits), ${best.data.length} characters to ${c.packedBytes} bytes`,
+      `stage 2: LZSS (flag bytes, 2048-byte window), ${c.packedBytes} to ${c.programBytes} bytes`,
+      `stage 3: a table of ${c.strings.length} string(s) and a function of ${c.main.instructions} instruction(s), the layout MoonVeil 2.1.0 uses`,
+    ];
+  } catch { best.stages = null; }
+  return best;
 }
 
 // ---- other transformations ---------------------------------------------------------------------------------------------------------------------------------
@@ -318,7 +355,7 @@ export function probe(source) {
     throw e;
   }
   const out = [];
-  const add = (id, confidence, evidence, extra = {}) => out.push({ id, confidence: +confidence.toFixed(2), description: TRANSFORMATIONS[id], evidence, ...extra });
+  const add = (id, confidence, evidence, extra = {}) => out.push({ ...extra, id, confidence: +confidence.toFixed(2), description: TRANSFORMATIONS[id], evidence });
   const { vm, flatten } = interpreterFinding(ast);
   if (vm && vm.confidence >= 0.5) {
     const kind = { 'per-instruction': 'one piece of code per instruction, picked by the instruction counter', 'opcode-tree': 'a binary search over the opcode', 'opcode-switch': 'a chain of tests on the opcode' }[vm.shape] || vm.shape;
@@ -327,6 +364,15 @@ export function probe(source) {
       `${vm.handlers} distinct handlers; ${vm.instructionClasses} of the 10 operation classes of a register machine appear (${Object.keys(vm.profile).join(', ')})`,
       ...(vm.unclassified ? [`${vm.unclassified} handler(s) fit no operation class`] : []),
     ], { shape: vm.shape, handlers: vm.handlers, profile: vm.profile, variable: vm.variable, line: vm.line });
+  }
+  // a program shipped as data: a long string passed through a chain of calls (decode, unpack, run). Each stage that a known reader can take is evidence of its own;
+  // the stages are what the analysis reports as identified, the program they hold is not claimed
+  const chain = stagedContainer(ast);
+  if (chain && !(vm && vm.confidence >= 0.5)) {
+    const evidence = [`the ${chain.data.length}-character string at the end of a chain of ${chain.depth} calls (${chain.names.join(' \u2190 ')}) is data the script decodes and runs`];
+    let conf = 0.55;
+    if (chain.stages) { evidence.push(...chain.stages); conf = 0.85; }
+    add('bytecode-vm', conf, evidence, { shape: 'staged-container', stages: chain.stages ? chain.stages.length : 0, line: chain.line });
   }
   if (flatten) add('control-flow-flattening', flatten.confidence, [`a loop at line ${flatten.line || '?'} switches on \`${flatten.variable}\` with ${flatten.tests} tests and sets it to constants in its branches`], { line: flatten.line, variable: flatten.variable });
   const dec = stringDecoders(ast);

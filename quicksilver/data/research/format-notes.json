@@ -288,6 +288,17 @@
           "tests": [
             "tests/ironbrikked-vm.test.mjs"
           ]
+        },
+        {
+          "id": "xiv-ironbrikked-compiler",
+          "summary": "Prompt XIV read LuaXen's compiler (src/Interpreter/LuaInterpreter/InstructionGenerator, MIT) and the IronBrikked template. RETURN's B is written as first register + count + 1 and is now read back as Lua's count + 1 (clamp in s01 reads exactly as the original). The parameter count is stored under a misspelt key (numParmas), so every function is written with 0 parameters and the template's CLOSURE takes that 0 as its upvalue count. The register allocator ignores parameter registers (they are kept in takenRegisters, allocation looks at registers), so temporaries overwrite live parameters and call results: that makes a different program, and controlled programs without parameters (scratch, not committed) fail the same way, so runtime equivalence with the original cannot come from the file",
+          "files": [
+            "src/recover/ironbrikked-vm.js",
+            "src/recover/confidence.js"
+          ],
+          "tests": [
+            "tests/ironbrikked-vm.test.mjs: RETURN counts"
+          ]
         }
       ],
       "failurePatterns": [
@@ -326,7 +337,7 @@
             "both"
           ],
           "status": "tool defect",
-          "summary": "calls whose results are used are written with a result count of 0 or 1, RETURN carries a count that is not the number of values, a method call loses its object, a forward jump of 256 or more reads as a backward one: runs error; lifted output follows the encoded instructions and does not run like the original (the audit status is partial: structure and semantic gains are measured, runtime is not judged because the tool\u2019s own output does not run)",
+          "summary": "calls whose results are used are written with a result count of 0 or 1, RETURN carries a count that is not the number of values, a method call loses its object, a forward jump of 256 or more reads as a backward one: runs error; lifted output follows the encoded instructions and does not run like the original (the audit status is partial: structure and semantic gains are measured, runtime is not judged because the tool’s own output does not run)",
           "evidence": "tests/ironbrikked-vm.test.mjs"
         }
       ],
@@ -666,6 +677,29 @@
           "tests": [
             "tests/xiii-targets.test.mjs"
           ]
+        },
+        {
+          "id": "xiv-keyword-repair",
+          "summary": "the 1.6 default preset's renamer writes every `if` of the VM template as one generated name; src/recover/keyword-repair.js restores it when the then/if deficit is filled by exactly one never-declared name and the result parses (s01, s04, s05, s06 default). The recovered s01/s04/s05/s07 run as the original; s04's shipped build behaves exactly like the VM-only build of the same version (the divergence is the template's)",
+          "files": [
+            "src/recover/keyword-repair.js",
+            "src/recover/pipeline.js"
+          ],
+          "tests": [
+            "tests/xiv-targets.test.mjs"
+          ]
+        },
+        {
+          "id": "xiv-lost-constants",
+          "summary": "s06 VM (1.6, 1.6.2, 2.0.0, current): a constant after a nil in the pool was never written (the serialiser measures with #); the program is now lifted with that slot read as nil, as the shipped script reads it, and the report names the slot and the instruction. Nothing is invented",
+          "files": [
+            "src/recover/hercules-vm.js",
+            "src/recover/pipeline.js",
+            "src/recover/confidence.js"
+          ],
+          "tests": [
+            "tests/formats.test.mjs"
+          ]
         }
       ],
       "failurePatterns": [
@@ -708,6 +742,18 @@
           "tests": [
             "tests/xiii-targets.test.mjs"
           ]
+        },
+        {
+          "id": "xiv-cache-reads",
+          "summary": "every decoded-cache read of the Strong/Medium fixtures is evaluated: proxies over a named empty table or assigned once later, keys held in locals, discarded decoder calls not voting, host-reading statements outside the decoder's own slice left out together with the sites that depend on them, decoders remembered across rounds by body shape, an unread SplitStrings joiner removed. 26 scorecard entries better, none worse",
+          "files": [
+            "src/passes/evaluate.js",
+            "src/recover/prometheus.js"
+          ],
+          "tests": [
+            "tests/xiv-targets.test.mjs",
+            "tests/prometheus-nested.test.mjs"
+          ]
         }
       ],
       "failurePatterns": [
@@ -722,6 +768,23 @@
         }
       ],
       "assumptions": []
+    },
+    "panda": {
+      "licence": "Prometheus licence (derivative work of Prometheus)",
+      "source": "https://github.com/Panda-Repositories/Prometheus-Modified",
+      "research": [
+        "Prompt XIV: found by a web search for open-source Lua/Luau VM obfuscators. Commit 26f69030594d813bbb778f1affcb4470c7bf9c91 (2026-04-19) read as text: presets Minify/Weak/Medium/Strong/LuaU-Safe/LuaU-Typed/Panda-Xenon/Panda-Roblox-Strong, the Prometheus step set (Vmify, EncryptStrings, ConstantArray, SplitStrings, ...) plus Watermark, and a refactored VM compiler (src/prometheus/compiler, about 1600 lines)",
+        "running it in run_isolated.py was not permitted in this session: no fixtures, nothing measured"
+      ],
+      "improvements": [],
+      "failurePatterns": [
+        {
+          "id": "panda-no-fixtures",
+          "configs": [],
+          "status": "open",
+          "summary": "untested prediction: the Prometheus readers apply to the Lua 5.1 presets; the Luau presets and the double Vmify of Panda-Roblox-Strong are unknown"
+        }
+      ]
     }
   },
   "backlog": [
@@ -784,6 +847,18 @@
       "item": "FusGato: what it is, from reading its output",
       "state": "lifted (4 of 4 working fixtures)",
       "detail": "an IronBrew 2 fork with a bit-string container (instruction words of 26 bits: A, B, C, no opcode) and an interpreter that is `if pc == n` with the handler of instruction n written out and its operands read from the decoded table; the leaf reader of the Zartha lifter plus a container reader lift it (src/recover/fusgato-vm.js). Evidence is two programs only"
+    },
+    {
+      "id": "xiv-moonveil-21-container",
+      "item": "MoonVeil 2.1.0: the deserializer as its own problem",
+      "state": "container read; function reader not written",
+      "detail": "src/recover/moonveil-vm/container21.js: base 85 (RFC 1924 digits), then LZSS (flag bytes with bit set = literal, u16 big-endian references: offset = v >> 5, length = (v & 31) + 3, 2048-byte window, 1-based start), then a LEB128 string table, then functions (a per-build marker byte, 192 / 93; a LEB128 instruction count; opcode bytes mapped by a per-build decision tree to about 26 handler closures that decode their own fields, `param2[26] - 61`). Read for both samples (6 strings and 12 instructions; 4 and 27). Open: the per-handler operand layout (factory la) and the cipher of the table strings"
+    },
+    {
+      "id": "xiv-custom-staged",
+      "item": "Custom format: flattening against interpreter, staged containers",
+      "state": "done",
+      "detail": "a dispatch whose branches write their own state and seldom fetch from a table is flattening (MoonVeil 2.1.0's bootstrap had been read as a 452-handler opcode tree); a chain of three or more calls ending in a long string is a staged container, and each stage a known reader takes is evidence of its own. Prediction accuracy unchanged (0.81 leave-one-out, 0.722 leave-one-tool-out)"
     }
   ]
 }

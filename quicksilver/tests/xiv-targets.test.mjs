@@ -234,3 +234,32 @@ test('moonveil 2.1.0 sample 6: the container call is found by its shape and read
   assert.equal(c.strings.length, 6);
   assert.equal(c.main.instructions, 12);
 });
+
+// ---- custom format: flattening that writes its own state is not an interpreter; a staged container is reported stage by stage ---------------------
+
+import { probe } from '../src/custom/probes.js';
+
+test('custom probes: a big dispatch whose branches write their own state and fetch nothing is flattening, not an opcode tree', () => {
+  // 150 states, each a block of ordinary code that sets the next state: the loop compares with < like a binary search, as MoonVeil's does
+  const blocks = [];
+  for (let k = 0; k < 150; k++) blocks.push(`if s < ${k + 1} then x = x + ${k} s = ${k === 149 ? -1 : k + 1}`);
+  const src = `local x, s = 0, 0\nwhile s >= 0 do\n${blocks.join(' else')} end\nend\nprint(x)`;
+  const r = probe(src);
+  assert.ok(!r.transformations.some((t) => t.id === 'bytecode-vm'), JSON.stringify(r.transformations.map((t) => t.id)));
+  assert.ok(r.transformations.some((t) => t.id === 'control-flow-flattening'));
+});
+
+test('custom probes: a program shipped through a chain of three calls is a staged container, and each stage that reads is named', () => {
+  // a readable container: a string table and a function header behind LZSS (literal flags only) and base 85; padded with strings so that it counts as data
+  const program = [12, ...Array.from({ length: 12 }, () => [10, ...Buffer.from('abcdefghij')]).flat(), 93, 4];
+  const packed = [];
+  for (let i = 0; i < program.length; i += 8) { const part = program.slice(i, i + 8); packed.push((1 << part.length) - 1, ...part); }
+  const readable = probe(`local a = {}\nreturn a.R(a.U(a.T("${enc85(packed)}")))`).transformations.find((t) => t.id === 'bytecode-vm');
+  assert.equal(readable.shape, 'staged-container');
+  assert.equal(readable.stages, 3);
+  assert.ok(readable.evidence.some((e) => /stage 3: a table of 12 string\(s\) and a function of 4 instruction/.test(e)), JSON.stringify(readable.evidence));
+  // the same chain over text no stage reads: a container is still reported, without stages and with less confidence
+  const opaque = probe(`local a = {}\nreturn a.R(a.U(a.T("${'x'.repeat(120)}")))`).transformations.find((t) => t.id === 'bytecode-vm');
+  assert.equal(opaque.stages, 0);
+  assert.ok(opaque.confidence < readable.confidence);
+});
