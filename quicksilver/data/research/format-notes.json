@@ -299,6 +299,17 @@
           "tests": [
             "tests/ironbrikked-vm.test.mjs: RETURN counts"
           ]
+        },
+        {
+          "id": "xv-ironbrikked-faults",
+          "summary": "closure links counted from what the child uses (the generator writes the parameter count, 0, where the template reads the link count); a loop body reading the counter R(A) and using R(A+3) as a temporary is renamed so the loop variable is read. Faults classified: encodings (read back) against miscompiles (temporaries over parameters, call results reused, assignments to globals and upvalues compiled as moves into register 0: the compiler has no SETGLOBAL/SETUPVAL path). A controlled program inside the subset the compiler handles is recovered exactly (tests/corpus/controlled/luaxen-subset)",
+          "files": [
+            "src/recover/ironbrikked-vm.js",
+            "src/recover/confidence.js"
+          ],
+          "tests": [
+            "tests/xv-targets.test.mjs"
+          ]
         }
       ],
       "failurePatterns": [
@@ -774,17 +785,84 @@
       "source": "https://github.com/Panda-Repositories/Prometheus-Modified",
       "research": [
         "Prompt XIV: found by a web search for open-source Lua/Luau VM obfuscators. Commit 26f69030594d813bbb778f1affcb4470c7bf9c91 (2026-04-19) read as text: presets Minify/Weak/Medium/Strong/LuaU-Safe/LuaU-Typed/Panda-Xenon/Panda-Roblox-Strong, the Prometheus step set (Vmify, EncryptStrings, ConstantArray, SplitStrings, ...) plus Watermark, and a refactored VM compiler (src/prometheus/compiler, about 1600 lines)",
-        "running it in run_isolated.py was not permitted in this session: no fixtures, nothing measured"
+        "running it in run_isolated.py was not permitted in this session: no fixtures, nothing measured",
+        "Prompt XV: run in run_isolated.py with drivers/panda.lua (32 Lua 5.1 fixtures; the 24 Luau builds stop in the tool: `is` used at parser.lua:208, declared at line 270)"
       ],
-      "improvements": [],
+      "improvements": [
+        {
+          "id": "xv-panda",
+          "summary": "measured first, Prometheus's readers handled only Minify. Panda disguises the Vmify dispatcher tests (`pos + -N < 0 and pos == pos`, `not (N <= pos)`), its AntiTamper raises a random message (recognised now by its mechanism, the line-number probe, also in the form Vmify leaves: `local flag = true ... if not flag then fail() end`), and the second Vmify layer leaves numeric and boolean temporaries, lowered `and`, and register moves between a test and its `if`. 29 of 29 fixtures whose shipped build runs like the original run the same after recovery at high confidence; the 3 s03 builds run like the obfuscated script",
+          "files": [
+            "src/recover/vmify.js",
+            "src/recover/prometheus.js",
+            "src/passes/evaluate.js"
+          ],
+          "tests": [
+            "tests/xv-targets.test.mjs"
+          ]
+        }
+      ],
       "failurePatterns": [
         {
-          "id": "panda-no-fixtures",
-          "configs": [],
-          "status": "open",
-          "summary": "untested prediction: the Prometheus readers apply to the Lua 5.1 presets; the Luau presets and the double Vmify of Panda-Roblox-Strong are unknown"
+          "id": "panda-luau-presets",
+          "configs": [
+            "LuaU-Safe",
+            "Panda-Xenon",
+            "Panda-Roblox-Strong"
+          ],
+          "status": "tool defect",
+          "summary": "the tool stops in its own parser before writing anything"
         }
       ]
+    },
+    "vault": {
+      "licence": "Vault Source-Available License 1.0: research and internal use allowed, redistribution not; fixtures kept local (tests/corpus/obfuscated-local/vault)",
+      "source": "https://github.com/polarr-is67/Vault-Obfuscator",
+      "research": [
+        "Prompt XV: found by a search for open-source Lua/Luau VM obfuscators; commit 4cf9664 read as text (Python: lexer, parser, IR, bytecode generator and encoder, Lua 5.1 and Luau targets, presets low/medium/strong, four VM families and four dispatch forms: cascade, tree, per-opcode closure table, indirect table) and run in sandbox_run.py (no network, no host files)"
+      ],
+      "improvements": [
+        {
+          "id": "xv-handler-table-probe",
+          "summary": "its interpreters were not seen: the dispatch sits in a step function called by a loop over a call stack, or in a table of handler functions read with a computed key. Both shapes are now probes of the custom-format analysis, and the pipeline's confidence drops to low whenever a generated interpreter is still in the output (Vault's builds had been rated high)",
+          "files": [
+            "src/custom/probes.js",
+            "src/recover/confidence.js"
+          ],
+          "tests": [
+            "tests/xv-targets.test.mjs"
+          ]
+        }
+      ],
+      "failurePatterns": [
+        {
+          "id": "vault-vm",
+          "configs": [
+            "low",
+            "medium",
+            "strong"
+          ],
+          "status": "open",
+          "summary": "identified, not lifted: a bytecode image with LCG-scrambled constants and instructions, a base-45 alphabet or a byte container, per-build operand order"
+        },
+        {
+          "id": "vault-method-decl",
+          "configs": [
+            "low",
+            "medium",
+            "strong"
+          ],
+          "status": "tool defect",
+          "summary": "s06 fails in its parser on `function a:b()`"
+        }
+      ]
+    },
+    "luraph": {
+      "research": [
+        "Prompt XV: v15 is the newest version the vendor advertises (lura.ph); v14.4-v14.9 builds were in wide use into 2026. Two public v15 deobfuscators read as text: their only sample with a source is the v15 pair already verified here; their notes describe four dispatch modes per VM with randomised handlers, layered in-place XOR decryption of operands, flattening through jump registers, a stack-VM variant, register-resident arrays and a boolean store Luraph drops; other versions are untested there too. Nothing new could be measured: no further reference pair exists in public"
+      ],
+      "improvements": [],
+      "failurePatterns": []
     }
   },
   "backlog": [
@@ -859,6 +937,12 @@
       "item": "Custom format: flattening against interpreter, staged containers",
       "state": "done",
       "detail": "a dispatch whose branches write their own state and seldom fetch from a table is flattening (MoonVeil 2.1.0's bootstrap had been read as a 452-handler opcode tree); a chain of three or more calls ending in a long string is a staged container, and each stage a known reader takes is evidence of its own. Prediction accuracy unchanged (0.81 leave-one-out, 0.722 leave-one-tool-out)"
+    },
+    {
+      "id": "xv-moonveil-21-schema",
+      "item": "MoonVeil 2.1.0: functions read with a schema derived from each build's reader",
+      "state": "program read to the last byte for both samples; handlers not mapped",
+      "detail": "src/recover/moonveil-vm/schema21.js: the reader factory is taken apart statement by statement (LEB128 integers, bytes, the marker test, counted lists typed by content: a decision tree means instructions, evaluated per opcode with partial() in two levels; \"<d\" means constants, each tag classified by what it computes; \"c\" .. means strings; a call of the reader means nested functions). Marker, section order, constant tags, opcode slot and operand layouts all differ between samples 6 and 7. Next: map the ~26 handler closures (flattened, permuted per build) to Lua operations"
     }
   ]
 }

@@ -186,3 +186,22 @@ test('vault-obf (local fixtures): every build is seen as an interpreter and none
     assert.notEqual(r.confidence.level, 'high', e.file);
   }
 });
+
+// ---- Prometheus as of November 2026: a changed Vmify layout, read by an experimental reader that may not call itself verified ---------------------------
+
+const p2611 = path.join(corpus, 'obfuscated/prometheus-2026-11');
+
+test('prometheus 2026-11: the changed Vmify layout is located and lifted (counted value lists, environment threaded through closures)', () => {
+  const r = run(read(path.join(p2611, 's07_roblox_style__Weak.lua')));
+  const st = r.steps.find((x) => x.id === 'prometheus.vmify');
+  assert.equal(st && st.status, 'applied');
+  assert.match(String(st.detail.experimental), /November 2026/);
+});
+
+test('prometheus 2026-11: while that reader is unfinished no build it lifts is reported as recovered', () => {
+  for (const f of fs.readdirSync(p2611).filter((x) => /__Weak\.lua$/.test(x))) {
+    const r = run(read(path.join(p2611, f)));
+    assert.notEqual(r.confidence.level, 'high', f);
+    assert.ok(r.confidence.reasons.some((x) => /Experimental reader/.test(x.text)), f);
+  }
+});

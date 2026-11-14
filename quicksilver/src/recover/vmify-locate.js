@@ -199,7 +199,7 @@ export function locateLoose(chunk, info) {
   lastReason = 'no function of four parameters runs a dispatcher loop';
   const parents = enclosingFunctions(chunk);
   for (const [f, outer] of parents) {
-    if (f.params.length !== 4) continue;
+    if (f.params.length !== 4 && f.params.length !== 5) continue;
     const d = dispatcherOf(f, info);
     if (!d) continue;
     const found = describe(chunk, info, f, outer, d);

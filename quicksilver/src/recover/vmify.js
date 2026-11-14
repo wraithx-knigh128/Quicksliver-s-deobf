@@ -25,7 +25,7 @@
 // original tree when it throws.
 
 import { analyze } from '../core/scope.js';
-import { walk, clone } from '../core/walk.js';
+import { walk, clone, transform } from '../core/walk.js';
 import { structure as structureCfg, CfgError } from '../decompile/cfg.js';
 import { placeDeclarations } from './decls.js';
 import { VmifyError, fail, stripParens, isName, num, nameNode, varOf } from './vmify-util.js';
@@ -59,7 +59,8 @@ export function locate(chunk, info = analyze(chunk)) {
   const ret = stripParens(body[1].values[0]);
   if (!ret || ret.type !== 'Call') return null;
   const first = stripParens(ret.fn);
-  if (!first || first.type !== 'Call' || first.args.length !== 2 || first.args[0].type !== 'Number' || first.args[1].type !== 'Table') return null;
+  // `create(startId, {})(unpack(args))`; Prometheus after 2026-11 passes the environment as a third argument (`create(startId, {}, env)`) and threads it through closures
+  if (!first || first.type !== 'Call' || (first.args.length !== 2 && first.args.length !== 3) || first.args[0].type !== 'Number' || first.args[1].type !== 'Table') return null;
   const createVararg = varOf(info, first.fn);
   if (!createVararg) return null;
   const startId = first.args[0].value;
@@ -73,7 +74,10 @@ export function locate(chunk, info = analyze(chunk)) {
     if (!a || !v) return;
     const e = stripParens(a);
     if (e.type === 'Name' && ['newproxy', 'setmetatable', 'getmetatable', 'select'].includes(e.name)) roles[e.name] = v;
-    else if (e.type === 'Table' && e.fields.length === 1 && stripParens(e.fields[0].value).type === 'Vararg') roles.argTable = v;
+    // after 2026-11 more standard functions are handed in the same way; inside the program they are those globals
+    else if (e.type === 'Name' && ['getfenv', 'setfenv', 'error', 'tonumber'].includes(e.name)) (roles.globals = roles.globals || new Map()).set(v, e.name);
+    // `{ ... }`, or `{ [n] = select("#", ...), ... }` (the count kept with the arguments, after 2026-11)
+    else if (e.type === 'Table' && e.fields.length >= 1 && e.fields.length <= 2 && stripParens(e.fields[e.fields.length - 1].value).type === 'Vararg') roles.argTable = v;
     else if (e.type === 'Binary' && e.op === 'or') {
       const l = stripParens(e.left);
       const r = stripParens(e.right);
@@ -95,11 +99,13 @@ export function locate(chunk, info = analyze(chunk)) {
     else if (kind === 'free') { out.free = v; Object.assign(out, freeTables(f, info)); }
   }
   if (!out.container || !out.alloc || !out.free) return null;
+  if (out.container.params.length === 5) out.roles.envParam = info.varOf.get(out.container.params[4]);
   return out;
 }
 
 function isContainer(f, info) {
-  if (f.params.length !== 4) return false;
+  // (pos, args, upvals, proxy), and after 2026-11 the environment the closure runs in as a fifth
+  if (f.params.length !== 4 && f.params.length !== 5) return false;
   const loop = f.body.find((s) => s.type === 'While');
   if (!loop) return false;
   const c = stripParens(loop.cond);
@@ -109,11 +115,15 @@ function isContainer(f, info) {
 /** creator: `function(pos, upvals) local proxy = ... local f = function(...) return container(pos, {...}, upvals, proxy) end return f end` */
 function helperKind(f, info) {
   const b = f.body;
-  if (f.params.length === 2 && b.length === 3 && b[0].type === 'Local' && b[1].type === 'Local' && b[2].type === 'Return') {
-    const inner = b[1].values[0];
-    if (inner && inner.type === 'Func' && inner.body.length === 1 && inner.body[0].type === 'Return') {
-      const c = inner.body[0].values[0];
-      if (c && c.type === 'Call' && c.args.length === 4 && c.args[1].type === 'Table') return 'creator';
+  // after 2026-11: a third parameter (the environment), the container called with it, and `if setfenv then setfenv(f, env) end` before the return
+  const withEnv = f.params.length === 3 && b.length === 4 && b[2].type === 'If';
+  if ((f.params.length === 2 && b.length === 3) || withEnv) {
+    if (b[0].type === 'Local' && b[1].type === 'Local' && b[b.length - 1].type === 'Return') {
+      const inner = b[1].values[0];
+      if (inner && inner.type === 'Func' && inner.body.length === 1 && inner.body[0].type === 'Return') {
+        const c = inner.body[0].values[0];
+        if (c && c.type === 'Call' && (c.args.length === 4 || c.args.length === 5) && (c.args[1].type === 'Table' || (c.args[1].type === 'Call' && c.args[1].args.some((a) => a.type === 'Vararg')))) return 'creator';
+      }
     }
   }
   if (f.params.length === 0 && b.length === 3 && b[0].type === 'Assign' && b[1].type === 'Assign' && b[2].type === 'Return') {
@@ -507,7 +517,7 @@ function analyseBlock(id, leaf, ctx) {
       case 'Index': {
         let o = stripParens(e.obj);
         for (let hop = 0; hop < 4 && o.type === 'Name' && defs.has(info.varOf.get(o)) && stripParens(defs.get(info.varOf.get(o)).expr).type === 'Name'; hop++) o = stripParens(defs.get(info.varOf.get(o)).expr);
-        if (o.type === 'Name' && info.varOf.get(o) === ctx.roles.env) {
+        if (o.type === 'Name' && (info.varOf.get(o) === ctx.roles.env || (ctx.roles.envParam && info.varOf.get(o) === ctx.roles.envParam))) {
           // the read of a global that does not exist. Read through a register, it has to be that register's only use: a
           // global that is also passed on or tested (`getfenv and getfenv()`) is an ordinary lookup
           const via = [...resolving].pop();
@@ -1069,8 +1079,9 @@ function recoverFunction(entryIdIn, upvalNames, ctx) {
           if (!n) fail(`register ${e.name} has no web`);
           return nameNode(n);
         }
-        if (v === ctx.roles.env) return nameNode('__env');
+        if (v === ctx.roles.env || (ctx.roles.envParam && v === ctx.roles.envParam)) return nameNode('__env');
         if (v === ctx.roles.unpack) return nameNode('unpack');
+        if (ctx.roles.globals && ctx.roles.globals.has(v)) return nameNode(ctx.roles.globals.get(v));
         if (v === ctx.roles.select) return nameNode('select');
         if (v === ctx.argsVar) return fail('the argument table is used as a value');
         if (v && ctx.droppedAliases.has(v)) return fail('a copy of one of the VM tables is used in a block other than the one that made it');
@@ -1124,7 +1135,8 @@ function recoverFunction(entryIdIn, upvalNames, ctx) {
   };
 
   const makeClosure = (call) => {
-    if (call.args.length !== 2 || call.args[0].type !== 'Number' || call.args[1].type !== 'Table') fail(`a closure creation with an unexpected shape`);
+    // `create(id, { upvalues })`, and after 2026-11 `create(id, { upvalues }, env)`: the environment the new closure runs in, which is the one this function runs in
+    if ((call.args.length !== 2 && call.args.length !== 3) || call.args[0].type !== 'Number' || call.args[1].type !== 'Table') fail(`a closure creation with an unexpected shape`);
     const names = call.args[1].fields.map((f) => entryOf(f.value));
     return recoverFunction(call.args[0].value, names, ctx);
   };
@@ -1252,15 +1264,75 @@ function splitMultiAssign(chunk) {
   visit(chunk.body);
 }
 
+/**
+ * Prometheus after 2026-11 keeps the number of values with every list the VM passes around: results are packed by a helper
+ * `function(...) return { [K] = select("#", ...), ... } end`, unpacked by `function(t) return unpack(t, 1, t[K]) end`, and the argument
+ * tables of fixed-arity closures carry `[K] = n`. The translator below reads the earlier forms (`{ f(...) }`, `unpack(t)`, `{ a, b }`), so
+ * the new ones are written back to them first. The helpers are found by their shape, and a field is dropped only when its key is exactly
+ * the pack helper's key; nothing else is touched. Returns the number of places rewritten.
+ */
+function normaliseCounts(chunk) {
+  const keyText = (e) => JSON.stringify(e, (k, v) => (k === 'line' || k === 'raw' || k === 'endLine' ? undefined : v));
+  const packs = new Map();       // name -> key text
+  const unpacks = new Map();     // name -> unpack function name
+  const defs = [];
+  walk(chunk, (n) => {
+    if (n.type === 'Assign' || n.type === 'Local') {
+      const ids = n.type === 'Assign' ? n.targets : n.ids;
+      ids.forEach((t, i) => { const v = n.values[i]; if (v && v.type === 'Func' && t.type !== 'Index') defs.push([t.name, v]); });
+    }
+    if (n.type === 'LocalFunction') defs.push([n.id.name, n.func]);
+    return undefined;
+  });
+  for (const [name, f] of defs) {
+    if (f.body.length !== 1 || f.body[0].type !== 'Return' || f.body[0].values.length !== 1) continue;
+    const r = stripParens(f.body[0].values[0]);
+    if (f.vararg && f.params.length === 0 && r.type === 'Table' && r.fields.length === 2 && r.fields[0].kind === 'keyed'
+        && stripParens(r.fields[0].value).type === 'Call' && stripParens(r.fields[0].value).args.some((a) => a.type === 'Vararg') && stripParens(r.fields[1].value).type === 'Vararg') {
+      packs.set(name, keyText(r.fields[0].key));
+    } else if (f.params.length === 1 && r.type === 'Call' && r.fn.type === 'Name' && r.args.length === 3 && r.args[0].type === 'Name' && r.args[0].name === f.params[0].name
+        && r.args[1].type === 'Number' && r.args[1].value === 1 && r.args[2].type === 'Index' && stripParens(r.args[2].obj).type === 'Name' && stripParens(r.args[2].obj).name === f.params[0].name) {
+      unpacks.set(name, { fn: r.fn.name, key: keyText(r.args[2].key) });
+    }
+  }
+  // `P(f, env, ...)`: call f with the arguments; a call of getfenv answered with the closure's environment. As a call it is `f(...)`
+  const calls = new Set();
+  for (const [name, f] of defs) {
+    if (!f.vararg || f.params.length !== 2) continue;
+    const last = f.body[f.body.length - 1];
+    const r = last && last.type === 'Return' && last.values.length === 1 ? stripParens(last.values[0]) : null;
+    if (r && r.type === 'Call' && r.fn.type === 'Name' && r.fn.name === f.params[0].name && r.args.length === 1 && r.args[0].type === 'Vararg' && f.body.length <= 2) calls.add(name);
+  }
+  if (!packs.size) return 0;
+  const keys = new Set([...packs.values(), ...[...unpacks.values()].map((u) => u.key)]);
+  let changed = 0;
+  transform(chunk, {
+    expr(e) {
+      if (e.type === 'Call' && e.fn.type === 'Name' && calls.has(e.fn.name) && e.args.length >= 2) { changed++; return { type: 'Call', fn: e.args[0], args: e.args.slice(2) }; }
+      if (e.type === 'Call' && e.fn.type === 'Name' && packs.has(e.fn.name)) { changed++; return { type: 'Table', fields: e.args.map((a) => ({ kind: 'item', value: a })) }; }
+      // the call is bound to the unpack role after the locator has found it (by name it could be shadowed inside the blocks)
+      if (e.type === 'Call' && e.fn.type === 'Name' && unpacks.has(e.fn.name) && e.args.length === 1) { changed++; return { type: 'Call', fn: { type: 'Name', name: unpacks.get(e.fn.name).fn, unpackRole: true }, args: e.args }; }
+      if (e.type === 'Table' && e.fields.some((f) => f.kind === 'keyed' && keys.has(keyText(f.key)))) {
+        const rest = e.fields.filter((f) => !(f.kind === 'keyed' && keys.has(keyText(f.key))));
+        if (rest.every((f) => f.kind === 'item')) { changed++; return { ...e, fields: rest }; }
+      }
+      return undefined;
+    },
+  });
+  return changed;
+}
+
 export function unflattenVmify(original, options = {}) {
   // everything below works on a copy: the registers held in the overflow table are rewritten in place, and a script that
   // turns out not to be understood has to come back untouched
   const chunk = clone(original);
   splitMultiAssign(chunk);
+  const counted = normaliseCounts(chunk);
   const info = analyze(chunk);
   const exact = locate(chunk, info);
   const L = exact ? describeExact(exact, info) : locateLoose(chunk, info);
   if (!L) return { changed: 0, skipped: lastReason ? `not a Vmify script (${lastReason})` : 'not a Vmify script' };
+  if (L.roles && L.roles.unpack) walk(chunk, (n) => { if (n.type === 'Name' && n.unpackRole) info.varOf.set(n, L.roles.unpack); });
   const f = L.container;
   const regs = new Set(L.regs);
 
@@ -1295,7 +1367,7 @@ export function unflattenVmify(original, options = {}) {
     hasTamperMarker: containsString(L.tree, 'Tamper Detected!'),
     blockCache: new Map(),
     droppedAliases: new Set(),
-    roleVars: new Set([L.roles.env, L.roles.unpack, L.roles.select, L.upvalsVar, L.proxyVar, L.cells, L.alloc, L.free, ...L.creators].filter(Boolean)),
+    roleVars: new Set([L.roles.env, L.roles.envParam, L.roles.unpack, L.roles.select, L.upvalsVar, L.proxyVar, L.cells, L.alloc, L.free, ...L.creators].filter(Boolean)),
     startId: L.startId,
     layer: options.layer || 1, count: 0, nextSynthetic: 0,
     isRegister: (v) => regs.has(v),
@@ -1308,7 +1380,7 @@ export function unflattenVmify(original, options = {}) {
   const body = main.body;
   if (main.params.length) body.unshift({ type: 'Local', ids: main.params, values: [{ type: 'Vararg' }] });
   L.splice(original, body);
-  return { changed: ctx.count, functions: ctx.count };
+  return { changed: ctx.count, functions: ctx.count, counted };
 }
 
 function containsString(node, text) {

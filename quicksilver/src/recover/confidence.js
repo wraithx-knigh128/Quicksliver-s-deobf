@@ -52,17 +52,6 @@ export function assessConfidence(before, output, ctx) {
   }
   // A VM the input showed and no pass rebuilt. Clean-up can rewrite the signature away (an inlined alias is gone) while the program is still
   // inside the VM, so the verdict cannot depend on the signature surviving.
-  // An interpreter no rule knows by name, still in the output: the structure probe of the custom-format analysis sees it by its shape (a dispatch over handlers that
-  // cover the operations of a register machine, or a table of handler functions read with a computed key). Unless a step rebuilt a VM, the program is still data.
-  const VM_STEPS = ['hercules.vm', 'zartha.vm', 'fusgato.vm', 'ironbrikked.vm', 'obscura.vm', 'moonveil.vm', 'prometheus.vmify', 'ironbrew2', 'layers'];
-  if (output.length < 600000 && !steps.some((x) => VM_STEPS.includes(x.id) && x.status === 'applied')) {
-    let left = null;
-    try { left = probe(output).transformations.find((t) => t.id === 'bytecode-vm' && t.confidence >= 0.8 && t.shape !== 'staged-container'); } catch { left = null; }
-    if (left && !after.families.some((f) => f.evidence.some((e) => e.unrecoverable))) {
-      note(-0.55, `A generated interpreter is still in the output (${left.shape === 'handler-table' ? `a table of ${left.handlers} handler functions dispatched by a computed key` : `a dispatch over ${left.handlers} handlers`}, line ${left.line || '?'}): the program is its data and was not rebuilt.`);
-      if (!hints.includes('trace')) hints.push('trace');
-    }
-  }
   const REBUILT_BY = { ironbrew2: ['ironbrew2'], hercules: ['layers', 'hercules.vm'], moonveil: ['moonveil.vm'], obscura: ['obscura.vm'], zartha: ['zartha.vm'], fusgato: ['fusgato.vm'], luaxen: ['ironbrikked.vm'] };
   for (const f of before.families) {
     const hard = f.confidence >= 0.5 && f.evidence.find((e) => e.unrecoverable);
@@ -71,6 +60,19 @@ export function assessConfidence(before, output, ctx) {
     if ((REBUILT_BY[f.id] || []).some((id) => steps.some((x) => x.id === id && x.status === 'applied'))) continue;
     note(-0.55, `${hard.text}: nothing rebuilt it.`);
     if (!hints.includes('trace')) hints.push('trace');
+  }
+  // An interpreter no rule knows by name, still in the output: the structure probe of the custom-format analysis sees it by its shape (a dispatch over handlers that
+  // cover the operations of a register machine, or a table of handler functions read with a computed key). Unless a step rebuilt a VM, the program is still data.
+  const VM_STEPS = ['hercules.vm', 'zartha.vm', 'fusgato.vm', 'ironbrikked.vm', 'obscura.vm', 'moonveil.vm', 'prometheus.vmify', 'ironbrew2', 'layers'];
+  if (output.length < 600000 && !steps.some((x) => VM_STEPS.includes(x.id) && x.status === 'applied')) {
+    let left = null;
+    try { left = probe(output).transformations.find((t) => t.id === 'bytecode-vm' && t.confidence >= 0.8 && t.shape !== 'staged-container'); } catch { left = null; }
+    // counted once: a VM that a rule already named as left in place (or not rebuilt) is not penalised again
+    const named = reasons.some((r) => /nothing rebuilt it|still present in the output|dispatcher loop .*still present|virtual-machine wrapper is still present/.test(r.text));
+    if (left && !named) {
+      note(-0.55, `A generated interpreter is still in the output (${left.shape === 'handler-table' ? `a table of ${left.handlers} handler functions dispatched by a computed key` : `a dispatch over ${left.handlers} handlers`}, line ${left.line || '?'}): the program is its data and was not rebuilt.`);
+      if (!hints.includes('trace')) hints.push('trace');
+    }
   }
   // A vendor banner comment is not obfuscation; only structural evidence counts as "still obfuscated".
   for (const f of after.families) {
@@ -92,6 +94,7 @@ export function assessConfidence(before, output, ctx) {
     if (root) note(-0.3, 'The program is still MoonVeil\u2019s table of lifted functions: the functions are decoded and readable, but they are not joined into the script\u2019s own flow of control.');
   }
   for (const s of steps) if (s.status === 'applied' && s.detail && s.detail.lost) note(-0.3, `Not in the file: ${s.detail.lost}. The original values are unknown, so this part of the program cannot match the original.`);
+  for (const s of steps) if (s.status === 'applied' && s.detail && s.detail.experimental) note(-0.35, `Experimental reader: ${s.detail.experimental}.`);
   for (const s of steps) if (s.status === 'applied' && s.detail && s.detail.inferred) note(-0.15, `Inferred, not read: ${s.detail.inferred}.`);
   for (const s of steps.filter((x) => x.status === 'failed')) note(-0.1, `Pass "${s.label}" failed and was skipped: ${s.error}`);
   const evalStep = steps.find((s) => s.id === 'evaluate');

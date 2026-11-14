@@ -120,6 +120,7 @@ class Run {
 function rebuildVmify(ast, run) {
   let layers = 0;
   let functions = 0;
+  let counted = 0;
   for (; layers < 4; layers++) {
     let r;
     try { r = unflattenVmify(ast, { layer: ++run.vmifyLayers }); } catch (e) {
@@ -131,7 +132,11 @@ function rebuildVmify(ast, run) {
     }
     if (!r.changed) break;
     functions += r.functions;
+    if (r.counted) counted += r.counted;
   }
+  // the layout Prometheus writes since 2026-11 (counted value lists, an environment threaded through closures) is read by rewriting it into the earlier one;
+  // that reader is not finished, so the result says it
+  if (layers && counted) return { changed: functions, layers, functions, experimental: `the Vmify layout Prometheus writes since November 2026 (value lists that carry their count, an environment handed to every closure) was read by translating it into the earlier layout (${counted} place(s)); that reader is unfinished and some programs it gives do not run like the original` };
   return layers ? { changed: functions, layers, functions } : { skipped: 'not a Vmify script' };
 }
 

@@ -32,7 +32,7 @@ for (const [tool, dir] of [['colisseum', 'obfuscated-local/colisseum'], ['simple
 // Hercules revisions older than the current one (each its own folder, tests/corpus/tools/gen_hercules_versions.py) and the layered (mixed) chains
 // (gen_mixed.py): measured with the same pipeline, kept apart in the results by `version` / the tool name `mixed`.
 const versions = new Map();
-for (const d of fs.readdirSync(path.join(corpus, 'obfuscated')).filter((x) => /^(hercules|obscura)-\d/.test(x)).sort()) {
+for (const d of fs.readdirSync(path.join(corpus, 'obfuscated')).filter((x) => /^(hercules|obscura|prometheus)-\d/.test(x)).sort()) {
   if (!fs.existsSync(path.join(corpus, 'obfuscated', d, 'manifest.json'))) continue;
   const [tool, ...ver] = d.split('-');
   tools.push([tool, `obfuscated/${d}`]);
