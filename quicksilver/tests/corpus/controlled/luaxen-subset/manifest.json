@@ -1,0 +1,8 @@
+{
+  "note": "Controlled programs written for this project and protected with LuaXen's IronBrikked (MIT, https://github.com/luauminati/LuaXen) in run_isolated.py with drivers/luaxen.lua. c4 stays inside the subset LuaXen's compiler compiles correctly (locals only, no parameters, no assignment to globals or upvalues, no call result kept in a local or stored into a table); c5 keeps a call result in a local, which the compiler gets wrong (the register is reused before it is read).",
+  "tool": "LuaXen IronBrikked",
+  "entries": [
+    { "file": "c4_subset__ironbrikked.lua", "original": "c4_subset.lua", "expect": "runs as the original after recovery" },
+    { "file": "c5_closure__ironbrikked.lua", "original": "c5_closure.lua", "expect": "the compiled program differs from the original (local r = twice() loses its value), and recovery follows the compiled program" }
+  ]
+}

@@ -88,3 +88,28 @@ print(f())`;
   evaluatePass(ast2, { sandbox: { enabled: true } });
   assert.match(print(ast2), /local k = dec\("ifmmp", 5\)/);
 });
+
+// ---- IronBrikked: a program the compiler compiles correctly is recovered exactly ------------------------------------------------------------------
+
+const subset = path.join(corpus, 'controlled/luaxen-subset');
+
+test('ironbrikked: a controlled program inside the subset LuaXen compiles correctly runs as the original after recovery (the reader is exact there)', { skip: noOracle }, async () => {
+  const r = run(read(path.join(subset, 'c4_subset__ironbrikked.lua')));
+  assert.ok(r.steps.some((x) => x.id === 'ironbrikked.vm' && x.status === 'applied'));
+  const want = await oracle.runLua(read(path.join(subset, 'c4_subset.lua')), 'lua51');
+  const got = await oracle.runLua(r.output, 'lua51');
+  assert.equal(got.stdout, want.stdout);
+  // the numeric for loop reads its own counter R(A) (luac reads R(A+3)); the reader makes those reads the loop variable
+  assert.match(r.output, /list\[i\]/);
+});
+
+test('ironbrikked: closures are given the upvalue links their own instructions use (the generator writes 0 there)', () => {
+  const r = run(read(path.join(subset, 'c5_closure__ironbrikked.lua')));
+  assert.match(r.output, /print\(\w+, 42\)/, 'the closure reads both upvalues: name and base + 2 folded');
+});
+
+test('ironbrikked: `local r = f()` is compiled with the result thrown away and its register reused, and recovery follows the compiled program', { skip: noOracle }, async () => {
+  const r = run(read(path.join(subset, 'c5_closure__ironbrikked.lua')));
+  const got = await oracle.runLua(r.output, 'lua51');
+  assert.match(got.stdout, /^answer\t42\ntwice\tfunction/);
+});

@@ -204,9 +204,21 @@ function buildFunction(p, ctx, label) {
     if (op.op === 'Closure') {
       const child = p.protos[op.b];
       if (!child) fail(`${label}: instruction ${idx + 1} makes a function the data does not hold`);
-      protos.push(buildFunction(child, ctx, `${label} > function ${op.b + 1}`));
+      const built = buildFunction(child, ctx, `${label} > function ${op.b + 1}`);
+      protos.push(built);
       op.b = protos.length - 1;
-      links = child.field;
+      // the byte the template's CLOSURE reads as the number of upvalue links is LuaXen's parameter count, which its compiler never stores (`numParmas`): always 0, so
+      // the links after a CLOSURE are not skipped by the shipped interpreter. Their number is what the child uses: one past the highest upvalue slot its own
+      // instructions read or write (GETUPVAL 4 / SETUPVAL 8 in Lua 5.1's numbering, B field)
+      let used = 0;
+      for (const w of built.code) { const o = w & 63; if (o === 4 || o === 8) used = Math.max(used, ((w >>> 23) & 511) + 1); }
+      let follow = 0;
+      while (follow < used && p.ins[idx + 1 + follow] && [0, 4].includes(p.ins[idx + 1 + follow].F[1]) && p.ins[idx + 1 + follow].F[2] === 0) follow++;
+      if (follow < used) fail(`${label}: instruction ${idx + 1} makes a function with ${used} upvalue(s) and only ${follow} link(s) follow it`);
+      links = used;
+      built.nups = used;
+      // LuaXen writes the links in `pairs` order over the upvalue names, which need not be the order of their slots: with two or more the pairing is assumed, not read
+      if (used > 1) ctx.stats.orderedLinks = (ctx.stats.orderedLinks || 0) + 1;
     } else if (links > 0) {
       links--;
       if (op.op !== 'Move' && op.op !== 'GetUpval') fail(`${label}: instruction ${idx + 1} follows a closure and is not a link to an upvalue`);
@@ -253,6 +265,39 @@ function buildFunction(p, ctx, label) {
       i.c = n > 0 ? n + 1 : 1;
     });
   }
+  // LuaXen's loop body reads the loop's own counter R(A) where luac reads the visible copy R(A+3), and it uses R(A+3) as an ordinary temporary. Both registers hold
+  // the current value at the top of every iteration (FORLOOP writes both), but a decompiler takes R(A) for the hidden state and reads its first value. Inside the
+  // body of each loop that never writes R(A): the body's own uses of R(A+3) move to a register nothing else uses, then the reads of R(A) become reads of R(A+3).
+  // A loop whose body touches either register through a range (call arguments, a concatenation, a return list) is left as it is.
+  const single = {
+    Move: ['a', 'b'], Len: ['a', 'b'], Not: ['a', 'b'], Unm: ['a', 'b'], TestSet: ['a', 'b'], LoadConst: ['a'], LoadBool: ['a'], GetGlobal: ['a'], GetUpval: ['a'],
+    NewTable: ['a'], Closure: ['a'], GetTable: ['a', 'b', 'c'], Self: ['a', 'b', 'c'], SetTable: ['a', 'b', 'c'], Test: ['a'], SetGlobal: ['a'], SetUpval: ['a'],
+    Add: ['a', 'b', 'c'], Sub: ['a', 'b', 'c'], Mul: ['a', 'b', 'c'], Div: ['a', 'b', 'c'], Mod: ['a', 'b', 'c'], Pow: ['a', 'b', 'c'], Eq: ['b', 'c'], Lt: ['b', 'c'], Le: ['b', 'c'],
+    Jmp: [], Close: [],
+  };
+  const rkField = (op, f) => f !== 'a' && ['GetTable', 'Self', 'SetTable', 'Add', 'Sub', 'Mul', 'Div', 'Mod', 'Pow', 'Eq', 'Lt', 'Le'].includes(op) && !(f === 'b' && ['GetTable', 'Self'].includes(op));
+  let fresh = maxStack(code) + 1;
+  code.forEach((prep, k) => {
+    if (prep.op !== 'ForPrep') return;
+    const end = k + 1 + prep.b;
+    if (!code[end] || code[end].op !== 'ForLoop' || code[end].a !== prep.a) return;
+    const A = prep.a;
+    const V = A + 3;
+    const body = code.slice(k + 1, end);
+    // only single-register operands in the body, and no write to R(A)
+    if (body.some((i) => i.pseudo || !single[i.op])) return;
+    const writes = (i, r) => single[i.op][0] === 'a' && !['Test', 'SetTable', 'SetGlobal', 'SetUpval', 'Eq', 'Lt', 'Le'].includes(i.op) && i.a === r;
+    if (body.some((i) => writes(i, A))) return;
+    const usesV = body.some((i) => single[i.op].some((f) => i[f] === V && !(rkField(i.op, f) && i[f] >= 256)));
+    const F = usesV ? fresh++ : null;
+    for (const i of body) {
+      for (const f of single[i.op]) {
+        if (rkField(i.op, f) && i[f] >= 256) continue;
+        if (F !== null && i[f] === V) i[f] = F;
+        else if (i[f] === A && !(f === 'a' && writes(i, A))) i[f] = V;
+      }
+    }
+  });
   const takesOpen = (i) => i && (i.op === 'Call' || i.op === 'TailCall' || i.op === 'Return' || i.op === 'SetList') && i.b === 0;
   code.forEach((i, k) => { if (i.op === 'Call' && i.c === 0 && !takesOpen(code[k + 1])) i.c = 1; });
   const last = code[code.length - 1];
@@ -263,7 +308,7 @@ function buildFunction(p, ctx, label) {
     if (['LoadConst', 'GetGlobal', 'SetGlobal'].includes(i.op) && (i.b < 0 || i.b >= k.length)) fail(`${label}: a constant that does not exist is used`);
   }
   return {
-    source: null, line: 0, lastLine: 0, nups: p.field, numParams: inferParams(code), isVararg: code.some((i) => i.op === 'VarArg'), maxStack: maxStack(code),
+    source: null, line: 0, lastLine: 0, nups: 0, numParams: inferParams(code), isVararg: code.some((i) => i.op === 'VarArg'), maxStack: maxStack(code),
     code: Uint32Array.from(code.map(encode)), k, protos, lines: [], locals: [], upNames: [],
   };
 }
@@ -311,13 +356,14 @@ export function liftIronbrikkedVm(ast) {
   // constants are `m[..]`: the name the variants index the constants with
   const m = (() => { for (let op = 38; op < 60; op++) { const raw = partial([tree], Z, op); if (raw.length && raw[0].type === 'Assign' && raw[0].values[0].type === 'Index') { const n = substFields(raw[0], Y); const v = n.values[0]; if (v.obj.type === 'Index' && v.obj.obj.type === 'Name') return v.obj.obj.name; } } return null; })();
   if (m) roles.set(m, 'm');
-  const fn = buildFunction(root, { handlers }, 'the program');
+  const ctx = { handlers, stats: {} };
+  const fn = buildFunction(root, ctx, 'the program');
   fn.isVararg = true; fn.numParams = 0; fn.nups = 0;
   let functions = 0; let instructions = 0;
   const count = (f) => { functions++; instructions += f.code.length; f.protos.forEach(count); };
   count(fn);
   const bin = dumpChunk51({ main: fn, header: { little: true, intSize: 4, sizeT: 8, numSize: 8 } }, { strip: true });
-  return { bytes: bin, stats: { functions, instructions, constants: fn.k.length } };
+  return { bytes: bin, stats: { functions, instructions, constants: fn.k.length, ...ctx.stats } };
 }
 
 /** The shape of an IronBrikked build: a long compressed string passed to a function that runs a repeat loop dispatching on an opcode. */
