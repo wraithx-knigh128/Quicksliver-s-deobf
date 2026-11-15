@@ -25,7 +25,7 @@
 // original tree when it throws.
 
 import { analyze } from '../core/scope.js';
-import { walk, clone, transform } from '../core/walk.js';
+import { walk, clone, transform, transformExpr } from '../core/walk.js';
 import { structure as structureCfg, CfgError } from '../decompile/cfg.js';
 import { placeDeclarations } from './decls.js';
 import { VmifyError, fail, stripParens, isName, num, nameNode, varOf } from './vmify-util.js';
@@ -627,6 +627,21 @@ function analyseBlock(id, leaf, ctx) {
       if (named && stripParens(named.expr).type === 'Table' && [...named.stamp].every(([w, n]) => (version.get(w) || 0) === n)) val = stripParens(named.expr);
       if (val && val.type === 'Table' && val.fields.every((x) => x.kind === 'item')) {
         values = val.fields.map((x) => x.value);
+        // the values are read where the function returns, after the rest of the block. Since November 2026 the block
+        // clears the registers it used after packing them (`d = { Y }; Y = nil`): writes of nil to registers are dead
+        // once the function returns. Anything else that runs after the pack and touches what it reads is refused
+        const later = out.slice(q + 1);
+        const clears = (x) => x.type === 'Assign' && x.targets.every((t) => t.type === 'Name' && ctx.isRegister(info.varOf.get(t))) && x.values.every((v) => v.type === 'Nil');
+        const rest = later.filter((x) => !clears(x));
+        if (rest.length !== later.length) {
+          const readsNames = new Set();
+          for (const v of values) walk(v, (m) => { if (m.type === 'Name') readsNames.add(info.varOf.get(m)); return undefined; });
+          const written = new Set();
+          const hasCall = (n) => { let c = false; walk(n, (m) => { if (m.type === 'Call') c = true; return !c; }); return c; };
+          for (const x of rest) if (x.type === 'Assign') x.targets.forEach((t) => { if (t.type === 'Name') written.add(info.varOf.get(t)); });
+          if ([...written].some((w) => readsNames.has(w)) || (rest.some(hasCall) && values.some(hasCall))) fail(`block ${id}: statements after the returned values change what they read`);
+          out.splice(q + 1, later.length, ...rest);
+        }
         if (st.targets.length === 1) out.splice(q, 1);
         else out[q] = { type: 'Assign', targets: st.targets.filter((_, j) => j !== at), values: st.values.filter((_, j) => j !== at) };
       }
@@ -1068,6 +1083,48 @@ function recoverFunction(entryIdIn, upvalNames, ctx) {
     return fail(`a closure upvalue that is not a variable of the enclosing function (${e.name || e.type})`);
   };
 
+  // An expression the flattener kept native (Cff with ExcludeVm: the VM interpreter) sits in a bridge:
+  //     (function(proxy, env, values) local r = EXPR; if setfenv then setfenv(r, env) end; return r end)(mkProxy({ c1, c2 }), env, cells)
+  // EXPR reads the k-th captured variable as `values[proxy[k]]` and a global as `env.name`. Written back, those are the
+  // variables themselves and plain globals, and the bridge goes
+  const nativeBridge = (e) => {
+    const f = stripParens(e.fn);
+    if (f.type !== 'Func' || f.params.length !== 3 || f.vararg || e.args.length !== 3) return null;
+    const b = f.body;
+    if (b.length < 2 || b[0].type !== 'Local' || b[0].ids.length !== 1 || b[0].values.length !== 1) return null;
+    const last = b[b.length - 1];
+    if (last.type !== 'Return' || last.values.length !== 1 || stripParens(last.values[0]).type !== 'Name' || stripParens(last.values[0]).name !== b[0].ids[0].name) return null;
+    if (b.length === 3 && b[1].type !== 'If') return null;
+    if (b.length > 3) return null;
+    if (!isName(stripParens(e.args[2]), ctx.cellsVar, info)) return null;
+    const pa = stripParens(e.args[0]);
+    let entries = [];
+    if (pa.type === 'Call' && pa.args.length === 1 && stripParens(pa.args[0]).type === 'Table') entries = stripParens(pa.args[0]).fields.map((x) => (x.kind === 'item' ? x.value : fail('a native bridge with a keyed capture')));
+    else if (pa.type !== 'Nil') return null;
+    const names = entries.map((x) => entryOf(x));
+    const [proxyP, envP, valuesP] = f.params.map((p) => info.varOf.get(p));
+    const isP = (n, v) => n && stripParens(n).type === 'Name' && info.varOf.get(stripParens(n)) === v;
+    const expr = transformExpr(b[0].values[0], {
+      expr(n) {
+        if (n.type === 'Index' && isP(n.obj, valuesP)) {
+          const k = stripParens(n.key);
+          if (k.type === 'Index' && isP(k.obj, proxyP) && k.key.type === 'Number' && names[k.key.value - 1]) return nameNode(names[k.key.value - 1]);
+          fail('a native bridge read this tool does not understand');
+        }
+        if (n.type === 'Name' && info.varOf.get(n) === envP) return nameNode('__env');
+        return undefined;
+      },
+    });
+    walk(expr, (m) => {
+      if (m.type !== 'Name') return undefined;
+      const v = info.varOf.get(m);
+      if (v === proxyP || v === valuesP) fail('a native bridge parameter used another way');
+      if (v && !v.isGlobal && (ctx.isRegister(v) || ctx.roleVars.has(v) || v === ctx.posVar || v === ctx.argsVar)) fail('a native function inside a block reads the VM\'s registers');
+      return undefined;
+    });
+    return expr;
+  };
+
   const tx = (e) => {
     switch (e.type) {
       case 'Name': {
@@ -1109,6 +1166,8 @@ function recoverFunction(entryIdIn, upvalNames, ctx) {
           // `unpack(args)` hands on everything the function was called with
           if (v === ctx.roles.unpack && e.args.length === 1 && isName(stripParens(e.args[0]), ctx.argsVar, info)) { fn.vararg = true; fn.whole = true; return { type: 'Vararg' }; }
         }
+        const bridged = nativeBridge(e);
+        if (bridged) return bridged;
         return { type: 'Call', fn: tx(e.fn), args: e.args.map(tx), sugar: e.sugar };
       }
       case 'Table': {
@@ -1130,6 +1189,20 @@ function recoverFunction(entryIdIn, upvalNames, ctx) {
       case 'Unary': return { type: 'Unary', op: e.op, arg: tx(e.arg) };
       case 'Paren': return { type: 'Paren', expr: tx(e.expr) };
       case 'Number': case 'String': case 'Nil': case 'True': case 'False': return clone(e);
+      case 'Vararg': return clone(e);
+      case 'Func': {
+        // a function the flattener left native (Cff with ExcludeVm keeps the VM interpreter as it is). It is copied when
+        // every name it reads from outside is a global or a variable of the script around the VM: none of the VM's own
+        // registers or tables, which do not exist once the blocks are written back
+        walk(e, (m) => {
+          if (m.type !== 'Name') return undefined;
+          const v = info.varOf.get(m);
+          if (!v || v.isGlobal) return undefined;
+          if (ctx.isRegister(v) || ctx.roleVars.has(v) || v === ctx.posVar || v === ctx.argsVar) fail('a native function inside a block reads the VM\'s registers');
+          return undefined;
+        });
+        return clone(e);
+      }
       default: return fail(`an expression this tool does not understand: ${e.type}`);
     }
   };
@@ -1275,16 +1348,34 @@ function normaliseCounts(chunk) {
   const keyText = (e) => JSON.stringify(e, (k, v) => (k === 'line' || k === 'raw' || k === 'endLine' ? undefined : v));
   const packs = new Map();       // name -> key text
   const unpacks = new Map();     // name -> unpack function name
+  // the helpers are the flattener's, defined next to its dispatcher. A program it compiled can hold functions of the same shape
+  // deeper down (a VM interpreter kept native has a `pack` of its own, with its own count key): only the outermost ones count
   const defs = [];
-  walk(chunk, (n) => {
+  const depthOf = new Map();
+  const ownerOf = new Map();     // helper function -> the function whose scope binds it
+  const visit = (n, depth, owner) => {
+    if (!n || typeof n !== 'object') return;
+    if (Array.isArray(n)) { n.forEach((x) => visit(x, depth, owner)); return; }
     if (n.type === 'Assign' || n.type === 'Local') {
       const ids = n.type === 'Assign' ? n.targets : n.ids;
-      ids.forEach((t, i) => { const v = n.values[i]; if (v && v.type === 'Func' && t.type !== 'Index') defs.push([t.name, v]); });
+      ids.forEach((t, i) => { const v = n.values[i]; if (v && v.type === 'Func' && t.type !== 'Index') { defs.push([t.name, v]); depthOf.set(v, depth); ownerOf.set(v, owner); } });
     }
-    if (n.type === 'LocalFunction') defs.push([n.id.name, n.func]);
-    return undefined;
-  });
-  for (const [name, f] of defs) {
+    if (n.type === 'LocalFunction') { defs.push([n.id.name, n.func]); depthOf.set(n.func, depth); ownerOf.set(n.func, owner); }
+    const isF = n.type === 'Func';
+    for (const k of Object.keys(n)) { if (k === 'comments' || k === 'endComments') continue; const c = n[k]; if (c && typeof c === 'object') visit(c, isF ? depth + 1 : depth, isF ? n : owner); }
+  };
+  visit(chunk.body, 0, null);
+  const packShaped = (f) => {
+    if (f.body.length !== 1 || f.body[0].type !== 'Return' || f.body[0].values.length !== 1) return false;
+    const r = stripParens(f.body[0].values[0]);
+    return f.vararg && f.params.length === 0 && r.type === 'Table' && r.fields.length === 2 && r.fields[0].kind === 'keyed' && stripParens(r.fields[1].value).type === 'Vararg';
+  };
+  const depths = defs.filter(([, f]) => packShaped(f)).map(([, f]) => depthOf.get(f));
+  if (!depths.length) return 0;
+  // the outermost pack helper, and the helpers beside it
+  const packDepth = Math.min(...depths);
+  const outer = defs.filter(([, f]) => depthOf.get(f) <= packDepth);
+  for (const [name, f] of outer) {
     if (f.body.length !== 1 || f.body[0].type !== 'Return' || f.body[0].values.length !== 1) continue;
     const r = stripParens(f.body[0].values[0]);
     if (f.vararg && f.params.length === 0 && r.type === 'Table' && r.fields.length === 2 && r.fields[0].kind === 'keyed'
@@ -1297,17 +1388,48 @@ function normaliseCounts(chunk) {
   }
   // `P(f, env, ...)`: call f with the arguments; a call of getfenv answered with the closure's environment. As a call it is `f(...)`
   const calls = new Set();
-  for (const [name, f] of defs) {
+  for (const [name, f] of outer) {
     if (!f.vararg || f.params.length !== 2) continue;
     const last = f.body[f.body.length - 1];
     const r = last && last.type === 'Return' && last.values.length === 1 ? stripParens(last.values[0]) : null;
     if (r && r.type === 'Call' && r.fn.type === 'Name' && r.fn.name === f.params[0].name && r.args.length === 1 && r.args[0].type === 'Vararg' && f.body.length <= 2) calls.add(name);
   }
   if (!packs.size) return 0;
+  // the rewriting goes by name, and below the helpers a function of the program may reuse one: calls are rewritten only where the
+  // name still means the helper, i.e. not inside a function that declares the same name again
+  const shadowing = new Set([...packs.keys(), ...unpacks.keys(), ...calls]);
+  const shadowedCalls = new Set();
+  const declares = (f) => {
+    const out = new Set(f.params.map((p) => p.name));
+    walk(f.body, (m) => {
+      if (m.type === 'Func') return false;
+      if (m.type === 'Local') m.ids.forEach((id) => out.add(id.name));
+      if (m.type === 'LocalFunction') out.add(m.id.name);
+      if (m.type === 'NumFor') out.add(m.id.name);
+      if (m.type === 'GenFor') m.ids.forEach((id) => out.add(id.name));
+      return undefined;
+    });
+    return out;
+  };
+  const mark = (n, hidden) => {
+    if (!n || typeof n !== 'object') return;
+    if (Array.isArray(n)) { n.forEach((x) => mark(x, hidden)); return; }
+    let h = hidden;
+    if (n.type === 'Func') {
+      const own = new Set(defs.filter(([name, f]) => ownerOf.get(f) === n && depthOf.get(f) <= packDepth).map(([name]) => name));
+      const d = [...declares(n)].filter((x) => shadowing.has(x) && !own.has(x));
+      if (d.length) h = new Set([...hidden, ...d]);
+    }
+    if (n.type === 'Call' && n.fn.type === 'Name' && h.has(n.fn.name)) shadowedCalls.add(n);
+    for (const k of Object.keys(n)) { if (k === 'comments' || k === 'endComments') continue; const c = n[k]; if (c && typeof c === 'object') mark(c, h); }
+  };
+  mark(chunk.body, new Set());
+
   const keys = new Set([...packs.values(), ...[...unpacks.values()].map((u) => u.key)]);
   let changed = 0;
   transform(chunk, {
     expr(e) {
+      if (shadowedCalls.has(e)) return undefined;
       if (e.type === 'Call' && e.fn.type === 'Name' && calls.has(e.fn.name) && e.args.length >= 2) { changed++; return { type: 'Call', fn: e.args[0], args: e.args.slice(2) }; }
       if (e.type === 'Call' && e.fn.type === 'Name' && packs.has(e.fn.name)) { changed++; return { type: 'Table', fields: e.args.map((a) => ({ kind: 'item', value: a })) }; }
       // the call is bound to the unpack role after the locator has found it (by name it could be shadowed inside the blocks)
@@ -1317,6 +1439,37 @@ function normaliseCounts(chunk) {
         if (rest.every((f) => f.kind === 'item')) { changed++; return { ...e, fields: rest }; }
       }
       return undefined;
+    },
+  });
+  // `Z = { f(x) }` ... `d = { unpack(Z) }`: the earlier layout packed once (`d = { f(x) }`). When Z is defined in the same block, read nowhere in
+  // between and only cleared after, d takes Z's definition where Z was made
+  const reads = (node, name) => { let hit = 0; walk(node, (m) => { if (m.type === 'Name' && m.name === name) hit++; return undefined; }); return hit; };
+  transform(chunk, {
+    block(stmts) {
+      let out = null;
+      for (let i = 0; i < stmts.length; i++) {
+        const st = stmts[i];
+        if (!(st.type === 'Assign' && st.targets.length === 1 && st.targets[0].type === 'Name' && st.values.length === 1)) continue;
+        const t = stripParens(st.values[0]);
+        if (!(t.type === 'Table' && t.fields.length === 1 && t.fields[0].kind === 'item')) continue;
+        const u = stripParens(t.fields[0].value);
+        if (!(u.type === 'Call' && u.fn.type === 'Name' && u.fn.unpackRole && u.args.length === 1 && u.args[0].type === 'Name')) continue;
+        const z = u.args[0].name;
+        const d = st.targets[0].name;
+        let j = i - 1;
+        for (; j >= 0; j--) {
+          const x = stmts[j];
+          if (x.type === 'Assign' && x.targets.length === 1 && x.targets[0].type === 'Name' && x.targets[0].name === z) break;
+        }
+        if (j < 0 || stripParens(stmts[j].values[0]).type !== 'Table') continue;
+        if (stmts.slice(j + 1, i).some((x) => reads(x, z) || reads(x, d))) continue;
+        if (stmts.slice(i + 1).some((x) => reads(x, z) && !(x.type === 'Assign' && x.values.every((v) => v.type === 'Nil')))) continue;
+        out = out || stmts.slice();
+        out[j] = { ...stmts[j], targets: [{ ...st.targets[0] }] };
+        out[i] = null;
+        changed++;
+      }
+      return out ? out.filter(Boolean) : undefined;
     },
   });
   return changed;

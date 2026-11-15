@@ -263,7 +263,9 @@ class Emitter {
       first = false;
       const blk = this.blocks.get(cur);
       // a short block that ends the function can be written wherever control gets to it: several early returns share one
-      const copyable = blk.term.kind === 'return' && blk.stmts.length <= 3;
+      // so can a block that only clears variables (`x = nil`) on its way to a shared exit: copying it changes nothing
+      const clearsOnly = blk.stmts.length <= 8 && blk.stmts.every((st) => st.type === 'Assign' && st.values.every((v) => v.type === 'Nil') && st.targets.every((t) => t.type === 'Name'));
+      const copyable = (blk.term.kind === 'return' && blk.stmts.length <= 3) || (clearsOnly && blk.term.kind === 'goto');
       if (this.emitted.has(cur) && !copyable) throw new CfgError(`block ${String(cur)} would be emitted twice`);
       this.emitted.add(cur);
       out.push(...blk.stmts);
@@ -286,7 +288,9 @@ class Emitter {
       if (t.f === loop.exit) { out.push({ type: 'If', clauses: [{ cond: this.h.negate(t.cond), body: [{ ...BREAK }] }], orelse: null }); return t.t; }
     }
     let j = this.g.ipdom.get(cur);
-    if (j === this.g.X || (loop && !loop.nodes.has(j))) j = null;
+    // inside the loop, or inside the clean-up a `break` runs before it leaves (the arms can come together there too)
+    const within = (n) => !loop || loop.nodes.has(n) || (loop.breakNodes && loop.breakNodes.has(n));
+    if (j === this.g.X || !within(j)) j = null;
     // A join is where the arms come together in one pass. An arm that goes round the loop first (a `continue`) meets the post-dominator only in the
     // next iteration, after the loop body has run again, so the block is not a join: it belongs to the other arm. (`if even then total = total + n end`
     // followed by `if n > 9 then break end` is a different program from the `elseif` it came from.)
@@ -330,7 +334,7 @@ class Emitter {
         const n = stack.pop();
         for (const m of this.g.succ.get(n)) {
           if (seen.has(m) || this.g.index.get(m) <= this.g.index.get(n)) continue;
-          if (loop && !loop.nodes.has(m)) continue;
+          if (loop && !loop.nodes.has(m) && !(loop.breakNodes && loop.breakNodes.has(m))) continue;
           seen.add(m);
           stack.push(m);
         }

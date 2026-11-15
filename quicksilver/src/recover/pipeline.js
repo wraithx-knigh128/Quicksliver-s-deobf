@@ -19,11 +19,12 @@ import { unwrapLayers } from '../passes/layers.js';
 import { dataflowPass } from '../passes/dataflow.js';
 import { regionPass } from '../passes/regions.js';
 import { booleanResults, orientComparisons, shortCircuits, tableConstructors, methodCalls, bareNils, functionForms, multiResults, numericLoops, loopForms, unsetLocals } from '../passes/idioms.js';
-import { removeAntiTamper, removeGuardFlag, removeGuardPrefix, undoProxifyLocals, removeOrphanDecoders, removeUnusedJoiner } from './prometheus.js';
+import { removeAntiTamper, removeGuardFlag, removeGuardPrefix, removeSanityCheck, undoProxifyLocals, removeOrphanDecoders, removeUnusedJoiner } from './prometheus.js';
 import { propagateStable } from '../passes/stable.js';
 import { buildReport, annotate, stripReport } from './annotate.js';
 import { profileVm } from './vmprofile.js';
 import { liftObscuraVm, ObscuraVmError } from './obscura-vm.js';
+import { liftPrometheusBvm, looksLikePrometheusBvm, BvmError } from './prometheus-bvm.js';
 import { liftIronbrikkedVm, IronbrikkedVmError, looksLikeIronbrikked } from './ironbrikked-vm.js';
 import { liftFusgatoVm, FusgatoVmError, looksLikeFusgato } from './fusgato-vm.js';
 import { repairRenamedKeyword } from './keyword-repair.js';
@@ -134,9 +135,31 @@ function rebuildVmify(ast, run) {
     functions += r.functions;
     if (r.counted) counted += r.counted;
   }
-  // the layout Prometheus writes since 2026-11 (counted value lists, an environment threaded through closures) is read by rewriting it into the earlier one;
-  // that reader is not finished, so the result says it
-  if (layers && counted) return { changed: functions, layers, functions, experimental: `the Vmify layout Prometheus writes since November 2026 (value lists that carry their count, an environment handed to every closure) was read by translating it into the earlier layout (${counted} place(s)); that reader is unfinished and some programs it gives do not run like the original` };
+  // Cff applied to a VM interpreter alone (Prometheus Strong): the dispatcher is the body of a function inside the script, not the script.
+  // Each such function body is read as a script of its own (`...` is the function's, which is what the dispatcher was handed)
+  if (!layers) {
+    const nested = [];
+    walk(ast, (n) => {
+      if (n.type !== 'Func' || n.body.length !== 1 || n.body[0].type !== 'Return' || n.body[0].values.length !== 1) return undefined;
+      const c = n.body[0].values[0];
+      const fn = c && c.type === 'Call' ? (c.fn.type === 'Paren' ? c.fn.expr : c.fn) : null;
+      if (fn && fn.type === 'Func' && fn.params.length >= 4 && fn.body.length >= 2) { nested.push(n); return false; }
+      return undefined;
+    });
+    for (const f of nested) {
+      const sub = { type: 'Chunk', body: f.body, features: ast.features, endComments: [] };
+      let r;
+      try { r = unflattenVmify(sub, { layer: ++run.vmifyLayers }); } catch (e) { if (e instanceof VmifyError) continue; throw e; }
+      if (!r.changed) continue;
+      f.body = sub.body;
+      layers++;
+      functions += r.functions;
+      if (r.counted) counted += r.counted;
+    }
+  }
+  // the layout Prometheus writes since 2026-11 (its old Vmify, renamed Cff: counted value lists, an environment threaded through closures) is read by
+  // rewriting it into the earlier one
+  if (layers && counted) return { changed: functions, layers, functions, layout: `the Cff layout Prometheus writes since November 2026 (value lists that carry their count, an environment handed to every closure), read by translating it into the earlier Vmify layout (${counted} place(s))` };
   return layers ? { changed: functions, layers, functions } : { skipped: 'not a Vmify script' };
 }
 
@@ -309,6 +332,7 @@ export function recover(source, userOptions = {}) {
   let vmified = false;
   let vmTried = false;
   let vmLifted = false;
+  let bvmTried = 0;
   let ikTried = false;
   const evalMemory = new Set();          // decoders found by an earlier round of evaluation
   let mvJoined = false;
@@ -368,12 +392,16 @@ export function recover(source, userOptions = {}) {
     total += run.step('uninline', 'Give inlined function bodies back their own functions', (a) => uninlinePass(a, { single: detection.families.some((f) => f.id === 'hercules' && f.confidence >= 0.5) }), { quiet: true });
     {
       const n = run.step('hercules.vm', 'Rebuild the program from the Hercules VM data', rebuildHerculesVm, { quiet: true });
-      if (n) { total += n; unusedAtStart = new WeakSet(); decompiled = true; }
+      if (n) { total += n; unusedAtStart = new WeakSet(); decompiled = true; bvmTried = 99; }
     }
     if (maybeVmify) {
       // a rebuilt program has no author-written dead code to preserve; Strong applies the pass twice, so this runs each round
       const n = run.step('prometheus.vmify', 'Rebuild the functions Vmify flattened into a dispatcher', (a) => rebuildVmify(a, run), { quiet: true });
-      if (n) { total += n; unusedAtStart = new WeakSet(); decompiled = true; vmified = true; }
+      if (n) {
+        total += n; unusedAtStart = new WeakSet(); decompiled = true; vmified = true;
+        // the script's own wrapper, compiled into the dispatcher with everything else, comes back as a local function called once
+        total += run.step('unwrap', 'Unwrap outer wrapper function', (a) => unwrapWrapper(a), { quiet: true });
+      }
     }
     if (decompiled) {
       total += run.step('idioms.results', 'Drop the unpack({ f() }) wrappers around calls', (a) => multiResults(a), { quiet: true });
@@ -448,6 +476,8 @@ export function recover(source, userOptions = {}) {
     }
     if (mvJoined) total += run.step('moonveil.unbox', 'Read MoonVeil cells as the variables they stand for', (a) => unboxCells(a), { quiet: true });
     total += run.step('simplify', 'Simplify control flow and remove dead code', (a) => simplifyPass(a, { unusedAtStart }));
+    // the dispatcher kept its own constants in a table (`__env[K[27]]` is a global): with them in place the globals read as globals
+    if (vmified) total += run.step('constants.inline', 'Replace reads of a machine-named table of constants by the constants', (a) => inlineConstantTable(a, { anyName: true }), { quiet: true });
     if (vmified) total += run.step('prometheus.env', 'Read globals from the environment table again', (a) => envToGlobals(a), { quiet: true });
     if (decompiled) total += run.step('regions', 'Evaluate closed constant computations', (a) => regionPass(a), { quiet: true });
     if (decompiled) total += run.step('dataflow', 'Remove dead stores, copies and temporaries', (a) => dataflowPass(a), { quiet: true });
@@ -461,7 +491,7 @@ export function recover(source, userOptions = {}) {
     // a string table that decrypts itself in place: the decoder's first argument becomes the stored text so that the evaluator can run it
     total += run.step('strtable.seed', 'Read the strings of a self-decrypting table as the decoder\u2019s arguments', (a) => seedDecoderCalls(a), { quiet: true });
     if (options.sandbox.enabled) {
-      total += run.step('evaluate', 'Evaluate string decoders (sandbox)', (a) => evaluatePass(a, { sandbox: options.sandbox, memory: evalMemory }));
+            total += run.step('evaluate', 'Evaluate string decoders (sandbox)', (a) => evaluatePass(a, { sandbox: options.sandbox, memory: evalMemory }));
     } else {
       run.record('evaluate', 'Evaluate string decoders (sandbox)', { status: 'skipped', changed: 0, detail: 'sandboxed evaluation is not enabled', ms: 0 });
     }
@@ -476,6 +506,14 @@ export function recover(source, userOptions = {}) {
     total += run.step('prometheus.orphans', 'Remove the string-decryption machinery nothing reads any more', (a) => removeOrphanDecoders(a), { quiet: true });
     total += run.step('prometheus.joiner', 'Remove the SplitStrings joiner nothing calls any more', (a) => removeUnusedJoiner(a), { quiet: true });
     total += run.step('constants.inline', 'Replace reads of a machine-named table of constants by the constants', (a) => inlineConstantTable(a), { quiet: true });
+    // an anti-tamper guard the dispatcher had compiled with everything else, readable now that its strings are
+    if (vmified) total += run.step('prometheus.guardprefix', 'Remove an anti-tamper guard that ends in `if not flag then fail() end`', (a) => removeGuardPrefix(a), { quiet: true });
+    // Prometheus' register VM: its program is a literal of records, readable once the layers above are undone
+    if (bvmTried < 4 && looksLikePrometheusBvm(run.ast)) {
+      bvmTried++;
+      const n = run.step('prometheus.bvm', 'Lift the Prometheus register VM back to source', (a) => { try { const r = liftPrometheusBvm(a); run.bvm = r.stats; return r; } catch (e) { if (e instanceof BvmError) return { changed: 0, skipped: e.message }; throw e; } }, { quiet: true });
+      if (n) { total += n; unusedAtStart = new WeakSet(); decompiled = true; }
+    }
     // once decoded names are plain strings, `obj.method(obj, ...)` (what tools that route every call through a lookup write) is `obj:method(...)` again
     if (!decompiled) total += run.step('idioms.method.plain', 'Write o.m(o, ...) as o:m(...)', (a) => methodCalls(a), { quiet: true });
     return total;
@@ -515,6 +553,8 @@ export function recover(source, userOptions = {}) {
       run.step('simplify.after-adaptive', 'Simplify control flow and remove dead code', (a) => simplifyPass(a, { unusedAtStart: new WeakSet() }), { quiet: true });
     }
   }
+  if (vmified) run.step('prometheus.guardprefix.late', 'Remove an anti-tamper guard that ends in `if not flag then fail() end`', (a) => removeGuardPrefix(a), { quiet: true });
+  if (vmified) run.step('prometheus.sanity', 'Remove the sanity-check loop an anti-tamper guard leaves in front of it', (a) => removeSanityCheck(a), { quiet: true });
   if (vmified) run.step('prometheus.environment', 'Declare the environment the script still reads', (a) => envToGlobals(a, true), { quiet: true });
   if (!vmLifted) run.step('varargs', 'Remove unused vararg parameters', (a) => removeUnusedVararg(a), { quiet: true });
   // the rebuilt program is already named and laid out; the later passes would only rename what was named on purpose

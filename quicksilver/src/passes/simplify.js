@@ -276,16 +276,28 @@ function removeDead(chunk, state) {
     const v = info.varOf.get(name);
     return v && !v.isGlobal && v.reads.length === 0 && (isMachineName(v.name) || !state.unusedAtStart.has(v.decl));
   };
+  // `local f ... function f() end`: the function statement sets the local (the scope analysis does not count it as a write). The two go
+  // together or not at all, or the statement would set a global once the declaration is gone
+  const fnTargets = new Set();
+  walk(chunk, (n) => { if (n.type === 'Function' && n.target && n.target.type === 'Name' && !n.method) { const v = info.varOf.get(n.target); if (v && !v.isGlobal) fnTargets.add(v); } });
+  const deadFn = (v) => v.reads.length === 0 && (isMachineName(v.name) || !state.unusedAtStart.has(v.decl));
+  const unset = (v) => v.writes.length === 0 && (!fnTargets.has(v) || deadFn(v));
   let changed = 0;
   transform(chunk, {
     stmt(s) {
+      if (s.type === 'Function' && s.target && s.target.type === 'Name' && !s.method) {
+        const v = info.varOf.get(s.target);
+        if (v && !v.isGlobal && fnTargets.has(v) && deadFn(v)) { changed++; return null; }
+        return undefined;
+      }
       if (s.type === 'Local') {
         const vars = s.ids.map((id) => info.varOf.get(id));
         // a declaration list without values (what a decompiler hoists) loses the names nothing uses
         if (s.values.length === 0 && s.ids.length > 1) {
-          const keep = s.ids.filter((id, i) => !(removable(vars[i]) && vars[i].writes.length === 0));
+          const keep = s.ids.filter((id, i) => !(removable(vars[i]) && unset(vars[i])));
           if (keep.length && keep.length < s.ids.length) { changed++; return { ...s, ids: keep }; }
         }
+        if (vars.some((v) => v && fnTargets.has(v) && !deadFn(v))) return undefined;
         if (vars.every((v, i) => removable(v, s.values[i]))) {
           if (s.values.every((x) => isPure(x, info))) { changed++; return null; }
           if (s.ids.length === 1 && s.values.length === 1 && (s.values[0].type === 'Call' || s.values[0].type === 'MethodCall')) {

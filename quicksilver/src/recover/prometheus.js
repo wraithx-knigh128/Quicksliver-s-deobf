@@ -156,10 +156,32 @@ export function removeGuardPrefix(chunk) {
     if (from < 0 || from >= at) continue;
     // the statements in front of `local flag = true` that declare what only the guard uses (`local function f() end` ... `pcall(f)`) are the guard's too
     const inRange = (m, a, b) => body.slice(a, b + 1).some((st) => { let hit = false; walk(st, (n) => { if (n === m) hit = true; return hit ? false : undefined; }); return hit; });
+    // so is the sanity check AntiTamper puts first (`local valid = "s"; for i = 0, n do ... end`): statements that touch nothing but the
+    // guard's own variables and the standard library
+    const selfContained = (st, a) => {
+      let ok = true;
+      walk(st, (n) => {
+        if (!ok || n.type !== 'Name') return undefined;
+        const v = info.varOf.get(n);
+        if (!v) { ok = false; return false; }
+        if (v.isGlobal) { if (!GUARD_STD.has(v.name)) ok = false; return undefined; }
+        if (!inRange(v.decl, a, at)) ok = false;
+        return undefined;
+      });
+      return ok;
+    };
     while (from > 0) {
       const prev = body[from - 1];
       const declared = prev.type === 'LocalFunction' ? [prev.id] : prev.type === 'Local' ? prev.ids : null;
-      if (!declared) break;
+      if (!declared) {
+        if (['NumFor', 'Do', 'While', 'If', 'Repeat'].includes(prev.type) && selfContained(prev, from - 1)) { from--; continue; }
+        // `local valid = "s"` right before it, used by nothing else
+        const before = from >= 2 ? body[from - 2] : null;
+        if (['NumFor', 'Do', 'While', 'If', 'Repeat'].includes(prev.type) && before && before.type === 'Local' && selfContained(prev, from - 2)
+          && before.ids.every((id) => { const v = info.varOf.get(id); return v && [...v.reads, ...v.writes].every((m) => inRange(m, from - 2, at)); })
+          && before.values.every((v) => v.type === 'String' || v.type === 'Number' || v.type === 'True' || v.type === 'False')) { from -= 2; continue; }
+        break;
+      }
       const vars = declared.map((id) => info.varOf.get(id));
       if (vars.some((v) => !v || [...v.reads, ...v.writes].some((m) => !inRange(m, from - 1, at)))) break;
       from--;
@@ -171,8 +193,12 @@ export function removeGuardPrefix(chunk) {
     for (const st of segment) walk(st, (n) => { if (n.type === 'Name') names.add(n); if (n.type === 'Id') ids.add(n); if (isGuardMarker(n)) marker = true; });
     if (!marker) continue;
     // the failure branch: calls of the segment's own functions, or of error
-    const failOk = s.clauses[0].body.every((x) => x.type === 'CallStmt' && x.call.type === 'Call' && x.call.fn.type === 'Name'
-      && (() => { const v = info.varOf.get(x.call.fn); return v && (v.isGlobal ? v.name === 'error' : ids.has(v.decl)); })());
+    const ownCall = (c) => c && c.type === 'Call' && c.fn.type === 'Name'
+      && (() => { const v = info.varOf.get(c.fn); return v && (v.isGlobal ? v.name === 'error' : ids.has(v.decl)); })();
+    // or, written back from a flattener, a local function that loops calling the failure, returned into: `local function f() while true do fail() end end; return f()`
+    const fb = s.clauses[0].body;
+    const failOk = fb.every((x) => x.type === 'CallStmt' && ownCall(x.call))
+      || (fb.length === 2 && (fb[0].type === 'LocalFunction' || (fb[0].type === 'Local' && fb[0].ids.length === 1 && fb[0].values.length === 1 && fb[0].values[0].type === 'Func')) && fb[1].type === 'Return' && fb[1].values.length === 1 && ownCall(fb[1].values[0]));
     if (!failOk) continue;
     let ok = true;
     for (const v of info.vars) {
@@ -448,3 +474,41 @@ export function removeUnusedJoiner(chunk) {
 }
 
 export { makeConst, constOf, NOT_CONST };
+
+/**
+ * The sanity check AntiTamper writes first, once the guard after it is gone: `local valid = "s"; for i = 0, n do ... end` where the loop
+ * only sets and tests `valid` and hangs (`while true do end`) when a test fails. Nothing else reads `valid`; with the guard removed the
+ * loop computes nothing the program uses, so it goes too.
+ */
+export function removeSanityCheck(chunk) {
+  const info = analyze(chunk);
+  let changed = 0;
+  const visitBlock = (body) => {
+    for (let i = 0; i + 1 < body.length; i++) {
+      const a = body[i];
+      const b = body[i + 1];
+      if (a.type !== 'Local' || a.ids.length !== 1 || a.values.length !== 1 || a.values[0].type !== 'String' || b.type !== 'NumFor') continue;
+      const v = info.varOf.get(a.ids[0]);
+      if (!v) continue;
+      const loopVar = info.varOf.get(b.id);
+      let ok = true;
+      let hangs = false;
+      walk(b, (n) => {
+        if (!ok) return false;
+        if (n.type === 'While' && n.cond.type === 'True' && !n.body.length) hangs = true;
+        if (n.type === 'Call' || n.type === 'MethodCall' || n.type === 'Func' || n.type === 'Index') { ok = false; return false; }
+        if (n.type === 'Name') { const w = info.varOf.get(n); if (w !== v && w !== loopVar) ok = false; }
+        return undefined;
+      });
+      if (!ok || !hangs) continue;
+      const inLoop = new Set();
+      walk(b, (n) => { inLoop.add(n); return undefined; });
+      if ([...v.reads, ...v.writes].some((m) => !inLoop.has(m))) continue;
+      body.splice(i, 2);
+      changed += 2;
+      i--;
+    }
+  };
+  visitBlock(chunk.body);
+  return { changed };
+}

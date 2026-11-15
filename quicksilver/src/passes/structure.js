@@ -19,6 +19,7 @@ export function unwrapWrapper(chunk) {
     if (!chunk.body.length) break;
     const s = chunk.body[chunk.body.length - 1];
     if (chunk.body.length !== 1 && s.type !== 'Return') break;
+    if (unwrapNamedWrapper(chunk)) { unwrapped++; continue; }
     // a preamble that declares a local would capture names the wrapper body reads as globals once the body is spliced in beside it: it is only passed over when it declares none
     if (chunk.body.slice(0, -1).some((p) => p.type === 'Local' || p.type === 'LocalFunction' || p.type === 'Label')) break;
     let call = null;
@@ -37,6 +38,72 @@ export function unwrapWrapper(chunk) {
     unwrapped++;
   }
   return { changed: unwrapped };
+}
+
+/**
+ * `local L = { ... }; local F = function(...) BODY end; return F(unpack(L))`: what a lifted flattener leaves of the script's own
+ * wrapper (the arguments packed, the body a local function called once with them). BODY runs at chunk level instead when F and L
+ * are used nowhere else and no name BODY reads from outside is one of the preamble's locals.
+ */
+function unwrapNamedWrapper(chunk) {
+  const body = chunk.body;
+  const s = body[body.length - 1];
+  if (s.type !== 'Return' || s.values.length !== 1 || s.values[0].type !== 'Call') return false;
+  const call = s.values[0];
+  if (call.fn.type !== 'Name' || call.args.length !== 1) return false;
+  const fi = body.findIndex((x) => x.type === 'Local' && x.ids.length === 1 && x.ids[0].name === call.fn.name && x.values.length === 1 && x.values[0].type === 'Func');
+  if (fi < 0) return false;
+  const fn = body[fi].values[0];
+  if (fn.params.length || !fn.vararg) return false;
+  const a = call.args[0];
+  let li = -1;
+  const unpackOfVarargs = (x) => x.type === 'Call' && x.fn.type === 'Name' && x.fn.name === 'unpack' && x.args.length === 1 && x.args[0].type === 'Table'
+    && x.args[0].fields.length === 1 && x.args[0].fields[0].kind === 'item' && x.args[0].fields[0].value.type === 'Vararg';
+  if (a.type === 'Vararg' || unpackOfVarargs(a)) li = -2;
+  else if (a.type === 'Call' && a.fn.type === 'Name' && a.fn.name === 'unpack' && a.args.length === 1 && a.args[0].type === 'Name') {
+    li = body.findIndex((x) => x.type === 'Local' && x.ids.length === 1 && x.ids[0].name === a.args[0].name && x.values.length === 1
+      && x.values[0].type === 'Table' && x.values[0].fields.length === 1 && x.values[0].fields[0].kind === 'item' && x.values[0].fields[0].value.type === 'Vararg');
+    if (li < 0) return false;
+  } else return false;
+  const preamble = body.filter((x, i) => i !== fi && i !== li && i !== body.length - 1);
+  // the preamble must not rebind `unpack` or the names; anything it declares must not be read by BODY as a free name
+  const declared = new Set();
+  for (const x of preamble) {
+    if (x.type === 'Local') x.ids.forEach((id) => declared.add(id.name));
+    else if (x.type === 'LocalFunction') declared.add(x.id.name);
+    else return false;
+  }
+  declared.add(call.fn.name);
+  if (li >= 0) declared.add(body[li].ids[0].name);
+  const free = freeNames(fn.body);
+  if ([...declared].some((n) => free.has(n))) return false;
+  // what the preamble's locals were set to must not be needed: values without calls only
+  const pure = (e) => { let ok = true; const v = (n) => { if (!ok || !n || typeof n !== 'object') return; if (Array.isArray(n)) { n.forEach(v); return; } if (n.type === 'Call' || n.type === 'Func') { ok = n.type !== 'Call' || (n.fn.type === 'Name' && n.fn.name === 'getfenv' && n.args.length === 0); if (!ok) return; } eachChild(n, v); }; v(e); return ok; };
+  if (!preamble.every((x) => x.values.every(pure))) return false;
+  chunk.body = [...fn.body];
+  return true;
+}
+
+const eachChild = (n, fn) => { for (const k of Object.keys(n)) { if (k === 'comments' || k === 'endComments') continue; const c = n[k]; if (c && typeof c === 'object') fn(c); } };
+
+/** Names a block reads or writes that it does not declare itself (scopes are tracked roughly: a name declared anywhere inside counts as declared from there on). */
+function freeNames(stmts) {
+  const free = new Set();
+  const visit = (n, scope) => {
+    if (!n || typeof n !== 'object') return;
+    if (Array.isArray(n)) { n.forEach((x) => visit(x, scope)); return; }
+    switch (n.type) {
+      case 'Name': if (!scope.has(n.name)) free.add(n.name); return;
+      case 'Local': n.values.forEach((v) => visit(v, scope)); n.ids.forEach((id) => scope.add(id.name)); return;
+      case 'LocalFunction': scope.add(n.id.name); visit(n.func, scope); return;
+      case 'Func': { const inner = new Set(scope); n.params.forEach((p) => inner.add(p.name)); visit(n.body, inner); return; }
+      case 'NumFor': { visit(n.start, scope); visit(n.stop, scope); visit(n.step, scope); const inner = new Set(scope); inner.add(n.id.name); visit(n.body, inner); return; }
+      case 'GenFor': { n.exprs.forEach((v) => visit(v, scope)); const inner = new Set(scope); n.ids.forEach((v) => inner.add(v.name)); visit(n.body, inner); return; }
+      default: eachChild(n, (c) => visit(c, scope));
+    }
+  };
+  visit(stmts, new Set());
+  return free;
 }
 
 /** Drop `...` from functions that never use it (Prometheus' AddVararg adds one to every function). */

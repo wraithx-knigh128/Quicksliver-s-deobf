@@ -191,17 +191,17 @@ test('vault-obf (local fixtures): every build is seen as an interpreter and none
 
 const p2611 = path.join(corpus, 'obfuscated/prometheus-2026-11');
 
-test('prometheus 2026-11: the changed Vmify layout is located and lifted (counted value lists, environment threaded through closures)', () => {
+test('prometheus 2026-11: the changed Vmify layout (renamed Cff upstream) is located and lifted (counted value lists, environment threaded through closures)', () => {
   const r = run(read(path.join(p2611, 's07_roblox_style__Weak.lua')));
   const st = r.steps.find((x) => x.id === 'prometheus.vmify');
   assert.equal(st && st.status, 'applied');
-  assert.match(String(st.detail.experimental), /November 2026/);
+  assert.match(String(st.detail.layout), /November 2026/);
 });
 
-test('prometheus 2026-11: while that reader is unfinished no build it lifts is reported as recovered', () => {
-  for (const f of fs.readdirSync(p2611).filter((x) => /__Weak\.lua$/.test(x))) {
+test('prometheus 2026-11: no build is reported as recovered at high confidence unless its dispatcher and VM are gone', () => {
+  for (const f of fs.readdirSync(p2611).filter((x) => x.endsWith('.lua'))) {
     const r = run(read(path.join(p2611, f)));
-    assert.notEqual(r.confidence.level, 'high', f);
-    assert.ok(r.confidence.reasons.some((x) => /Experimental reader/.test(x.text)), f);
+    if (r.confidence.level !== 'high') continue;
+    assert.ok(!r.confidence.reasons.some((x) => /interpreter|dispatcher loop/i.test(x.text)), f);
   }
 });

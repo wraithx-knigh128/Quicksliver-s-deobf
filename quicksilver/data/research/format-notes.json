@@ -348,7 +348,7 @@
             "both"
           ],
           "status": "tool defect",
-          "summary": "calls whose results are used are written with a result count of 0 or 1, RETURN carries a count that is not the number of values, a method call loses its object, a forward jump of 256 or more reads as a backward one: runs error; lifted output follows the encoded instructions and does not run like the original (the audit status is partial: structure and semantic gains are measured, runtime is not judged because the tool’s own output does not run)",
+          "summary": "calls whose results are used are written with a result count of 0 or 1, RETURN carries a count that is not the number of values, a method call loses its object, a forward jump of 256 or more reads as a backward one: runs error; lifted output follows the encoded instructions and does not run like the original (the audit status is partial: structure and semantic gains are measured, runtime is not judged because the tool\u2019s own output does not run)",
           "evidence": "tests/ironbrikked-vm.test.mjs"
         }
       ],
@@ -739,7 +739,8 @@
     "prometheus": {
       "licence": "MIT",
       "research": [
-        "EncryptStrings: a PRNG seeded per string, a shuffled lookup table and a cache read through a proxy; the decryptor returns the seed, so the program reads `cache[decrypt(text, seed)]`"
+        "EncryptStrings: a PRNG seeded per string, a shuffled lookup table and a cache read through a proxy; the decryptor returns the seed, so the program reads `cache[decrypt(text, seed)]`",
+        "After Prompt XV: upstream a98c501 (2026-11-09) read as text. The old Vmify compiler is now the Cff step; Vmify is a register bytecode VM (src/prometheus/vm/): prototypes as a literal of records rebuilt at startup, per-build field keys, opcode ids shuffled over 56 semantic instructions, operands spread over slots 2..5 in a per-build order. Presets: Weak = Cff + ConstantArray + WrapInFunction; Medium = Vmify + EncryptStrings(HoistVmStrings) + AntiTamper + ConstantArray + WrapInFunction + Cff(ExcludeVm) + NumbersToExpressions; Strong = the same with the interpreter flattened"
       ],
       "improvements": [
         {
@@ -765,6 +766,24 @@
             "tests/xiv-targets.test.mjs",
             "tests/prometheus-nested.test.mjs"
           ]
+        },
+        {
+          "id": "xvi-prometheus-register-vm",
+          "summary": "all 24 builds of the current upstream (Weak, Medium, Strong; 8 programs) run like the original after recovery. Cff: results read after the block clears its registers, helper normalisation by scope, the native-expression bridge undone, Cff inside a function body, joins inside the clean-up a break runs. Register VM: program read from its record literal, field keys from the shape of the values, operand slots from the fetch, opcodes from what each handler does (refused when two handlers read alike), prototypes lifted to functions with value lists inlined where liveness allows",
+          "files": [
+            "src/recover/prometheus-bvm.js",
+            "src/recover/vmify.js",
+            "src/recover/prometheus.js",
+            "src/decompile/cfg.js",
+            "src/passes/structure.js",
+            "src/passes/strtable.js",
+            "src/passes/simplify.js",
+            "src/recover/pipeline.js"
+          ],
+          "tests": [
+            "tests/xvi-prometheus-vm.test.mjs",
+            "tests/xv-targets.test.mjs"
+          ]
         }
       ],
       "failurePatterns": [
@@ -776,6 +795,15 @@
           ],
           "status": "partial",
           "summary": "s05, s06 and s07 keep one undecoded read of the cache (a lookup through a proxy inside a nested function) and stay at medium confidence"
+        },
+        {
+          "id": "prometheus-2026-boxes",
+          "configs": [
+            "Medium",
+            "Strong"
+          ],
+          "status": "open",
+          "summary": "a variable boxed inside a loop stays a one-element box handed to a closure factory; a generic for keeps its value list; Strong keeps its decryptor character table (math.random side effect)"
         }
       ],
       "assumptions": []

@@ -197,7 +197,7 @@ function constantEntries(table) {
  * A local table of numbers, strings, booleans and nils, machine-named or written key by key, that is only ever read with a constant number as the key is a list of constants: each
  * read is the constant and the table goes. (XFuscator keeps every constant of the program in one such table, with `[k] = nil` entries where the program had nil, which is why it is written key by key.)
  */
-export function inlineConstantTable(chunk) {
+export function inlineConstantTable(chunk, opts = {}) {
   const info = analyze(chunk);
   const parentOf = new Map();
   const stored = new Set();                         // the indexed places something is assigned to
@@ -214,7 +214,9 @@ export function inlineConstantTable(chunk) {
     const entries = constantEntries(n.values[0]);
     if (!entries || entries.size < 3) return undefined;
     // a machine-named table, or one written key by key (`[1] = ..., [2] = ...`, the way a program that has nil among its constants has to): nobody writes a list like that by hand
-    if (!isMachineName(v.name) && !(entries.size >= 5 && n.values[0].fields.every((f) => f.kind === 'keyed'))) return undefined;
+    // (after a flattener's dispatcher was rebuilt the name says nothing: the tool's constant table and the program's own are
+    // told apart by use alone, and a table only ever read at constant keys is its constants either way)
+    if (!opts.anyName && !isMachineName(v.name) && !(entries.size >= 5 && n.values[0].fields.every((f) => f.kind === 'keyed'))) return undefined;
     const sites = [];
     for (const r of v.reads) {
       const p = parentOf.get(r);
