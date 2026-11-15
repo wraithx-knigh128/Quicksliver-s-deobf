@@ -896,6 +896,39 @@
       ],
       "improvements": [],
       "failurePatterns": []
+    },
+    "azurevm": {
+      "research": [
+        "Prompt XVI: azure_vm/{encoder,generator,reader}.lua read as text: string.dump bytecode, global opcode permutation 1..250, per-prototype affine opcode map and three operand layouts chained on the previous word, a 2^34 keystream, nonce-keyed strings, a rolling byte encoding in Ascii85; the dispatch is 38 fixed templates plus decoys"
+      ],
+      "improvements": [
+        {
+          "id": "xvi-azurevm-vm",
+          "summary": "lifted without running anything: payload and keys read from the script, handlers matched to the generator templates, the program rebuilt as a standard Lua 5.1 chunk (it runs like the original) and decompiled; a sandbox self-check refuses reconstructions that behave differently from the chunk. 36 of 48 builds run like the original at high confidence (none before); the decompiler now splits captured registers at CLOSE",
+          "files": [
+            "src/recover/azurevm.js",
+            "src/recover/azurevm-templates.js",
+            "src/recover/bytecode-check.js",
+            "src/decompile/decompile.js",
+            "src/recover/pipeline.js"
+          ],
+          "tests": [
+            "tests/xvi-azurevm.test.mjs"
+          ]
+        }
+      ],
+      "failurePatterns": [
+        {
+          "id": "azurevm-vm-unstructured",
+          "configs": [
+            "Luraph14",
+            "AzureGod15",
+            "AzureGodUltra"
+          ],
+          "status": "open",
+          "summary": "functions the decompiler cannot structure (flattening and opaque predicates of the layered presets): the VM is kept and the result says so"
+        }
+      ]
     }
   },
   "backlog": [

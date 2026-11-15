@@ -26,6 +26,8 @@ import { profileVm } from './vmprofile.js';
 import { liftObscuraVm, ObscuraVmError } from './obscura-vm.js';
 import { liftPrometheusBvm, looksLikePrometheusBvm, BvmError } from './prometheus-bvm.js';
 import { liftVault, looksLikeVault, VaultVmError } from './vault-vm.js';
+import { liftAzureVM, looksLikeAzureVM, AzureVmError } from './azurevm.js';
+import { checkAgainstChunk } from './bytecode-check.js';
 import { liftIronbrikkedVm, IronbrikkedVmError, looksLikeIronbrikked } from './ironbrikked-vm.js';
 import { liftFusgatoVm, FusgatoVmError, looksLikeFusgato } from './fusgato-vm.js';
 import { repairRenamedKeyword } from './keyword-repair.js';
@@ -203,6 +205,27 @@ function rebuildZarthaVm(ast, state) {
   return { changed: r.stats.instructions, ...r.stats };
 }
 
+/** AzureVM: payload and keys read from the script, opcodes read off its handler templates, the program a standard Lua 5.1 chunk for the decompiler. Nothing runs. */
+function rebuildAzureVm(ast, state) {
+  let r;
+  try { r = liftAzureVM(ast); } catch (e) {
+    if (e instanceof AzureVmError) return { skipped: e.message };
+    throw e;
+  }
+  const out = decompile(parseChunk(r.bytes));
+  if (out.failures.length) return { skipped: `the decompiler could not structure ${out.failures.length} function(s): ${out.failures[0]}` };
+  // the decoded chunk is the VM's own program: the reconstruction has to behave like it (run in the sandbox, when that is allowed)
+  let check = null;
+  if (state.sandbox) {
+    check = checkAgainstChunk(r.bytes, print(out.ast));
+    if (check.checked && !check.same) return { skipped: `the decompiled program does not behave like the decoded bytecode (${check.reason}); it is not reported as recovered` };
+  }
+  ast.body = out.ast.body;
+  ast.features = out.ast.features || ast.features;
+  state.stats = { ...r.stats, selfCheck: check ? (check.checked ? 'same as the decoded bytecode in the sandbox' : `not checked: ${check.reason}`) : 'not checked (sandbox off)' };
+  return { changed: r.stats.instructions, ...state.stats };
+}
+
 /** Vault-Obf's register VM: the payload decoded with the parameters it carries, opcodes read off the handlers, functions lifted to Lua. Nothing runs. */
 function rebuildVaultVm(ast, state) {
   let r;
@@ -378,6 +401,15 @@ export function recover(source, userOptions = {}) {
     if (run.step('ironbrikked.vm', 'Lift the IronBrikked virtual machine back to source', (a) => rebuildIronbrikkedVm(a, ik))) {
       unusedAtStart = new WeakSet(); decompiled = true;
       vm = { kind: 'ironbrikked', lifted: true, functions: [], instructionBytes: 0, constants: null, stats: ik.stats };
+    }
+  }
+
+  // AzureVM: a Lua 5.1 bytecode VM whose payload, keys and handler table are literals of the script
+  if (!vm && !zartha.zarthaLifted && !decompiled && looksLikeAzureVM(parsed.ast)) {
+    const az = { stats: null, sandbox: options.sandbox && options.sandbox.enabled };
+    if (run.step('azurevm.vm', 'Lift the AzureVM virtual machine back to source', (a) => rebuildAzureVm(a, az))) {
+      unusedAtStart = new WeakSet(); decompiled = true;
+      vm = { kind: 'azurevm', lifted: true, functions: [], instructionBytes: 0, constants: null, stats: az.stats };
     }
   }
 

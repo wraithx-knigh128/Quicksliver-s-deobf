@@ -52,6 +52,11 @@ function describeVm(vm) {
     lines.push(...wrap(`Virtual machine (FusGato), lifted back to source from its bit-string program (${plural(st.functions || 0, 'function')}, ${plural(st.instructions || 0, 'instruction')}, ${plural(st.constants || 0, 'constant')}). Names, comments and layout are not recovered; every instruction was read from the handler the build wrote for it and the operands it decoded, and the control flow and expressions were rebuilt by the Lua 5.1 decompiler.`, '-- ', '--   '));
     return lines;
   }
+  if (vm.lifted && vm.kind === 'azurevm') {
+    const st = vm.stats || {};
+    lines.push(...wrap(`Virtual machine (AzureVM), lifted back to source from its payload (${plural(st.functions || 0, 'function')}, ${plural(st.instructions || 0, 'instruction')}). The payload was decoded with the keys the script carries, every opcode was read off the handler template this build wrote for it (${st.decoyHandlers || 0} decoy handlers left aside), and the control flow and expressions were rebuilt by the Lua 5.1 decompiler. Names, comments and layout are not recovered.`, '-- ', '--   '));
+    return lines;
+  }
   if (vm.lifted && vm.kind === 'vault') {
     const st = vm.stats || {};
     lines.push(...wrap(`Virtual machine (Vault-Obf), lifted back to source from its payload (${plural(st.functions || 0, 'function')} of ${plural(st.payloadPrototypes || 0, 'prototype')} in the payload; the rest are decoys nothing calls). The payload was decoded with the parameters it carries and every opcode was read off the handler this build wrote for it (${st.dispatch || 'dispatch'}). Names, comments and layout are not recovered.`, '-- ', '--   '));

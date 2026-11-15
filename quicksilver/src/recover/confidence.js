@@ -52,7 +52,7 @@ export function assessConfidence(before, output, ctx) {
   }
   // A VM the input showed and no pass rebuilt. Clean-up can rewrite the signature away (an inlined alias is gone) while the program is still
   // inside the VM, so the verdict cannot depend on the signature surviving.
-  const REBUILT_BY = { ironbrew2: ['ironbrew2'], hercules: ['layers', 'hercules.vm'], moonveil: ['moonveil.vm'], obscura: ['obscura.vm'], zartha: ['zartha.vm'], fusgato: ['fusgato.vm'], luaxen: ['ironbrikked.vm'] };
+  const REBUILT_BY = { azurevm: ['azurevm.vm'], ironbrew2: ['ironbrew2'], hercules: ['layers', 'hercules.vm'], moonveil: ['moonveil.vm'], obscura: ['obscura.vm'], zartha: ['zartha.vm'], fusgato: ['fusgato.vm'], luaxen: ['ironbrikked.vm'] };
   for (const f of before.families) {
     const hard = f.confidence >= 0.5 && f.evidence.find((e) => e.unrecoverable);
     if (!hard) continue;
@@ -63,7 +63,7 @@ export function assessConfidence(before, output, ctx) {
   }
   // An interpreter no rule knows by name, still in the output: the structure probe of the custom-format analysis sees it by its shape (a dispatch over handlers that
   // cover the operations of a register machine, or a table of handler functions read with a computed key). Unless a step rebuilt a VM, the program is still data.
-  const VM_STEPS = ['hercules.vm', 'zartha.vm', 'fusgato.vm', 'ironbrikked.vm', 'obscura.vm', 'moonveil.vm', 'prometheus.vmify', 'prometheus.bvm', 'vault.vm', 'ironbrew2', 'layers'];
+  const VM_STEPS = ['hercules.vm', 'zartha.vm', 'fusgato.vm', 'ironbrikked.vm', 'obscura.vm', 'moonveil.vm', 'prometheus.vmify', 'prometheus.bvm', 'vault.vm', 'azurevm.vm', 'ironbrew2', 'layers'];
   if (output.length < 600000 && !steps.some((x) => VM_STEPS.includes(x.id) && x.status === 'applied')) {
     let left = null;
     try { left = probe(output).transformations.find((t) => t.id === 'bytecode-vm' && t.confidence >= 0.8 && t.shape !== 'staged-container'); } catch { left = null; }

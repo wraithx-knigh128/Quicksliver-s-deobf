@@ -41,17 +41,25 @@ test('AzureVM: the fixtures are real tool output under the MIT licence, at six p
 });
 
 for (const e of ok(azure).filter((x) => x.config !== 'Balanced' && x.sample === 's06_combined.lua')) {
-  test(`azurevm/${e.config}: named from its header and the library prelude, and reported as a VM that is not recovered`, () => {
+  test(`azurevm/${e.config}: named from its header and the library prelude; the VM is lifted and runs as the original, or it stays and is not rated as recovered`, { skip: skipOracle }, async () => {
     const src = fixture('azurevm', e);
     const d = detect(src);
     const f = family(d, 'azurevm');
     assert.ok(f && f.confidence >= 0.95, `confidence ${f && f.confidence}`);
     assert.ok(f.evidence.some((x) => x.rule === 'payload' && x.unrecoverable), 'the payload is flagged');
     assert.equal(d.families.filter((x) => x.confidence >= 0.5).length, 1, 'no other family is claimed');
-    const r = recover(src, {});
+    // Prompt XVI: the VM is lifted (src/recover/azurevm.js); a build whose reconstruction the self-check refuses keeps its VM
+    const r = recover(src, { sandbox: { enabled: true } });
     assert.equal(r.ok, true);
-    assert.ok(r.confidence.score <= 0.4, `confidence ${r.confidence.score}: a VM is still present`);
-    assert.ok(r.confidence.hints.includes('trace'));
+    const step = r.steps.find((x) => x.id === 'azurevm.vm');
+    if (step && step.status === 'applied') {
+      const want = await oracle.runLua(original(e.sample), 'lua51');
+      const got = await oracle.runLua(r.output, 'lua51');
+      assert.equal(got.ok, want.ok, got.error);
+      assert.equal(got.stdout, want.stdout);
+    } else {
+      assert.ok(r.confidence.score <= 0.4, `confidence ${r.confidence.score}: a VM is still present`);
+    }
   });
 }
 

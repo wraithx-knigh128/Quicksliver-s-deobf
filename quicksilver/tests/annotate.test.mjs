@@ -19,7 +19,6 @@ const nested = (f) => fs.readFileSync(path.join(here, 'corpus', 'obfuscated', 'p
 // virtual machines the engine detects and does not rebuild (documented in README.md)
 const UNRECOVERED_VMS = [
   'zenfus__s06_combined__default.lua',
-  'azurevm__s06_combined__Fast.lua',
   'clyde__s06_combined__vm.lua',
 ];
 

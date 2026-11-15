@@ -411,8 +411,23 @@ class FunctionDecompiler {
   pushScope() { this.scopes.push(new Set()); }
   popScope() { this.scopes.pop(); }
 
+  /**
+   * Without debug information a register is one variable for the whole function, which is wrong for a register a closure captured: once
+   * a CLOSE covering it has run, the closure keeps the old variable and the register is a new one. Each CLOSE starts a new generation of
+   * the captured registers it covers, and a later generation gets a name of its own.
+   */
+  generation(r) {
+    if (this.hasDebug || !this.captured.has(r) || this.curIdx === undefined) return 0;
+    if (!this.closes) this.closes = this.ir.map((o, j) => (o.op === 'close' ? [j, o.from] : null)).filter(Boolean);
+    let g = 0;
+    for (const [j, from] of this.closes) if (j < this.curIdx && from <= r) g++;
+    return g;
+  }
+
   tempName(r) {
-    const name = this.o.depth === 0 ? `_r${r}` : `_r${this.o.depth}_${r}`;
+    const g = this.generation(r);
+    const base = this.o.depth === 0 ? `_r${r}` : `_r${this.o.depth}_${r}`;
+    const name = g ? `${base}_c${g}` : base;
     this.hoisted.set(name, r);
     return name;
   }
@@ -926,6 +941,7 @@ class FunctionDecompiler {
   stepSimple(i, out) { return this.step(i, i + 1, out, { exit: null, innerStart: -1, until: -1 }, true); }
 
   step(i, hi, out, ctx, simple = false) {
+    this.curIdx = i;
     const o = this.ir[i];
     const pc = o.pc;
     switch (o.op) {
