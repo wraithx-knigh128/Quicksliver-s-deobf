@@ -1,6 +1,6 @@
 {
  "schema": "quicksilver/primary-matrix@1",
- "generated": "2026-11-14",
+ "generated": "2026-11-15",
  "note": "One row per version and configuration. Status words: verified, partial, experimental, unsupported (format-db) and, for Luraph, the engine registry’s own (partially-tested ...). A cell with a note is one that cannot be measured for that row.",
  "sources": [
   "data/research/format-db.json",
@@ -3058,7 +3058,7 @@
     "of": 7
    },
    "failurePatterns": [
-    "partial: s05, s06 and s07 keep one undecoded read of the cache (a lookup through a proxy inside a nested function) and stay at medium confidence"
+    "open: 2026-11 builds: a variable boxed inside a loop stays a one-element box handed to a closure factory; a generic for keeps its value list; Strong keeps its decryptor character table (math.random side effect)"
    ],
    "status": "partial",
    "implementation": [
@@ -3097,7 +3097,7 @@
     "of": 7
    },
    "failurePatterns": [
-    "partial: s05, s06 and s07 keep one undecoded read of the cache (a lookup through a proxy inside a nested function) and stay at medium confidence"
+    "open: 2026-11 builds: a variable boxed inside a loop stays a one-element box handed to a closure factory; a generic for keeps its value list; Strong keeps its decryptor character table (math.random side effect)"
    ],
    "status": "partial",
    "implementation": [
@@ -3453,25 +3453,25 @@
    },
    "structure": {
     "before": 1,
-    "after": 2
+    "after": 70
    },
    "semantic": {
     "before": 2,
-    "after": 3
+    "after": 55
    },
    "runtime": {
-    "same": 0,
+    "same": 8,
     "judged": 8,
     "notJudged": 0
    },
    "completeness": {
-    "complete": 0,
+    "complete": 8,
     "of": 8
    },
    "failurePatterns": [
-    "partial: s05, s06 and s07 keep one undecoded read of the cache (a lookup through a proxy inside a nested function) and stay at medium confidence"
+    "open: 2026-11 builds: a variable boxed inside a loop stays a one-element box handed to a closure factory; a generic for keeps its value list; Strong keeps its decryptor character table (math.random side effect)"
    ],
-   "status": "unsupported",
+   "status": "partial",
    "implementation": [
     "src/recover/prometheus.js",
     "src/passes/evaluate.js"
@@ -3492,25 +3492,25 @@
    },
    "structure": {
     "before": 1,
-    "after": 1
+    "after": 65
    },
    "semantic": {
     "before": 3,
-    "after": 3
+    "after": 47
    },
    "runtime": {
-    "same": 7,
+    "same": 8,
     "judged": 8,
     "notJudged": 0
    },
    "completeness": {
-    "complete": 0,
+    "complete": 8,
     "of": 8
    },
    "failurePatterns": [
-    "partial: s05, s06 and s07 keep one undecoded read of the cache (a lookup through a proxy inside a nested function) and stay at medium confidence"
+    "open: 2026-11 builds: a variable boxed inside a loop stays a one-element box handed to a closure factory; a generic for keeps its value list; Strong keeps its decryptor character table (math.random side effect)"
    ],
-   "status": "unsupported",
+   "status": "partial",
    "implementation": [
     "src/recover/prometheus.js",
     "src/passes/evaluate.js"
@@ -3531,19 +3531,19 @@
    },
    "structure": {
     "before": 9,
-    "after": 76
+    "after": 80
    },
    "semantic": {
     "before": 5,
-    "after": 56
+    "after": 59
    },
    "runtime": {
-    "same": 2,
+    "same": 8,
     "judged": 8,
     "notJudged": 0
    },
    "completeness": {
-    "complete": 0,
+    "complete": 8,
     "of": 8
    },
    "failurePatterns": [],
@@ -3658,7 +3658,7 @@
     "of": 8
    },
    "failurePatterns": [
-    "partial: s05, s06 and s07 keep one undecoded read of the cache (a lookup through a proxy inside a nested function) and stay at medium confidence"
+    "open: 2026-11 builds: a variable boxed inside a loop stays a one-element box handed to a closure factory; a generic for keeps its value list; Strong keeps its decryptor character table (math.random side effect)"
    ],
    "status": "partial",
    "implementation": [
@@ -3697,7 +3697,7 @@
     "of": 8
    },
    "failurePatterns": [
-    "partial: s05, s06 and s07 keep one undecoded read of the cache (a lookup through a proxy inside a nested function) and stay at medium confidence"
+    "open: 2026-11 builds: a variable boxed inside a loop stays a one-element box handed to a closure factory; a generic for keeps its value list; Strong keeps its decryptor character table (math.random side effect)"
    ],
    "status": "partial",
    "implementation": [

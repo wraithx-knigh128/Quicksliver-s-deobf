@@ -127,8 +127,8 @@ Rows by status: unsupported 4, experimental 3, partially-tested 2.
 |---|---|---|---|---|---|---|---|---|---|---|
 | current | Minify | 7 (prometheus/Minify) | 0/7 | 99%→99% | 96%→96% | 7/7 | 7/7 | verified | — | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
 | current | Weak | 7 (prometheus/Weak) | 7/7 | 11%→80% | 6%→64% | 6/6 (1) | 7/7 | partial | — | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
-| current | Medium | 7 (prometheus/Medium) | 7/7 | 2%→81% | 3%→56% | 6/6 (1) | 7/7 | partial | partial: s05, s06 and s07 keep one undecoded read of the cache (a lookup through a proxy inside a nested function) and stay at medium confidence | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
-| current | Strong | 7 (prometheus/Strong) | 7/7 | 1%→77% | 3%→60% | 6/6 (1) | 7/7 | partial | partial: s05, s06 and s07 keep one undecoded read of the cache (a lookup through a proxy inside a nested function) and stay at medium confidence | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
+| current | Medium | 7 (prometheus/Medium) | 7/7 | 2%→81% | 3%→56% | 6/6 (1) | 7/7 | partial | open: 2026-11 builds: a variable boxed inside a loop stays a one-element box handed to a closure factory; a generic for keeps its value list; Strong keeps its decryptor character table (math.random side effect) | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
+| current | Strong | 7 (prometheus/Strong) | 7/7 | 1%→77% | 3%→60% | 6/6 (1) | 7/7 | partial | open: 2026-11 builds: a variable boxed inside a loop stays a one-element box handed to a closure factory; a generic for keeps its value list; Strong keeps its decryptor character table (math.random side effect) | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
 | current | step-EncryptStrings | 7 (prometheus/step-EncryptStrings) | 7/7 | 49%→99% | 32%→96% | 7/7 | 7/7 | verified | — | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
 | current | step-ConstantArray | 7 (prometheus/step-ConstantArray) | 7/7 | 39%→98% | 21%→92% | 7/7 | 7/7 | verified | — | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
 | current | step-SplitStrings | 7 (prometheus/step-SplitStrings) | 7/7 | 94%→99% | 66%→96% | 7/7 | 7/7 | verified | — | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
@@ -138,13 +138,13 @@ Rows by status: unsupported 4, experimental 3, partially-tested 2.
 | current | step-AddVararg | 7 (prometheus/step-AddVararg) | 0/7 | 99%→99% | 96%→96% | 7/7 | 7/7 | verified | — | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
 | current | step-AntiTamper | 7 (prometheus/step-AntiTamper) | 7/7 | 62%→99% | 39%→96% | 7/7 | 7/7 | verified | — | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
 | current | step-Vmify | 7 (prometheus/step-Vmify) | 7/7 | 13%→80% | 10%→64% | 6/6 (1) | 7/7 | partial | — | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
-| 2026-11 | Medium | 8 (prometheus-2026-11/Medium) | 8/8 | 1%→2% | 2%→3% | 0/8 | 0/8 | unsupported | partial: s05, s06 and s07 keep one undecoded read of the cache (a lookup through a proxy inside a nested function) and stay at medium confidence | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
-| 2026-11 | Strong | 8 (prometheus-2026-11/Strong) | 8/8 | 1%→1% | 3%→3% | 7/8 | 0/8 | unsupported | partial: s05, s06 and s07 keep one undecoded read of the cache (a lookup through a proxy inside a nested function) and stay at medium confidence | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
-| 2026-11 | Weak | 8 (prometheus-2026-11/Weak) | 8/8 | 9%→76% | 5%→56% | 2/8 | 0/8 | partial | — | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
+| 2026-11 | Medium | 8 (prometheus-2026-11/Medium) | 8/8 | 1%→70% | 2%→55% | 8/8 | 8/8 | partial | open: 2026-11 builds: a variable boxed inside a loop stays a one-element box handed to a closure factory; a generic for keeps its value list; Strong keeps its decryptor character table (math.random side effect) | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
+| 2026-11 | Strong | 8 (prometheus-2026-11/Strong) | 8/8 | 1%→65% | 3%→47% | 8/8 | 8/8 | partial | open: 2026-11 builds: a variable boxed inside a loop stays a one-element box handed to a closure factory; a generic for keeps its value list; Strong keeps its decryptor character table (math.random side effect) | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
+| 2026-11 | Weak | 8 (prometheus-2026-11/Weak) | 8/8 | 9%→80% | 5%→59% | 8/8 | 8/8 | partial | — | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
 | lennyobf | Minify | 8 (tests/corpus/obfuscated-local/prometheus-lennyobf/Minify) | 0/8 | 99%→99% | 97%→94% | 7/7 (1) | 8/8 | verified | — | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
 | lennyobf | Weak | 8 (tests/corpus/obfuscated-local/prometheus-lennyobf/Weak) | 8/8 | 6%→71% | 4%→50% | 5/5 (3) | 8/8 | partial | — | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
-| lennyobf | Medium | 8 (tests/corpus/obfuscated-local/prometheus-lennyobf/Medium) | 8/8 | 1%→66% | 2%→46% | 5/5 (3) | 8/8 | partial | partial: s05, s06 and s07 keep one undecoded read of the cache (a lookup through a proxy inside a nested function) and stay at medium confidence | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
-| lennyobf | Strong | 8 (tests/corpus/obfuscated-local/prometheus-lennyobf/Strong) | 8/8 | 1%→66% | 2%→46% | 5/5 (3) | 8/8 | partial | partial: s05, s06 and s07 keep one undecoded read of the cache (a lookup through a proxy inside a nested function) and stay at medium confidence | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
+| lennyobf | Medium | 8 (tests/corpus/obfuscated-local/prometheus-lennyobf/Medium) | 8/8 | 1%→66% | 2%→46% | 5/5 (3) | 8/8 | partial | open: 2026-11 builds: a variable boxed inside a loop stays a one-element box handed to a closure factory; a generic for keeps its value list; Strong keeps its decryptor character table (math.random side effect) | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
+| lennyobf | Strong | 8 (tests/corpus/obfuscated-local/prometheus-lennyobf/Strong) | 8/8 | 1%→66% | 2%→46% | 5/5 (3) | 8/8 | partial | open: 2026-11 builds: a variable boxed inside a loop stays a one-element box handed to a closure factory; a generic for keeps its value list; Strong keeps its decryptor character table (math.random side effect) | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
 | lennyobf | step-EncryptStrings | 8 (tests/corpus/obfuscated-local/prometheus-lennyobf/step-EncryptStrings) | 8/8 | 48%→99% | 32%→97% | 7/7 (1) | 8/8 | verified | — | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
 | lennyobf | step-ConstantArray | 8 (tests/corpus/obfuscated-local/prometheus-lennyobf/step-ConstantArray) | 8/8 | 49%→98% | 29%→93% | 7/7 (1) | 8/8 | verified | — | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
 | lennyobf | step-SplitStrings | 8 (tests/corpus/obfuscated-local/prometheus-lennyobf/step-SplitStrings) | 8/8 | 93%→99% | 65%→97% | 7/7 (1) | 8/8 | verified | — | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
@@ -155,7 +155,7 @@ Rows by status: unsupported 4, experimental 3, partially-tested 2.
 | lennyobf | step-AntiTamper | 8 (tests/corpus/obfuscated-local/prometheus-lennyobf/step-AntiTamper) | 0/8 | 64%→99% | 40%→97% | 7/7 (1) | 8/8 | verified | — | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
 | lennyobf | step-Vmify | 8 (tests/corpus/obfuscated-local/prometheus-lennyobf/step-Vmify) | 8/8 | 12%→80% | 9%→62% | 7/7 (1) | 8/8 | partial | — | `src/recover/prometheus.js`, `src/passes/evaluate.js` |
 
-Rows by status: verified 18, partial 9, unsupported 2.
+Rows by status: verified 18, partial 11.
 
 ## IronBrew
 

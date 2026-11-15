@@ -788,22 +788,13 @@
       ],
       "failurePatterns": [
         {
-          "id": "strong-residual",
-          "configs": [
-            "Strong",
-            "Medium"
-          ],
-          "status": "partial",
-          "summary": "s05, s06 and s07 keep one undecoded read of the cache (a lookup through a proxy inside a nested function) and stay at medium confidence"
-        },
-        {
           "id": "prometheus-2026-boxes",
           "configs": [
             "Medium",
             "Strong"
           ],
           "status": "open",
-          "summary": "a variable boxed inside a loop stays a one-element box handed to a closure factory; a generic for keeps its value list; Strong keeps its decryptor character table (math.random side effect)"
+          "summary": "2026-11 builds: a variable boxed inside a loop stays a one-element box handed to a closure factory; a generic for keeps its value list; Strong keeps its decryptor character table (math.random side effect)"
         }
       ],
       "assumptions": []

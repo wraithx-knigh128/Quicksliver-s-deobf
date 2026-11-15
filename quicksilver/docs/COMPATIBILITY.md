@@ -59,19 +59,19 @@ Open-source Lua 5.1 / basic Luau obfuscator written in Lua (levno-710).
 
 | Configuration | Status | Fidelity before → after | Same behaviour | Mean time |
 |---|---|---|---|---|
-| Minify (preset) | supported | 96% → 96% | 7 / 7 | 25 ms |
-| Weak (preset) | partial | 6% → 64% (needs sandbox) | 6 / 6 (1 tool output broken) | 245 ms |
-| Medium (preset) | partial | 3% → 56% (needs sandbox) | 6 / 6 (1 tool output broken) | 575 ms |
-| Strong (preset) | partial | 3% → 60% (needs sandbox) | 6 / 6 (1 tool output broken) | 1631 ms |
-| EncryptStrings (step) | supported | 32% → 96% (needs sandbox) | 7 / 7 | 41 ms |
-| ConstantArray (step) | supported | 21% → 92% (needs sandbox) | 7 / 7 | 40 ms |
-| SplitStrings (step) | supported | 66% → 96% | 7 / 7 | 17 ms |
+| Minify (preset) | supported | 96% → 96% | 7 / 7 | 23 ms |
+| Weak (preset) | partial | 6% → 64% (needs sandbox) | 6 / 6 (1 tool output broken) | 217 ms |
+| Medium (preset) | partial | 3% → 56% (needs sandbox) | 6 / 6 (1 tool output broken) | 568 ms |
+| Strong (preset) | partial | 3% → 60% (needs sandbox) | 6 / 6 (1 tool output broken) | 1691 ms |
+| EncryptStrings (step) | supported | 32% → 96% (needs sandbox) | 7 / 7 | 37 ms |
+| ConstantArray (step) | supported | 21% → 92% (needs sandbox) | 7 / 7 | 39 ms |
+| SplitStrings (step) | supported | 66% → 96% | 7 / 7 | 16 ms |
 | NumbersToExpressions (step) | supported | 80% → 96% | 7 / 7 | 15 ms |
-| ProxifyLocals (step) | supported | 39% → 95% | 7 / 7 | 24 ms |
+| ProxifyLocals (step) | supported | 39% → 95% | 7 / 7 | 25 ms |
 | WrapInFunction (step) | supported | 95% → 96% | 7 / 7 | 13 ms |
-| AddVararg (step) | supported | 96% → 96% | 7 / 7 | 13 ms |
-| AntiTamper (step) | supported | 39% → 96% | 7 / 7 | 21 ms |
-| Vmify (step) | partial | 10% → 64% | 6 / 6 (1 tool output broken) | 115 ms |
+| AddVararg (step) | supported | 96% → 96% | 7 / 7 | 12 ms |
+| AntiTamper (step) | supported | 39% → 96% | 7 / 7 | 15 ms |
+| Vmify (step) | partial | 10% → 64% | 6 / 6 (1 tool output broken) | 103 ms |
 
 **Detection on real scripts:** 230 of 238 files filed under Prometheus in the public collection (https://github.com/vyxonq-dev/obfuscator-samples, commit `82e582fcdd`) were identified as Prometheus. The collection's labels are its uploaders' and are noisy; a file our rules call something else was looked at before being counted as a miss.
 
@@ -81,10 +81,10 @@ Each revision of the tool that can still be run, measured on its own fixtures (a
 
 | Version | Revision | Fixtures | Fidelity before → after | Same behaviour | Configurations (supported / partial / unsupported) |
 |---|---|---|---|---|---|
-| 2026-11 | `a98c501`  | 24 | 3% → 20% | 9 / 24 | 0 / 1 / 2 |
+| 2026-11 | `a98c501`  | 24 | 3% → 54% | 24 / 24 | 0 / 3 / 0 |
 | lennyobf | `c764942` 2025-01-13 | 104 | 45% → 82% | 84 / 84 | 9 / 4 / 0 |
 
-* **2026-11** not supported: Medium (unsupported, 3%); Strong (unsupported, 3%); Weak (partial, 56%)
+* **2026-11** not supported: Medium (partial, 55%); Strong (partial, 47%); Weak (partial, 59%)
 
 * **lennyobf** not supported: Weak (partial, 50%); Medium (partial, 46%); Strong (partial, 46%); step-Vmify (partial, 62%)
 
@@ -104,22 +104,22 @@ Open-source Lua obfuscator with a module pipeline (zeusssz).
 | Configuration | Status | Fidelity before → after | Same behaviour | Mean time |
 |---|---|---|---|---|
 | light (preset) | supported | 64% → 96% | 6 / 6 (1 tool output broken) | 15 ms |
-| balanced (preset) | supported | 37% → 95% (needs sandbox) | 6 / 6 (1 tool output broken) | 27 ms |
-| heavy (preset) | partial | 7% → 77% (needs sandbox) | 5 / 5 (2 tool output broken) | 60 ms |
-| maximum (preset) | partial | 20% → 66% (needs sandbox) | 2 / 2 (1 tool output broken) | 1526 ms |
-| virtual machine (module) | supported | 8% → 96% | 5 / 5 (2 tool output broken) | 78 ms |
-| antitamper (module) | supported | 37% → 100% | 7 / 7 | 14 ms |
-| control flow (module) | supported | 63% → 98% | 7 / 7 | 15 ms |
-| string to expressions (module) | supported | 34% → 100% | 7 / 7 | 23 ms |
-| string encoding (module) | supported | 47% → 100% (needs sandbox) | 7 / 7 | 21 ms |
+| balanced (preset) | supported | 37% → 95% (needs sandbox) | 6 / 6 (1 tool output broken) | 25 ms |
+| heavy (preset) | partial | 7% → 77% (needs sandbox) | 5 / 5 (2 tool output broken) | 53 ms |
+| maximum (preset) | partial | 20% → 66% (needs sandbox) | 2 / 2 (1 tool output broken) | 1437 ms |
+| virtual machine (module) | supported | 8% → 96% | 5 / 5 (2 tool output broken) | 75 ms |
+| antitamper (module) | supported | 37% → 100% | 7 / 7 | 18 ms |
+| control flow (module) | supported | 63% → 98% | 7 / 7 | 16 ms |
+| string to expressions (module) | supported | 34% → 100% | 7 / 7 | 22 ms |
+| string encoding (module) | supported | 47% → 100% (needs sandbox) | 7 / 7 | 18 ms |
 | wrap in function (module) | supported | 99% → 100% | 7 / 7 | 14 ms |
-| variable renaming (module) | supported | 64% → 96% | 6 / 6 (1 tool output broken) | 16 ms |
-| garbage code (module) | supported | 53% → 100% | 7 / 7 | 20 ms |
-| opaque predicates (module) | supported | 93% → 100% | 7 / 7 | 17 ms |
-| function inlining (module) | supported | 71% → 97% | 4 / 4 (3 tool output broken) | 10 ms |
+| variable renaming (module) | supported | 64% → 96% | 6 / 6 (1 tool output broken) | 13 ms |
+| garbage code (module) | supported | 53% → 100% | 7 / 7 | 14 ms |
+| opaque predicates (module) | supported | 93% → 100% | 7 / 7 | 13 ms |
+| function inlining (module) | supported | 71% → 97% | 4 / 4 (3 tool output broken) | 9 ms |
 | dynamic code (module) | supported | 90% → 100% | 6 / 6 (1 tool output broken) | 15 ms |
-| bytecode encoding (module) | supported | 18% → 93% (needs sandbox) | 7 / 7 | 56 ms |
-| compressor (module) | supported | 100% → 100% | 7 / 7 | 11 ms |
+| bytecode encoding (module) | supported | 18% → 93% (needs sandbox) | 7 / 7 | 43 ms |
+| compressor (module) | supported | 100% → 100% | 7 / 7 | 10 ms |
 
 ### Versions
 
@@ -353,11 +353,11 @@ Open-source Lua 5.1 obfuscator (efrederickson, 2013, no licence stated). Extract
 
 | Configuration | Status | Fidelity before → after | Same behaviour | Mean time |
 |---|---|---|---|---|
-| default (preset) | supported | 1% → 97% | 8 / 8 | 70 ms |
-| uglify (preset) | supported | 1% → 97% | 8 / 8 | 65 ms |
-| encrypt (preset) | supported | 1% → 94% (needs sandbox) | 0 / 0 (8 tool output broken) | 459 ms |
+| default (preset) | supported | 1% → 97% | 8 / 8 | 67 ms |
+| uglify (preset) | supported | 1% → 97% | 8 / 8 | 67 ms |
+| encrypt (preset) | supported | 1% → 94% (needs sandbox) | 0 / 0 (8 tool output broken) | 480 ms |
 | nostep2 (preset) | supported | 3% → 97% | 8 / 8 | 20 ms |
-| notamper (preset) | supported | 1% → 97% | 8 / 8 | 73 ms |
+| notamper (preset) | supported | 1% → 97% | 8 / 8 | 77 ms |
 
 **Limits**
 
@@ -375,13 +375,13 @@ Open-source (MIT) Lua 5.1 VM obfuscator (TimOdemchuk). Compiles with luac, parse
 
 | Configuration | Status | Fidelity before → after | Same behaviour | Mean time |
 |---|---|---|---|---|
-| default (preset) | supported | 3% → 90% | 4 / 4 (4 tool output broken) | 78 ms |
-| minify (preset) | supported | 4% → 89% | 4 / 4 (3 tool output broken) | 66 ms |
-| encryptstrings (preset) | supported | 3% → 90% | 4 / 4 (4 tool output broken) | 66 ms |
-| flatten (preset) | supported | 3% → 90% | 4 / 4 (4 tool output broken) | 95 ms |
-| antitamper (preset) | supported | 3% → 90% | 0 / 0 (8 tool output broken) | 91 ms |
-| constants (preset) | partial | 3% → 66% | 0 / 0 (8 tool output broken) | 79 ms |
-| all (preset) | partial | 3% → 43% | 0 / 0 (7 tool output broken) | 101 ms |
+| default (preset) | supported | 3% → 90% | 4 / 4 (4 tool output broken) | 89 ms |
+| minify (preset) | supported | 4% → 89% | 4 / 4 (3 tool output broken) | 71 ms |
+| encryptstrings (preset) | supported | 3% → 90% | 4 / 4 (4 tool output broken) | 80 ms |
+| flatten (preset) | supported | 3% → 90% | 4 / 4 (4 tool output broken) | 101 ms |
+| antitamper (preset) | supported | 3% → 90% | 0 / 0 (8 tool output broken) | 101 ms |
+| constants (preset) | partial | 3% → 66% | 0 / 0 (8 tool output broken) | 78 ms |
+| all (preset) | partial | 3% → 43% | 0 / 0 (7 tool output broken) | 113 ms |
 
 **Limits**
 
@@ -397,7 +397,7 @@ Open-source (MIT) Luvit program (adzwang, "half-working" by its author): compile
 | Configuration | Status | Fidelity before → after | Same behaviour | Mean time |
 |---|---|---|---|---|
 | default (preset) | supported | 2% → 98% | 0 / 0 (2 tool output broken) | 54 ms |
-| noconstants (preset) | supported | 2% → 98% | 0 / 0 (2 tool output broken) | 50 ms |
+| noconstants (preset) | supported | 2% → 98% | 0 / 0 (2 tool output broken) | 45 ms |
 
 **Limits**
 
@@ -414,9 +414,9 @@ Open-source (MIT) Lua obfuscator suite (luauminati). IronBrikked: a VM with LZW-
 
 | Configuration | Status | Fidelity before → after | Same behaviour | Mean time |
 |---|---|---|---|---|
-| ironbrikked (preset) | partial | 5% → 60% | 0 / 0 (7 tool output broken) | 67 ms |
-| ast (preset) | supported | 11% → 97% (needs sandbox) | 5 / 5 (3 tool output broken) | 46 ms |
-| both (preset) | partial | 3% → 60% (needs sandbox) | 0 / 0 (7 tool output broken) | 359 ms |
+| ironbrikked (preset) | partial | 5% → 60% | 0 / 0 (7 tool output broken) | 85 ms |
+| ast (preset) | supported | 11% → 97% (needs sandbox) | 5 / 5 (3 tool output broken) | 56 ms |
+| both (preset) | partial | 3% → 60% (needs sandbox) | 0 / 0 (7 tool output broken) | 421 ms |
 
 **Limits**
 
@@ -434,7 +434,7 @@ Small Roblox-targeted obfuscator (kosuke14, no licence, 2022) that does not call
 
 | Configuration | Status | Fidelity before → after | Same behaviour | Mean time |
 |---|---|---|---|---|
-| default (preset) | supported | 3% → 100% | 8 / 8 | 225 ms |
+| default (preset) | supported | 3% → 100% | 8 / 8 | 250 ms |
 
 **Limits**
 
@@ -478,14 +478,14 @@ Open-source (MIT) Lua 5.1 obfuscator in C# that compiles a script with luac and 
 
 | Configuration | Status | Fidelity before → after | Same behaviour | Mean time |
 |---|---|---|---|---|
-| default (preset) | supported | 4% → 88% | 8 / 8 | 64 ms |
-| plain (preset) | supported | 8% → 90% | 8 / 8 | 45 ms |
-| mutate (preset) | supported | 6% → 90% | 8 / 8 | 49 ms |
-| super (preset) | supported | 5% → 90% | 8 / 8 | 53 ms |
-| flow (preset) | supported | 8% → 88% | 3 / 3 (5 tool output broken) | 49 ms |
-| strings (preset) | partial | 3% → 84% | 8 / 8 | 445 ms |
-| lineinfo (preset) | supported | 4% → 88% | 8 / 8 | 62 ms |
-| nocompress (preset) | supported | 4% → 88% | 8 / 8 | 55 ms |
+| default (preset) | supported | 4% → 88% | 8 / 8 | 59 ms |
+| plain (preset) | supported | 8% → 90% | 8 / 8 | 44 ms |
+| mutate (preset) | supported | 6% → 90% | 8 / 8 | 50 ms |
+| super (preset) | supported | 5% → 90% | 8 / 8 | 49 ms |
+| flow (preset) | supported | 8% → 88% | 3 / 3 (5 tool output broken) | 46 ms |
+| strings (preset) | partial | 3% → 84% | 8 / 8 | 418 ms |
+| lineinfo (preset) | supported | 4% → 88% | 8 / 8 | 64 ms |
+| nocompress (preset) | supported | 4% → 88% | 8 / 8 | 59 ms |
 
 **Detection on real scripts:** 7 of 8 files filed under IronBrew2 in the public collection (https://github.com/vyxonq-dev/obfuscator-samples, commit `82e582fcdd`) were identified as IronBrew 2. The collection's labels are its uploaders' and are noisy; a file our rules call something else was looked at before being counted as a miss.
 
@@ -543,17 +543,17 @@ A class of packers, not one tool: the program is encoded and handed to loadstrin
 
 | Configuration | Status | Fidelity before → after | Same behaviour | Mean time |
 |---|---|---|---|---|
-| ascii (preset) | supported | 15% → 100% (needs sandbox) | 6 / 6 | 20 ms |
-| hex (preset) | supported | 10% → 100% (needs sandbox) | 6 / 6 | 18 ms |
+| ascii (preset) | supported | 15% → 100% (needs sandbox) | 6 / 6 | 16 ms |
+| hex (preset) | supported | 10% → 100% (needs sandbox) | 6 / 6 | 17 ms |
 | binary (preset) | supported | 15% → 100% (needs sandbox) | 6 / 6 | 18 ms |
-| url (preset) | supported | 10% → 100% (needs sandbox) | 6 / 6 | 16 ms |
-| base64 (preset) | supported | 23% → 100% (needs sandbox) | 6 / 6 | 19 ms |
-| xor (preset) | supported | 5% → 100% (needs sandbox) | 6 / 6 | 45 ms |
-| reverse (preset) | supported | 3% → 100% | 6 / 6 | 17 ms |
-| escapes (preset) | supported | 3% → 100% | 6 / 6 | 19 ms |
-| charcodes (preset) | supported | 3% → 100% | 6 / 6 | 25 ms |
+| url (preset) | supported | 10% → 100% (needs sandbox) | 6 / 6 | 15 ms |
+| base64 (preset) | supported | 23% → 100% (needs sandbox) | 6 / 6 | 17 ms |
+| xor (preset) | supported | 5% → 100% (needs sandbox) | 6 / 6 | 35 ms |
+| reverse (preset) | supported | 3% → 100% | 6 / 6 | 15 ms |
+| escapes (preset) | supported | 3% → 100% | 6 / 6 | 17 ms |
+| charcodes (preset) | supported | 3% → 100% | 6 / 6 | 27 ms |
 | pieces (preset) | supported | 5% → 100% | 6 / 6 | 17 ms |
-| layered (preset) | supported | 23% → 100% (needs sandbox) | 6 / 6 | 32 ms |
+| layered (preset) | supported | 23% → 100% (needs sandbox) | 6 / 6 | 29 ms |
 
 **Detection on real scripts:** 0 of 4 files filed under Base64Payload in the public collection (https://github.com/vyxonq-dev/obfuscator-samples, commit `82e582fcdd`) were identified as Loadstring packers. The collection's labels are its uploaders' and are noisy; a file our rules call something else was looked at before being counted as a miss.
 
@@ -590,7 +590,7 @@ Open-source (MIT) obfuscator based on IronBrew 2 (Zaenalos): the script is compi
 
 | Configuration | Status | Fidelity before → after | Same behaviour | Mean time |
 |---|---|---|---|---|
-| default (preset) | unsupported | 4% → 4% | 2 / 2 (6 tool output broken) | 413 ms |
+| default (preset) | unsupported | 4% → 4% | 2 / 2 (6 tool output broken) | 410 ms |
 
 **Limits**
 
@@ -689,11 +689,11 @@ Open-source (MIT) Lua 5.1 VM obfuscator by LionHub-Pino, built on Prometheus. Re
 | Configuration | Status | Fidelity before → after | Same behaviour | Mean time |
 |---|---|---|---|---|
 | Fast (preset) | unsupported | 5% → 5% | 8 / 8 | 269 ms |
-| Balanced (preset) | partial | 3% → 62% (needs sandbox) | 7 / 7 (1 tool output broken) | 338 ms |
-| Luraph (preset) | unsupported | 4% → 4% | 8 / 8 | 315 ms |
-| Luraph14 (preset) | unsupported | 4% → 4% | 8 / 8 | 301 ms |
-| AzureGod15 (preset) | unsupported | 4% → 4% | 8 / 8 | 371 ms |
-| AzureGodUltra (preset) | unsupported | 4% → 4% | 8 / 8 | 542 ms |
+| Balanced (preset) | partial | 3% → 62% (needs sandbox) | 7 / 7 (1 tool output broken) | 346 ms |
+| Luraph (preset) | unsupported | 4% → 4% | 8 / 8 | 307 ms |
+| Luraph14 (preset) | unsupported | 4% → 4% | 8 / 8 | 306 ms |
+| AzureGod15 (preset) | unsupported | 4% → 4% | 8 / 8 | 364 ms |
+| AzureGodUltra (preset) | unsupported | 4% → 4% | 8 / 8 | 605 ms |
 
 **Limits**
 
@@ -710,7 +710,7 @@ A single HTML page (iamsopotatoe, MIT) that strips comments, renames locals with
 
 | Configuration | Status | Fidelity before → after | Same behaviour | Mean time |
 |---|---|---|---|---|
-| default (preset) | supported | 35% → 99% | 5 / 5 (3 tool output broken) | 21 ms |
+| default (preset) | supported | 35% → 99% | 5 / 5 (3 tool output broken) | 22 ms |
 
 **Limits**
 
@@ -727,9 +727,9 @@ Open-source (MIT) Luau obfuscator written in TypeScript (sfr-development), also 
 | Configuration | Status | Fidelity before → after | Same behaviour | Mean time |
 |---|---|---|---|---|
 | rename (preset) | supported | 100% → 100% | 8 / 8 | 12 ms |
-| strings-flow (preset) | supported | 45% → 94% (needs sandbox) | 8 / 8 | 17 ms |
-| vm (preset) | unsupported | 3% → 3% | 8 / 8 | 390 ms |
-| vm-max (preset) | unsupported | 13% → 13% | 0 / 0 (1 tool output broken) | 88 ms |
+| strings-flow (preset) | supported | 45% → 94% (needs sandbox) | 8 / 8 | 16 ms |
+| vm (preset) | unsupported | 3% → 3% | 8 / 8 | 403 ms |
+| vm-max (preset) | unsupported | 13% → 13% | 0 / 0 (1 tool output broken) | 85 ms |
 
 **Limits**
 
