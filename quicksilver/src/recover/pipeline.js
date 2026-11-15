@@ -25,6 +25,7 @@ import { buildReport, annotate, stripReport } from './annotate.js';
 import { profileVm } from './vmprofile.js';
 import { liftObscuraVm, ObscuraVmError } from './obscura-vm.js';
 import { liftPrometheusBvm, looksLikePrometheusBvm, BvmError } from './prometheus-bvm.js';
+import { liftVault, looksLikeVault, VaultVmError } from './vault-vm.js';
 import { liftIronbrikkedVm, IronbrikkedVmError, looksLikeIronbrikked } from './ironbrikked-vm.js';
 import { liftFusgatoVm, FusgatoVmError, looksLikeFusgato } from './fusgato-vm.js';
 import { repairRenamedKeyword } from './keyword-repair.js';
@@ -202,6 +203,17 @@ function rebuildZarthaVm(ast, state) {
   return { changed: r.stats.instructions, ...r.stats };
 }
 
+/** Vault-Obf's register VM: the payload decoded with the parameters it carries, opcodes read off the handlers, functions lifted to Lua. Nothing runs. */
+function rebuildVaultVm(ast, state) {
+  let r;
+  try { r = liftVault(ast); } catch (e) {
+    if (e instanceof VaultVmError) return { skipped: e.message };
+    throw e;
+  }
+  state.stats = r.stats;
+  return { changed: r.changed, ...r.stats };
+}
+
 /** LuaXen's IronBrikked virtual machine: compressed bytes, a dispatch over the opcode whose handlers are read from the script, the decompiler. Nothing runs. */
 function rebuildIronbrikkedVm(ast, state) {
   let r;
@@ -366,6 +378,15 @@ export function recover(source, userOptions = {}) {
     if (run.step('ironbrikked.vm', 'Lift the IronBrikked virtual machine back to source', (a) => rebuildIronbrikkedVm(a, ik))) {
       unusedAtStart = new WeakSet(); decompiled = true;
       vm = { kind: 'ironbrikked', lifted: true, functions: [], instructionBytes: 0, constants: null, stats: ik.stats };
+    }
+  }
+
+  // Vault-Obf's register VM: payload blobs, decode parameters and handlers are all literals of the script
+  if (!vm && !zartha.zarthaLifted && !decompiled && looksLikeVault(parsed.ast)) {
+    const vs = { stats: null };
+    if (run.step('vault.vm', 'Lift the Vault virtual machine back to source', (a) => rebuildVaultVm(a, vs))) {
+      unusedAtStart = new WeakSet(); decompiled = true;
+      vm = { kind: 'vault', lifted: true, functions: [], instructionBytes: 0, constants: null, stats: vs.stats };
     }
   }
 

@@ -838,7 +838,8 @@
       "licence": "Vault Source-Available License 1.0: research and internal use allowed, redistribution not; fixtures kept local (tests/corpus/obfuscated-local/vault)",
       "source": "https://github.com/polarr-is67/Vault-Obfuscator",
       "research": [
-        "Prompt XV: found by a search for open-source Lua/Luau VM obfuscators; commit 4cf9664 read as text (Python: lexer, parser, IR, bytecode generator and encoder, Lua 5.1 and Luau targets, presets low/medium/strong, four VM families and four dispatch forms: cascade, tree, per-opcode closure table, indirect table) and run in sandbox_run.py (no network, no host files)"
+        "Prompt XV: found by a search for open-source Lua/Luau VM obfuscators; commit 4cf9664 read as text (Python: lexer, parser, IR, bytecode generator and encoder, Lua 5.1 and Luau targets, presets low/medium/strong, four VM families and four dispatch forms: cascade, tree, per-opcode closure table, indirect table) and run in sandbox_run.py (no network, no host files)",
+        "Prompt XVI: encoder, emitter, runtime template and IR builder read as text. The payload is fully specified by parameters the build carries (Q[1]); the opcode permutation exists only as the dispatch, whose handlers are fixed templates. 112 more builds generated in sandbox_run.py with seeds the tool's own resolve_shapes picks so that every preset x VM family x dispatch appears, and 42 Luau-target builds. A generator defect found: upval_remap is built and never applied"
       ],
       "improvements": [
         {
@@ -851,19 +852,22 @@
           "tests": [
             "tests/xv-targets.test.mjs"
           ]
+        },
+        {
+          "id": "xvi-vault-vm",
+          "summary": "lifted without running anything: payload decoded with its own parameters, opcodes read off the handlers in all four dispatch strategies and both layouts, prototypes lifted to Lua functions. 175 local builds: every recovery runs like the original where Vault's build does, and like Vault's build where it does not; the scrambled upvalue order restored when the evidence admits one order, counted and kept below high confidence otherwise",
+          "files": [
+            "src/recover/vault-vm.js",
+            "src/recover/pipeline.js",
+            "src/recover/confidence.js",
+            "src/recover/annotate.js"
+          ],
+          "tests": [
+            "tests/xvi-vault.test.mjs"
+          ]
         }
       ],
       "failurePatterns": [
-        {
-          "id": "vault-vm",
-          "configs": [
-            "low",
-            "medium",
-            "strong"
-          ],
-          "status": "open",
-          "summary": "identified, not lifted: a bytecode image with LCG-scrambled constants and instructions, a base-45 alphabet or a byte container, per-build operand order"
-        },
         {
           "id": "vault-method-decl",
           "configs": [
@@ -873,6 +877,16 @@
           ],
           "status": "tool defect",
           "summary": "s06 fails in its parser on `function a:b()`"
+        },
+        {
+          "id": "vault-upvalue-order",
+          "configs": [
+            "low",
+            "medium",
+            "strong"
+          ],
+          "status": "tool defect",
+          "summary": "the generator shuffles upvalue descriptors without renumbering GETUPVAL/SETUPVAL; undone where one order fits the evidence, otherwise reported (two captured numbers cannot be told apart)"
         }
       ]
     },

@@ -179,11 +179,13 @@ test('confidence: an interpreter no rule knows, left in the output, keeps the re
 });
 
 const vaultDir = path.join(corpus, 'obfuscated-local', 'vault');
-test('vault-obf (local fixtures): every build is seen as an interpreter and none is reported as recovered', { skip: !fs.existsSync(vaultDir) && 'Vault-Obf fixtures are local only (its licence does not allow redistribution)' }, () => {
+test('vault-obf (local fixtures): every build is lifted out of its interpreter (Prompt XVI), and none is rated high while one is left', { skip: !fs.existsSync(vaultDir) && 'Vault-Obf fixtures are local only (its licence does not allow redistribution)' }, () => {
   const man = JSON.parse(fs.readFileSync(path.join(vaultDir, 'manifest.json'), 'utf8'));
   for (const e of man.entries.filter((x) => x.status === 'ok')) {
     const r = run(read(path.join(vaultDir, e.file)));
-    assert.notEqual(r.confidence.level, 'high', e.file);
+    const st = r.steps.find((x) => x.id === 'vault.vm');
+    assert.equal(st && st.status, 'applied', e.file);
+    if (r.confidence.level === 'high') assert.ok(!r.confidence.reasons.some((x) => /generated interpreter is still in the output/.test(x.text)), e.file);
   }
 });
 
