@@ -514,7 +514,8 @@
     "realobfuscator": {
       "licence": "GPL-3.0-only (output kept local)",
       "research": [
-        "README, Cargo.toml and docs read as text; the 166 crates were downloaded with `cargo vendor` (no build script of theirs ran on the host), the tool was built offline in the sandbox and run only there (gen_realobf.py)"
+        "README, Cargo.toml and docs read as text; the 166 crates were downloaded with `cargo vendor` (no build script of theirs ran on the host), the tool was built offline in the sandbox and run only there (gen_realobf.py)",
+        "Prompt XVI: src/function_vm.rs and its runtime read as text: a register machine with cells, counted argument lists, accessor closures and plain-Lua factories for closures, method calls and generic for loops; checksummed 5-word records in a per-function byte layout, xorshift-encoded per record and linked in shuffled order; 2 to 4 opcode aliases dispatched by a balanced range tree"
       ],
       "improvements": [
         {
@@ -547,26 +548,29 @@
           "tests": [
             "tests/formats-ix.test.mjs: detection"
           ]
+        },
+        {
+          "id": "xvi-realobfuscator-vm",
+          "summary": "function VM lifted to source: records decoded statically with checksums verified, every alias classified by its handler, blocks written with single-use temporaries folded in evaluation order, cells as locals, factories as closures, method calls and for loops; 20 of 20 VM builds run like the originals (Luau oracle)",
+          "files": [
+            "src/recover/realobfuscator-vm.js",
+            "src/recover/pipeline.js"
+          ],
+          "tests": [
+            "tests/xvi-realobfuscator.test.mjs"
+          ]
         }
       ],
       "failurePatterns": [
         {
-          "id": "vm",
+          "id": "realobfuscator-vm-numeric-for",
           "configs": [
             "vm",
             "vm-max",
             "vm-cached"
           ],
           "status": "open",
-          "summary": "register bytecode with shuffled records, opcode aliases and lazy constants: identified, not recovered"
-        },
-        {
-          "id": "vm-heuristic",
-          "configs": [
-            "lightweight (large programs)"
-          ],
-          "status": "known risk",
-          "summary": "the VM rule counts records (40 or more in a build over 20 kB); a lightweight build of a program with that many strings would be flagged as a VM although it is recovered"
+          "summary": "numeric for loops are rebuilt as while loops over three locals when the clean-up passes do not re-raise them"
         }
       ],
       "assumptions": [

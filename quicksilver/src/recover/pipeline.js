@@ -34,6 +34,7 @@ import { repairRenamedKeyword } from './keyword-repair.js';
 import { liftZarthaVm, ZarthaVmError, looksLikeZartha, removeZarthaGuards, repairZarthaSource } from './zartha-vm.js';
 import { snapshotNames, joinMoonVeil, unboxCells, JoinError } from './moonveil-join.js';
 import { rebuildProgram21, Lift21Error } from './moonveil-vm/lift21.js';
+import { liftRealObfuscatorVm, looksLikeRealObfuscatorVm, RealObfuscatorVmError } from './realobfuscator-vm.js';
 import { removeHerculesAntiTamper, removeHerculesAntiTamperFunction, removeHerculesCoinGuard, restoreMethodSelf } from './hercules.js';
 import { uninlinePass } from '../passes/uninline.js';
 import { splitWebs } from '../passes/webs.js';
@@ -186,6 +187,36 @@ function rebuildObscuraVm(ast, vm) {
   ast.features = out.ast.features || ast.features;
   vm.lifted = true;
   return { changed: r.stats.instructions, ...r.stats };
+}
+
+/** Run the original script and a rebuilt one in the sandbox (Luau); null when the sandbox is off, {checked:false} when a run hit a limit. */
+function sameRun(source, rebuilt, options) {
+  if (!options.sandbox || !options.sandbox.enabled) return null;
+  const wrap = (src) => `local __qs_r = {(function(...)\n${src}\nend)()}\nprint("__qs_returned", #__qs_r)`;
+  const runOne = (src) => { try { return runSource(wrap(src), { dialect: 'luau', fuel: 20_000_000, timeMs: 4000, maxDepth: 300, chunkName: 'sample' }); } catch (e) { return { ok: false, limit: true, error: e }; } };
+  const a = runOne(source);
+  const b = runOne(rebuilt);
+  if (a.limit || b.limit || a.kind === 'limit' || b.kind === 'limit') return { checked: false };
+  return { checked: true, same: a.ok === b.ok && a.output === b.output, a, b };
+}
+
+/**
+ * RealObfuscator's function VM (src/recover/realobfuscator-vm.js): every function the generator compiled is written back as Lua. With the sandbox on,
+ * the rebuilt script must run like the original or the VM stays.
+ */
+function rebuildRealObfuscatorVm(ast, { source, options, holder }) {
+  const work = clone(ast);
+  let stats;
+  try { stats = liftRealObfuscatorVm(work); } catch (e) {
+    if (e instanceof RealObfuscatorVmError) return { skipped: e.message };
+    throw e;
+  }
+  const check = sameRun(source, print(work), options);
+  if (check && check.checked && !check.same) return { skipped: `the rebuilt program does not run like the original script (original: ${check.a.ok ? 'ok' : 'error'}; rebuilt: ${check.b.ok ? 'ok' : 'error'} ${JSON.stringify(String((check.b.error && (check.b.error.message || check.b.error)) || check.b.output || '').slice(0, 80))})` };
+  ast.body = work.body;
+  const result = { ...stats, selfCheck: check ? (check.checked ? 'same' : 'not run') : 'sandbox off' };
+  if (holder) holder.stats = result;
+  return result;
 }
 
 /**
@@ -674,6 +705,25 @@ export function recover(source, userOptions = {}) {
     } catch (e) {
       if (!(e instanceof Schema21Error)) throw e;
       run.record('moonveil.program21', 'Read MoonVeil 2.1.0\u2019s program with the layout its own reader uses (not rebuilt)', { status: 'skipped', changed: 0, ms: 0, detail: `the layout could not be read off this build\u2019s reader: ${e.message}` });
+    }
+  }
+
+  // RealObfuscator's function VM: read late, once the bank's constants are plain values (the lifter itself does not need them to be)
+  if (!vmLifted && options.realobfuscatorVm !== false && detection.families.some((f) => f.id === 'realobfuscator' && f.confidence >= 0.5) && looksLikeRealObfuscatorVm(run.ast)) {
+    const holder = { stats: null };
+    const lifted = run.step('realobfuscator.vm', 'Lift RealObfuscator\u2019s function VM back to source', (a) => rebuildRealObfuscatorVm(a, { source, options, holder }), { quiet: true });
+    if (lifted) {
+      vmLifted = true;
+      vm = { kind: 'realobfuscator', lifted: true, functions: [], instructionBytes: 0, constants: null, stats: holder.stats };
+      // string decoders the VM's constants called are now in plain code: they are evaluated like any other
+      if (options.sandbox.enabled) run.step('evaluate.ro', 'Evaluate string decoders (sandbox)', (a) => evaluatePass(a, { sandbox: options.sandbox, memory: evalMemory }), { quiet: true });
+      run.step('simplify.ro', 'Simplify control flow and remove dead code', (a) => simplifyPass(a, { unusedAtStart: new WeakSet() }), { quiet: true });
+      run.step('orphans.ro', 'Remove the string-decryption machinery nothing reads any more', (a) => removeOrphanDecoders(a), { quiet: true });
+      run.step('dataflow.ro', 'Remove dead stores, copies and temporaries', (a) => dataflowPass(a), { quiet: true });
+      run.step('idioms.loops.ro', 'Write counting loops as for loops', (a) => numericLoops(a), { quiet: true });
+      run.step('idioms.whiles.ro', 'Move loop exit tests into the loop header', (a) => loopForms(a), { quiet: true });
+      if (options.rename !== 'off') run.step('rename.ro', 'Give obfuscated locals readable names', (a) => renamePass(a, { mode: options.rename }), { quiet: true });
+      run.step('idioms.functions.ro', 'Use function and method declarations', (a) => functionForms(a), { quiet: true });
     }
   }
 

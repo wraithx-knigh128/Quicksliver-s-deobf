@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "generatedAt": "2026-11-15T13:35:04.579Z",
+ "generatedAt": "2026-11-15T17:30:08.149Z",
  "gates": {
   "real": {
    "minFixtures": 8,
@@ -855,7 +855,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-15T13:30:03.394Z"
+       "measuredAt": "2026-11-15T17:26:48.323Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -1025,7 +1025,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-15T13:30:03.394Z"
+       "measuredAt": "2026-11-15T17:26:48.323Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -1232,6 +1232,7 @@
       "Read back statically: the strings (Z85 text plus an XOR cipher), the numbers (bit32 expressions) and the table of cells, which makes the program’s plain Lua readable. The bootstrap permutation is read in both spellings seen (2.0.25 and 2.0.26/2.1.0, where the flattened bootstrap scrambles the statements), and the cell layout (where the index, the value and the self reference sit) is read from the script, not fixed: it differs between 2.0.25, 2.0.26 and 2.1.0.",
       "Version 2.0.25 only: the function MoonVeil compiled to its own VM is read back too, without running anything (data layout, opcode table and instruction layouts are taken from the script’s own interpreter code).",
       "Versions 2.0.26 and 2.1.0: strings and numbers are decoded (for the one 2.0.26 script with a hand-made reference, 77 of its 81 string literals are in the output, including every URL), but the VM reader does not fit the interpreter of these builds (\"the interpreter does not have the expected shape\") and the control-flow-flattened functions are not all unflattened (the initial state of the dispatcher is not a constant). The program stays a table of decoded functions; fidelity against the reference is 21%. The confidence is capped for that reason (0.60, medium); it was 0.90 before this was measured.",
+      "Version 2.1.0 since Prompt XVI: rebuilt from its handlers (src/recover/moonveil-vm/lift21.js). The builder, dispatcher, closure builder and cells of each build are read, every instruction is partially evaluated through its handler, the result is written as Lua 5.1, decompiled and joined with the factories MoonVeil left as plain Lua. Both 2.1.0 scripts run in the sandbox like the originals; only these two builds of one program exist, so handler kinds outside it are untested (docs/targets/MOONVEIL-2.1.0.md).",
       "Version 1.4.5: a different layout (no function table): constants and cells are decoded, three dispatcher loops of 8, 135 and 259 blocks remain, and a 28888-character encoded blob is left. No reference exists, so fidelity is not measured; the confidence is low (0.50).",
       "MV_CFF, MV_ENC_FUNC and MV_VM are the vendor’s documented macros (per-function virtualisation, encryption keyed at run time, control-flow flattening, MV_OMIT to exclude one); MV_ENC_FUNC bodies need their run-time key and are not recovered. The vendor’s documentation site could not be read from this environment, so the macro list is from search results quoting it."
      ],
@@ -1724,7 +1725,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-15T13:30:03.394Z"
+       "measuredAt": "2026-11-15T17:26:48.323Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -1852,7 +1853,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-15T13:30:03.394Z"
+       "measuredAt": "2026-11-15T17:26:48.323Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -1861,7 +1862,7 @@
      },
      "limitations": [
       "rename, lightweight and native are recovered (76% to 100%, checked on Luau); the lightweight decoder needs Luau’s generalized iteration in the evaluation sandbox, which was added.",
-      "The register-bytecode VM modes are identified and flagged as not recovered.",
+      "The register-bytecode VM modes (vm, vm-max, vm-cached) are lifted back to source since Prompt XVI (src/recover/realobfuscator-vm.js): the records are decoded with the keys they carry and checked against their checksums, every opcode alias is read off its handler, cells become locals again, and closures, method calls and generic for loops are rebuilt from the plain-Lua factories the VM keeps. All 20 local VM builds run like their originals (checked on Luau). Where the tool’s string decoder is refused by the evaluation sandbox (one vm-cached build), a few strings stay encoded.",
       "Fixtures are kept local (GPL-3.0-only); the numbers reproduce only with the same build."
      ],
      "verification": {
@@ -1958,7 +1959,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-15T13:30:03.394Z"
+       "measuredAt": "2026-11-15T17:26:48.323Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -2162,7 +2163,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-15T13:30:03.394Z"
+       "measuredAt": "2026-11-15T17:26:48.323Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -2282,7 +2283,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-15T13:30:03.394Z"
+       "measuredAt": "2026-11-15T17:26:48.323Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -2387,7 +2388,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-15T13:30:03.394Z"
+       "measuredAt": "2026-11-15T17:26:48.323Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -2492,7 +2493,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-15T13:30:03.394Z"
+       "measuredAt": "2026-11-15T17:26:48.323Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -2598,7 +2599,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-15T13:30:03.394Z"
+       "measuredAt": "2026-11-15T17:26:48.323Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -2925,7 +2926,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-15T13:30:03.394Z"
+       "measuredAt": "2026-11-15T17:26:48.323Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -3314,7 +3315,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-15T13:30:03.394Z"
+       "measuredAt": "2026-11-15T17:26:48.323Z"
       },
       "reproduction": null
      },
@@ -3439,7 +3440,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-15T13:30:03.394Z"
+       "measuredAt": "2026-11-15T17:26:48.323Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -3561,7 +3562,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-15T13:30:03.394Z"
+       "measuredAt": "2026-11-15T17:26:48.323Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -3667,7 +3668,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-15T13:30:03.394Z"
+       "measuredAt": "2026-11-15T17:26:48.323Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -4246,8 +4247,8 @@
        "verified": "real-output-tested"
       },
       "recover": {
-       "available": false,
-       "verified": "none"
+       "available": true,
+       "verified": "real-output-tested"
       }
      },
      "results": {
@@ -4262,7 +4263,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-15T13:30:03.394Z"
+       "measuredAt": "2026-11-15T17:26:48.323Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -4270,7 +4271,7 @@
       }
      },
      "limitations": [
-      "The program is compiled to Lua 5.1 bytecode, its instructions are encoded with a seeded opcode map and a rolling cipher, and a generated interpreter runs it. The VM is detected and flagged as not recovered; no lifter for this format was written.",
+      "The program is compiled to Lua 5.1 bytecode, its instructions are encoded with a seeded opcode map and a rolling cipher, and a generated interpreter runs it. Since Prompt XVI it is lifted (src/recover/azurevm.js): the payload is decoded with the keys the script carries, the 38 handlers are matched to the generator’s templates, and the rebuilt Lua 5.1 chunk is decompiled and checked against itself in the sandbox. 36 of 48 builds run like the original at high confidence; functions the decompiler cannot structure (mostly AzureGodUltra) keep the VM and say so.",
       "The Balanced preset is not a VM: its Prometheus-style transforms are partly reverted by the existing passes.",
       "Presets named after Luraph are the tool’s own labels; its README says it is not Luraph. The payload tag LPH is the same three letters Luraph uses, which is a naming overlap, not evidence of shared code.",
       "Fixtures were generated here by running the tool inside the isolated harness; its outputs are committed because the licence is MIT."
@@ -4383,7 +4384,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-15T13:30:03.394Z"
+       "measuredAt": "2026-11-15T17:26:48.323Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -4503,7 +4504,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-15T13:30:03.394Z"
+       "measuredAt": "2026-11-15T17:26:48.323Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
