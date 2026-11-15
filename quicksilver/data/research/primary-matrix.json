@@ -4528,8 +4528,8 @@
    ],
    "status": "partial",
    "confidence": {
-    "score": 0.6,
-    "level": "medium"
+    "score": 0.85,
+    "level": "high"
    },
    "implementation": [
     "src/recover/moonveil-join.js",
@@ -4568,8 +4568,8 @@
    ],
    "status": "partial",
    "confidence": {
-    "score": 0.6,
-    "level": "medium"
+    "score": 0.85,
+    "level": "high"
    },
    "implementation": [
     "src/recover/moonveil-join.js",

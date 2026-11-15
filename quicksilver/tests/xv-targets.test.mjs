@@ -119,12 +119,14 @@ test('ironbrikked: `local r = f()` is compiled with the result thrown away and i
 
 const mv21 = (n) => path.join(here, '..', 'local', 'moonveil', `v2.1.0_sample${n}.lua`);
 for (const [n, marker, functions, instructions] of [[6, 192, 3, 40], [7, 93, 2, 28]]) {
-  test(`moonveil 2.1.0 sample ${n}: the build's schema is derived from its reader and the program data is read exactly (${functions} functions, ${instructions} instructions)`, { skip: !fs.existsSync(mv21(n)) && 'local MoonVeil samples are not in the repository' }, () => {
+  test(`moonveil 2.1.0 sample ${n}: the build's schema is derived from its reader and the program data is read exactly (${functions} functions, ${instructions} instructions) and the program is rebuilt`, { skip: !fs.existsSync(mv21(n)) && 'local MoonVeil samples are not in the repository' }, () => {
     const r = recover(read(mv21(n)), { sandbox: { enabled: true } });
     const st = r.steps.find((x) => x.id === 'moonveil.program21');
     assert.ok(st, 'the step ran');
     assert.match(String(st.detail), new RegExp(`read to its last byte .*function marker ${marker}.*${functions} function\\(s\\), ${instructions} instruction\\(s\\)`));
-    assert.notEqual(r.confidence.level, 'high', 'nothing is rebuilt from it');
+    // Prompt XVI: the program is rebuilt from its handlers (tests/xvi-moonveil21.test.mjs)
+    const vm = r.steps.find((x) => x.id === 'moonveil.vm21');
+    assert.equal(vm && vm.status, 'applied', vm && JSON.stringify(vm.detail));
   });
 }
 

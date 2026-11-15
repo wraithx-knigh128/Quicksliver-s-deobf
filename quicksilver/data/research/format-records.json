@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-11-15T13:09:21.058Z",
+ "generatedAt": "2026-11-15T13:32:16.945Z",
  "engine": "src/recover/pipeline.js",
  "records": [
   {
@@ -214,8 +214,8 @@
    "versionMatches": true,
    "ok": true,
    "confidence": {
-    "score": 0.6,
-    "level": "medium"
+    "score": 0.85,
+    "level": "high"
    },
    "steps": [
     {
@@ -299,13 +299,42 @@
     },
     {
      "id": "moonveil.program21",
-     "status": "skipped",
-     "changed": 0,
-     "why": "the program data was read to its last byte with the layout derived from this build’s reader (function marker 192; sectio"
+     "status": "applied",
+     "changed": 0
+    },
+    {
+     "id": "moonveil.vm21",
+     "status": "applied",
+     "changed": 56
+    },
+    {
+     "id": "moonveil.unbox",
+     "status": "applied",
+     "changed": 2
+    },
+    {
+     "id": "simplify.mv21",
+     "status": "applied",
+     "changed": 10
+    },
+    {
+     "id": "dataflow.mv21",
+     "status": "applied",
+     "changed": 1
+    },
+    {
+     "id": "rename.mv21",
+     "status": "applied",
+     "changed": 25
+    },
+    {
+     "id": "idioms.functions.mv21",
+     "status": "applied",
+     "changed": 2
     }
    ],
    "unresolved": 0,
-   "outputBytes": 76769
+   "outputBytes": 4196
   },
   {
    "id": "moonveil-2.1.0-sample7",
@@ -327,8 +356,8 @@
    "versionMatches": true,
    "ok": true,
    "confidence": {
-    "score": 0.6,
-    "level": "medium"
+    "score": 0.85,
+    "level": "high"
    },
    "steps": [
     {
@@ -417,13 +446,27 @@
     },
     {
      "id": "moonveil.program21",
-     "status": "skipped",
-     "changed": 0,
-     "why": "the program data was read to its last byte with the layout derived from this build’s reader (function marker 93; section"
+     "status": "applied",
+     "changed": 0
+    },
+    {
+     "id": "moonveil.vm21",
+     "status": "applied",
+     "changed": 36
+    },
+    {
+     "id": "simplify.mv21",
+     "status": "applied",
+     "changed": 4
+    },
+    {
+     "id": "rename.mv21",
+     "status": "applied",
+     "changed": 25
     }
    ],
    "unresolved": 0,
-   "outputBytes": 67167
+   "outputBytes": 4161
   },
   {
    "id": "snowveil-1-sample2",

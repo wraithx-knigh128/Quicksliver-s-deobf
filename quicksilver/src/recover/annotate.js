@@ -57,6 +57,11 @@ function describeVm(vm) {
     lines.push(...wrap(`Virtual machine (AzureVM), lifted back to source from its payload (${plural(st.functions || 0, 'function')}, ${plural(st.instructions || 0, 'instruction')}). The payload was decoded with the keys the script carries, every opcode was read off the handler template this build wrote for it (${st.decoyHandlers || 0} decoy handlers left aside), and the control flow and expressions were rebuilt by the Lua 5.1 decompiler. Names, comments and layout are not recovered.`, '-- ', '--   '));
     return lines;
   }
+  if (vm.lifted && vm.kind === 'moonveil21') {
+    const st = vm.stats || {};
+    lines.push(...wrap(`Virtual machine (MoonVeil 2.1.0), rebuilt from its program data (${plural(st.functions || 0, 'function')}, ${plural(st.instructions || 0, 'instruction')}). Every instruction was read through the handler its opcode selects in this build (${plural(st.handlers || 0, 'distinct handler')}), evaluated with the instruction's own fields, and the result was decompiled; the code MoonVeil left as plain Lua around the VM (${plural(st.natives || 0, 'native function')}) was joined back in. ${st.selfCheck === 'same' ? 'The rebuilt script ran in the sandbox like the original.' : 'The rebuilt script was not run against the original.'} Names, comments and layout are not recovered.`, '-- ', '--   '));
+    return lines;
+  }
   if (vm.lifted && vm.kind === 'vault') {
     const st = vm.stats || {};
     lines.push(...wrap(`Virtual machine (Vault-Obf), lifted back to source from its payload (${plural(st.functions || 0, 'function')} of ${plural(st.payloadPrototypes || 0, 'prototype')} in the payload; the rest are decoys nothing calls). The payload was decoded with the parameters it carries and every opcode was read off the handler this build wrote for it (${st.dispatch || 'dispatch'}). Names, comments and layout are not recovered.`, '-- ', '--   '));

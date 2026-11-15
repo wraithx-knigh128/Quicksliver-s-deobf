@@ -52,7 +52,7 @@ export function assessConfidence(before, output, ctx) {
   }
   // A VM the input showed and no pass rebuilt. Clean-up can rewrite the signature away (an inlined alias is gone) while the program is still
   // inside the VM, so the verdict cannot depend on the signature surviving.
-  const REBUILT_BY = { azurevm: ['azurevm.vm'], ironbrew2: ['ironbrew2'], hercules: ['layers', 'hercules.vm'], moonveil: ['moonveil.vm'], obscura: ['obscura.vm'], zartha: ['zartha.vm'], fusgato: ['fusgato.vm'], luaxen: ['ironbrikked.vm'] };
+  const REBUILT_BY = { azurevm: ['azurevm.vm'], ironbrew2: ['ironbrew2'], hercules: ['layers', 'hercules.vm'], moonveil: ['moonveil.vm', 'moonveil.vm21'], obscura: ['obscura.vm'], zartha: ['zartha.vm'], fusgato: ['fusgato.vm'], luaxen: ['ironbrikked.vm'] };
   for (const f of before.families) {
     const hard = f.confidence >= 0.5 && f.evidence.find((e) => e.unrecoverable);
     if (!hard) continue;
@@ -63,7 +63,7 @@ export function assessConfidence(before, output, ctx) {
   }
   // An interpreter no rule knows by name, still in the output: the structure probe of the custom-format analysis sees it by its shape (a dispatch over handlers that
   // cover the operations of a register machine, or a table of handler functions read with a computed key). Unless a step rebuilt a VM, the program is still data.
-  const VM_STEPS = ['hercules.vm', 'zartha.vm', 'fusgato.vm', 'ironbrikked.vm', 'obscura.vm', 'moonveil.vm', 'prometheus.vmify', 'prometheus.bvm', 'vault.vm', 'azurevm.vm', 'ironbrew2', 'layers'];
+  const VM_STEPS = ['hercules.vm', 'zartha.vm', 'fusgato.vm', 'ironbrikked.vm', 'obscura.vm', 'moonveil.vm', 'prometheus.vmify', 'prometheus.bvm', 'vault.vm', 'azurevm.vm', 'moonveil.vm21', 'ironbrew2', 'layers'];
   if (output.length < 600000 && !steps.some((x) => VM_STEPS.includes(x.id) && x.status === 'applied')) {
     let left = null;
     try { left = probe(output).transformations.find((t) => t.id === 'bytecode-vm' && t.confidence >= 0.8 && t.shape !== 'staged-container'); } catch { left = null; }
@@ -88,7 +88,7 @@ export function assessConfidence(before, output, ctx) {
   const residual = ctx.adaptive && ctx.adaptive.residual ? ctx.adaptive.residual.length : 0;
   if (residual) note(-Math.min(0.5, 0.05 * residual), `${residual} place(s) were found and could not be resolved (listed in the report).`);
   // MoonVeil keeps the program as a table of lifted functions; unless the VM reader or the cell/constant passes joined it into one program, that table is still the script.
-  if (ctx.ast && before.families.some((f) => f.id === 'moonveil' && f.confidence >= 0.5) && !steps.some((x) => x.id === 'moonveil.vm' && x.status === 'applied')) {
+  if (ctx.ast && before.families.some((f) => f.id === 'moonveil' && f.confidence >= 0.5) && !steps.some((x) => (x.id === 'moonveil.vm' || x.id === 'moonveil.vm21') && x.status === 'applied')) {
     let root = null;
     try { root = findRoot(ctx.ast); } catch { root = null; }
     if (root) note(-0.3, 'The program is still MoonVeil\u2019s table of lifted functions: the functions are decoded and readable, but they are not joined into the script\u2019s own flow of control.');
@@ -131,6 +131,14 @@ export function assessConfidence(before, output, ctx) {
     if (v.constants.missing) note(-0.1, `${v.constants.missing} readable constant(s) of the VM program do not appear in the output (for example ${JSON.stringify(v.constants.sample[0])}).`);
     if (v.undeclared.length) note(-0.1, `Names that look like registers are read without being assigned: ${v.undeclared.slice(0, 4).join(', ')}.`);
     if (v.unstructured) note(-0.05, `${v.unstructured} function(s) could not be structured and are written with labels and jumps.`);
+  }
+  const mv21 = steps.find((s) => s.id === 'moonveil.vm21' && s.status === 'applied');
+  if (mv21) {
+    const d = mv21.detail || {};
+    reasons.push({ effect: 0, text: `MoonVeil 2.1.0: each of the ${d.instructions || 'VM\u2019s'} instruction(s) was read through the handler its opcode selects, evaluated with the instruction's fields known (${d.handlers || 'its'} distinct handlers), written as Lua 5.1 and decompiled; the ${d.sites || 0} place(s) where MoonVeil left plain Lua (the code around the VM and ${d.natives || 0} native function(s)) were joined around it. Nothing of the program was run to read it.` });
+    if (d.selfCheck === 'same') reasons.push({ effect: 0, text: 'The rebuilt script and the original were both run in the sandbox: same success, same output, same number of results.' });
+    else note(-0.25, 'The rebuilt script was not run against the original (the sandbox is off or the run hit a limit), so nothing confirms that it behaves the same.');
+    if (d.generalisedIteration) note(-0.05, `${d.generalisedIteration} generic for loop(s) start with Luau's generalised iteration (a table iterated directly, or __iter); they are written as plain generic for loops, which Luau runs the same way.`);
   }
   if (!hadObfuscation) reasons.push({ effect: 0, text: 'No obfuscation was detected; the result is a cleaned and reformatted copy.' });
 

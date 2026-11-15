@@ -61,19 +61,8 @@ const cellIndex = (e, cells) => {
   return k.type === 'Number' ? k.value : null;
 };
 
-export function joinMoonVeil(chunk, snapshot) {
-  if (!snapshot) fail('the names of the functions were not read before the control flow was rebuilt');
-  const root = findRoot(chunk);
-  if (!root) fail('this is not a table of functions in the shape MoonVeil produces');
-  const items = root.table.fields.filter((f) => f.kind === 'item').map((f) => f.value);
-  if (items.length !== snapshot.names.length) fail('the table changed shape since its names were read');
-  const members = new Map();
-  items.forEach((node, i) => members.set(snapshot.names[i], node));
-  for (const f of root.table.fields) if (f.kind === 'named') members.set(f.key, f.value);
-  const entry = members.get(snapshot.entry);
-  if (!isFunc(entry)) fail('the entry of the program is not a function');
-
-  // work on a copy: the script is only changed when the whole join succeeded
+/** Instantiates factories of the table as plain functions (a copy of the table is used: nothing of the script changes). */
+export function factoryInstantiator(members) {
   const work = clone({ type: 'Chunk', body: [{ type: 'Return', values: [{ type: 'Table', fields: [...members].map(([k, v]) => ({ kind: 'named', key: k, value: v })) }] }], endComments: [], features: new Set() });
   const table = work.body[0].values[0];
   const copy = new Map(table.fields.map((f) => [f.key, f.value]));
@@ -158,6 +147,37 @@ export function joinMoonVeil(chunk, snapshot) {
     const outer = { type: 'Func', params: pre.map(([n]) => ({ type: 'Id', name: n })), vararg: false, body: [...clone(setup), { type: 'Return', values: [inner] }] };
     return { type: 'Call', fn: { type: 'Paren', expr: outer }, args: pre.map(([, a]) => a) };
   }
+
+  return { instantiate, hoisted, stats, copy, stack };
+}
+
+/** The table's members by name, from the names read before its control flow was rebuilt. */
+export function membersOf(chunk, snapshot) {
+  if (!snapshot) fail('the names of the functions were not read before the control flow was rebuilt');
+  const root = findRoot(chunk);
+  if (!root) fail('this is not a table of functions in the shape MoonVeil produces');
+  const items = root.table.fields.filter((f) => f.kind === 'item').map((f) => f.value);
+  if (items.length !== snapshot.names.length) fail('the table changed shape since its names were read');
+  const members = new Map();
+  items.forEach((node, i) => members.set(snapshot.names[i], node));
+  for (const f of root.table.fields) if (f.kind === 'named') members.set(f.key, f.value);
+  return members;
+}
+
+/**
+ * @param {object} chunk the script
+ * @param {object} snapshot snapshotNames' result
+ * @param {{replace?: Map<string, object>}} options factories to use in place of the script's own (MoonVeil 2.1.0: the factory that runs the VM
+ *   container is replaced by the function the VM's program was rebuilt into)
+ */
+export function joinMoonVeil(chunk, snapshot, { replace } = {}) {
+  const members = membersOf(chunk, snapshot);
+  if (replace) for (const [k, v] of replace) { if (!members.has(k)) fail(`the factory ${k} to replace is not in the table`); members.set(k, v); }
+  const entry = members.get(snapshot.entry);
+  if (!isFunc(entry)) fail('the entry of the program is not a function');
+
+  // work on a copy: the script is only changed when the whole join succeeded
+  const { instantiate, hoisted, stats, copy, stack } = factoryInstantiator(members);
 
   // the entry: its context parameter and body become the program. What it sets on the context (the runtime the helpers use) is dropped when nothing reads it
   const entryFn = copy.get(snapshot.entry);

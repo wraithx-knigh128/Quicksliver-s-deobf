@@ -33,6 +33,7 @@ import { liftFusgatoVm, FusgatoVmError, looksLikeFusgato } from './fusgato-vm.js
 import { repairRenamedKeyword } from './keyword-repair.js';
 import { liftZarthaVm, ZarthaVmError, looksLikeZartha, removeZarthaGuards, repairZarthaSource } from './zartha-vm.js';
 import { snapshotNames, joinMoonVeil, unboxCells, JoinError } from './moonveil-join.js';
+import { rebuildProgram21, Lift21Error } from './moonveil-vm/lift21.js';
 import { removeHerculesAntiTamper, removeHerculesAntiTamperFunction, removeHerculesCoinGuard, restoreMethodSelf } from './hercules.js';
 import { uninlinePass } from '../passes/uninline.js';
 import { splitWebs } from '../passes/webs.js';
@@ -56,6 +57,7 @@ import { AdaptiveEngine } from '../adaptive/engine.js';
 import { recoverIronBrew, IronBrewError } from './ironbrew.js';
 import { unflattenVmify, envToGlobals, VmifyError } from './vmify.js';
 import { parseChunk } from '../sandbox/bytecode.js';
+import { runSource } from '../sandbox/sandbox.js';
 import { decompile } from '../decompile/decompile.js';
 
 export const DEFAULT_OPTIONS = Object.freeze({
@@ -184,6 +186,38 @@ function rebuildObscuraVm(ast, vm) {
   ast.features = out.ast.features || ast.features;
   vm.lifted = true;
   return { changed: r.stats.instructions, ...r.stats };
+}
+
+/**
+ * MoonVeil 2.1.0: the VM's program rebuilt from its handlers (src/recover/moonveil-vm/lift21.js) and joined with the factories MoonVeil left as Lua.
+ * The rebuilt script replaces the interpreter only when every function was read and structured; with the sandbox on, it must also run like the
+ * original script (same success, same output, same results), or the interpreter stays.
+ */
+function rebuildMoonVeil21(ast, { snapshot, prog, schema, source, options, holder }) {
+  if (!snapshot) return { skipped: 'the names of the factory table were not read before its control flow was rebuilt' };
+  const work = clone(ast);
+  let stats;
+  try { stats = rebuildProgram21(work, { snapshot, prog, schema }); } catch (e) {
+    if (e instanceof Lift21Error || e instanceof JoinError) return { skipped: e.message };
+    throw e;
+  }
+  let check = null;
+  if (options.sandbox && options.sandbox.enabled) {
+    const wrap = (src) => `local __qs_r = {(function(...)\n${src}\nend)()}\nprint("__qs_returned", #__qs_r)`;
+    const runOne = (src) => { try { return runSource(wrap(src), { dialect: 'luau', fuel: 20_000_000, timeMs: 4000, maxDepth: 300, chunkName: 'sample' }); } catch (e) { return { ok: false, limit: true, error: e }; } };
+    const a = runOne(source);
+    const b = runOne(print(work));
+    if (a.limit || b.limit || a.kind === 'limit' || b.kind === 'limit') check = { checked: false };
+    else {
+      check = { checked: true, same: a.ok === b.ok && a.output === b.output };
+      if (!check.same) return { skipped: `the rebuilt program does not run like the original script (original: ${a.ok ? 'ok' : 'error'}, ${JSON.stringify(String(a.output || '').slice(0, 60))}; rebuilt: ${b.ok ? 'ok' : 'error'}, ${JSON.stringify(String(b.output || '').slice(0, 60))})` };
+    }
+  }
+  ast.body = work.body;
+  ast.features = work.features || ast.features;
+  const result = { changed: stats.instructions, ...stats, selfCheck: check ? (check.checked ? 'same' : 'not run') : 'sandbox off' };
+  if (holder) holder.stats = result;
+  return result;
 }
 
 /**
@@ -518,6 +552,7 @@ export function recover(source, userOptions = {}) {
     // the names of the table's positions are read while the builder still has its original shape; the factories are put back together once their control flow is rebuilt
     let mvNames = null;
     if (!mvJoined && options.moonveilJoin !== false && detection.families.some((f) => f.id === 'moonveil' && f.confidence >= 0.5)) { try { mvNames = snapshotNames(run.ast); } catch { mvNames = null; } }
+    if (mvNames && !run.mvNames) run.mvNames = mvNames;
     const nCff = run.step('moonveil.cff', 'Take MoonVeil\u2019s control-flow flattening apart', (a) => unflattenMoonVeil(a, { gotoFallback: true }), { quiet: true });
     if (nCff) { total += nCff; unusedAtStart = new WeakSet(); decompiled = true; }
     if (mvNames) {
@@ -622,7 +657,20 @@ export function recover(source, userOptions = {}) {
       const prog = readProgram21(run.mv21.program, schema);
       run.mv21.read = prog;
       const order = schema.steps.map((x) => x.kind).filter((k) => k !== 'varint' && k !== 'byte').join(', ');
-      run.record('moonveil.program21', 'Read MoonVeil 2.1.0\u2019s program with the layout its own reader uses (not rebuilt)', { status: 'skipped', changed: 0, ms: 0, detail: `the program data was read to its last byte with the layout derived from this build\u2019s reader (function marker ${schema.marker}; sections ${order}): ${prog.stats.functions} function(s), ${prog.stats.instructions} instruction(s), ${prog.stats.constants} constant(s), ${prog.strings.length} string(s). What each opcode does is decided by the interpreter\u2019s handler closures, which are not mapped yet, so the program is not rebuilt from it` });
+      run.record('moonveil.program21', 'Read MoonVeil 2.1.0\u2019s program with the layout its own reader uses', { status: 'applied', changed: 0, ms: 0, detail: `the program data was read to its last byte with the layout derived from this build\u2019s reader (function marker ${schema.marker}; sections ${order}): ${prog.stats.functions} function(s), ${prog.stats.instructions} instruction(s), ${prog.stats.constants} constant(s), ${prog.strings.length} string(s)` });
+      // the handlers: each instruction is run through its handler with its fields known (lift21.js), the result decompiled and joined with the code MoonVeil left as Lua
+      const holder = { stats: null };
+      const rebuilt = run.step('moonveil.vm21', 'Rebuild MoonVeil 2.1.0\u2019s program from what its handlers do with each instruction', (a) => rebuildMoonVeil21(a, { snapshot: run.mvNames, prog, schema, source, options, holder }), { quiet: true });
+      if (rebuilt) {
+        vmLifted = true;
+        vm = { kind: 'moonveil21', lifted: true, functions: [], instructionBytes: 0, constants: null, stats: holder.stats };
+        run.step('moonveil.unbox', 'Read MoonVeil cells as the variables they stand for', (a) => unboxCells(a), { quiet: true });
+        run.step('simplify.mv21', 'Simplify control flow and remove dead code', (a) => simplifyPass(a, { unusedAtStart: new WeakSet() }), { quiet: true });
+        run.step('dataflow.mv21', 'Remove dead stores, copies and temporaries', (a) => dataflowPass(a), { quiet: true });
+        run.step('idioms.whiles.mv21', 'Move loop exit tests into the loop header', (a) => loopForms(a), { quiet: true });
+        if (options.rename !== 'off') run.step('rename.mv21', 'Give obfuscated locals readable names', (a) => renamePass(a, { mode: options.rename }), { quiet: true });
+        run.step('idioms.functions.mv21', 'Use function and method declarations', (a) => functionForms(a), { quiet: true });
+      }
     } catch (e) {
       if (!(e instanceof Schema21Error)) throw e;
       run.record('moonveil.program21', 'Read MoonVeil 2.1.0\u2019s program with the layout its own reader uses (not rebuilt)', { status: 'skipped', changed: 0, ms: 0, detail: `the layout could not be read off this build\u2019s reader: ${e.message}` });

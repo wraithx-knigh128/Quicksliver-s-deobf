@@ -271,7 +271,9 @@ test('format records: every record is attributable and none claims more than its
     assert.match(r.source, /^https:\/\/github\.com\//);
     assert.match(r.sha256, /^[0-9a-f]{64}$/);
     assert.equal(r.versionMatches, true, `${r.id}: the detected version is the one the record names`);
-    if (r.family === 'moonveil' && r.version !== '2.0.25') assert.ok(r.confidence.score < 0.85, `${r.id}: a MoonVeil build the VM reader does not fit is not "high"`);
+    // a MoonVeil build that no VM reader rebuilt is not "high"; 2.1.0 is rebuilt from its handlers (Prompt XVI) and is high only when the sandbox ran it like the original
+    const rebuilt = (r.steps || []).some((x) => (x.id === 'moonveil.vm' || x.id === 'moonveil.vm21') && x.status === 'applied');
+    if (r.family === 'moonveil' && r.version !== '2.0.25' && !rebuilt) assert.ok(r.confidence.score < 0.85, `${r.id}: a MoonVeil build the VM reader does not fit is not "high"`);
     if (r.family === 'snowveil') assert.ok(r.confidence.score <= 0.5, r.id);
   }
   if (samples.every((s) => fs.existsSync(path.join(root, s.path)))) {

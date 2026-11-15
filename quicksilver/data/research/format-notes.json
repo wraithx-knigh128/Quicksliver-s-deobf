@@ -929,6 +929,33 @@
           "summary": "functions the decompiler cannot structure (flattening and opaque predicates of the layered presets): the VM is kept and the result says so"
         }
       ]
+    },
+    "moonveil": {
+      "research": [],
+      "improvements": [
+        {
+          "id": "xvi-moonveil21-handlers",
+          "summary": "MoonVeil 2.1.0 rebuilt from its handlers: the builder, dispatcher roles, frame layout and cells are read per build, each instruction is partially evaluated through its handler (fields known, program state symbolic), written as Lua 5.1, re-laid out, decompiled and joined with the native factories. Both samples run in the sandbox like the originals",
+          "files": [
+            "src/recover/moonveil-vm/lift21.js",
+            "src/recover/moonveil-join.js",
+            "src/recover/pipeline.js"
+          ],
+          "tests": [
+            "tests/xvi-moonveil21.test.mjs"
+          ]
+        }
+      ],
+      "failurePatterns": [
+        {
+          "id": "moonveil21-coverage",
+          "configs": [
+            "2.1.0"
+          ],
+          "status": "open",
+          "summary": "only two builds of one program: handler kinds outside it (other arithmetic, comparisons as jumps, VARARG, SETUPVAL, numeric for) are untested; natives with upvalues are not rebuilt"
+        }
+      ]
     }
   },
   "backlog": [
