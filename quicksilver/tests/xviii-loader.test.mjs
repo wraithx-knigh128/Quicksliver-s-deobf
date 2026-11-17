@@ -119,3 +119,10 @@ test('text that does not parse is not treated as a loader', () => {
   assert.equal(a.parsed, false);
   assert.equal(a.isLoader, false);
 });
+
+test('a key-system service (Panda) is case 3: the owner’s route, not fetched', () => {
+  const a = analyzeLoader('local ok = game:HttpGet("https://pandadevelopment.net/v2_validation?service=x&hwid=" .. gethwid())\nif ok then loadstring(game:HttpGet("https://raw.githubusercontent.com/u/r/main/x.lua"))() end');
+  assert.equal(a.case.n, 3);
+  assert.ok(a.families.some((f) => f.id === 'panda-keys'));
+  assert.equal(a.requests[0].retrieval.route, 'owner');
+});

@@ -49,6 +49,13 @@ export const LOADER_FAMILIES = [
     access: 'Serves protected scripts to its own loader after a key check (the loader passes `script_key`; the bootstrap caches its init script with writefile). Owners manage scripts and keys in their dashboard; no documented interface hands a protected script to a third party.',
     case: 6,
   },
+  {
+    id: 'panda-keys', name: 'Panda Development key system',
+    test: (h) => /(^|\.)pandadevelopment\.net$/.test(h.host),
+    service: 'licensing',
+    access: 'A key system: the script validates a user key against the service before it continues (third-party documentation of its client library describes a key link and a key-validation call). Whether and how the protected script itself is delivered is not established from public documentation.',
+    case: 3,
+  },
   { id: 'github', name: 'GitHub (raw / gist)', test: (h) => /^(raw|gist)\.githubusercontent\.com$|^(gist\.)?github\.com$/.test(h.host), service: 'public-host', access: 'Public files are readable without credentials; private repositories need the owner’s token.', case: 2 },
   { id: 'pastebin', name: 'Pastebin', test: (h) => h.host === 'pastebin.com', service: 'public-host', access: 'Public and unlisted pastes are readable through their /raw/ address; private pastes are not.', case: 2 },
   { id: 'rentry', name: 'rentry', test: (h) => h.host === 'rentry.co' || h.host === 'rentry.org', service: 'public-host', access: 'Public pages have a /raw address.', case: 2 },
@@ -245,11 +252,16 @@ function payloadInFile(ast, source, requests) {
   });
   const bytecode = /\x1bLua/.test(source);
   const statements = (ast.body || []).length;
+  let nodes = 0;
+  walk(ast, () => { nodes++; });
   const kinds = [];
+  // a script that makes requests but also has a program of its own (it loads a UI library, say) is not "only a loader"
+  const ownProgram = requests.length > 0 && (statements > 15 || nodes > 400);
+  if (ownProgram) kinds.push(`its own program (${statements} top-level statements)`);
   if (bytecode) kinds.push('compiled chunk');
   if (bigString >= 2000) kinds.push(`string of ${bigString} characters`);
   if (numArray) kinds.push(`array of ${numArray} numbers`);
-  return { present: kinds.length > 0 || (requests.length === 0 && statements > 0), kinds, bytes: source.length };
+  return { present: kinds.length > 0 || (requests.length === 0 && statements > 0), ownProgram, kinds, bytes: source.length };
 }
 
 /**
@@ -290,7 +302,7 @@ export function analyzeLoader(source, options = {}) {
   // families: by host, plus marker-only recognition (a Luarmor bootstrap that names no host literally)
   const famIds = new Set(requests.map((r) => r.family).filter(Boolean));
   for (const f of LOADER_FAMILIES) if (f.marker && f.marker(source)) famIds.add(f.id);
-  const families = [...famIds].map((id) => { const f = LOADER_FAMILIES.find((x) => x.id === id); return { id, name: f.name, service: f.service, access: f.access }; });
+  const families = [...famIds].map((id) => { const f = LOADER_FAMILIES.find((x) => x.id === id); return { id, name: f.name, service: f.service, access: f.access, case: f.case }; });
 
   const arch = architectures({ ast, source, requests, flows, auth, payload, env });
   const isLoader = requests.length > 0;
@@ -307,6 +319,7 @@ export function analyzeLoader(source, options = {}) {
 function retrievalFor({ shape, host, family, auth, kind }) {
   if (kind === 'asset') return { possible: false, route: 'none', reason: 'A platform asset is delivered to a running game, not to this tool.' };
   if (family && family.case === 6) return { possible: false, route: 'none', reason: `${family.name}: ${family.access}` };
+  if (family && family.case === 3) return { possible: false, route: 'owner', reason: `${family.name}: only the key holder may obtain what it protects, through the service’s own tools.` };
   if (shape.kind === 'dynamic') return { possible: false, route: 'none', reason: `The address is only known at run time (it depends on ${shape.holes.slice(0, 3).join(', ')}).` };
   if (shape.kind === 'constructed') return { possible: false, route: 'manual', reason: `Part of the address is computed at run time (${shape.holes.slice(0, 3).join(', ')}). If you know the full address and may access it, fetch it yourself.` };
   const keyed = KEY_PARAM.test(shape.template); KEY_PARAM.lastIndex = 0;
@@ -356,8 +369,9 @@ function decideCase({ requests, families, auth, payload, arch, isLoader }) {
   if (dynamic) also.add(4);
   if (transformed) also.add(5);
   if (payload.kinds.length) also.add(1);
+  if (payload.ownProgram) explanation.push('The file also carries a program of its own; its requests load libraries or further stages. That program goes through the normal pipeline.');
   let primary;
-  if (licensing) { primary = 6; explanation.push(`It is a ${licensing.name} loader. ${licensing.access}`); if (keyed) explanation.push('The loader expects a key; a key identifies its holder to the service and is not a licence for this tool to retrieve the script.'); }
+  if (licensing) { primary = licensing.case; explanation.push(`It is a ${licensing.name} loader. ${licensing.access}`); if (keyed) explanation.push('The loader expects a key; a key identifies its holder to the service and is not a licence for this tool to retrieve the script.'); }
   else if (asset) { primary = 6; explanation.push('It loads a platform asset, which only a running game receives.'); }
   else if (keyed) { primary = 3; explanation.push('The request carries a key or token, so only its owner may retrieve the payload.'); }
   else if (relevant.some((r) => r.urlKind === 'dynamic')) { primary = 4; explanation.push('The address depends on values that exist only when the script runs.'); }

@@ -11,6 +11,7 @@ import { print } from '../core/printer.js';
 import { clone, structuralKey, walk } from '../core/walk.js';
 import { detect } from '../detect/detect.js';
 import { foldPass } from '../passes/fold.js';
+import { simplifyMBA } from '../passes/mba.js';
 import { simplifyPass, snapshotUnused } from '../passes/simplify.js';
 import { evaluatePass } from '../passes/evaluate.js';
 import { renamePass } from '../passes/rename.js';
@@ -550,6 +551,7 @@ export function recover(source, userOptions = {}) {
     }
     total += run.step('metaarith', 'Evaluate numbers hidden behind metamethod arithmetic', (a) => foldMetaArithmetic(a, { sandbox: options.sandbox }), { quiet: true });
     total += run.step('fold', 'Fold constant expressions', (a) => foldPass(a, { foldCalls: options.foldCalls }));
+    total += run.step('mba', 'Simplify mixed boolean-arithmetic identities inside bit32 calls', (a) => simplifyMBA(a), { quiet: true });
     // the text it produces may make `"a" .. "b"` and similar foldable
     const pageStrings = run.step('simple_html.strings', 'Read the _D string calls of the single-page obfuscator', (a) => decodePageStrings(a), { quiet: true });
     if (pageStrings) total += pageStrings + run.step('fold.after', 'Fold constant expressions', (a) => foldPass(a, { foldCalls: options.foldCalls }), { quiet: true });

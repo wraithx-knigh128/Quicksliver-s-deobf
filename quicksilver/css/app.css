@@ -595,14 +595,25 @@ textarea.form { height: 92px; padding: 6px 8px; width: 100%; font: 12px var(--mo
   .workspace.with-side { grid-template-columns: 210px minmax(0, 1fr) 0; }
   .workspace.with-side.with-inspector { grid-template-columns: 0 minmax(0, 1fr) 320px; }
 }
+@media (max-width: 1100px) {
+  .toolbar { flex-wrap: wrap; overflow: visible; row-gap: 6px; }
+  .toolbar > .grow { display: none; }
+}
 @media (max-width: 860px) {
   /* two header rows: brand + utilities, then the actions with the timer at the end */
   .titlebar { flex-wrap: wrap; gap: 0 4px; padding: 4px 8px 0 14px; }
   .brand { order: 1; flex: 1; height: 40px; }
-  .utils { order: 2; }
-  .actions { order: 3; flex: 1 1 0; min-width: 0; padding: 2px 0 6px; }
-  .timer { order: 4; padding: 0 4px; margin-bottom: 4px; }
+  .timer { order: 2; padding: 0 4px; }
   .timer svg { display: none; }
+  /* on a phone the command bar is one row that scrolls sideways (the groups are wider than the screen) */
+  .toolbar { flex-wrap: nowrap; overflow-x: auto; }
+  .utils { order: 3; }
+  .utils .btn.icon { width: 28px; }
+  .actions { order: 4; flex: 1 0 100%; min-width: 0; padding: 2px 0 6px; }
+  /* the summary under the editors: one line each, scrolled sideways instead of wrapping into five */
+  .resultbar .facts, .ob-main { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .resultbar .facts::-webkit-scrollbar, .ob-main::-webkit-scrollbar { display: none; }
+  .ob-main > * { flex: none; }
   .codebar { flex-wrap: wrap; padding-top: 6px; padding-bottom: 6px; row-gap: 4px; }
   .brand .ver { display: none; }
   .timer .op { display: none; }
@@ -613,8 +624,7 @@ textarea.form { height: 92px; padding: 6px 8px; width: 100%; font: 12px var(--mo
   .hero .btn.big, .hero .drop { height: 36px; }
   .panes { grid-template-rows: minmax(0, 1fr) 5px minmax(0, 1fr); }
   .originbar { padding-left: 12px; }
-  .ob-main { flex: 1 0 100%; }
-  .ob-item { white-space: normal; }
+  .ob-main { flex: 1 1 0; min-width: 0; }
   .ob-acts { margin-left: 0; }
   .workspace.with-side, .workspace.with-inspector, .workspace.with-side.with-inspector { grid-template-columns: 0 minmax(0, 1fr) 0; }
   .workspace.with-side .drawer.side, .workspace.with-inspector .drawer.inspector { position: fixed; z-index: 30; top: 0; bottom: var(--statusbar); width: min(340px, 92vw); visibility: visible; box-shadow: var(--shadow); border: 0; }
