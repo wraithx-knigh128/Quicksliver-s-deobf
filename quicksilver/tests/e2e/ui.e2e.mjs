@@ -104,7 +104,7 @@ test('page loads cleanly and lists every obfuscator', { skip }, async () => {
   await ctx.close();
 });
 
-test('only .txt, .lua and .luau files are accepted', { skip }, async () => {
+test('only .txt, .lua, .luau files and Roblox models (.rbxm, .rbxmx) are accepted', { skip }, async () => {
   const { page, ctx } = await newPage();
   const bad = path.join(tmp, 'picture.png');
   fs.writeFileSync(bad, Buffer.from([0x89, 0x50, 0x4e, 0x47]));
@@ -112,7 +112,7 @@ test('only .txt, .lua and .luau files are accepted', { skip }, async () => {
   await page.waitForSelector('#toast:not([hidden])');
   assert.match(await page.textContent('#toast'), /is not supported/);
   assert.equal((await page.inputValue('textarea.editor')), '');
-  assert.equal(await page.getAttribute('#file-input', 'accept'), '.lua,.luau,.txt');
+  assert.equal(await page.getAttribute('#file-input', 'accept'), '.lua,.luau,.txt,.rbxm,.rbxmx');
   await ctx.close();
 });
 

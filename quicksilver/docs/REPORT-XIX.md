@@ -189,4 +189,7 @@ See `docs/METHODS.md` §9–13.
 | `tests/xix-loader-intel.test.mjs` | 23 |
 | e2e (Loader Intelligence; Roblox model file) | 2 |
 
-The full-suite and e2e results are recorded in the commit that follows this report.
+| Suite | Result |
+|---|---|
+| Full suite (`npm test`) | 1122 tests: 1116 passed, 0 failed, 6 skipped (oracle tests that need local-only fixtures) |
+| e2e | 73 tests: 72 passed. The one failure was the earlier test pinning the file-type list to `.lua,.luau,.txt`; the list now deliberately includes `.rbxm,.rbxmx`, the test was updated to the new list, and it passes when re-run (other file types are still refused) |
