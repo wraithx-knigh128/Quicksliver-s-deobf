@@ -21,6 +21,7 @@ import { renamePass } from './passes/rename.js';
 import { originAnalysis } from './origin/index.js';
 import { verifyRecovery } from './adaptive/verify.js';
 import { analyzeCustom } from './custom/analyze.js';
+import { analyzeLoader, classifyStage } from './loader/analyze.js';
 
 export const ENGINE_VERSION = '1.0.0';
 
@@ -191,7 +192,28 @@ export function dumpSource(source, options = {}) {
  * is the recovered text.
  */
 export function verifySource(source, options = {}) {
+  if (typeof options.recovered !== 'string') return timed(() => ({ ok: false, error: 'There is no recovered program to compare with; recover the script first.' }));
   return timed(() => verifyRecovery(source, options.recovered, options));
+}
+
+/**
+ * Loader Analysis (src/loader/analyze.js): what the script fetches, from where, and whether that payload can be obtained through an authorised
+ * route. Static only: nothing is run or fetched here. `options.recovered` (the recovered text, when the input was obfuscated) is analysed too,
+ * because an obfuscated loader often shows its requests only after the obfuscation is removed.
+ */
+export function loaderSource(source, options = {}) {
+  return timed(() => {
+    const input = analyzeLoader(source, { origin: options.origin || 'input', depth: options.depth || 0 });
+    const recovered = typeof options.recovered === 'string' && options.recovered !== source ? analyzeLoader(options.recovered, { origin: 'recovered', depth: options.depth || 0 }) : null;
+    const resolved = (a) => (a ? a.requests.filter((r) => r.urlKind === 'literal' || r.urlKind === 'encoded').length * 10 + a.requests.length : -1);
+    const best = recovered && resolved(recovered) > resolved(input) ? 'recovered' : 'input';
+    return { ok: true, input, recovered, best };
+  });
+}
+
+/** What a downloaded stage is (compiled chunk, web page, another loader, a script) before it is handed to the pipeline. */
+export function loaderStage(source) {
+  return timed(() => ({ ok: true, ...classifyStage(source) }));
 }
 
 /** Local half of the origin check: style signals, hints of other authors, and the lines worth searching for online. */

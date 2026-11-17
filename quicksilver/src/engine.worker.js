@@ -19,6 +19,8 @@ const OPS = {
   dump: api.dumpSource,
   origin: api.originCheck,
   verify: api.verifySource,
+  loader: api.loaderSource,
+  stage: api.loaderStage,
   diff: (source, options) => api.diffSources(source, options.other),
 };
 

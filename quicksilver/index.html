@@ -48,6 +48,7 @@
   <symbol id="i-timer" viewBox="0 0 16 16"><circle cx="8" cy="9" r="5"/><path d="M8 9V6M6.5 2h3M12.2 4.3l1-1"/></symbol>
   <symbol id="i-max" viewBox="0 0 16 16"><path d="M3 6V3h3M10 3h3v3M13 10v3h-3M6 13H3v-3"/></symbol>
   <symbol id="i-restore" viewBox="0 0 16 16"><path d="M6 3v3H3M13 6h-3V3M10 13v-3h3M3 10h3v3"/></symbol>
+  <symbol id="i-loader" viewBox="0 0 16 16"><path d="M8 1.75v7.5M5 6.5l3 3 3-3"/><path d="M2.25 10.5v3.75h11.5V10.5"/><circle cx="8" cy="12.25" r=".6"/></symbol>
   <symbol id="i-wand" viewBox="0 0 16 16"><path d="M3 13 11 5M10 2.5v2M13.5 6h-2M12.4 3.6l-1.2 1.2M3.5 4.5v2M2.5 5.5h2"/></symbol>
 </svg>
 
@@ -99,6 +100,7 @@
       <button class="btn chip" id="act-beautify" type="button" title="Re-indent and re-flow only; nothing is decoded (Alt+B)"><svg aria-hidden="true"><use href="#i-beautify"/></svg><span class="lbl">Beautify</span></button>
       <button class="btn chip" id="act-rename" type="button" title="Give machine-made variable names readable ones"><svg aria-hidden="true"><use href="#i-rename"/></svg><span class="lbl">Rename</span></button>
       <button class="btn chip" id="act-dump" type="button" title="Run in the sandbox and capture the text the script builds before it loads it (table.concat / loadstring)"><svg aria-hidden="true"><use href="#i-dump"/></svg><span class="lbl">Dump</span></button>
+      <button class="btn chip" id="act-loader" type="button" title="Loader Analysis: what the script downloads, from where, and whether that can be retrieved legitimately (nothing is run or fetched until you ask)"><svg aria-hidden="true"><use href="#i-loader"/></svg><span class="lbl">Loader</span></button>
       <button class="btn chip" id="act-origin" type="button" title="AI check: does it read like AI-written (vibe-coded) code, or like code copied from someone else?"><svg aria-hidden="true"><use href="#i-origin"/></svg><span class="lbl">AI check</span></button>
     </div>
     <span class="grow"></span>

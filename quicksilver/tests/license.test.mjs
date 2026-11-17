@@ -107,10 +107,10 @@ test('the revocation function validates ids and reads the environment', async ()
   const call = (id, revoked) => {
     process.env.QS_REVOKED_IDS = revoked;
     const out = { headers: {} };
-    handler({ query: { id } }, {
+    handler({ method: 'GET', query: { id } }, {
       setHeader: (k, v) => { out.headers[k] = v; },
-      status(code) { out.code = code; return this; },
-      send(body) { out.body = JSON.parse(body); },
+      set statusCode(code) { out.code = code; },
+      end(body) { out.body = JSON.parse(body); },
     });
     return out;
   };
@@ -118,4 +118,15 @@ test('the revocation function validates ids and reads the environment', async ()
   assert.deepEqual(call('QS-2026-AAAA', 'QS-2026-AAAA, QS-2026-BBBB').body.revoked, true);
   assert.deepEqual(call('QS-2026-CCCC', 'QS-2026-AAAA').body.revoked, false);
   assert.equal(call('QS-2026-CCCC', '').headers['Cache-Control'], 'no-store');
+  assert.equal(call(['QS-2026-AAAA', 'QS-2026-BBBB'], '').code, 400, 'a repeated ?id= is refused, not stringified');
+});
+
+test('the revocation function answers only GET and works on a plain Node response (no framework helpers)', async () => {
+  const { createHandler } = await import('../api/license.js');
+  const handler = createHandler({ env: { QS_REVOKED_IDS: 'QS-2026-AAAA' } });
+  const mk = () => { const o = { headers: {} }; return [o, { setHeader: (k, v) => { o.headers[k] = v; }, set statusCode(c) { o.code = c; }, end(b) { o.body = JSON.parse(b); } }]; };
+  const [a, ra] = mk(); handler({ method: 'POST', query: { id: 'QS-2026-AAAA' } }, ra);
+  assert.equal(a.code, 405);
+  const [b, rb] = mk(); handler({ method: 'GET', url: '/api/license?id=QS-2026-AAAA' }, rb);
+  assert.deepEqual(b.body, { id: 'QS-2026-AAAA', revoked: true }, 'the id is read from the URL when there is no parsed query');
 });

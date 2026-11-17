@@ -22,6 +22,7 @@ import { showHelp } from './help.js';
 import { originView } from './origin-view.js';
 import { loadResearch, researchView } from './research-view.js';
 import { customView, loadExamples } from './custom-view.js';
+import { loaderView } from './loader-view.js';
 import { createReconstructView } from './reconstruct-view.js';
 import { buildMarkdownReport } from './report-md.js';
 import { planOptions } from '../research/plans.js';
@@ -74,17 +75,19 @@ const S = {
   observed: null,
 };
 
+// Three groups, separated in the tab row: the work itself, reports about the current script, and the reference library.
 const TABS = [
-  { id: 'work', label: 'Deobfuscator' },
+  { id: 'work', label: 'Deobfuscator', group: 'Work' },
   { id: 'compare', label: 'Compare' },
+  { id: 'loader', label: 'Loader' },
   { id: 'reconstruct', label: 'Reconstruct' },
-  { id: 'detection', label: 'Detection' },
+  { id: 'detection', label: 'Detection', group: 'Reports' },
   { id: 'analysis', label: 'Analysis' },
   { id: 'origin', label: 'AI check' },
-  { id: 'luast', label: 'Luast' },
-  { id: 'examples', label: 'Examples' },
-  { id: 'compat', label: 'Obfuscators' },
   { id: 'custom', label: 'Custom format' },
+  { id: 'luast', label: 'Luast' },
+  { id: 'examples', label: 'Examples', group: 'Library' },
+  { id: 'compat', label: 'Obfuscators' },
   { id: 'research', label: 'Research' },
 ];
 
@@ -95,7 +98,7 @@ const el = {
   docname: $('#docname'), ver: $('#ver'), stState: $('#st-state'), stPos: $('#st-pos'), stSize: $('#st-size'), stSandbox: $('#st-sandbox'), stLicense: $('#st-license'),
   file: $('#file-input'), toollist: $('#toollist'), sideFilters: $('#side-filters'), sideCount: $('#side-count'),
   btn: {
-    ...Object.fromEntries(['open', 'link', 'samples', 'detect', 'beautify', 'rename', 'dump', 'origin', 'help', 'analyze', 'recover', 'trace', 'compare', 'export', 'cancel', 'clear'].map((k) => [k, $(`#act-${k}`)])),
+    ...Object.fromEntries(['open', 'link', 'samples', 'detect', 'beautify', 'rename', 'dump', 'origin', 'loader', 'help', 'analyze', 'recover', 'trace', 'compare', 'export', 'cancel', 'clear'].map((k) => [k, $(`#act-${k}`)])),
     ...Object.fromEntries(['luraph', 'ironbrew', 'moonveil'].map((k) => [k, $(`#tool-${k}`)])),
   },
 };
@@ -353,6 +356,7 @@ views.luast = h('div.view', { id: 'view-luast' },
 views.compat = h('div.view', { id: 'view-compat' }, emptyState('Loading', 'Reading data/compat.json'));
 views.research = h('div.view', { id: 'view-research' }, emptyState('Loading', 'Reading data/research'));
 views.custom = h('div.view', { id: 'view-custom' });
+views.loader = h('div.view', { id: 'view-loader' });
 const customState = { result: null, examples: null, busy: false };
 const recon = createReconstructView({ getEditorBytes: () => getInputBytes(), getEditorName: () => S.name || 'script.lua', toast });
 views.reconstruct = recon.root;
@@ -385,6 +389,7 @@ for (const t of TABS) {
   const b = h('button.tab', { type: 'button', role: 'tab', id: `tab-${t.id}`, 'aria-selected': 'false', 'aria-controls': `view-${t.id}`, onclick: () => switchTab(t.id) }, h('span', t.label), count);
   b._count = count;
   tabButtons[t.id] = b;
+  if (t.group && t.id !== TABS[0].id) el.tabs.append(h('span.tab-sep', { role: 'presentation', 'aria-hidden': 'true' }));
   el.tabs.append(b);
 }
 el.tabs.addEventListener('keydown', (e) => {
@@ -409,6 +414,7 @@ function switchTab(id) {
   if (id === 'examples') board.show();
   if (id === 'research') renderResearch();
   if (id === 'custom') { renderCustom(); ensureExamples(); }
+  if (id === 'loader') renderLoader();
   if (id === 'reconstruct') recon.show();
   if (id === 'detection' && !S.detection && inputPresent()) runDetect({ quiet: true });
   if (id === 'analysis' && !S.analysis && inputPresent()) runAnalyze({ quiet: true });
@@ -822,7 +828,7 @@ async function runVerify() {
     return null;
   }
   if (version !== S.version) return null;
-  S.verify = r ? { result: r } : null;
+  S.verify = !r ? null : r.ok === false ? { error: r.error || 'The comparison could not run.' } : { result: r };
   renderInspector();
   return r;
 }
@@ -1651,6 +1657,7 @@ el.btn.compare.addEventListener('click', () => runCompare());
 el.btn.rename.addEventListener('click', () => runRename());
 el.btn.dump.addEventListener('click', () => runDump());
 el.btn.origin.addEventListener('click', () => runOrigin());
+el.btn.loader.addEventListener('click', () => { switchTab('loader'); runLoader(); });
 el.btn.link.addEventListener('click', () => openLinkDialog());
 el.btn.help.addEventListener('click', () => showHelp());
 el.btn.luraph.addEventListener('click', () => runVmTool('luraph', 'Luraph'));
@@ -1683,6 +1690,81 @@ function renderCustom() {
     onAnalyze: runCustom,
     onCopy: (text) => { navigator.clipboard.writeText(text).then(() => toast('Copied'), () => toast('Copy was blocked by the browser')); },
   }));
+}
+
+// ---- Loader Analysis -------------------------------------------------------------------------------------------------------------------------------
+// The analysis is static (src/loader/analyze.js). A stage is downloaded only when the user presses Fetch on a request the analysis marked as
+// retrievable through the site's fetcher; each download is kept here as its own artifact (address, size, SHA-256) and is never run.
+
+const loaderState = { result: null, busy: false, error: null, stages: [], forVersion: -1, loaderName: null, loaderBytes: null };
+
+function renderLoader() {
+  replace(views.loader, loaderView(loaderState, { onAnalyze: runLoader, onFetch: fetchStage, onOpen: openStage, onAnalyzeStage: analyzeStage }));
+  if (loaderState.result && loaderState.forVersion !== S.version && loaderState.loaderBytes) {
+    const back = h('p.note.info', 'The editor now holds a different script. ', h('button.btn.small', { type: 'button', onclick: () => { loadBytes(loaderState.loaderName, loaderState.loaderBytes); loaderState.forVersion = S.version; switchTab('loader'); } }, 'Put the loader back in the editor'));
+    views.loader.firstChild.insertBefore(back, views.loader.firstChild.children[1] || null);
+  }
+}
+
+async function runLoader() {
+  if (!inputPresent()) { toast('Nothing to analyse. Paste a loader or open a file first.'); switchTab('work'); editor.focus(); return null; }
+  loaderState.busy = true; loaderState.error = null; renderLoader();
+  const recovered = S.recovered && S.recovered.output != null ? S.recovered.output : undefined;
+  const r = await run('loader', { recovered }, 'Analysing the loader', { limits: { timeoutMs: 30_000 }, needsText: true });
+  loaderState.busy = false;
+  if (r) {
+    const sameLoader = loaderState.forVersion === S.version;
+    loaderState.result = r;
+    loaderState.forVersion = S.version;
+    if (!sameLoader) { loaderState.stages = []; loaderState.loaderName = S.name || 'loader.lua'; loaderState.loaderBytes = getInputBytes(); }
+  } else if (!loaderState.result) loaderState.error = 'The analysis did not run (see the note in the Deobfuscator tab).';
+  renderLoader();
+  return r;
+}
+
+async function fetchStage(req) {
+  if (!req.retrieval || !req.retrieval.possible || !req.url) return;
+  const ok = await modal({
+    title: 'Fetch this stage?',
+    body: [h('p', 'This site’s server downloads the file at:'), h('p', h('code', req.url)), h('p.note', 'It is kept as a separate stage and is not run. Only fetch addresses you are allowed to access.')],
+    buttons: [{ id: 'cancel', label: 'Cancel' }, { id: 'ok', label: 'Fetch', primary: true }],
+  });
+  if (ok !== 'ok') return;
+  loaderState.busy = true; renderLoader();
+  setBusy('Fetching');
+  try {
+    const res = await fetch(`/api/fetch?url=${encodeURIComponent(req.url)}`, { credentials: 'omit', referrerPolicy: 'no-referrer' });
+    if (!res.ok) {
+      let why = `The server answered ${res.status}.`;
+      try { why = (await res.json()).error || why; } catch { if (res.status === 404) why = 'Fetching needs the deployed site (its /api/fetch function). It is not available on this server.'; }
+      toast(why, 7000);
+      return;
+    }
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    const text = bytesToBinary(bytes);
+    const kind = await engine.run('stage', text, {}, { timeoutMs: 20_000 }).catch(() => ({ kind: 'script', label: 'a downloaded file' }));
+    loaderState.stages.push({ url: req.url, name: res.headers.get('x-qs-name') || 'stage.lua', bytes: bytes.length, raw: bytes, sha256: await sha256Hex(bytes), kind: kind.kind, label: kind.label, at: new Date().toLocaleTimeString(), opened: false });
+    toast(`Fetched stage ${loaderState.stages.length} (${fmtBytes(bytes.length)})`);
+    setStatus(`Fetched stage ${loaderState.stages.length}`);
+  } catch (e) {
+    toast(`Could not fetch: ${e.message}`, 7000);
+  } finally {
+    setBusy(null);
+    if (/^Fetching/.test(el.stState.textContent)) setStatus('Ready');
+    loaderState.busy = false; renderLoader();
+  }
+}
+
+function openStage(stage) {
+  stage.opened = true;
+  loadBytes(stage.name, stage.raw);
+  toast(`Opened ${stage.name}. Press Deobfuscate to analyse it.`);
+}
+
+async function analyzeStage(stage) {
+  openStage(stage);
+  switchTab('loader');
+  await runLoader();
 }
 
 async function ensureExamples() {

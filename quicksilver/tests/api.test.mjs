@@ -149,3 +149,48 @@ test('fragmentContains needs nearly all the words', () => {
   assert.equal(fragmentContains('local function calculateDamageMultiplier(x)', 'local function calculateDamageMultiplier'), true);
   assert.equal(fragmentContains('fox dog', 'the quick brown fox jumps over the lazy dog'), false);
 });
+
+// Prompt XVIII audit: reproduced failures, now regression tests.
+test('/api/fetch: a malformed %-escape in the file name is a name, not a 500', async () => {
+  const handler = createFetch({ fetchImpl: async () => textRes('print(1)') });
+  const r = await call(handler, { query: { url: 'https://raw.githubusercontent.com/a/b/main/%E0%A4%A.lua' } });
+  assert.equal(r.status, 200, 'before the fix decodeURIComponent threw URIError and the endpoint answered 500');
+  assert.match(r.headers['x-qs-name'], /^[\w.-]+\.lua$/);
+});
+
+test('/api/fetch: an empty answer (204 or a zero-byte body) is reported as an empty file, not an interrupted download', async () => {
+  const none = createFetch({ fetchImpl: async () => ({ status: 204, ok: true, headers: new Map(), body: null }) });
+  const a = await call(none, { query: { url: 'https://raw.githubusercontent.com/a/b/c/d.lua' } });
+  assert.equal(a.status, 422);
+  assert.match(JSON.parse(a.body.toString()).error, /empty file/);
+  const zero = createFetch({ fetchImpl: async () => textRes('') });
+  assert.equal((await call(zero, { query: { url: 'https://raw.githubusercontent.com/a/b/c/d.lua' } })).status, 422);
+});
+
+test('/api/fetch owner credentials: off by default, token-gated, scoped to host+prefix, never echoed, not carried by a redirect', async () => {
+  const seen = [];
+  const SECRET = 'ghp_SECRETSECRETSECRET';
+  const fetchImpl = async (u, init) => { seen.push({ u, auth: init.headers.Authorization || null }); return textRes('print(1)'); };
+  const url = 'https://raw.githubusercontent.com/owner/private/main/x.lua';
+  // not configured
+  const off = createFetch({ fetchImpl, env: {} });
+  assert.equal((await call(off, { query: { url, auth: '1' } })).status, 501);
+  const env = { QS_FETCH_AUTH: JSON.stringify([{ host: 'raw.githubusercontent.com', pathPrefix: '/owner/private/', scheme: 'token', secretEnv: 'GH_SECRET' }, { host: 'evil.example', pathPrefix: '/x/', secretEnv: 'GH_SECRET' }]), GH_SECRET: SECRET, QS_FETCH_AUTH_TOKEN: 'op-token' };
+  const on = createFetch({ fetchImpl, env });
+  assert.equal((await call(on, { query: { url, auth: '1' } })).status, 401, 'no caller token');
+  assert.equal((await call(on, { query: { url, auth: '1' }, headers: { 'x-fetch-token': 'wrong' } })).status, 401);
+  assert.equal((await call(on, { query: { url: 'https://raw.githubusercontent.com/other/repo/main/x.lua', auth: '1' }, headers: { 'x-fetch-token': 'op-token' } })).status, 403, 'outside the configured prefix');
+  const ok = await call(on, { query: { url, auth: '1' }, headers: { 'x-fetch-token': 'op-token' } });
+  assert.equal(ok.status, 200);
+  assert.equal(seen.at(-1).auth, `token ${SECRET}`);
+  assert.ok(!JSON.stringify(ok.headers).includes(SECRET) && !ok.body.toString().includes(SECRET));
+  // anonymous request to the same URL: no credential attached
+  await call(on, { query: { url } });
+  assert.equal(seen.at(-1).auth, null);
+  // a redirect from the configured prefix to another allowed host does not carry the credential
+  seen.length = 0;
+  let n = 0;
+  const hop = createFetch({ env, fetchImpl: async (u, init) => { seen.push({ u, auth: init.headers.Authorization || null }); return n++ === 0 ? { status: 302, ok: false, headers: new Map([['location', 'https://gist.githubusercontent.com/a/b/raw']]), body: null } : textRes('x'); } });
+  assert.equal((await call(hop, { query: { url, auth: '1' }, headers: { 'x-fetch-token': 'op-token' } })).status, 200);
+  assert.deepEqual(seen.map((s) => !!s.auth), [true, false]);
+});

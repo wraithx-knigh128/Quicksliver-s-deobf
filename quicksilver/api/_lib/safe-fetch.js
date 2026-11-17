@@ -47,7 +47,7 @@ export function normalizeUrl(input) {
  * GET with redirects restricted to the allowed hosts. Returns { bytes: Uint8Array, type, url }.
  * @param {string|URL} url already normalised
  */
-export async function safeGet(url, { fetchImpl = fetch, maxBytes = 4 * 1024 * 1024, timeoutMs = 10_000, headers = {} } = {}) {
+export async function safeGet(url, { fetchImpl = fetch, maxBytes = 4 * 1024 * 1024, timeoutMs = 10_000, headers = {}, credentialFor = null } = {}) {
   let current = new URL(url);
   const deadline = Date.now() + timeoutMs;
   for (let hop = 0; hop < 4; hop++) {
@@ -57,7 +57,9 @@ export async function safeGet(url, { fetchImpl = fetch, maxBytes = 4 * 1024 * 10
     const timer = setTimeout(() => ctl.abort(), left);
     let res;
     try {
-      res = await fetchImpl(current.toString(), { redirect: 'manual', signal: ctl.signal, headers: { 'User-Agent': 'QuickSilver', Accept: '*/*', ...headers } });
+      // an owner-configured credential is attached only to the URL it was configured for, re-checked on every hop, so a redirect cannot carry it elsewhere
+      const cred = credentialFor ? credentialFor(current) : null;
+      res = await fetchImpl(current.toString(), { redirect: 'manual', signal: ctl.signal, headers: { 'User-Agent': 'QuickSilver', Accept: '*/*', ...headers, ...(cred || {}) } });
     } catch (e) {
       clearTimeout(timer);
       throw new FetchRefused(e && e.name === 'AbortError' ? 'The site took too long to answer.' : 'Could not reach the site.', 502);
@@ -79,6 +81,7 @@ export async function safeGet(url, { fetchImpl = fetch, maxBytes = 4 * 1024 * 10
     if (declared > maxBytes) { clearTimeout(timer); throw new FetchRefused(`The file is larger than ${Math.round(maxBytes / 1024 / 1024)} MB.`, 413); }
     const chunks = [];
     let total = 0;
+    if (!res.body) { clearTimeout(timer); return { bytes: new Uint8Array(0), type: res.headers.get('content-type') || '', url: current.toString() }; }
     try {
       const reader = res.body.getReader();
       for (;;) {
@@ -98,4 +101,37 @@ export async function safeGet(url, { fetchImpl = fetch, maxBytes = 4 * 1024 * 10
     return { bytes, type: res.headers.get('content-type') || '', url: current.toString() };
   }
   throw new FetchRefused('Too many redirects.', 508);
+}
+
+/**
+ * Owner-configured credentials for /api/fetch (off unless configured). QS_FETCH_AUTH is a JSON array of
+ *   { "host": "raw.githubusercontent.com", "pathPrefix": "/owner/private-repo/", "header": "Authorization", "scheme": "token", "secretEnv": "QS_FETCH_SECRET_1" }
+ * The secret itself lives in the environment variable named by secretEnv; it is never part of the configuration, a response or an error.
+ * Only hosts already on ALLOWED_HOSTS can be configured: credentials never widen what the fetcher can reach.
+ * Returns { rules, credentialFor(url) } or null when nothing (valid) is configured.
+ */
+export function authConfig(env = process.env) {
+  if (!env.QS_FETCH_AUTH) return null;
+  let list;
+  try { list = JSON.parse(env.QS_FETCH_AUTH); } catch { return null; }
+  if (!Array.isArray(list)) return null;
+  const rules = [];
+  for (const r of list) {
+    if (!r || typeof r !== 'object') continue;
+    const host = String(r.host || '').toLowerCase();
+    const prefix = String(r.pathPrefix || '');
+    const header = String(r.header || 'Authorization');
+    const secret = r.secretEnv && env[r.secretEnv];
+    if (!ALLOWED_HOSTS.has(host) || !prefix.startsWith('/') || prefix.length < 2 || !/^[A-Za-z][A-Za-z0-9-]{0,40}$/.test(header) || !secret) continue;
+    rules.push({ host, prefix, header, value: r.scheme ? `${String(r.scheme)} ${secret}` : String(secret) });
+  }
+  if (!rules.length) return null;
+  return {
+    rules: rules.map(({ host, prefix, header }) => ({ host, prefix, header })),
+    credentialFor(url) {
+      const u = new URL(url);
+      const rule = rules.find((x) => u.protocol === 'https:' && u.hostname.toLowerCase() === x.host && u.pathname.startsWith(x.prefix));
+      return rule ? { [rule.header]: rule.value } : null;
+    },
+  };
 }

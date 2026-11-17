@@ -1189,3 +1189,50 @@ test('Reconstruct: cancelling says so, re-enables the button, and a server that 
   assert.match(await page.textContent('.recon-right .note.bad'), /not the reconstruction service/);
   await ctx.close();
 });
+
+// ---- Loader Analysis (Prompt XVIII) --------------------------------------------------------------------------------------------------
+
+const LOADER_SRC = 'script_key = "ABCDEFGHIJ1234567890"\nloadstring(game:HttpGet("https://api.luarmor.net/files/v3/loaders/0123456789abcdef.lua"))()\nlocal ui = loadstring(game:HttpGet("https://raw.githubusercontent.com/u/r/main/ui.lua"))()\n';
+
+test('Loader: the analysis names the case, the service and the route, and never shows the key', { skip }, async () => {
+  const { page, ctx, problems } = await newPage();
+  let fetches = 0;
+  await page.route('**/api/fetch**', (route) => { fetches++; route.fulfill({ status: 500, body: '{}' }); });
+  await page.fill('textarea.editor', LOADER_SRC);
+  await page.click('#act-loader');
+  await page.waitForSelector('#view-loader .loader-case');
+  const text = await page.textContent('#view-loader');
+  assert.match(text, /Case 6 of 6/);
+  assert.match(text, /No authorised interface/);
+  assert.match(text, /Luarmor/);
+  assert.match(text, /<redacted 20 chars>/);
+  assert.ok(!text.includes('ABCDEFGHIJ1234567890'), 'the key value is not shown');
+  assert.equal(await page.locator('.req-table button:has-text("Fetch stage")').count(), 1, 'only the public address offers a fetch');
+  assert.equal(fetches, 0, 'nothing is fetched without being asked');
+  assert.deepEqual(problems, []);
+  await ctx.close();
+});
+
+test('Loader: a stage is fetched only after confirmation, kept with its hash, opened, and the loader can be put back', { skip }, async () => {
+  const { page, ctx, problems } = await newPage();
+  const asked = [];
+  await page.route('**/api/fetch**', (route) => { asked.push(new URL(route.request().url()).searchParams.get('url')); route.fulfill({ status: 200, headers: { 'content-type': 'application/octet-stream', 'x-qs-name': 'ui.lua' }, body: 'local lib = {}\nreturn lib\n' }); });
+  await page.fill('textarea.editor', LOADER_SRC);
+  await page.click('#act-loader');
+  await page.waitForSelector('.req-table');
+  await page.click('.req-table button:has-text("Fetch stage")');
+  await page.click('.modal button:has-text("Cancel")');
+  assert.equal(asked.length, 0, 'cancelling fetches nothing');
+  await page.click('.req-table button:has-text("Fetch stage")');
+  await page.click('.modal button:has-text("Fetch")');
+  await page.waitForSelector('.stage-card');
+  assert.deepEqual(asked, ['https://raw.githubusercontent.com/u/r/main/ui.lua']);
+  assert.match(await page.textContent('.stage-card'), /[0-9a-f]{64}/, 'the stage carries its SHA-256');
+  await page.click('.stage-card button:has-text("Open in Deobfuscator")');
+  assert.equal(await page.inputValue('textarea.editor'), 'local lib = {}\nreturn lib\n');
+  await page.click('#tab-loader');
+  await page.click('button:has-text("Put the loader back")');
+  assert.ok((await page.inputValue('textarea.editor')).startsWith('script_key'));
+  assert.deepEqual(problems, []);
+  await ctx.close();
+});
