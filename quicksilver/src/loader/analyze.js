@@ -61,7 +61,21 @@ export const LOADER_FAMILIES = [
   { id: 'rentry', name: 'rentry', test: (h) => h.host === 'rentry.co' || h.host === 'rentry.org', service: 'public-host', access: 'Public pages have a /raw address.', case: 2 },
   { id: 'paste-ee', name: 'paste.ee', test: (h) => h.host === 'paste.ee', service: 'public-host', access: 'Public pastes have an /r/ address.', case: 2 },
   { id: 'discord-cdn', name: 'Discord attachment', test: (h) => /^(cdn\.discordapp\.com|media\.discordapp\.net)$/.test(h.host), service: 'public-host', access: 'Attachment links are readable while they are valid (they expire).', case: 2 },
-  { id: 'roblox-asset', name: 'Roblox asset (module / model)', test: (h) => h.kind === 'asset', service: 'platform', access: 'A `require(<id>)` module or a GetObjects model is delivered by the platform to a running game; this tool has no authorised route to the asset store.', case: 6 },
+  {
+    id: 'panda-vault', name: 'Panda (PandAuth) Kryptic Vault',
+    test: (h) => /(^|\.)vss\.pandauth\.com$/.test(h.host),
+    service: 'licensing',
+    access: 'Scripts are stored server-side, obfuscated and (per the vendor) AES-encrypted, and handed to a one-line loader after a key/HWID check. The documented API (X-API-Key) manages keys; no documented endpoint returns the stored script.',
+    case: 6,
+  },
+  {
+    id: 'polsec', name: 'Polsec',
+    test: (h) => /(^|\.)(polsec\.sh|getpolsec\.com|polsec\.net)$/.test(h.host),
+    service: 'licensing',
+    access: 'A whitelist / key / HWID service that obfuscates and serves scripts. Its sites advertise a REST API for keys, scripts and users, but no endpoint documentation could be found; no documented route returns a protected script.',
+    case: 6,
+  },
+  { id: 'roblox-asset', name: 'Roblox asset (module / model)', test: (h) => h.kind === 'asset', service: 'platform', access: 'A `require(<id>)` module or a GetObjects model is delivered by the platform to a running game. Its owner can download it with Roblox Open Cloud Asset Delivery (an API key with the legacy-asset:manage scope), which this deployment does only when its operator configured that key.', case: 6 },
 ];
 
 const NETWORK_METHODS = new Set(['HttpGet', 'HttpGetAsync', 'HttpPost', 'HttpPostAsync', 'GetAsync', 'PostAsync', 'RequestAsync', 'GetObjects']);
@@ -287,7 +301,7 @@ export function analyzeLoader(source, options = {}) {
     const flow = flows.filter((f) => f.request === r);
     const executes = flow.length > 0;
     const decoder = flow.map((f) => f.decoder).find(Boolean) || null;
-    const retrieval = retrievalFor({ shape: r.shape, host, family: fam, auth, kind: r.kind });
+    const retrieval = retrievalFor({ shape: r.shape, host, family: fam, auth, kind: r.kind, providers: options.providers || [] });
     return {
       id: i, api: r.api, kind: r.kind, line: r.line,
       url: r.shape.value ? redactUrl(r.shape.value) : null,
@@ -316,7 +330,10 @@ export function analyzeLoader(source, options = {}) {
   };
 }
 
-function retrievalFor({ shape, host, family, auth, kind }) {
+function retrievalFor({ shape, host, family, auth, kind, providers = [] }) {
+  if (kind === 'asset' && providers.includes('roblox-asset') && /^rbxassetid:\/\/\d+$/.test(shape.template)) {
+    return { possible: true, route: 'provider:roblox-asset', reason: 'The operator of this deployment configured a Roblox Open Cloud key: the asset is downloaded with the owner\u2019s credential through the documented Asset Delivery API (only assets that key may access).' };
+  }
   if (kind === 'asset') return { possible: false, route: 'none', reason: 'A platform asset is delivered to a running game, not to this tool.' };
   if (family && family.case === 6) return { possible: false, route: 'none', reason: `${family.name}: ${family.access}` };
   if (family && family.case === 3) return { possible: false, route: 'owner', reason: `${family.name}: only the key holder may obtain what it protects, through the service’s own tools.` };
@@ -372,7 +389,8 @@ function decideCase({ requests, families, auth, payload, arch, isLoader }) {
   if (payload.ownProgram) explanation.push('The file also carries a program of its own; its requests load libraries or further stages. That program goes through the normal pipeline.');
   let primary;
   if (licensing) { primary = licensing.case; explanation.push(`It is a ${licensing.name} loader. ${licensing.access}`); if (keyed) explanation.push('The loader expects a key; a key identifies its holder to the service and is not a licence for this tool to retrieve the script.'); }
-  else if (asset) { primary = 6; explanation.push('It loads a platform asset, which only a running game receives.'); }
+  else if (asset && relevant.some((r) => r.kind === 'asset' && r.retrieval.possible)) { primary = 3; explanation.push('It loads a platform asset. This deployment has its operator\u2019s Roblox Open Cloud key, so the owner\u2019s assets can be downloaded through the documented Asset Delivery API.'); }
+  else if (asset) { primary = 6; explanation.push('It loads a platform asset, which only a running game receives (or its owner, through Roblox Open Cloud with their own API key).'); }
   else if (keyed) { primary = 3; explanation.push('The request carries a key or token, so only its owner may retrieve the payload.'); }
   else if (relevant.some((r) => r.urlKind === 'dynamic')) { primary = 4; explanation.push('The address depends on values that exist only when the script runs.'); }
   else if (relevant.some((r) => r.urlKind === 'constructed')) { primary = 4; explanation.push('Part of the address is computed when the script runs.'); }
