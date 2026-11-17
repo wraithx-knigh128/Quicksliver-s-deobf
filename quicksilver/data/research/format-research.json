@@ -114,6 +114,22 @@
    "method": "GitHub repository search",
    "source": "https://github.com/spxnso/lua-obfuscators",
    "reliability": "medium: a list, not an audit"
+  },
+  {
+   "id": "luaq-identity",
+   "family": "luaq",
+   "finding": "LuaQ (\"Luaq Obfuscator\", obfuscator.cfd) is a closed commercial Lua/Luau obfuscator; vendor page: a custom bytecode VM, targets Roblox executors / Luau CLI / Lua 5.2, macros LUAQ_ATTRIBUTES(INLINE) and LUAQ_NO_VIRTUALIZE(fn), and a loader that fetches an external SDK with loadstring(game:HttpGet(...)). Distinct from similarly named tools (Lua Obscura, obfuscate.club, wYnFuscate, xbcqfuscator) by its LUAQ!/LQZ1/=LUAQ_VM markers.",
+   "method": "vendor page read via web search (US), cross-checked against the authorized v2.7 sample",
+   "source": "https://obfuscator.cfd/",
+   "reliability": "medium (vendor marketing, corroborated by the sample)"
+  },
+  {
+   "id": "luaq-v27-architecture",
+   "family": "luaq",
+   "finding": "LuaQ v2.7 is four layers: (1) base-93 text + LQZ1 (size, Adler-32) + raw DEFLATE, fully decoded; (2) a 606 kB Luau VM runtime with ~60 captured globals, Roblox environment checks and a SHA-256/HMAC key schedule; (3) an encrypted loader program run by the VM; (4) the user's program, delivered at run time by LuaQ's server or an in-game LuaqSeal. The VM is register-based: a masked opcode v=D-s dispatched through a balanced BST of 202 fused, opaque-guarded handlers; operands decoded from a per-handler feedback keystream with widths 1..31 bits; signed operands zigzag-encoded; instructions memoised per index.",
+   "method": "decoded the container with src/recover/luaq.js and read/ran the stage-2 runtime in the JS sandbox; VM facts extracted reproducibly by analyzeVm",
+   "source": "local/luaq/v2.7_sample.lua (authorized, not committed); docs/targets/LUAQ.md",
+   "reliability": "high (measured and read; one sample)"
   }
  ],
  "unresolved": [
@@ -122,6 +138,8 @@
   "Hercules 1.5/1.6 virtual machine format is not read.",
   "MoonVeil 2.0.24 (named by a regression issue) has no script here.",
   "Obscura and RealObfuscator were not run (third-party code on the host was refused by the permission policy); their fixtures and per-version measurements are missing.",
-  "The collection's Unknown, VM Compressed and MinifiedLua directories are mostly unidentified by signature (they hold unobfuscated scripts and unfamiliar tools)."
+  "The collection's Unknown, VM Compressed and MinifiedLua directories are mostly unidentified by signature (they hold unobfuscated scripts and unfamiliar tools).",
+  "The LuaQ program could not be recovered: it is delivered to the script at run time from LuaQ\u2019s server or an in-game seal, not stored in the file (one v2.7 sample).",
+  "LuaQ\u2019s 202 fused VM handlers were characterised (dispatch, operand encoding, keystream) but not given individual meanings; a second authorized sample of a known source is needed to map them differentially."
  ]
 }

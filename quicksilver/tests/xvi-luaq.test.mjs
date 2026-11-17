@@ -59,6 +59,8 @@ test('luaq v2.7 sample: the outer layer is decoded to the VM runtime, and the re
   assert.equal(d.stage2Bytes, 606561);
   assert.equal(d.buildId, 'c642dea5-964f-4805-82ef-26e4598dd783');
   assert.doesNotThrow(() => parse(d.stage2));
+  // the VM architecture is read off the decoded runtime (docs/targets/LUAQ.md)
+  assert.deepEqual(d.vm, { handlers: 202, dispatchTree: true, keystream: true, memoised: true, zigzag: true, deserializer: true });
   const r = recover(src, { sandbox: { enabled: false } });
   assert.equal(r.detection.families[0].id, 'luaq');
   const st = r.steps.find((x) => x.id === 'luaq.layers');

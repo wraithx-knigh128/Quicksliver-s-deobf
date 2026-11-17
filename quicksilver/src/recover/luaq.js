@@ -86,7 +86,29 @@ export function describeStage2(text) {
     buildId: build ? build[1] : null,
     loaderPayloadChars: innerSize,
     environmentChecks: /Instance\.new/.test(text) && /InstanceHandle|Path2DControlPoint|FloatCurveKey/.test(text),
+    ...analyzeVm(text),
   };
+}
+
+/**
+ * The VM runtime's architecture, read off the decoded stage-2 source. These are reproducible counts, not a lift: the handlers are fused and
+ * guarded, so recognising their shape is not the same as giving each a meaning.
+ * @param {string} text the decoded stage-2 Luau source
+ */
+export function analyzeVm(text) {
+  // the probes read the minified runtime, so spaces around operators are optional
+  const S = (re) => new RegExp(re.replace(/ /g, ' ?')).test(text);
+  // the interpreter dispatches on a masked opcode `v = D - s`, through a balanced binary search tree of `if v == N` / `if v <= N` nodes
+  const handlers = (text.match(/(?:if|elseif) ?v ?== ?\d+ ?then/g) || []).length;
+  const dispatchTree = S('v = \\w+ - \\w+') && S('if ?v <= \\d+ ?then');
+  // instructions are decrypted from a feedback keystream (a running key updated with the ciphertext) and memoised per index
+  const keystream = S('T\\(F\\(\\w+, \\w+\\), \\w+, \\w+\\)');
+  const memoised = /\.G\[\w+\]/.test(text) && S('\\.G\\[\\w+\\] = ');
+  // operands include zigzag-encoded signed values (`t % 2 == 0 and t / 2 or -(t + 1) / 2`)
+  const zigzag = S('% 2 == 0 and \\w+ / 2 or -\\(\\w+ \\+ 1\\) / 2');
+  // the deserializer reads a prototype table with these fields (bytecode body, constants, child protos, line info)
+  const deserializer = S('m = \\w+\\(\\),') && S('c = \\w+\\(\\),');
+  return { vm: { handlers, dispatchTree, keystream, memoised, zigzag, deserializer } };
 }
 
 /** Stage 1 decoded: the source of stage 2 (a binary string), and what was checked on the way. */
