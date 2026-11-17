@@ -483,4 +483,5 @@ Source: https://github.com/vyxonq-dev/obfuscator-samples at 82e582fcdd78, 748 fi
 * #64: **Prometheus as of November 2026 (upstream a98c501): resolved after Prompt XV**
 * #65: **AzureVM: lifted (Prompt XVI); layered presets partly kept**
 * #66: **RealObfuscator function VM: lifted (Prompt XVI)**
+* #67: **LuaQ v2.7: outer layer decoded; the program is not in the file**
 

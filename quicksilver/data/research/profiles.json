@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "generatedAt": "2026-11-15T17:30:08.149Z",
+ "generatedAt": "2026-11-17T07:26:15.477Z",
  "gates": {
   "real": {
    "minFixtures": 8,
@@ -1741,6 +1741,117 @@
      "verification": {
       "status": "internally-tested",
       "basis": "recovery measured on examples that are not real tool output"
+     }
+    }
+   ],
+   "claims": {
+    "unversioned": {
+     "claim": "identification-only",
+     "why": "The output can be recognised. No reconstruction has been verified against real or authorised samples."
+    }
+   }
+  },
+  {
+   "id": "luaq",
+   "name": "LuaQ",
+   "kind": "commercial",
+   "summary": "Commercial, closed obfuscation service (obfuscator.cfd). v2.7 read on one sample supplied by a user: a base-93 / LQZ1 / DEFLATE loader around a Luau VM runtime; the program is delivered at run time from outside the file, so it is not recoverable from the file.",
+   "versions": [
+    {
+     "id": "unversioned",
+     "label": "as measured (no version split)",
+     "identification": {
+      "methods": [
+       {
+        "kind": "signature",
+        "confidence": 0.8,
+        "note": "heuristic"
+       }
+      ],
+      "confidence": 0.8
+     },
+     "characteristics": [
+      {
+       "text": "base-93 text encoding",
+       "knownAs": "documented",
+       "sources": [
+        "https://obfuscator.cfd/ (named in the banner; not reachable from the build environment)"
+       ]
+      },
+      {
+       "text": "DEFLATE container",
+       "knownAs": "documented",
+       "sources": [
+        "https://obfuscator.cfd/ (named in the banner; not reachable from the build environment)"
+       ]
+      },
+      {
+       "text": "bytecode VM",
+       "knownAs": "documented",
+       "sources": [
+        "https://obfuscator.cfd/ (named in the banner; not reachable from the build environment)"
+       ]
+      },
+      {
+       "text": "environment checks",
+       "knownAs": "documented",
+       "sources": [
+        "https://obfuscator.cfd/ (named in the banner; not reachable from the build environment)"
+       ]
+      },
+      {
+       "text": "encrypted loader program",
+       "knownAs": "documented",
+       "sources": [
+        "https://obfuscator.cfd/ (named in the banner; not reachable from the build environment)"
+       ]
+      },
+      {
+       "text": "server-delivered program",
+       "knownAs": "documented",
+       "sources": [
+        "https://obfuscator.cfd/ (named in the banner; not reachable from the build environment)"
+       ]
+      }
+     ],
+     "samples": {
+      "authorizedPairs": 0,
+      "realOutput": 0,
+      "publicObserved": 0,
+      "notes": "No real output of this tool was available."
+     },
+     "capabilities": {
+      "identify": {
+       "available": true,
+       "verified": "format-tested"
+      },
+      "trace": {
+       "available": true,
+       "verified": "unverified"
+      },
+      "recover": {
+       "available": false,
+       "verified": "none"
+      }
+     },
+     "results": {
+      "fixtures": 0,
+      "syntheticFixtures": 0,
+      "behaviourChecked": 0,
+      "behaviourSame": 0,
+      "traceChecked": 0,
+      "traceIdentical": 0,
+      "toolBroken": 0,
+      "fidelityAfter": null,
+      "runtime": null,
+      "reproduction": null
+     },
+     "limitations": [
+      "No limits were recorded for this tool."
+     ],
+     "verification": {
+      "status": "identified",
+      "basis": "recognised from signatures; no reconstruction measured"
      }
     }
    ],
