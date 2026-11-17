@@ -26,11 +26,11 @@ const IMPLEMENTATION = {
   ironbrikked: { default: ['src/recover/ironbrikked-vm.js'] },
 };
 
-// what stops each MoonVeil version, from KNOWN-ISSUES (#18, #19, #46, #47)
+// what stops each MoonVeil version, from KNOWN-ISSUES (#18, #19, #46, #47, #60)
 const MOONVEIL_PATTERNS = {
   '1.4.5': ['three dispatcher loops (8, 135 and 259 blocks) and a 28888-character blob remain (KNOWN-ISSUES 19)'],
   '2.0.26': ['joined from a table of factories, not recovered: names are lost, register-style temporaries remain (KNOWN-ISSUES 47)'],
-  '2.1.0': ['a bytecode VM again: the VM reader written for 2.0.25 stops at its first shape check (KNOWN-ISSUES 46)'],
+  '2.1.0': ['rebuilt from its handlers since Prompt XVI (KNOWN-ISSUES 60): both samples run in the sandbox like the originals; only two builds of one program exist, so handler kinds outside it are untested'],
 };
 
 const rows = [];
@@ -97,6 +97,25 @@ for (const [version, row] of Object.entries(luraph.summary.versions)) {
   });
 }
 
+// LuaQ: a closed, hosted, commercial VM obfuscator. One authorized v2.7 sample (local, not committed); the program is delivered at run time from
+// outside the file, so there is no in-file program to reconstruct or run. These cells are read from docs/targets/LUAQ.md and the reproducible
+// src/recover/luaq.js analysis, not measured against a reference (there is none).
+rows.push({
+  target: 'LuaQ', version: '2.7', config: 'bytecode VM (hosted)',
+  fixtures: { dir: 'authorized sample, not stored (local/luaq)', count: 1, id: 'luaq-2.7-sample' },
+  identification: { detected: 1, of: 1 },
+  structure: { note: 'stage 1 (base-93 / LQZ1 / DEFLATE) decoded exactly to the 606 kB VM runtime; the VM program is read (prototypes, pools) but not rebuilt' },
+  semantic: { note: 'not reached: the 202 fused handlers are characterised, not given meanings' },
+  runtime: { note: 'n/a: the user program is delivered at run time from LuaQ’s server or an in-game seal, not in the file' },
+  completeness: { unresolved: 2 },
+  failurePatterns: [
+    'the program is not in the file: delivered at run time from a server or an in-game LuaqSeal (access control, out of scope)',
+    'the 202 fused, opaque-guarded handlers are characterised (masked-opcode BST dispatch, per-handler keystream operands 1..31 bits, zigzag, per-index memoisation) but not individually lifted',
+  ],
+  status: 'partial',
+  implementation: ['src/recover/luaq.js', 'src/core/inflate.js'],
+});
+
 const luraphFam = compat.families.find((f) => f.id === 'luraph');
 const corpus = luraphFam && luraphFam.corpus;
 const out = {
@@ -125,7 +144,7 @@ lines.push('# Compatibility matrix: the five primary targets', '', '_Generated b
 lines.push(out.note, '');
 lines.push(`Luraph's public collection: ${out.luraphCollection ? `${out.luraphCollection.files} files, ${out.luraphCollection.identified} identified` : 'n/a'}; without a banner the era is named correctly ${pct(out.luraphEra.era)}% of the time, the exact version ${pct(out.luraphEra.exactVersion)}% (${out.luraphEra.labelled} labelled files, leave-one-out).`, '');
 lines.push('Columns: identification (detected/of), structure and semantic (before→after recovery), runtime (same/judged, in brackets the fixtures whose own tool output does not run like the original and are therefore not judged), completeness (nothing of the obfuscator left and nothing unresolved), known failure patterns, fixture identifier, status.', '');
-for (const target of ['MoonVeil', 'Hercules', 'Luraph', 'Prometheus', 'IronBrew']) {
+for (const target of ['LuaQ', 'MoonVeil', 'Hercules', 'Luraph', 'Prometheus', 'IronBrew']) {
   const rs = rows.filter((r) => r.target === target);
   lines.push(`## ${target}`, '');
   lines.push('| Version | Configuration | Fixtures (id) | Ident. | Structure | Semantic | Runtime | Complete | Status | Failure patterns | Implementation |', '|---|---|---|---|---|---|---|---|---|---|---|');
@@ -137,4 +156,4 @@ for (const target of ['MoonVeil', 'Hercules', 'Luraph', 'Prometheus', 'IronBrew'
   lines.push('', `Rows by status: ${Object.entries(by).map(([k, v]) => `${k} ${v}`).join(', ')}.`, '');
 }
 fs.writeFileSync(path.join(root, 'docs/MATRIX.md'), `${lines.join('\n')}\n`);
-console.log(`${rows.length} rows`, Object.fromEntries(['MoonVeil', 'Hercules', 'Luraph', 'Prometheus', 'IronBrew'].map((t) => [t, rows.filter((r) => r.target === t).length])));
+console.log(`${rows.length} rows`, Object.fromEntries(['LuaQ', 'MoonVeil', 'Hercules', 'Luraph', 'Prometheus', 'IronBrew'].map((t) => [t, rows.filter((r) => r.target === t).length])));

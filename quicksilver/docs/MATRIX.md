@@ -8,14 +8,22 @@ Luraph's public collection: 218 files, 206 identified; without a banner the era 
 
 Columns: identification (detected/of), structure and semantic (before→after recovery), runtime (same/judged, in brackets the fixtures whose own tool output does not run like the original and are therefore not judged), completeness (nothing of the obfuscator left and nothing unresolved), known failure patterns, fixture identifier, status.
 
+## LuaQ
+
+| Version | Configuration | Fixtures (id) | Ident. | Structure | Semantic | Runtime | Complete | Status | Failure patterns | Implementation |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 2.7 | bytecode VM (hosted) | 1 (luaq-2.7-sample) | 1/1 | n/a (stage 1 (base-93 / LQZ1 / DEFLATE) decoded exactly to the 606 kB VM runtime; the VM program is read (prototypes, pools) but not rebuilt) | n/a (not reached: the 202 fused handlers are characterised, not given meanings) | n/a (n/a: the user program is delivered at run time from LuaQ’s server or an in-game seal, not in the file) | 2 unresolved | partial | the program is not in the file: delivered at run time from a server or an in-game LuaqSeal (access control, out of scope) ; the 202 fused, opaque-guarded handlers are characterised (masked-opcode BST dispatch, per-handler keystream operands | `src/recover/luaq.js`, `src/core/inflate.js` |
+
+Rows by status: partial 1.
+
 ## MoonVeil
 
 | Version | Configuration | Fixtures (id) | Ident. | Structure | Semantic | Runtime | Complete | Status | Failure patterns | Implementation |
 |---|---|---|---|---|---|---|---|---|---|---|
 | 1.4.5 | script 1.4.5-raw3 | 1 (moonveil-1.4.5-raw3) | 1/1 | n/a (no original program exists to compare with) | n/a (no original program exists to compare with) | n/a (not checkable: the program needs Roblox objects and its original is not available) | 4 unresolved | partial | three dispatcher loops (8, 135 and 259 blocks) and a 28888-character blob remain (KNOWN-ISSUES 19) | `src/recover/moonveil-join.js`, `src/recover/moonveil-vm/`, `src/recover/moonveil-cff.js`, `src/recover/moonveil.js` |
 | 2.0.26 | script 2.0.26-rideafish | 1 (moonveil-2.0.26-rideafish) | 1/1 | n/a (against the hand-made reconstruction of that script) | 34% | n/a (not checkable: the program needs Roblox objects and its original is not available) | 0 unresolved | partial | joined from a table of factories, not recovered: names are lost, register-style temporaries remain (KNOWN-ISSUES 47) | `src/recover/moonveil-join.js`, `src/recover/moonveil-vm/`, `src/recover/moonveil-cff.js`, `src/recover/moonveil.js` |
-| 2.1.0 | script 2.1.0-sample6 | 1 (moonveil-2.1.0-sample6) | 1/1 | n/a (no original program exists to compare with) | n/a (no original program exists to compare with) | n/a (not checkable: the program needs Roblox objects and its original is not available) | 0 unresolved | partial | a bytecode VM again: the VM reader written for 2.0.25 stops at its first shape check (KNOWN-ISSUES 46) | `src/recover/moonveil-join.js`, `src/recover/moonveil-vm/`, `src/recover/moonveil-cff.js`, `src/recover/moonveil.js` |
-| 2.1.0 | script 2.1.0-sample7 | 1 (moonveil-2.1.0-sample7) | 1/1 | n/a (no original program exists to compare with) | n/a (no original program exists to compare with) | n/a (not checkable: the program needs Roblox objects and its original is not available) | 0 unresolved | partial | a bytecode VM again: the VM reader written for 2.0.25 stops at its first shape check (KNOWN-ISSUES 46) | `src/recover/moonveil-join.js`, `src/recover/moonveil-vm/`, `src/recover/moonveil-cff.js`, `src/recover/moonveil.js` |
+| 2.1.0 | script 2.1.0-sample6 | 1 (moonveil-2.1.0-sample6) | 1/1 | n/a (no original program exists to compare with) | n/a (no original program exists to compare with) | n/a (not checkable: the program needs Roblox objects and its original is not available) | 0 unresolved | partial | rebuilt from its handlers since Prompt XVI (KNOWN-ISSUES 60): both samples run in the sandbox like the originals; only two builds of one program exist, so handler kinds outside it are untested | `src/recover/moonveil-join.js`, `src/recover/moonveil-vm/`, `src/recover/moonveil-cff.js`, `src/recover/moonveil.js` |
+| 2.1.0 | script 2.1.0-sample7 | 1 (moonveil-2.1.0-sample7) | 1/1 | n/a (no original program exists to compare with) | n/a (no original program exists to compare with) | n/a (not checkable: the program needs Roblox objects and its original is not available) | 0 unresolved | partial | rebuilt from its handlers since Prompt XVI (KNOWN-ISSUES 60): both samples run in the sandbox like the originals; only two builds of one program exist, so handler kinds outside it are untested | `src/recover/moonveil-join.js`, `src/recover/moonveil-vm/`, `src/recover/moonveil-cff.js`, `src/recover/moonveil.js` |
 
 Rows by status: partial 4.
 

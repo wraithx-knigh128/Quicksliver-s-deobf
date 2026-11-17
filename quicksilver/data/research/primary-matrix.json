@@ -1,6 +1,6 @@
 {
  "schema": "quicksilver/primary-matrix@1",
- "generated": "2026-11-15",
+ "generated": "2026-11-17",
  "note": "One row per version and configuration. Status words: verified, partial, experimental, unsupported (format-db) and, for Luraph, the engine registry’s own (partially-tested ...). A cell with a note is one that cannot be measured for that row.",
  "sources": [
   "data/research/format-db.json",
@@ -4524,7 +4524,7 @@
     "unresolved": 0
    },
    "failurePatterns": [
-    "a bytecode VM again: the VM reader written for 2.0.25 stops at its first shape check (KNOWN-ISSUES 46)"
+    "rebuilt from its handlers since Prompt XVI (KNOWN-ISSUES 60): both samples run in the sandbox like the originals; only two builds of one program exist, so handler kinds outside it are untested"
    ],
    "status": "partial",
    "confidence": {
@@ -4564,7 +4564,7 @@
     "unresolved": 0
    },
    "failurePatterns": [
-    "a bytecode VM again: the VM reader written for 2.0.25 stops at its first shape check (KNOWN-ISSUES 46)"
+    "rebuilt from its handlers since Prompt XVI (KNOWN-ISSUES 60): both samples run in the sandbox like the originals; only two builds of one program exist, so handler kinds outside it are untested"
    ],
    "status": "partial",
    "confidence": {
@@ -4909,6 +4909,41 @@
    "implementation": [
     "src/reconstruct/",
     "api/reconstruct.py"
+   ]
+  },
+  {
+   "target": "LuaQ",
+   "version": "2.7",
+   "config": "bytecode VM (hosted)",
+   "fixtures": {
+    "dir": "authorized sample, not stored (local/luaq)",
+    "count": 1,
+    "id": "luaq-2.7-sample"
+   },
+   "identification": {
+    "detected": 1,
+    "of": 1
+   },
+   "structure": {
+    "note": "stage 1 (base-93 / LQZ1 / DEFLATE) decoded exactly to the 606 kB VM runtime; the VM program is read (prototypes, pools) but not rebuilt"
+   },
+   "semantic": {
+    "note": "not reached: the 202 fused handlers are characterised, not given meanings"
+   },
+   "runtime": {
+    "note": "n/a: the user program is delivered at run time from LuaQ’s server or an in-game seal, not in the file"
+   },
+   "completeness": {
+    "unresolved": 2
+   },
+   "failurePatterns": [
+    "the program is not in the file: delivered at run time from a server or an in-game LuaqSeal (access control, out of scope)",
+    "the 202 fused, opaque-guarded handlers are characterised (masked-opcode BST dispatch, per-handler keystream operands 1..31 bits, zigzag, per-index memoisation) but not individually lifted"
+   ],
+   "status": "partial",
+   "implementation": [
+    "src/recover/luaq.js",
+    "src/core/inflate.js"
    ]
   }
  ]
