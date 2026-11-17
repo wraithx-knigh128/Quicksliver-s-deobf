@@ -53,7 +53,7 @@ sit outside it).
 | Version | Configs | 1 id | 2 ver | 3 stages | 4 struct | 5 instr/handler | 6 semantic | 7 runtime | 8 behav | Notes |
 |---|---|---|---|---|---|---|---|---|---|---|
 | current | Minify, and each single step (EncryptStrings, ConstantArray, SplitStrings, NumbersToExpressions, ProxifyLocals, WrapInFunction, AddVararg, AntiTamper) | ● | ● | ● | ● | ● (non-VM) | ● | ● | ● | per-step fixtures all run like the original |
-| current | Weak, Medium, Strong | ● | ● | ● | ● | ◐ (Vmify) | ◐ | ● | ◐ | the Vmify interpreter is the residual; 6/6 of the judged subset run like the original |
+| current | Weak, Medium, Strong | ● | ● | ● | ● | ● | ◐ | ● | ● | the Vmify VM is fully lifted (Prompt XVIII re-check: all 21 builds print exactly what the obfuscated program prints on Lua 5.1; 18/21 also what the original prints — the 3 s03 builds diverge inside Prometheus, which drops a truncating `( )`). Semantic stays ◐: generic `for` over `pairs` stays a `while` loop (16 of 33 generic loops raised) and expression forms differ |
 | 2026-11 | Weak, Medium, Strong | ● | ● | ● | ● | ● | ● | ● | ● | the upstream rewrite (old Vmify → `Cff`; new `Vmify` = a register bytecode VM); 8/8 run like the original (Prompt XV) |
 | lennyobf (fork) | Minify, Weak, Medium, Strong, per-step | ● | ● | ● | ● | ◐ | ◐ | ● | ◐ | a public fork; same passes, measured on local fixtures |
 
