@@ -1236,3 +1236,48 @@ test('Loader: a stage is fetched only after confirmation, kept with its hash, op
   assert.deepEqual(problems, []);
   await ctx.close();
 });
+
+// ---- Loader Intelligence (Prompt XIX) ------------------------------------------------------------------------------------------------
+
+test('Loader Intelligence: retrieves only after confirmation, measures each stage, reconstructs a decoded payload, exports a report', { skip, timeout: 240_000 }, async () => {
+  const { page, ctx } = await newPage();
+  const remote = path.join(root, 'tests', 'corpus', 'remote-loaders', 'bodies');
+  const asked = [];
+  await page.route('**/api/retrieve**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, mode: 'off', providers: [] }) }));
+  await page.route('**/api/fetch**', (route) => {
+    const url = new URL(route.request().url()).searchParams.get('url');
+    asked.push(url);
+    if (url.endsWith('/ib2gz/raw')) return route.fulfill({ status: 200, headers: { 'content-type': 'application/octet-stream' }, body: fs.readFileSync(path.join(remote, 'ib2.b64gz.txt')) });
+    return route.fulfill({ status: 404, contentType: 'application/json', body: JSON.stringify({ error: 'The site answered 404.' }) });
+  });
+  await page.fill('textarea.editor', 'loadstring(game:HttpGet("https://rentry.co/ib2gz/raw"))()\nloadstring(game:HttpGet("https://raw.githubusercontent.com/a/b/main/missing.lua"))()\nrequire(4242424242)\n');
+  await page.click('#act-loader');
+  await page.waitForSelector('.intel-head');
+  assert.equal(asked.length, 0, 'nothing retrieved before the user asks');
+  await page.click('.intel-head button.btn.primary');
+  await page.click('.modal button:has-text("Cancel")');
+  assert.equal(asked.length, 0, 'cancel retrieves nothing');
+  await page.click('.intel-head button.btn.primary');
+  await page.click('.modal button:has-text("Retrieve and analyse")');
+  await page.waitForSelector('.intel-table', { timeout: 200_000 });
+  const rows = await page.$$eval('.intel-table tbody tr', (rs) => rs.map((r) => r.textContent.replace(/\s+/g, ' ')));
+  assert.equal(rows.length, 3);
+  assert.match(rows[0], /base64 → gzip.*IronBrew 2.*confidence high.*Reconstructed/);
+  assert.match(rows[1], /404.*Request failed/);
+  assert.match(rows[2], /4242424242.*not requested.*Not retrievable/, 'the asset has no authorised route here (no provider), so it is not requested');
+  assert.ok(!asked.some((u) => /4242424242/.test(u)));
+  const [dl] = await Promise.all([page.waitForEvent('download'), page.click('button:has-text("Report (.md)")')]);
+  const md = fs.readFileSync(await dl.path(), 'utf8');
+  assert.match(md, /# Loader Intelligence report/);
+  assert.match(md, /reconstructed \(high\/medium confidence\) \| 1 \|/);
+  await ctx.close();
+});
+
+test('a Roblox model file opens as the script inside it', { skip }, async () => {
+  const { page, ctx, problems } = await newPage();
+  await page.setInputFiles('#file-input', path.join(root, 'tests', 'corpus', 'models', 'default-inserted-modulescript', 'binary.rbxm'));
+  await page.waitForFunction(() => document.querySelector('textarea.editor').value.includes('return module'));
+  assert.equal(await page.inputValue('textarea.editor'), 'local module = {}\n\nreturn module\n');
+  assert.deepEqual(problems, []);
+  await ctx.close();
+});

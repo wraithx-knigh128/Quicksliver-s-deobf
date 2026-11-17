@@ -21,6 +21,8 @@ const OPS = {
   verify: api.verifySource,
   loader: api.loaderSource,
   stage: api.loaderStage,
+  loaderAnalyze: api.loaderAnalyze,
+  payload: api.payloadDecode,
   diff: (source, options) => api.diffSources(source, options.other),
 };
 

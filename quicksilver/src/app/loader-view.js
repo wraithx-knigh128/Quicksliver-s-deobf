@@ -60,7 +60,54 @@ function stageCard(s, i, { onOpen, onAnalyzeStage }) {
     ]));
 }
 
-export function loaderView(state, { onAnalyze, onFetch, onOpen, onAnalyzeStage }) {
+const OUTCOME = {
+  'not-retrievable': ['', 'Not retrievable'],
+  'transport-failed': ['bad', 'Request failed'],
+  'not-code': ['bad', 'Not code'],
+  'retrieved-unrecoverable': ['warn', 'Retrieved, not reconstructed'],
+  'retrieved-reconstructed': ['ok', 'Reconstructed'],
+  'retrieved-plain': ['ok', 'Plain code'],
+  'nested-loader': ['info', 'Another loader'],
+};
+
+/** Loader Intelligence: one row per request, each stage (route, transport, payload, program, reconstruction) shown on its own. */
+function intelSection(state, a, { onIntel, onOpenText, onExport }) {
+  const routes = ['link-fetcher', ...(state.providers || []).map((p) => `provider:${p}`)];
+  const n = a.requests.filter((r) => r.retrieval.possible && routes.includes(r.retrieval.route)).length;
+  const head = h('div.intel-head',
+    h('button.btn.primary', { type: 'button', disabled: state.busy || !n, onclick: onIntel }, state.intel ? 'Run again…' : 'Retrieve and analyse…'),
+    h('span.meta', n ? `${n} address${n === 1 ? '' : 'es'} with an authorised route. Each response is checked, decoded and reconstructed separately; nothing is run.` : 'No request has an authorised route on this deployment, so nothing can be retrieved.'),
+    state.intel ? h('span.grow') : null,
+    state.intel ? h('button.btn.small.outline', { type: 'button', onclick: () => onExport('md') }, 'Report (.md)') : null,
+    state.intel ? h('button.btn.small.outline', { type: 'button', onclick: () => onExport('json') }, 'Report (.json)') : null);
+  if (!state.intel) return section('Loader Intelligence', head);
+  const r = state.intel;
+  const s = r.summary;
+  const metric = (v, label) => h('div.metric', h('b', String(v)), h('span', label));
+  return section('Loader Intelligence', [
+    head,
+    h('div.metrics', metric(s.requests, 'requests'), metric(s.transportOk, 'retrieved'), metric(s.payloadCode, 'were code'), metric(s.reconstructed, 'reconstructed'), metric(s.plain, 'plain'), metric(s.unrecoverable + s.notCode + s.transportFailed, 'not recovered')),
+    h('div.table-scroll', h('table.grid.intel-table',
+      h('thead', h('tr', h('th', '#'), h('th', 'Address'), h('th', 'Transport'), h('th', 'Payload'), h('th', 'Program → result'), h('th', 'Outcome'))),
+      h('tbody', r.stages.map((st, i) => {
+        const [cls, label] = OUTCOME[st.outcome] || ['', st.outcome];
+        return h('tr',
+          h('td.mono', `${i + 1}${st.depth ? `·${st.depth}` : ''}`),
+          h('td.addr', h('code', st.request.address), h('div.faint', st.route.route)),
+          h('td', st.transport ? (st.transport.ok ? h('span.nowrap', `HTTP ${st.transport.status ?? 200} · ${fmtBytes(st.transport.bytes)}`) : h('span.bad-text', st.transport.error || 'failed')) : h('span.faint', 'not requested')),
+          h('td', st.payload ? [st.payload.label, st.payload.layers.length ? h('div.faint', st.payload.layers.map((l) => l.kind).join(' → ')) : null] : h('span.faint', '—')),
+          h('td', (st.programs || []).length ? st.programs.map((p) => h('div.prog',
+            h('span', p.nestedLoader ? 'a further loader' : p.families.length ? p.families.join(', ') : p.obfuscated ? 'obfuscated' : 'not obfuscated'),
+            p.nestedLoader ? h('span.faint', ` · case ${p.nestedLoader.case}, analysed as the next stage`) : p.reconstruction ? h('span.faint', ` · confidence ${p.reconstruction.level || '—'}`) : null,
+            p.source ? h('button.btn.small.outline', { type: 'button', onclick: () => onOpenText(`${(p.name || 'payload').split('/').pop() || 'payload'}`, p.source) }, 'Payload') : null,
+            p.output ? h('button.btn.small.outline', { type: 'button', onclick: () => onOpenText(`${(p.name || 'payload').split('/').pop() || 'payload'}.recovered.lua`, p.output) }, 'Result') : null)) : h('span.faint', '—')),
+          h('td', h('span.badge.' + (cls || 'plain'), label)));
+      })))),
+    note('', 'Counted on their own: a successful request is not a payload, a payload is not a reconstruction, and the confidence is the pipeline\u2019s own estimate (behaviour is checked separately in the Deobfuscator).'),
+  ]);
+}
+
+export function loaderView(state, { onAnalyze, onFetch, onOpen, onAnalyzeStage, onIntel, onOpenText, onExport }) {
   const { result, busy, error } = state;
   const head = h('div.codebar',
     h('button.btn.primary', { type: 'button', disabled: busy, onclick: onAnalyze }, busy ? 'Analysing…' : 'Analyse the loader'),
@@ -84,6 +131,7 @@ export function loaderView(state, { onAnalyze, onFetch, onOpen, onAnalyzeStage }
         h('p', a.case.retrieval),
         a.explanation.map((e) => h('p.dim', e))),
       h('div.loader-side', caseLadder(a), progress(state, a))),
+    a.isLoader ? intelSection(state, a, { onIntel, onOpenText, onExport }) : null,
     a.architectures.length ? section('Architecture', h('div.arch-list', a.architectures.map((x) => h('div.arch',
       h('b', x.label), x.evidence.length ? h('ul', x.evidence.map((e) => h('li', h('code', e)))) : null)))) : null,
     a.isLoader ? section(`Requests (${a.requests.length})`, h('div.table-scroll', h('table.grid.req-table',

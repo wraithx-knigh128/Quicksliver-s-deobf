@@ -1,7 +1,7 @@
 // File input and output. Only plain text sources are accepted (.lua, .luau, .txt); anything else is refused
 // with a reason instead of being decoded into noise.
 
-export const ACCEPTED = ['.lua', '.luau', '.txt'];
+export const ACCEPTED = ['.lua', '.luau', '.txt', '.rbxm', '.rbxmx'];
 export const MAX_FILE_BYTES = 16 * 1024 * 1024;
 
 export class FileRejected extends Error {}

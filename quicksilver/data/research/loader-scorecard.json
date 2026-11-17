@@ -1,0 +1,347 @@
+{
+ "summary": {
+  "cases": 22,
+  "stages": 23,
+  "retrievable": 19,
+  "transportOk": 14,
+  "payloadIsCode": 11,
+  "reconstructed": 5,
+  "plain": 4,
+  "unrecoverable": 1,
+  "behaviourSame": 9,
+  "behaviourChecked": 9
+ },
+ "rows": [
+  {
+   "case": "direct-plain",
+   "category": "direct source",
+   "stage": 1,
+   "depth": 0,
+   "route": "link-fetcher",
+   "transport": "ok",
+   "payload": "lua",
+   "outcome": "retrieved-plain",
+   "programs": [
+    {
+     "families": [],
+     "level": "high",
+     "behaviour": "same"
+    }
+   ]
+  },
+  {
+   "case": "public-ironbrew2",
+   "category": "public endpoint, obfuscated",
+   "stage": 1,
+   "depth": 0,
+   "route": "link-fetcher",
+   "transport": "ok",
+   "payload": "lua",
+   "outcome": "retrieved-reconstructed",
+   "programs": [
+    {
+     "families": [
+      "IronBrew 2"
+     ],
+     "level": "high",
+     "behaviour": "same"
+    }
+   ]
+  },
+  {
+   "case": "public-prometheus",
+   "category": "public endpoint, obfuscated",
+   "stage": 1,
+   "depth": 0,
+   "route": "link-fetcher",
+   "transport": "ok",
+   "payload": "lua",
+   "outcome": "retrieved-reconstructed",
+   "programs": [
+    {
+     "families": [
+      "Prometheus"
+     ],
+     "level": "high",
+     "behaviour": "same"
+    }
+   ]
+  },
+  {
+   "case": "encoded-base64-gzip",
+   "category": "encoded response",
+   "stage": 1,
+   "depth": 0,
+   "route": "link-fetcher",
+   "transport": "ok",
+   "payload": "lua (base64→gzip)",
+   "outcome": "retrieved-reconstructed",
+   "programs": [
+    {
+     "families": [
+      "IronBrew 2"
+     ],
+     "level": "high",
+     "behaviour": "same"
+    }
+   ]
+  },
+  {
+   "case": "encoded-json-field",
+   "category": "encoded response",
+   "stage": 1,
+   "depth": 0,
+   "route": "link-fetcher",
+   "transport": "ok",
+   "payload": "lua (json)",
+   "outcome": "retrieved-plain",
+   "programs": [
+    {
+     "families": [],
+     "level": "high",
+     "behaviour": "same"
+    }
+   ]
+  },
+  {
+   "case": "encoded-hex-zlib",
+   "category": "encoded response",
+   "stage": 1,
+   "depth": 0,
+   "route": "link-fetcher",
+   "transport": "ok",
+   "payload": "lua (hex→zlib)",
+   "outcome": "retrieved-plain",
+   "programs": [
+    {
+     "families": [],
+     "level": "high",
+     "behaviour": "same"
+    }
+   ]
+  },
+  {
+   "case": "multi-stage",
+   "category": "multi-stage",
+   "stage": 1,
+   "depth": 0,
+   "route": "link-fetcher",
+   "transport": "ok",
+   "payload": "lua",
+   "outcome": "nested-loader",
+   "programs": [
+    {
+     "families": [],
+     "level": null,
+     "behaviour": null
+    }
+   ]
+  },
+  {
+   "case": "multi-stage",
+   "category": "multi-stage",
+   "stage": 2,
+   "depth": 1,
+   "route": "link-fetcher",
+   "transport": "ok",
+   "payload": "lua",
+   "outcome": "retrieved-reconstructed",
+   "programs": [
+    {
+     "families": [
+      "IronBrew 2"
+     ],
+     "level": "high",
+     "behaviour": "same"
+    }
+   ]
+  },
+  {
+   "case": "invalid-endpoint",
+   "category": "invalid endpoint",
+   "stage": 1,
+   "depth": 0,
+   "route": "link-fetcher",
+   "transport": "failed 404",
+   "payload": "—",
+   "outcome": "transport-failed",
+   "programs": []
+  },
+  {
+   "case": "auth-failure",
+   "category": "authentication failure",
+   "stage": 1,
+   "depth": 0,
+   "route": "link-fetcher",
+   "transport": "failed 502",
+   "payload": "—",
+   "outcome": "transport-failed",
+   "programs": []
+  },
+  {
+   "case": "service-unavailable",
+   "category": "unavailable service",
+   "stage": 1,
+   "depth": 0,
+   "route": "link-fetcher",
+   "transport": "failed 502",
+   "payload": "—",
+   "outcome": "transport-failed",
+   "programs": []
+  },
+  {
+   "case": "html-instead-of-script",
+   "category": "malformed response",
+   "stage": 1,
+   "depth": 0,
+   "route": "link-fetcher",
+   "transport": "failed 415",
+   "payload": "—",
+   "outcome": "transport-failed",
+   "programs": []
+  },
+  {
+   "case": "html-as-text",
+   "category": "malformed response",
+   "stage": 1,
+   "depth": 0,
+   "route": "link-fetcher",
+   "transport": "ok",
+   "payload": "html",
+   "outcome": "not-code",
+   "programs": []
+  },
+  {
+   "case": "truncated-gzip",
+   "category": "malformed response",
+   "stage": 1,
+   "depth": 0,
+   "route": "link-fetcher",
+   "transport": "ok",
+   "payload": "binary",
+   "outcome": "not-code",
+   "programs": []
+  },
+  {
+   "case": "json-error-200",
+   "category": "malformed response",
+   "stage": 1,
+   "depth": 0,
+   "route": "link-fetcher",
+   "transport": "ok",
+   "payload": "json",
+   "outcome": "not-code",
+   "programs": []
+  },
+  {
+   "case": "empty-200",
+   "category": "malformed response",
+   "stage": 1,
+   "depth": 0,
+   "route": "link-fetcher",
+   "transport": "failed 422",
+   "payload": "—",
+   "outcome": "transport-failed",
+   "programs": []
+  },
+  {
+   "case": "retrieved-unrecoverable",
+   "category": "retrieved but unrecoverable",
+   "stage": 1,
+   "depth": 0,
+   "route": "link-fetcher",
+   "transport": "ok",
+   "payload": "lua",
+   "outcome": "retrieved-unrecoverable",
+   "programs": [
+    {
+     "families": [
+      "Zenfus"
+     ],
+     "level": "minimal",
+     "behaviour": "payload does not run standalone"
+    }
+   ]
+  },
+  {
+   "case": "luarmor",
+   "category": "service with no authorised retrieval",
+   "stage": 1,
+   "depth": 0,
+   "route": "none",
+   "transport": "—",
+   "payload": "—",
+   "outcome": "not-retrievable",
+   "programs": []
+  },
+  {
+   "case": "keyed-url",
+   "category": "requires an owner key",
+   "stage": 1,
+   "depth": 0,
+   "route": "owner",
+   "transport": "—",
+   "payload": "—",
+   "outcome": "not-retrievable",
+   "programs": []
+  },
+  {
+   "case": "dynamic-url",
+   "category": "generated dynamically",
+   "stage": 1,
+   "depth": 0,
+   "route": "manual",
+   "transport": "—",
+   "payload": "—",
+   "outcome": "not-retrievable",
+   "programs": []
+  },
+  {
+   "case": "owner-roblox-model-obfuscated",
+   "category": "authorised authenticated retrieval",
+   "stage": 1,
+   "depth": 0,
+   "route": "provider:roblox-asset",
+   "transport": "ok",
+   "payload": "model (gzip→rbxmx)",
+   "outcome": "retrieved-reconstructed",
+   "programs": [
+    {
+     "families": [
+      "IronBrew 2"
+     ],
+     "level": "high",
+     "behaviour": "same"
+    }
+   ]
+  },
+  {
+   "case": "owner-roblox-model-binary",
+   "category": "authorised authenticated retrieval",
+   "stage": 1,
+   "depth": 0,
+   "route": "provider:roblox-asset",
+   "transport": "ok",
+   "payload": "model (rbxm)",
+   "outcome": "retrieved-plain",
+   "programs": [
+    {
+     "families": [],
+     "level": "high",
+     "behaviour": "same"
+    }
+   ]
+  },
+  {
+   "case": "owner-provider-not-configured",
+   "category": "authorised authenticated retrieval",
+   "stage": 1,
+   "depth": 0,
+   "route": "none",
+   "transport": "—",
+   "payload": "—",
+   "outcome": "not-retrievable",
+   "programs": []
+  }
+ ]
+}

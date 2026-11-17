@@ -45,7 +45,7 @@ export async function loaderIntel(source, deps, opts = {}) {
   const t0 = Date.now();
   const stages = [];
   const seen = new Set();
-  const loader = deps.analyze(source, { depth: 0, origin: 'input' });
+  const loader = await deps.analyze(source, { depth: 0, origin: 'input' });
 
   async function visit(analysis, depth, via) {
     for (const req of analysis.requests) {
@@ -64,7 +64,7 @@ export async function loaderIntel(source, deps, opts = {}) {
       if (!res.ok || !res.bytes) { st.outcome = 'transport-failed'; continue; }
       st.transport.sha256 = await sha256(res.bytes);
       // payload
-      const p = deps.decode(res.bytes, { contentType: res.contentType });
+      const p = await deps.decode(res.bytes, { contentType: res.contentType });
       st.payload = { kind: p.kind, label: p.label, layers: p.layers, parses: p.parses ?? null, notes: p.notes, scripts: p.scripts ? p.scripts.map((s) => ({ path: s.path, className: s.className, bytes: s.source.length })) : undefined };
       const texts = p.kind === 'lua' || p.kind === 'luac' || p.kind === 'luajit' ? [{ name: req.url, text: p.text }]
         : p.kind === 'model' ? p.scripts.map((s) => ({ name: s.path, text: unicodeToBinary(s.source) })) : [];
@@ -72,9 +72,9 @@ export async function loaderIntel(source, deps, opts = {}) {
       // classify + reconstruct, per program in the payload
       st.programs = [];
       for (const prog of texts) {
-        const d = deps.detect(prog.text);
+        const d = (await deps.detect(prog.text)) || {};
         const fams = (d.families || []).filter((f) => f.confidence >= 0.5).map((f) => f.name);
-        const next = deps.analyze(prog.text, { depth: depth + 1, origin: prog.name });
+        const next = await deps.analyze(prog.text, { depth: depth + 1, origin: prog.name });
         const entry = { name: prog.name, bytes: prog.text.length, families: fams, obfuscated: fams.length > 0 || (d.traits || []).some((x) => ['vm', 'state-machine', 'string-table', 'loadstring-layer', 'minified'].includes(x.id)) };
         if (next.isLoader && !next.payload.ownProgram && depth + 1 <= maxDepth) {
           entry.nestedLoader = { case: next.case.n, requests: next.requests.length };
@@ -82,9 +82,11 @@ export async function loaderIntel(source, deps, opts = {}) {
           await visit(next, depth + 1, prog.name);
           continue;
         }
-        const r = deps.recover(prog.text);
+        let r = null;
+        try { r = await deps.recover(prog.text); } catch (e) { r = null; entry.error = String(e.message || e); }
         entry.reconstruction = r ? { ok: r.output != null, level: r.confidence ? r.confidence.level : r.level || null, score: r.confidence ? r.confidence.score : null, bytes: r.output ? r.output.length : 0 } : { ok: false, level: null };
         entry.output = r && r.output != null ? r.output : null;
+        if (opts.keepText) entry.source = prog.text;
         st.programs.push(entry);
       }
       st.outcome = st.programs.every((x) => x.nestedLoader) ? 'nested-loader'

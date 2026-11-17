@@ -22,6 +22,8 @@ import { originAnalysis } from './origin/index.js';
 import { verifyRecovery } from './adaptive/verify.js';
 import { analyzeCustom } from './custom/analyze.js';
 import { analyzeLoader, classifyStage } from './loader/analyze.js';
+import { decodePayload } from './loader/payload.js';
+import { binaryToBytes } from './core/bytes.js';
 
 export const ENGINE_VERSION = '1.0.0';
 
@@ -203,12 +205,22 @@ export function verifySource(source, options = {}) {
  */
 export function loaderSource(source, options = {}) {
   return timed(() => {
-    const input = analyzeLoader(source, { origin: options.origin || 'input', depth: options.depth || 0 });
-    const recovered = typeof options.recovered === 'string' && options.recovered !== source ? analyzeLoader(options.recovered, { origin: 'recovered', depth: options.depth || 0 }) : null;
+    const input = analyzeLoader(source, { origin: options.origin || 'input', depth: options.depth || 0, providers: options.providers || [] });
+    const recovered = typeof options.recovered === 'string' && options.recovered !== source ? analyzeLoader(options.recovered, { origin: 'recovered', depth: options.depth || 0, providers: options.providers || [] }) : null;
     const resolved = (a) => (a ? a.requests.filter((r) => r.urlKind === 'literal' || r.urlKind === 'encoded').length * 10 + a.requests.length : -1);
     const best = recovered && resolved(recovered) > resolved(input) ? 'recovered' : 'input';
     return { ok: true, input, recovered, best };
   });
+}
+
+/** Loader analysis of one text, without the recovered-text variant (Loader Intelligence calls this per stage). */
+export function loaderAnalyze(source, options = {}) {
+  return analyzeLoader(source, options);
+}
+
+/** Peel the transport layers off a retrieved body (src/loader/payload.js); `source` is the body as a binary string. */
+export function payloadDecode(source, options = {}) {
+  return timed(() => ({ ok: true, ...decodePayload(binaryToBytes(source), options) }));
 }
 
 /** What a downloaded stage is (compiled chunk, web page, another loader, a script) before it is handed to the pipeline. */

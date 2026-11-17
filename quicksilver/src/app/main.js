@@ -23,6 +23,9 @@ import { originView } from './origin-view.js';
 import { loadResearch, researchView } from './research-view.js';
 import { customView, loadExamples } from './custom-view.js';
 import { loaderView } from './loader-view.js';
+import { loaderIntel, intelMarkdown } from '../loader/intel.js';
+import { modelKind, extractScripts } from '../loader/rbx.js';
+import { recoverOptions as recoverOpts } from './settings.js';
 import { createReconstructView } from './reconstruct-view.js';
 import { buildMarkdownReport } from './report-md.js';
 import { planOptions } from '../research/plans.js';
@@ -519,7 +522,28 @@ function loadBytes(name, bytes) {
 
 async function openFile(file) {
   try {
-    const bytes = await readFileBytes(file);
+    let bytes = await readFileBytes(file);
+    // a Roblox model: its scripts are the program; pick one (each can be opened in turn)
+    if (modelKind(bytes)) {
+      let m;
+      try { m = extractScripts(bytes); } catch (e) { toast(`Could not read the model: ${e.message}`, 7000); return; }
+      if (!m.scripts.length) { toast(`${file.name} is a Roblox model with ${m.instances} instance(s) and no scripts.`, 6000); return; }
+      let pick = m.scripts[0];
+      if (m.scripts.length > 1) {
+        const choice = await modal({
+          title: `${file.name}: ${m.scripts.length} scripts`,
+          body: [h('p', 'This Roblox model holds several scripts. Open one; the others can be opened from the same file afterwards.'),
+            h('ul', m.scripts.map((sc, i) => h('li', h('code', sc.path), ` (${sc.className}, ${fmtBytes(new TextEncoder().encode(sc.source).length)})`)))],
+          buttons: m.scripts.slice(0, 8).map((sc, i) => ({ id: String(i), label: sc.name, primary: i === 0 })).concat([{ id: 'cancel', label: 'Cancel' }]),
+        });
+        if (choice === 'cancel' || choice == null) return;
+        pick = m.scripts[Number(choice)] || pick;
+      }
+      bytes = new TextEncoder().encode(pick.source);
+      loadBytes(`${file.name}:${pick.path}.lua`, bytes);
+      toast(`Opened ${pick.path} (${pick.className}) from ${file.name}`);
+      return;
+    }
     if (lic.ent.maxBytes && bytes.length > lic.ent.maxBytes) {
       S.notes = [{ kind: 'warn', text: `Evaluation access is limited to ${fmtBytes(lic.ent.maxBytes)} of input; this file is ${fmtBytes(bytes.length)}.` }];
     }
@@ -1696,10 +1720,21 @@ function renderCustom() {
 // The analysis is static (src/loader/analyze.js). A stage is downloaded only when the user presses Fetch on a request the analysis marked as
 // retrievable through the site's fetcher; each download is kept here as its own artifact (address, size, SHA-256) and is never run.
 
-const loaderState = { result: null, busy: false, error: null, stages: [], forVersion: -1, loaderName: null, loaderBytes: null };
+const loaderState = { result: null, busy: false, error: null, stages: [], forVersion: -1, loaderName: null, loaderBytes: null, intel: null, providers: null };
+
+// Which owner-retrieval providers this deployment offers to the page (names only; usable from the page only in 'open' mode).
+async function ensureProviders() {
+  if (loaderState.providers) return loaderState.providers;
+  try {
+    const r = await fetch('/api/retrieve?check=1', { credentials: 'omit' });
+    const j = r.ok ? await r.json() : null;
+    loaderState.providers = j && j.mode === 'open' ? j.providers : [];
+  } catch { loaderState.providers = []; }
+  return loaderState.providers;
+}
 
 function renderLoader() {
-  replace(views.loader, loaderView(loaderState, { onAnalyze: runLoader, onFetch: fetchStage, onOpen: openStage, onAnalyzeStage: analyzeStage }));
+  replace(views.loader, loaderView(loaderState, { onAnalyze: runLoader, onFetch: fetchStage, onOpen: openStage, onAnalyzeStage: analyzeStage, onIntel: runIntel, onOpenText: openText, onExport: exportIntel }));
   if (loaderState.result && loaderState.forVersion !== S.version && loaderState.loaderBytes) {
     const back = h('p.note.info', 'The editor now holds a different script. ', h('button.btn.small', { type: 'button', onclick: () => { loadBytes(loaderState.loaderName, loaderState.loaderBytes); loaderState.forVersion = S.version; switchTab('loader'); } }, 'Put the loader back in the editor'));
     views.loader.firstChild.insertBefore(back, views.loader.firstChild.children[1] || null);
@@ -1710,13 +1745,15 @@ async function runLoader() {
   if (!inputPresent()) { toast('Nothing to analyse. Paste a loader or open a file first.'); switchTab('work'); editor.focus(); return null; }
   loaderState.busy = true; loaderState.error = null; renderLoader();
   const recovered = S.recovered && S.recovered.output != null ? S.recovered.output : undefined;
-  const r = await run('loader', { recovered }, 'Analysing the loader', { limits: { timeoutMs: 30_000 }, needsText: true });
+  // only a platform asset (require(<id>) / GetObjects) can be served by an owner provider, so the deployment is asked only then
+  const providers = /\brequire\s*\(\s*\d|GetObjects/.test(editor.value) ? await ensureProviders() : (loaderState.providers || []);
+  const r = await run('loader', { recovered, providers }, 'Analysing the loader', { limits: { timeoutMs: 30_000 }, needsText: true });
   loaderState.busy = false;
   if (r) {
     const sameLoader = loaderState.forVersion === S.version;
     loaderState.result = r;
     loaderState.forVersion = S.version;
-    if (!sameLoader) { loaderState.stages = []; loaderState.loaderName = S.name || 'loader.lua'; loaderState.loaderBytes = getInputBytes(); }
+    if (!sameLoader) { loaderState.stages = []; loaderState.intel = null; loaderState.loaderName = S.name || 'loader.lua'; loaderState.loaderBytes = getInputBytes(); }
   } else if (!loaderState.result) loaderState.error = 'The analysis did not run (see the note in the Deobfuscator tab).';
   renderLoader();
   return r;
@@ -1753,6 +1790,73 @@ async function fetchStage(req) {
     if (/^Fetching/.test(el.stState.textContent)) setStatus('Ready');
     loaderState.busy = false; renderLoader();
   }
+}
+
+// ---- Loader Intelligence: retrieve every authorised address, peel its layers, reconstruct, recurse — each stage measured -------------------
+
+async function pageFetchStage(req) {
+  const t = performance.now();
+  try {
+    const res = req.retrieval.route === 'provider:roblox-asset'
+      ? await fetch('/api/retrieve', { method: 'POST', credentials: 'omit', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ provider: 'roblox-asset', assetId: String(req.url) }) })
+      : await fetch(`/api/fetch?url=${encodeURIComponent(req.url)}`, { credentials: 'omit', referrerPolicy: 'no-referrer' });
+    if (!res.ok) {
+      let error = `HTTP ${res.status}`;
+      try { const j = await res.json(); error = typeof j.error === 'string' ? j.error : (j.error && j.error.message) || error; } catch { if (res.status === 404) error = 'The fetcher is not available on this server (it needs the deployed site).'; }
+      return { ok: false, status: res.status, error, ms: performance.now() - t };
+    }
+    return { ok: true, status: res.status, bytes: new Uint8Array(await res.arrayBuffer()), contentType: res.headers.get('x-qs-upstream-type') || '', ms: performance.now() - t };
+  } catch (e) { return { ok: false, error: String(e.message || e), ms: performance.now() - t }; }
+}
+
+async function runIntel() {
+  const res = loaderState.result;
+  if (!res) return;
+  const a = res.best === 'recovered' && res.recovered ? res.recovered : res.input;
+  const routes = ['link-fetcher', ...(loaderState.providers || []).map((p) => `provider:${p}`)];
+  const go = a.requests.filter((r) => r.retrieval.possible && routes.includes(r.retrieval.route));
+  if (!go.length) { toast('No request of this loader has an authorised route on this deployment.'); return; }
+  const ok = await modal({
+    title: 'Run Loader Intelligence?',
+    body: [h('p', `This site’s server retrieves ${go.length === 1 ? 'this address' : `these ${go.length} addresses`} (and the addresses of any further loader stage it returns):`),
+      h('ul', go.map((r) => h('li', h('code', r.url || r.template)))),
+      h('p.note', 'Nothing is run. Each response is checked, decoded and reconstructed separately. Only retrieve what you are allowed to access.')],
+    buttons: [{ id: 'cancel', label: 'Cancel' }, { id: 'ok', label: 'Retrieve and analyse', primary: true }],
+  });
+  if (ok !== 'ok') return;
+  loaderState.busy = true; renderLoader();
+  setBusy('Loader Intelligence');
+  const allowSandbox = lic.allow('sandbox') && settings.sandbox;
+  const providers = loaderState.providers || [];
+  try {
+    const report = await loaderIntel(bytesToBinary(loaderState.loaderBytes || getInputBytes()), {
+      analyze: (src, o) => engine.run('loaderAnalyze', src, { ...o, providers }, { timeoutMs: 30_000 }),
+      fetchStage: async (req) => { setStatus(`Retrieving ${req.url || req.template}`, 'busy'); return pageFetchStage(req); },
+      decode: async (bytes, meta) => engine.run('payload', bytesToBinary(bytes), meta, { timeoutMs: 30_000 }),
+      detect: async (text) => (await engine.run('detect', text, {}, { timeoutMs: 30_000 })).detection,
+      recover: async (text) => { setStatus('Reconstructing a retrieved payload', 'busy'); return engine.run('recover', text, { ...recoverOpts(settings, { allowSandbox }), format: { indent: indentString(settings), width: settings.width } }, { timeoutMs: 180_000 }); },
+    }, { routes: ['link-fetcher', ...providers.map((p) => `provider:${p}`)], keepText: true });
+    loaderState.intel = report;
+    setStatus(`Loader Intelligence: ${report.summary.reconstructed} reconstructed, ${report.summary.plain} plain, ${report.summary.transportFailed + report.summary.notCode + report.summary.unrecoverable} not recovered`);
+  } catch (e) {
+    loaderState.error = `Loader Intelligence stopped: ${e.message || e}`;
+    setStatus('Loader Intelligence failed', 'error');
+  } finally {
+    setBusy(null);
+    loaderState.busy = false; renderLoader();
+  }
+}
+
+function openText(name, text) {
+  loadBytes(name, binaryToBytes(text));
+  toast(`Opened ${name}.`);
+}
+
+function exportIntel(kind) {
+  if (!loaderState.intel) return;
+  const name = (loaderState.loaderName || 'loader').replace(/\.[^.]+$/, '');
+  if (kind === 'md') download(`${name}.loader-report.md`, new TextEncoder().encode(intelMarkdown(loaderState.intel, { name: loaderState.loaderName || 'loader' })), 'text/markdown');
+  else download(`${name}.loader-report.json`, new TextEncoder().encode(JSON.stringify({ ...loaderState.intel, stages: loaderState.intel.stages.map((s) => ({ ...s, programs: (s.programs || []).map(({ source, output, ...p }) => p) })) }, null, 2)), 'application/json');
 }
 
 function openStage(stage) {
