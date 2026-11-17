@@ -165,3 +165,63 @@ The sources are primary papers, checked when this was written. A claim made only
 | 6 | Differential testing | in the repo | `tests/helpers/lua-oracle.mjs`, `src/adaptive/verify.js` | behavioural tests |
 | 7 | Condition-based structuring | partial; extension proposed | `src/decompile` | goto count is the metric |
 | 8 | Partial evaluation / decoders | in the repo | `src/passes/*`, `src/core/inflate.js` | pipeline tests |
+
+---
+
+# Prompt XIX: methods around loaders and payloads
+
+## 9. Transport and serialization recovery: added
+
+- **What it does.** Peels a retrieved body layer by layer:
+  - gzip, with its CRC-32 checked;
+  - zlib, with its Adler-32 checked;
+  - base64 and hex text;
+  - JSON with the code in one field;
+  - Roblox models.
+
+  Each layer is recorded. What is left is classified: Lua source, Lua or LuaJIT chunk, model, web page, JSON error, empty, or binary.
+- **Addresses.** Loaders whose endpoint returns something other than plain Lua. An HTTP success is not treated as a payload.
+- **Implementation.** `src/loader/payload.js`, which uses the project's own DEFLATE reader. No dependency was added.
+- **Limitations.** Unknown ciphers stay encoded; that case is reported as binary. Luau bytecode is recognised only as a hint (see §12).
+- **Tests.** The remote-loader fixtures `encoded-base64-gzip`, `encoded-json-field`, `encoded-hex-zlib`, `truncated-gzip`, `json-error-200`
+  and `html-as-text` (`tests/xix-loader-intel.test.mjs`).
+
+## 10. Container extraction: Roblox models — added
+
+- **What it does.** Reads the Script, LocalScript and ModuleScript sources, with their tree paths, out of `.rbxm` and `.rbxmx` files. The binary
+  reader handles LZ4 chunks, byte-interleaved zig-zag integers, delta-encoded referents and parent links.
+- **Addresses.** `require(<id>)` and `GetObjects` loaders, whose payload is a model, not Lua text.
+- **Implementation.** `src/loader/rbx.js`, written from the community format specification
+  ([dom.rojo.space/binary](https://dom.rojo.space/binary)).
+- **Verification.**
+  - Real Roblox Studio output from rojo-rbx/rbx-test-files (MIT): all 108 files parse, and the binary and XML encodings of each model agree.
+  - LZ4 matches the reference library (python `lz4`) on 33 vectors, including random and repetitive data.
+- **Limitations.**
+  - ZSTD-compressed chunks are reported, not decoded.
+  - Property types other than strings are skipped.
+
+## 11. Loader-level semantic validation: added
+
+- **What it does.** For every retrieved payload that was reconstructed, the payload and the reconstruction are both run on the reference Lua,
+  and their output is compared (`tools/loaders/score.mjs`).
+- **Why.** A reconstruction's confidence is the pipeline's own estimate. Behaviour is an independent check.
+- **Result.** 9 of 9 checked programs behave like the retrieved payload (`docs/LOADER-SCORECARD.md`).
+
+## 12. Luau bytecode decompilation: proposed
+
+- **Observed elsewhere.** Several open-source projects decompile Luau bytecode (`jte/lua-decompiler`: Luau versions 3–14; `PumbaaDev/luau-decompiler`;
+  `luau-bytecode-lens`), most of them validated by round-trip testing.
+- **Gap here.** A loader that returns Luau bytecode is classified, but not decompiled.
+- **Feasibility.** A Luau bytecode reader is self-contained: a varint-encoded string table, protos and instructions. It could feed the
+  existing structuring and decompiling back end after an opcode mapping.
+- **Why not now.** No fixture or real loader in the corpus returns Luau bytecode, so nothing could measure the work. Generating such fixtures needs `luau-compile`, which is not installed in this environment (the project's Luau runner takes a `luau` binary through `QS_LUAU_BIN`); building it would be the first step.
+- **How to test.** Compile the committed originals with `luau-compile`, decompile them, and run the result against the originals on Luau.
+
+## 13. Static versus dynamic analysis for loaders
+
+| | Static (this project's default) | Dynamic, in a controlled environment |
+|---|---|---|
+| What it reveals | Requests, address templates, decoding steps, keys and device checks, without running anything | Addresses computed at run time; what is actually loaded |
+| Risk | None | Executes untrusted code. Contacting the real services would mean acting as their client |
+| In the repo | `src/loader/analyze.js`, `payload.js`, `intel.js` | The sandbox `Trace` and `Dump` run a script with **no network**: they show the chunks a script builds, never fetched content |
+| Decision | Used for every loader | Network-free only. A dynamic run never contacts a delivery service, because that would impersonate its client |

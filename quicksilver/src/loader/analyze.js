@@ -75,6 +75,13 @@ export const LOADER_FAMILIES = [
     access: 'A whitelist / key / HWID service that obfuscates and serves scripts. Its sites advertise a REST API for keys, scripts and users, but no endpoint documentation could be found; no documented route returns a protected script.',
     case: 6,
   },
+  {
+    id: 'luaprot', name: 'LuaProt',
+    test: (h) => /(^|\.)luaprot\.net$/.test(h.host),
+    service: 'licensing',
+    access: 'A hub/key/blacklist service with an SDK that checks a user key and loads the script. Its API documents hubs (script metadata), keys and blacklists for the account owner; no documented endpoint returns a protected script.',
+    case: 6,
+  },
   { id: 'roblox-asset', name: 'Roblox asset (module / model)', test: (h) => h.kind === 'asset', service: 'platform', access: 'A `require(<id>)` module or a GetObjects model is delivered by the platform to a running game. Its owner can download it with Roblox Open Cloud Asset Delivery (an API key with the legacy-asset:manage scope), which this deployment does only when its operator configured that key.', case: 6 },
 ];
 

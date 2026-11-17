@@ -102,7 +102,7 @@ The analysis puts each loader in one case. Other cases that also apply are liste
 | Licensing service that serves its own client (Luarmor) | **None** | Key, plus device binding | Official docs unreachable here; no third-party source endpoint found | Not accessible to third parties | The loader's structure; the bootstrap is recognised (`luarmor` family) | No client impersonation, no HWID spoofing, no key sharing |
 | Dynamic or runtime-constructed address | **None** from the file | Varies | — | Unknown until run time | The address template and the run-time values it depends on | Not resolved by running the loader |
 | Encrypted or transformed download | `/api/fetch` if the address is public | Varies | — | The encoded form | Decoded by the pipeline where the encoding is a known layer | Unknown encodings stay encoded |
-| Platform asset (`require(id)`) | **None** | Platform session | Roblox docs | Not via this tool | The loader's structure | — |
+| Platform asset (`require(id)` / `GetObjects`) | **Owner provider** `/api/retrieve` (`roblox-asset`, Prompt XIX): Roblox Open Cloud Asset Delivery, then the model's scripts are extracted (`src/loader/rbx.js`) | The owner's Open Cloud key (`legacy-asset:manage`), configured by the operator | Roblox announcement (see `docs/API-CATALOGUE.md`) | The owner's assets | Each script goes through the pipeline | Off unless `QS_RETRIEVE_MODE` and `QS_ROBLOX_API_KEY` are set; ZSTD model chunks not decoded |
 | Server-delivered VM program (LuaQ) | **None** | Vendor session | — | Not accessible | The VM architecture is described (`docs/targets/LUAQ.md`) | The program is not retrieved |
 
 ## Owner credentials (`/api/fetch`, optional)
@@ -117,6 +117,27 @@ This is for the case where the payload belongs to whoever runs the deployment, s
   outside the scope.
 - The credential is re-checked on every redirect hop, so a redirect cannot carry it to another host or path.
 - The page never holds the operator token. This route is for the operator's own tools. It is not meant for visitors.
+
+## Prompt XIX: Loader Intelligence
+
+Retrieval became an end-to-end, staged process (`src/loader/intel.js`):
+
+1. identify;
+2. route;
+3. transport;
+4. payload, with its layers (`src/loader/payload.js`);
+5. classify;
+6. reconstruct;
+7. recurse into further loaders.
+
+Each stage is measured on its own: an HTTP success is not a payload, a payload is not a reconstruction, and a reconstruction is not verified
+behaviour.
+
+- **Owner providers.** `/api/retrieve` adds three owner-authorised providers: Roblox Asset Delivery, GitHub contents and Pastebin owner raw.
+  It is off by default.
+- **Measured.** On 22 fixture loaders (`docs/LOADER-SCORECARD.md`), through the real server handlers, retrieval, decoding, reconstruction
+  and behaviour are counted separately.
+- **Services.** All service research is in `docs/API-CATALOGUE.md`.
 
 ## Loader Analysis module — status
 
