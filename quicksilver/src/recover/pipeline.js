@@ -35,6 +35,7 @@ import { liftZarthaVm, ZarthaVmError, looksLikeZartha, removeZarthaGuards, repai
 import { snapshotNames, joinMoonVeil, unboxCells, JoinError } from './moonveil-join.js';
 import { rebuildProgram21, Lift21Error } from './moonveil-vm/lift21.js';
 import { liftRealObfuscatorVm, looksLikeRealObfuscatorVm, RealObfuscatorVmError } from './realobfuscator-vm.js';
+import { looksLikeLuaq, decodeLuaq, LuaqError } from './luaq.js';
 import { removeHerculesAntiTamper, removeHerculesAntiTamperFunction, removeHerculesCoinGuard, restoreMethodSelf } from './hercules.js';
 import { uninlinePass } from '../passes/uninline.js';
 import { splitWebs } from '../passes/webs.js';
@@ -426,6 +427,22 @@ export function recover(source, userOptions = {}) {
     const traits = new Map([...detection.traits, ...inner.traits].map((t) => [t.id, t]));
     detection = { ...inner, families: [...merged.values()].sort((a, b) => b.confidence - a.confidence), traits: [...traits.values()], layers: (detection.layers || 0) + 1, wrapper: detection.wrapper || { families: detection.families.map((f) => f.id), traits: detection.traits.map((t) => t.id) } };
   };
+  // LuaQ: stage 1 is data (base 93, an LQZ1 container, raw DEFLATE) and is decoded here; what it decodes to is the VM runtime, not the program,
+  // which LuaQ delivers at run time from its server or from a seal object in the game (src/recover/luaq.js)
+  if (looksLikeLuaq(source)) {
+    run.step('luaq.layers', 'Decode LuaQ\u2019s outer layer (base 93, LQZ1, DEFLATE) to the VM runtime it loads', (a) => {
+      let d;
+      try { d = decodeLuaq(source); } catch (e) { if (e instanceof LuaqError) return { skipped: e.message }; throw e; }
+      const inner = tryParse(d.stage2);
+      if (!inner.ok) return { skipped: `the decoded stage does not parse: ${inner.error.message}` };
+      a.body = inner.ast.body;
+      a.features = inner.ast.features || a.features;
+      const { stage2, ...info } = d;
+      void stage2;
+      return { changed: 1, ...info, programInFile: false };
+    });
+    parsed = { ok: true, ast: run.ast };
+  }
   let unusedAtStart = snapshotUnused(parsed.ast);
 
   let decompiled = false;

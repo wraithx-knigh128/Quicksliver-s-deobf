@@ -309,6 +309,11 @@ const RULES = {
     rule('encrypt-strings', 'structure', 0.5, (c) => /^--!nocheck\r?\n--!nolint\r?\n-- Obscura \[/.test(c.src.slice(0, 200)) && /string\.char\(bit32\.bxor\(/.test(c.src) && 'strings rebuilt with string.char(bit32.bxor(...)) by a decoder function'),
     rule('vm', 'structure', 0.9, (c) => /^--!nocheck\r?\n--!nolint\r?\n-- Obscura VM \[/.test(c.src.slice(0, 200)) && 'the VM build header: the program is bytecode for an interpreter generated into the script', true),
   ],
+  luaq: [
+    rule('banner', 'banner', 0.97, (c) => { const m = /This file was protected using Luaq Obfuscator v([0-9][0-9.]*)/i.exec(c.src.slice(0, 400)); return m ? { text: `LuaQ banner (v${m[1]})`, version: m[1] } : false; }),
+    // stage 1: a "LUAQ!" long-string argument decoded into an LQZ1 container and loadstring()ed as "=LUAQ_VM"
+    rule('container', 'structure', 0.9, (c) => c.src.includes('LUAQ!') && c.src.includes("'LQZ1'") && c.src.includes('=LUAQ_VM') && 'a "LUAQ!" payload decoded to an LQZ1 container and loaded as =LUAQ_VM: the VM runtime; the program is delivered at run time from outside the file', true),
+  ],
   realobfuscator: [
     // the header every output starts with (two Luau directives, then the credit line with the build and the repository)
     rule('banner', 'banner', 0.97, (c) => { const m = /^--!nocheck\r?\n--!nolint\r?\n-- RealObfuscator \[([^\]\n]{1,24})\](?: \| (https:\/\/github\.com\/linkoro57\/RealObfuscator))?/.exec(c.src.slice(0, 240)); return m ? { text: `RealObfuscator header, build ${m[1]}` } : false; }),

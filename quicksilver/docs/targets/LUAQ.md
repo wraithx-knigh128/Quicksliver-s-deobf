@@ -1,42 +1,22 @@
 # LuaQ: status record
 
-## Identification
+LuaQ ("Luaq Obfuscator", obfuscator.cfd) is closed and commercial. One v2.7 build was supplied by the user in Prompt XVI, test 5. It is kept in
+the git-ignored `local/luaq/` and is not in the repository. Nothing was run on the host and nothing was sent over the network.
 
-"LuaQ" / "Luaq" is a commercial, closed-source obfuscation service (obfuscator.cfd). Public descriptions found in Prompt XV and XVI name these
-features:
+## What the file contains
 
-- a custom VM;
-- Roblox, Luau and Lua 5.2 targets;
-- in-source macros `LUAQ_NO_VIRTUALIZE` and `LUAQ_ATTRIBUTES(INLINE)`.
-
-No source code, generator or documentation of its output format is public.
-
-## What blocked further work
-
-- **The site.** Requests to obfuscator.cfd fail inside this environment with DNS `ENOTFOUND`. This was not worked around.
-- **Samples.** There are no authorized samples. The tool cannot be run here: it is a hosted service, and using it to produce samples would mean
-  creating an account on a third-party service, which this project does not do on its own.
-
-## What would unblock it (permission needed)
-
-1. **Samples:** LuaQ outputs that the user is authorized to share, ideally with the source each was made from, at the settings the user cares about.
-   They would go in the git-ignored `tests/corpus/obfuscated-local/luaq/` with a manifest.
-2. **Documentation:** network access to obfuscator.cfd for this environment, if its documentation is wanted. This is an environment setting the user
-   approves; it would give documentation, not samples.
-
-With samples, the path is the one used for MoonVeil 2.1.0 and RealObfuscator:
-
-1. identify the runtime by shape (`src/custom/probes.js` already reports unknown VMs with their structure);
-2. read the dispatcher and handlers of each build;
-3. decode the program data statically;
-4. partially evaluate the instructions through their handlers;
-5. check the result against the original in the sandbox.
+| Stage | What it is | Status |
+|---|---|---|
+| 1. The file (294 kB) | a loader around one argument `"LUAQ!<text>"`: base-93 text → `LQZ1` header (size, Adler-32) → raw DEFLATE → loaded as `=LUAQ_VM` | decoded statically (`src/recover/luaq.js`, `src/core/inflate.js`), checksum verified |
+| 2. The VM runtime (606 kB of Luau) | an interpreter, a deserializer, Roblox environment checks and an encrypted loader program for the VM | decoded to readable Luau; it is the output of the pipeline for this format |
+| 3. The program | not in the file: it is delivered to the script at run time from outside it | not recovered; out of scope |
 
 ## Status per layer
 
 | Layer | Status |
 |---|---|
-| 1. Recognition | not possible without samples (no signature can be verified) |
-| 2–7 | not started (no samples) |
+| 1. Recognition | done (banner and the stage-1 container) |
+| 2. Container decoding | done for stage 1 |
+| 3–7 | not applicable to the file: the program is not in it |
 
-Unknown scripts are still analysed by the custom-format engine, which reports a VM by its shape. They are never reported as recovered.
+The pipeline reports the result as PARTIAL with minimal confidence and says why in the file's report.

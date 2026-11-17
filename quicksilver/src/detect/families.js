@@ -102,6 +102,15 @@ export const FAMILIES = {
     techniques: ['identifier renaming', 'string encryption', 'number expressions', 'control-flow flattening', 'opaque predicates', 'dead code', 'table indirection', 'anti-tamper', 'bytecode VM with encrypted constants'],
     sources: ['https://github.com/vo3pal/obscura'],
   },
+  luaq: {
+    name: 'LuaQ',
+    kind: 'commercial',
+    evidence: 'sample',
+    maxConfidence: 0.97,
+    summary: 'Commercial, closed obfuscation service (obfuscator.cfd). v2.7 read on one sample supplied by a user: a base-93 / LQZ1 / DEFLATE loader around a Luau VM runtime; the program is delivered at run time from outside the file, so it is not recoverable from the file.',
+    techniques: ['base-93 text encoding', 'DEFLATE container', 'bytecode VM', 'environment checks', 'encrypted loader program', 'server-delivered program'],
+    sources: ['https://obfuscator.cfd/ (named in the banner; not reachable from the build environment)'],
+  },
   realobfuscator: {
     name: 'RealObfuscator',
     kind: 'open-source',

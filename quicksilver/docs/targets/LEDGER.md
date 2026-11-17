@@ -61,11 +61,14 @@ reference interpreter (lupa Lua 5.1 / Luau oracle) or in the JS sandbox where sa
 - **Next experiment:** handler partial evaluation as for MoonVeil 2.1.0.
 
 ### LuaQ (docs/targets/LUAQ.md)
-- **Status:** identified by name only.
-- **Discoveries:** a closed commercial service; its public feature list.
-- **Blockers:** no authorized samples; the site is unreachable from this environment (DNS).
-- **Permission needed:** samples the user is authorized to share; optionally network access to the site for documentation.
-- **Next experiment:** with samples, the same path as MoonVeil 2.1.0.
+- **Status:** recognised; stage 1 decoded to the VM runtime (`luaq.layers`). The program itself is not in the file.
+- **Discoveries:** base-93 + LQZ1 + DEFLATE outer layer; a 606 kB Luau VM runtime with environment checks and an encrypted loader program.
+- **Improvements:** the stage-1 decoder, a dependency-free DEFLATE inflater, a detection family, a confidence note.
+- **Tests:** `tests/xvi-luaq.test.mjs` (codec tests on data built in the test; the sample test skips without the local file).
+- **Blockers:** the program is delivered to the script at run time from outside the file; recovering it is out of scope.
+- **Sources:** one v2.7 sample supplied by the user (local only).
+- **Confidence:** minimal for this format, by design.
+- **Next experiment:** none planned.
 
 ## Abandoned approaches
 
@@ -79,3 +82,4 @@ reference interpreter (lupa Lua 5.1 / Luau oracle) or in the JS sandbox where sa
 | AzureVM | trusting the decompiler's output without a check | one AzureGodUltra build was mis-structured and rated high; the sandbox self-check against the chunk catches it |
 | Vault | accepting the tool's upvalue order | the tool's own builds compute the wrong upvalue; the order is restored on evidence instead |
 | LuaQ | fetching the vendor site | DNS failure in this environment; not worked around |
+| LuaQ | recovering the program from the file | it is not in the file |

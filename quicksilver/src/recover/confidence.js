@@ -132,6 +132,8 @@ export function assessConfidence(before, output, ctx) {
     if (v.undeclared.length) note(-0.1, `Names that look like registers are read without being assigned: ${v.undeclared.slice(0, 4).join(', ')}.`);
     if (v.unstructured) note(-0.05, `${v.unstructured} function(s) could not be structured and are written with labels and jumps.`);
   }
+  const lq = steps.find((s) => s.id === 'luaq.layers' && s.status === 'applied');
+  if (lq) note(-0.6, `LuaQ${lq.detail && lq.detail.version ? ` v${lq.detail.version}` : ''}: the outer layer was decoded (base 93, LQZ1 with its Adler-32 checked, DEFLATE) to the VM runtime it loads, which is the output here. The program itself is not in the file: it is delivered to the script at run time from outside it, so nothing of it was recovered.`);
   const ro = steps.find((s) => s.id === 'realobfuscator.vm' && s.status === 'applied');
   if (ro) {
     const d = ro.detail || {};
