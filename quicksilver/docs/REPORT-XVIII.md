@@ -177,8 +177,8 @@ Implemented in the real site (`index.html`, `css/app.css`, `src/app/main.js`, `s
 
 | Suite | Result |
 |---|---|
-| Unit and integration (`npm test`) | see "Final verification" below |
-| e2e (`tests/e2e/ui.e2e.mjs`) | see "Final verification" below |
+| Unit and integration (`npm test`) | 1089 tests: 1082 passed, 1 failed, 6 skipped (oracle-dependent tests that need local-only fixtures). The failure was the stale `data/research/format-db.json` after the scorecard regeneration; after `node tools/formats/build-db.mjs`, `tests/format-db.test.mjs` passes 9/9 |
+| e2e (`tests/e2e/ui.e2e.mjs`) | 71 / 71 passed: the 69 earlier tests, unchanged, plus 2 Loader tests |
 
 New test files:
 
