@@ -484,4 +484,7 @@ Source: https://github.com/vyxonq-dev/obfuscator-samples at 82e582fcdd78, 748 fi
 * #65: **AzureVM: lifted (Prompt XVI); layered presets partly kept**
 * #66: **RealObfuscator function VM: lifted (Prompt XVI)**
 * #67: **LuaQ v2.7: outer layer decoded; the program is not in the file**
+* #68: **Prometheus (current mainline) Vmify: generic `for` re-raised conservatively (Prompt XVIII)**
+* #69: **Loader Analysis: static only, and only as good as its evidence**
+* #70: **Linear MBA simplification: linear class, bit32 context, ≤ 3 variables**
 

@@ -116,7 +116,35 @@ See `docs/METHODS.md`; every source was verified.
     originals print; the 3 s03 builds diverge **inside Prometheus**, because Vmify drops the parentheses that truncate `gsub` to one value.
   - New this round: the Vmify generic-`for` lowering is re-raised, so 16 of the originals' 33 generic `for` loops now come back as `for`.
   - Correction to earlier docs: the claim that "the Vmify interpreter is the residual" was stale. The VM is fully lifted; what holds the
-    semantic score below the gate is loop and expression form. Scorecard numbers: see "Scorecard after this round" below.
+    semantic score below the gate is loop and expression form.
+
+### Scorecard after this round
+
+`tests/results/scorecard.json` was regenerated on all 1458 fixtures with the reference Lua oracle. Each fixture is paired with its previous
+result:
+
+- **63 improved, 0 worse.**
+- **No behaviour verdict changed.**
+
+Mean over the fixtures that changed:
+
+| Group | Changed | Semantic | Structure |
+|---|---|---|---|
+| prometheus/Weak | 17 | +5.0 pt | +9.6 pt |
+| prometheus/Medium | 11 | +4.5 pt | +8.8 pt |
+| prometheus/Strong | 6 | +4.2 pt | +7.5 pt |
+| prometheus/step-Vmify | 11 | +5.4 pt | +9.9 pt |
+| panda/Weak, panda/Medium (Prometheus fork) | 12 | +5.0 / +5.6 pt | +9.8 / +10.6 pt |
+| azurevm/Balanced | 6 | +5.5 pt | +10.7 pt |
+
+Group means across every Prometheus build of a configuration (current mainline, 2026-11 and lennyobf together):
+
+| Configuration | Semantic | Structure |
+|---|---|---|
+| Weak | 57.4% → 61.1% | 76.9% → 84.0% |
+| Medium | 52.0% → 54.2% | 71.8% → 76.0% |
+| Strong | 50.6% → 51.7% | 68.9% → 70.9% |
+| step-Vmify | 62.9% → 66.8% | 79.7% → 87.0% |
 - **All other targets** (MoonVeil, IronBrew, IronBrikked, LuaQ, Vault, Hercules, Luraph, Panda, Hardened Obscura, RealObfuscator, AzureVM,
   custom): no change in this round. Their per-metric status is in `docs/VERSION-MATRIX.md` and `docs/MATRIX.md`, regenerated from the
   committed fixtures. Luarmor-wrapped scripts now get a Loader Analysis case instead of only a "remote loader" note.
