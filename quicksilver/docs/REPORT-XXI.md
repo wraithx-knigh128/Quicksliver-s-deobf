@@ -116,4 +116,100 @@ syntax validation → behavioural validation → Lua output.**
 
 ## 7. Measured results
 
-Filled in from the final runs; see below.
+### API fetcher
+
+`tests/xxi-fetcher.test.mjs` (9 tests) and `tests/xix-retrieve.test.mjs` (6 tests): **all pass**. Upstream services are mocks; no network is
+used. They cover:
+
+- short transfers in both transports, and the content-encoding exception;
+- upstream 401/403/404/500 mapping;
+- the Luarmor owner check: owned and not owned; the documented 403 (IP whitelist) and 400 (invalid key); `success:false`; a non-JSON answer;
+  the key never echoed; no personal data returned; input validated before any request; not configured without the key; nothing under
+  `/files/` ever requested.
+
+### Loader → payload → reconstruction integration
+
+`tests/xix-loader-intel.test.mjs`: **27 of 27 pass.** There are 26 fixture cases, run through the real `/api/fetch` and `/api/retrieve`
+handlers in front of a mock service, plus one test that checks the fixture set covers every category. Each stage must reach the transport outcome and the **outcome class**
+decided for it in advance. **Classification accuracy: 26 / 26.**
+
+In the first run 3 cases disagreed. Two were fixed in the code (D9, D10). One was my own expectation, corrected: a model whose only script
+does nothing observable cannot be validated.
+
+Coverage of the twelve scenarios in Prompt XXI §7:
+
+| # | Scenario | Covered by |
+|---|---|---|
+| 1 | Valid authorised Luarmor loader | intel case `luarmor`; `tests/xx-luarmor.test.mjs`; e2e (Luarmor) |
+| 2 | Locally embedded content | Luarmor local logic (`xx-luarmor`); case-1 loaders (`tests/xviii-loader.test.mjs`) |
+| 3 | Remote payload | `public-ironbrew2`, `public-prometheus`, `multi-stage` |
+| 4 | Owner-authorised API retrieval | `owner-roblox-model-*` (Roblox Open Cloud provider); Luarmor owner check (metadata) |
+| 5 | Missing or invalid credentials | `auth-failure`, `keyed-url`, `owner-provider-not-configured`; Luarmor 403 / 400 |
+| 6 | Unavailable payload | `invalid-endpoint`, `service-unavailable`, `luarmor` |
+| 7 | Malformed API response | `html-instead-of-script`, `html-as-text`, `json-error-200`, `empty-200`, `key-required-text`; Luarmor non-JSON |
+| 8 | Compressed or encoded | `encoded-base64-gzip`, `encoded-json-field`, `encoded-hex-zlib`, gzip'd model |
+| 9 | Truncated source | `truncated-lua`, `truncated-gzip`, `short-transfer`; D8 tests |
+| 10 | Retrieved but unsupported | `retrieved-unrecoverable` (VM kept → not deobfuscated), `luau-bytecode` (unsupported format) |
+| 11 | Reconstructed | the validated cases above; the owner-supplied IronBrew 2 payload |
+| 12 | Regressions of the existing deobfuscator | full suite and e2e, below |
+
+### Deobfuscator: zero false success on the whole corpus
+
+**Method.** `tools/validate/outcome-eval.mjs` → `data/research/outcome-eval.json`. Every real-tool fixture with an original is processed as
+follows:
+
+1. Recover with the sandbox on, and classify.
+2. Compare the behaviour of the output with the **submitted (obfuscated) program** on a real Lua runtime (PUC Lua / LuaJIT / Luau through the
+   oracle), and classify again.
+3. Independently, run the output next to the **authorised original**, which the classifier never sees. A "validated" result that does not
+   behave like the original is a **false success**. This is counted only where the original is a valid reference, that is, where the
+   obfuscator itself preserved the original's behaviour.
+
+| Measure | Result |
+|---|---|
+| Fixtures | 1643 (0 crashes) |
+| **Validated** | **1269** |
+| — checked against the authorised original | 1121: **all 1121 behave like the original** |
+| — no valid reference (the obfuscator itself changed the program) | 148 |
+| **False successes** | **0** |
+| Syntax-valid but unverified | 136. The behaviour comparison could not settle it: the submitted program fails on the runtime, or prints nothing. |
+| Partial | 150: 130 with obfuscation still in the output; 20 whose behaviour differs from the submitted program |
+| Not deobfuscated | 9 (the VM is kept) |
+| Invalid input | 79 (fixtures that do not parse, as their generators shipped them) |
+| Results the engine rates "high" that are **not** validated | **165** (136 unverified, 29 partial). Under the old reading of confidence alone, each would have looked like a success. |
+| Conservative: not validated although the output behaves like the original | 43. A VM still runs the program (behaviour equal, program not rebuilt), or places the engine lists as unresolved. |
+
+The four high-confidence lifts found in the audit:
+
+| Fixture | Class |
+|---|---|
+| Obscura 1.0.1 vm s04 | unverified (its input prints nothing) |
+| Obscura 1.0.1 vm s06 | partial |
+| lennyobf s08 Medium | partial |
+| lennyobf s08 Strong | partial |
+
+### Full suites
+
+- **`npm test`:** 1169 tests; 1162 passed and 6 were skipped in the full run. The 1 failure was the XIX assertion "no Luarmor provider
+  exists". It was restated to the guarantee it protects (the `luarmor` provider is metadata-only and never returns a script) and now passes.
+- **`npm run test:e2e`:** E2E_RESULT.
+
+New browser tests:
+
+- Loader Intelligence with and without behaviour validation;
+- the Deobfuscator's outcome, upgraded only by "Compare behaviour";
+- the Luarmor owner-supplied payload, through the whole chain;
+- the Luarmor ownership check (only the loader id is sent, never the key).
+
+## 8. Remaining limitations and unresolved cases
+
+- **The protected Luarmor script cannot be retrieved.** No authorised interface exists. The workflow says so at the retrieval stage and offers
+  the owner's route instead (KNOWN-ISSUES 72, 76).
+- **The Luarmor owner check is untested against the live service.** No owner key was supplied. It needs a whitelisted static IP, and it
+  assumes the loader id is the `script_id` (KNOWN-ISSUES 79).
+- **Four VM lifts that the engine rates "high" are wrong or unverifiable.** They are now classified honestly, but are not fixed.
+  - For lennyobf, the duplicated call (D11) was fixed. A reference to the fork's nil stand-in remains.
+  - For Obscura 1.0.1, the obfuscated input itself does nothing observable, so a lift cannot be validated (KNOWN-ISSUES 77).
+- **Behaviour validation in the page uses the project's own interpreter.** Programs that need the real Roblox runtime, or do nothing
+  observable, stay "unverified" (KNOWN-ISSUES 78).
+- **A static estimate is still shown.** The engine's confidence remains next to the outcome class. It is no longer what decides success.

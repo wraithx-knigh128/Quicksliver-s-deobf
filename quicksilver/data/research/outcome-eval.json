@@ -1,21 +1,21 @@
 {
- "generatedAt": "2026-11-18T08:33:38.666Z",
+ "generatedAt": "2026-11-18T08:56:22.664Z",
  "method": "tools/validate/outcome-eval.mjs",
  "summary": {
   "fixtures": 1643,
   "crashes": 0,
   "outcomesBeforeBehaviour": {
-   "syntax-valid-unverified": 1418,
-   "partial": 128,
+   "syntax-valid-unverified": 1425,
+   "partial": 130,
    "not-deobfuscated": 9,
-   "invalid-input": 88
+   "invalid-input": 79
   },
   "outcomes": {
    "validated": 1269,
-   "partial": 148,
+   "partial": 150,
    "not-deobfuscated": 9,
-   "invalid-input": 88,
-   "syntax-valid-unverified": 129
+   "invalid-input": 79,
+   "syntax-valid-unverified": 136
   },
   "validated": 1269,
   "validatedCheckedAgainstOriginal": 1121,
@@ -3789,11 +3789,11 @@
    "fixture": "obfuscated/hercules-1.6/s01_minify_basic__default.lua",
    "toolBehavior": "errored",
    "level": "high",
-   "before": "invalid-input",
+   "before": "syntax-valid-unverified",
    "runtime": "lua51",
    "truth": "no-valid-reference",
    "behaviour": "inconclusive",
-   "outcome": "invalid-input",
+   "outcome": "syntax-valid-unverified",
    "falseSuccess": false
   },
   {
@@ -4180,11 +4180,11 @@
    "fixture": "obfuscated/hercules-1.6/s04_control_flow__default.lua",
    "toolBehavior": "errored",
    "level": "high",
-   "before": "invalid-input",
+   "before": "syntax-valid-unverified",
    "runtime": "lua51",
    "truth": "no-valid-reference",
    "behaviour": "inconclusive",
-   "outcome": "invalid-input",
+   "outcome": "syntax-valid-unverified",
    "falseSuccess": false
   },
   {
@@ -4309,11 +4309,11 @@
    "fixture": "obfuscated/hercules-1.6/s05_nested_functions__default.lua",
    "toolBehavior": "errored",
    "level": "high",
-   "before": "invalid-input",
+   "before": "syntax-valid-unverified",
    "runtime": "lua51",
    "truth": "no-valid-reference",
    "behaviour": "inconclusive",
-   "outcome": "invalid-input",
+   "outcome": "syntax-valid-unverified",
    "falseSuccess": false
   },
   {
@@ -4439,11 +4439,11 @@
    "fixture": "obfuscated/hercules-1.6/s06_combined__default.lua",
    "toolBehavior": "errored",
    "level": "medium",
-   "before": "invalid-input",
+   "before": "partial",
    "runtime": "lua51",
    "truth": "no-valid-reference",
    "behaviour": "inconclusive",
-   "outcome": "invalid-input",
+   "outcome": "partial",
    "falseSuccess": false
   },
   {
@@ -13156,55 +13156,55 @@
    "fixture": "obfuscated/zartha/s06_combined__default.lua",
    "toolBehavior": "errored",
    "level": "high",
-   "before": "invalid-input",
+   "before": "syntax-valid-unverified",
    "runtime": "lua51",
    "truth": "no-valid-reference",
    "behaviour": "inconclusive",
-   "outcome": "invalid-input",
+   "outcome": "syntax-valid-unverified",
    "falseSuccess": false
   },
   {
    "fixture": "obfuscated/zartha/s06_combined__encryptstrings.lua",
    "toolBehavior": "errored",
    "level": "high",
-   "before": "invalid-input",
+   "before": "syntax-valid-unverified",
    "runtime": "lua51",
    "truth": "no-valid-reference",
    "behaviour": "inconclusive",
-   "outcome": "invalid-input",
+   "outcome": "syntax-valid-unverified",
    "falseSuccess": false
   },
   {
    "fixture": "obfuscated/zartha/s06_combined__flatten.lua",
    "toolBehavior": "errored",
    "level": "high",
-   "before": "invalid-input",
+   "before": "syntax-valid-unverified",
    "runtime": "lua51",
    "truth": "no-valid-reference",
    "behaviour": "inconclusive",
-   "outcome": "invalid-input",
+   "outcome": "syntax-valid-unverified",
    "falseSuccess": false
   },
   {
    "fixture": "obfuscated/zartha/s06_combined__antitamper.lua",
    "toolBehavior": "errored",
    "level": "high",
-   "before": "invalid-input",
+   "before": "syntax-valid-unverified",
    "runtime": "lua51",
    "truth": "no-valid-reference",
    "behaviour": "inconclusive",
-   "outcome": "invalid-input",
+   "outcome": "syntax-valid-unverified",
    "falseSuccess": false
   },
   {
    "fixture": "obfuscated/zartha/s06_combined__constants.lua",
    "toolBehavior": "errored",
    "level": "low",
-   "before": "invalid-input",
+   "before": "partial",
    "runtime": "lua51",
    "truth": "no-valid-reference",
    "behaviour": "inconclusive",
-   "outcome": "invalid-input",
+   "outcome": "partial",
    "falseSuccess": false
   },
   {

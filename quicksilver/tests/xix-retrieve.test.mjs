@@ -3,7 +3,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHandler } from '../api/retrieve.js';
-import { providerRequest, ProviderError } from '../api/_lib/providers.js';
+import { providerRequest, ProviderError, PROVIDERS } from '../api/_lib/providers.js';
 
 const SECRET = { QS_ROBLOX_API_KEY: 'RBX-SECRET-KEY-123', QS_GITHUB_TOKEN: 'ghp_SECRETSECRET', QS_GITHUB_REPOS: 'me/private-scripts', QS_PASTEBIN_DEV_KEY: 'PBDEVSECRET', QS_PASTEBIN_USER_KEY: 'PBUSERSECRET' };
 const resp = (body, { status = 200, type = 'application/octet-stream', headers = {} } = {}) => {
@@ -98,5 +98,10 @@ test('upstream failures are named; one retry on a transient error; size cap; rat
 test('cross-site callers and unknown providers are refused', async () => {
   const h = createHandler({ env: { ...SECRET, QS_RETRIEVE_MODE: 'open' } });
   assert.equal((await call(h, { body: { provider: 'github' }, headers: { 'sec-fetch-site': 'cross-site' } })).status, 403);
-  assert.equal((await call(h, { body: { provider: 'luarmor', script: 'x' } })).status, 400, 'no Luarmor provider: no documented retrieval endpoint');
+  // Luarmor has no documented endpoint that returns a script. Since Prompt XXI a `luarmor` provider exists, but only as the owner's
+  // metadata check: without the owner's key it is not configured, and with it a request for a script is refused as invalid
+  assert.equal((await call(h, { body: { provider: 'luarmor', script: 'x' } })).status, 501, 'not configured without the owner key');
+  const owner = createHandler({ env: { ...SECRET, QS_RETRIEVE_MODE: 'open', QS_LUARMOR_API_KEY: 'k' }, fetchImpl: async () => { throw new Error('must not be called'); } });
+  assert.equal((await call(owner, { body: { provider: 'luarmor', script: 'x' } })).status, 400, 'a request for a script (no loader id) is refused before any request');
+  assert.equal(PROVIDERS.luarmor.kind, 'metadata', 'the Luarmor provider never returns a script');
 });
