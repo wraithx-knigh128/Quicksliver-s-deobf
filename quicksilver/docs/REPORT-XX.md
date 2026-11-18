@@ -201,4 +201,14 @@ No new external code was used.
 - `tests/xx-luarmor.test.mjs`: 6 tests.
 - `tests/xx-collection.test.mjs`: 5 tests.
 
-The full-suite and e2e results are added below when they finish.
+- e2e: two new tests, for the anatomy view and the Luarmor bootstrap view (`tests/e2e/ui.e2e.mjs`).
+
+**Full suite (`npm test`):** 1141 tests; 1135 pass, **0 fail**, 6 skipped.
+
+**e2e (`npm run test:e2e`):** 75 tests; 74 pass, 1 fail.
+
+- **The failure.** "Reconstruct: upload a protected script and its original… verified reconstruction" showed "Not verified" where the test
+  expects "Identical to the original".
+- **Run alone.** The same test passed **3 out of 3** times.
+- **Assessment.** Prompt XX changed nothing on the Reconstruct path. The failure most likely comes from timing in the behaviour check
+  under a long suite run. That is not proven, so it is recorded here as an intermittent failure, not dismissed.
