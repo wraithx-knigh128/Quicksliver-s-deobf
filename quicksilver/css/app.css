@@ -776,3 +776,6 @@ table.table td { padding: 7px 12px 7px 0; border-bottom: 1px solid var(--line); 
 .intel-table td:first-child { white-space: nowrap; }
 .table.ops td { vertical-align: top; }
 .table.ops td:nth-child(2) { white-space: nowrap; font-weight: 500; }
+.hyp-table td.conf { width: 110px; white-space: nowrap; }
+.hyp-table td:last-child { width: 32%; }
+.hyp-table td .dim { font-size: 12px; margin-top: 2px; }

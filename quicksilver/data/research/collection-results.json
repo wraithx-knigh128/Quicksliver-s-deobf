@@ -1,0 +1,698 @@
+{
+ "summary": {
+  "samples": 20,
+  "skipped": 0,
+  "detectionCorrect": 15,
+  "detectionMeasured": 15,
+  "falseClaims": 0,
+  "parses": 18,
+  "behaviourSameAsOriginal": 13,
+  "behaviourChecked": 13,
+  "hypothesesConfirmed": 18,
+  "hypothesesRefuted": 0
+ },
+ "rows": [
+  {
+   "category": "previously supported",
+   "label": "IronBrew 2 (default)",
+   "file": "tests/corpus/obfuscated/ironbrew2/s01_minify_basic__default.lua",
+   "detection": "correct",
+   "claimed": [
+    "ironbrew2"
+   ],
+   "architecture": "virtual machine",
+   "stages": {
+    "hypotheses": 3,
+    "confirmed": 2,
+    "refuted": 0,
+    "inconclusive": 0,
+    "learned": 0,
+    "applied": [
+     "ironbrew2",
+     "webs",
+     "fold",
+     "simplify",
+     "rename",
+     "idioms.functions"
+    ]
+   },
+   "completeness": {
+    "transformations": 3,
+    "resolved": 3,
+    "reduced": 0,
+    "unresolved": 0
+   },
+   "syntax": "parses",
+   "behaviour": {
+    "runtime": "lua51",
+    "vsOriginal": "same",
+    "vsObfuscated": "same"
+   },
+   "confidence": "high",
+   "limitations": []
+  },
+  {
+   "category": "previously supported",
+   "label": "Prometheus Weak",
+   "file": "tests/corpus/obfuscated/prometheus/s06_combined__Weak.lua",
+   "detection": "correct",
+   "claimed": [
+    "prometheus"
+   ],
+   "architecture": "conventional Lua",
+   "stages": {
+    "hypotheses": 5,
+    "confirmed": 0,
+    "refuted": 0,
+    "inconclusive": 0,
+    "learned": 0,
+    "applied": [
+     "unwrap",
+     "prometheus.vmify",
+     "idioms.nil",
+     "fold",
+     "simplify",
+     "dataflow",
+     "stable",
+     "evaluate",
+     "idioms.results",
+     "idioms.method",
+     "idioms.unset",
+     "prometheus.env",
+     "idioms.loops",
+     "loops.raise",
+     "rename",
+     "idioms.functions"
+    ]
+   },
+   "completeness": {
+    "transformations": 6,
+    "resolved": 6,
+    "reduced": 0,
+    "unresolved": 0
+   },
+   "syntax": "parses",
+   "behaviour": {
+    "runtime": "lua51",
+    "vsOriginal": "same",
+    "vsObfuscated": "same"
+   },
+   "confidence": "high",
+   "limitations": []
+  },
+  {
+   "category": "previously supported",
+   "label": "Hercules balanced",
+   "file": "tests/corpus/obfuscated/hercules/s02_renamed_vars__balanced.lua",
+   "detection": "correct",
+   "claimed": [
+    "hercules"
+   ],
+   "architecture": "conventional Lua with decoded constants",
+   "stages": {
+    "hypotheses": 1,
+    "confirmed": 0,
+    "refuted": 0,
+    "inconclusive": 1,
+    "learned": 0,
+    "applied": [
+     "fold",
+     "simplify",
+     "evaluate",
+     "rename"
+    ]
+   },
+   "completeness": {
+    "transformations": 4,
+    "resolved": 4,
+    "reduced": 0,
+    "unresolved": 0
+   },
+   "syntax": "parses",
+   "behaviour": {
+    "runtime": "lua51",
+    "vsOriginal": "same",
+    "vsObfuscated": "same"
+   },
+   "confidence": "high",
+   "limitations": []
+  },
+  {
+   "category": "VM-based",
+   "label": "Zartha (default)",
+   "file": "tests/corpus/obfuscated/zartha/s01_minify_basic__default.lua",
+   "detection": "correct",
+   "claimed": [
+    "zartha"
+   ],
+   "architecture": "virtual machine",
+   "stages": {
+    "hypotheses": 7,
+    "confirmed": 4,
+    "refuted": 0,
+    "inconclusive": 1,
+    "learned": 2,
+    "applied": [
+     "zartha.vm",
+     "zartha.guards",
+     "webs",
+     "fold",
+     "simplify",
+     "rename",
+     "idioms.functions"
+    ]
+   },
+   "completeness": {
+    "transformations": 2,
+    "resolved": 2,
+    "reduced": 0,
+    "unresolved": 0
+   },
+   "syntax": "parses",
+   "behaviour": {
+    "runtime": "lua51",
+    "vsOriginal": "same",
+    "vsObfuscated": "different"
+   },
+   "confidence": "high",
+   "limitations": []
+  },
+  {
+   "category": "VM-based",
+   "label": "Obscura 1.1.0 VM",
+   "file": "tests/corpus/obfuscated/obscura-1.1.0/s01_minify_basic__vm.lua",
+   "detection": "correct",
+   "claimed": [
+    "obscura"
+   ],
+   "architecture": "virtual machine",
+   "stages": {
+    "hypotheses": 11,
+    "confirmed": 0,
+    "refuted": 0,
+    "inconclusive": 2,
+    "learned": 0,
+    "applied": [
+     "obscura.vm",
+     "webs",
+     "idioms.bool",
+     "fold",
+     "simplify",
+     "dataflow",
+     "idioms.whiles",
+     "rename",
+     "idioms.functions"
+    ]
+   },
+   "completeness": {
+    "transformations": 5,
+    "resolved": 5,
+    "reduced": 0,
+    "unresolved": 0
+   },
+   "syntax": "parses",
+   "behaviour": {
+    "runtime": "lua51",
+    "vsOriginal": "same",
+    "vsObfuscated": "same"
+   },
+   "confidence": "high",
+   "limitations": []
+  },
+  {
+   "category": "VM-based",
+   "label": "Clyde VM",
+   "file": "tests/corpus/obfuscated/clyde/s01_minify_basic__vm.lua",
+   "detection": "correct",
+   "claimed": [
+    "clyde"
+   ],
+   "architecture": "conventional Lua with decoded constants",
+   "stages": {
+    "hypotheses": 6,
+    "confirmed": 0,
+    "refuted": 0,
+    "inconclusive": 5,
+    "learned": 0,
+    "applied": [
+     "fold",
+     "simplify",
+     "stable",
+     "rename"
+    ]
+   },
+   "completeness": {
+    "transformations": 4,
+    "resolved": 1,
+    "reduced": 0,
+    "unresolved": 3
+   },
+   "syntax": "parses",
+   "behaviour": {
+    "runtime": "lua52",
+    "vsOriginal": "same",
+    "vsObfuscated": "same"
+   },
+   "confidence": "low",
+   "limitations": [
+    "bytecode-vm: Zartha (per-instruction templates): the header that names the standard library was not found",
+    "environment-probe: No capability of the engine addresses this shape; the evidence above says where it is.",
+    "constant-table: No capability of the engine addresses this shape; the evidence above says where it is."
+   ]
+  },
+  {
+   "category": "unknown custom (no signature)",
+   "label": "project packer: base64 + loadstring",
+   "file": "tests/corpus/obfuscated/loaders/s01_minify_basic__base64.lua",
+   "detection": "correct (no tool claimed)",
+   "claimed": [],
+   "architecture": "runtime-generated code",
+   "stages": {
+    "hypotheses": 4,
+    "confirmed": 3,
+    "refuted": 0,
+    "inconclusive": 0,
+    "learned": 0,
+    "applied": [
+     "fold",
+     "layers"
+    ]
+   },
+   "completeness": {
+    "transformations": 1,
+    "resolved": 1,
+    "reduced": 0,
+    "unresolved": 0
+   },
+   "syntax": "parses",
+   "behaviour": {
+    "runtime": "lua51",
+    "vsOriginal": "same",
+    "vsObfuscated": "same"
+   },
+   "confidence": "high",
+   "limitations": []
+  },
+  {
+   "category": "unknown custom (no signature)",
+   "label": "project packer: character codes",
+   "file": "tests/corpus/obfuscated/loaders/s01_minify_basic__charcodes.lua",
+   "detection": "correct (no tool claimed)",
+   "claimed": [],
+   "architecture": "runtime-generated code",
+   "stages": {
+    "hypotheses": 1,
+    "confirmed": 1,
+    "refuted": 0,
+    "inconclusive": 0,
+    "learned": 0,
+    "applied": [
+     "fold",
+     "layers",
+     "simplify"
+    ]
+   },
+   "completeness": {
+    "transformations": 1,
+    "resolved": 1,
+    "reduced": 0,
+    "unresolved": 0
+   },
+   "syntax": "parses",
+   "behaviour": {
+    "runtime": "lua51",
+    "vsOriginal": "same",
+    "vsObfuscated": "same"
+   },
+   "confidence": "high",
+   "limitations": []
+  },
+  {
+   "category": "unknown custom (no signature)",
+   "label": "project packer: layered",
+   "file": "tests/corpus/obfuscated/loaders/s01_minify_basic__layered.lua",
+   "detection": "correct (no tool claimed)",
+   "claimed": [],
+   "architecture": "runtime-generated code",
+   "stages": {
+    "hypotheses": 4,
+    "confirmed": 3,
+    "refuted": 0,
+    "inconclusive": 0,
+    "learned": 0,
+    "applied": [
+     "fold",
+     "layers"
+    ]
+   },
+   "completeness": {
+    "transformations": 0,
+    "resolved": 0,
+    "reduced": 0,
+    "unresolved": 0
+   },
+   "syntax": "parses",
+   "behaviour": {
+    "runtime": "lua51",
+    "vsOriginal": "same",
+    "vsObfuscated": "same"
+   },
+   "confidence": "high",
+   "limitations": []
+  },
+  {
+   "category": "multi-layer",
+   "label": "Hercules VM + base64 + Hercules light",
+   "file": "tests/corpus/obfuscated/mixed/s01_minify_basic__base64+hercules-vm+hercules-light.lua",
+   "detection": "correct",
+   "claimed": [
+    "hercules"
+   ],
+   "architecture": "virtual machine",
+   "stages": {
+    "hypotheses": 7,
+    "confirmed": 4,
+    "refuted": 0,
+    "inconclusive": 1,
+    "learned": 1,
+    "applied": [
+     "hercules.vm",
+     "idioms.shortcircuit",
+     "idioms.compare",
+     "fold",
+     "simplify",
+     "dataflow",
+     "layers"
+    ]
+   },
+   "completeness": {
+    "transformations": 4,
+    "resolved": 4,
+    "reduced": 0,
+    "unresolved": 0
+   },
+   "syntax": "parses",
+   "behaviour": {
+    "runtime": "lua51",
+    "vsOriginal": "same",
+    "vsObfuscated": "reference does not run"
+   },
+   "confidence": "high",
+   "limitations": []
+  },
+  {
+   "category": "multi-layer",
+   "label": "Hercules balanced + XOR",
+   "file": "tests/corpus/obfuscated/mixed/s01_minify_basic__hercules-balanced+xor.lua",
+   "detection": "correct after peeling (an outer layer hid it)",
+   "claimed": [],
+   "architecture": "runtime-generated code",
+   "stages": {
+    "hypotheses": 2,
+    "confirmed": 1,
+    "refuted": 0,
+    "inconclusive": 0,
+    "learned": 0,
+    "applied": [
+     "fold",
+     "layers",
+     "simplify",
+     "evaluate",
+     "rename"
+    ]
+   },
+   "completeness": {
+    "transformations": 2,
+    "resolved": 2,
+    "reduced": 0,
+    "unresolved": 0
+   },
+   "syntax": "parses",
+   "behaviour": {
+    "runtime": "lua51",
+    "vsOriginal": "same",
+    "vsObfuscated": "same"
+   },
+   "confidence": "high",
+   "limitations": []
+  },
+  {
+   "category": "unsupported / partial",
+   "label": "ZenFus VM",
+   "file": "tests/corpus/obfuscated/zenfus/s01_minify_basic__default.lua",
+   "detection": "correct",
+   "claimed": [
+    "zenfus"
+   ],
+   "architecture": "virtual machine",
+   "stages": {
+    "hypotheses": 5,
+    "confirmed": 0,
+    "refuted": 0,
+    "inconclusive": 2,
+    "learned": 0,
+    "applied": [
+     "fold",
+     "simplify",
+     "stable",
+     "rename"
+    ]
+   },
+   "completeness": {
+    "transformations": 2,
+    "resolved": 1,
+    "reduced": 0,
+    "unresolved": 1
+   },
+   "syntax": "parses",
+   "behaviour": {
+    "runtime": "lua54",
+    "vsOriginal": "same",
+    "vsObfuscated": "same"
+   },
+   "confidence": "minimal",
+   "limitations": [
+    "wrapper: No capability of the engine addresses this shape; the evidence above says where it is."
+   ]
+  },
+  {
+   "category": "unsupported / partial",
+   "label": "AzureVM AzureGodUltra",
+   "file": "tests/corpus/obfuscated/azurevm/s01_minify_basic__AzureGodUltra.lua",
+   "detection": "correct",
+   "claimed": [
+    "azurevm"
+   ],
+   "architecture": "conventional Lua",
+   "stages": {
+    "hypotheses": 3,
+    "confirmed": 0,
+    "refuted": 0,
+    "inconclusive": 0,
+    "learned": 0,
+    "applied": [
+     "unwrap",
+     "fold",
+     "simplify",
+     "stable",
+     "adaptive",
+     "rename"
+    ]
+   },
+   "completeness": {
+    "transformations": 6,
+    "resolved": 3,
+    "reduced": 0,
+    "unresolved": 3
+   },
+   "syntax": "parses",
+   "behaviour": {
+    "runtime": "lua51",
+    "vsOriginal": "same",
+    "vsObfuscated": "same"
+   },
+   "confidence": "low",
+   "limitations": [
+    "bytecode-vm: azurevm.vm: the decompiler could not structure 2 function(s): conditional jump at 67 leaves its block",
+    "compressed-payload: No capability of the engine addresses this shape; the evidence above says where it is.",
+    "constant-table: No capability of the engine addresses this shape; the evidence above says where it is."
+   ]
+  },
+  {
+   "category": "unknown custom (real, no original)",
+   "label": "third-party VM script",
+   "file": "local/corpus/Unknown/0030800e284c9cb8.lua",
+   "detection": "correct (no tool claimed)",
+   "claimed": [],
+   "architecture": "virtual machine",
+   "stages": {
+    "hypotheses": 3,
+    "confirmed": 0,
+    "refuted": 0,
+    "inconclusive": 1,
+    "learned": 0,
+    "applied": [
+     "fold",
+     "simplify"
+    ]
+   },
+   "completeness": {
+    "transformations": 1,
+    "resolved": 0,
+    "reduced": 0,
+    "unresolved": 1
+   },
+   "syntax": "parses",
+   "behaviour": {
+    "vsOriginal": "no original available",
+    "vsObfuscated": null
+   },
+   "confidence": "low",
+   "limitations": [
+    "bytecode-vm: Zartha (per-instruction templates): the header that names the standard library was not found"
+   ]
+  },
+  {
+   "category": "unknown custom (real, no original)",
+   "label": "third-party VM script",
+   "file": "local/corpus/Unknown/0444eb6189c02bee.lua",
+   "detection": "correct (no tool claimed)",
+   "claimed": [],
+   "architecture": "virtual machine",
+   "stages": {
+    "hypotheses": 7,
+    "confirmed": 0,
+    "refuted": 0,
+    "inconclusive": 1,
+    "learned": 0,
+    "applied": [
+     "fold",
+     "simplify",
+     "tidy",
+     "stable",
+     "adaptive",
+     "rename",
+     "idioms.functions"
+    ]
+   },
+   "completeness": {
+    "transformations": 5,
+    "resolved": 1,
+    "reduced": 0,
+    "unresolved": 4
+   },
+   "syntax": "parses",
+   "behaviour": {
+    "vsOriginal": "no original available",
+    "vsObfuscated": null
+   },
+   "confidence": "minimal",
+   "limitations": [
+    "bytecode-vm: azurevm.vm: the runtime's seed was not found",
+    "minified-layout: No capability of the engine addresses this shape; the evidence above says where it is.",
+    "wrapper: No capability of the engine addresses this shape; the evidence above says where it is.",
+    "environment-probe: No capability of the engine addresses this shape; the evidence above says where it is."
+   ]
+  },
+  {
+   "category": "loader with remote reference",
+   "label": "Luarmor bootstrap (real)",
+   "file": "local/corpus/Unknown/00aded388ac6544c.lua",
+   "loader": {
+    "case": "6: No authorised interface gives the payload out",
+    "architectures": [
+     "runtime-constructed",
+     "cached"
+    ],
+    "requests": 1
+   },
+   "luarmor": {
+    "variants": [
+     "bootstrap"
+    ],
+    "operations": [
+     "1:done",
+     "2:partial",
+     "3:not-available",
+     "4:needs-input",
+     "5:needs-input"
+    ],
+    "localRecoverable": "full",
+    "opaqueData": 1
+   },
+   "syntax": "parses",
+   "limitations": [
+    "init runtime: not in the file"
+   ]
+  },
+  {
+   "category": "loader with remote reference",
+   "label": "Luarmor SDK loader (user-supplied)",
+   "file": "tests/corpus/user-local/MainLoader.lua",
+   "loader": {
+    "case": "6: No authorised interface gives the payload out",
+    "architectures": [
+     "api-backed",
+     "token-auth",
+     "device-bound",
+     "dynamic"
+    ],
+    "requests": 2
+   },
+   "luarmor": {
+    "variants": [
+     "sdk"
+    ],
+    "operations": [
+     "1:done",
+     "2:done",
+     "3:not-available",
+     "4:needs-input",
+     "5:needs-input"
+    ],
+    "localRecoverable": "full",
+    "opaqueData": 0
+   },
+   "syntax": "parses",
+   "limitations": [
+    "SDK library: not in the file",
+    "protected script: not in the file"
+   ]
+  },
+  {
+   "category": "locally encoded loader",
+   "label": "project packer: hex",
+   "file": "tests/corpus/obfuscated/loaders/s01_minify_basic__hex.lua",
+   "loader": {
+    "case": "1: The payload is in the loader",
+    "architectures": [
+     "payload-in-file"
+    ],
+    "requests": 0
+   },
+   "luarmor": null,
+   "syntax": "parses",
+   "limitations": []
+  },
+  {
+   "category": "incomplete / malformed",
+   "label": "IronBrew 2 file cut at 60%",
+   "detection": "—",
+   "syntax": "input does not parse",
+   "confidence": null,
+   "limitations": [
+    "reported, not crashed: 37:3720: syntax error near <eof>"
+   ]
+  },
+  {
+   "category": "incomplete / malformed",
+   "label": "loader with a syntax error",
+   "detection": "—",
+   "syntax": "input does not parse",
+   "confidence": null,
+   "limitations": [
+    "reported, not crashed: 2:1: ')' expected (to close '(' at line 1) near <eof>"
+   ]
+  }
+ ]
+}

@@ -152,6 +152,8 @@ export function analyzeCustom(source, options = {}) {
     anatomy: anat,
     plan,
     readers,
+    // what the pipeline identified once outer layers came off (it looks again after unwrapping a layer)
+    identifiedAfterPeeling: r.detection ? r.detection.families.filter((f) => f.confidence >= 0.5).map((f) => f.id) : [],
     result: { ok: r.ok, level: r.confidence ? r.confidence.level : null, score: r.confidence ? r.confidence.score : null, applied, skipped, bytes: output.length, output: r.ok ? output : null, error: r.ok ? null : (r.error || (r.warnings && r.warnings[0]) || 'the recovery did not produce a parsable program') },
     after: after.transformations,
     explanation,

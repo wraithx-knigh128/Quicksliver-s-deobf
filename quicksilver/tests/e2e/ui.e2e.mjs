@@ -1281,3 +1281,54 @@ test('a Roblox model file opens as the script inside it', { skip }, async () => 
   assert.deepEqual(problems, []);
   await ctx.close();
 });
+
+// ---- Custom-format anatomy and Luarmor analysis (Prompt XX) ---------------------------------------------------------------------------
+
+test('Custom format: the anatomy names the architecture, describes the VM, and shows each hypothesis with its test', { skip, timeout: 180_000 }, async () => {
+  const { page, ctx, problems } = await newPage();
+  await loadFile(page, path.join(corpus, 'obfuscated/zartha/s05_nested_functions__flatten.lua'));
+  await page.click('#tab-custom');
+  await page.click('#view-custom button:has-text("Analyse this script")');
+  await page.waitForSelector('#view-custom .hyp-table', { timeout: 150_000 });
+  const text = await page.textContent('#view-custom');
+  assert.match(text, /Architecture: virtual machine/);
+  assert.match(text, /Virtual machine/);
+  assert.match(text, /Instructions: /);
+  const rows = await page.$$eval('#view-custom .hyp-table tbody tr', (rs) => rs.map((r) => r.textContent.replace(/\s+/g, ' ')));
+  assert.ok(rows.length >= 1);
+  assert.ok(rows.every((r) => /\d+%/.test(r) && /(confirmed|refuted|inconclusive|not tested)/.test(r)), 'every hypothesis carries a confidence and a test result');
+  assert.ok(rows.some((r) => /confirmed/.test(r)), 'the VM hypothesis is confirmed by the reader that read the program');
+  assert.match(text, /only "confirmed" by a test/);
+  assert.deepEqual(problems, []);
+  await ctx.close();
+});
+
+// the structure of a Luarmor bootstrap with invented values (the same shape as tests/xx-luarmor.test.mjs)
+const LUARMOR_BOOT = `-- Do not save this file
+_bsdata0={123456789,987654321,"\\1\\2\\3\\200\\201\\202","${'ab'.repeat(32)}",42};
+local f,b,a="static_content_1","0000-demo";pcall(function()a=readfile(f.."/init-"..b..".lua")end) if a and #a>2000 then a=loadstring(a) else a=nil; end;
+if a then return a() else pcall(makefolder,f) a=game:HttpGet("https://cdn.luarmor.net/v4_init_demo.lua") writefile(f.."/init-"..b..".lua", a); return loadstring(a)() end
+`;
+
+test('Loader: a Luarmor bootstrap gets the five operations kept apart, its own logic opened, and nothing fetched', { skip }, async () => {
+  const { page, ctx, problems } = await newPage();
+  let fetches = 0;
+  await page.route('**/api/fetch**', (route) => { fetches++; route.fulfill({ status: 500, body: '{}' }); });
+  await page.fill('textarea.editor', LUARMOR_BOOT);
+  await page.click('#act-loader');
+  await page.waitForSelector('#view-loader .table.ops');
+  const ops = await page.$$eval('#view-loader .table.ops tr', (rs) => rs.map((r) => r.textContent.replace(/\s+/g, ' ')));
+  assert.equal(ops.length, 5, 'five operations, each answered separately');
+  assert.match(ops[2], /not available/, 'retrieving the delivered payload is not available');
+  const text = await page.textContent('#view-loader');
+  assert.match(text, /Variant: bootstrap/);
+  assert.match(text, /Embedded data/);
+  assert.match(text, /Opaque: /);
+  assert.match(text, /Not in this file/);
+  assert.equal(fetches, 0, 'nothing is fetched');
+  await page.click('#view-loader button:has-text("Open the recovered loader logic")');
+  const opened = await page.inputValue('textarea.editor');
+  assert.ok(!opened.includes('_bsdata0') && /readfile/.test(opened), 'the opened text is the loader logic, without the data table');
+  assert.deepEqual(problems, []);
+  await ctx.close();
+});

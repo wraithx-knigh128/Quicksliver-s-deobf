@@ -15,6 +15,31 @@ export async function loadExamples() {
   return res.json();
 }
 
+const TEST = { confirmed: ['ok', 'confirmed'], refuted: ['bad', 'refuted'], inconclusive: ['warn', 'inconclusive'], 'not-run': ['', 'not tested'] };
+
+/** The anatomy (src/custom/anatomy.js): what the parts are, where, and which hypotheses survived their tests. */
+function anatomySection(a) {
+  if (!a) return null;
+  if (!a.ok) return section('Anatomy', note('warn', `The structure could not be read: ${a.error}`));
+  const hyps = [...a.hypotheses].sort((x, y) => y.confidence - x.confidence);
+  return section('Anatomy', [
+    h('p', h('b', `Architecture: ${a.summary.architecture}. `), `${a.summary.functions} functions, ${a.summary.withRoles} with a recognisable role; encoded data is ${Math.round(a.summary.encodedShare * 100)}% of the file.`),
+    a.vm ? h('div.row-item', h('b', 'Virtual machine'), h('ul',
+      h('li', `${a.vm.machine}; ${a.vm.handlers ? `${a.vm.handlers} distinct handlers, ` : ''}dispatch on “${a.vm.dispatchVariable}” (${a.vm.shape}, ${a.vm.tests} tests) at line ${a.vm.line}`),
+      h('li', `Instructions: ${a.vm.instructionEncoding.kind} — ${a.vm.instructionEncoding.note}`),
+      a.vm.features.length ? h('li', a.vm.features.join(', ')) : null)) : null,
+    h('table.table.hyp-table', h('thead', h('tr', h('th', 'Hypothesis'), h('th', 'Confidence'), h('th', 'Test'))),
+      h('tbody', hyps.map((x) => {
+        const [cls, label] = TEST[x.test.status] || ['', x.test.status];
+        return h('tr',
+          h('td', x.statement, x.evidence.length ? h('div.dim', x.evidence.join('; ')) : null),
+          h('td.conf', `${Math.round(x.confidence * 100)}%`, meter(x.confidence)),
+          h('td', h('span.badge.' + (cls || 'plain'), label), x.test.detail ? h('div.dim', x.test.detail) : null));
+      }))),
+    note('', 'A hypothesis is only "confirmed" by a test: a decoder by call sites the sandboxed evaluator actually replaced, a VM by a reader that read its program, a layer by its unwrapping. Learned rules raise a hypothesis but never replace its test.'),
+  ]);
+}
+
 export function customView(state, { onAnalyze, onCopy }) {
   const { result, examples, busy } = state;
   const head = h('div.codebar',
@@ -33,6 +58,7 @@ export function customView(state, { onAnalyze, onCopy }) {
       ]),
       r.ok && (r.level === 'low' || r.level === 'minimal' || r.level === 'none') ? note('warn', 'The transformations below may read as resolved while the engine’s own confidence in the result is low: the report in the Deobfuscator tab says why.') : null,
     ], r.ok && r.output ? h('button.btn.small', { type: 'button', onclick: () => onCopy(r.output) }, 'Copy recovered source') : null),
+    anatomySection(result.anatomy),
     section('What it shows', result.input.transformations.map((t) => h('div.row-item', h('div', h('b', t.id), ` — ${t.description}`, ' ', meter(t.confidence), h('span.meta', ` ${pct(t.confidence)}`)), h('ul', t.evidence.map((e) => h('li', e)))))),
     section('Explanation', result.explanation.length ? result.explanation.map((e) => h('div.row-item',
       h('div', h('b', e.transformation), ' ', h('span.badge.' + STATUS_CLASS[e.status], STATUS_TEXT[e.status])),

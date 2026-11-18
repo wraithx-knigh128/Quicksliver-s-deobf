@@ -1874,13 +1874,14 @@ async function analyzeStage(stage) {
 async function ensureExamples() {
   if (customState.examples) return;
   try { customState.examples = await loadExamples(); renderCustom(); } catch { /* the analysis works without the examples */ }
+  if (!customState.rules) { try { const res = await fetch('data/research/learned-rules.json', { cache: 'no-cache' }); if (res.ok) customState.rules = await res.json(); } catch { /* the anatomy works without learned rules */ } }
 }
 
 async function runCustom() {
   if (!inputPresent()) { toast('Nothing to analyse. Paste code or open a file first.'); switchTab('work'); editor.focus(); return; }
   customState.busy = true; renderCustom();
   const allowSandbox = lic.allow('sandbox') && settings.sandbox;
-  const r = await run('custom', { sandbox: { enabled: !!allowSandbox }, examples: customState.examples }, 'Analysing', { limits: { timeoutMs: 180_000 }, needsText: true });
+  const r = await run('custom', { sandbox: { enabled: !!allowSandbox }, examples: customState.examples, rules: customState.rules }, 'Analysing', { limits: { timeoutMs: 180_000 }, needsText: true });
   customState.busy = false;
   customState.result = r;
   renderCustom();
