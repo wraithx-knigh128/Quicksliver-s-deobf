@@ -13,8 +13,15 @@
 //   pastebin       Pastebin API raw output of the user's own paste: POST https://pastebin.com/api/api_raw.php with api_dev_key,
 //                  api_user_key, api_paste_key, api_option=show_paste. Env: QS_PASTEBIN_DEV_KEY, QS_PASTEBIN_USER_KEY.
 //
-// Not providers, on purpose (docs/API-CATALOGUE.md): Luarmor, Polsec, Panda — their documented APIs manage keys and users (Luarmor's also
-// uploads scripts); none documents a call that returns a protected script, and acting as their loader client is not an authorised route.
+//   luarmor        OWNER CHECK ONLY, never a retrieval. Luarmor's documented v3 API: GET https://api.luarmor.net/v3/keys/{api_key}/details
+//                  (the owner's API key in the path) lists the owner's projects and their scripts as metadata — script_id, name, version.
+//                  The check answers one question: is the script this loader references one of the owner's own scripts? It returns no code:
+//                  no documented Luarmor endpoint returns a script's contents ("Luarmor does not store your source code by default"), and
+//                  acting as Luarmor's loader client is not an authorised route. Luarmor's API only answers from IP addresses the owner
+//                  whitelisted, so a deployment without a fixed outbound address gets 403. Env: QS_LUARMOR_API_KEY.
+//
+// Not providers, on purpose (docs/API-CATALOGUE.md): Polsec, Panda — no documented call returns a protected script, and acting as their loader
+// client is not an authorised route. Luarmor is here only for the owner check above.
 
 export class ProviderError extends Error {
   constructor(code, message, status) { super(message); this.code = code; this.status = status; }
@@ -73,6 +80,9 @@ export async function providerRequest(url, { fetchImpl = fetch, hosts, method = 
         if (e instanceof ProviderError) throw e;
         throw new ProviderError('upstream_unavailable', 'The download was interrupted.', 502);
       } finally { clearTimeout(timer); }
+      // a body shorter than the length the server declared is a cut-off transfer, not a smaller file. (With a content-encoding the declared
+      // length counts the compressed bytes and fetch has already decoded them, so the comparison only holds for an unencoded body.)
+      if (declared && !res.headers.get('content-encoding') && total !== declared) throw new ProviderError('upstream_unavailable', `The download ended early: ${total} of ${declared} bytes arrived.`, 502);
       const bytes = new Uint8Array(total);
       let at = 0;
       for (const c of chunks) { bytes.set(c, at); at += c.length; }
@@ -126,6 +136,38 @@ export const PROVIDERS = {
       if (/^Bad API request/i.test(head)) throw new ProviderError(/invalid (api_dev_key|api_user_key)/i.test(head) ? 'upstream_auth' : 'upstream_error', /invalid (api_dev_key|api_user_key)/i.test(head) ? 'Pastebin refused the configured keys.' : 'Pastebin refused the request for this paste.', 502);
       return { bytes: r.bytes, contentType: r.contentType, name: `${t.key}.lua` };
     },
+  },
+};
+
+PROVIDERS.luarmor = {
+  env: ['QS_LUARMOR_API_KEY'],
+  kind: 'metadata',
+  validate(t) { if (!/^[0-9a-fA-F]{32}$/.test(String(t.loaderId || ''))) throw new ProviderError('bad_request', 'loaderId must be the 32-hex identifier from the loader address.', 400); },
+  async retrieve(t, env, opts) {
+    let r;
+    try {
+      r = await providerRequest(`https://api.luarmor.net/v3/keys/${encodeURIComponent(env.QS_LUARMOR_API_KEY)}/details`, { ...opts, hosts: ['api.luarmor.net'], headers: { Accept: 'application/json' }, maxBytes: 1024 * 1024 });
+    } catch (e) {
+      // the documented meanings: 403 = IP not whitelisted or wrong key, 400 = usually an invalid API key
+      if (e instanceof ProviderError && e.code === 'upstream_auth') throw new ProviderError('upstream_auth', 'Luarmor refused the request (HTTP 403): its API answers only from IP addresses the owner whitelisted, with a valid API key.', 502);
+      if (e instanceof ProviderError && e.code === 'upstream_error' && /400/.test(e.message)) throw new ProviderError('upstream_auth', 'Luarmor says the configured API key is not valid (HTTP 400).', 502);
+      throw e;
+    }
+    let j;
+    try { j = JSON.parse(text(r.bytes)); } catch { throw new ProviderError('bad_upstream', 'Luarmor did not answer with JSON.', 502); }
+    if (!j || j.success === false) throw new ProviderError('upstream_auth', `Luarmor refused the request${j && j.message ? `: ${String(j.message).slice(0, 120)}` : ''}.`, 502);
+    if (!Array.isArray(j.projects)) throw new ProviderError('bad_upstream', 'Luarmor’s answer has no project list.', 502);
+    const id = String(t.loaderId).toLowerCase();
+    let match = null;
+    let scripts = 0;
+    for (const p of j.projects) {
+      for (const sc of Array.isArray(p && p.scripts) ? p.scripts : []) {
+        scripts++;
+        if (String(sc && sc.script_id || '').toLowerCase() === id) match = { projectName: String(p.name || p.project_name || ''), scriptName: String(sc.script_name || ''), scriptVersion: sc.script_version == null ? null : String(sc.script_version) };
+      }
+    }
+    // only what answers the question is returned: never the e-mail, Discord id, plan, keys or user list the same answer contains
+    return { json: { owned: !!match, ...(match || {}), projectsSeen: j.projects.length, scriptsSeen: scripts, contents: 'not available: no documented Luarmor endpoint returns a script’s contents' } };
   },
 };
 

@@ -76,7 +76,13 @@ export async function safeGet(url, { fetchImpl = fetch, maxBytes = 4 * 1024 * 10
       current = next;
       continue;
     }
-    if (!res.ok) { clearTimeout(timer); throw new FetchRefused(`The site answered ${res.status}.`, res.status === 404 ? 404 : 502); }
+    // the upstream status is kept where it means something to the next stage: 401/403 is an authorisation answer, 404 an absent file;
+    // everything else is the site failing (502)
+    if (!res.ok) {
+      clearTimeout(timer);
+      if (res.status === 401 || res.status === 403) throw new FetchRefused(`The site refused access (HTTP ${res.status}): this file needs an authorisation this tool does not have.`, 403);
+      throw new FetchRefused(`The site answered ${res.status}.`, res.status === 404 ? 404 : 502);
+    }
     const declared = Number(res.headers.get('content-length') || 0);
     if (declared > maxBytes) { clearTimeout(timer); throw new FetchRefused(`The file is larger than ${Math.round(maxBytes / 1024 / 1024)} MB.`, 413); }
     const chunks = [];
@@ -95,6 +101,9 @@ export async function safeGet(url, { fetchImpl = fetch, maxBytes = 4 * 1024 * 10
       if (e instanceof FetchRefused) throw e;
       throw new FetchRefused('The download was interrupted.', 502);
     } finally { clearTimeout(timer); }
+    // a body shorter than the length the server declared is a cut-off transfer, not a smaller file. (With a content-encoding the declared
+    // length counts the compressed bytes and fetch has already decoded them, so the comparison only holds for an unencoded body.)
+    if (declared && !res.headers.get('content-encoding') && total !== declared) throw new FetchRefused(`The download ended early: ${total} of ${declared} bytes arrived.`, 502);
     const bytes = new Uint8Array(total);
     let at = 0;
     for (const c of chunks) { bytes.set(c, at); at += c.length; }

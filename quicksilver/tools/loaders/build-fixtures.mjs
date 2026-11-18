@@ -52,7 +52,7 @@ const cases = [
   { id: 'html-as-text', category: 'malformed response', loader: loader('https://paste.ee/r/HtmlText'),
     service: [R('https://paste.ee/r/HtmlText', { file: 'page.html', type: 'text/plain' })], expect: ['not-code'], note: 'a page served as text/plain passes the fetcher; the payload stage recognises it' },
   { id: 'truncated-gzip', category: 'malformed response', loader: loader('https://paste.ee/r/Truncated'),
-    service: [R('https://paste.ee/r/Truncated', { file: body('truncated.gz', zlib.gzipSync(PLAIN).subarray(0, 40)), type: 'application/octet-stream' })], expect: ['not-code'] },
+    service: [R('https://paste.ee/r/Truncated', { file: body('truncated.gz', zlib.gzipSync(PLAIN).subarray(0, 40)), type: 'application/octet-stream' })], expect: ['invalid-payload'] },
   { id: 'json-error-200', category: 'malformed response', loader: loader('https://rentry.co/keyerr/raw'),
     service: [R('https://rentry.co/keyerr/raw', { file: body('keyerr.json', Buffer.from('{"success":false,"message":"Invalid key"}')), type: 'application/json' })], expect: ['not-code'] },
   { id: 'empty-200', category: 'malformed response', loader: loader('https://paste.ee/r/Empty01'),
@@ -71,7 +71,31 @@ const cases = [
     service: [R('provider:roblox-asset:1111111111', { file: body('asset-1111.rbxm', MODEL_BIN), type: 'application/octet-stream' })], expect: ['retrieved-plain'] },
   { id: 'owner-provider-not-configured', category: 'authorised authenticated retrieval', loader: 'require(4242424242)\n',
     service: [], expect: ['not-retrievable'] },
+  // Prompt XXI: payload validation and transport integrity
+  { id: 'truncated-lua', category: 'truncated source', loader: loader('https://pastebin.com/raw/Cutoff01'),
+    service: [R('https://pastebin.com/raw/Cutoff01', { file: body('cutoff.lua', PLAIN.subarray(0, Math.floor(PLAIN.length * 0.6))), type: 'text/plain' })], expect: ['invalid-payload'], note: 'Lua text that stops in the middle: reported as cut off, never passed to the pipeline' },
+  { id: 'key-required-text', category: 'malformed response', loader: loader('https://rentry.co/needkey/raw'),
+    service: [R('https://rentry.co/needkey/raw', { file: body('needkey.txt', Buffer.from('Key required. Get your key from our Discord, then run the loader again.')), type: 'text/plain' })], expect: ['not-code'], note: 'a message served with HTTP 200 is not a payload' },
+  { id: 'short-transfer', category: 'truncated source', loader: loader('https://paste.ee/r/Short01'),
+    service: [R('https://paste.ee/r/Short01', { file: 'plain.lua', type: 'text/plain', declared: PLAIN.length + 500 })], expect: ['transport-failed'], note: 'the server declared more bytes than it sent: the transfer is rejected as cut off' },
+  { id: 'luau-bytecode', category: 'unsupported format', loader: loader('https://cdn.discordapp.com/attachments/1/2/chunk.bin'),
+    service: [R('https://cdn.discordapp.com/attachments/1/2/chunk.bin', { file: body('chunk.luau', Buffer.from([5, 3, 2, 0, 1, 0, 0, 0, 7, 0x80, 0x81, 0x10, 0x11, 0x12, 0x13, 0, 0, 0, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a])), type: 'application/octet-stream' })], expect: ['unsupported-payload'] },
 ];
+// The outcome class each stage must reach (src/validate/outcome.js), decided independently of the classifier and checked by tests/xix-loader-intel.test.mjs.
+// null: a stage that is another loader (its program is analysed as the next stage, not classified on its own).
+const RESULTS = {
+  'direct-plain': ['validated'], 'public-ironbrew2': ['validated'], 'public-prometheus': ['validated'], 'encoded-base64-gzip': ['validated'],
+  'encoded-json-field': ['validated'], 'encoded-hex-zlib': ['validated'], 'multi-stage': [null, 'validated'], 'invalid-endpoint': ['payload-unavailable'],
+  'auth-failure': ['authorization-unavailable'], 'service-unavailable': ['payload-unavailable'], 'html-instead-of-script': ['payload-unavailable'],
+  'html-as-text': ['payload-unavailable'], 'truncated-gzip': ['invalid-input'], 'json-error-200': ['payload-unavailable'], 'empty-200': ['payload-unavailable'],
+  'retrieved-unrecoverable': ['not-deobfuscated'], luarmor: ['payload-unavailable'], 'keyed-url': ['authorization-unavailable'], 'dynamic-url': ['payload-unavailable'],
+  'owner-roblox-model-obfuscated': ['validated'],
+  // the model's only script is `local module = {} return module`: it does nothing a run can observe, so its behaviour cannot be validated
+  'owner-roblox-model-binary': ['syntax-valid-unverified'],
+  'owner-provider-not-configured': ['authorization-unavailable'],
+  'truncated-lua': ['invalid-input'], 'key-required-text': ['payload-unavailable'], 'short-transfer': ['payload-unavailable'], 'luau-bytecode': ['unsupported-format'],
+};
+for (const c of cases) c.result = RESULTS[c.id];
 fs.writeFileSync(path.join(out, 'manifest.json'), JSON.stringify({
   description: 'Loader fixtures: each case is a loader script and the responses a mock service gives for its addresses. Payloads are fixtures of this repository (originals, IronBrew 2, Prometheus, ZenFus outputs; a Roblox Studio model from rojo-rbx/rbx-test-files, MIT) wrapped in transport forms. Generated by tools/loaders/build-fixtures.mjs; no real service involved.',
   cases: cases.map((c) => ({ ...c, service: Object.fromEntries(c.service) })),

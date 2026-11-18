@@ -1196,6 +1196,8 @@ const LOADER_SRC = 'script_key = "ABCDEFGHIJ1234567890"\nloadstring(game:HttpGet
 
 test('Loader: the analysis names the case, the service and the route, and never shows the key', { skip }, async () => {
   const { page, ctx, problems } = await newPage();
+  // the page asks the deployment which owner routes it offers when a loader names luarmor.net (the ownership check); this static test server has no API
+  await page.route('**/api/retrieve**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, mode: 'off', providers: [] }) }));
   let fetches = 0;
   await page.route('**/api/fetch**', (route) => { fetches++; route.fulfill({ status: 500, body: '{}' }); });
   await page.fill('textarea.editor', LOADER_SRC);
@@ -1215,6 +1217,8 @@ test('Loader: the analysis names the case, the service and the route, and never 
 
 test('Loader: a stage is fetched only after confirmation, kept with its hash, opened, and the loader can be put back', { skip }, async () => {
   const { page, ctx, problems } = await newPage();
+  // the page asks the deployment which owner routes it offers when a loader names luarmor.net (the ownership check); this static test server has no API
+  await page.route('**/api/retrieve**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, mode: 'off', providers: [] }) }));
   const asked = [];
   await page.route('**/api/fetch**', (route) => { asked.push(new URL(route.request().url()).searchParams.get('url')); route.fulfill({ status: 200, headers: { 'content-type': 'application/octet-stream', 'x-qs-name': 'ui.lua' }, body: 'local lib = {}\nreturn lib\n' }); });
   await page.fill('textarea.editor', LOADER_SRC);
@@ -1262,14 +1266,117 @@ test('Loader Intelligence: retrieves only after confirmation, measures each stag
   await page.waitForSelector('.intel-table', { timeout: 200_000 });
   const rows = await page.$$eval('.intel-table tbody tr', (rs) => rs.map((r) => r.textContent.replace(/\s+/g, ' ')));
   assert.equal(rows.length, 3);
-  assert.match(rows[0], /base64 → gzip.*IronBrew 2.*confidence high.*Reconstructed/);
-  assert.match(rows[1], /404.*Request failed/);
-  assert.match(rows[2], /4242424242.*not requested.*Not retrievable/, 'the asset has no authorised route here (no provider), so it is not requested');
+  // Prompt XXI: "validated" only because the reconstruction was run next to the retrieved payload and behaved identically
+  assert.match(rows[0], /base64 → gzip.*IronBrew 2.*confidence high.*behaviour identical.*Fully reconstructed and behaviourally validated/);
+  assert.match(rows[1], /404.*Payload unavailable/);
+  assert.match(rows[2], /4242424242.*not requested.*Authorization unavailable/, 'the asset has an owner route (Open Cloud) but no key here, so it is not requested');
   assert.ok(!asked.some((u) => /4242424242/.test(u)));
   const [dl] = await Promise.all([page.waitForEvent('download'), page.click('button:has-text("Report (.md)")')]);
   const md = fs.readFileSync(await dl.path(), 'utf8');
   assert.match(md, /# Loader Intelligence report/);
-  assert.match(md, /reconstructed \(high\/medium confidence\) \| 1 \|/);
+  assert.match(md, /reconstructed and behaviourally validated \| 1 \|/);
+  assert.match(md, /\| Fully reconstructed and behaviourally validated \| 1 \|/);
+  await ctx.close();
+});
+
+// ---- Prompt XXI: zero false success, one connected workflow ------------------------------------------------------------------------------
+
+test('Loader Intelligence without behaviour validation: a clean, high-confidence reconstruction stays "behaviourally unverified"', { skip, timeout: 240_000 }, async () => {
+  const { page, ctx, problems } = await newPage();
+  const remote = path.join(root, 'tests', 'corpus', 'remote-loaders', 'bodies');
+  await page.route('**/api/retrieve**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, mode: 'off', providers: [] }) }));
+  await page.route('**/api/fetch**', (route) => route.fulfill({ status: 200, headers: { 'content-type': 'application/octet-stream' }, body: fs.readFileSync(path.join(remote, 'ib2.b64gz.txt')) }));
+  await page.fill('textarea.editor', 'loadstring(game:HttpGet("https://rentry.co/ib2gz/raw"))()\n');
+  await page.click('#act-loader');
+  await page.click('.intel-head button.btn.primary');
+  await page.uncheck('#intel-validate');
+  await page.click('.modal button:has-text("Retrieve and analyse")');
+  await page.waitForSelector('.intel-table', { timeout: 200_000 });
+  const row = (await page.textContent('.intel-table tbody tr')).replace(/\s+/g, ' ');
+  assert.match(row, /confidence high/);
+  assert.match(row, /behaviour not compared/);
+  assert.match(row, /Syntax-valid but behaviourally unverified/);
+  assert.doesNotMatch(row, /Fully reconstructed/);
+  // the chain names every stage and where it stopped
+  await page.click('.intel-table details.chain-details summary');
+  const chain = (await page.textContent('.intel-table ol.chain')).replace(/\s+/g, ' ');
+  for (const step of ['Loader analysis', 'Payload availability', 'Authorised retrieval', 'Payload validation', 'Obfuscator identification', 'Reconstruction', 'Syntax validation', 'Behavioural validation', 'Lua output']) assert.match(chain, new RegExp(step));
+  assert.match(chain, /Behavioural validation\s*not compared/);
+  assert.deepEqual(problems, []);
+  await ctx.close();
+});
+
+test('Deobfuscator: the outcome says "unverified" after recovery and is upgraded only by a behaviour comparison', { skip, timeout: 180_000 }, async () => {
+  const { page, ctx, problems } = await newPage();
+  // with the sandbox off, Prometheus' encrypted strings stay encrypted: the result says so instead of claiming success
+  await loadFile(page, path.join(corpus, 'obfuscated/prometheus/s06_combined__Weak.lua'));
+  await page.click('#act-recover'); await idle(page);
+  assert.match(await page.textContent('#resultbar'), /Partially reconstructed/);
+  assert.match(await page.textContent('#inspector'), /Obfuscation still detected in the output \(trait:string-table\)/);
+  // a recovery with nothing left in it is "unverified" until it is run next to its input
+  await loadFile(page, path.join(corpus, 'obfuscated/prometheus/s01_minify_basic__Minify.lua'));
+  await page.click('#act-recover'); await idle(page);
+  await page.waitForFunction(() => /Syntax-valid but behaviourally unverified/.test(document.querySelector('#resultbar').textContent), null, { timeout: 120_000 });
+  if (!(await page.isVisible('#inspector'))) await page.click('#btn-inspector');
+  assert.doesNotMatch(await page.textContent('#inspector'), /Fully reconstructed and behaviourally validated/);
+  await page.click('#inspector button:has-text("Compare behaviour")');
+  // the sandbox consent is asked once per session; wait for the dialog rather than racing it
+  await page.waitForSelector('.modal button:has-text("Run in sandbox")', { timeout: 10_000 }).then(() => page.click('.modal button:has-text("Run in sandbox")')).catch(() => {});
+  await page.waitForFunction(() => /Fully reconstructed and behaviourally validated/.test(document.querySelector('#inspector').textContent), null, { timeout: 90_000 });
+  assert.match(await page.textContent('#inspector'), /behaved identically to the submitted program/);
+  assert.deepEqual(problems, []);
+  await ctx.close();
+});
+
+const LUARMOR_SDK = 'script_key = script_key or "ABCDEFGHIJ1234567890"\nloadstring(game:HttpGet("https://api.luarmor.net/files/v3/loaders/0123456789abcdef0123456789abcdef.lua"))()\n';
+
+test('Luarmor: the owner supplies the payload; it goes through validation, identification, deobfuscation, syntax and behaviour, and the result opens', { skip, timeout: 240_000 }, async () => {
+  const { page, ctx, problems } = await newPage();
+  let fetches = 0;
+  await page.route('**/api/fetch**', (route) => { fetches++; route.fulfill({ status: 500, body: '{}' }); });
+  await page.route('**/api/retrieve**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, mode: 'off', providers: [] }) }));
+  await page.fill('textarea.editor', LUARMOR_SDK);
+  await page.click('#act-loader');
+  await page.waitForSelector('#view-loader .owner-route');
+  assert.match(await page.textContent('#view-loader .owner-route'), /documents no interface that returns a protected script/);
+  const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.click('#view-loader button:has-text("Supply the payload")')]);
+  await chooser.setFiles(path.join(corpus, 'obfuscated/ironbrew2/s01_minify_basic__default.lua'));
+  // the sandbox consent is asked once per session; wait for the dialog rather than racing it
+  await page.waitForSelector('.modal button:has-text("Run in sandbox")', { timeout: 10_000 }).then(() => page.click('.modal button:has-text("Run in sandbox")')).catch(() => {});
+  await page.waitForSelector('#view-loader .stage-card.supplied .badge', { timeout: 200_000 });
+  const card = (await page.textContent('#view-loader .stage-card.supplied')).replace(/\s+/g, ' ');
+  assert.match(card, /supplied by its owner/);
+  assert.match(card, /[0-9a-f]{64}/, 'the supplied file carries its SHA-256');
+  assert.match(card, /Fully reconstructed and behaviourally validated/);
+  await page.click('#view-loader .stage-card.supplied details.chain-details summary');
+  const chain = (await page.textContent('#view-loader .stage-card.supplied ol.chain')).replace(/\s+/g, ' ');
+  assert.doesNotMatch(chain, /Authorised retrieval/, 'a supplied payload has no retrieval step');
+  assert.match(chain, /Obfuscator identification\s*IronBrew 2/);
+  assert.match(chain, /Behavioural validation\s*identical/);
+  await page.click('#view-loader .stage-card.supplied button:has-text("Open the result")');
+  assert.match(await page.inputValue('textarea.editor'), /print/);
+  assert.equal(fetches, 0, 'nothing is downloaded from Luarmor or anywhere else');
+  assert.deepEqual(problems, []);
+  await ctx.close();
+});
+
+test('Luarmor: with the owner\u2019s key configured, the ownership check shows the script\u2019s details and never its contents', { skip, timeout: 120_000 }, async () => {
+  const { page, ctx, problems } = await newPage();
+  const posted = [];
+  await page.route('**/api/retrieve**', (route) => {
+    if (route.request().method() === 'GET') return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, mode: 'open', providers: ['luarmor'] }) });
+    posted.push(JSON.parse(route.request().postData()));
+    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, provider: 'luarmor', owned: true, projectName: 'My hub', scriptName: 'Main', scriptVersion: '1.4', projectsSeen: 1, scriptsSeen: 2, contents: 'not available' }) });
+  });
+  await page.fill('textarea.editor', LUARMOR_SDK);
+  await page.click('#act-loader');
+  await page.click('#view-loader button:has-text("Check ownership with your Luarmor key")');
+  await page.waitForFunction(() => /one of yours/.test(document.querySelector('#view-loader .owner-route').textContent));
+  const text = await page.textContent('#view-loader .owner-route');
+  assert.match(text, /“Main”, version 1\.4, in project “My hub”/);
+  assert.match(text, /returns its details, not its contents/);
+  assert.deepEqual(posted, [{ provider: 'luarmor', loaderId: '0123456789abcdef0123456789abcdef' }], 'only the loader id is sent, never the script key');
+  assert.deepEqual(problems, []);
   await ctx.close();
 });
 
@@ -1312,6 +1419,8 @@ if a then return a() else pcall(makefolder,f) a=game:HttpGet("https://cdn.luarmo
 
 test('Loader: a Luarmor bootstrap gets the five operations kept apart, its own logic opened, and nothing fetched', { skip }, async () => {
   const { page, ctx, problems } = await newPage();
+  // the page asks the deployment which owner routes it offers when a loader names luarmor.net (the ownership check); this static test server has no API
+  await page.route('**/api/retrieve**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, mode: 'off', providers: [] }) }));
   let fetches = 0;
   await page.route('**/api/fetch**', (route) => { fetches++; route.fulfill({ status: 500, body: '{}' }); });
   await page.fill('textarea.editor', LUARMOR_BOOT);

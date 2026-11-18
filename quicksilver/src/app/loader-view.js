@@ -4,7 +4,7 @@
 // Everything shown comes from src/loader/analyze.js (static; nothing is run). Text that came from a script is only ever inserted as text.
 
 import { h, fmtBytes } from './dom.js';
-import { section, kv, note } from './views.js';
+import { section, kv, note, OUTCOME_BADGE } from './views.js';
 
 const ROUTE_TEXT = {
   'link-fetcher': ['ok', 'Fetchable'],
@@ -60,15 +60,46 @@ function stageCard(s, i, { onOpen, onAnalyzeStage }) {
     ]));
 }
 
-const OUTCOME = {
-  'not-retrievable': ['', 'Not retrievable'],
-  'transport-failed': ['bad', 'Request failed'],
-  'not-code': ['bad', 'Not code'],
-  'retrieved-unrecoverable': ['warn', 'Retrieved, not reconstructed'],
-  'retrieved-reconstructed': ['ok', 'Reconstructed'],
-  'retrieved-plain': ['ok', 'Plain code'],
-  'nested-loader': ['info', 'Another loader'],
-};
+/**
+ * The connected workflow for one stage, step by step, from what was actually recorded for it: each step is done (✓), failed (✗) or not
+ * reached (–). Loader analysis → availability → authorised retrieval → payload validation → identification → reconstruction → syntax →
+ * behaviour → output. `supplied`: the payload came from its owner, so there is no retrieval step.
+ */
+export function chainSteps(st, { supplied = false } = {}) {
+  const prog = (st.programs || []).find((p) => p.result) || (st.programs || [])[0];
+  const met = (st.result && st.result.met) || [];
+  const steps = [];
+  const add = (label, state, detail) => steps.push({ label, state, detail });
+  if (!supplied) {
+    add('Loader analysis', 'done', st.request ? `${st.request.api} → ${st.request.urlKind}` : '');
+    add('Payload availability', st.route && st.route.possible ? 'done' : 'failed', st.route ? st.route.reason : '');
+    add('Authorised retrieval', !st.transport ? 'none' : st.transport.ok ? 'done' : 'failed', st.transport ? (st.transport.ok ? `HTTP ${st.transport.status ?? 200}, ${st.transport.bytes} bytes` : st.transport.error) : 'not requested');
+  }
+  const pv = !st.payload ? 'none' : (st.programs && st.programs.length) ? 'done' : 'failed';
+  add('Payload validation', pv, st.payload ? st.payload.label : '');
+  add('Obfuscator identification', prog ? 'done' : 'none', prog ? (prog.nestedLoader ? 'another loader' : prog.families.length ? prog.families.join(', ') : prog.obfuscated ? 'obfuscated, no known tool' : 'not obfuscated') : '');
+  if (prog && prog.nestedLoader) { add('Reconstruction', 'none', 'analysed as the next loader stage'); return steps; }
+  add('Reconstruction', !prog || !prog.reconstruction ? 'none' : prog.reconstruction.ok ? 'done' : 'failed', prog && prog.reconstruction ? (prog.reconstruction.ok ? `engine confidence ${prog.reconstruction.level}` : prog.error || 'no output') : '');
+  const syntax = met.includes('the output parses') ? 'done' : prog && prog.reconstruction && prog.reconstruction.ok ? 'failed' : 'none';
+  add('Syntax validation', syntax, syntax === 'done' ? 'the output parses' : syntax === 'failed' ? 'the output does not parse' : '');
+  const b = prog && prog.behaviour;
+  add('Behavioural validation', !b ? 'none' : b.verdict === 'identical' ? 'done' : b.verdict === 'different' ? 'failed' : 'none', !b ? 'not compared' : `${b.verdict}${b.note ? `: ${b.note}` : ''}`);
+  add('Lua output', prog && prog.output ? 'done' : 'none', prog && prog.output ? `${prog.output.length} bytes` : '');
+  return steps;
+}
+
+const MARK = { done: ['ok', '\u2713'], failed: ['bad', '\u2717'], none: ['', '\u2013'] };
+export function chainList(steps) {
+  return h('ol.chain', steps.map((x) => h('li.' + x.state, h('span.mark', MARK[x.state][1]), h('span.name', x.label), x.detail ? h('span.detail.faint', x.detail) : null)));
+}
+
+/** The class of a stage, as a badge, with its reasons and the step-by-step chain under it. */
+export function resultCell(st, opts) {
+  if (!st.result) return h('span.badge.info', st.outcome === 'nested-loader' ? 'Another loader' : '—');
+  return [h('span.badge.' + (OUTCOME_BADGE[st.result.outcome] || 'plain'), st.result.label),
+    st.result.reasons.length ? h('div.faint.why', st.result.reasons.join(' ')) : null,
+    h('details.chain-details', h('summary', 'Stages'), chainList(chainSteps(st, opts)))];
+}
 
 /** Loader Intelligence: one row per request, each stage (route, transport, payload, program, reconstruction) shown on its own. */
 function intelSection(state, a, { onIntel, onOpenText, onExport }) {
@@ -86,11 +117,11 @@ function intelSection(state, a, { onIntel, onOpenText, onExport }) {
   const metric = (v, label) => h('div.metric', h('b', String(v)), h('span', label));
   return section('Loader Intelligence', [
     head,
-    h('div.metrics', metric(s.requests, 'requests'), metric(s.transportOk, 'retrieved'), metric(s.payloadCode, 'were code'), metric(s.reconstructed, 'reconstructed'), metric(s.plain, 'plain'), metric(s.unrecoverable + s.notCode + s.transportFailed, 'not recovered')),
+    h('div.metrics', metric(s.requests, 'requests'), metric(s.transportOk, 'retrieved'), metric(s.payloadCode, 'were code'), metric(s.validated, 'validated'),
+      metric((s.classes['syntax-valid-unverified'] || 0) + (s.classes.partial || 0), 'unverified or partial'), metric(s.requests - s.validated - (s.classes['syntax-valid-unverified'] || 0) - (s.classes.partial || 0) - s.nested, 'not recovered')),
     h('div.table-scroll', h('table.grid.intel-table',
       h('thead', h('tr', h('th', '#'), h('th', 'Address'), h('th', 'Transport'), h('th', 'Payload'), h('th', 'Program → result'), h('th', 'Outcome'))),
       h('tbody', r.stages.map((st, i) => {
-        const [cls, label] = OUTCOME[st.outcome] || ['', st.outcome];
         return h('tr',
           h('td.mono', `${i + 1}${st.depth ? `·${st.depth}` : ''}`),
           h('td.addr', h('code', st.request.address), h('div.faint', st.route.route)),
@@ -98,27 +129,66 @@ function intelSection(state, a, { onIntel, onOpenText, onExport }) {
           h('td', st.payload ? [st.payload.label, st.payload.layers.length ? h('div.faint', st.payload.layers.map((l) => l.kind).join(' → ')) : null] : h('span.faint', '—')),
           h('td', (st.programs || []).length ? st.programs.map((p) => h('div.prog',
             h('span', p.nestedLoader ? 'a further loader' : p.families.length ? p.families.join(', ') : p.obfuscated ? 'obfuscated' : 'not obfuscated'),
-            p.nestedLoader ? h('span.faint', ` · case ${p.nestedLoader.case}, analysed as the next stage`) : p.reconstruction ? h('span.faint', ` · confidence ${p.reconstruction.level || '—'}`) : null,
+            p.nestedLoader ? h('span.faint', ` · case ${p.nestedLoader.case}, analysed as the next stage`) : p.reconstruction ? h('span.faint', ` · confidence ${p.reconstruction.level || '—'} · behaviour ${p.behaviour ? p.behaviour.verdict : 'not compared'}`) : null,
             p.source ? h('button.btn.small.outline', { type: 'button', onclick: () => onOpenText(`${(p.name || 'payload').split('/').pop() || 'payload'}`, p.source) }, 'Payload') : null,
             p.output ? h('button.btn.small.outline', { type: 'button', onclick: () => onOpenText(`${(p.name || 'payload').split('/').pop() || 'payload'}.recovered.lua`, p.output) }, 'Result') : null)) : h('span.faint', '—')),
-          h('td', h('span.badge.' + (cls || 'plain'), label)));
+          h('td.result', resultCell(st)));
       })))),
-    note('', 'Counted on their own: a successful request is not a payload, a payload is not a reconstruction, and the confidence is the pipeline\u2019s own estimate (behaviour is checked separately in the Deobfuscator).'),
+    note('', 'Counted on their own: a successful request is not a payload, a payload is not a reconstruction, and a reconstruction is "validated" only when it was run next to the retrieved program in the sandbox and behaved identically. The confidence is the pipeline\u2019s own estimate and never decides the result.'),
   ]);
 }
 
 const OP_STATUS = { done: ['ok', 'done'], partial: ['warn', 'partial'], 'via-pipeline': ['info', 'via the Deobfuscator'], 'not-available': ['bad', 'not available'], 'needs-input': ['', 'needs your input'] };
 
 /** Luarmor loader analysis (src/loader/luarmor.js): the five operations kept apart, the local logic, the data, the remote parts. */
-function luarmorSection(l, { onOpenText }) {
+/** The loader id in a Luarmor loader address (/files/v3|v4/loaders/<32 hex>.lua), if the file fixes it. */
+export function luarmorLoaderId(l) {
+  for (const x of (l && l.remote) || []) { const m = String(x.address || '').match(/\/files\/v\d\/loaders\/([0-9a-fA-F]{32})\.lua/); if (m) return m[1]; }
+  return null;
+}
+
+/** What the owner can do with their own Luarmor script: the documented owner check, and supplying the payload they hold. */
+function ownerRoute(l, state, { onOwnerCheck, onSupply, onOpenText }) {
+  const id = luarmorLoaderId(l);
+  const canCheck = (state.providers || []).includes('luarmor') && id;
+  const o = state.owner;
+  const sup = state.supplied;
+  return h('div.row-item.owner-route',
+    h('b', 'If this is your script'),
+    h('p.dim', 'Luarmor documents no interface that returns a protected script, so it is never downloaded here. Its owner already holds it: supply that file — the obfuscated output or your own source — and it goes through the same chain as a retrieved payload: validation, identification, deobfuscation, syntax and behaviour checks.'),
+    h('div.acts',
+      h('button.btn.small.primary', { type: 'button', disabled: state.busy, onclick: onSupply }, sup ? 'Supply another file\u2026' : 'Supply the payload\u2026'),
+      canCheck ? h('button.btn.small.outline', { type: 'button', disabled: state.busy || (o && o.running), onclick: () => onOwnerCheck(id) }, 'Check ownership with your Luarmor key') : null),
+    !canCheck ? h('p.faint', id ? 'Ownership check: available when this deployment holds your Luarmor API key (QS_LUARMOR_API_KEY) and its outbound address is on your Luarmor IP whitelist.' : 'Ownership check: this loader fixes no loader id.') : null,
+    o && o.running ? h('p.note.info', 'Asking Luarmor which scripts your key can see\u2026') : null,
+    o && o.error ? h('p.note.bad', o.error) : null,
+    o && o.result ? (o.result.owned
+      ? note('ok', `This loader’s script is one of yours: “${o.result.scriptName || '(unnamed)'}”${o.result.scriptVersion ? `, version ${o.result.scriptVersion}` : ''}${o.result.projectName ? `, in project “${o.result.projectName}”` : ''}. Luarmor returns its details, not its contents.`)
+      : note('warn', `Not among the ${o.result.scriptsSeen} script(s) your key can see. Nothing is retrieved either way.`)) : null,
+    sup ? suppliedCard(sup, { onOpenText }) : null);
+}
+
+function suppliedCard(sup, { onOpenText }) {
+  if (sup.running) return h('p.note.info', `Running the chain on ${sup.name}\u2026`);
+  if (sup.error) return h('p.note.bad', sup.error);
+  const st = sup.stage;
+  const prog = (st.programs || []).find((p) => p.output) || null;
+  return h('div.stage-card.supplied',
+    h('div.stage-head', h('b', sup.name), h('span.faint', `${fmtBytes(sup.bytes)} · supplied by its owner`), h('span.grow'),
+      prog ? h('button.btn.small.outline', { type: 'button', onclick: () => onOpenText(`${sup.name.replace(/\.[^.]+$/, '')}.recovered.lua`, prog.output) }, 'Open the result') : null),
+    kv([['SHA-256', h('code.hash', sup.sha256 || '\u2026')]]),
+    resultCell(st, { supplied: true }));
+}
+
+function luarmorSection(l, { onOpenText, onOwnerCheck, onSupply, state = {} }) {
   if (!l || !l.recognised) return null;
   if (!l.parsed) return section('Luarmor loader', note('warn', l.note || l.error));
   return section('Luarmor loader', [
     h('p', h('b', `Variant: ${l.variants.join(', ')}. `), l.answer),
-    h('table.table.ops', h('tbody', l.operations.map((o) => {
+    h('div.table-scroll', h('table.table.ops', h('tbody', l.operations.map((o) => {
       const [cls, label] = OP_STATUS[o.status] || ['', o.status];
       return h('tr', h('td.mono', String(o.n)), h('td', o.name), h('td', h('span.badge.' + (cls || 'plain'), label)), h('td.dim', o.detail));
-    }))),
+    })))),
     h('div.row-item', h('b', 'The loader\u2019s own code'), h('ul', l.local.describes.map((d) => h('li', d))),
       l.local.code ? h('button.btn.small.outline', { type: 'button', onclick: () => onOpenText('luarmor-loader.recovered.lua', l.local.code) }, 'Open the recovered loader logic') : null),
     l.data.length ? h('div.row-item', h('b', 'Embedded data'), l.data.map((d) => h('div',
@@ -126,10 +196,11 @@ function luarmorSection(l, { onOpenText }) {
       h('div.dim', `Opaque: ${d.why}.`)))) : null,
     l.remote.length ? h('div.row-item', h('b', 'Not in this file'), h('ul', l.remote.map((x) => h('li', h('b', x.role), `: ${x.what}${x.address ? ' — ' : ''}`, x.address ? h('code', x.address) : null, h('span.dim', ` (${x.why})`))))) : null,
     l.key.set ? note('', `The loader sets script_key from ${[...new Set(l.key.sources)].join('; ')}. Its value is never shown or sent anywhere by this tool.`) : null,
+    onSupply ? ownerRoute(l, state, { onOwnerCheck, onSupply, onOpenText }) : null,
   ]);
 }
 
-export function loaderView(state, { onAnalyze, onFetch, onOpen, onAnalyzeStage, onIntel, onOpenText, onExport }) {
+export function loaderView(state, { onAnalyze, onFetch, onOpen, onAnalyzeStage, onIntel, onOpenText, onExport, onOwnerCheck, onSupply }) {
   const { result, busy, error } = state;
   const head = h('div.codebar',
     h('button.btn.primary', { type: 'button', disabled: busy, onclick: onAnalyze }, busy ? 'Analysing…' : 'Analyse the loader'),
@@ -153,7 +224,7 @@ export function loaderView(state, { onAnalyze, onFetch, onOpen, onAnalyzeStage, 
         h('p', a.case.retrieval),
         a.explanation.map((e) => h('p.dim', e))),
       h('div.loader-side', caseLadder(a), progress(state, a))),
-    luarmorSection(result.luarmor, { onOpenText }),
+    luarmorSection(result.luarmor, { onOpenText, onOwnerCheck, onSupply, state }),
     a.isLoader ? intelSection(state, a, { onIntel, onOpenText, onExport }) : null,
     a.architectures.length ? section('Architecture', h('div.arch-list', a.architectures.map((x) => h('div.arch',
       h('b', x.label), x.evidence.length ? h('ul', x.evidence.map((e) => h('li', h('code', e)))) : null)))) : null,

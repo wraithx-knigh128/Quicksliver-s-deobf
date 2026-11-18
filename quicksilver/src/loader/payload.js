@@ -89,7 +89,7 @@ export function decodePayload(input, meta = {}) {
     try {
       if (isGzip(b)) { const o = gunzip(b); layers.push({ kind: 'gzip', note: 'gzip stream, CRC-32 checked', bytes: o.length }); b = o; continue; }
       if (isZlib(b)) { const o = unzlib(b); layers.push({ kind: 'zlib', note: 'zlib stream, Adler-32 checked', bytes: o.length }); b = o; continue; }
-    } catch (e) { notes.push(e.message); return { kind: 'binary', label: 'a compressed stream that does not decode', layers, notes }; }
+    } catch (e) { notes.push(e.message); return { kind: 'corrupt', label: 'a compressed stream that is cut off or corrupt (its checksum or structure does not hold)', layers, notes }; }
     const model = modelKind(b);
     if (model) {
       try {

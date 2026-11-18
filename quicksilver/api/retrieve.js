@@ -1,7 +1,8 @@
 // /api/retrieve — owner-authorised retrieval through documented service APIs (api/_lib/providers.js).
 //
 //   GET  /api/retrieve?check=1                     → { mode, providers: [names] }   (never any credential)
-//   POST /api/retrieve { provider, ...target }     → the item's bytes (application/octet-stream), X-QS-Provider / X-QS-Name headers
+//   POST /api/retrieve { provider, ...target }     → the item's bytes (application/octet-stream), X-QS-Provider / X-QS-Name headers;
+//                                                     for a metadata provider (luarmor: the owner check) a JSON answer instead, never the item
 //
 // Off unless the operator turns it on, because it spends the operator's own credentials:
 //   QS_RETRIEVE_MODE   off (default) | token | open
@@ -54,6 +55,8 @@ export function createHandler({ env = process.env, fetchImpl = fetch, now = () =
       if (!providers.includes(body.provider)) throw new ProviderError('not_configured', 'That provider has no credential on this deployment.', 501);
       p.validate(body, env);
       const out = await p.retrieve(body, env, { fetchImpl, sleep });
+      // a metadata provider (the Luarmor owner check) answers with facts about an item, never with the item
+      if (out.json) return json(res, 200, { ok: true, provider: body.provider, ...out.json });
       res.statusCode = 200;
       res.setHeader('Content-Type', 'application/octet-stream');
       res.setHeader('Content-Length', String(out.bytes.length));

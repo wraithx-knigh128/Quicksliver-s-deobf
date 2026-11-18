@@ -23,6 +23,7 @@ const OPS = {
   stage: api.loaderStage,
   loaderAnalyze: api.loaderAnalyze,
   payload: api.payloadDecode,
+  outcome: api.outcomeWithBehaviour,
   diff: (source, options) => api.diffSources(source, options.other),
 };
 

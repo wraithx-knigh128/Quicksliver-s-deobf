@@ -255,6 +255,17 @@ function proxyAccessor(f, key) {
   return null;
 }
 
+/** An expression that can be evaluated twice without a difference: a constant, a function literal, or a name (reading a variable has no effect). */
+function effectFree(e) {
+  if (!e) return true;
+  switch (e.type) {
+    case 'Number': case 'String': case 'Nil': case 'True': case 'False': case 'Func': case 'Name': case 'Vararg': return true;
+    case 'Paren': return effectFree(e.expr);
+    case 'Unary': return e.op !== '#' && effectFree(e.arg ?? e.operand ?? e.expr);
+    default: return false;
+  }
+}
+
 export function undoProxifyLocals(chunk) {
   const info = analyze(chunk);
   const proxies = new Map(); // Var -> { key, get, set, declStmt, init }
@@ -292,7 +303,14 @@ export function undoProxifyLocals(chunk) {
     const set = roles.find((r) => r.role === 'set');
     const get = roles.find((r) => r.role === 'get');
     if (!set || !get) return;
-    proxies.set(info.varOf.get(n.ids[0]), { key, get: OP_OF_META[get.meta], set: OP_OF_META[set.meta], declStmt: n, init: data.fields[0].value });
+    // The proxy's declaration becomes `local P = <the stored value>`. When the data table is written inline, its value moves with it. When it is
+    // declared apart (`local t = { K = f(x) }`), that declaration stays where it is, so copying `f(x)` would run the call twice: the value is
+    // then read from the table instead (`local P = t.K`), unless it is free of effects and can be copied as it is.
+    const init = data.fields[0].value;
+    const apart = call.args[0] !== data && call.args[0].type === 'Name';
+    const value = apart && !effectFree(init) ? { type: 'Index', obj: { type: 'Name', name: call.args[0].name }, key: { type: 'String', value: key } } : init;
+    if (value !== init) info.varOf.set(value.obj, info.varOf.get(call.args[0]));
+    proxies.set(info.varOf.get(n.ids[0]), { key, get: OP_OF_META[get.meta], set: OP_OF_META[set.meta], declStmt: n, init: value });
   });
   // A proxy is undone only when every use of its variable is one this pass rewrites. A copy of the proxy (`local q = P`, which a rebuilt program makes for a register) or a use as an
   // argument would be left reading a table whose declaration is gone, and the program would no longer run.

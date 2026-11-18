@@ -348,9 +348,27 @@ export function nexusSummary(nx, { onGoto } = {}) {
   return out;
 }
 
+/** Badge style for each outcome class (src/validate/outcome.js). */
+export const OUTCOME_BADGE = { validated: 'ok', 'syntax-valid-unverified': 'info', partial: 'warn', 'not-deobfuscated': 'bad', 'payload-unavailable': 'bad', 'authorization-unavailable': 'bad', 'unsupported-format': 'bad', 'invalid-input': 'bad' };
+
+/** The evidence-based result: the class, what was established, what is missing — and the behaviour step when it is still open. */
+export function outcomeSection(o, { onVerify, verify, canVerify } = {}) {
+  if (!o) return null;
+  const open = o.outcome === 'syntax-valid-unverified' || (o.outcome === 'partial' && !(verify && verify.result));
+  return section('Outcome', [
+    h('p', h('span.badge.' + (OUTCOME_BADGE[o.outcome] || 'plain'), o.label)),
+    o.met.length ? h('ul.list', o.met.map((m) => h('li', [h('span.mono.faint', '\u2713 '), m]))) : null,
+    o.reasons.length ? h('ul.list', o.reasons.map((m) => h('li', [h('span.mono.faint', '\u2717 '), m]))) : null,
+    canVerify && open && !(verify && verify.running) && !(verify && verify.result) ? h('button.btn.small.outline', { type: 'button', onclick: onVerify }, 'Compare behaviour\u2026') : null,
+    verify && verify.running ? h('p.note.info', 'Running both programs\u2026') : null,
+    note('', 'Only a behaviour comparison makes a result "validated": a parsing, readable output with a high confidence is "syntax-valid but behaviourally unverified" until it has been run next to the program it came from.'),
+  ]);
+}
+
 export function recoverySummary(r, helpers = {}) {
   const out = [];
   if (!r) return out;
+  if (helpers.outcome) out.push(outcomeSection(helpers.outcome, { ...helpers, canVerify: helpers.canVerify && r.output != null }));
   if (!r.ok && r.stage === 'parse') {
     out.push(section('Recovery', [note('bad', `The input does not parse: ${r.error.line}:${r.error.col} ${r.error.message}. Recovery works on a syntax tree, so nothing was changed. Beautify can still repair the layout.`)]));
     return out;

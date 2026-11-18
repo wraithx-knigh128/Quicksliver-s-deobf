@@ -25,6 +25,8 @@ import { analyzeLoader, classifyStage } from './loader/analyze.js';
 import { decodePayload } from './loader/payload.js';
 import { analyzeLuarmor } from './loader/luarmor.js';
 import { binaryToBytes } from './core/bytes.js';
+import { recoveryOutcome } from './validate/evidence.js';
+import { classifyOutcome } from './validate/outcome.js';
 
 export const ENGINE_VERSION = '1.0.0';
 
@@ -90,9 +92,26 @@ export function analyzeSource(source) {
  */
 export function recoverSource(source, options = {}) {
   const { nexus, nexusPasses, nexusRuntime, ...rest } = options;
-  if (!nexus) return timed(() => recover(source, rest));
   const onStage = typeof rest.onProgress === 'function' ? (st) => rest.onProgress({ phase: 'nexus', label: st.title, done: st.index, total: st.total }) : undefined;
-  return timed(() => nexusRecover(source, { passes: nexusPasses || undefined, runtime: !!nexusRuntime, onStage, recover: rest }));
+  return timed(() => withOutcome(source, nexus ? nexusRecover(source, { passes: nexusPasses || undefined, runtime: !!nexusRuntime, onStage, recover: rest }) : recover(source, rest)));
+}
+
+/**
+ * Every recovery carries its outcome class (src/validate/outcome.js) next to the engine's confidence estimate. Before a behaviour
+ * comparison the best class a recovery can reach is "syntax-valid but behaviourally unverified": the confidence alone never makes a
+ * result "validated".
+ */
+function withOutcome(source, r) {
+  try { r.outcome = recoveryOutcome(source, r); } catch (e) { r.outcome = { outcome: 'not-deobfuscated', label: 'Received but not successfully deobfuscated', success: false, reasons: [`The result could not be classified: ${e.message || e}`], met: [] }; }
+  return r;
+}
+
+/**
+ * The outcome after a behaviour comparison: `options.evidence` is the outcome.evidence of the recovery, `options.behaviour` the comparison
+ * ({ verdict, against, note }). Pure; nothing is run here.
+ */
+export function outcomeWithBehaviour(_source, options = {}) {
+  return timed(() => ({ ok: true, ...classifyOutcome({ ...(options.evidence || {}), behaviour: options.behaviour || null }) }));
 }
 
 /**

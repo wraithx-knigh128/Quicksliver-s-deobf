@@ -9,7 +9,8 @@ import { analyzeLoader } from '../../src/loader/analyze.js';
 import { decodePayload } from '../../src/loader/payload.js';
 import { loaderIntel } from '../../src/loader/intel.js';
 import { detect } from '../../src/detect/detect.js';
-import { recover } from '../../src/recover/pipeline.js';
+import { recoverSource } from '../../src/api.js';
+import { verifyRecovery } from '../../src/adaptive/verify.js';
 
 export const dir = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..', 'tests', 'corpus', 'remote-loaders');
 export const manifest = () => JSON.parse(fs.readFileSync(path.join(dir, 'manifest.json'), 'utf8'));
@@ -28,11 +29,12 @@ function upstream(service) {
     if (!spec) return response(Buffer.from('404: Not Found'), 404, 'text/plain');
     if (spec.fail === 'network') throw new TypeError('fetch failed');
     const bytes = fs.readFileSync(path.join(dir, 'bodies', spec.file));
-    return response(bytes, spec.status || 200, spec.type || 'text/plain');
+    // `declared`: the server announces more bytes than it sends (a connection that ends early without an error)
+    return response(bytes, spec.status || 200, spec.type || 'text/plain', spec.declared);
   };
 }
-function response(bytes, status, type) {
-  return { status, ok: status >= 200 && status < 300, headers: new Map([['content-type', type], ['content-length', String(bytes.length)]]), body: new ReadableStream({ start(c) { if (bytes.length) c.enqueue(new Uint8Array(bytes)); c.close(); } }) };
+function response(bytes, status, type, declared) {
+  return { status, ok: status >= 200 && status < 300, headers: new Map([['content-type', type], ['content-length', String(declared || bytes.length)]]), body: new ReadableStream({ start(c) { if (bytes.length) c.enqueue(new Uint8Array(bytes)); c.close(); } }) };
 }
 function invoke(handler, req) {
   return new Promise((resolve) => {
@@ -62,7 +64,9 @@ export async function runCase(c, { sandbox = true } = {}) {
     fetchStage,
     decode: decodePayload,
     detect: (t) => detect(t),
-    recover: (t) => recover(t, { sandbox: { enabled: sandbox } }),
+    recover: (t) => recoverSource(t, { sandbox: { enabled: sandbox } }),
+    // behavioural validation, as the page does it: the retrieved program and its reconstruction in the project's own sandbox interpreter
+    verify: sandbox ? (original, recovered) => verifyRecovery(original, recovered) : undefined,
   }, { routes: ['link-fetcher', ...(c.providers || []).map((p) => `provider:${p}`)] });
   return { case: c, report };
 }

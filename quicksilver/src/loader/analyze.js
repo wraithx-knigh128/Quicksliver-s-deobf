@@ -341,6 +341,8 @@ function retrievalFor({ shape, host, family, auth, kind, providers = [] }) {
   if (kind === 'asset' && providers.includes('roblox-asset') && /^rbxassetid:\/\/\d+$/.test(shape.template)) {
     return { possible: true, route: 'provider:roblox-asset', reason: 'The operator of this deployment configured a Roblox Open Cloud key: the asset is downloaded with the owner\u2019s credential through the documented Asset Delivery API (only assets that key may access).' };
   }
+  // a numbered asset has a documented owner route (Roblox Open Cloud Asset Delivery with the owner's key); it is the credential that is missing
+  if (kind === 'asset' && /^rbxassetid:\/\/\d+$/.test(shape.template)) return { possible: false, route: 'owner', reason: 'Its owner can download this asset through Roblox Open Cloud Asset Delivery with their own API key; this deployment has no such key configured (QS_ROBLOX_API_KEY).' };
   if (kind === 'asset') return { possible: false, route: 'none', reason: 'A platform asset is delivered to a running game, not to this tool.' };
   if (family && family.case === 6) return { possible: false, route: 'none', reason: `${family.name}: ${family.access}` };
   if (family && family.case === 3) return { possible: false, route: 'owner', reason: `${family.name}: only the key holder may obtain what it protects, through the service’s own tools.` };

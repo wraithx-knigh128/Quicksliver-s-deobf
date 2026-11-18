@@ -16,14 +16,15 @@ import { TreeView } from './tree.js';
 import { loadSettings, saveSettings, recoverOptions, indentString, DEFAULTS } from './settings.js';
 import { LicenseState, showLicenseDialog } from './license-ui.js';
 import { loadCompat, loadFormatDb, loadPrimaryMatrix, matrixSection, CompatDashboard } from './compat.js';
-import { detectionView, analysisView, recoverySummary, detectionSummary, statusBadge, STATUS_LABEL } from './views.js';
+import { detectionView, analysisView, recoverySummary, detectionSummary, statusBadge, STATUS_LABEL, OUTCOME_BADGE } from './views.js';
+import { classifyOutcome } from '../validate/outcome.js';
 import { makeZip } from './zip.js';
 import { showHelp } from './help.js';
 import { originView } from './origin-view.js';
 import { loadResearch, researchView } from './research-view.js';
 import { customView, loadExamples } from './custom-view.js';
 import { loaderView } from './loader-view.js';
-import { loaderIntel, intelMarkdown } from '../loader/intel.js';
+import { loaderIntel, intelMarkdown, processPayload } from '../loader/intel.js';
 import { modelKind, extractScripts } from '../loader/rbx.js';
 import { recoverOptions as recoverOpts } from './settings.js';
 import { createReconstructView } from './reconstruct-view.js';
@@ -838,6 +839,15 @@ async function runTrace() {
 }
 
 
+/** The recovery's outcome class, with the behaviour comparison folded in once it has run (src/validate/outcome.js). */
+function currentOutcome() {
+  const r = S.recovered;
+  if (!r || !r.outcome) return null;
+  const v = S.verify && S.verify.result;
+  if (!v || !v.verdict || !r.outcome.evidence) return r.outcome;
+  return classifyOutcome({ ...r.outcome.evidence, behaviour: { verdict: v.verdict, against: 'input', note: v.difference ? `${v.difference.original} / ${v.difference.recovered}` : (v.notes || [])[0] } });
+}
+
 async function runVerify() {
   if (!S.recovered || S.recovered.output == null || !inputPresent()) return null;
   if (!(await confirmTrace())) return null;
@@ -1337,7 +1347,7 @@ function renderInspector() {
     ]))));
   }
   if (S.detection) parts.push(...detectionSummary(S.detection, compatById));
-  if (S.recovered) parts.push(...recoverySummary(S.recovered, { onGoto: (line) => selectLine(line), onVerify: () => runVerify(), verify: S.verify, canVerify: inputPresent() }));
+  if (S.recovered) parts.push(...recoverySummary(S.recovered, { onGoto: (line) => selectLine(line), onVerify: () => runVerify(), verify: S.verify, canVerify: inputPresent(), outcome: currentOutcome() }));
   if (S.trace) parts.push(traceSection());
   if (S.dump) parts.push(dumpSection());
   replace(el.inspector, parts);
@@ -1634,6 +1644,8 @@ function renderResultBar() {
       facts.push(fact(det.dialect.label));
     } else facts.push(fact('Not analysed yet'));
     const r = S.recovered;
+    const oc = currentOutcome();
+    if (oc) facts.push(fact(h('span.badge.' + (OUTCOME_BADGE[oc.outcome] || 'plain'), { title: oc.reasons.join(' ') || oc.met.join('; ') }, oc.label)));
     if (r && r.confidence) {
       facts.push(fact(['Confidence ', h('b', pct(r.confidence.score)), ` (${r.confidence.level})`]));
       const applied = (r.steps || []).filter((x) => x.status === 'applied').length;
@@ -1734,7 +1746,7 @@ async function ensureProviders() {
 }
 
 function renderLoader() {
-  replace(views.loader, loaderView(loaderState, { onAnalyze: runLoader, onFetch: fetchStage, onOpen: openStage, onAnalyzeStage: analyzeStage, onIntel: runIntel, onOpenText: openText, onExport: exportIntel }));
+  replace(views.loader, loaderView(loaderState, { onAnalyze: runLoader, onFetch: fetchStage, onOpen: openStage, onAnalyzeStage: analyzeStage, onIntel: runIntel, onOpenText: openText, onExport: exportIntel, onOwnerCheck: runOwnerCheck, onSupply: runSupplied }));
   if (loaderState.result && loaderState.forVersion !== S.version && loaderState.loaderBytes) {
     const back = h('p.note.info', 'The editor now holds a different script. ', h('button.btn.small', { type: 'button', onclick: () => { loadBytes(loaderState.loaderName, loaderState.loaderBytes); loaderState.forVersion = S.version; switchTab('loader'); } }, 'Put the loader back in the editor'));
     views.loader.firstChild.insertBefore(back, views.loader.firstChild.children[1] || null);
@@ -1746,14 +1758,15 @@ async function runLoader() {
   loaderState.busy = true; loaderState.error = null; renderLoader();
   const recovered = S.recovered && S.recovered.output != null ? S.recovered.output : undefined;
   // only a platform asset (require(<id>) / GetObjects) can be served by an owner provider, so the deployment is asked only then
-  const providers = /\brequire\s*\(\s*\d|GetObjects/.test(editor.value) ? await ensureProviders() : (loaderState.providers || []);
+  // the deployment's providers are probed only when the loader could use one: a numbered asset, or a Luarmor loader (the owner check)
+  const providers = /\brequire\s*\(\s*\d|GetObjects|luarmor\.net/.test(editor.value) ? await ensureProviders() : (loaderState.providers || []);
   const r = await run('loader', { recovered, providers }, 'Analysing the loader', { limits: { timeoutMs: 30_000 }, needsText: true });
   loaderState.busy = false;
   if (r) {
     const sameLoader = loaderState.forVersion === S.version;
     loaderState.result = r;
     loaderState.forVersion = S.version;
-    if (!sameLoader) { loaderState.stages = []; loaderState.intel = null; loaderState.loaderName = S.name || 'loader.lua'; loaderState.loaderBytes = getInputBytes(); }
+    if (!sameLoader) { loaderState.stages = []; loaderState.intel = null; loaderState.owner = null; loaderState.supplied = null; loaderState.loaderName = S.name || 'loader.lua'; loaderState.loaderBytes = getInputBytes(); }
   } else if (!loaderState.result) loaderState.error = 'The analysis did not run (see the note in the Deobfuscator tab).';
   renderLoader();
   return r;
@@ -1816,14 +1829,19 @@ async function runIntel() {
   const routes = ['link-fetcher', ...(loaderState.providers || []).map((p) => `provider:${p}`)];
   const go = a.requests.filter((r) => r.retrieval.possible && routes.includes(r.retrieval.route));
   if (!go.length) { toast('No request of this loader has an authorised route on this deployment.'); return; }
+  const canRun = lic.allow('sandbox');
+  const runBox = h('input', { type: 'checkbox', id: 'intel-validate', checked: canRun, disabled: !canRun });
   const ok = await modal({
     title: 'Run Loader Intelligence?',
     body: [h('p', `This site’s server retrieves ${go.length === 1 ? 'this address' : `these ${go.length} addresses`} (and the addresses of any further loader stage it returns):`),
       h('ul', go.map((r) => h('li', h('code', r.url || r.template)))),
-      h('p.note', 'Nothing is run. Each response is checked, decoded and reconstructed separately. Only retrieve what you are allowed to access.')],
+      h('p.note', 'Each response is checked, decoded and reconstructed separately. Only retrieve what you are allowed to access.'),
+      h('label.check', runBox, ' Validate behaviour: run each reconstruction next to the payload it came from in QuickSilver’s sandbox interpreter (nothing is fetched or sent). Without this, results stay “behaviourally unverified”.')],
     buttons: [{ id: 'cancel', label: 'Cancel' }, { id: 'ok', label: 'Retrieve and analyse', primary: true }],
   });
   if (ok !== 'ok') return;
+  const validate = canRun && runBox.checked;
+  if (validate) S.traceConsent = true;
   loaderState.busy = true; renderLoader();
   setBusy('Loader Intelligence');
   const allowSandbox = lic.allow('sandbox') && settings.sandbox;
@@ -1835,9 +1853,11 @@ async function runIntel() {
       decode: async (bytes, meta) => engine.run('payload', bytesToBinary(bytes), meta, { timeoutMs: 30_000 }),
       detect: async (text) => (await engine.run('detect', text, {}, { timeoutMs: 30_000 })).detection,
       recover: async (text) => { setStatus('Reconstructing a retrieved payload', 'busy'); return engine.run('recover', text, { ...recoverOpts(settings, { allowSandbox }), format: { indent: indentString(settings), width: settings.width } }, { timeoutMs: 180_000 }); },
+      verify: validate ? async (text, recovered) => { setStatus('Validating behaviour in the sandbox', 'busy'); return engine.run('verify', text, { recovered }, { timeoutMs: 90_000 }); } : undefined,
     }, { routes: ['link-fetcher', ...providers.map((p) => `provider:${p}`)], keepText: true });
     loaderState.intel = report;
-    setStatus(`Loader Intelligence: ${report.summary.reconstructed} reconstructed, ${report.summary.plain} plain, ${report.summary.transportFailed + report.summary.notCode + report.summary.unrecoverable} not recovered`);
+    const c = report.summary.classes || {};
+    setStatus(`Loader Intelligence: ${c.validated || 0} validated, ${(c['syntax-valid-unverified'] || 0) + (c.partial || 0)} unverified or partial, ${report.summary.requests - (c.validated || 0) - (c['syntax-valid-unverified'] || 0) - (c.partial || 0) - report.summary.nested} not recovered`);
   } catch (e) {
     loaderState.error = `Loader Intelligence stopped: ${e.message || e}`;
     setStatus('Loader Intelligence failed', 'error');
@@ -1845,6 +1865,46 @@ async function runIntel() {
     setBusy(null);
     loaderState.busy = false; renderLoader();
   }
+}
+
+/** Luarmor owner check (/api/retrieve, provider luarmor): is the script this loader names one of the key owner's? Metadata only. */
+async function runOwnerCheck(loaderId) {
+  loaderState.owner = { running: true }; renderLoader();
+  try {
+    const res = await fetch('/api/retrieve', { method: 'POST', credentials: 'omit', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ provider: 'luarmor', loaderId }) });
+    const j = await res.json().catch(() => null);
+    loaderState.owner = res.ok && j && j.ok ? { result: j } : { error: (j && j.error && j.error.message) || `The check failed (HTTP ${res.status}).` };
+  } catch (e) { loaderState.owner = { error: `The check could not be made: ${e.message || e}` }; }
+  renderLoader();
+}
+
+/** A payload its owner supplies: the same chain as a retrieved one (src/loader/intel.js processPayload), with behaviour validated on consent. */
+async function runSupplied() {
+  const input = h('input', { type: 'file', accept: '.lua,.luau,.txt,.rbxm,.rbxmx,*/*' });
+  const file = await new Promise((resolve) => { input.onchange = () => resolve(input.files && input.files[0]); input.click(); });
+  if (!file) return;
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const validate = await confirmTrace();
+  loaderState.supplied = { running: true, name: file.name, bytes: bytes.length }; renderLoader();
+  setBusy('Owner-supplied payload');
+  const allowSandbox = lic.allow('sandbox') && settings.sandbox;
+  try {
+    const st = await processPayload({ source: 'owner-supplied' }, bytes, {
+      name: file.name, supplied: true, opts: { keepText: true },
+      deps: {
+        decode: async (b, meta) => engine.run('payload', bytesToBinary(b), meta, { timeoutMs: 30_000 }),
+        detect: async (text) => (await engine.run('detect', text, {}, { timeoutMs: 30_000 })).detection,
+        analyze: (src, o) => engine.run('loaderAnalyze', src, o, { timeoutMs: 30_000 }),
+        recover: async (text) => { setStatus('Deobfuscating the supplied payload', 'busy'); return engine.run('recover', text, { ...recoverOpts(settings, { allowSandbox }), format: { indent: indentString(settings), width: settings.width } }, { timeoutMs: 180_000 }); },
+        verify: validate ? async (text, recovered) => { setStatus('Validating behaviour in the sandbox', 'busy'); return engine.run('verify', text, { recovered }, { timeoutMs: 90_000 }); } : undefined,
+      },
+    });
+    loaderState.supplied = { name: file.name, bytes: bytes.length, sha256: await sha256Hex(bytes), stage: st };
+    setStatus(st.result ? `Supplied payload: ${st.result.label}` : 'Supplied payload: another loader');
+  } catch (e) {
+    loaderState.supplied = { name: file.name, bytes: bytes.length, error: `The chain stopped: ${e.message || e}` };
+    setStatus('Supplied payload: failed', 'error');
+  } finally { setBusy(null); renderLoader(); }
 }
 
 function openText(name, text) {

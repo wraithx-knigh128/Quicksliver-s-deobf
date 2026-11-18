@@ -13,6 +13,9 @@
    },
    "expect": [
     "retrieved-plain"
+   ],
+   "result": [
+    "validated"
    ]
   },
   {
@@ -27,6 +30,9 @@
    },
    "expect": [
     "retrieved-reconstructed"
+   ],
+   "result": [
+    "validated"
    ]
   },
   {
@@ -41,6 +47,9 @@
    },
    "expect": [
     "retrieved-reconstructed"
+   ],
+   "result": [
+    "validated"
    ]
   },
   {
@@ -55,6 +64,9 @@
    },
    "expect": [
     "retrieved-reconstructed"
+   ],
+   "result": [
+    "validated"
    ]
   },
   {
@@ -69,6 +81,9 @@
    },
    "expect": [
     "retrieved-plain"
+   ],
+   "result": [
+    "validated"
    ]
   },
   {
@@ -83,6 +98,9 @@
    },
    "expect": [
     "retrieved-plain"
+   ],
+   "result": [
+    "validated"
    ]
   },
   {
@@ -102,6 +120,10 @@
    "expect": [
     "nested-loader",
     "retrieved-reconstructed"
+   ],
+   "result": [
+    null,
+    "validated"
    ]
   },
   {
@@ -117,6 +139,9 @@
    },
    "expect": [
     "transport-failed"
+   ],
+   "result": [
+    "payload-unavailable"
    ]
   },
   {
@@ -132,6 +157,9 @@
    },
    "expect": [
     "transport-failed"
+   ],
+   "result": [
+    "authorization-unavailable"
    ]
   },
   {
@@ -145,6 +173,9 @@
    },
    "expect": [
     "transport-failed"
+   ],
+   "result": [
+    "payload-unavailable"
    ]
   },
   {
@@ -160,7 +191,10 @@
    "expect": [
     "transport-failed"
    ],
-   "note": "the fetcher refuses web pages (415) before they reach the decoder"
+   "note": "the fetcher refuses web pages (415) before they reach the decoder",
+   "result": [
+    "payload-unavailable"
+   ]
   },
   {
    "id": "html-as-text",
@@ -175,7 +209,10 @@
    "expect": [
     "not-code"
    ],
-   "note": "a page served as text/plain passes the fetcher; the payload stage recognises it"
+   "note": "a page served as text/plain passes the fetcher; the payload stage recognises it",
+   "result": [
+    "payload-unavailable"
+   ]
   },
   {
    "id": "truncated-gzip",
@@ -188,7 +225,10 @@
     }
    },
    "expect": [
-    "not-code"
+    "invalid-payload"
+   ],
+   "result": [
+    "invalid-input"
    ]
   },
   {
@@ -203,6 +243,9 @@
    },
    "expect": [
     "not-code"
+   ],
+   "result": [
+    "payload-unavailable"
    ]
   },
   {
@@ -218,7 +261,10 @@
    "expect": [
     "transport-failed"
    ],
-   "note": "the fetcher answers 422 for an empty file"
+   "note": "the fetcher answers 422 for an empty file",
+   "result": [
+    "payload-unavailable"
+   ]
   },
   {
    "id": "retrieved-unrecoverable",
@@ -232,6 +278,9 @@
    },
    "expect": [
     "retrieved-unrecoverable"
+   ],
+   "result": [
+    "not-deobfuscated"
    ]
   },
   {
@@ -241,6 +290,9 @@
    "service": {},
    "expect": [
     "not-retrievable"
+   ],
+   "result": [
+    "payload-unavailable"
    ]
   },
   {
@@ -250,6 +302,9 @@
    "service": {},
    "expect": [
     "not-retrievable"
+   ],
+   "result": [
+    "authorization-unavailable"
    ]
   },
   {
@@ -259,6 +314,9 @@
    "service": {},
    "expect": [
     "not-retrievable"
+   ],
+   "result": [
+    "payload-unavailable"
    ]
   },
   {
@@ -276,6 +334,9 @@
    },
    "expect": [
     "retrieved-reconstructed"
+   ],
+   "result": [
+    "validated"
    ]
   },
   {
@@ -293,6 +354,9 @@
    },
    "expect": [
     "retrieved-plain"
+   ],
+   "result": [
+    "syntax-valid-unverified"
    ]
   },
   {
@@ -302,6 +366,81 @@
    "service": {},
    "expect": [
     "not-retrievable"
+   ],
+   "result": [
+    "authorization-unavailable"
+   ]
+  },
+  {
+   "id": "truncated-lua",
+   "category": "truncated source",
+   "loader": "loadstring(game:HttpGet(\"https://pastebin.com/raw/Cutoff01\"))()\n",
+   "service": {
+    "https://pastebin.com/raw/Cutoff01": {
+     "file": "cutoff.lua",
+     "type": "text/plain"
+    }
+   },
+   "expect": [
+    "invalid-payload"
+   ],
+   "note": "Lua text that stops in the middle: reported as cut off, never passed to the pipeline",
+   "result": [
+    "invalid-input"
+   ]
+  },
+  {
+   "id": "key-required-text",
+   "category": "malformed response",
+   "loader": "loadstring(game:HttpGet(\"https://rentry.co/needkey/raw\"))()\n",
+   "service": {
+    "https://rentry.co/needkey/raw": {
+     "file": "needkey.txt",
+     "type": "text/plain"
+    }
+   },
+   "expect": [
+    "not-code"
+   ],
+   "note": "a message served with HTTP 200 is not a payload",
+   "result": [
+    "payload-unavailable"
+   ]
+  },
+  {
+   "id": "short-transfer",
+   "category": "truncated source",
+   "loader": "loadstring(game:HttpGet(\"https://paste.ee/r/Short01\"))()\n",
+   "service": {
+    "https://paste.ee/r/Short01": {
+     "file": "plain.lua",
+     "type": "text/plain",
+     "declared": 1518
+    }
+   },
+   "expect": [
+    "transport-failed"
+   ],
+   "note": "the server declared more bytes than it sent: the transfer is rejected as cut off",
+   "result": [
+    "payload-unavailable"
+   ]
+  },
+  {
+   "id": "luau-bytecode",
+   "category": "unsupported format",
+   "loader": "loadstring(game:HttpGet(\"https://cdn.discordapp.com/attachments/1/2/chunk.bin\"))()\n",
+   "service": {
+    "https://cdn.discordapp.com/attachments/1/2/chunk.bin": {
+     "file": "chunk.luau",
+     "type": "application/octet-stream"
+    }
+   },
+   "expect": [
+    "unsupported-payload"
+   ],
+   "result": [
+    "unsupported-format"
    ]
   }
  ]
