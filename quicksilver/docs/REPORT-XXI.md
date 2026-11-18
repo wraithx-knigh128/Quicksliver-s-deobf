@@ -192,7 +192,7 @@ The four high-confidence lifts found in the audit:
 
 - **`npm test`:** 1169 tests; 1162 passed and 6 were skipped in the full run. The 1 failure was the XIX assertion "no Luarmor provider
   exists". It was restated to the guarantee it protects (the `luarmor` provider is metadata-only and never returns a script) and now passes.
-- **`npm run test:e2e`:** E2E_RESULT.
+- **`npm run test:e2e`:** **79 of 79 pass** (including the Reconstruct test that failed intermittently in Prompt XX).
 
 New browser tests:
 
