@@ -176,7 +176,7 @@ export async function processPayload(st, bytes, { contentType = '', name = 'payl
     if (deps.verify && entry.output != null && ev.recovery && ev.recovery.parses !== false) {
       try {
         const v = await deps.verify(prog.text, entry.output);
-        if (v && v.verdict) behaviour = { verdict: v.verdict, against: 'input', note: v.difference ? `${v.difference.original} / ${v.difference.recovered}` : (v.notes || [])[0] };
+        if (v && v.verdict) behaviour = { verdict: v.verdict, against: 'input', coverage: v.coverage ? v.coverage.ratio : null, note: v.difference ? `${v.difference.original} / ${v.difference.recovered}` : (v.notes || [])[0] };
       } catch (e) { behaviour = { verdict: 'inconclusive', against: 'input', note: String(e.message || e) }; }
     }
     entry.behaviour = behaviour;

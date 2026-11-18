@@ -500,7 +500,9 @@ export class Compiler {
   // -- statements --
 
   block(stmts) {
-    const code = stmts.map((s) => this.stmt(s));
+    // coverage (optional, for the behaviour check): the line of every statement that runs is recorded in m.coverage
+    const cov = this.m.coverage instanceof Set ? this.m.coverage : null;
+    const code = stmts.map((s) => { const c = this.stmt(s); if (!cov || !s.line) return c; const ln = s.line; return (f) => { cov.add(ln); return c(f); }; });
     const n = code.length;
     const labels = new Map();
     stmts.forEach((s, i) => { if (s.type === 'Label') labels.set(s.name, i); });

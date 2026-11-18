@@ -21,7 +21,7 @@ export const OUTCOMES = {
 };
 
 export const CRITERIA = {
-  validated: 'The output parses; no obfuscation is left in it (no residual indicator, nothing the engine lists as unresolved, confidence not low); and the output was run next to a reference — the authorised original when there is one, otherwise the submitted program — and behaved identically, with the reference doing something observable.',
+  validated: 'The output parses; no obfuscation is left in it (no residual indicator, nothing the engine lists as unresolved, confidence not low); and the output was run next to a reference — the authorised original when there is one, otherwise the submitted program — and behaved identically, with the reference doing something observable and the run reaching at least half of the output\u2019s statement lines (when that is measured).',
   'syntax-valid-unverified': 'The output parses and no obfuscation is left in it, but its behaviour was not compared (no comparison run, or one that could not settle it). Readable is not the same as correct.',
   partial: 'The output parses, but some obfuscation is still in it (residual indicators, unresolved places, or a low confidence), or it was run next to its reference and behaved differently.',
   'not-deobfuscated': 'A program was received and the pipeline ran, but it produced no output, an output that does not parse, or an output in which the protection is essentially all still present (confidence minimal or none).',
@@ -30,6 +30,9 @@ export const CRITERIA = {
   'unsupported-format': 'The content was received and is intact, but it is in a form the pipeline cannot read (for example Luau bytecode or an unknown binary container).',
   'invalid-input': 'The input itself is not a complete program: it is empty, it is cut off, or it does not parse.',
 };
+
+/** The share of the recovered program's statement lines a behaviour comparison must reach before "identical" counts as validation. */
+export const MIN_COVERAGE = 0.5;
 
 const RETRIEVAL_AUTH = new Set(['not-configured', 'unauthorized']);
 const RETRIEVAL_UNAVAILABLE = new Set(['no-route', 'not-found', 'failed', 'empty', 'not-code']);
@@ -46,7 +49,11 @@ const RETRIEVAL_UNAVAILABLE = new Set(['no-route', 'not-found', 'failed', 'empty
 export function classifyOutcome(ev) {
   const reasons = [];
   const met = [];
-  const out = (outcome) => ({ outcome, label: label(outcome, ev), success: outcome === 'validated', reasons, met });
+  const notes = [];
+  const out = (outcome) => ({ outcome, label: label(outcome, ev), success: outcome === 'validated', reasons, met, notes });
+  // what the script downloads when it runs is never part of the result, whatever the class: it is said on every result that has such parts
+  const rm = ev.remote;
+  if (rm && rm.places && rm.places.length) notes.push(`Not in this file: ${rm.places.length} part(s) the script downloads and runs when it runs (line${rm.places.length === 1 ? '' : 's'} ${rm.places.map((p) => p.line).join(', ')}). Nothing is recovered of them here; the Loader tab says whether they can be retrieved.`);
 
   // retrieval (only when the program came through a loader)
   const r = ev.retrieval;
@@ -64,6 +71,9 @@ export function classifyOutcome(ev) {
   if (inp.kind === 'luau-bytecode' || inp.kind === 'binary') { reasons.push(inp.error || 'The content is not in a form the pipeline reads.'); return out('unsupported-format'); }
   if (inp.kind === 'text') { reasons.push(inp.error || 'The content is not Lua code.'); return out(r ? 'payload-unavailable' : 'invalid-input'); }
   if (inp.kind === 'lua' && inp.parses === false) { reasons.push(inp.error ? `The program does not parse: ${inp.error}.` : 'The program does not parse.'); return out('invalid-input'); }
+  if (ev.obfuscated === false && ev.recovery) met.push('the input was not obfuscated: there was nothing to deobfuscate in this file');
+  // a script that only downloads and runs its program: the program is not in the file, so there is nothing of it to reconstruct
+  if (rm && rm.only && !r) { reasons.push('This file only downloads and runs its program; the program is not in the file, so nothing of it is reconstructed here.'); return out('payload-unavailable'); }
   met.push(inp.kind === 'lua' ? (inp.repaired ? `the input parses as Lua after a documented repair: ${inp.repaired}` : 'the input parses as Lua') : `the input is ${inp.kind}`);
 
   // deobfuscation and syntax validation
@@ -89,12 +99,17 @@ export function classifyOutcome(ev) {
   met.push('no obfuscation is left in the output');
   if (!b) { reasons.push('Its behaviour was not compared with a reference.'); return out('syntax-valid-unverified'); }
   if (b.verdict !== 'identical') { reasons.push(`The behaviour comparison could not settle it${b.note ? `: ${b.note}` : ''}.`); return out('syntax-valid-unverified'); }
+  // an identical run is evidence for what it reached: a run that took an early exit (an unsupported game, a missing key) and reached less than
+  // half of the program's statements does not validate the program
+  if (b.coverage != null && b.coverage < MIN_COVERAGE) { reasons.push(`The comparison run reached only ${Math.round(b.coverage * 100)}% of the program's statement lines; the rest was never run, so it is not validated.`); return out('syntax-valid-unverified'); }
   met.push(`behaved identically to ${b.against === 'original' ? 'the authorised original' : 'the submitted program'}`);
   return out('validated');
 }
 
 function label(outcome, ev) {
   if (outcome === 'not-deobfuscated' && !ev.retrieval) return 'Received but not successfully deobfuscated';
+  // a file that was never obfuscated is not "reconstructed": the class is the same, the words say what happened
+  if (outcome === 'validated' && ev.obfuscated === false) return 'Not obfuscated; the output behaves like the input (behaviourally validated)';
   return OUTCOMES[outcome];
 }
 

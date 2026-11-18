@@ -98,6 +98,7 @@ export function resultCell(st, opts) {
   if (!st.result) return h('span.badge.info', st.outcome === 'nested-loader' ? 'Another loader' : '—');
   return [h('span.badge.' + (OUTCOME_BADGE[st.result.outcome] || 'plain'), st.result.label),
     st.result.reasons.length ? h('div.faint.why', st.result.reasons.join(' ')) : null,
+    st.result.notes && st.result.notes.length ? h('div.faint.why', st.result.notes.join(' ')) : null,
     h('details.chain-details', h('summary', 'Stages'), chainList(chainSteps(st, opts)))];
 }
 
@@ -141,15 +142,18 @@ function intelSection(state, a, { onIntel, onOpenText, onExport }) {
 const OP_STATUS = { done: ['ok', 'done'], partial: ['warn', 'partial'], 'via-pipeline': ['info', 'via the Deobfuscator'], 'not-available': ['bad', 'not available'], 'needs-input': ['', 'needs your input'] };
 
 /** Luarmor loader analysis (src/loader/luarmor.js): the five operations kept apart, the local logic, the data, the remote parts. */
-/** The loader id in a Luarmor loader address (/files/v3|v4/loaders/<32 hex>.lua), if the file fixes it. */
-export function luarmorLoaderId(l) {
-  for (const x of (l && l.remote) || []) { const m = String(x.address || '').match(/\/files\/v\d\/loaders\/([0-9a-fA-F]{32})\.lua/); if (m) return m[1]; }
-  return null;
+/** The loader ids a Luarmor loader can use: one fixed in its address, or the ones it chooses between at run time (resolved statically). */
+export function luarmorLoaderIds(l) {
+  const out = [];
+  for (const x of (l && l.remote) || []) { const m = String(x.address || '').match(/\/files\/v\d\/loaders\/([0-9a-fA-F]{32})\.lua/); if (m) out.push(m[1].toLowerCase()); }
+  for (const x of (l && l.loaderIds) || []) out.push(x.id);
+  return [...new Set(out)];
 }
 
 /** What the owner can do with their own Luarmor script: the documented owner check, and supplying the payload they hold. */
 function ownerRoute(l, state, { onOwnerCheck, onSupply, onOpenText }) {
-  const id = luarmorLoaderId(l);
+  const ids = luarmorLoaderIds(l);
+  const id = ids.length ? ids : null;
   const canCheck = (state.providers || []).includes('luarmor') && id;
   const o = state.owner;
   const sup = state.supplied;
@@ -162,9 +166,9 @@ function ownerRoute(l, state, { onOwnerCheck, onSupply, onOpenText }) {
     !canCheck ? h('p.faint', id ? 'Ownership check: available when this deployment holds your Luarmor API key (QS_LUARMOR_API_KEY) and its outbound address is on your Luarmor IP whitelist.' : 'Ownership check: this loader fixes no loader id.') : null,
     o && o.running ? h('p.note.info', 'Asking Luarmor which scripts your key can see\u2026') : null,
     o && o.error ? h('p.note.bad', o.error) : null,
-    o && o.result ? (o.result.owned
-      ? note('ok', `This loader’s script is one of yours: “${o.result.scriptName || '(unnamed)'}”${o.result.scriptVersion ? `, version ${o.result.scriptVersion}` : ''}${o.result.projectName ? `, in project “${o.result.projectName}”` : ''}. Luarmor returns its details, not its contents.`)
-      : note('warn', `Not among the ${o.result.scriptsSeen} script(s) your key can see. Nothing is retrieved either way.`)) : null,
+    o && o.results ? o.results.map(({ id: lid, result, error }) => error ? note('bad', `${lid}: ${error}`) : result.owned
+      ? note('ok', `${o.results.length > 1 ? `${lid}: ` : ''}This loader’s script is one of yours: “${result.scriptName || '(unnamed)'}”${result.scriptVersion ? `, version ${result.scriptVersion}` : ''}${result.projectName ? `, in project “${result.projectName}”` : ''}. Luarmor returns its details, not its contents.`)
+      : note('warn', `${o.results.length > 1 ? `${lid}: ` : ''}Not among the ${result.scriptsSeen} script(s) your key can see. Nothing is retrieved either way.`)) : null,
     sup ? suppliedCard(sup, { onOpenText }) : null);
 }
 
@@ -194,6 +198,8 @@ function luarmorSection(l, { onOpenText, onOwnerCheck, onSupply, state = {} }) {
     l.data.length ? h('div.row-item', h('b', 'Embedded data'), l.data.map((d) => h('div',
       h('code', d.name), ` (line ${d.line}): ${d.entries} values — ${d.numbers} number${d.numbers === 1 ? '' : 's'}${d.strings.length ? `, ${d.strings.map((x) => x.note).join('; ')}` : ''}.`,
       h('div.dim', `Opaque: ${d.why}.`)))) : null,
+    l.loaderIds && l.loaderIds.length ? h('div.row-item', h('b', `Loader ids chosen at run time (${l.loaderIds.length})`),
+      h('div.table-scroll', h('table.table.ids', h('tbody', l.loaderIds.map((x) => h('tr', h('td', h('code', x.id)), h('td.dim', x.when.join('; ') || '—'), h('td.dim', x.keyed ? 'script_key set before it' : 'no script_key on this path'))))))) : null,
     l.remote.length ? h('div.row-item', h('b', 'Not in this file'), h('ul', l.remote.map((x) => h('li', h('b', x.role), `: ${x.what}${x.address ? ' — ' : ''}`, x.address ? h('code', x.address) : null, h('span.dim', ` (${x.why})`))))) : null,
     l.key.set ? note('', `The loader sets script_key from ${[...new Set(l.key.sources)].join('; ')}. Its value is never shown or sent anywhere by this tool.`) : null,
     onSupply ? ownerRoute(l, state, { onOwnerCheck, onSupply, onOpenText }) : null,

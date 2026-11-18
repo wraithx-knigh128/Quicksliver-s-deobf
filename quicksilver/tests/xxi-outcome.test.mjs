@@ -156,3 +156,24 @@ test('D11 proxify: a stored value with an effect is read from its table, never c
   assert.equal(run(out), run(src));
   assert.match(run(out), /10\s+1/);
 });
+
+// ---- E5 (Test 7): an identical run that only reached an early exit does not validate the program ------------------------------------------
+
+test('E5: "identical" validates only a run that reached at least half of the output’s statements; the reached share is reported', async () => {
+  const { MIN_COVERAGE } = await import('../src/validate/outcome.js');
+  assert.equal(MIN_COVERAGE, 0.5);
+  assert.equal(classifyOutcome({ ...clean, behaviour: { verdict: 'identical', against: 'input', coverage: 0.08 } }).outcome, 'syntax-valid-unverified');
+  assert.match(classifyOutcome({ ...clean, behaviour: { verdict: 'identical', against: 'input', coverage: 0.08 } }).reasons.join(' '), /reached only 8%/);
+  assert.equal(classifyOutcome({ ...clean, behaviour: { verdict: 'identical', against: 'input', coverage: 0.9 } }).outcome, 'validated');
+  // a script that leaves early in the sandbox (an unsupported game): the run is identical, but most of the program never ran
+  const early = ['local id = ({ ["1"] = "x" })[tostring(game.PlaceId)]', 'if not id then warn("unsupported") return end',
+    ...Array.from({ length: 12 }, (_, i) => `print("step ${i}")`)].join('\n');
+  const v = verifySource(early, { recovered: early });
+  assert.equal(v.verdict, 'identical');
+  assert.ok(v.coverage && v.coverage.ratio < 0.5, JSON.stringify(v.coverage));
+  assert.match(v.notes.join(' '), /statement lines/);
+  // a plain file whose run did reach its program is "not obfuscated", never "fully reconstructed"
+  const plain = outcomeWithBehaviour('', { evidence: { input: { kind: 'lua', parses: true }, obfuscated: false, recovery: { hasOutput: true, parses: true, residual: [], unresolved: 0, level: 'high' } }, behaviour: { verdict: 'identical', against: 'input', coverage: 1 } });
+  assert.equal(plain.outcome, 'validated');
+  assert.match(plain.label, /^Not obfuscated/);
+});

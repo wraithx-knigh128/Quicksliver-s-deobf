@@ -15,7 +15,7 @@ import { LuaTable, LuaUserdata, NativeFunction, LuaFunction, LuaError, SandboxLi
 import { createMachine, classify } from '../sandbox/sandbox.js';
 import { compileSource, callValue } from '../sandbox/interp.js';
 import { quoteString, formatNumber, isIdentifier } from '../core/printer.js';
-import { LuaSyntaxError } from '../core/parser.js';
+import { LuaSyntaxError, parse as parseForCoverage } from '../core/parser.js';
 import { readsAsText } from '../sandbox/numeric.js';
 
 const nf = (name, fn) => new NativeFunction(name, fn);
@@ -511,6 +511,7 @@ function traceOnce(source, options) {
   }
 
   let main = null;
+  if (opts.coverage) m.coverage = new Set();
   const outcome = run(() => { main = compileSource(m, source, m.chunkName, m.globals); callValue(m, main, [], ''); });
 
   // Handlers (event callbacks, spawned functions) run once, with stand-in arguments, after the main chunk.
@@ -548,7 +549,35 @@ function traceOnce(source, options) {
     undefinedGlobals: [...rec.undefinedGlobals].slice(0, 100),
     globalWrites: [...rec.globalWrites].slice(0, 100),
     output: m.output.join(''),
+    coverage: m.coverage instanceof Set ? statementCoverage(source, m.coverage) : null,
     stats: { events: rec.all.length, calls: calls.length, sets: rec.all.filter((e) => e.kind === 'set').length, loads: rec.layers.length, handlers: handlersRun, waits: rec.waits, fuelUsed: startFuel - m.fuel, truncated: rec.truncated },
   };
   return { result: result_, precisionLoss: m.precisionLoss };
+}
+
+/** How much of the program a run reached: distinct statement lines run / distinct statement lines in the source. */
+function statementCoverage(source, ran) {
+  let ast;
+  try { ast = parseForCoverage(source); } catch { return null; }
+  const lines = new Set();
+  const visit = (body) => { for (const st of body || []) { if (st.line) lines.add(st.line); walkBlocks(st, visit); } };
+  visit(ast.body);
+  let hit = 0;
+  for (const l of lines) if (ran.has(l)) hit++;
+  return { linesRun: hit, statementLines: lines.size, ratio: lines.size ? +(hit / lines.size).toFixed(3) : 1 };
+}
+function walkBlocks(st, visit) {
+  const kids = [];
+  if (st.type === 'If') { st.clauses.forEach((c) => kids.push(c.body)); if (st.orelse) kids.push(st.orelse); }
+  if (['Do', 'While', 'Repeat', 'NumFor', 'GenFor'].includes(st.type)) kids.push(st.body);
+  // function bodies anywhere in the statement (local function, callbacks passed to calls, table fields)
+  const seen = new Set();
+  const find = (n) => {
+    if (!n || typeof n !== 'object' || seen.has(n)) return;
+    seen.add(n);
+    if (n.type === 'Func') { kids.push(n.body); return; }
+    for (const k of Object.keys(n)) { if (k === 'line') continue; const v = n[k]; if (Array.isArray(v)) { if (!(v === st.body || st.clauses && st.clauses.some((c) => c.body === v) || v === st.orelse)) v.forEach(find); } else if (v && typeof v === 'object') find(v); }
+  };
+  find(st);
+  for (const b of kids) visit(b);
 }

@@ -845,7 +845,7 @@ function currentOutcome() {
   if (!r || !r.outcome) return null;
   const v = S.verify && S.verify.result;
   if (!v || !v.verdict || !r.outcome.evidence) return r.outcome;
-  return classifyOutcome({ ...r.outcome.evidence, behaviour: { verdict: v.verdict, against: 'input', note: v.difference ? `${v.difference.original} / ${v.difference.recovered}` : (v.notes || [])[0] } });
+  return classifyOutcome({ ...r.outcome.evidence, behaviour: { verdict: v.verdict, against: 'input', coverage: v.coverage ? v.coverage.ratio : null, note: v.difference ? `${v.difference.original} / ${v.difference.recovered}` : (v.notes || [])[0] } });
 }
 
 async function runVerify() {
@@ -1868,13 +1868,18 @@ async function runIntel() {
 }
 
 /** Luarmor owner check (/api/retrieve, provider luarmor): is the script this loader names one of the key owner's? Metadata only. */
-async function runOwnerCheck(loaderId) {
+async function runOwnerCheck(loaderIds) {
+  const ids = (Array.isArray(loaderIds) ? loaderIds : [loaderIds]).slice(0, 8);
   loaderState.owner = { running: true }; renderLoader();
-  try {
-    const res = await fetch('/api/retrieve', { method: 'POST', credentials: 'omit', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ provider: 'luarmor', loaderId }) });
-    const j = await res.json().catch(() => null);
-    loaderState.owner = res.ok && j && j.ok ? { result: j } : { error: (j && j.error && j.error.message) || `The check failed (HTTP ${res.status}).` };
-  } catch (e) { loaderState.owner = { error: `The check could not be made: ${e.message || e}` }; }
+  const results = [];
+  for (const loaderId of ids) {
+    try {
+      const res = await fetch('/api/retrieve', { method: 'POST', credentials: 'omit', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ provider: 'luarmor', loaderId }) });
+      const j = await res.json().catch(() => null);
+      results.push(res.ok && j && j.ok ? { id: loaderId, result: j } : { id: loaderId, error: (j && j.error && j.error.message) || `The check failed (HTTP ${res.status}).` });
+    } catch (e) { results.push({ id: loaderId, error: `The check could not be made: ${e.message || e}` }); }
+  }
+  loaderState.owner = { results };
   renderLoader();
 }
 

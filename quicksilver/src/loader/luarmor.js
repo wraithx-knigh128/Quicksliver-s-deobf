@@ -25,6 +25,7 @@
 import { parse } from '../core/parser.js';
 import { print } from '../core/printer.js';
 import { walk } from '../core/walk.js';
+import { analyze } from '../core/scope.js';
 import { detect } from '../detect/detect.js';
 
 const unparen = (e) => { while (e && e.type === 'Paren') e = e.expr; return e; };
@@ -42,6 +43,175 @@ function strInfo(v) {
  * @param {string} source binary string
  * @returns {null | object} null when nothing Luarmor-related is present
  */
+// ---- loader ids chosen at run time (Prompt XXI, Test 7) ---------------------------------------------------------------------------------
+//
+// A hub loader often builds the loader address as `".../loaders/" .. id .. ".lua"`, with `id` taken from a table keyed by PlaceId or returned
+// by a function that tests PlaceId and the executor. The ids are literals in the file; they are found statically — never by running anything —
+// together with the literal conditions each one sits under, so the report can say which id serves which game.
+
+const LOADER_PREFIX = /files\/v\d+\/loaders\/$/i;
+const exprText = (e, info, depth = 0) => {
+  e = unparen(e);
+  if (!e) return '?';
+  if (e.type === 'String') return JSON.stringify(e.value);
+  if (e.type === 'Number') return String(e.value);
+  if (e.type === 'Name') {
+    const v = info.varOf.get(e);
+    return v && !v.isGlobal && !v.writes.length && v.init && depth < 3 && v.init.type !== 'Func' ? exprText(v.init, info, depth + 1) : e.name;
+  }
+  if (e.type === 'Index') {
+    if (e.key && e.key.type === 'String' && /^[A-Za-z_]\w*$/.test(e.key.value)) return `${exprText(e.obj, info, depth)}.${e.key.value}`;
+    return `${unparen(e.obj).type === 'Table' ? '{…}' : exprText(e.obj, info, depth)}[${exprText(e.key, info, depth + 1)}]`;
+  }
+  if (e.type === 'Table') return '{…}';
+  if (e.type === 'Call') return `${exprText(e.fn, info, depth)}(${e.args.map((a) => exprText(a, info, depth + 1)).join(', ')})`;
+  if (e.type === 'MethodCall') return `${exprText(e.obj, info, depth)}:${e.name}(…)`;
+  return e.type.toLowerCase();
+};
+
+/** The literal comparisons in a condition, as text: `v == "1" or v == "2"` → `tostring(game.PlaceId) is "1" or "2"`. */
+function condText(cond, info) {
+  const pairs = [];
+  walk(cond, (n) => {
+    if (n.type !== 'Binary' || (n.op !== '==' && n.op !== '~=')) return undefined;
+    const [lit, other] = unparen(n.right).type === 'String' ? [unparen(n.right), n.left] : unparen(n.left).type === 'String' ? [unparen(n.left), n.right] : [null, null];
+    if (lit) pairs.push({ what: exprText(other, info), value: lit.value, neg: n.op === '~=' });
+    return false;
+  });
+  if (!pairs.length) return null;
+  const by = new Map();
+  for (const p of pairs) { const k = `${p.what}${p.neg ? ' is not' : ' is'}`; if (!by.has(k)) by.set(k, []); by.get(k).push(JSON.stringify(p.value)); }
+  return [...by].map(([k, vs]) => `${k} ${vs.join(' or ')}`).join('; ');
+}
+
+/** Candidate string values of an expression, statically. Returns { values: [{ value, line, when[] }], complete } or null when nothing is known. */
+function candidates(e, info, depth = 0, when = []) {
+  e = unparen(e);
+  if (!e || depth > 6) return null;
+  if (e.type === 'String') return { values: [{ value: e.value, line: e.line || null, when }], complete: true };
+  if (e.type === 'Name') {
+    const v = info.varOf.get(e);
+    if (!v || v.isGlobal || v.writes.length || !v.init) return null;
+    return candidates(v.init, info, depth + 1, when);
+  }
+  if (e.type === 'Index') {
+    let t = unparen(e.obj);
+    // a table bound once to a local (`local ids = {...}; ids[k]`) is the same table as one written in place
+    if (t.type === 'Name') { const tv = info.varOf.get(t); t = tv && !tv.isGlobal && !tv.writes.length && tv.init ? unparen(tv.init) : t; }
+    if (t.type !== 'Table') return null;
+    const out = [];
+    let complete = true;
+    for (const f of t.fields) {
+      const val = unparen(f.value);
+      const key = f.kind === 'named' ? f.key : f.kind === 'keyed' && unparen(f.key).type === 'String' ? unparen(f.key).value : f.kind === 'keyed' && unparen(f.key).type === 'Number' ? unparen(f.key).value : null;
+      if (val.type !== 'String') { complete = false; continue; }
+      out.push({ value: val.value, line: val.line || null, when: [...when, key != null ? `${exprText(e.key, info)} is ${JSON.stringify(String(key))}` : 'a table entry'] });
+    }
+    return out.length ? { values: out, complete } : null;
+  }
+  if (e.type === 'Call' && unparen(e.fn).type === 'Name') {
+    const v = info.varOf.get(unparen(e.fn));
+    const fn = v && !v.isGlobal && !v.writes.length && v.init && v.init.type === 'Func' ? v.init : null;
+    if (!fn) return null;
+    const out = [];
+    let complete = true;
+    const visit = (body, conds) => {
+      for (const st of body || []) {
+        if (st.type === 'Return') {
+          const r0 = st.values && st.values[0] ? unparen(st.values[0]) : { type: 'Nil' };
+          if (r0.type === 'Nil') continue;              // "no id for this case": not a candidate
+          const c = candidates(r0, info, depth + 1, [...when, ...conds]);
+          if (c) { out.push(...c.values); if (!c.complete) complete = false; } else complete = false;
+        } else if (st.type === 'If') {
+          st.clauses.forEach((cl) => visit(cl.body, [...conds, condText(cl.cond, info) || 'a condition']));
+          if (st.orelse) visit(st.orelse, [...conds, 'otherwise']);
+        } else if (st.type === 'Do' || st.type === 'While' || st.type === 'Repeat' || st.type === 'NumFor' || st.type === 'GenFor') visit(st.body, conds);
+      }
+    };
+    visit(fn.body, []);
+    return out.length ? { values: out, complete } : null;
+  }
+  return null;
+}
+
+/** Every `".../files/vN/loaders/" .. id .. ".lua"` in the file, with the ids it can take and whether a script_key is set before it on its path. */
+function constructedLoaders(ast, info) {
+  const found = [];
+  const seen = new WeakSet();
+  const flatten = (e, out = []) => { e = unparen(e); if (e && e.type === 'Binary' && e.op === '..') { flatten(e.left, out); flatten(e.right, out); } else out.push(e); return out; };
+  // a block's statements in order; a key assigned earlier in the block (or in an enclosing one) holds for what follows, nested blocks included
+  const block = (body, keyAlready) => {
+    let keySet = keyAlready;
+    for (const st of body || []) {
+      walk(st, (n) => {
+        if (n.type === 'Func') return false;                  // function bodies are visited as blocks of their own (innerBlocks)
+        if (n !== st && STATEMENTS.has(n.type)) return false;  // so are nested blocks, in order, after what precedes them
+        if (n.type !== 'Binary' || n.op !== '..' || seen.has(n)) return undefined;
+        const parts = flatten(n);
+        const i = parts.findIndex((x) => x && x.type === 'String' && /luarmor\.net\//i.test(x.value) && LOADER_PREFIX.test(x.value));
+        if (i < 0 || !parts[i + 1]) return undefined;
+        walk(n, (m) => { if (m.type === 'Binary') seen.add(m); return undefined; });
+        const c = candidates(parts[i + 1], info);
+        found.push({ line: n.line || st.line || null, prefix: parts[i].value, hole: exprText(parts[i + 1], info), ids: c ? c.values.filter((x) => /^[0-9a-f]{32}$/i.test(x.value)) : [], complete: !!(c && c.complete), keySet });
+        return false;
+      });
+      if (isKeyAssign(st)) keySet = true;
+      for (const inner of innerBlocks(st)) block(inner, keySet);
+    }
+  };
+  block(ast.body, false);
+  return found.sort((a, b) => (a.line || 0) - (b.line || 0));
+}
+
+const STATEMENTS = new Set(['Local', 'Assign', 'CallStmt', 'If', 'Do', 'While', 'Repeat', 'NumFor', 'GenFor', 'Return', 'Function', 'LocalFunction', 'Break', 'Goto', 'Label']);
+const isKeyAssign = (st) => (st.type === 'Assign' || st.type === 'Local') && (st.type === 'Assign' ? st.targets : st.ids).some((t) => {
+  const name = t.type === 'Name' || t.type === 'Id' ? t.name : t.type === 'Index' && t.key && t.key.type === 'String' ? t.key.value : null;
+  return name && /^script_?key$/i.test(name);
+});
+function innerBlocks(st) {
+  const out = [];
+  const add = (b) => { if (Array.isArray(b)) out.push(b); };
+  if (st.type === 'If') { st.clauses.forEach((c) => add(c.body)); add(st.orelse); }
+  else if (['Do', 'While', 'Repeat', 'NumFor', 'GenFor'].includes(st.type)) add(st.body);
+  // function bodies (callbacks, pcall(function() ... end)) anywhere in the statement
+  walk(st, (n) => { if (n.type === 'Func') { add(n.body); return false; } return undefined; });
+  return out;
+}
+
+/** Where a value assigned to script_key comes from, in words (never the value). */
+function keySource(v, info) {
+  v = unparen(v);
+  if (!v) return 'nothing (declared)';
+  if (v.type === 'String') return `a literal (${v.value.length} characters, redacted)`;
+  const text = (e) => {
+    let hit = null;
+    walk(e, (n) => {
+      if (hit) return false;
+      if (n.type === 'Call' && unparen(n.fn).type === 'Name' && unparen(n.fn).name === 'readfile') { const a = n.args[0] && unparen(n.args[0]); hit = `a file it saved earlier${a && a.type === 'String' ? ` (${a.value})` : ''}`; }
+      if (n.type === 'Index' && n.key && n.key.type === 'String' && n.key.value === 'Text') hit = 'what the user typed into a text box';
+      return undefined;
+    });
+    return hit;
+  };
+  if (v.type === 'Name') {
+    const x = info.varOf.get(v);
+    if (x && !x.isGlobal && x.init) {
+      const init = unparen(x.init);
+      const direct = text(init);
+      if (direct) return `the local ${v.name}: ${direct}`;
+      if (init.type === 'Call' && unparen(init.fn).type === 'Name') {
+        const f = info.varOf.get(unparen(init.fn));
+        const body = f && f.init && f.init.type === 'Func' ? f.init : null;
+        const inner = body && text(body);
+        if (inner) return `the local ${v.name}: ${inner}`;
+      }
+      if (init.type === 'MethodCall' || init.type === 'Call') { const t2 = text(init); if (t2) return `the local ${v.name}: ${t2}`; }
+    }
+    return `the variable ${v.name}`;
+  }
+  return v.type === 'Call' ? 'the result of a call (user input, a file or a request)' : `a ${v.type.toLowerCase()} expression`;
+}
+
 export function analyzeLuarmor(source) {
   const mentions = /luarmor/i.test(source) || /\b_bsdata\d+\b/.test(source);
   if (!mentions && !/\bscript_key\b/.test(source)) return null;
@@ -51,6 +221,8 @@ export function analyzeLuarmor(source) {
   }
   const urls = [];
   walk(ast, (n) => { if (n.type === 'String' && /luarmor\.net/i.test(n.value)) urls.push({ value: n.value, line: n.line || null }); return undefined; });
+  const info = analyze(ast);
+  const constructed = constructedLoaders(ast, info);
   const has = (re) => urls.some((u) => re.test(u.value)) || re.test(source);
   const variants = [];
   const dataTables = [];
@@ -77,8 +249,9 @@ export function analyzeLuarmor(source) {
   if (dataTables.length || cdnInit) variants.push('bootstrap');
   const sdk = has(/sdkapi-public\.luarmor\.net/i) || /\bcheck_key\b/.test(source) && /\bload_script\b/.test(source);
   if (sdk) variants.push('sdk');
-  const loaderUrls = urls.filter((u) => /api\.luarmor\.net\/files\/v\d+\/loaders\//i.test(u.value));
-  const constructedLoader = /api\.luarmor\.net\/files\/v\d+\/loaders\/["']?\s*\.\./i.test(source) || /files\/v\d+\/loaders\/"\s*\.\./.test(source);
+  // a full loader address in one literal; a literal that ends at ".../loaders/" is only the start of an address built at run time
+  const loaderUrls = urls.filter((u) => /api\.luarmor\.net\/files\/v\d+\/loaders\//i.test(u.value) && !LOADER_PREFIX.test(u.value));
+  const constructedLoader = constructed.length > 0 || /api\.luarmor\.net\/files\/v\d+\/loaders\/["']?\s*\.\./i.test(source) || /files\/v\d+\/loaders\/"\s*\.\./.test(source);
   if (loaderUrls.length || constructedLoader) variants.push('loader-url');
   const keyLinks = urls.filter((u) => /ads\.luarmor\.net\/get_key/i.test(u.value));
   if (keyLinks.length) variants.push('key-link');
@@ -99,11 +272,31 @@ export function analyzeLuarmor(source) {
       if (!name || !/^script_?key$/i.test(name)) return;
       key.set = true;
       const v = unparen(n.values[i]);
-      key.sources.push(v && v.type === 'String' ? `a literal (${v.value.length} characters, redacted)` : v && v.type === 'Call' ? 'the result of a call (user input, a file or a request)' : v ? `a ${v.type.toLowerCase()} expression` : 'nothing (declared)');
+      key.sources.push(keySource(v, info));
     });
     return undefined;
   });
-  const statuses = [...new Set((source.match(/KEY_[A-Z_]{3,}/g) || []).filter((s) => STATUS.test(s)))].sort();
+  // status codes: the KEY_* names, and every literal the loader compares with a `.code` field (INVALID_EXECUTOR, SECURITY_ERROR, ...)
+  const compared = [];
+  walk(ast, (n) => {
+    if (n.type !== 'Binary' || (n.op !== '==' && n.op !== '~=')) return undefined;
+    const [a, b] = [unparen(n.left), unparen(n.right)];
+    const lit = a.type === 'String' ? a : b.type === 'String' ? b : null;
+    const other = lit === a ? b : a;
+    if (lit && other && other.type === 'Index' && other.key && other.key.type === 'String' && other.key.value === 'code' && /^[A-Z][A-Z0-9_]{2,}$/.test(lit.value)) compared.push(lit.value);
+    return undefined;
+  });
+  const statuses = [...new Set([...(source.match(/KEY_[A-Z_]{3,}/g) || []).filter((s) => STATUS.test(s)), ...compared])].sort();
+  // the loader ids the file chooses between at run time, each with the conditions it sits under
+  const ids = new Map();
+  for (const c of constructed) for (const x of c.ids) {
+    const id = x.value.toLowerCase();
+    if (!ids.has(id)) ids.set(id, { id, line: x.line, when: x.when.filter(Boolean), requests: [], keyed: false });
+    const e = ids.get(id);
+    e.requests.push(c.line);
+    if (c.keySet) e.keyed = true;
+  }
+  const loaderIds = [...ids.values()];
   const cache = { reads: /\breadfile\b/.test(source), writes: /\bwritefile\b/.test(source), cleansOld: /\bdelfile\b/.test(source) && /\blistfiles\b/.test(source) };
 
   // the loader's own logic: everything but the data tables; recoverable when it parses as plain Lua
@@ -125,9 +318,10 @@ export function analyzeLuarmor(source) {
   const remote = [
     ...(cdnInit ? [{ role: 'init runtime', what: 'the service’s client runtime the bootstrap downloads and caches; it reads the data table', address: cdnInit.value, retrieved: false, why: 'the service’s own client code, not the user’s script; not fetched' }] : []),
     ...(sdk ? [{ role: 'SDK library', what: 'Luarmor’s key-check library (check_key, load_script)', address: (urls.find((u) => /sdkapi-public/i.test(u.value)) || {}).value || null, retrieved: false, why: 'the service’s client code; not fetched' }] : []),
-    ...(sdk ? [{ role: 'protected script', what: 'delivered by load_script after check_key accepts the key', address: null, retrieved: false, why: 'no documented interface returns a protected script; the owner already holds the source they uploaded' }] : []),
+    ...(sdk && (/\bload_script\b/.test(source) || !(loaderUrls.length || constructed.length)) ? [{ role: 'protected script', what: 'delivered by load_script after check_key accepts the key', address: null, retrieved: false, why: 'no documented interface returns a protected script; the owner already holds the source they uploaded' }] : []),
     ...loaderUrls.map((u) => ({ role: 'protected script loader', what: 'served by the service after the key check', address: u.value, retrieved: false, why: 'no documented interface returns a protected script' })),
-    ...(constructedLoader && !loaderUrls.length ? [{ role: 'protected script loader', what: 'address built at run time from a script id', address: null, retrieved: false, why: 'no documented interface returns a protected script' }] : []),
+    ...constructed.map((c) => ({ role: 'protected script loader', what: `address built at run time from ${c.hole}${c.ids.length ? `: one of ${c.ids.length} loader id${c.ids.length === 1 ? '' : 's'} in the file${c.complete ? '' : ' (and possibly others the file does not fix)'}` : ' (the id is not fixed by the file)'}${c.keySet ? '' : '; no script_key is set on this path'}`, address: `${c.prefix}{${c.hole}}.lua`, line: c.line, retrieved: false, why: 'no documented interface returns a protected script' })),
+    ...(constructedLoader && !constructed.length && !loaderUrls.length ? [{ role: 'protected script loader', what: 'address built at run time from a script id', address: null, retrieved: false, why: 'no documented interface returns a protected script' }] : []),
   ];
   const localBytes = logic.length;
   return {
@@ -136,7 +330,9 @@ export function analyzeLuarmor(source) {
       bytes: localBytes, recoverable: obfuscated ? 'needs-deobfuscation' : 'full', obfuscatedBy: obfuscators, code: obfuscated ? null : logic,
       describes: [
         variants.includes('bootstrap') ? `runs a cached copy of the init script if present${cache.reads ? ' (readfile)' : ''}, otherwise downloads it${cache.writes ? ', caches it (writefile)' : ''}${cache.cleansOld ? ' and deletes older cached copies' : ''}, then runs it` : null,
-        sdk ? `loads the SDK, ${key.set ? 'sets the key, ' : ''}checks it${statuses.length ? ` and handles ${statuses.length} status code${statuses.length === 1 ? '' : 's'} (${statuses.join(', ')})` : ''}, then calls load_script` : null,
+        sdk ? `loads the SDK, checks the key${statuses.length ? ` and handles ${statuses.length} status code${statuses.length === 1 ? '' : 's'} (${statuses.join(', ')})` : ''}, then ${/\bload_script\b/.test(source) ? 'calls load_script' : constructedLoader || loaderUrls.length ? `${key.set ? 'sets script_key and ' : ''}runs the Luarmor loader for the script id` : 'continues'}` : null,
+        loaderIds.length ? `chooses between ${loaderIds.length} loader id${loaderIds.length === 1 ? '' : 's'} at run time${loaderIds.some((x) => x.when.length) ? ' by the conditions listed with each id' : ''}${loaderIds.some((x) => !x.keyed) ? `; ${loaderIds.filter((x) => !x.keyed).length} of them ${loaderIds.filter((x) => !x.keyed).length === 1 ? 'is' : 'are'} loaded without setting a script_key (a keyless script)` : ''}` : null,
+        cache.reads && cache.writes && !variants.includes('bootstrap') ? 'remembers the key in a file (writefile) and tries it first on the next run (readfile)' : null,
         ui ? 'builds its own user interface (key entry / status)' : null,
         redactedKeys ? `the script_key literal is replaced by a placeholder in the recovered code (${redactedKeys} place${redactedKeys === 1 ? '' : 's'})` : null,
         keyLinks.length ? `points the user to a key page (${keyLinks.length} link${keyLinks.length === 1 ? '' : 's'} to ads.luarmor.net/get_key)` : null,
@@ -145,6 +341,7 @@ export function analyzeLuarmor(source) {
     },
     data: dataTables.map((d) => ({ ...d, recoverable: 'opaque', why: 'its only consumer is the init runtime, which is not in this file; what the values mean cannot be determined from the loader' })),
     remote,
+    loaderIds,
     key,
     statuses,
     cache,

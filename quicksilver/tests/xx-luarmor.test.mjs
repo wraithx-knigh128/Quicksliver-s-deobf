@@ -71,3 +71,95 @@ test('the Loader op carries the Luarmor analysis', () => {
   const r = loaderSource(BOOTSTRAP);
   assert.ok(r.luarmor && r.luarmor.variants.includes('bootstrap'));
 });
+
+// ---- Test 7 (Prompt XXI): a hub loader that chooses its Luarmor loader id at run time ------------------------------------------------------
+// The structure of a real hub loader (PlaceId table, a function returning an id per game and executor, a key UI, a cached key), with invented
+// ids and place ids. Defects it exposed: E1 the ids were not resolved and the bare address prefix was reported as a loader address; E2 a plain
+// loader was classed "partially reconstructed"; E3 the description said "load_script" for a loader that never calls it; E4 status codes other
+// than KEY_* and the key's origin were not named.
+const HUB = `local ids = { ["111"] = "${'a'.repeat(32)}" }
+local idA = ids[tostring(game.PlaceId)]
+if idA then
+  pcall(function() loadstring(game:HttpGet("https://api.luarmor.net/files/v4/loaders/" .. idA .. ".lua"))() end)
+  return
+end
+local function exec() return (identifyexecutor or function() return "x" end)():lower() end
+local function pick()
+  local p = tostring(game.PlaceId)
+  if p == "222" or p == "333" then
+    if exec() == "lite" then return "${'b'.repeat(32)}" end
+    return "${'c'.repeat(32)}"
+  end
+  if p == "444" then return "${'d'.repeat(32)}" end
+  return nil
+end
+local id = pick()
+if not id then return end
+local api = loadstring(game:HttpGet("https://sdkapi-public.luarmor.net/library.lua"))()
+local function check(k) api.script_id = id local r = api.check_key(k) if r.code == "KEY_VALID" then return true elseif r.code == "SECURITY_ERROR" then return false end return false end
+local saved = readfile("hub_key.txt")
+if saved and check(saved) then
+  getgenv().script_key = saved
+  loadstring(game:HttpGet("https://api.luarmor.net/files/v4/loaders/" .. id .. ".lua"))()
+  return
+end
+local box = Instance.new("TextBox")
+local typed = box.Text:gsub("%s+", "")
+if check(typed) then writefile("hub_key.txt", typed) getgenv().script_key = typed loadstring(game:HttpGet("https://api.luarmor.net/files/v4/loaders/" .. id .. ".lua"))() end
+`;
+
+test('Test 7 E1: loader ids chosen at run time are resolved statically, with the conditions they sit under and whether a key is set on their path', () => {
+  const r = analyzeLuarmor(HUB);
+  assert.deepEqual(r.loaderIds.map((x) => x.id), ['a', 'b', 'c', 'd'].map((c) => c.repeat(32)));
+  const [a, b, c, d] = r.loaderIds;
+  assert.match(a.when.join(' '), /tostring\(game\.PlaceId\) is "111"/);
+  assert.equal(a.keyed, false, 'the PlaceId-table path loads without setting a script_key');
+  assert.match(b.when.join(' '), /"222" or "333".*exec\(\) is "lite"/);
+  assert.match(c.when.join(' '), /"222" or "333"/);
+  assert.match(d.when.join(' '), /"444"/);
+  assert.ok([b, c, d].every((x) => x.keyed), 'both key paths set script_key before the loader runs');
+  // the bare prefix is not reported as a loader address; each built address is named with its hole
+  assert.ok(!r.remote.some((x) => x.address === 'https://api.luarmor.net/files/v4/loaders/'));
+  assert.ok(r.remote.some((x) => /\{pick\(\)\}\.lua$/.test(x.address || '')));
+  assert.equal(r.operations[2].status, 'not-available', 'resolving the ids retrieves nothing');
+});
+
+test('Test 7 E3/E4: the description follows the code (no load_script), every compared status code and the key’s origins are named', () => {
+  const r = analyzeLuarmor(HUB);
+  const sdk = r.local.describes.find((x) => /loads the SDK/.test(x));
+  assert.doesNotMatch(sdk, /load_script/);
+  assert.match(sdk, /runs the Luarmor loader for the script id/);
+  assert.deepEqual(r.statuses, ['KEY_VALID', 'SECURITY_ERROR']);
+  assert.deepEqual(r.key.sources, ['the local saved: a file it saved earlier (hub_key.txt)', 'the local typed: what the user typed into a text box']);
+  assert.ok(!r.remote.some((x) => /load_script/.test(x.what) && x.role === 'protected script'), 'no "delivered by load_script" entry for a loader without load_script');
+});
+
+test('Test 7 E2: a plain loader is never "partially reconstructed": its code is not obfuscated, its program is not in the file, its remote parts are named', async () => {
+  const { recoverSource } = await import('../src/api.js');
+  const hub = recoverSource(HUB, { sandbox: { enabled: true } }).outcome;
+  assert.equal(hub.outcome, 'payload-unavailable', 'the detector reads this as a script that only downloads its program');
+  assert.ok(hub.met.some((m) => /not obfuscated/.test(m)));
+  assert.match(hub.notes.join(' '), /Not in this file: \d+ part\(s\)/);
+  const one = recoverSource('loadstring(game:HttpGet("https://api.luarmor.net/files/v4/loaders/' + 'e'.repeat(32) + '.lua"))()\n', { sandbox: { enabled: true } }).outcome;
+  assert.equal(one.outcome, 'payload-unavailable');
+  // a loader whose code is computed in the file (not fetched) is still obfuscation, not a remote part
+  const computed = recoverSource('local s = "pr" .. "int(1)" loadstring(s)()\n', { sandbox: { enabled: false } }).outcome;
+  assert.notEqual(computed.outcome, 'payload-unavailable');
+});
+
+const SPARK = path.join(root, 'tests', 'corpus', 'user-local', 'SparkHub_Loader.lua');
+test('Test 7 on the supplied loader (local only): six loader ids, one keyless path, nothing retrieved', { skip: !fs.existsSync(SPARK) && 'the supplied loader is kept locally only' }, () => {
+  const r = analyzeLuarmor(fs.readFileSync(SPARK, 'latin1'));
+  assert.equal(r.loaderIds.length, 6);
+  assert.equal(r.loaderIds.filter((x) => !x.keyed).length, 1);
+  assert.equal(r.statuses.length, 9);
+  assert.equal(r.local.recoverable, 'full');
+});
+
+test('Test 7 on the supplied loader (local only): its own program (the key UI) is plain code, never "partially reconstructed"', { skip: !fs.existsSync(SPARK) && 'the supplied loader is kept locally only' }, async () => {
+  const { recoverSource } = await import('../src/api.js');
+  const o = recoverSource(fs.readFileSync(SPARK, 'latin1'), { sandbox: { enabled: true } }).outcome;
+  assert.equal(o.outcome, 'syntax-valid-unverified');
+  assert.ok(o.met.some((m) => /not obfuscated/.test(m)));
+  assert.match(o.notes.join(' '), /4 part\(s\).*lines 31, 83, 173, 866/);
+});

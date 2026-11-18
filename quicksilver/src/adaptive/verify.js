@@ -35,7 +35,10 @@ export function verifyRecovery(original, recovered, options = {}) {
   const limits = { fuel: options.fuel ?? 40_000_000, timeMs: options.timeMs ?? 8000 };
   const t0 = Date.now();
   const a = summarise(traceScript(original, limits));
-  const b = summarise(traceScript(recovered, limits));
+  // the recovered program's run is the one whose claim is being checked: how much of it the run reached is recorded with the verdict
+  const tb = traceScript(recovered, { ...limits, coverage: true });
+  const b = summarise(tb);
+  const coverage = tb.coverage || null;
   const ms = Date.now() - t0;
   const notes = [];
   const cut = (x) => x.status === 'limit' || /^stopped/.test(x.ended || '');
@@ -65,6 +68,7 @@ export function verifyRecovery(original, recovered, options = {}) {
   const idle = a.events.length === 0 && !a.output;
   if (idle) notes.push('The original did nothing the stand-in environment could observe, so this run is a weak check.');
 
+  if (coverage && coverage.ratio < 1) notes.push(`The run reached ${coverage.linesRun} of the recovered program's ${coverage.statementLines} statement lines (${Math.round(coverage.ratio * 100)}%); what it did not reach was not compared.`);
   const verdict = difference ? 'different' : truncated || idle ? 'inconclusive' : 'identical';
   return {
     ok: true,
@@ -74,6 +78,7 @@ export function verifyRecovery(original, recovered, options = {}) {
       : verdict === 'different' ? 'The two programs behaved differently in the sandbox.' : 'The comparison could not settle it.',
     difference,
     notes,
+    coverage,
     original: { status: a.status, events: a.events.length, output: a.output.length },
     recovered: { status: b.status, events: b.events.length, output: b.output.length },
     ms,

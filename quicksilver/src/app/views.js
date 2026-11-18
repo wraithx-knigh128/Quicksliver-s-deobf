@@ -359,6 +359,7 @@ export function outcomeSection(o, { onVerify, verify, canVerify } = {}) {
     h('p', h('span.badge.' + (OUTCOME_BADGE[o.outcome] || 'plain'), o.label)),
     o.met.length ? h('ul.list', o.met.map((m) => h('li', [h('span.mono.faint', '\u2713 '), m]))) : null,
     o.reasons.length ? h('ul.list', o.reasons.map((m) => h('li', [h('span.mono.faint', '\u2717 '), m]))) : null,
+    o.notes && o.notes.length ? o.notes.map((m) => note('info', m)) : null,
     canVerify && open && !(verify && verify.running) && !(verify && verify.result) ? h('button.btn.small.outline', { type: 'button', onclick: onVerify }, 'Compare behaviour\u2026') : null,
     verify && verify.running ? h('p.note.info', 'Running both programs\u2026') : null,
     note('', 'Only a behaviour comparison makes a result "validated": a parsing, readable output with a high confidence is "syntax-valid but behaviourally unverified" until it has been run next to the program it came from.'),
