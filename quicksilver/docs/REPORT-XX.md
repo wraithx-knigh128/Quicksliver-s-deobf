@@ -49,8 +49,8 @@ It explains the structure of a script without needing a tool name:
 
 What this changed:
 
-- The 10 unknown VMs of the first audit are now described, by machine type, instruction format and handler count, instead of only
-  "unresolved".
+- Of the 19 VMs in the re-audit that no reader accepts, 18 are now described by machine type, instruction format and handler count,
+  instead of only "unresolved".
 - On the real Luau VM script `Unknown/0030800e…`: a register machine with 47 handlers; instructions read as table fields `[1]`–`[4]`; a
   12,984-byte custom-alphabet string consumed by `VMCall`; one VM entry per function the VM runs.
 
@@ -137,16 +137,51 @@ limitation named.
 
 - **The protected Luarmor script.** It is not in the loader, and no authorised interface returns it (KNOWN-ISSUES 76).
 - **Truncated or syntactically broken input.** It is reported, not reconstructed.
+- **Two corpus scripts that exceed 120 s.** The analysis does not finish on them within that limit.
+- **One VM with no recognised instruction fetch** (`Unknown/00f02d5e…`).
 
 ## Still requires research
 
 - **Handler-level fingerprints.** Whole-interpreter fingerprints rarely repeat across builds (KNOWN-ISSUES 75).
 - **Handler synthesis**, to lift VMs the anatomy describes but no reader accepts.
 - **Per-site evaluation** of single-use decoders.
+- **Tests for the hypothesis kinds that have none yet.** 197 of the 348 hypotheses in the re-audit had no test, chiefly encoded regions
+  with no confirmed consumer (118) and anti-analysis or environment-manipulation roles (46).
+- **Analysis time on the two scripts over 120 s.**
 
 ## Measured on the unfamiliar corpus
 
-The numbers are filled in after the audit completes (see below).
+**What was measured.** The re-audit ran the Custom Obfuscator analysis, with the sandbox on and the learned rules loaded, over every
+unique script under 400 KB in `local/corpus/{Unknown, VM Compressed, MinifiedLua}`: 70 scripts, recognised or not. Each script ran in its
+own process with a 120-second limit.
+
+**Comparing with the first audit.** The first audit (24 scripts) covered only scripts no detector recognises, so the two sets differ. The
+counts below are therefore given as shares, not as a before/after on identical inputs.
+
+| Measure | First audit (24 unrecognised) | Re-audit (70 scripts) |
+|---|---|---|
+| Analysed | 24 | 68; **2 exceeded 120 s** (`MinifiedLua/Unknown/0af19ff7…`, `Unknown/0517b016…`) and are reported as time-outs, not results |
+| "minified-layout" still unresolved after recovery | 18 / 24 (75 %) | **5 / 68 (7 %)** |
+| VM kept, no reader accepts it | 10, with no description | 19, of which **18 are described** (machine type, instruction encoding, handlers). The exception, `Unknown/00f02d5e…`, has no recognised instruction fetch. |
+
+**Architecture.** Runtime-generated code 37; virtual machine 18; conventional Lua 10; conventional Lua with decoded constants 3.
+
+**Hypotheses.** 348 were stated:
+
+| Test result | Count | What it means |
+|---|---|---|
+| confirmed | 12 | 3 decoders, 7 encoded regions, 2 stages |
+| refuted | 7 | all decoder hypotheses that the evaluator's call-site test contradicted; they lost confidence and are shown as refuted |
+| inconclusive | 132 | 111 stages (mostly VM entry points) that the pipeline did not unwrap; 18 VMs that no reader accepts; 3 decoders the evaluator could not run |
+| not tested | 197 | no test exists yet for these kinds: 118 encoded regions with no confirmed consumer; 34 anti-analysis and 12 environment-manipulation roles; 21 interpreter roles whose VM no reader accepts; 11 stages; 1 deserializer. They keep the confidence they started with. |
+
+**Other measures:**
+
+- **Decoders:** 12 decoder, cipher or deserializer functions, in 8 scripts.
+- **Encoded regions:** 187, of which 51 are linked to the function that consumes them.
+- **Learned-rule matches:** **0**, exact or near. The 28 learned rules come from generator families that this corpus does not contain, so
+  the rules do not generalise to it (KNOWN-ISSUES 75).
+- **Time:** median 0.5 s per script; the slowest that finished took 8.3 s.
 
 ## Phase VI research
 
