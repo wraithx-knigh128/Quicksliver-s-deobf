@@ -66,7 +66,7 @@ function conditionVariable(cond) {
 
 // ---- loops that dispatch ------------------------------------------------------------------------------------------------------------
 
-function loopsWithDispatch(ast) {
+export function loopsWithDispatch(ast) {
   const out = [];
   // a dispatch sits in a loop, or in a function a loop calls once per instruction (`while #stack > 0 do step(frame) end`, Vault-Obf): the step function's body is the
   // interpreter's body. Only the function's own statements are looked at, not the functions inside it
@@ -163,7 +163,7 @@ function describeHandler(stmts, counter) {
   return h;
 }
 
-function interpreterFinding(ast) {
+export function interpreterFinding(ast) {
   const loops = loopsWithDispatch(ast);
   if (!loops.length) return { vm: null, flatten: null };
   // the biggest dispatch is the interpreter or the flattened state machine; the rest are noise
@@ -293,7 +293,7 @@ function stringDecoders(ast) {
   return sites >= 3 ? { functions: [...names].length, sites, confidence: Math.min(0.97, 0.5 + sites / 40) } : null;
 }
 
-function entropy(s) {
+export function entropy(s) {
   const f = new Map();
   for (const c of s) f.set(c, (f.get(c) || 0) + 1);
   let e = 0;
@@ -436,8 +436,11 @@ export function probe(source) {
   const mangled = locals.length >= 6 ? locals.filter((v) => isMachineName(v.name)).length / locals.length : 0;
   if (mangled >= 0.6) add('identifier-mangling', Math.min(0.97, mangled), [`${Math.round(mangled * 100)}% of ${locals.length} local names are machine-made`], { ratio: +mangled.toFixed(2) });
   const lines = source.split('\n');
-  const longest = lines.reduce((a, l) => Math.max(a, l.length), 0);
-  if (longest > 300 || source.length / Math.max(1, lines.length) > 120) add('minified-layout', 0.9, [`${lines.length} lines, the longest ${longest} characters`]);
+  // a line is long because of its layout, not because it holds one long string literal (a data blob printed on one line is not minified code)
+  const strip = (l) => l.replace(/"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\[(=*)\[[\s\S]*?\]\1\]/g, '""');
+  const longest = lines.reduce((a, l) => Math.max(a, l.length > 300 ? strip(l).length : l.length), 0);
+  const codeBytes = lines.reduce((a, l) => a + (l.length > 120 ? strip(l).length : l.length), 0);
+  if (longest > 300 || codeBytes / Math.max(1, lines.length) > 120) add('minified-layout', 0.9, [`${lines.length} lines, the longest ${longest} characters`]);
   out.sort((a, b) => b.confidence - a.confidence);
   return { ok: true, transformations: out, structure: { bytes: source.length, lines: lines.length, locals: locals.length, mangledRatio: +mangled.toFixed(2) } };
 }

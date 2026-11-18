@@ -23,6 +23,7 @@ import { verifyRecovery } from './adaptive/verify.js';
 import { analyzeCustom } from './custom/analyze.js';
 import { analyzeLoader, classifyStage } from './loader/analyze.js';
 import { decodePayload } from './loader/payload.js';
+import { analyzeLuarmor } from './loader/luarmor.js';
 import { binaryToBytes } from './core/bytes.js';
 
 export const ENGINE_VERSION = '1.0.0';
@@ -209,7 +210,10 @@ export function loaderSource(source, options = {}) {
     const recovered = typeof options.recovered === 'string' && options.recovered !== source ? analyzeLoader(options.recovered, { origin: 'recovered', depth: options.depth || 0, providers: options.providers || [] }) : null;
     const resolved = (a) => (a ? a.requests.filter((r) => r.urlKind === 'literal' || r.urlKind === 'encoded').length * 10 + a.requests.length : -1);
     const best = recovered && resolved(recovered) > resolved(input) ? 'recovered' : 'input';
-    return { ok: true, input, recovered, best };
+    // Luarmor: a dedicated reading of the loader's local structure (src/loader/luarmor.js), on the text where it is visible
+    let luarmor = null;
+    try { luarmor = analyzeLuarmor(best === 'recovered' ? options.recovered : source) || (best === 'recovered' ? analyzeLuarmor(source) : null); } catch { luarmor = null; }
+    return { ok: true, input, recovered, best, luarmor };
   });
 }
 

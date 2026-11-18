@@ -15,6 +15,9 @@
 import { parse } from '../core/parser.js';
 import { recover } from '../recover/pipeline.js';
 import { probe, TRANSFORMATIONS } from './probes.js';
+import { anatomy, testHypotheses } from './anatomy.js';
+import { evaluatePass } from '../passes/evaluate.js';
+import { unwrapWrapper } from '../passes/structure.js';
 import { liftZarthaVm } from '../recover/zartha-vm.js';
 import { liftFusgatoVm } from '../recover/fusgato-vm.js';
 import { liftIronbrikkedVm } from '../recover/ironbrikked-vm.js';
@@ -102,6 +105,9 @@ export function analyzeCustom(source, options = {}) {
   }));
   const hasVm = strong.some((t) => t.id === 'bytecode-vm');
   const readers = hasVm || strong.some((t) => t.id === 'compressed-payload') ? tryReaders(source) : [];
+  // ANATOMY: where the parts are and what they are, with hypotheses (tested below, after the recovery, so the tests can use what it did)
+  let anat = null;
+  try { anat = anatomy(source, { rules: options.rules }); } catch (e) { anat = { ok: false, error: String(e.message || e) }; }
   // RECOVER
   const r = recover(source, { ...(options.recoverOptions || {}), sandbox: { enabled: !!(options.sandbox && options.sandbox.enabled), ...(options.sandbox || {}) } });
   const applied = (r.steps || []).filter((s) => s.status === 'applied').map((s) => ({ id: s.id, changed: s.changed }));
@@ -129,12 +135,21 @@ export function analyzeCustom(source, options = {}) {
     }
     return { transformation: t.id, status, evidence: t.evidence, remaining: was ? was.evidence : [], notes: lines };
   });
+  if (anat && anat.ok) {
+    const sandboxOn = !!(options.sandbox && options.sandbox.enabled);
+    testHypotheses(anat, source, {
+      evaluate: sandboxOn ? (ast) => { unwrapWrapper(ast); return evaluatePass(ast, { sandbox: options.sandbox }); } : null,
+      readers: tryReaders,
+      layersApplied: applied.some((x) => x.id === 'layers'),
+    });
+  }
   // anything the recovery INTRODUCED (a transformation visible in the output and not in the input)
   const introduced = after.transformations.filter((t) => t.confidence >= 0.6 && !strong.some((s) => s.id === t.id)).map((t) => ({ transformation: t.id, evidence: t.evidence }));
   const neighbors = neighbours(input.transformations, options.examples, 3);
   return {
     ok: true,
     input: { transformations: input.transformations, structure: input.structure },
+    anatomy: anat,
     plan,
     readers,
     result: { ok: r.ok, level: r.confidence ? r.confidence.level : null, score: r.confidence ? r.confidence.score : null, applied, skipped, bytes: output.length, output: r.ok ? output : null, error: r.ok ? null : (r.error || (r.warnings && r.warnings[0]) || 'the recovery did not produce a parsable program') },

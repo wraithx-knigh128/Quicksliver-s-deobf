@@ -107,6 +107,28 @@ function intelSection(state, a, { onIntel, onOpenText, onExport }) {
   ]);
 }
 
+const OP_STATUS = { done: ['ok', 'done'], partial: ['warn', 'partial'], 'via-pipeline': ['info', 'via the Deobfuscator'], 'not-available': ['bad', 'not available'], 'needs-input': ['', 'needs your input'] };
+
+/** Luarmor loader analysis (src/loader/luarmor.js): the five operations kept apart, the local logic, the data, the remote parts. */
+function luarmorSection(l, { onOpenText }) {
+  if (!l || !l.recognised) return null;
+  if (!l.parsed) return section('Luarmor loader', note('warn', l.note || l.error));
+  return section('Luarmor loader', [
+    h('p', h('b', `Variant: ${l.variants.join(', ')}. `), l.answer),
+    h('table.table.ops', h('tbody', l.operations.map((o) => {
+      const [cls, label] = OP_STATUS[o.status] || ['', o.status];
+      return h('tr', h('td.mono', String(o.n)), h('td', o.name), h('td', h('span.badge.' + (cls || 'plain'), label)), h('td.dim', o.detail));
+    }))),
+    h('div.row-item', h('b', 'The loader\u2019s own code'), h('ul', l.local.describes.map((d) => h('li', d))),
+      l.local.code ? h('button.btn.small.outline', { type: 'button', onclick: () => onOpenText('luarmor-loader.recovered.lua', l.local.code) }, 'Open the recovered loader logic') : null),
+    l.data.length ? h('div.row-item', h('b', 'Embedded data'), l.data.map((d) => h('div',
+      h('code', d.name), ` (line ${d.line}): ${d.entries} values — ${d.numbers} number${d.numbers === 1 ? '' : 's'}${d.strings.length ? `, ${d.strings.map((x) => x.note).join('; ')}` : ''}.`,
+      h('div.dim', `Opaque: ${d.why}.`)))) : null,
+    l.remote.length ? h('div.row-item', h('b', 'Not in this file'), h('ul', l.remote.map((x) => h('li', h('b', x.role), `: ${x.what}${x.address ? ' — ' : ''}`, x.address ? h('code', x.address) : null, h('span.dim', ` (${x.why})`))))) : null,
+    l.key.set ? note('', `The loader sets script_key from ${[...new Set(l.key.sources)].join('; ')}. Its value is never shown or sent anywhere by this tool.`) : null,
+  ]);
+}
+
 export function loaderView(state, { onAnalyze, onFetch, onOpen, onAnalyzeStage, onIntel, onOpenText, onExport }) {
   const { result, busy, error } = state;
   const head = h('div.codebar',
@@ -131,6 +153,7 @@ export function loaderView(state, { onAnalyze, onFetch, onOpen, onAnalyzeStage, 
         h('p', a.case.retrieval),
         a.explanation.map((e) => h('p.dim', e))),
       h('div.loader-side', caseLadder(a), progress(state, a))),
+    luarmorSection(result.luarmor, { onOpenText }),
     a.isLoader ? intelSection(state, a, { onIntel, onOpenText, onExport }) : null,
     a.architectures.length ? section('Architecture', h('div.arch-list', a.architectures.map((x) => h('div.arch',
       h('b', x.label), x.evidence.length ? h('ul', x.evidence.map((e) => h('li', h('code', e)))) : null)))) : null,

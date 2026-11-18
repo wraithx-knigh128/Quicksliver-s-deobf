@@ -774,3 +774,5 @@ table.table td { padding: 7px 12px 7px 0; border-bottom: 1px solid var(--line); 
 .badge.plain { color: var(--dim); }
 .nowrap { white-space: nowrap; }
 .intel-table td:first-child { white-space: nowrap; }
+.table.ops td { vertical-align: top; }
+.table.ops td:nth-child(2) { white-space: nowrap; font-weight: 500; }
