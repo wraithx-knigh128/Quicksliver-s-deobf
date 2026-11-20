@@ -86,3 +86,21 @@ test('engine service on Luraph v15.1: "no program observed", never ok', { skip: 
   assert.equal(j.error.code, 'no_program_observed');
   assert.equal(j.trace.probeOnly, true);
 });
+
+test('engine service (Test 8): the v14 engines write the run status to their log only; a run that failed after Luraph v14’s probe is not a reconstruction', { skip: !hasPython && 'python3 is not available' }, () => {
+  const r = spawnSync('python3', ['-I', '-c', `
+import sys, json
+sys.path.insert(0, ${JSON.stringify(engineDir)})
+import service
+t = 'local connection = game.AttributeChanged:Connect(function(attribute)\\nend)\\nconnection:Disconnect()\\nlocal HttpService = game:GetService("HttpService")\\nlocal connection5 = HttpService.AttributeChanged:Connect(function(attribute5)\\nend)\\nconnection5:Disconnect()\\n'
+log = ['[*] engine: Luraph v14.8', '[*] run status: script error: Script:1: buffer access out of bounds', '[*] static v14 lift resolved to bootstrap/runtime scaffolding']
+print(json.dumps([service.trace_facts(t, 'trace-assisted', log), service.trace_facts('local HttpService = game:GetService("HttpService")\\nprint(HttpService:JSONEncode({}))\\n', 'trace-assisted', ['[*] run status: finished'])]))
+`], { encoding: 'utf8' });
+  assert.equal(r.status, 0, r.stderr);
+  const [probe, real] = JSON.parse(r.stdout);
+  assert.equal(probe.status, 'script error: Script:1: buffer access out of bounds');
+  assert.equal(probe.finished, false);
+  assert.equal(probe.probeOnly, true);
+  assert.equal(probe.observedProgram, false);
+  assert.equal(real.observedProgram, true, 'GetService followed by the program’s own use is a program');
+});

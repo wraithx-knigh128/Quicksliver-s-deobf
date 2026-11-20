@@ -392,18 +392,31 @@ _RUN_STATUS = re.compile(r"^--\s*run status:\s*(.+)$", re.M)
 _STMTS = re.compile(r"^--\s*(\d+) statements? recorded", re.M)
 # Luraph's environment probe (the block its key derivation runs first): instances it makes and parents, and its Path2D queries
 _PROBE_LINE = re.compile(r'^(?:local \w+ = )?Instance\.new\("(?:Folder|ScreenGui|Frame|Path2D)"\)$|^\w+\.(?:Parent|Size|Position) = .+$'
-                         r'|^\w+:(?:SetControlPoints|Destroy)\(.*\)$|^\w+:(?:Get\w+OnCurve\w*|GetLength|GetBoundingRect|GetControlPoints)\(.*\)$')
+                         r'|^\w+:(?:SetControlPoints|Destroy)\(.*\)$|^\w+:(?:Get\w+OnCurve\w*|GetLength|GetBoundingRect|GetControlPoints)\(.*\)$'
+                         # Luraph v14's probe (Test 8): an AttributeChanged connection on game, workspace, folders and services, disconnected at once
+                         r'|^(?:local \w+ = )?\w+\.AttributeChanged:Connect\(function\(\w*\)$|^end\)$|^\w+:Disconnect\(\)$')
+# lines that are neither program nor probe evidence on their own (the probe asks for services too)
+_NEUTRAL_LINE = re.compile(r'^local \w+ = game:GetService\("\w+"\)$')
+_LOG_STATUS = re.compile(r"run status:\s*(.+)$")
 
 
-def trace_facts(text: str, kind: str) -> dict | None:
-    """How a behaviour trace's run ended and whether it observed anything beyond the obfuscator's own environment probe."""
+def trace_facts(text: str, kind: str, log: list | None = None) -> dict | None:
+    """How a behaviour trace's run ended and whether it observed anything beyond the obfuscator's own environment probe. The v14 engines
+    write the run status to their log only (Test 8: their output held no status line, so a failed run read as finished)."""
     if kind == "devirtualized":
         return None
     st = _RUN_STATUS.search(text)
     n = _STMTS.search(text)
     code = [l.strip() for l in text.splitlines() if l.strip() and not l.strip().startswith("--")]
-    probe_only = bool(code) and all(_PROBE_LINE.match(l) for l in code)
+    probe_lines = [l for l in code if _PROBE_LINE.match(l)]
+    probe_only = bool(code) and bool(probe_lines) and all(_PROBE_LINE.match(l) or _NEUTRAL_LINE.match(l) for l in code)
     status = st.group(1).strip() if st else None
+    if status is None and log:
+        for line in reversed(log):
+            m = _LOG_STATUS.search(str(line))
+            if m:
+                status = m.group(1).strip()
+                break
     return {
         "status": status,
         "finished": status is None or status.startswith("finished"),
@@ -577,7 +590,7 @@ def reconstruct(source: bytes, engine: str = "auto", timeout_s: int = DEFAULT_TI
         spec = ENGINES[step["engine"]]
         run.stage_start("check")
         quality = assess(text, kind, run.log)
-        tfacts = trace_facts(text, kind)
+        tfacts = trace_facts(text, kind, run.log)
         if tfacts and not tfacts["finished"] and quality["grade"] == "clean":
             # no unresolved markers, but the run itself stopped: the output cannot be complete
             quality["grade"] = "incomplete"
