@@ -327,7 +327,8 @@ def attempt_budget(remaining: int, reserve: int = 0) -> int:
 def _attempt(step, input_path: Path, work: Path, deadline, run: Run, reserve: int = 0) -> dict:
     spec = ENGINES[step["engine"]]
     out_path = work / ("out_%s_%s.lua" % (step["engine"], step["mode"]))
-    budget = attempt_budget(max(5, int(deadline - time.time())), reserve)
+    remaining = max(5, int(deadline - time.time()))
+    budget = attempt_budget(remaining, reserve)
     py = sys.executable or "python3"
     if spec["front"] == "cli":
         cmd = [py, "-I", "cli.py", str(input_path), "-o", str(out_path), "--timeout", str(budget), "--no-credit"] + spec["args"]
