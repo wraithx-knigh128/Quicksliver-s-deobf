@@ -10878,10 +10878,10 @@
     "parsed": 23,
     "expected": "unlabelled",
     "identified": 0,
-    "unidentified": 18,
+    "unidentified": 9,
     "classOfUnidentified": {
-     "minified-script": 16,
      "bytecode": 1,
+     "minified-script": 7,
      "remote-library-script": 1
     }
    },
@@ -10941,12 +10941,9 @@
     "files": 5,
     "parsed": 5,
     "expected": "synapse_xen",
-    "identified": 0,
-    "unidentified": 3,
-    "classOfUnidentified": {
-     "minified-script": 2,
-     "encoded-strings": 1
-    }
+    "identified": 3,
+    "unidentified": 0,
+    "classOfUnidentified": {}
    },
    {
     "label": "Unknown",
