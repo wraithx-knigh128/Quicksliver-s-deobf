@@ -160,3 +160,11 @@ test('Synapse Xen (Prompt XXV): header with version, and the SynapseXen_ locals 
   assert.equal(bare.id, 'synapse_xen');
   assert.ok(bare.confidence >= 0.9 && bare.evidence.some((e) => e.unrecoverable));
 });
+
+test('LuaObfuscator (Prompt XXV): the ASCII art with a customer’s own message, and the string-XOR prelude after other code or inside `do`', () => {
+  const art = '--[[\n .____                  ________ ___.    _____                           __                \n |    |    __ _______   \\_____  \\\\_ |___/ ____\\_ __  ______ ____ _____ _/  |_  ___________ \n\\_Welcome to my hub! ~  Much Love, someone\n]]--\n\nprint(1)\n';
+  assert.equal(detectScript(art).detection.families[0].id, 'luaobfuscator');
+  const inner = 'warn("hello")\ndo local v0=string.char;local v1=string.byte;local v2=string.sub;local v3=bit32 or bit ;local v4=v3.bxor; end\n';
+  assert.equal(detectScript(inner).detection.families[0].id, 'luaobfuscator');
+  assert.equal(detectScript('local v0 = string.char\nprint(v0(65))\n').detection.families.length, 0, 'one library local is not the prelude');
+});

@@ -250,12 +250,17 @@ const RULES = {
     rule('mention', 'banner', 0.6, (c) => /luaobfuscator\.com/i.test(c.src) && 'mentions luaobfuscator.com'),
     // the banner of the service's free tier: an ASCII-art header and the credit line (read on 24 real scripts of the public collection)
     rule('art', 'banner', 0.9, (c) => /\.____\s+________ ___\.[\s\S]{0,1200}Obfuscator\.com/.test(c.src.slice(0, 3000)) && 'the ASCII-art header of the free tier'),
+    // Prompt XXV: the art spells the service's name; the line under it is the customer's own message (111 ChaoticGood scripts replaced the
+    // credit with theirs, e.g. "Welcome to ... ~ Much Love, <name>") and were not detected
+    rule('art-custom', 'banner', 0.85, (c) => /^\s*--\[\[\s*\n\s*\.____\s+________ ___\.\s+_____\s+__\s*\n\s*\|\s+\|\s+__ _______\s+\\_____\s+\\\\_ \|___\/ ____\\_ __/.test(c.src.slice(0, 1500)) && 'the service\u2019s ASCII-art header (it spells LuaObfuscator), with a custom message under it'),
     // the prelude of the service's string-XOR output: local v0=string.char; v1=string.byte; v2=string.sub; v3=bit32 or bit; ... then v4=v3.bxor, v5=table.concat, v6=table.insert
-    rule('prelude', 'structure', 0.85, (c) => /^(?:--[^\n]*\n)*\s*local v0=string\.char;\s*local v1=string\.byte;\s*local v2=string\.sub;\s*local v3=bit32 or bit\s*;/.test(c.src.slice(0, 800)) && 'starts with local v0=string.char; local v1=string.byte; local v2=string.sub; local v3=bit32 or bit; (numbered names, XOR string decoder)'),
+    rule('prelude', 'structure', 0.85, (c) => /^(?:--\[(=*)\[[\s\S]{0,3000}?\]\1\](?:--)?\s*|--[^\n]*\n|\s)*local v0=string\.char;\s*local v1=string\.byte;\s*local v2=string\.sub;\s*local v3=bit32 or bit\s*;/.test(c.src.slice(0, 800)) && 'starts with local v0=string.char; local v1=string.byte; local v2=string.sub; local v3=bit32 or bit; (numbered names, XOR string decoder)'),
     // Prompt XXIV: the VM preset's prelude, which stays when the banner is stripped (1143 of the 4473 VM scripts of a public collection had no
     // banner and were not detected): numbered library locals, then the deserialiser `local function v15(v16, v17, ...)`
     rule('vm-prelude', 'structure', 0.92, (c) => /local v0=tonumber;local v1=string\.byte;local v2=string\.char;local v3=string\.sub;local v4=string\.gsub;local v5=string\.rep;local v6=table\.concat;local v7=table\.insert;local v8=math\.ldexp;local v9=getfenv or/.test(c.src.slice(0, 6000))
       && 'the VM preset\u2019s prelude: numbered library locals (v0 = tonumber ... v9 = getfenv) and a deserialiser for the program it carries as hex text', true),
+    // the same prelude further in: inside a `do` block, or after code someone put in front of the service's output (39 ChaoticGood scripts)
+    rule('prelude-inner', 'structure', 0.8, (c) => /(?:^|[\s;)]|\bdo\s)local v0=string\.char;local v1=string\.byte;local v2=string\.sub;local v3=bit32 or bit\s*;/.test(c.src.slice(0, 8000)) && 'the service\u2019s string-XOR prelude (local v0=string.char; ... local v3=bit32 or bit), after other code or inside a do block'),
     rule('credit', 'banner', 0.95, (c) => { const m = /Obfuscator\.com\s+\(Alpha\s*([0-9][0-9.]*)\)[\s\S]{0,40}Much Love, Ferib/.exec(c.src.slice(0, 4000)); return m ? { text: `LuaObfuscator.com credit line (Alpha ${m[1]})`, version: `Alpha ${m[1]}` } : false; }),
   ],
   psu: [
