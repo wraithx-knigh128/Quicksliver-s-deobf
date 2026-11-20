@@ -1108,7 +1108,10 @@ test('Reconstruct: upload a protected script and its original, watch the stages,
   await page.click('[data-tab="compatibility"]');
   const compat = await page.textContent('.recon-right');
   assert.match(compat, /Luraph v14\.8[\s\S]*Experimental/);
-  assert.match(compat, /Luraph v15\.1 and later 15\.x[\s\S]*Unsupported/);
+  // Prompt XXII: v15.1 has its own row (it exists, no sample: unsupported, nearest engine tried); v15.2+ is not confirmed to exist
+  assert.match(compat, /Luraph v15\.1none \(.*tried\)Unsupported/);
+  assert.match(compat, /Luraph v15\.2 and later 15\.x[\s\S]*Version uncertain[\s\S]*No source confirms/);
+  assert.equal(await page.locator('.recon-right .badge:has-text("Version uncertain")').count(), 1);
   assert.deepEqual(problems, []);
   await ctx.close();
 });

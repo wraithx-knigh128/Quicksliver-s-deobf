@@ -315,13 +315,19 @@ def _run_process(cmd, cwd, env, deadline, run: Run):
 _HEADER_LINES = re.compile(r"^(-- (Reconstructed by QuickSilver|Devirtualized with Luraph|Behaviour trace:|source: ).*\n)+", re.M)
 
 
+def attempt_budget(remaining: int, reserve: int = 0) -> int:
+    """Seconds one engine attempt may run. Prompt XXII: an attempt may use the job's remaining time, less a reserve for a fallback step
+    that follows. It was capped at 120 s, so a job given the 240 s maximum still cut a large v15 lift off in its third round, and the
+    "request a longer limit" hint could not help. Never more than what is left."""
+    if remaining - reserve >= 60:
+        return max(5, remaining - reserve)
+    return max(1, min(120, remaining))
+
+
 def _attempt(step, input_path: Path, work: Path, deadline, run: Run, reserve: int = 0) -> dict:
     spec = ENGINES[step["engine"]]
     out_path = work / ("out_%s_%s.lua" % (step["engine"], step["mode"]))
-    remaining = max(5, int(deadline - time.time()))
-    # Prompt XXII: an attempt may use the job's remaining time (less a reserve for a fallback step that follows). It was capped at 120 s, so a
-    # job given the 240 s maximum still cut a large v15 lift off in its third round, and the "request a longer limit" hint could not help.
-    budget = max(5, remaining - reserve) if remaining - reserve >= 60 else min(120, remaining)
+    budget = attempt_budget(max(5, int(deadline - time.time())), reserve)
     py = sys.executable or "python3"
     if spec["front"] == "cli":
         cmd = [py, "-I", "cli.py", str(input_path), "-o", str(out_path), "--timeout", str(budget), "--no-credit"] + spec["args"]

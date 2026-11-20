@@ -8,6 +8,7 @@ import { parseBanner, versionFor, VERSIONS } from '../src/reconstruct/engines.js
 import { versionStatus } from '../src/reconstruct/status.js';
 import { generationForVersion } from '../src/research/identify.js';
 import { recoverSource } from '../src/api.js';
+import { spawnSync } from 'node:child_process';
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const banner = (v) => `-- This file was protected using Luraph Obfuscator v${v} [https://lura.ph/]`;
@@ -50,4 +51,23 @@ test('LuaQ v2.7: the outer layers decode, and the result is "payload unavailable
   assert.equal(st.detail.programInFile, false);
   assert.equal(r.outcome.outcome, 'payload-unavailable');
   assert.match(r.outcome.reasons.join(' '), /delivered from outside the file/);
+});
+
+// L1 (Prompt XXII): each engine attempt was capped at 120 s, so a large v15 lift was cut off even when the job had 240 s; two of the eight
+// local v15.0 scripts produced nothing until the attempt was given the job's remaining time.
+const engineDir = path.join(root, 'api', '_engine', 'luraph');
+const hasPython = spawnSync('python3', ['-V']).status === 0;
+test('engine service: an attempt may use the job’s remaining time, less a reserve for a following step, and never more than is left', { skip: !hasPython && 'python3 is not available' }, () => {
+  const r = spawnSync('python3', ['-I', '-c', `
+import sys, json
+sys.path.insert(0, ${JSON.stringify(engineDir)})
+import service
+print(json.dumps([service.attempt_budget(*a) for a in [(240, 0), (240, 30), (200, 30), (80, 30), (30, 0), (5, 0)]]))
+`], { encoding: 'utf8' });
+  assert.equal(r.status, 0, r.stderr);
+  const [full, reserved, mid, small, short, tiny] = JSON.parse(r.stdout);
+  assert.equal(full, 240, 'the whole 240 s job (was 120)');
+  assert.equal(reserved, 210, 'room is kept for the fallback step');
+  assert.equal(mid, 170);
+  assert.ok(small <= 80 && short <= 30 && tiny <= 5, 'never more than what is left');
 });

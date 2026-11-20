@@ -159,13 +159,15 @@ Each revision of the tool that can still be run, measured on its own fixtures (a
 
 Commercial virtualising obfuscator for Lua and Luau (lura.ph). Per-script VM; v14 and v15 are current.
 
-**Status:** unsupported (signature). Banner comments only. No real Luraph output could be obtained here, so structural detection is heuristic.
+**Status:** unsupported (signature). The banner comment (`protected using Luraph Obfuscator vX`) routes a file to a version row; without it, structure only (heuristic). Luraph is closed and hosted, so no output could be generated here: the evidence is real outputs from public collections (8 v15.0 scripts, git-ignored, none with its original) and the vendor’s macro SDK (github.com/Luraph/macrosdk), whose history shows v15 (2026-08-10) and v15.1 (2026-10-03, LPH_ASSUME and LPH_OPAQUE).
 
 **Detection on real scripts:** 206 of 218 files filed under Luraph in the public collection (https://github.com/vyxonq-dev/obfuscator-samples, commit `82e582fcdd`) were identified as Luraph; the version read from the script matched the collection's version directory in 195 of 195. The collection's labels are its uploaders' and are noisy; a file our rules call something else was looked at before being counted as a miss.
 
 **Limits**
 
-* Luraph generates a different virtual machine for every script. Static recovery of the original source from a v14/v15 VM is not something this tool can do, and no output of the real obfuscator was available to test against.
+* Luraph builds a different virtual machine for every script. The static pipeline does not rebuild it; the separate dynamic engine (Reconstruct tab, api/_engine/luraph) does for v15.0, and its results are in data/research/luraph-compat.json.
+* v15.0, measured on the 8 local scripts: 6 lifted to Lua that parses and 2 produced nothing until the per-attempt time cap was fixed (Prompt XXII; then 1490 and 109 lines, syntax valid). None has an original, so none is behaviourally verified; the strings in the lifted code that are observable were found in a behaviour trace for 1/1, 2/4, 4/14 and 21/40 of them (33/33 for the trace-assisted run).
+* v15.1 exists (vendor SDK) but no sample of it was available: it is reported as unsupported with v15.0 as the nearest engine, never as supported. v15.2 and later: no source confirms such a version (SDK history checked to 2026-11-20); a banner that claims one is reported as version-uncertain and inherits nothing from 15.1.
 
 **Documented techniques with no fixture:** custom VM per script, encrypted constants, anti-tamper, VM compression (v14+)
 
