@@ -148,8 +148,19 @@ New tests:
 - `tests/xxii-volt.test.mjs` (6 tests);
 - `tests/xxii-versions.test.mjs` (5 tests).
 
-The tests that need git-ignored samples skip with the reason when the samples are absent. The full `npm test` and the end-to-end site tests
-were run sequentially; their results are recorded in the commit that adds this report.
+The tests that need git-ignored samples skip with the reason when the samples are absent.
+
+Measured results, with the tests run one file at a time:
+
+| Suite | Tests | Passed | Failed | Skipped |
+|---|---|---|---|---|
+| `npm test` | 1186 | 1180 | 0 | 6 |
+| `npm run test:e2e` (Playwright, Chromium) | 79 | 79 | 0 | 0 |
+
+The first full run had 9 failures, all in `tests/reconstruct.test.mjs`. They were caused by a `NameError` in the engine service, introduced
+when `attempt_budget()` was extracted (L1). It was fixed in `479dbdb`, and that file was rerun alone: 33 of 33 passed, together with
+`tests/xxii-versions.test.mjs`. The e2e run includes the Reconstruct compatibility table, which now shows the separate v15.1 row and the
+"Version uncertain" badge for v15.2 and later.
 
 The result classes asked for in the prompt map onto the engine's outcome classes:
 
