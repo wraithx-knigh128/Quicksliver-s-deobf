@@ -60,7 +60,7 @@ export function summarizeInventory(rows) {
       const bv = r.banner && /v?(\d+(?:\.\d+)*[A-Za-z]?)/.exec(r.banner.replace(/^.*?(?:Obfuscator|Fuscate|fuscator|V)\s*/i, ''));
       if (r.banner) bannerVersions[bv ? bv[1] : '?'] = (bannerVersions[bv ? bv[1] : '?'] || 0) + 1;
       // a confident detection of another family is a candidate mislabel (or a layered script); kept with the evidence for review
-      if (want && id !== 'none' && !ok && f[1] >= 0.9) suspects.push({ path: r.path, label: k, detected: id, confidence: f[1], version: f[2], banner: r.banner });
+      if (want && id !== 'none' && !ok && f[1] >= 0.9) suspects.push({ path: r.path, label: k, detected: id, confidence: f[1], version: f[2] });  // no banner text: third-party header text is not recorded
     }
     const n = list.length;
     out.push({

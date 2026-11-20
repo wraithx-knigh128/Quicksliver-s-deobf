@@ -1,0 +1,7232 @@
+{
+ "source": {
+  "repository": "https://github.com/terrorlua/obfuscator-samples",
+  "note": "No licence is stated: the samples are kept outside this repository (local/terrorlua, git-ignored) and only measurements are recorded here. Folder labels are the collection’s claims; the README says wrongly filed scripts exist."
+ },
+ "generated": "2026-11-20",
+ "inventory": {
+  "files": 43288,
+  "groups": [
+   {
+    "group": "77fuscator/0.4.7",
+    "label": "77fuscator",
+    "sub": "0.4.7",
+    "files": 2,
+    "expected": "fuscator77",
+    "bytes": {
+     "min": 98348,
+     "median": 261077,
+     "max": 261077
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "fuscator77",
+      2
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "0.4.7",
+      2
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "77fuscator/0.4.8",
+    "label": "77fuscator",
+    "sub": "0.4.8",
+    "files": 3,
+    "expected": "fuscator77",
+    "bytes": {
+     "min": 111490,
+     "median": 178753,
+     "max": 269236
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "fuscator77",
+      3
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      66.7
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "0.4.8",
+      3
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "77fuscator/0.4.9",
+    "label": "77fuscator",
+    "sub": "0.4.9",
+    "files": 86,
+    "expected": "fuscator77",
+    "bytes": {
+     "min": 72132,
+     "median": 89905,
+     "max": 322776
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "fuscator77",
+      86
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "0.4.9",
+      86
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "77fuscator/0.5.0",
+    "label": "77fuscator",
+    "sub": "0.5.0",
+    "files": 471,
+    "expected": "fuscator77",
+    "bytes": {
+     "min": 58637,
+     "median": 79330,
+     "max": 354824
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "fuscator77",
+      471
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      98.9
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "0.5.0",
+      463
+     ],
+     [
+      "?",
+      4
+     ],
+     [
+      "4",
+      1
+     ],
+     [
+      "77f",
+      1
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "77fuscator/0.5.1",
+    "label": "77fuscator",
+    "sub": "0.5.1",
+    "files": 76,
+    "expected": "fuscator77",
+    "bytes": {
+     "min": 49196,
+     "median": 62972,
+     "max": 340933
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "fuscator77",
+      76
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "0.5.1",
+      76
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "77fuscator/0.6.0",
+    "label": "77fuscator",
+    "sub": "0.6.0",
+    "files": 203,
+    "expected": "fuscator77",
+    "bytes": {
+     "min": 9041,
+     "median": 62486,
+     "max": 333508
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "fuscator77",
+      203
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      98.5
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "0.6.0",
+      202
+     ],
+     [
+      "?",
+      1
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "77fuscator/0.6.1",
+    "label": "77fuscator",
+    "sub": "0.6.1",
+    "files": 43,
+    "expected": "fuscator77",
+    "bytes": {
+     "min": 53525,
+     "median": 111923,
+     "max": 322905
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "fuscator77",
+      43
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "0.6.1",
+      43
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Boronide/Default",
+    "label": "Boronide",
+    "sub": "Default",
+    "files": 1133,
+    "expected": "boronide",
+    "bytes": {
+     "min": 54066,
+     "median": 271813,
+     "max": 21047796
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "boronide",
+      1133
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ],
+     [
+      "escape-encoded-strings",
+      18.4
+     ]
+    ],
+    "bannerVersions": [],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Boronide/Maximum",
+    "label": "Boronide",
+    "sub": "Maximum",
+    "files": 1120,
+    "expected": "boronide",
+    "bytes": {
+     "min": 59583,
+     "median": 520509,
+     "max": 12969194
+    },
+    "parsed": 96.3,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "boronide",
+      1120
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      96.3
+     ],
+     [
+      "escape-encoded-strings",
+      0.4
+     ],
+     [
+      "bytecode-blob",
+      0.1
+     ]
+    ],
+    "bannerVersions": [],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Boronide/Minimal",
+    "label": "Boronide",
+    "sub": "Minimal",
+    "files": 1132,
+    "expected": "boronide",
+    "bytes": {
+     "min": 49502,
+     "median": 266855,
+     "max": 21265274
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "boronide",
+      1132
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ],
+     [
+      "escape-encoded-strings",
+      19.2
+     ]
+    ],
+    "bannerVersions": [],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Boronide/SuperOps-Only",
+    "label": "Boronide",
+    "sub": "SuperOps-Only",
+    "files": 1126,
+    "expected": "boronide",
+    "bytes": {
+     "min": 50484,
+     "median": 521929,
+     "max": 12895275
+    },
+    "parsed": 96.1,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "boronide",
+      1126
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      96.1
+     ],
+     [
+      "escape-encoded-strings",
+      0.4
+     ]
+    ],
+    "bannerVersions": [],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Hercules/Maximum",
+    "label": "Hercules",
+    "sub": "Maximum",
+    "files": 868,
+    "expected": "hercules",
+    "bytes": {
+     "min": 135316,
+     "median": 318796,
+     "max": 24053533
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "hercules",
+      868
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ],
+     [
+      "escape-encoded-strings",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "1.6.2",
+      868
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Hercules/Medium",
+    "label": "Hercules",
+    "sub": "Medium",
+    "files": 870,
+    "expected": "hercules",
+    "bytes": {
+     "min": 137163,
+     "median": 321111,
+     "max": 24573693
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "hercules",
+      870
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ],
+     [
+      "escape-encoded-strings",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "1.6.2",
+      870
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Hercules/Minimum",
+    "label": "Hercules",
+    "sub": "Minimum",
+    "files": 870,
+    "expected": "hercules",
+    "bytes": {
+     "min": 133116,
+     "median": 321452,
+     "max": 24346649
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "hercules",
+      870
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ],
+     [
+      "escape-encoded-strings",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "1.6.2",
+      870
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Ironbrew1/",
+    "label": "Ironbrew1",
+    "sub": null,
+    "files": 56,
+    "expected": "ironbrew1",
+    "bytes": {
+     "min": 24972,
+     "median": 92851,
+     "max": 330565
+    },
+    "parsed": 100,
+    "detected": 98.2,
+    "agree": 98.2,
+    "topFamilies": [
+     [
+      "ironbrew1",
+      55
+     ],
+     [
+      "none",
+      1
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ],
+     [
+      "loadstring-layer",
+      5.4
+     ],
+     [
+      "vendor-banner",
+      1.8
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "1",
+      52
+     ],
+     [
+      "3H",
+      3
+     ],
+     [
+      "?",
+      1
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "IronBrew2/",
+    "label": "IronBrew2",
+    "sub": null,
+    "files": 2000,
+    "expected": "ironbrew2",
+    "bytes": {
+     "min": 3201,
+     "median": 92141,
+     "max": 4559133
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "ironbrew2",
+      2000
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ]
+    ],
+    "bannerVersions": [],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Ironbrew3/v0.235",
+    "label": "Ironbrew3",
+    "sub": "v0.235",
+    "files": 7,
+    "expected": "ironbrew3",
+    "bytes": {
+     "min": 21332,
+     "median": 357894,
+     "max": 598345
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "ironbrew3",
+      7
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "0.235",
+      7
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Ironbrew3/v0.248",
+    "label": "Ironbrew3",
+    "sub": "v0.248",
+    "files": 10,
+    "expected": "ironbrew3",
+    "bytes": {
+     "min": 24083,
+     "median": 56730,
+     "max": 491936
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "ironbrew3",
+      10
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "0.248",
+      10
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "LPS/v1",
+    "label": "LPS",
+    "sub": "v1",
+    "files": 28,
+    "expected": "lps",
+    "bytes": {
+     "min": 33505,
+     "median": 52023,
+     "max": 672378
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "lps",
+      28
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ]
+    ],
+    "bannerVersions": [],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "LPS/v2",
+    "label": "LPS",
+    "sub": "v2",
+    "files": 3,
+    "expected": "lps",
+    "bytes": {
+     "min": 48627,
+     "median": 72916,
+     "max": 1545060
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "lps",
+      3
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ],
+     [
+      "compressed-payload",
+      33.3
+     ]
+    ],
+    "bannerVersions": [],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "LuaObfuscator/ChaoticEvil",
+    "label": "LuaObfuscator",
+    "sub": "ChaoticEvil",
+    "files": 42,
+    "expected": "luaobfuscator",
+    "bytes": {
+     "min": 11406,
+     "median": 15116,
+     "max": 139352
+    },
+    "parsed": 97.6,
+    "detected": 97.6,
+    "agree": 97.6,
+    "topFamilies": [
+     [
+      "luaobfuscator",
+      41
+     ],
+     [
+      "none",
+      1
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      97.6
+     ],
+     [
+      "escape-encoded-strings",
+      66.7
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "0.10.9",
+      3
+     ],
+     [
+      "0.10.8",
+      2
+     ],
+     [
+      "0.10.7",
+      1
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "LuaObfuscator/ChaoticGood",
+    "label": "LuaObfuscator",
+    "sub": "ChaoticGood",
+    "files": 1878,
+    "expected": "luaobfuscator",
+    "bytes": {
+     "min": 373,
+     "median": 12650,
+     "max": 1801129
+    },
+    "parsed": 98.1,
+    "detected": 99.8,
+    "agree": 98.4,
+    "topFamilies": [
+     [
+      "luaobfuscator",
+      1848
+     ],
+     [
+      "moonsec_v3",
+      23
+     ],
+     [
+      "none",
+      3
+     ],
+     [
+      "prometheus",
+      2
+     ]
+    ],
+    "traits": [
+     [
+      "mangled-names",
+      97.6
+     ],
+     [
+      "minified",
+      88.2
+     ],
+     [
+      "escape-encoded-strings",
+      75.2
+     ],
+     [
+      "loadstring-layer",
+      65.4
+     ],
+     [
+      "string-table",
+      0.1
+     ],
+     [
+      "vendor-banner",
+      0.1
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "0.10.8",
+      511
+     ],
+     [
+      "0.10.9",
+      414
+     ],
+     [
+      "0.10.7",
+      105
+     ],
+     [
+      "0.10.6",
+      41
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "LuaObfuscator/VM",
+    "label": "LuaObfuscator",
+    "sub": "VM",
+    "files": 4473,
+    "expected": "luaobfuscator",
+    "bytes": {
+     "min": 3509,
+     "median": 41159,
+     "max": 6634620
+    },
+    "parsed": 99.4,
+    "detected": 98.8,
+    "agree": 98.7,
+    "topFamilies": [
+     [
+      "luaobfuscator",
+      4417
+     ],
+     [
+      "none",
+      53
+     ],
+     [
+      "moonsec_v3",
+      2
+     ],
+     [
+      "luraph",
+      1
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      99.3
+     ],
+     [
+      "loadstring-layer",
+      0.1
+     ],
+     [
+      "escape-encoded-strings",
+      0.1
+     ],
+     [
+      "vendor-banner",
+      0
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "0.10.8",
+      1186
+     ],
+     [
+      "0.10.9",
+      865
+     ],
+     [
+      "0.10.7",
+      323
+     ],
+     [
+      "0.10.5",
+      132
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Luraph/v1",
+    "label": "Luraph",
+    "sub": "v1",
+    "files": 2,
+    "expected": "luraph",
+    "bytes": {
+     "min": 40148,
+     "median": 40149,
+     "max": 40149
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "luraph",
+      2
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ],
+     [
+      "escape-encoded-strings",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "1",
+      2
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Luraph/v2",
+    "label": "Luraph",
+    "sub": "v2",
+    "files": 1,
+    "expected": "luraph",
+    "bytes": {
+     "min": 18113,
+     "median": 18113,
+     "max": 18113
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "luraph",
+      1
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ],
+     [
+      "escape-encoded-strings",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "2",
+      1
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Luraph/v3",
+    "label": "Luraph",
+    "sub": "v3",
+    "files": 1,
+    "expected": "luraph",
+    "bytes": {
+     "min": 113283,
+     "median": 113283,
+     "max": 113283
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "luraph",
+      1
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ],
+     [
+      "escape-encoded-strings",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "3",
+      1
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Luraph/v4",
+    "label": "Luraph",
+    "sub": "v4",
+    "files": 1,
+    "expected": "luraph",
+    "bytes": {
+     "min": 43035,
+     "median": 43035,
+     "max": 43035
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "luraph",
+      1
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "4",
+      1
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Luraph/v5.1",
+    "label": "Luraph",
+    "sub": "v5.1",
+    "files": 1,
+    "expected": "luraph",
+    "bytes": {
+     "min": 55358,
+     "median": 55358,
+     "max": 55358
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "luraph",
+      1
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "5.1",
+      1
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Luraph/v6.3",
+    "label": "Luraph",
+    "sub": "v6.3",
+    "files": 1,
+    "expected": "luraph",
+    "bytes": {
+     "min": 67827,
+     "median": 67827,
+     "max": 67827
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "luraph",
+      1
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "6.3",
+      1
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Luraph/v7.2.3",
+    "label": "Luraph",
+    "sub": "v7.2.3",
+    "files": 1,
+    "expected": "luraph",
+    "bytes": {
+     "min": 273122,
+     "median": 273122,
+     "max": 273122
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "luraph",
+      1
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ],
+     [
+      "escape-encoded-strings",
+      100
+     ],
+     [
+      "loadstring-layer",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "7.2.3",
+      1
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Luraph/v8.0",
+    "label": "Luraph",
+    "sub": "v8.0",
+    "files": 1,
+    "expected": "luraph",
+    "bytes": {
+     "min": 93219,
+     "median": 93219,
+     "max": 93219
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "luraph",
+      1
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ],
+     [
+      "escape-encoded-strings",
+      100
+     ],
+     [
+      "loadstring-layer",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "8.0",
+      1
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Luraph/v9.2",
+    "label": "Luraph",
+    "sub": "v9.2",
+    "files": 1,
+    "expected": "luraph",
+    "bytes": {
+     "min": 90615,
+     "median": 90615,
+     "max": 90615
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "luraph",
+      1
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ],
+     [
+      "escape-encoded-strings",
+      100
+     ],
+     [
+      "loadstring-layer",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "9.2",
+      1
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Luraph/v10.2",
+    "label": "Luraph",
+    "sub": "v10.2",
+    "files": 1,
+    "expected": "luraph",
+    "bytes": {
+     "min": 33701,
+     "median": 33701,
+     "max": 33701
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "luraph",
+      1
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ],
+     [
+      "loadstring-layer",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "10.2",
+      1
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Luraph/v11.1",
+    "label": "Luraph",
+    "sub": "v11.1",
+    "files": 1,
+    "expected": "luraph",
+    "bytes": {
+     "min": 54316,
+     "median": 54316,
+     "max": 54316
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "luraph",
+      1
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ],
+     [
+      "loadstring-layer",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "11.1",
+      1
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Luraph/v11.3",
+    "label": "Luraph",
+    "sub": "v11.3",
+    "files": 1,
+    "expected": "luraph",
+    "bytes": {
+     "min": 120468,
+     "median": 120468,
+     "max": 120468
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "luraph",
+      1
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "11.3",
+      1
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Luraph/v11.5",
+    "label": "Luraph",
+    "sub": "v11.5",
+    "files": 2,
+    "expected": "luraph",
+    "bytes": {
+     "min": 68864,
+     "median": 132218,
+     "max": 132218
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "luraph",
+      2
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ],
+     [
+      "loadstring-layer",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "11.5",
+      2
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Luraph/v11.6",
+    "label": "Luraph",
+    "sub": "v11.6",
+    "files": 1,
+    "expected": "luraph",
+    "bytes": {
+     "min": 67150,
+     "median": 67150,
+     "max": 67150
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "luraph",
+      1
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "11.6",
+      1
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Luraph/v11.8.1",
+    "label": "Luraph",
+    "sub": "v11.8.1",
+    "files": 1,
+    "expected": "luraph",
+    "bytes": {
+     "min": 39060,
+     "median": 39060,
+     "max": 39060
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "luraph",
+      1
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "11.8.1",
+      1
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Luraph/v12.2",
+    "label": "Luraph",
+    "sub": "v12.2",
+    "files": 1,
+    "expected": "luraph",
+    "bytes": {
+     "min": 71546,
+     "median": 71546,
+     "max": 71546
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "luraph",
+      1
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "12.2",
+      1
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Luraph/v13.2.1",
+    "label": "Luraph",
+    "sub": "v13.2.1",
+    "files": 3,
+    "expected": "luraph",
+    "bytes": {
+     "min": 57856,
+     "median": 86185,
+     "max": 115888
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "luraph",
+      3
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "13.2.1",
+      3
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Luraph/v13.4.3",
+    "label": "Luraph",
+    "sub": "v13.4.3",
+    "files": 1,
+    "expected": "luraph",
+    "bytes": {
+     "min": 264648,
+     "median": 264648,
+     "max": 264648
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "luraph",
+      1
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "13.4.3",
+      1
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Luraph/v13.4.5",
+    "label": "Luraph",
+    "sub": "v13.4.5",
+    "files": 5,
+    "expected": "luraph",
+    "bytes": {
+     "min": 222748,
+     "median": 300417,
+     "max": 694132
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "luraph",
+      5
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "13.4.5",
+      5
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Luraph/v13.5.3",
+    "label": "Luraph",
+    "sub": "v13.5.3",
+    "files": 2,
+    "expected": "luraph",
+    "bytes": {
+     "min": 465445,
+     "median": 465446,
+     "max": 465446
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "luraph",
+      2
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "13.5.3",
+      2
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Luraph/v13.5.4",
+    "label": "Luraph",
+    "sub": "v13.5.4",
+    "files": 1,
+    "expected": "luraph",
+    "bytes": {
+     "min": 97502,
+     "median": 97502,
+     "max": 97502
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "luraph",
+      1
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "13.5.4",
+      1
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Luraph/v13.5.6",
+    "label": "Luraph",
+    "sub": "v13.5.6",
+    "files": 4,
+    "expected": "luraph",
+    "bytes": {
+     "min": 38449,
+     "median": 369930,
+     "max": 615935
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "luraph",
+      4
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "13.5.6",
+      4
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Luraph/v13.5.8",
+    "label": "Luraph",
+    "sub": "v13.5.8",
+    "files": 2,
+    "expected": "luraph",
+    "bytes": {
+     "min": 444162,
+     "median": 2633473,
+     "max": 2633473
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "luraph",
+      2
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "13.5.8",
+      2
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Luraph/v13.5.9",
+    "label": "Luraph",
+    "sub": "v13.5.9",
+    "files": 2,
+    "expected": "luraph",
+    "bytes": {
+     "min": 42131,
+     "median": 262129,
+     "max": 262129
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "luraph",
+      2
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "13.5.9",
+      2
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Luraph/v13.6.6",
+    "label": "Luraph",
+    "sub": "v13.6.6",
+    "files": 8,
+    "expected": "luraph",
+    "bytes": {
+     "min": 127401,
+     "median": 694393,
+     "max": 913432
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "luraph",
+      8
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "13.6.6",
+      8
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Luraph/v13.6.7",
+    "label": "Luraph",
+    "sub": "v13.6.7",
+    "files": 16,
+    "expected": "luraph",
+    "bytes": {
+     "min": 132185,
+     "median": 835572,
+     "max": 1929703
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "luraph",
+      16
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ],
+     [
+      "loadstring-layer",
+      12.5
+     ],
+     [
+      "opaque-predicates",
+      6.3
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "13.6.7",
+      16
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Luraph/v13.7",
+    "label": "Luraph",
+    "sub": "v13.7",
+    "files": 2,
+    "expected": "luraph",
+    "bytes": {
+     "min": 36554,
+     "median": 679720,
+     "max": 679720
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "luraph",
+      2
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "13.7",
+      2
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Luraph/v13.8",
+    "label": "Luraph",
+    "sub": "v13.8",
+    "files": 2,
+    "expected": "luraph",
+    "bytes": {
+     "min": 104135,
+     "median": 104136,
+     "max": 104136
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "luraph",
+      2
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "13.8",
+      2
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Luraph/v13.8.1",
+    "label": "Luraph",
+    "sub": "v13.8.1",
+    "files": 11,
+    "expected": "luraph",
+    "bytes": {
+     "min": 107267,
+     "median": 360682,
+     "max": 7094204
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "luraph",
+      11
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "13.8.1",
+      11
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Luraph/v14.0.2",
+    "label": "Luraph",
+    "sub": "v14.0.2",
+    "files": 11,
+    "expected": "luraph",
+    "bytes": {
+     "min": 96654,
+     "median": 270147,
+     "max": 1227266
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "luraph",
+      11
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "14.0.2",
+      11
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Luraph/v14.0.3",
+    "label": "Luraph",
+    "sub": "v14.0.3",
+    "files": 19,
+    "expected": "luraph",
+    "bytes": {
+     "min": 44124,
+     "median": 147350,
+     "max": 377233
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "luraph",
+      19
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ],
+     [
+      "loadstring-layer",
+      5.3
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "14.0.3",
+      19
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Luraph/v14.1",
+    "label": "Luraph",
+    "sub": "v14.1",
+    "files": 35,
+    "expected": "luraph",
+    "bytes": {
+     "min": 53211,
+     "median": 175731,
+     "max": 571274
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "luraph",
+      35
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      94.3
+     ],
+     [
+      "junk-code",
+      5.7
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "14.1",
+      35
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Luraph/v14.2",
+    "label": "Luraph",
+    "sub": "v14.2",
+    "files": 83,
+    "expected": "luraph",
+    "bytes": {
+     "min": 33652,
+     "median": 278579,
+     "max": 2170288
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "luraph",
+      83
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      92.8
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "14.2",
+      83
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Luraph/v14.3",
+    "label": "Luraph",
+    "sub": "v14.3",
+    "files": 858,
+    "expected": "luraph",
+    "bytes": {
+     "min": 423,
+     "median": 178139,
+     "max": 4083264
+    },
+    "parsed": 99.3,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "luraph",
+      858
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      99.9
+     ],
+     [
+      "mangled-names",
+      97.2
+     ],
+     [
+      "loadstring-layer",
+      1.5
+     ],
+     [
+      "junk-code",
+      0.6
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "14.3",
+      853
+     ],
+     [
+      "8889",
+      4
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Luraph/v14.4",
+    "label": "Luraph",
+    "sub": "v14.4",
+    "files": 21,
+    "expected": "luraph",
+    "bytes": {
+     "min": 39540,
+     "median": 139782,
+     "max": 332671
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "luraph",
+      21
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      90.5
+     ],
+     [
+      "opaque-predicates",
+      19
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "14.4",
+      21
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Luraph/v14.4.1",
+    "label": "Luraph",
+    "sub": "v14.4.1",
+    "files": 697,
+    "expected": "luraph",
+    "bytes": {
+     "min": 40112,
+     "median": 163703,
+     "max": 5336136
+    },
+    "parsed": 98.9,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "luraph",
+      697
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      95
+     ],
+     [
+      "opaque-predicates",
+      28.3
+     ],
+     [
+      "loadstring-layer",
+      0.6
+     ],
+     [
+      "junk-code",
+      0.1
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "14.4.1",
+      697
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Luraph/v14.4.2",
+    "label": "Luraph",
+    "sub": "v14.4.2",
+    "files": 160,
+    "expected": "luraph",
+    "bytes": {
+     "min": 4000,
+     "median": 240327,
+     "max": 3886323
+    },
+    "parsed": 98.8,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "luraph",
+      160
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      96.3
+     ],
+     [
+      "opaque-predicates",
+      5.6
+     ],
+     [
+      "junk-code",
+      0.6
+     ],
+     [
+      "loadstring-layer",
+      0.6
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "14.4.2",
+      160
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Luraph/v14.5",
+    "label": "Luraph",
+    "sub": "v14.5",
+    "files": 13,
+    "expected": "luraph",
+    "bytes": {
+     "min": 73225,
+     "median": 356357,
+     "max": 674728
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "luraph",
+      13
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "14.5",
+      13
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Luraph/v14.5.1",
+    "label": "Luraph",
+    "sub": "v14.5.1",
+    "files": 36,
+    "expected": "luraph",
+    "bytes": {
+     "min": 65143,
+     "median": 301398,
+     "max": 976443
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "luraph",
+      36
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "14.5.1",
+      36
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Luraph/v14.5.2",
+    "label": "Luraph",
+    "sub": "v14.5.2",
+    "files": 157,
+    "expected": "luraph",
+    "bytes": {
+     "min": 53089,
+     "median": 384925,
+     "max": 1078888
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "luraph",
+      157
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      99.4
+     ],
+     [
+      "opaque-predicates",
+      3.8
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "14.5.2",
+      157
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Luraph/v14.6",
+    "label": "Luraph",
+    "sub": "v14.6",
+    "files": 1026,
+    "expected": "luraph",
+    "bytes": {
+     "min": 0,
+     "median": 269139,
+     "max": 1879256
+    },
+    "parsed": 98.8,
+    "detected": 99.9,
+    "agree": 99.9,
+    "topFamilies": [
+     [
+      "luraph",
+      1025
+     ],
+     [
+      "none",
+      1
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      99.8
+     ],
+     [
+      "mangled-names",
+      95.1
+     ],
+     [
+      "opaque-predicates",
+      6.2
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "14.6",
+      1025
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Luraph/v14.6.0",
+    "label": "Luraph",
+    "sub": "v14.6.0",
+    "files": 1,
+    "expected": "luraph",
+    "bytes": {
+     "min": 946722,
+     "median": 946722,
+     "max": 946722
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "luraph",
+      1
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ],
+     [
+      "opaque-predicates",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "14.6.0",
+      1
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Luraph/v14.6.2",
+    "label": "Luraph",
+    "sub": "v14.6.2",
+    "files": 2,
+    "expected": "luraph",
+    "bytes": {
+     "min": 95484,
+     "median": 161338,
+     "max": 161338
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "luraph",
+      2
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ],
+     [
+      "opaque-predicates",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "14.6.2",
+      2
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Luraph/v14.7",
+    "label": "Luraph",
+    "sub": "v14.7",
+    "files": 1123,
+    "expected": "luraph",
+    "bytes": {
+     "min": 47332,
+     "median": 1158238,
+     "max": 9851442
+    },
+    "parsed": 99.6,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "luraph",
+      1123
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      96.8
+     ],
+     [
+      "compressed-payload",
+      23.1
+     ],
+     [
+      "opaque-predicates",
+      10.7
+     ],
+     [
+      "loadstring-layer",
+      0.4
+     ],
+     [
+      "junk-code",
+      0.4
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "14.7",
+      1123
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Luraph/v14.8",
+    "label": "Luraph",
+    "sub": "v14.8",
+    "files": 12,
+    "expected": "luraph",
+    "bytes": {
+     "min": 113290,
+     "median": 438750,
+     "max": 1253911
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "luraph",
+      12
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      75
+     ],
+     [
+      "opaque-predicates",
+      66.7
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "14.8",
+      12
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Luraph/v14.9",
+    "label": "Luraph",
+    "sub": "v14.9",
+    "files": 7,
+    "expected": "luraph",
+    "bytes": {
+     "min": 212717,
+     "median": 2073892,
+     "max": 2418666
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "luraph",
+      7
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "14.9",
+      7
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Luraph/v15.0",
+    "label": "Luraph",
+    "sub": "v15.0",
+    "files": 12,
+    "expected": "luraph",
+    "bytes": {
+     "min": 170950,
+     "median": 543742,
+     "max": 1620173
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "luraph",
+      12
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "15.0",
+      12
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Luraph/v15.1",
+    "label": "Luraph",
+    "sub": "v15.1",
+    "files": 7,
+    "expected": "luraph",
+    "bytes": {
+     "min": 280360,
+     "median": 345141,
+     "max": 1673224
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "luraph",
+      7
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "15.1",
+      7
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Luraph/v15.2",
+    "label": "Luraph",
+    "sub": "v15.2",
+    "files": 6,
+    "expected": "luraph",
+    "bytes": {
+     "min": 185739,
+     "median": 279929,
+     "max": 439881
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "luraph",
+      6
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "15.2",
+      6
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "MoonSec/V2",
+    "label": "MoonSec",
+    "sub": "V2",
+    "files": 883,
+    "expected": "moonsec_v2",
+    "bytes": {
+     "min": 17212,
+     "median": 85872,
+     "max": 356085
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 99.8,
+    "topFamilies": [
+     [
+      "moonsec_v2",
+      881
+     ],
+     [
+      "psu",
+      2
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      97.3
+     ],
+     [
+      "junk-code",
+      12.2
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "?",
+      64
+     ],
+     [
+      "0x",
+      46
+     ],
+     [
+      "6666",
+      16
+     ],
+     [
+      "3",
+      13
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "MoonSec/V3",
+    "label": "MoonSec",
+    "sub": "V3",
+    "files": 792,
+    "expected": "moonsec_v3",
+    "bytes": {
+     "min": 12057,
+     "median": 141486,
+     "max": 357382
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "moonsec_v3",
+      792
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      99.5
+     ],
+     [
+      "junk-code",
+      3
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "3",
+      792
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "MoonVeil/2.0.5-beta",
+    "label": "MoonVeil",
+    "sub": "2.0.5-beta",
+    "files": 1,
+    "expected": "moonveil",
+    "bytes": {
+     "min": 80992,
+     "median": 80992,
+     "max": 80992
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "moonveil",
+      1
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "2.0.5",
+      1
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "MoonVeil/2.0.12-beta",
+    "label": "MoonVeil",
+    "sub": "2.0.12-beta",
+    "files": 1,
+    "expected": "moonveil",
+    "bytes": {
+     "min": 84409,
+     "median": 84409,
+     "max": 84409
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "moonveil",
+      1
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "2.0.12",
+      1
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "MoonVeil/2.0.15-beta",
+    "label": "MoonVeil",
+    "sub": "2.0.15-beta",
+    "files": 2,
+    "expected": "moonveil",
+    "bytes": {
+     "min": 126408,
+     "median": 160529,
+     "max": 160529
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "moonveil",
+      2
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "2.0.15",
+      2
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "MoonVeil/2.0.26",
+    "label": "MoonVeil",
+    "sub": "2.0.26",
+    "files": 6,
+    "expected": "moonveil",
+    "bytes": {
+     "min": 5307,
+     "median": 60793,
+     "max": 185177
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "moonveil",
+      6
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "2.0.26",
+      6
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "MoonVeil/v1.0.1",
+    "label": "MoonVeil",
+    "sub": "v1.0.1",
+    "files": 1,
+    "expected": "moonveil",
+    "bytes": {
+     "min": 183200,
+     "median": 183200,
+     "max": 183200
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "moonveil",
+      1
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ],
+     [
+      "escape-encoded-strings",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "1.0.1",
+      1
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "MoonVeil/v1.0.5",
+    "label": "MoonVeil",
+    "sub": "v1.0.5",
+    "files": 4,
+    "expected": "moonveil",
+    "bytes": {
+     "min": 3867,
+     "median": 11842,
+     "max": 47035
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "moonveil",
+      4
+     ]
+    ],
+    "traits": [
+     [
+      "mangled-names",
+      100
+     ],
+     [
+      "loadstring-layer",
+      75
+     ],
+     [
+      "minified",
+      50
+     ],
+     [
+      "escape-encoded-strings",
+      25
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "1.0.5",
+      4
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "MoonVeil/v1.2.1",
+    "label": "MoonVeil",
+    "sub": "v1.2.1",
+    "files": 11,
+    "expected": "moonveil",
+    "bytes": {
+     "min": 5458,
+     "median": 95359,
+     "max": 541554
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "moonveil",
+      11
+     ]
+    ],
+    "traits": [
+     [
+      "mangled-names",
+      100
+     ],
+     [
+      "minified",
+      27.3
+     ],
+     [
+      "escape-encoded-strings",
+      18.2
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "1.2.1",
+      11
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "MoonVeil/v1.2.2",
+    "label": "MoonVeil",
+    "sub": "v1.2.2",
+    "files": 19,
+    "expected": "moonveil",
+    "bytes": {
+     "min": 1537,
+     "median": 115610,
+     "max": 407750
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "moonveil",
+      19
+     ]
+    ],
+    "traits": [
+     [
+      "mangled-names",
+      100
+     ],
+     [
+      "minified",
+      63.2
+     ],
+     [
+      "escape-encoded-strings",
+      5.3
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "1.2.2",
+      19
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "MoonVeil/v1.3.0",
+    "label": "MoonVeil",
+    "sub": "v1.3.0",
+    "files": 106,
+    "expected": "moonveil",
+    "bytes": {
+     "min": 6194,
+     "median": 90466,
+     "max": 1765633
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "moonveil",
+      106
+     ]
+    ],
+    "traits": [
+     [
+      "mangled-names",
+      95.3
+     ],
+     [
+      "minified",
+      91.5
+     ],
+     [
+      "escape-encoded-strings",
+      19.8
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "1.3.0",
+      106
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "MoonVeil/v1.3.1",
+    "label": "MoonVeil",
+    "sub": "v1.3.1",
+    "files": 9,
+    "expected": "moonveil",
+    "bytes": {
+     "min": 53050,
+     "median": 94392,
+     "max": 530805
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "moonveil",
+      9
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "1.3.1",
+      9
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "MoonVeil/v1.3.2",
+    "label": "MoonVeil",
+    "sub": "v1.3.2",
+    "files": 5,
+    "expected": "moonveil",
+    "bytes": {
+     "min": 44863,
+     "median": 88294,
+     "max": 149638
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "moonveil",
+      5
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "1.3.2",
+      5
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "MoonVeil/v1.3.3",
+    "label": "MoonVeil",
+    "sub": "v1.3.3",
+    "files": 4,
+    "expected": "moonveil",
+    "bytes": {
+     "min": 52181,
+     "median": 93455,
+     "max": 93456
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "moonveil",
+      4
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "1.3.3",
+      4
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "MoonVeil/v1.4.0",
+    "label": "MoonVeil",
+    "sub": "v1.4.0",
+    "files": 25,
+    "expected": "moonveil",
+    "bytes": {
+     "min": 34340,
+     "median": 92852,
+     "max": 1672613
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "moonveil",
+      25
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      96
+     ],
+     [
+      "mangled-names",
+      92
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "1.4.0",
+      25
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "MoonVeil/v1.4.1",
+    "label": "MoonVeil",
+    "sub": "v1.4.1",
+    "files": 7,
+    "expected": "moonveil",
+    "bytes": {
+     "min": 82760,
+     "median": 83264,
+     "max": 134693
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "moonveil",
+      7
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "1.4.1",
+      7
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "MoonVeil/v1.4.2",
+    "label": "MoonVeil",
+    "sub": "v1.4.2",
+    "files": 7,
+    "expected": "moonveil",
+    "bytes": {
+     "min": 88704,
+     "median": 125566,
+     "max": 299803
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "moonveil",
+      7
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "1.4.2",
+      7
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "MoonVeil/v1.4.3",
+    "label": "MoonVeil",
+    "sub": "v1.4.3",
+    "files": 11,
+    "expected": "moonveil",
+    "bytes": {
+     "min": 14917,
+     "median": 126950,
+     "max": 181069
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "moonveil",
+      11
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ],
+     [
+      "escape-encoded-strings",
+      9.1
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "1.4.3",
+      11
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "MoonVeil/v1.4.4",
+    "label": "MoonVeil",
+    "sub": "v1.4.4",
+    "files": 19,
+    "expected": "moonveil",
+    "bytes": {
+     "min": 8554,
+     "median": 90057,
+     "max": 163314
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "moonveil",
+      19
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "1.4.4",
+      19
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "MoonVeil/v1.4.5",
+    "label": "MoonVeil",
+    "sub": "v1.4.5",
+    "files": 471,
+    "expected": "moonveil",
+    "bytes": {
+     "min": 7331,
+     "median": 95247,
+     "max": 2715623
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 99.2,
+    "topFamilies": [
+     [
+      "moonveil",
+      467
+     ],
+     [
+      "prometheus",
+      4
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      98.3
+     ],
+     [
+      "mangled-names",
+      95.5
+     ],
+     [
+      "escape-encoded-strings",
+      3.8
+     ],
+     [
+      "loadstring-layer",
+      1.1
+     ],
+     [
+      "string-table",
+      0.8
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "1.4.5",
+      471
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Prometheus/Medium",
+    "label": "Prometheus",
+    "sub": "Medium",
+    "files": 1083,
+    "expected": "prometheus",
+    "bytes": {
+     "min": 20300,
+     "median": 112028,
+     "max": 10830823
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "prometheus",
+      1083
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ],
+     [
+      "string-table",
+      100
+     ],
+     [
+      "escape-encoded-strings",
+      8.5
+     ]
+    ],
+    "bannerVersions": [],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Prometheus/Strong",
+    "label": "Prometheus",
+    "sub": "Strong",
+    "files": 1089,
+    "expected": "prometheus",
+    "bytes": {
+     "min": 36718,
+     "median": 454725,
+     "max": 49693839
+    },
+    "parsed": 99.7,
+    "detected": 99.7,
+    "agree": 99.7,
+    "topFamilies": [
+     [
+      "prometheus",
+      1086
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      99.7
+     ],
+     [
+      "mangled-names",
+      99.7
+     ],
+     [
+      "string-table",
+      99.7
+     ],
+     [
+      "escape-encoded-strings",
+      0.4
+     ]
+    ],
+    "bannerVersions": [],
+    "timeouts": 3,
+    "errors": 0
+   },
+   {
+    "group": "Prometheus/unknown",
+    "label": "Prometheus",
+    "sub": "unknown",
+    "files": 11942,
+    "expected": "prometheus",
+    "bytes": {
+     "min": 776,
+     "median": 22885,
+     "max": 9611771
+    },
+    "parsed": 99.3,
+    "detected": 99.4,
+    "agree": 99.3,
+    "topFamilies": [
+     [
+      "prometheus",
+      11863
+     ],
+     [
+      "none",
+      75
+     ],
+     [
+      "moonsec_v3",
+      3
+     ],
+     [
+      "luaobfuscator",
+      1
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "string-table",
+      96.6
+     ],
+     [
+      "mangled-names",
+      95.1
+     ],
+     [
+      "escape-encoded-strings",
+      7.4
+     ],
+     [
+      "state-machine",
+      4.8
+     ],
+     [
+      "vendor-banner",
+      0.9
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "?",
+      233
+     ],
+     [
+      "1",
+      24
+     ],
+     [
+      "3",
+      15
+     ],
+     [
+      "14.3",
+      11
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Prometheus/Weak",
+    "label": "Prometheus",
+    "sub": "Weak",
+    "files": 1092,
+    "expected": "prometheus",
+    "bytes": {
+     "min": 2394,
+     "median": 34983,
+     "max": 2566090
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "prometheus",
+      1092
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "string-table",
+      100
+     ],
+     [
+      "mangled-names",
+      99.8
+     ],
+     [
+      "state-machine",
+      88.6
+     ],
+     [
+      "escape-encoded-strings",
+      77.1
+     ]
+    ],
+    "bannerVersions": [],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "Prometheus/WeAreDevs",
+    "label": "Prometheus",
+    "sub": "WeAreDevs",
+    "files": 4215,
+    "expected": "wearedevs",
+    "bytes": {
+     "min": 16939,
+     "median": 54073,
+     "max": 3927383
+    },
+    "parsed": 99.9,
+    "detected": 99.9,
+    "agree": 99.9,
+    "topFamilies": [
+     [
+      "prometheus",
+      4212
+     ],
+     [
+      "none",
+      3
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "string-table",
+      99.9
+     ],
+     [
+      "mangled-names",
+      99.8
+     ],
+     [
+      "escape-encoded-strings",
+      11.3
+     ]
+    ],
+    "bannerVersions": [],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "PSU/v4.0A",
+    "label": "PSU",
+    "sub": "v4.0A",
+    "files": 98,
+    "expected": "psu",
+    "bytes": {
+     "min": 0,
+     "median": 33167,
+     "max": 287419
+    },
+    "parsed": 95.9,
+    "detected": 99,
+    "agree": 99,
+    "topFamilies": [
+     [
+      "psu",
+      97
+     ],
+     [
+      "none",
+      1
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      98
+     ],
+     [
+      "mangled-names",
+      90.8
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "4.0",
+      93
+     ],
+     [
+      "74",
+      1
+     ],
+     [
+      "7006",
+      1
+     ],
+     [
+      "8084",
+      1
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "PSU/v4.5A",
+    "label": "PSU",
+    "sub": "v4.5A",
+    "files": 273,
+    "expected": "psu",
+    "bytes": {
+     "min": 28817,
+     "median": 66115,
+     "max": 353936
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "psu",
+      273
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "4.5",
+      270
+     ],
+     [
+      "112",
+      1
+     ],
+     [
+      "3r",
+      1
+     ],
+     [
+      "?",
+      1
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "PSU/v5.0A",
+    "label": "PSU",
+    "sub": "v5.0A",
+    "files": 1,
+    "expected": "psu",
+    "bytes": {
+     "min": 1024138,
+     "median": 1024138,
+     "max": 1024138
+    },
+    "parsed": 0,
+    "detected": 0,
+    "agree": 0,
+    "topFamilies": [
+     [
+      "none",
+      1
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "5.0A",
+      1
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "SynapseXen/unknown",
+    "label": "SynapseXen",
+    "sub": "unknown",
+    "files": 23,
+    "expected": "synapse_xen",
+    "bytes": {
+     "min": 63939,
+     "median": 197376,
+     "max": 301332
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "synapse_xen",
+      23
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      95.7
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "?",
+      22
+     ],
+     [
+      "8951",
+      1
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "SynapseXen/v1.1.1",
+    "label": "SynapseXen",
+    "sub": "v1.1.1",
+    "files": 16,
+    "expected": "synapse_xen",
+    "bytes": {
+     "min": 71569,
+     "median": 202442,
+     "max": 348416
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "synapse_xen",
+      16
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      87.5
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "?",
+      16
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "SynapseXen/v1.1.2",
+    "label": "SynapseXen",
+    "sub": "v1.1.2",
+    "files": 49,
+    "expected": "synapse_xen",
+    "bytes": {
+     "min": 66771,
+     "median": 196699,
+     "max": 347605
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "synapse_xen",
+      49
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      95.9
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "?",
+      49
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "wYnFuscate/2026Q3",
+    "label": "wYnFuscate",
+    "sub": "2026Q3",
+    "files": 112,
+    "expected": "wynfuscate",
+    "bytes": {
+     "min": 94979,
+     "median": 309011,
+     "max": 1263539
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "wynfuscate",
+      112
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "5x",
+      112
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   },
+   {
+    "group": "wYnFuscate/ClosedBeta",
+    "label": "wYnFuscate",
+    "sub": "ClosedBeta",
+    "files": 48,
+    "expected": "wynfuscate",
+    "bytes": {
+     "min": 89357,
+     "median": 210508,
+     "max": 662215
+    },
+    "parsed": 100,
+    "detected": 100,
+    "agree": 100,
+    "topFamilies": [
+     [
+      "wynfuscate",
+      48
+     ]
+    ],
+    "traits": [
+     [
+      "minified",
+      100
+     ],
+     [
+      "mangled-names",
+      100
+     ]
+    ],
+    "bannerVersions": [
+     [
+      "5x",
+      48
+     ]
+    ],
+    "timeouts": 0,
+    "errors": 0
+   }
+  ],
+  "suspects": [
+   {
+    "path": "LuaObfuscator/ChaoticGood/04ce6dd4ff1862a4.lua",
+    "label": "LuaObfuscator/ChaoticGood",
+    "detected": "moonsec_v3",
+    "confidence": 0.95,
+    "version": "V3"
+   },
+   {
+    "path": "LuaObfuscator/ChaoticGood/1242e37929f96a35.lua",
+    "label": "LuaObfuscator/ChaoticGood",
+    "detected": "prometheus",
+    "confidence": 0.98,
+    "version": null
+   },
+   {
+    "path": "LuaObfuscator/ChaoticGood/12ff820e9b4e618a.lua",
+    "label": "LuaObfuscator/ChaoticGood",
+    "detected": "prometheus",
+    "confidence": 0.98,
+    "version": null
+   },
+   {
+    "path": "LuaObfuscator/ChaoticGood/1746902e92899f96.lua",
+    "label": "LuaObfuscator/ChaoticGood",
+    "detected": "moonsec_v3",
+    "confidence": 0.95,
+    "version": "V3"
+   },
+   {
+    "path": "LuaObfuscator/ChaoticGood/18d9890b9cc35528.lua",
+    "label": "LuaObfuscator/ChaoticGood",
+    "detected": "moonsec_v3",
+    "confidence": 0.95,
+    "version": "V3"
+   },
+   {
+    "path": "LuaObfuscator/ChaoticGood/2537b0fd6582006b.lua",
+    "label": "LuaObfuscator/ChaoticGood",
+    "detected": "moonsec_v3",
+    "confidence": 0.95,
+    "version": "V3"
+   },
+   {
+    "path": "LuaObfuscator/ChaoticGood/29aa60d55bfb7a3f.lua",
+    "label": "LuaObfuscator/ChaoticGood",
+    "detected": "moonsec_v3",
+    "confidence": 0.95,
+    "version": "V3"
+   },
+   {
+    "path": "LuaObfuscator/ChaoticGood/5bfc7018f5fc00ee.lua",
+    "label": "LuaObfuscator/ChaoticGood",
+    "detected": "moonsec_v3",
+    "confidence": 0.95,
+    "version": "V3"
+   },
+   {
+    "path": "LuaObfuscator/ChaoticGood/61f02303cd77ecdc.lua",
+    "label": "LuaObfuscator/ChaoticGood",
+    "detected": "moonsec_v3",
+    "confidence": 0.95,
+    "version": "V3"
+   },
+   {
+    "path": "LuaObfuscator/ChaoticGood/79fcc566eb089eb0.lua",
+    "label": "LuaObfuscator/ChaoticGood",
+    "detected": "moonsec_v3",
+    "confidence": 0.95,
+    "version": "V3"
+   },
+   {
+    "path": "LuaObfuscator/ChaoticGood/87b5bc1add7a5028.lua",
+    "label": "LuaObfuscator/ChaoticGood",
+    "detected": "moonsec_v3",
+    "confidence": 0.95,
+    "version": "V3"
+   },
+   {
+    "path": "LuaObfuscator/ChaoticGood/9667313088bb6d22.lua",
+    "label": "LuaObfuscator/ChaoticGood",
+    "detected": "moonsec_v3",
+    "confidence": 0.95,
+    "version": "V3"
+   },
+   {
+    "path": "LuaObfuscator/ChaoticGood/a1fa64fef53d3499.lua",
+    "label": "LuaObfuscator/ChaoticGood",
+    "detected": "moonsec_v3",
+    "confidence": 0.95,
+    "version": "V3"
+   },
+   {
+    "path": "LuaObfuscator/ChaoticGood/a98eba9cd9dbffcc.lua",
+    "label": "LuaObfuscator/ChaoticGood",
+    "detected": "moonsec_v3",
+    "confidence": 0.95,
+    "version": "V3"
+   },
+   {
+    "path": "LuaObfuscator/ChaoticGood/b30ed6aeb7ef5acc.lua",
+    "label": "LuaObfuscator/ChaoticGood",
+    "detected": "moonsec_v3",
+    "confidence": 0.95,
+    "version": "V3"
+   },
+   {
+    "path": "LuaObfuscator/ChaoticGood/bb3a57ca51dfc264.lua",
+    "label": "LuaObfuscator/ChaoticGood",
+    "detected": "moonsec_v3",
+    "confidence": 0.95,
+    "version": "V3"
+   },
+   {
+    "path": "LuaObfuscator/ChaoticGood/c0aa1cefa2208455.lua",
+    "label": "LuaObfuscator/ChaoticGood",
+    "detected": "moonsec_v3",
+    "confidence": 0.95,
+    "version": "V3"
+   },
+   {
+    "path": "LuaObfuscator/ChaoticGood/d63ca00694810585.lua",
+    "label": "LuaObfuscator/ChaoticGood",
+    "detected": "moonsec_v3",
+    "confidence": 0.95,
+    "version": "V3"
+   },
+   {
+    "path": "LuaObfuscator/ChaoticGood/dfa8941595dda67a.lua",
+    "label": "LuaObfuscator/ChaoticGood",
+    "detected": "moonsec_v3",
+    "confidence": 0.95,
+    "version": "V3"
+   },
+   {
+    "path": "LuaObfuscator/ChaoticGood/e37eb94f843ae3c7.lua",
+    "label": "LuaObfuscator/ChaoticGood",
+    "detected": "moonsec_v3",
+    "confidence": 0.95,
+    "version": "V3"
+   },
+   {
+    "path": "LuaObfuscator/ChaoticGood/e6fedcbd2385266a.lua",
+    "label": "LuaObfuscator/ChaoticGood",
+    "detected": "moonsec_v3",
+    "confidence": 0.95,
+    "version": "V3"
+   },
+   {
+    "path": "LuaObfuscator/ChaoticGood/e982ad3cff2c5a59.lua",
+    "label": "LuaObfuscator/ChaoticGood",
+    "detected": "moonsec_v3",
+    "confidence": 0.95,
+    "version": "V3"
+   },
+   {
+    "path": "LuaObfuscator/ChaoticGood/eec4b4495afb6d51.lua",
+    "label": "LuaObfuscator/ChaoticGood",
+    "detected": "moonsec_v3",
+    "confidence": 0.95,
+    "version": "V3"
+   },
+   {
+    "path": "LuaObfuscator/ChaoticGood/f040f5ff76db2889.lua",
+    "label": "LuaObfuscator/ChaoticGood",
+    "detected": "moonsec_v3",
+    "confidence": 0.95,
+    "version": "V3"
+   },
+   {
+    "path": "LuaObfuscator/ChaoticGood/fc34a21d846524c8.lua",
+    "label": "LuaObfuscator/ChaoticGood",
+    "detected": "moonsec_v3",
+    "confidence": 0.95,
+    "version": "V3"
+   },
+   {
+    "path": "LuaObfuscator/VM/69d8f1d4826a4724.lua",
+    "label": "LuaObfuscator/VM",
+    "detected": "luraph",
+    "confidence": 0.97,
+    "version": "14.3"
+   },
+   {
+    "path": "LuaObfuscator/VM/c3187eb6d5e5d0d3.lua",
+    "label": "LuaObfuscator/VM",
+    "detected": "moonsec_v3",
+    "confidence": 0.95,
+    "version": "V3"
+   },
+   {
+    "path": "LuaObfuscator/VM/f71c10b7592b5868.lua",
+    "label": "LuaObfuscator/VM",
+    "detected": "moonsec_v3",
+    "confidence": 0.95,
+    "version": "V3"
+   },
+   {
+    "path": "MoonSec/V2/683e15bd0b06123e.lua",
+    "label": "MoonSec/V2",
+    "detected": "psu",
+    "confidence": 0.97,
+    "version": "4.0.A"
+   },
+   {
+    "path": "MoonSec/V2/af5e7240858481b6.lua",
+    "label": "MoonSec/V2",
+    "detected": "psu",
+    "confidence": 0.97,
+    "version": "4.0.A"
+   },
+   {
+    "path": "MoonVeil/v1.4.5/83446ed65f0eb401.lua",
+    "label": "MoonVeil/v1.4.5",
+    "detected": "prometheus",
+    "confidence": 0.98,
+    "version": null
+   },
+   {
+    "path": "MoonVeil/v1.4.5/bf3a693353a177c8.lua",
+    "label": "MoonVeil/v1.4.5",
+    "detected": "prometheus",
+    "confidence": 0.98,
+    "version": null
+   },
+   {
+    "path": "MoonVeil/v1.4.5/f8d03d58c9caa382.lua",
+    "label": "MoonVeil/v1.4.5",
+    "detected": "prometheus",
+    "confidence": 0.98,
+    "version": null
+   },
+   {
+    "path": "MoonVeil/v1.4.5/f9503b68f685ce4d.lua",
+    "label": "MoonVeil/v1.4.5",
+    "detected": "prometheus",
+    "confidence": 0.98,
+    "version": null
+   },
+   {
+    "path": "Prometheus/unknown/3d77df96b97e4d8e.lua",
+    "label": "Prometheus/unknown",
+    "detected": "moonsec_v3",
+    "confidence": 0.95,
+    "version": "V3"
+   },
+   {
+    "path": "Prometheus/unknown/cfa550b923d8d81e.lua",
+    "label": "Prometheus/unknown",
+    "detected": "moonsec_v3",
+    "confidence": 0.95,
+    "version": "V3"
+   },
+   {
+    "path": "Prometheus/unknown/ea297d7eadee16a5.lua",
+    "label": "Prometheus/unknown",
+    "detected": "moonsec_v3",
+    "confidence": 0.95,
+    "version": "V3"
+   }
+  ]
+ },
+ "baseline": {
+  "totals": {
+   "files": 334,
+   "outcome": {
+    "not-deobfuscated": 264,
+    "partial": 47,
+    "syntax-valid-unverified": 20,
+    "invalid-input": 1
+   },
+   "crashes": 0,
+   "timeouts": 2,
+   "parses": 331
+  },
+  "groups": [
+   {
+    "group": "77fuscator/0.4.7",
+    "files": 2,
+    "outcome": {
+     "not-deobfuscated": 1,
+     "partial": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 2,
+    "meanSeconds": 11.5
+   },
+   {
+    "group": "77fuscator/0.4.8",
+    "files": 3,
+    "outcome": {
+     "not-deobfuscated": 2,
+     "partial": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 3,
+    "meanSeconds": 10.3
+   },
+   {
+    "group": "77fuscator/0.4.9",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 2,
+     "partial": 2
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 7.2
+   },
+   {
+    "group": "77fuscator/0.5.0",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 3.5
+   },
+   {
+    "group": "77fuscator/0.5.1",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 1.3
+   },
+   {
+    "group": "77fuscator/0.6.0",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 3.2
+   },
+   {
+    "group": "77fuscator/0.6.1",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 6.4
+   },
+   {
+    "group": "Boronide/Default",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 6.3
+   },
+   {
+    "group": "Boronide/Maximum",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 15.4
+   },
+   {
+    "group": "Boronide/Minimal",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 7.1
+   },
+   {
+    "group": "Boronide/SuperOps-Only",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 29.8
+   },
+   {
+    "group": "Hercules/Maximum",
+    "files": 4,
+    "outcome": {
+     "syntax-valid-unverified": 2,
+     "not-deobfuscated": 1,
+     "partial": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 1.6
+   },
+   {
+    "group": "Hercules/Medium",
+    "files": 4,
+    "outcome": {
+     "syntax-valid-unverified": 2,
+     "not-deobfuscated": 2
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 1.1
+   },
+   {
+    "group": "Hercules/Minimum",
+    "files": 4,
+    "outcome": {
+     "partial": 1,
+     "not-deobfuscated": 2,
+     "syntax-valid-unverified": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 1.3
+   },
+   {
+    "group": "Ironbrew1/",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 3
+    },
+    "crashes": 0,
+    "timeouts": 1,
+    "parses": 3,
+    "meanSeconds": 11.1
+   },
+   {
+    "group": "IronBrew2/",
+    "files": 4,
+    "outcome": {
+     "partial": 1,
+     "syntax-valid-unverified": 1,
+     "not-deobfuscated": 2
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 5.7
+   },
+   {
+    "group": "Ironbrew3/v0.235",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 2.8
+   },
+   {
+    "group": "Ironbrew3/v0.248",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 2.3
+   },
+   {
+    "group": "LPS/v1",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 1.1
+   },
+   {
+    "group": "LPS/v2",
+    "files": 3,
+    "outcome": {
+     "not-deobfuscated": 3
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 3,
+    "meanSeconds": 4.9
+   },
+   {
+    "group": "LuaObfuscator/ChaoticEvil",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 1
+   },
+   {
+    "group": "LuaObfuscator/ChaoticGood",
+    "files": 4,
+    "outcome": {
+     "syntax-valid-unverified": 2,
+     "partial": 1,
+     "not-deobfuscated": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 0.5
+   },
+   {
+    "group": "LuaObfuscator/VM",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 2.4
+   },
+   {
+    "group": "Luraph/v1",
+    "files": 2,
+    "outcome": {
+     "not-deobfuscated": 2
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 2,
+    "meanSeconds": 0.2
+   },
+   {
+    "group": "Luraph/v2",
+    "files": 1,
+    "outcome": {
+     "not-deobfuscated": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 1,
+    "meanSeconds": 0.3
+   },
+   {
+    "group": "Luraph/v3",
+    "files": 1,
+    "outcome": {
+     "not-deobfuscated": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 1,
+    "meanSeconds": 0.5
+   },
+   {
+    "group": "Luraph/v4",
+    "files": 1,
+    "outcome": {
+     "not-deobfuscated": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 1,
+    "meanSeconds": 0.5
+   },
+   {
+    "group": "Luraph/v5.1",
+    "files": 1,
+    "outcome": {
+     "not-deobfuscated": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 1,
+    "meanSeconds": 0.4
+   },
+   {
+    "group": "Luraph/v6.3",
+    "files": 1,
+    "outcome": {
+     "not-deobfuscated": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 1,
+    "meanSeconds": 0.5
+   },
+   {
+    "group": "Luraph/v7.2.3",
+    "files": 1,
+    "outcome": {
+     "not-deobfuscated": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 1,
+    "meanSeconds": 1.1
+   },
+   {
+    "group": "Luraph/v8.0",
+    "files": 1,
+    "outcome": {
+     "not-deobfuscated": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 1,
+    "meanSeconds": 0.7
+   },
+   {
+    "group": "Luraph/v9.2",
+    "files": 1,
+    "outcome": {
+     "not-deobfuscated": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 1,
+    "meanSeconds": 0.6
+   },
+   {
+    "group": "Luraph/v10.2",
+    "files": 1,
+    "outcome": {
+     "not-deobfuscated": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 1,
+    "meanSeconds": 0.3
+   },
+   {
+    "group": "Luraph/v11.1",
+    "files": 1,
+    "outcome": {
+     "not-deobfuscated": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 1,
+    "meanSeconds": 0.4
+   },
+   {
+    "group": "Luraph/v11.3",
+    "files": 1,
+    "outcome": {
+     "not-deobfuscated": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 1,
+    "meanSeconds": 0.6
+   },
+   {
+    "group": "Luraph/v11.5",
+    "files": 2,
+    "outcome": {
+     "not-deobfuscated": 2
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 2,
+    "meanSeconds": 0.8
+   },
+   {
+    "group": "Luraph/v11.6",
+    "files": 1,
+    "outcome": {
+     "not-deobfuscated": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 1,
+    "meanSeconds": 0.3
+   },
+   {
+    "group": "Luraph/v11.8.1",
+    "files": 1,
+    "outcome": {
+     "not-deobfuscated": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 1,
+    "meanSeconds": 0.2
+   },
+   {
+    "group": "Luraph/v12.2",
+    "files": 1,
+    "outcome": {
+     "not-deobfuscated": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 1,
+    "meanSeconds": 0.4
+   },
+   {
+    "group": "Luraph/v13.2.1",
+    "files": 3,
+    "outcome": {
+     "not-deobfuscated": 3
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 3,
+    "meanSeconds": 1.7
+   },
+   {
+    "group": "Luraph/v13.4.3",
+    "files": 1,
+    "outcome": {
+     "not-deobfuscated": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 1,
+    "meanSeconds": 2.1
+   },
+   {
+    "group": "Luraph/v13.4.5",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 2.1
+   },
+   {
+    "group": "Luraph/v13.5.3",
+    "files": 2,
+    "outcome": {
+     "not-deobfuscated": 2
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 2,
+    "meanSeconds": 2.2
+   },
+   {
+    "group": "Luraph/v13.5.4",
+    "files": 1,
+    "outcome": {
+     "not-deobfuscated": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 1,
+    "meanSeconds": 1.6
+   },
+   {
+    "group": "Luraph/v13.5.6",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 6.5
+   },
+   {
+    "group": "Luraph/v13.5.8",
+    "files": 2,
+    "outcome": {
+     "not-deobfuscated": 2
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 2,
+    "meanSeconds": 4.3
+   },
+   {
+    "group": "Luraph/v13.5.9",
+    "files": 2,
+    "outcome": {
+     "not-deobfuscated": 2
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 2,
+    "meanSeconds": 2.7
+   },
+   {
+    "group": "Luraph/v13.6.6",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 3.3
+   },
+   {
+    "group": "Luraph/v13.6.7",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 3.4
+   },
+   {
+    "group": "Luraph/v13.7",
+    "files": 2,
+    "outcome": {
+     "not-deobfuscated": 2
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 2,
+    "meanSeconds": 3
+   },
+   {
+    "group": "Luraph/v13.8",
+    "files": 2,
+    "outcome": {
+     "not-deobfuscated": 2
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 2,
+    "meanSeconds": 2.9
+   },
+   {
+    "group": "Luraph/v13.8.1",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 11.5
+   },
+   {
+    "group": "Luraph/v14.0.2",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 6.5
+   },
+   {
+    "group": "Luraph/v14.0.3",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 2.2
+   },
+   {
+    "group": "Luraph/v14.1",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 3.6
+   },
+   {
+    "group": "Luraph/v14.2",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 36.9
+   },
+   {
+    "group": "Luraph/v14.3",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 7.2
+   },
+   {
+    "group": "Luraph/v14.4",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 4.9
+   },
+   {
+    "group": "Luraph/v14.4.1",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 7.6
+   },
+   {
+    "group": "Luraph/v14.4.2",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 1.8
+   },
+   {
+    "group": "Luraph/v14.5",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 1
+   },
+   {
+    "group": "Luraph/v14.5.1",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 1.2
+   },
+   {
+    "group": "Luraph/v14.5.2",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 0.6
+   },
+   {
+    "group": "Luraph/v14.6",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 1.7
+   },
+   {
+    "group": "Luraph/v14.6.0",
+    "files": 1,
+    "outcome": {
+     "not-deobfuscated": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 1,
+    "meanSeconds": 8.9
+   },
+   {
+    "group": "Luraph/v14.6.2",
+    "files": 2,
+    "outcome": {
+     "not-deobfuscated": 2
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 2,
+    "meanSeconds": 5.4
+   },
+   {
+    "group": "Luraph/v14.7",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 1.1
+   },
+   {
+    "group": "Luraph/v14.8",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 16.5
+   },
+   {
+    "group": "Luraph/v14.9",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 2.2
+   },
+   {
+    "group": "Luraph/v15.0",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 13.3
+   },
+   {
+    "group": "Luraph/v15.1",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 5.7
+   },
+   {
+    "group": "Luraph/v15.2",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 16.4
+   },
+   {
+    "group": "MoonSec/V2",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 4.3
+   },
+   {
+    "group": "MoonSec/V3",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 3.7
+   },
+   {
+    "group": "MoonVeil/2.0.5-beta",
+    "files": 1,
+    "outcome": {
+     "not-deobfuscated": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 1,
+    "meanSeconds": 2.6
+   },
+   {
+    "group": "MoonVeil/2.0.12-beta",
+    "files": 1,
+    "outcome": {
+     "syntax-valid-unverified": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 1,
+    "meanSeconds": 3.2
+   },
+   {
+    "group": "MoonVeil/2.0.15-beta",
+    "files": 2,
+    "outcome": {
+     "not-deobfuscated": 2
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 2,
+    "meanSeconds": 4.3
+   },
+   {
+    "group": "MoonVeil/2.0.26",
+    "files": 4,
+    "outcome": {
+     "partial": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 4.2
+   },
+   {
+    "group": "MoonVeil/v1.0.1",
+    "files": 1,
+    "outcome": {
+     "not-deobfuscated": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 1,
+    "meanSeconds": 2.3
+   },
+   {
+    "group": "MoonVeil/v1.0.5",
+    "files": 4,
+    "outcome": {
+     "partial": 3,
+     "not-deobfuscated": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 0.2
+   },
+   {
+    "group": "MoonVeil/v1.2.1",
+    "files": 4,
+    "outcome": {
+     "partial": 1,
+     "not-deobfuscated": 2,
+     "syntax-valid-unverified": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 1.2
+   },
+   {
+    "group": "MoonVeil/v1.2.2",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 3,
+     "partial": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 1.2
+   },
+   {
+    "group": "MoonVeil/v1.3.0",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 1,
+     "syntax-valid-unverified": 1,
+     "partial": 2
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 2.8
+   },
+   {
+    "group": "MoonVeil/v1.3.1",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 2,
+     "partial": 2
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 3.9
+   },
+   {
+    "group": "MoonVeil/v1.3.2",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 3,
+     "partial": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 1.8
+   },
+   {
+    "group": "MoonVeil/v1.3.3",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 2
+   },
+   {
+    "group": "MoonVeil/v1.4.0",
+    "files": 4,
+    "outcome": {
+     "syntax-valid-unverified": 1,
+     "partial": 3
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 2.9
+   },
+   {
+    "group": "MoonVeil/v1.4.1",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 2,
+     "partial": 2
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 2.1
+   },
+   {
+    "group": "MoonVeil/v1.4.2",
+    "files": 4,
+    "outcome": {
+     "partial": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 4.4
+   },
+   {
+    "group": "MoonVeil/v1.4.3",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 1,
+     "partial": 3
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 2.2
+   },
+   {
+    "group": "MoonVeil/v1.4.4",
+    "files": 4,
+    "outcome": {
+     "partial": 3,
+     "not-deobfuscated": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 3
+   },
+   {
+    "group": "MoonVeil/v1.4.5",
+    "files": 4,
+    "outcome": {
+     "partial": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 2
+   },
+   {
+    "group": "Prometheus/Medium",
+    "files": 4,
+    "outcome": {
+     "partial": 2,
+     "syntax-valid-unverified": 1,
+     "not-deobfuscated": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 9.8
+   },
+   {
+    "group": "Prometheus/Strong",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 3
+    },
+    "crashes": 0,
+    "timeouts": 1,
+    "parses": 3,
+    "meanSeconds": 6.1
+   },
+   {
+    "group": "Prometheus/unknown",
+    "files": 4,
+    "outcome": {
+     "syntax-valid-unverified": 3,
+     "partial": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 1.9
+   },
+   {
+    "group": "Prometheus/Weak",
+    "files": 4,
+    "outcome": {
+     "partial": 1,
+     "not-deobfuscated": 1,
+     "syntax-valid-unverified": 2
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 6.5
+   },
+   {
+    "group": "Prometheus/WeAreDevs",
+    "files": 4,
+    "outcome": {
+     "syntax-valid-unverified": 2,
+     "partial": 1,
+     "not-deobfuscated": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 11.5
+   },
+   {
+    "group": "PSU/v4.0A",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 1.1
+   },
+   {
+    "group": "PSU/v4.5A",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 7
+   },
+   {
+    "group": "PSU/v5.0A",
+    "files": 1,
+    "outcome": {
+     "invalid-input": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 0,
+    "meanSeconds": 0
+   },
+   {
+    "group": "SynapseXen/unknown",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 2.1
+   },
+   {
+    "group": "SynapseXen/v1.1.1",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 1.4
+   },
+   {
+    "group": "SynapseXen/v1.1.2",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 1.6
+   },
+   {
+    "group": "wYnFuscate/2026Q3",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 23.8
+   },
+   {
+    "group": "wYnFuscate/ClosedBeta",
+    "files": 4,
+    "outcome": {
+     "partial": 1,
+     "not-deobfuscated": 3
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 11.2
+   }
+  ]
+ },
+ "before": {
+  "totals": {
+   "files": 334,
+   "outcome": {
+    "partial": 175,
+    "not-deobfuscated": 123,
+    "invalid-input": 7,
+    "syntax-valid-unverified": 27
+   },
+   "crashes": 0,
+   "timeouts": 2,
+   "parses": 325
+  },
+  "groups": [
+   {
+    "group": "77fuscator/0.4.7",
+    "files": 2,
+    "outcome": {
+     "partial": 2
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 2,
+    "meanSeconds": 11.5
+   },
+   {
+    "group": "77fuscator/0.4.8",
+    "files": 3,
+    "outcome": {
+     "partial": 3
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 3,
+    "meanSeconds": 10.9
+   },
+   {
+    "group": "77fuscator/0.4.9",
+    "files": 4,
+    "outcome": {
+     "partial": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 8.4
+   },
+   {
+    "group": "77fuscator/0.5.0",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 2,
+     "partial": 2
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 3.8
+   },
+   {
+    "group": "77fuscator/0.5.1",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 2,
+     "partial": 2
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 1.5
+   },
+   {
+    "group": "77fuscator/0.6.0",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 3.4
+   },
+   {
+    "group": "77fuscator/0.6.1",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 6
+   },
+   {
+    "group": "Boronide/Default",
+    "files": 4,
+    "outcome": {
+     "partial": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 6.1
+   },
+   {
+    "group": "Boronide/Maximum",
+    "files": 4,
+    "outcome": {
+     "invalid-input": 2,
+     "syntax-valid-unverified": 2
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 2,
+    "meanSeconds": 1.5
+   },
+   {
+    "group": "Boronide/Minimal",
+    "files": 4,
+    "outcome": {
+     "syntax-valid-unverified": 1,
+     "partial": 3
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 7.8
+   },
+   {
+    "group": "Boronide/SuperOps-Only",
+    "files": 4,
+    "outcome": {
+     "syntax-valid-unverified": 1,
+     "invalid-input": 1,
+     "partial": 2
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 3,
+    "meanSeconds": 5.5
+   },
+   {
+    "group": "Hercules/Maximum",
+    "files": 4,
+    "outcome": {
+     "partial": 2,
+     "syntax-valid-unverified": 2
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 1.8
+   },
+   {
+    "group": "Hercules/Medium",
+    "files": 4,
+    "outcome": {
+     "syntax-valid-unverified": 2,
+     "partial": 2
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 1.3
+   },
+   {
+    "group": "Hercules/Minimum",
+    "files": 4,
+    "outcome": {
+     "partial": 2,
+     "syntax-valid-unverified": 1,
+     "not-deobfuscated": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 1.5
+   },
+   {
+    "group": "Ironbrew1/",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 3
+    },
+    "crashes": 0,
+    "timeouts": 1,
+    "parses": 3,
+    "meanSeconds": 11.2
+   },
+   {
+    "group": "IronBrew2/",
+    "files": 4,
+    "outcome": {
+     "syntax-valid-unverified": 1,
+     "partial": 1,
+     "not-deobfuscated": 2
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 6.5
+   },
+   {
+    "group": "Ironbrew3/v0.235",
+    "files": 4,
+    "outcome": {
+     "partial": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 3
+   },
+   {
+    "group": "Ironbrew3/v0.248",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 2,
+     "partial": 2
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 2.8
+   },
+   {
+    "group": "LPS/v1",
+    "files": 4,
+    "outcome": {
+     "invalid-input": 2,
+     "partial": 2
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 2,
+    "meanSeconds": 0.5
+   },
+   {
+    "group": "LPS/v2",
+    "files": 3,
+    "outcome": {
+     "partial": 1,
+     "invalid-input": 1,
+     "not-deobfuscated": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 2,
+    "meanSeconds": 1
+   },
+   {
+    "group": "LuaObfuscator/ChaoticEvil",
+    "files": 4,
+    "outcome": {
+     "partial": 1,
+     "not-deobfuscated": 3
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 0.9
+   },
+   {
+    "group": "LuaObfuscator/ChaoticGood",
+    "files": 4,
+    "outcome": {
+     "syntax-valid-unverified": 2,
+     "partial": 1,
+     "not-deobfuscated": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 0.5
+   },
+   {
+    "group": "LuaObfuscator/VM",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 1.9
+   },
+   {
+    "group": "Luraph/v1",
+    "files": 2,
+    "outcome": {
+     "partial": 2
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 2,
+    "meanSeconds": 0.2
+   },
+   {
+    "group": "Luraph/v2",
+    "files": 1,
+    "outcome": {
+     "partial": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 1,
+    "meanSeconds": 0.4
+   },
+   {
+    "group": "Luraph/v3",
+    "files": 1,
+    "outcome": {
+     "partial": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 1,
+    "meanSeconds": 0.5
+   },
+   {
+    "group": "Luraph/v4",
+    "files": 1,
+    "outcome": {
+     "syntax-valid-unverified": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 1,
+    "meanSeconds": 0.8
+   },
+   {
+    "group": "Luraph/v5.1",
+    "files": 1,
+    "outcome": {
+     "syntax-valid-unverified": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 1,
+    "meanSeconds": 0.5
+   },
+   {
+    "group": "Luraph/v6.3",
+    "files": 1,
+    "outcome": {
+     "partial": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 1,
+    "meanSeconds": 0.5
+   },
+   {
+    "group": "Luraph/v7.2.3",
+    "files": 1,
+    "outcome": {
+     "partial": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 1,
+    "meanSeconds": 1.2
+   },
+   {
+    "group": "Luraph/v8.0",
+    "files": 1,
+    "outcome": {
+     "partial": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 1,
+    "meanSeconds": 1.1
+   },
+   {
+    "group": "Luraph/v9.2",
+    "files": 1,
+    "outcome": {
+     "partial": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 1,
+    "meanSeconds": 0.7
+   },
+   {
+    "group": "Luraph/v10.2",
+    "files": 1,
+    "outcome": {
+     "syntax-valid-unverified": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 1,
+    "meanSeconds": 0.5
+   },
+   {
+    "group": "Luraph/v11.1",
+    "files": 1,
+    "outcome": {
+     "partial": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 1,
+    "meanSeconds": 0.6
+   },
+   {
+    "group": "Luraph/v11.3",
+    "files": 1,
+    "outcome": {
+     "partial": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 1,
+    "meanSeconds": 0.4
+   },
+   {
+    "group": "Luraph/v11.5",
+    "files": 2,
+    "outcome": {
+     "partial": 2
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 2,
+    "meanSeconds": 0.7
+   },
+   {
+    "group": "Luraph/v11.6",
+    "files": 1,
+    "outcome": {
+     "partial": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 1,
+    "meanSeconds": 0.4
+   },
+   {
+    "group": "Luraph/v11.8.1",
+    "files": 1,
+    "outcome": {
+     "partial": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 1,
+    "meanSeconds": 0.3
+   },
+   {
+    "group": "Luraph/v12.2",
+    "files": 1,
+    "outcome": {
+     "partial": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 1,
+    "meanSeconds": 0.4
+   },
+   {
+    "group": "Luraph/v13.2.1",
+    "files": 3,
+    "outcome": {
+     "partial": 2,
+     "not-deobfuscated": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 3,
+    "meanSeconds": 1.8
+   },
+   {
+    "group": "Luraph/v13.4.3",
+    "files": 1,
+    "outcome": {
+     "not-deobfuscated": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 1,
+    "meanSeconds": 2.3
+   },
+   {
+    "group": "Luraph/v13.4.5",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 3,
+     "partial": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 2.3
+   },
+   {
+    "group": "Luraph/v13.5.3",
+    "files": 2,
+    "outcome": {
+     "partial": 2
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 2,
+    "meanSeconds": 2.6
+   },
+   {
+    "group": "Luraph/v13.5.4",
+    "files": 1,
+    "outcome": {
+     "not-deobfuscated": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 1,
+    "meanSeconds": 1.5
+   },
+   {
+    "group": "Luraph/v13.5.6",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 3,
+     "partial": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 7
+   },
+   {
+    "group": "Luraph/v13.5.8",
+    "files": 2,
+    "outcome": {
+     "not-deobfuscated": 1,
+     "partial": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 2,
+    "meanSeconds": 4.1
+   },
+   {
+    "group": "Luraph/v13.5.9",
+    "files": 2,
+    "outcome": {
+     "not-deobfuscated": 1,
+     "partial": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 2,
+    "meanSeconds": 2.8
+   },
+   {
+    "group": "Luraph/v13.6.6",
+    "files": 4,
+    "outcome": {
+     "partial": 2,
+     "not-deobfuscated": 2
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 3.5
+   },
+   {
+    "group": "Luraph/v13.6.7",
+    "files": 4,
+    "outcome": {
+     "partial": 2,
+     "not-deobfuscated": 2
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 3.6
+   },
+   {
+    "group": "Luraph/v13.7",
+    "files": 2,
+    "outcome": {
+     "not-deobfuscated": 1,
+     "partial": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 2,
+    "meanSeconds": 3.3
+   },
+   {
+    "group": "Luraph/v13.8",
+    "files": 2,
+    "outcome": {
+     "not-deobfuscated": 2
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 2,
+    "meanSeconds": 4.2
+   },
+   {
+    "group": "Luraph/v13.8.1",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 2,
+     "partial": 2
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 13.2
+   },
+   {
+    "group": "Luraph/v14.0.2",
+    "files": 4,
+    "outcome": {
+     "partial": 2,
+     "not-deobfuscated": 2
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 7.8
+   },
+   {
+    "group": "Luraph/v14.0.3",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 3,
+     "partial": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 2.8
+   },
+   {
+    "group": "Luraph/v14.1",
+    "files": 4,
+    "outcome": {
+     "partial": 2,
+     "not-deobfuscated": 2
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 4.7
+   },
+   {
+    "group": "Luraph/v14.2",
+    "files": 4,
+    "outcome": {
+     "partial": 3,
+     "not-deobfuscated": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 39.6
+   },
+   {
+    "group": "Luraph/v14.3",
+    "files": 4,
+    "outcome": {
+     "partial": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 8.3
+   },
+   {
+    "group": "Luraph/v14.4",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 3,
+     "partial": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 4.9
+   },
+   {
+    "group": "Luraph/v14.4.1",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 7.7
+   },
+   {
+    "group": "Luraph/v14.4.2",
+    "files": 4,
+    "outcome": {
+     "partial": 2,
+     "not-deobfuscated": 2
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 1.6
+   },
+   {
+    "group": "Luraph/v14.5",
+    "files": 4,
+    "outcome": {
+     "partial": 3,
+     "not-deobfuscated": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 1
+   },
+   {
+    "group": "Luraph/v14.5.1",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 1,
+     "partial": 3
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 1.2
+   },
+   {
+    "group": "Luraph/v14.5.2",
+    "files": 4,
+    "outcome": {
+     "partial": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 0.5
+   },
+   {
+    "group": "Luraph/v14.6",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 1.7
+   },
+   {
+    "group": "Luraph/v14.6.0",
+    "files": 1,
+    "outcome": {
+     "not-deobfuscated": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 1,
+    "meanSeconds": 8.7
+   },
+   {
+    "group": "Luraph/v14.6.2",
+    "files": 2,
+    "outcome": {
+     "not-deobfuscated": 2
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 2,
+    "meanSeconds": 5.5
+   },
+   {
+    "group": "Luraph/v14.7",
+    "files": 4,
+    "outcome": {
+     "partial": 3,
+     "not-deobfuscated": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 1.3
+   },
+   {
+    "group": "Luraph/v14.8",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 3,
+     "partial": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 16.7
+   },
+   {
+    "group": "Luraph/v14.9",
+    "files": 4,
+    "outcome": {
+     "partial": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 2.1
+   },
+   {
+    "group": "Luraph/v15.0",
+    "files": 4,
+    "outcome": {
+     "partial": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 14.6
+   },
+   {
+    "group": "Luraph/v15.1",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 1,
+     "partial": 3
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 6.2
+   },
+   {
+    "group": "Luraph/v15.2",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 2,
+     "partial": 2
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 17.8
+   },
+   {
+    "group": "MoonSec/V2",
+    "files": 4,
+    "outcome": {
+     "partial": 3,
+     "not-deobfuscated": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 6.1
+   },
+   {
+    "group": "MoonSec/V3",
+    "files": 4,
+    "outcome": {
+     "partial": 2,
+     "not-deobfuscated": 2
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 5.1
+   },
+   {
+    "group": "MoonVeil/2.0.5-beta",
+    "files": 1,
+    "outcome": {
+     "not-deobfuscated": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 1,
+    "meanSeconds": 2.8
+   },
+   {
+    "group": "MoonVeil/2.0.12-beta",
+    "files": 1,
+    "outcome": {
+     "syntax-valid-unverified": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 1,
+    "meanSeconds": 4.1
+   },
+   {
+    "group": "MoonVeil/2.0.15-beta",
+    "files": 2,
+    "outcome": {
+     "not-deobfuscated": 2
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 2,
+    "meanSeconds": 5.4
+   },
+   {
+    "group": "MoonVeil/2.0.26",
+    "files": 4,
+    "outcome": {
+     "partial": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 4.6
+   },
+   {
+    "group": "MoonVeil/v1.0.1",
+    "files": 1,
+    "outcome": {
+     "not-deobfuscated": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 1,
+    "meanSeconds": 2.2
+   },
+   {
+    "group": "MoonVeil/v1.0.5",
+    "files": 4,
+    "outcome": {
+     "partial": 3,
+     "not-deobfuscated": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 0.2
+   },
+   {
+    "group": "MoonVeil/v1.2.1",
+    "files": 4,
+    "outcome": {
+     "partial": 1,
+     "not-deobfuscated": 2,
+     "syntax-valid-unverified": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 1.4
+   },
+   {
+    "group": "MoonVeil/v1.2.2",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 3,
+     "partial": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 1.2
+   },
+   {
+    "group": "MoonVeil/v1.3.0",
+    "files": 4,
+    "outcome": {
+     "partial": 3,
+     "syntax-valid-unverified": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 2.6
+   },
+   {
+    "group": "MoonVeil/v1.3.1",
+    "files": 4,
+    "outcome": {
+     "partial": 3,
+     "not-deobfuscated": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 3.6
+   },
+   {
+    "group": "MoonVeil/v1.3.2",
+    "files": 4,
+    "outcome": {
+     "partial": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 2
+   },
+   {
+    "group": "MoonVeil/v1.3.3",
+    "files": 4,
+    "outcome": {
+     "partial": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 2.1
+   },
+   {
+    "group": "MoonVeil/v1.4.0",
+    "files": 4,
+    "outcome": {
+     "syntax-valid-unverified": 1,
+     "partial": 3
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 3
+   },
+   {
+    "group": "MoonVeil/v1.4.1",
+    "files": 4,
+    "outcome": {
+     "partial": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 2.2
+   },
+   {
+    "group": "MoonVeil/v1.4.2",
+    "files": 4,
+    "outcome": {
+     "partial": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 3.7
+   },
+   {
+    "group": "MoonVeil/v1.4.3",
+    "files": 4,
+    "outcome": {
+     "partial": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 1.7
+   },
+   {
+    "group": "MoonVeil/v1.4.4",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 1,
+     "partial": 3
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 2.8
+   },
+   {
+    "group": "MoonVeil/v1.4.5",
+    "files": 4,
+    "outcome": {
+     "partial": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 2.2
+   },
+   {
+    "group": "Prometheus/Medium",
+    "files": 4,
+    "outcome": {
+     "partial": 2,
+     "syntax-valid-unverified": 1,
+     "not-deobfuscated": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 8.6
+   },
+   {
+    "group": "Prometheus/Strong",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 3
+    },
+    "crashes": 0,
+    "timeouts": 1,
+    "parses": 3,
+    "meanSeconds": 5.3
+   },
+   {
+    "group": "Prometheus/unknown",
+    "files": 4,
+    "outcome": {
+     "syntax-valid-unverified": 3,
+     "partial": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 2.1
+   },
+   {
+    "group": "Prometheus/Weak",
+    "files": 4,
+    "outcome": {
+     "partial": 1,
+     "not-deobfuscated": 1,
+     "syntax-valid-unverified": 2
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 6.6
+   },
+   {
+    "group": "Prometheus/WeAreDevs",
+    "files": 4,
+    "outcome": {
+     "syntax-valid-unverified": 2,
+     "partial": 1,
+     "not-deobfuscated": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 10.5
+   },
+   {
+    "group": "PSU/v4.0A",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 1.1
+   },
+   {
+    "group": "PSU/v4.5A",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 6.7
+   },
+   {
+    "group": "PSU/v5.0A",
+    "files": 1,
+    "outcome": {
+     "invalid-input": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 0,
+    "meanSeconds": 0
+   },
+   {
+    "group": "SynapseXen/unknown",
+    "files": 4,
+    "outcome": {
+     "partial": 3,
+     "not-deobfuscated": 1
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 1.5
+   },
+   {
+    "group": "SynapseXen/v1.1.1",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 2,
+     "partial": 2
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 1.3
+   },
+   {
+    "group": "SynapseXen/v1.1.2",
+    "files": 4,
+    "outcome": {
+     "partial": 2,
+     "not-deobfuscated": 2
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 1.3
+   },
+   {
+    "group": "wYnFuscate/2026Q3",
+    "files": 4,
+    "outcome": {
+     "not-deobfuscated": 4
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 24.3
+   },
+   {
+    "group": "wYnFuscate/ClosedBeta",
+    "files": 4,
+    "outcome": {
+     "partial": 1,
+     "not-deobfuscated": 3
+    },
+    "crashes": 0,
+    "timeouts": 0,
+    "parses": 4,
+    "meanSeconds": 11.3
+   }
+  ]
+ }
+}
