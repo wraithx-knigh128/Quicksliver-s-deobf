@@ -168,3 +168,51 @@ test('LuaObfuscator (Prompt XXV): the ASCII art with a customer’s own message,
   assert.equal(detectScript(inner).detection.families[0].id, 'luaobfuscator');
   assert.equal(detectScript('local v0 = string.char\nprint(v0(65))\n').detection.families.length, 0, 'one library local is not the prelude');
 });
+
+// ---- Prompt XXVI: the Test 8 case, kept as a permanent check --------------------------------------------------------------------
+const test8 = path.join(root, 'local', 'test8', 'message-5.lua');
+test('Test 8 (Luraph 14.x handler table): never reported as reconstructed; the classification names the architecture and says the source is unresolved', { skip: !fs.existsSync(test8) && 'the Test 8 sample is kept locally only', timeout: 600_000 }, () => {
+  const r = recoverSource(fs.readFileSync(test8, 'latin1'), { sandbox: { enabled: true } });
+  assert.equal(r.outcome.outcome, 'not-deobfuscated');
+  assert.equal(r.outcome.label, 'Architecture identified (Luraph); source unresolved');
+  assert.ok(['none', 'minimal'].includes(r.confidence.level));
+});
+
+test('Test 8: the dynamic engine’s runs are "no program observed", not ok', { skip: (!hasPython && 'python3 is not available') || (!fs.existsSync(test8) && 'the Test 8 sample is kept locally only'), timeout: 900_000 }, () => {
+  for (const eng of ['luraph_v14_8']) {
+    const r = spawnSync('python3', ['-I', '-c', `
+import sys, json
+sys.path.insert(0, ${JSON.stringify(engineDir)})
+import service
+r = service.reconstruct(open(${JSON.stringify(test8)}, 'rb').read(), '${eng}', timeout_s=120, allow_fallback=False)
+print(json.dumps({'ok': r['ok'], 'code': (r.get('error') or {}).get('code')}))
+`], { encoding: 'utf8', maxBuffer: 64 << 20, timeout: 800_000 });
+    const j = JSON.parse(r.stdout.trim().split('\n').pop());
+    assert.equal(j.ok, false, eng);
+    assert.equal(j.code, 'no_program_observed', eng);
+  }
+});
+
+test('Test 8: the extracted plain-Lua closures are labelled as fragments, never as the program', { skip: !fs.existsSync(path.join(root, 'local', 'test8', 'message-5.pipeline-output.lua')) && 'the Test 8 output is kept locally only', timeout: 300_000 }, async () => {
+  const { extractNatives } = await import('../tools/luraph/natives.mjs');
+  const x = extractNatives(fs.readFileSync(path.join(root, 'local', 'test8', 'message-5.pipeline-output.lua'), 'latin1'));
+  assert.ok(x.functions.length > 0 && x.functions.length < x.total, 'only some of the handler table is plain Lua');
+  const head = fs.readFileSync(path.join(root, 'tools', 'luraph', 'natives.mjs'), 'utf8');
+  assert.match(head, /not a runnable program/);
+  assert.match(head, /NOT recovered/);
+});
+
+test('an output whose functions are mostly signatures without bodies is never more than "partial"', () => {
+  const stub = 'local a = function(x, y) end\nlocal b = function(p) end\nlocal c = function() end\nlocal d = function(q) return q end\nreturn a, b, c, d\n';
+  const ob = `local v0=string.char;local v1=string.byte;local v2=string.sub;local v3=bit32 or bit ;local v4=v3.bxor;\n${stub}`;
+  const r = recoverSource(ob, { sandbox: { enabled: true } });
+  assert.equal(r.outcome.outcome, 'partial');
+  assert.match(r.outcome.reasons.join(' '), /3 of its 4 functions have no body/);
+});
+
+test('missing constants written as (nil)[k] are holes, not code: such an output is never more than "partial"', () => {
+  const r = recoverSource('local t = { Title = (nil)[124], Size = (nil)[12] }\nprint(t.Title)\n', { sandbox: { enabled: false } });
+  assert.notEqual(r.outcome.outcome, 'validated');
+  assert.notEqual(r.outcome.outcome, 'syntax-valid-unverified');
+  assert.match(r.outcome.reasons.join(' '), /constant\(s\) are missing, written as \(nil\)\[k\]/);
+});

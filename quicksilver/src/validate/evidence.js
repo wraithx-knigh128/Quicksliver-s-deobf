@@ -43,7 +43,8 @@ export function recoveryEvidence(r) {
   if (!r) return null;
   if (r.output == null) return { ok: false, output: null, error: r.error ? r.error.message || String(r.error) : undefined };
   let parses = true;
-  try { parse(r.output); } catch { parses = false; }
+  let ast = null;
+  try { ast = parse(r.output); } catch { parses = false; }
   let residual = [];
   if (parses) { try { residual = residualIndicators(r.output); } catch { residual = []; } }
   return {
@@ -53,7 +54,27 @@ export function recoveryEvidence(r) {
     residual,
     unresolved: unresolvedCount(r),
     level: r.confidence ? r.confidence.level : null,
+    bodies: ast ? functionBodies(ast) : null,
   };
+}
+
+/**
+ * Prompt XXVI: how many of the output's functions have a body. A signature with nothing inside is not a reconstructed function; an output
+ * made of them (a list of parameters, stubs, placeholders) is not a reconstruction, however readable.
+ */
+export function functionBodies(ast) {
+  let total = 0; let empty = 0; let missingConstants = 0;
+  const visit = (n) => {
+    if (!n || typeof n !== 'object') return;
+    if (Array.isArray(n)) { n.forEach(visit); return; }
+    if (n.type === 'Func') { total++; if (!n.body || n.body.length === 0) empty++; }
+    // `(nil)[k]`: a devirtualizer that could not read the constant pool writes the missing constant k this way (another tool's output for
+    // Test 8 has 401 of them); it is not code, it is a hole
+    if (n.type === 'Index') { let o = n.obj; while (o && o.type === 'Paren') o = o.expr; if (o && o.type === 'Nil') missingConstants++; }
+    for (const k of Object.keys(n)) if (k !== 'line' && k !== 'comments') { const v = n[k]; if (v && typeof v === 'object') visit(v); }
+  };
+  visit(ast.body);
+  return { total, empty, missingConstants };
 }
 
 /**
@@ -73,6 +94,15 @@ function unresolvedCount(r) {
   return kept.length + other;
 }
 
+/** The name of a recognised protector whose VM (or packed program) is still in the output, with nothing rebuilt: its architecture is known, the source is not. */
+function unresolvedArchitecture(r) {
+  if (!r || !r.detection || !r.confidence || !['none', 'minimal'].includes(r.confidence.level)) return null;
+  const f = (r.detection.families || []).find((x) => x.confidence >= 0.5 && (x.evidence || []).some((e) => e.unrecoverable));
+  if (!f) return null;
+  const left = (r.confidence.reasons || []).some((x) => /nothing rebuilt it|still present in the output|generated interpreter is still in the output/.test(x.text));
+  return left ? (f.name || f.id) : null;
+}
+
 /** The outcome of a direct recovery (no loader, no retrieval), before any behaviour comparison. */
 export function recoveryOutcome(source, r, { behaviour = null, retrieval = null } = {}) {
   let input = inputEvidence(source, parse);
@@ -81,7 +111,7 @@ export function recoveryOutcome(source, r, { behaviour = null, retrieval = null 
   const mend = r && Array.isArray(r.steps) ? r.steps.find((x) => (x.id === 'keyword.repair' || x.id === 'zartha.repair') && x.status === 'applied') : null;
   if (input.kind === 'lua' && input.parses === false && mend && r.output != null) input = { kind: 'lua', parses: true, repaired: `${mend.label} (${mend.changed} place(s))` };
   const recovery = recoveryEvidence(r);
-  const ev = { retrieval, input, obfuscated: wasObfuscated(r && r.detection), recovery, behaviour, remote: remoteEvidence(r) };
+  const ev = { retrieval, input, obfuscated: wasObfuscated(r && r.detection), recovery, behaviour, remote: remoteEvidence(r), architecture: unresolvedArchitecture(r) };
   // the evidence travels with the result (and back for the behaviour step) without the output text itself
   return { evidence: { ...ev, recovery: recovery && { ...recovery, output: undefined, hasOutput: recovery.output != null } }, ...classifyOutcome(ev) };
 }

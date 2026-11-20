@@ -87,6 +87,9 @@ export function classifyOutcome(ev) {
   if (residual.length) left.push(`obfuscation still detected in the output (${residual.join(', ')})`);
   if (rec.unresolved > 0) left.push(`${rec.unresolved} place(s) the engine could not resolve`);
   if (ev.obfuscated && rec.level === 'low') left.push('engine confidence is low');
+  // a reconstruction whose functions are mostly signatures without bodies has not recovered them (Prompt XXVI)
+  if (rec.bodies && rec.bodies.missingConstants > 0) left.push(`${rec.bodies.missingConstants} constant(s) are missing, written as (nil)[k] (holes, not code)`);
+  if (ev.obfuscated && rec.bodies && rec.bodies.total >= 4 && rec.bodies.empty * 2 >= rec.bodies.total) left.push(`${rec.bodies.empty} of its ${rec.bodies.total} functions have no body (a signature is not a recovered function)`);
 
   // behavioural validation
   const b = ev.behaviour;
@@ -107,6 +110,9 @@ export function classifyOutcome(ev) {
 }
 
 function label(outcome, ev) {
+  // Prompt XXVI: a recognised protector whose interpreter is still in the output is not a reconstruction of any kind: the architecture is
+  // known, the program is not. Said in those words, so a list of helper closures or a cleaned-up VM is never read as recovered source.
+  if (outcome === 'not-deobfuscated' && ev.architecture) return `Architecture identified (${ev.architecture}); source unresolved`;
   if (outcome === 'not-deobfuscated' && !ev.retrieval) return 'Received but not successfully deobfuscated';
   // a file that was never obfuscated is not "reconstructed": the class is the same, the words say what happened
   if (outcome === 'validated' && ev.obfuscated === false) return 'Not obfuscated; the output behaves like the input (behaviourally validated)';
