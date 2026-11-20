@@ -309,6 +309,14 @@ const RULES = {
     rule('encrypt-strings', 'structure', 0.5, (c) => /^--!nocheck\r?\n--!nolint\r?\n-- Obscura \[/.test(c.src.slice(0, 200)) && /string\.char\(bit32\.bxor\(/.test(c.src) && 'strings rebuilt with string.char(bit32.bxor(...)) by a decoder function'),
     rule('vm', 'structure', 0.9, (c) => /^--!nocheck\r?\n--!nolint\r?\n-- Obscura VM \[/.test(c.src.slice(0, 200)) && 'the VM build header: the program is bytecode for an interpreter generated into the script', true),
   ],
+  volt: [
+    // the banner every Voltfuscator output carries as a string, assigned to a __voltfuscator_<id> global
+    rule('banner', 'banner', 0.97, (c) => { const m = /File protected by Voltfuscator v([0-9][0-9.]*)/i.exec(c.src.slice(0, 600)); return m ? { text: `Voltfuscator banner (v${m[1]})`, version: m[1] } : false; }),
+    rule('marker-global', 'structure', 0.8, (c) => /__voltfuscator_[A-Za-z]+\s*=/.test(c.src.slice(0, 600)) && 'the banner string is stored in a __voltfuscator_<id> global'),
+    // the integrity errors its runtime raises ("Voltfuscator: C0nn"), visible once the constants are decoded
+    rule('integrity-codes', 'structure', 0.7, (c) => /Voltfuscator: C0\d\d/.test(c.src) && 'integrity / environment errors "Voltfuscator: C0nn"'),
+    rule('method-table', 'structure', 0.6, (c) => /return\s*\(\{\s*[A-Za-z]{2}\s*=\s*function\b/.test(c.src.slice(0, 1200)) && /\}\):[A-Za-z]{2}\(\)\s*$/.test(c.src.slice(-200)) && 'the program is a table of methods run as ({ ... }):entry(): runtime, constant decoder, index and data fields', true),
+  ],
   luaq: [
     rule('banner', 'banner', 0.97, (c) => { const m = /This file was protected using Luaq Obfuscator v([0-9][0-9.]*)/i.exec(c.src.slice(0, 400)); return m ? { text: `LuaQ banner (v${m[1]})`, version: m[1] } : false; }),
     // stage 1: a "LUAQ!" long-string argument decoded into an LQZ1 container and loadstring()ed as "=LUAQ_VM"

@@ -452,6 +452,24 @@
     ],
     "nearest": "luraph_v15"
    },
+   "luraph-15.2": {
+    "status": "version-uncertain",
+    "evidence": {
+     "runs": 0,
+     "lifted": 0,
+     "liftedUnverified": 0,
+     "traceOnly": 0,
+     "liftFailed": 0,
+     "pairs": 0,
+     "identical": 0,
+     "different": 0,
+     "inconclusive": 0
+    },
+    "reasons": [
+     "No source confirms that this version exists (vendor SDK history checked to 2026-11-20; third-party trackers name v15.1 at most). A banner claiming it is treated as version-uncertain; the nearest engine is tried as an experiment."
+    ],
+    "nearest": "luraph_v15"
+   },
    "ironbrew-1": {
     "status": "partially-tested",
     "evidence": {

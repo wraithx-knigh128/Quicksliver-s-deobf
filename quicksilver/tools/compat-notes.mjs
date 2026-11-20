@@ -97,6 +97,29 @@ export const NOTES = {
   moonsec_v2: { status: 'unsupported', basis: 'signature', detect: 'The Protected_by_MoonSecV2 banner variable and the _msec assignment, read on the scripts of a public collection. Some files filed under MoonSecV2 there are other tools\u2019 output (a "Protected by Mnx Obfuscator", a "DELTA V3"); they are reported as an unrecognised vendor banner, not as MoonSec.', limits: ['VM loader: identified, not rebuilt.'] },
   wynfuscate: { status: 'unsupported', basis: 'signature', detect: 'The "Protected by wYnFuscate" header and the wrapper that rebuilds getfenv from string.char codes, read on 22 scripts of a public collection.', limits: ['VM: identified, not rebuilt. One recovery run took 7 s on a 245 KB script; no crash on any.'] },
   boronide: { status: 'unsupported', basis: 'signature', detect: 'The "Boronide[\u2122] [Free|Premium] Obfuscation, vX" header (v0.3.0 to v0.7.0 were found) and the credit string run through :gsub(\'(.*)\', function ...), read on the scripts of a public collection.', limits: ['Opaque state loops and a VM: identified, not rebuilt.'] },
+  volt: {
+    status: 'unsupported',
+    basis: 'signature',
+    covers: ['constant pool (decoded and checksum-verified)', 'environment checks (read)'],
+    detect: 'The banner string `File protected by Voltfuscator vX` stored in a `__voltfuscator_<id>` global, the preset / source / runtime header comments, and the `({ ... }):entry()` method table; read on the vendor\u2019s own published 8.1 sample (Normal and Ultra presets).',
+    config: {},
+    limits: [
+      'v8.1: the constant pool is decoded by the file\u2019s own decoder in the sandbox and every value is accepted only through the file\u2019s checksum (111 of 111 constants on both presets); the decoded runtime behaves like the protected file on real Luau with an executor stand-in.',
+      'The program itself is not recovered: it runs in a control-flow-flattened VM whose program is ChaCha20-enciphered, in two stages (an anti-tamper / loader stage, then the user\u2019s program unpacked from a second block). No lifter exists; results are reported as not deobfuscated.',
+      'Only one version (8.1) and one source program were available; other versions are detected by their banner and are not verified.',
+    ],
+  },
+  luaq: {
+    status: 'unsupported',
+    basis: 'signature',
+    covers: ['outer layers (base 93, LQZ1, DEFLATE)', 'VM runtime (read)'],
+    detect: 'The banner `This file was protected using Luaq Obfuscator vX` and the `LUAQ!` / `LQZ1` / `=LUAQ_VM` container, read on one v2.7 sample supplied by a user.',
+    config: {},
+    limits: [
+      'v2.7: the outer layers are decoded to the VM runtime; the program is not in the file \u2014 it is delivered by the service at run time \u2014 so results are reported as payload unavailable.',
+      'The latest LuaQ version could not be established (the vendor page names none and was not reachable from the build environment); a banner naming another version is decoded the same way when possible and marked as not verified.',
+    ],
+  },
   obscura: {
     status: 'partial',
     basis: 'real-output',

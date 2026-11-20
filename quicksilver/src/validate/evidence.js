@@ -25,6 +25,9 @@ export function wasObfuscated(detection) {
 
 /** What the script downloads and runs when it runs: those parts are not in the file, whatever the recovery did. */
 export function remoteEvidence(r) {
+  // a dedicated reader that established the program is not in the file at all (LuaQ: delivered by the service at run time)
+  const elsewhere = r && Array.isArray(r.steps) ? r.steps.find((x) => x.status === 'applied' && x.detail && x.detail.programInFile === false) : null;
+  if (elsewhere) return { only: true, places: [], why: `${elsewhere.label}: the file holds the obfuscator\u2019s runtime and loader; the program itself is delivered from outside the file when it runs` };
   const places = r && r.adaptive && Array.isArray(r.adaptive.residual) ? r.adaptive.residual.filter((x) => x.kind === 'remote-loader') : [];
   const classes = (r && r.detection && r.detection.classes || []).map((c) => c.id);
   if (!places.length && !classes.some((c) => REMOTE_CLASSES.includes(c))) return null;

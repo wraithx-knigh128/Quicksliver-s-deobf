@@ -44,6 +44,8 @@ export function engineStatus(records, { hasEngine = true } = {}) {
 
 /** Status of one catalogue row (a version), from the registry. A row with no engine is unsupported by definition; its `nearest` engine is reported separately. */
 export function versionStatus(version, registry) {
+  // a version no source confirms: neither "supported" nor plainly "unsupported" — what it is cannot be settled (Prompt XXII)
+  if (version.uncertain) return { status: 'version-uncertain', evidence: engineStatus([], { hasEngine: false }).evidence, reasons: [version.note || 'no source confirms this version'], nearest: version.nearest || null };
   if (!version.engine) return { ...engineStatus([], { hasEngine: false }), nearest: version.nearest || null };
   const records = (registry.records || []).filter((r) => r.versionRow === version.id && r.engine === version.engine);
   return { ...engineStatus(records), nearest: null };

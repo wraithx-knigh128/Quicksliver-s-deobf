@@ -16,8 +16,8 @@ const STAGES = [
   ['identify', 'Identify the input'], ['select', 'Choose the engine'], ['run', 'Run in the instrumented environment'], ['lift', 'Lift the virtual machine'],
   ['structure', 'Rebuild control flow and names'], ['check', 'Check the output'], ['verify', 'Compare with the original'], ['report', 'Write the report'],
 ];
-const STATUS_BADGE = { 'fully-tested': 'ok', 'partially-tested': 'info', experimental: 'warn', unsupported: 'bad' };
-const STATUS_TEXT = { 'fully-tested': 'Fully tested', 'partially-tested': 'Partially tested', experimental: 'Experimental', unsupported: 'Unsupported' };
+const STATUS_BADGE = { 'fully-tested': 'ok', 'partially-tested': 'info', experimental: 'warn', unsupported: 'bad', 'version-uncertain': 'warn' };
+const STATUS_TEXT = { 'fully-tested': 'Fully tested', 'partially-tested': 'Partially tested', experimental: 'Experimental', unsupported: 'Unsupported', 'version-uncertain': 'Version uncertain' };
 const KIND = {
   devirtualized: ['ok', 'Lifted from the virtual machine'], 'trace-assisted': ['warn', 'Built from a behaviour trace'], trace: ['warn', 'Behaviour trace only'], none: ['bad', 'No output'],
 };

@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "generatedAt": "2026-11-17T17:11:17.718Z",
+ "generatedAt": "2026-11-20T09:30:53.881Z",
  "gates": {
   "real": {
    "minFixtures": 8,
@@ -851,11 +851,11 @@
       "traceChecked": 87,
       "traceIdentical": 87,
       "toolBroken": 4,
-      "fidelityAfter": 0.849,
+      "fidelityAfter": 0.858,
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-15T17:26:48.323Z"
+       "measuredAt": "2026-11-17T13:03:37.434Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -1025,7 +1025,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-15T17:26:48.323Z"
+       "measuredAt": "2026-11-17T13:03:37.434Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -1725,7 +1725,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-15T17:26:48.323Z"
+       "measuredAt": "2026-11-17T13:03:37.434Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -1741,6 +1741,125 @@
      "verification": {
       "status": "internally-tested",
       "basis": "recovery measured on examples that are not real tool output"
+     }
+    }
+   ],
+   "claims": {
+    "unversioned": {
+     "claim": "identification-only",
+     "why": "The output can be recognised. No reconstruction has been verified against real or authorised samples."
+    }
+   }
+  },
+  {
+   "id": "volt",
+   "name": "Voltfuscator",
+   "kind": "commercial",
+   "summary": "Hosted Lua 5.1 / Luau obfuscator by Voltils (voltils.cc; presets Normal and Ultra; runtimes lua51, luau, roblox, studio, executor). v8.1 read on the vendor’s own published paired sample: a table of methods run as ({...}):entry(), a checksum-verified constant pool decoded by a keyed stream, an environment check that gates the decoder key, and a control-flow-flattened runtime whose program is ChaCha20-enciphered.",
+   "versions": [
+    {
+     "id": "unversioned",
+     "label": "as measured (no version split)",
+     "identification": {
+      "methods": [
+       {
+        "kind": "signature",
+        "confidence": 0.8,
+        "note": "heuristic"
+       }
+      ],
+      "confidence": 0.8
+     },
+     "characteristics": [
+      {
+       "text": "checksum-verified constant pool (base-85, keyed stream)",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/usernamethisorthat/Voltils-Voltfuscator",
+        "https://voltils.cc/ (not reachable from the build environment)"
+       ]
+      },
+      {
+       "text": "environment / executor checks gating the decoder key",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/usernamethisorthat/Voltils-Voltfuscator",
+        "https://voltils.cc/ (not reachable from the build environment)"
+       ]
+      },
+      {
+       "text": "integrity errors C0nn",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/usernamethisorthat/Voltils-Voltfuscator",
+        "https://voltils.cc/ (not reachable from the build environment)"
+       ]
+      },
+      {
+       "text": "control-flow flattening with opaque predicates",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/usernamethisorthat/Voltils-Voltfuscator",
+        "https://voltils.cc/ (not reachable from the build environment)"
+       ]
+      },
+      {
+       "text": "ChaCha20-enciphered VM program",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/usernamethisorthat/Voltils-Voltfuscator",
+        "https://voltils.cc/ (not reachable from the build environment)"
+       ]
+      },
+      {
+       "text": "macros --!vlt:vm and --!vlt:cff",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/usernamethisorthat/Voltils-Voltfuscator",
+        "https://voltils.cc/ (not reachable from the build environment)"
+       ]
+      }
+     ],
+     "samples": {
+      "authorizedPairs": 0,
+      "realOutput": 0,
+      "publicObserved": 0,
+      "notes": "No real output of this tool was available."
+     },
+     "capabilities": {
+      "identify": {
+       "available": true,
+       "verified": "format-tested"
+      },
+      "trace": {
+       "available": true,
+       "verified": "unverified"
+      },
+      "recover": {
+       "available": false,
+       "verified": "none"
+      }
+     },
+     "results": {
+      "fixtures": 0,
+      "syntheticFixtures": 0,
+      "behaviourChecked": 0,
+      "behaviourSame": 0,
+      "traceChecked": 0,
+      "traceIdentical": 0,
+      "toolBroken": 0,
+      "fidelityAfter": null,
+      "runtime": null,
+      "reproduction": null
+     },
+     "limitations": [
+      "v8.1: the constant pool is decoded by the file’s own decoder in the sandbox and every value is accepted only through the file’s checksum (111 of 111 constants on both presets); the decoded runtime behaves like the protected file on real Luau with an executor stand-in.",
+      "The program itself is not recovered: it runs in a control-flow-flattened VM whose program is ChaCha20-enciphered, in two stages (an anti-tamper / loader stage, then the user’s program unpacked from a second block). No lifter exists; results are reported as not deobfuscated.",
+      "Only one version (8.1) and one source program were available; other versions are detected by their banner and are not verified."
+     ],
+     "verification": {
+      "status": "identified",
+      "basis": "recognised from signatures; no reconstruction measured"
      }
     }
    ],
@@ -1847,7 +1966,8 @@
       "reproduction": null
      },
      "limitations": [
-      "No limits were recorded for this tool."
+      "v2.7: the outer layers are decoded to the VM runtime; the program is not in the file — it is delivered by the service at run time — so results are reported as payload unavailable.",
+      "The latest LuaQ version could not be established (the vendor page names none and was not reachable from the build environment); a banner naming another version is decoded the same way when possible and marked as not verified."
      ],
      "verification": {
       "status": "identified",
@@ -1964,7 +2084,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-15T17:26:48.323Z"
+       "measuredAt": "2026-11-17T13:03:37.434Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -2070,7 +2190,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-15T17:26:48.323Z"
+       "measuredAt": "2026-11-17T13:03:37.434Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -2274,7 +2394,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-15T17:26:48.323Z"
+       "measuredAt": "2026-11-17T13:03:37.434Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -2394,7 +2514,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-15T17:26:48.323Z"
+       "measuredAt": "2026-11-17T13:03:37.434Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -2499,7 +2619,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-15T17:26:48.323Z"
+       "measuredAt": "2026-11-17T13:03:37.434Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -2604,7 +2724,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-15T17:26:48.323Z"
+       "measuredAt": "2026-11-17T13:03:37.434Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -2710,7 +2830,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-15T17:26:48.323Z"
+       "measuredAt": "2026-11-17T13:03:37.434Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -3037,7 +3157,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-15T17:26:48.323Z"
+       "measuredAt": "2026-11-17T13:03:37.434Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -3426,7 +3546,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-15T17:26:48.323Z"
+       "measuredAt": "2026-11-17T13:03:37.434Z"
       },
       "reproduction": null
      },
@@ -3551,7 +3671,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-15T17:26:48.323Z"
+       "measuredAt": "2026-11-17T13:03:37.434Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -3673,7 +3793,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-15T17:26:48.323Z"
+       "measuredAt": "2026-11-17T13:03:37.434Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -3779,7 +3899,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-15T17:26:48.323Z"
+       "measuredAt": "2026-11-17T13:03:37.434Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -4370,11 +4490,11 @@
       "traceChecked": 47,
       "traceIdentical": 47,
       "toolBroken": 1,
-      "fidelityAfter": 0.6,
+      "fidelityAfter": 0.607,
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-15T17:26:48.323Z"
+       "measuredAt": "2026-11-17T13:03:37.434Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -4495,7 +4615,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-15T17:26:48.323Z"
+       "measuredAt": "2026-11-17T13:03:37.434Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",
@@ -4615,7 +4735,7 @@
       "runtime": {
        "source": "reference",
        "runtimes": "PUC Lua 5.1 / LuaJIT / Lua 5.4 via lupa",
-       "measuredAt": "2026-11-15T17:26:48.323Z"
+       "measuredAt": "2026-11-17T13:03:37.434Z"
       },
       "reproduction": {
        "rerunAt": "2026-11-09T02:11:15.970Z",

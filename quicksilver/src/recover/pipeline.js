@@ -37,6 +37,7 @@ import { snapshotNames, joinMoonVeil, unboxCells, JoinError } from './moonveil-j
 import { rebuildProgram21, Lift21Error } from './moonveil-vm/lift21.js';
 import { liftRealObfuscatorVm, looksLikeRealObfuscatorVm, RealObfuscatorVmError } from './realobfuscator-vm.js';
 import { looksLikeLuaq, decodeLuaq, LuaqError } from './luaq.js';
+import { looksLikeVolt, decodeVoltConstants, voltHeader, VoltError } from './volt.js';
 import { removeHerculesAntiTamper, removeHerculesAntiTamperFunction, removeHerculesCoinGuard, restoreMethodSelf } from './hercules.js';
 import { uninlinePass } from '../passes/uninline.js';
 import { splitWebs } from '../passes/webs.js';
@@ -443,6 +444,16 @@ export function recover(source, userOptions = {}) {
       return { changed: 1, ...info, programInFile: false };
     });
     parsed = { ok: true, ast: run.ast };
+  }
+  // Voltfuscator: the constant pool is decoded by the file's own decoder in the sandbox, every value accepted only through the file's checksum
+  // (src/recover/volt.js); the generic passes then work on the runtime with its strings in place
+  if (looksLikeVolt(source)) {
+    run.step('volt.constants', 'Decode Voltfuscator\u2019s constant pool with the file\u2019s own decoder (sandbox; checksum-verified)', (a) => {
+      try {
+        const r = decodeVoltConstants(a, { sandbox: options.sandbox });
+        return r.skipped ? r : { ...r, header: voltHeader(source) };
+      } catch (e) { if (e instanceof VoltError) return { skipped: e.message }; throw e; }
+    });
   }
   let unusedAtStart = snapshotUnused(parsed.ast);
 

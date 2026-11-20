@@ -315,17 +315,20 @@ def _run_process(cmd, cwd, env, deadline, run: Run):
 _HEADER_LINES = re.compile(r"^(-- (Reconstructed by QuickSilver|Devirtualized with Luraph|Behaviour trace:|source: ).*\n)+", re.M)
 
 
-def _attempt(step, input_path: Path, work: Path, deadline, run: Run) -> dict:
+def _attempt(step, input_path: Path, work: Path, deadline, run: Run, reserve: int = 0) -> dict:
     spec = ENGINES[step["engine"]]
     out_path = work / ("out_%s_%s.lua" % (step["engine"], step["mode"]))
     remaining = max(5, int(deadline - time.time()))
+    # Prompt XXII: an attempt may use the job's remaining time (less a reserve for a fallback step that follows). It was capped at 120 s, so a
+    # job given the 240 s maximum still cut a large v15 lift off in its third round, and the "request a longer limit" hint could not help.
+    budget = max(5, remaining - reserve) if remaining - reserve >= 60 else min(120, remaining)
     py = sys.executable or "python3"
     if spec["front"] == "cli":
-        cmd = [py, "-I", "cli.py", str(input_path), "-o", str(out_path), "--timeout", str(min(120, remaining)), "--no-credit"] + spec["args"]
+        cmd = [py, "-I", "cli.py", str(input_path), "-o", str(out_path), "--timeout", str(budget), "--no-credit"] + spec["args"]
         if step["mode"] == "trace":
             cmd += ["--trace-fallback", "--no-devirt"]
     else:
-        cmd = [py, "-I", "deob.py", str(input_path), "-o", str(out_path), "--timeout", str(min(120, remaining)), "--no-pypy"] + spec["args"]
+        cmd = [py, "-I", "deob.py", str(input_path), "-o", str(out_path), "--timeout", str(budget), "--no-pypy"] + spec["args"]
         if step["mode"] == "trace":
             cmd += ["--no-devirt"]
     cmd = isolation_prefix(remaining) + cmd
@@ -508,7 +511,8 @@ def reconstruct(source: bytes, engine: str = "auto", timeout_s: int = DEFAULT_TI
                 break
             run.stage = None
             run.stage_start("run", "attempt: %s (%s)" % (ENGINES[step["engine"]]["label"], step["mode"]))
-            a = _attempt(step, input_path, work, deadline, run)
+            later = steps[steps.index(step) + 1:]
+            a = _attempt(step, input_path, work, deadline, run, reserve=30 if later else 0)
             attempts.append(a["result"])
             if run.was_cancelled:
                 return {"ok": False, "engine": {"requested": engine, "attempts": attempts}, "kind": "none", "log": run.log, "diagnostics": [], "seconds": round(time.time() - run.t0, 1),

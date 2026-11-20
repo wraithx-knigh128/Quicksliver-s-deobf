@@ -102,6 +102,15 @@ export const FAMILIES = {
     techniques: ['identifier renaming', 'string encryption', 'number expressions', 'control-flow flattening', 'opaque predicates', 'dead code', 'table indirection', 'anti-tamper', 'bytecode VM with encrypted constants'],
     sources: ['https://github.com/vo3pal/obscura'],
   },
+  volt: {
+    name: 'Voltfuscator',
+    kind: 'commercial',
+    evidence: 'sample',
+    maxConfidence: 0.97,
+    summary: 'Hosted Lua 5.1 / Luau obfuscator by Voltils (voltils.cc; presets Normal and Ultra; runtimes lua51, luau, roblox, studio, executor). v8.1 read on the vendor\u2019s own published paired sample: a table of methods run as ({...}):entry(), a checksum-verified constant pool decoded by a keyed stream, an environment check that gates the decoder key, and a control-flow-flattened runtime whose program is ChaCha20-enciphered.',
+    techniques: ['checksum-verified constant pool (base-85, keyed stream)', 'environment / executor checks gating the decoder key', 'integrity errors C0nn', 'control-flow flattening with opaque predicates', 'ChaCha20-enciphered VM program', 'macros --!vlt:vm and --!vlt:cff'],
+    sources: ['https://github.com/usernamethisorthat/Voltils-Voltfuscator', 'https://voltils.cc/ (not reachable from the build environment)'],
+  },
   luaq: {
     name: 'LuaQ',
     kind: 'commercial',

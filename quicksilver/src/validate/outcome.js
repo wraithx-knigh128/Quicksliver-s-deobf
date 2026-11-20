@@ -73,7 +73,7 @@ export function classifyOutcome(ev) {
   if (inp.kind === 'lua' && inp.parses === false) { reasons.push(inp.error ? `The program does not parse: ${inp.error}.` : 'The program does not parse.'); return out('invalid-input'); }
   if (ev.obfuscated === false && ev.recovery) met.push('the input was not obfuscated: there was nothing to deobfuscate in this file');
   // a script that only downloads and runs its program: the program is not in the file, so there is nothing of it to reconstruct
-  if (rm && rm.only && !r) { reasons.push('This file only downloads and runs its program; the program is not in the file, so nothing of it is reconstructed here.'); return out('payload-unavailable'); }
+  if (rm && rm.only && !r) { reasons.push(rm.why || 'This file only downloads and runs its program; the program is not in the file, so nothing of it is reconstructed here.'); return out('payload-unavailable'); }
   met.push(inp.kind === 'lua' ? (inp.repaired ? `the input parses as Lua after a documented repair: ${inp.repaired}` : 'the input parses as Lua') : `the input is ${inp.kind}`);
 
   // deobfuscation and syntax validation

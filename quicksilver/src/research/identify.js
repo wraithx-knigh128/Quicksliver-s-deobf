@@ -19,7 +19,8 @@ export function generationForVersion(major, minor) {
   if (major === 13) return 'v13-era';
   if (major === 14) return 'v14';
   if (major === 15 && minor === 0) return 'v15';
-  if (major === 15 && minor >= 1) return 'v15.1';
+  if (major === 15 && minor === 1) return 'v15.1';
+  // a v15.2 or later is not profiled: no source describes it, so v15.1's profile is not assumed for it (Prompt XXII)
   return null;
 }
 

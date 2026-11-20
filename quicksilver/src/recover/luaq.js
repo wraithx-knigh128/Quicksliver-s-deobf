@@ -118,5 +118,6 @@ export function decodeLuaq(src) {
   const data = openLQZ1(bytes);
   let text = '';
   for (let i = 0; i < data.length; i += 8192) text += String.fromCharCode(...data.subarray(i, i + 8192));
-  return { stage2: text, version: s1.version, payloadChars: s1.payload.length, containerBytes: bytes.length, stage2Bytes: data.length, ...describeStage2(text) };
+  // the layout was read on v2.7 only: another version is decoded the same way when it can be, and says that its layout is not verified
+  return { stage2: text, version: s1.version, versionVerified: s1.version === '2.7', payloadChars: s1.payload.length, containerBytes: bytes.length, stage2Bytes: data.length, ...describeStage2(text) };
 }

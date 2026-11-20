@@ -26,7 +26,9 @@ export const VERSIONS = Object.freeze([
   { id: 'luraph-14.9', family: 'luraph', label: 'Luraph v14.9', match: { major: 14, minors: [9] }, engine: 'luraph_v14_9' },
   { id: 'luraph-14-late', family: 'luraph', label: 'Luraph v14.10 and later 14.x', match: { major: 14, minorFrom: 10 }, engine: null, nearest: 'luraph_v14_9', note: 'Named by no source; the nearest engine is tried as an experiment.' },
   { id: 'luraph-15.0', family: 'luraph', label: 'Luraph v15.0', match: { major: 15, minors: [0, null] }, engine: 'luraph_v15' },
-  { id: 'luraph-15.1', family: 'luraph', label: 'Luraph v15.1 and later 15.x', match: { major: 15, minorFrom: 1 }, engine: null, nearest: 'luraph_v15', source: 'luraph-macrosdk-history', note: 'The vendor SDK was updated for v15.1 on 2026-10-03; the supplied engine documents v15 only.' },
+  { id: 'luraph-15.1', family: 'luraph', label: 'Luraph v15.1', match: { major: 15, minors: [1] }, engine: null, nearest: 'luraph_v15', source: 'luraph-macrosdk-history', note: 'The vendor SDK was updated for v15.1 on 2026-10-03 (two new macros: LPH_ASSUME and LPH_OPAQUE); the supplied engine documents v15 only, and no v15.1 sample with its source is available, so the nearest engine is tried as an experiment.' },
+  // Prompt XXII: no source confirms a v15.2 (the vendor SDK history, checked 2026-11-20, ends at the v15.1 update and a fix of 2026-10-06)
+  { id: 'luraph-15.2', family: 'luraph', label: 'Luraph v15.2 and later 15.x', match: { major: 15, minorFrom: 2 }, engine: null, nearest: 'luraph_v15', uncertain: true, note: 'No source confirms that this version exists (vendor SDK history checked to 2026-11-20; third-party trackers name v15.1 at most). A banner claiming it is treated as version-uncertain; the nearest engine is tried as an experiment.' },
   { id: 'ironbrew-1', family: 'ironbrew', label: 'IronBrew 1', match: { header: 'ironbrew1' }, engine: 'ironbrew1' },
 ]);
 
