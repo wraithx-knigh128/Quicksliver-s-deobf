@@ -138,7 +138,7 @@ Lua 5.1 bytecode, and report each constant as recovered or missing). **That read
 
 - Last full run before the derived-data regeneration: 1206 tests, 2 failing (`format-db`, labelled-collection), both caused by stale generated
   data; regenerated in commit 0df52de; both files now pass (33 of 33).
-- Full clean run on the current code: in progress when this was committed; the result is recorded in the follow-up commit.
+- Full clean run on the current code (commit c339755): **1206 tests, 1200 pass, 0 fail, 6 skipped** (the skips need the local sample collection). Duration about 14 minutes.
 
 ## 9. Commits (this round)
 
