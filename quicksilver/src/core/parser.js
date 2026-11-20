@@ -11,6 +11,11 @@
 import { tokenize, LuaSyntaxError } from './lexer.js';
 import { textToBinary } from './bytes.js';
 
+// How deep blocks and expressions may nest. Lua 5.1 stops at 200 (LUAI_MAXCCALLS); Luau, which Roblox scripts are written for, at 1000
+// (its LuauRecursionLimit). Prompt XXIV: 650 Boronide scripts of a public collection nest 201-344 levels deep and are parsed by Luau itself,
+// so the limit is Luau's: a deobfuscator must read what the target runtime accepts.
+export const MAX_DEPTH = 1000;
+
 const BINARY_PRIORITY = {
   'or': [1, 1], 'and': [2, 2],
   '<': [3, 3], '>': [3, 3], '<=': [3, 3], '>=': [3, 3], '~=': [3, 3], '==': [3, 3],
@@ -74,7 +79,7 @@ class Parser {
 
   /** Statements up to (not including) a block terminator. */
   parseBlock() {
-    if (++this.depth > 200) this.error('chunk has too many syntax levels');
+    if (++this.depth > MAX_DEPTH) this.error('chunk has too many syntax levels');
     const body = [];
     let prev = null;
     for (;;) {
@@ -394,7 +399,7 @@ class Parser {
   }
 
   parseExpr(limit = 0) {
-    if (++this.depth > 200) this.error('expression too complex (nesting too deep)');
+    if (++this.depth > MAX_DEPTH) this.error('expression too complex (nesting too deep)');
     let left;
     const t = this.tok;
     if ((t.t === 'keyword' && t.v === 'not') || (t.t === 'op' && (t.v === '-' || t.v === '#' || t.v === '~'))) {

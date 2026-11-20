@@ -385,6 +385,35 @@ def assess(text: str, kind_hint: str, log: list[str]) -> dict:
     return {"lines": len(lines), "bytes": len(text.encode("utf-8")), "functions": functions, "unresolved": counts, "grade": grade, "unresolvedTotal": total}
 
 
+# Prompt XXIV: a trace states how its run ended ("-- run status: ...") and how much it recorded ("-- N statements recorded").
+# A trace whose run failed before the program did anything is not a reconstruction, whatever the marker counts say: Luraph
+# v15.1/v15.2 spin in their anti-tamper loop right after the environment probe, and such a "trace" held only that probe.
+_RUN_STATUS = re.compile(r"^--\s*run status:\s*(.+)$", re.M)
+_STMTS = re.compile(r"^--\s*(\d+) statements? recorded", re.M)
+# Luraph's environment probe (the block its key derivation runs first): instances it makes and parents, and its Path2D queries
+_PROBE_LINE = re.compile(r'^(?:local \w+ = )?Instance\.new\("(?:Folder|ScreenGui|Frame|Path2D)"\)$|^\w+\.(?:Parent|Size|Position) = .+$'
+                         r'|^\w+:(?:SetControlPoints|Destroy)\(.*\)$|^\w+:(?:Get\w+OnCurve\w*|GetLength|GetBoundingRect|GetControlPoints)\(.*\)$')
+
+
+def trace_facts(text: str, kind: str) -> dict | None:
+    """How a behaviour trace's run ended and whether it observed anything beyond the obfuscator's own environment probe."""
+    if kind == "devirtualized":
+        return None
+    st = _RUN_STATUS.search(text)
+    n = _STMTS.search(text)
+    code = [l.strip() for l in text.splitlines() if l.strip() and not l.strip().startswith("--")]
+    probe_only = bool(code) and all(_PROBE_LINE.match(l) for l in code)
+    status = st.group(1).strip() if st else None
+    return {
+        "status": status,
+        "finished": status is None or status.startswith("finished"),
+        "statements": int(n.group(1)) if n else None,
+        "codeLines": len(code),
+        "probeOnly": probe_only,
+        "observedProgram": bool(code) and not probe_only,
+    }
+
+
 def syntax_check(text: str, work: Path) -> dict:
     path = work / "check.lua"
     path.write_text(text, encoding="utf-8")
@@ -473,7 +502,9 @@ def diagnose(log: list[str], attempts: list[dict], output_kind: str, quality: di
         out.append({"code": "timeout", "severity": "error", "message": "An attempt hit the time limit.", "hint": "A longer limit (up to %d s) can be requested; very large scripts may need a self-hosted worker." % MAX_TIMEOUT_S})
     if output_kind == "trace":
         out.append({"code": "trace-only", "severity": "warning", "message": "The output is a behaviour trace: only what the script did in one run, in the order it did it.", "hint": "Branches that did not run are absent, and the program's own structure is not recovered."})
-    if quality and quality["grade"] != "clean" and output_kind != "none":
+    if quality and quality["grade"] == "incomplete":
+        out.append({"code": "run-incomplete", "severity": "warning", "message": "The traced run stopped before the script finished, so the output covers only what ran before the stop.", "hint": "See the run status at the top of the output."})
+    elif quality and quality["grade"] != "clean" and output_kind != "none":
         out.append({"code": "unresolved-markers", "severity": "warning", "message": "The output still contains %d unresolved marker(s)." % quality["unresolvedTotal"], "hint": "See the counts in the quality report."})
     if syntax and syntax.get("ok") is False:
         out.append({"code": "invalid-syntax", "severity": "error", "message": "The output is not valid Luau.", "hint": "; ".join(syntax.get("errors", [])[:2])})
@@ -546,6 +577,23 @@ def reconstruct(source: bytes, engine: str = "auto", timeout_s: int = DEFAULT_TI
         spec = ENGINES[step["engine"]]
         run.stage_start("check")
         quality = assess(text, kind, run.log)
+        tfacts = trace_facts(text, kind)
+        if tfacts and not tfacts["finished"] and quality["grade"] == "clean":
+            # no unresolved markers, but the run itself stopped: the output cannot be complete
+            quality["grade"] = "incomplete"
+        if tfacts and not tfacts["observedProgram"]:
+            run.stage_done("check", detail="the run observed no program (%s)" % (tfacts["status"] or "no status"))
+            why = ("only the obfuscator's own environment probe ran before the run stopped" if tfacts["probeOnly"]
+                   else "the script ran to its end without any observable action" if tfacts["finished"]
+                   else "the run stopped before it recorded anything")
+            diags = diagnose(run.log + [text], attempts, kind, None, None)
+            diags.insert(0, {"code": "no-program-observed", "severity": "error",
+                             "message": "No part of the program was observed: %s (run status: %s)." % (why, tfacts["status"] or "unknown"),
+                             "hint": "The emulated environment differs from Roblox in something this script checks before it starts. The trace is kept for inspection; it is not a reconstruction."})
+            return {"ok": False, "engine": {"requested": engine, "used": step["engine"], "label": spec["label"], "mode": step["mode"], "nearest": bool(step.get("nearest")), "attempts": attempts},
+                    "identification": ident, "kind": "none", "trace": tfacts, "probeTrace": text[:4000], "diagnostics": diags, "log": run.log,
+                    "seconds": round(time.time() - run.t0, 1),
+                    "error": {"code": "no_program_observed", "message": "The engine ran the script, but no part of the program was observed (%s)." % why}}
         syntax = syntax_check(text, work)
         run.stage_done("check", detail="%s, %d unresolved marker(s)" % ("valid Luau" if syntax.get("ok") else "syntax problem" if syntax.get("ok") is False else "syntax unchecked", quality["unresolvedTotal"]))
 
@@ -568,6 +616,7 @@ def reconstruct(source: bytes, engine: str = "auto", timeout_s: int = DEFAULT_TI
             "output": header + text,
             "quality": quality,
             "checks": {"syntax": syntax},
+            "trace": tfacts,
             "verification": verification,
             "diagnostics": diagnose(run.log, attempts, kind, quality, syntax),
             "log": run.log,

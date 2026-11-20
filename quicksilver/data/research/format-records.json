@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-11-17T07:15:38.881Z",
+ "generatedAt": "2026-11-20T13:46:37.234Z",
  "engine": "src/recover/pipeline.js",
  "records": [
   {
@@ -488,8 +488,8 @@
    "versionMatches": true,
    "ok": true,
    "confidence": {
-    "score": 0.35,
-    "level": "low"
+    "score": 0.25,
+    "level": "minimal"
    },
    "steps": [
     {
@@ -525,7 +525,7 @@
     }
    ],
    "unresolved": 0,
-   "outputBytes": 66928
+   "outputBytes": 66932
   }
  ]
 }

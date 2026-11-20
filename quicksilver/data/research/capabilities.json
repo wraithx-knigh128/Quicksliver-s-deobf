@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "generatedAt": "2026-11-15T17:30:14.583Z",
+  "generatedAt": "2026-11-20T13:57:00.288Z",
   "capabilities": [
     {
       "id": "luraph.banner-version",
@@ -164,6 +164,16 @@
           },
           {
             "name": "obscura validates",
+            "ok": true,
+            "detail": []
+          },
+          {
+            "name": "volt validates",
+            "ok": true,
+            "detail": []
+          },
+          {
+            "name": "luaq validates",
             "ok": true,
             "detail": []
           },
@@ -376,6 +386,14 @@
           },
           {
             "name": "boronide@unversioned is not \"supported\"",
+            "ok": true
+          },
+          {
+            "name": "volt@unversioned is not \"supported\"",
+            "ok": true
+          },
+          {
+            "name": "luaq@unversioned is not \"supported\"",
             "ok": true
           },
           {

@@ -140,7 +140,9 @@ export function createReconstructView(ctx) {
     const r = S.result;
     if (!r) return section('Result', note('', S.running ? 'Waiting for the service…' : 'The reconstruction appears here.'));
     if (!r.ok) {
-      return section('Result', [note('bad', (r.error && r.error.message) || 'The reconstruction failed.'), diagnosticsList(r.diagnostics || []), logBox()]);
+      // Prompt XXIV: a run that observed no program keeps what it did record (the obfuscator's environment probe) for inspection, as text
+      const probe = r.probeTrace ? h('details.recon-probe', [h('summary', `What the run recorded before it stopped (${r.trace && r.trace.status ? r.trace.status : 'no status'}): not the program`), h('pre.recon-log', r.probeTrace)]) : null;
+      return section('Result', [note('bad', (r.error && r.error.message) || 'The reconstruction failed.'), diagnosticsList(r.diagnostics || []), probe, logBox()]);
     }
     const k = KIND[r.kind] || ['', r.kind];
     const v = VERIFY[(r.verification && r.verification.status) || 'not-run'];

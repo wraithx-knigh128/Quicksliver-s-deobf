@@ -219,6 +219,11 @@ const RULES = {
     // the macro names Luraph defines for its own build flags (read on files of the public collection that carry no banner)
     rule('macros', 'structure', 0.85, (c) => /\bLPH_(?:NO_VIRTUALIZE|OBFUSCATED|JIT|ENCSTR|CRASH|NO_UPVALUES|SKIP)\b/.test(c.src) && 'the build-flag macros Luraph defines (LPH_NO_VIRTUALIZE, LPH_OBFUSCATED, ...)'),
     // the shape of a Luraph 14.x script without its banner: one `return({ name = function(...) ... })` table of VM handlers, and number literals spelled with capital 0X / 0B prefixes and underscores
+    // Prompt XXIV: every Luraph version of a public collection (v1 to v15.2, 51 versions) keeps the program as data: the structure probe finds
+    // an interpreter (38 to 184 handlers) in 38 versions and a compressed payload that one unpacks at run time in the rest. The banner is text
+    // the file's owner controls, so this needs the output's shape too: a large minified script (one line of thousands of characters).
+    rule('vm-output', 'structure', 0.9, (c) => /This file was (?:protected|generated) using Luraph Obfuscator/i.test(c.src.slice(0, 2000)) && c.src.length > 15000
+      && c.src.split('\n').some((l) => l.length > 5000) && 'a Luraph-protected program: it runs from an encoded payload inside Luraph\u2019s virtual machine (the static pipeline has no Luraph lifter; the Reconstruct tab runs the dynamic engine)', true),
     rule('handler-table', 'structure', 0.8, (c) => c.src.length > 20000 && /^(?:\s*--[^\n]*\n|\s)*return\s*\(\s*\{\s*[A-Za-z_][A-Za-z0-9_]{0,3}\s*=/.test(c.src.slice(0, 600)) && (c.src.slice(0, 40000).match(/\b0[XB][0-9A-Fa-f_]+/g) || []).length >= 20 && 'a returned table of short-named handler functions with number literals spelled 0X.. / 0B.. (the shape of a Luraph 14.x VM)', true),
   ],
   moonsec_v3: [
@@ -269,6 +274,11 @@ const RULES = {
   boronide: [
     rule('banner', 'banner', 0.97, (c) => { const m = /Boronide[^\n]{0,40}?,\s*v([0-9][0-9.]*)/.exec(c.src.slice(0, 600)); return m ? { text: `Boronide header comment (v${m[1]})`, version: m[1] } : false; }),
     rule('gsub-loader', 'structure', 0.8, (c) => /\(\[\[Boronide[^\]]*\]\]\):gsub\('\(\.\*\)',function\(/.test(c.src.slice(0, 2000)) && 'a credit string run through :gsub(\'(.*)\', function(d) ...) whose body is a state loop that decides what the loader does', true),
+    // Prompt XXIV: the same generator under its author's name ("herrtt's obfuscator, v0.2.4"; 4511 scripts of four presets in a public
+    // collection, filed as Boronide). The header and the credit line differ; the template does not.
+    rule('herrtt-banner', 'banner', 0.95, (c) => { const m = /herrtt'?s obfuscator,\s*v([0-9][0-9.]*)/i.exec(c.src.slice(0, 600)); return m ? { text: `herrtt's obfuscator header (v${m[1]}): the generator Boronide scripts come from`, version: `herrtt ${m[1]}` } : false; }),
+    rule('template', 'structure', 0.9, (c) => /^\s*(?:--\[\[[\s\S]{0,300}?\]\]\s*|--[^\n]*\n\s*)*local a,b,c=nil,nil,nil\(\[(=*)\[[^\]]{0,200}\]\1\]\):gsub\('\(\.\*\)',function\(d\)local e="/.test(c.src.slice(0, 1500))
+      && 'local a,b,c=nil,nil,nil([[credit]]):gsub(\'(.*)\',function(d) local e="..." ...: the Boronide / herrtt template (a state-loop loader over a serialised VM program)', true),
   ],
   ironveil: [rule('mention', 'banner', 0.5, (c) => /Iron\s?Veil/i.test(c.src) && 'mentions IronVeil')],
   goofyscator: [rule('mention', 'banner', 0.5, (c) => /Goofyscator/i.test(c.src) && 'mentions Goofyscator')],

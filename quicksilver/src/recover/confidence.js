@@ -156,6 +156,10 @@ export function assessConfidence(before, output, ctx) {
 
   // Static analysis alone never reaches certainty, hence the ceiling.
   let score = clamp((hadObfuscation ? 0.9 : 0.95) - penalty, 0, 1);
+  // Prompt XXIV: a virtual machine that no step rebuilt holds the program as its data; whatever else was cleaned up around it, the protection
+  // is essentially all still present. Before this cap, a Boronide or Luraph VM came out "low" (or higher, when the VM evidence was missed)
+  // and was reported as partially reconstructed.
+  if (reasons.some((r) => /nothing rebuilt it|still present in the output|generated interpreter is still in the output/.test(r.text))) score = Math.min(score, 0.25);
   const level = score >= 0.85 ? 'high' : score >= 0.6 ? 'medium' : score > 0.25 ? 'low' : 'minimal';
   return { score: Math.round(score * 100) / 100, level, reasons, hints };
 }

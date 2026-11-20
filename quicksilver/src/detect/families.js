@@ -89,9 +89,9 @@ export const FAMILIES = {
     kind: 'commercial',
     evidence: 'banner',
     maxConfidence: 0.97,
-    summary: 'Obfuscator whose scripts begin with a "Boronide, vX" comment and run a credit string through :gsub(\'(.*)\', function(d) ...) whose body is a state loop. Read on the scripts of a public collection.',
+    summary: 'Obfuscator whose scripts begin with a "Boronide, vX" comment (or, from the same generator, "herrtt\'s obfuscator, vX") and run a credit string through :gsub(\'(.*)\', function(d) ...) whose body is a state loop over a serialised VM program, with quotations measured by # as opaque constants. Read on the scripts of two public collections (4511 herrtt v0.2.4 scripts in four presets in the second).',
     techniques: ['credit string as the entry', 'opaque state loops', 'VM'],
-    sources: ['https://github.com/vyxonq-dev/obfuscator-samples'],
+    sources: ['https://github.com/vyxonq-dev/obfuscator-samples', 'https://github.com/terrorlua/obfuscator-samples'],
   },
   obscura: {
     name: 'Obscura',
