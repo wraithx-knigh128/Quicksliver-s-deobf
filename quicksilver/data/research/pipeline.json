@@ -8,7 +8,7 @@
     "compatibility-profile",
     "integration"
   ],
-  "generatedAt": "2026-11-20T15:45:14.358Z",
+  "generatedAt": "2026-11-20T16:23:06.875Z",
   "report": [
     {
       "system": "luraph",
@@ -2999,17 +2999,17 @@
       "stages": [
         {
           "stage": "research",
-          "reached": false,
-          "evidence": [],
-          "missing": [
-            "no characteristic names a source"
-          ]
+          "reached": true,
+          "evidence": [
+            "2 characteristics with sources"
+          ],
+          "missing": []
         },
         {
           "stage": "classification",
           "reached": false,
           "evidence": [
-            "signature (0.3)"
+            "banner (0.7)"
           ],
           "missing": [
             "no verified capability for this system (tools/research/capabilities.mjs)"
@@ -3050,7 +3050,7 @@
           ]
         }
       ],
-      "reached": null,
+      "reached": "research",
       "integration": {
         "identify": false,
         "reconstruct": false

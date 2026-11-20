@@ -296,7 +296,12 @@ const RULES = {
   ironveil: [rule('mention', 'banner', 0.5, (c) => /Iron\s?Veil/i.test(c.src) && 'mentions IronVeil')],
   goofyscator: [rule('mention', 'banner', 0.5, (c) => /Goofyscator/i.test(c.src) && 'mentions Goofyscator')],
   xhider: [rule('mention', 'banner', 0.5, (c) => /X\s?Hider/i.test(c.src) && 'mentions XHider')],
-  synapse_xen: [rule('mention', 'banner', 0.5, (c) => /Synapse\s*Xen/i.test(c.src) && 'mentions Synapse Xen')],
+  synapse_xen: [
+    // Prompt XXV: read on 88 scripts of a public collection (v1.1.1, v1.1.2 and a fork, and 23 with no header); 0 were detected before
+    rule('banner', 'banner', 0.97, (c) => { const m = /Synapse Xen v([0-9][0-9.]*)( Fork)? by ([^\n\]]{1,40})/.exec(c.src.slice(0, 600)); return m ? { text: `Synapse Xen header (v${m[1]}${m[2] ? ', a fork' : ''}, by ${m[3].trim()}): a VM (every script of the collection was)`, version: m[1] } : false; }, true),
+    rule('locals', 'structure', 0.92, (c) => /^(?:\s*--\[\[[\s\S]{0,400}?\]\]\s*)?local SynapseXen_[Ili]+=select;local SynapseXen_[Ili]+=string\.byte;/.test(c.src.slice(0, 1200)) && 'library locals named SynapseXen_<l/I pattern> (select, string.byte, ...): the Synapse Xen VM prelude', true),
+    rule('mention', 'banner', 0.5, (c) => /Synapse\s*Xen/i.test(c.src) && 'mentions Synapse Xen'),
+  ],
   colisseum: [
     rule('credit', 'banner', 0.9, (c) => { const m = /This file was obfuscated using Colisseum(?: Obfuscator)?(?: v([0-9][0-9.]*))?/.exec(c.src); return m ? { text: `Colisseum credit line${m[1] ? ` (v${m[1]})` : ''}`, version: m[1] || null } : false; }),
     rule('brand', 'structure', 0.9, (c) => c.src.includes('Oh Noes!, An error ocurred: 0x') && 'tamper error text "... Oh Noes!, An error ocurred: 0x<code>" (the Colisseum brand)'),

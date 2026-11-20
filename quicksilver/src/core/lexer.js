@@ -132,9 +132,13 @@ export function tokenize(src) {
     // Numbers (decimal, hex incl. hex floats, Luau binary and _ separators)
     if (isDigit(c) || (c === 46 && isDigit(src.charCodeAt(i + 1)))) {
       let value;
-      const c1 = src.charCodeAt(i + 1);
+      // Luau reads a number as one run of characters and drops every `_` before it reads the prefix, so `0_x1F` is 0x1F and `0_b11_01`
+      // is 0b1101 (Prompt XXV: 13 LPS scripts of a public collection spell numbers this way; Luau runs them, the lexer had refused them)
+      let pfx = i + 1;
+      while (c === 48 && src.charCodeAt(pfx) === 95) pfx++;
+      const c1 = src.charCodeAt(pfx);
       if (c === 48 && (c1 === 120 || c1 === 88)) {
-        i += 2;
+        i = pfx + 1;
         let mant = 0;
         let exp = 0;
         let seenDot = false;
@@ -160,7 +164,7 @@ export function tokenize(src) {
         }
         value = mant * Math.pow(2, exp);
       } else if (c === 48 && (c1 === 98 || c1 === 66)) {
-        i += 2;
+        i = pfx + 1;
         let v = 0;
         let digits = 0;
         while (src.charCodeAt(i) === 48 || src.charCodeAt(i) === 49 || src.charCodeAt(i) === 95) {

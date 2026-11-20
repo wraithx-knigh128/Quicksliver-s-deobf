@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-11-20T15:45:01.602Z",
+ "generatedAt": "2026-11-20T16:23:06.712Z",
  "engineVersion": "1.0.0",
  "trace": {
   "generatedAt": "2026-10-25T11:35:15.127Z"
@@ -4657,18 +4657,26 @@
    "kind": "commercial",
    "status": "unsupported",
    "basis": "signature",
-   "summary": "Historic commercial obfuscator bundled with an exploit executor; mentioned in community guides.",
+   "summary": "Commercial obfuscator bundled with an exploit executor. Scripts begin with a \"Synapse Xen vX by Synapse GP\" header and a VM hash (a fork by another author exists), then library locals named SynapseXen_<l/I pattern>, which remain when the header is removed. Read on 88 scripts of a public collection (v1.1.1, v1.1.2, a fork, 23 without header).",
    "detect": "Mentions of Synapse Xen only; 88 scripts (v1.1.1, v1.1.2, unknown) of a public sample collection (github.com/terrorlua/obfuscator-samples, read as text, kept outside the repository) are filed under it.",
-   "detectEvidence": "none",
-   "documentedTechniques": [],
-   "untestedTechniques": [],
+   "detectEvidence": "banner",
+   "documentedTechniques": [
+    "VM",
+    "bytecode verification (\"Failed to verify bytecode\")"
+   ],
+   "untestedTechniques": [
+    "VM",
+    "bytecode verification (\"Failed to verify bytecode\")"
+   ],
    "techniques": [],
    "versions": [],
    "measured": null,
    "limits": [
     "VM: identified by mention only, not rebuilt."
    ],
-   "sources": []
+   "sources": [
+    "https://github.com/terrorlua/obfuscator-samples"
+   ]
   },
   {
    "id": "wearedevs",

@@ -389,11 +389,11 @@ export const FAMILIES = {
   synapse_xen: {
     name: 'Synapse Xen',
     kind: 'commercial',
-    evidence: 'none',
-    maxConfidence: 0.3,
-    summary: 'Historic commercial obfuscator bundled with an exploit executor; mentioned in community guides.',
-    techniques: [],
-    sources: [],
+    evidence: 'banner',
+    maxConfidence: 0.97,
+    summary: 'Commercial obfuscator bundled with an exploit executor. Scripts begin with a "Synapse Xen vX by Synapse GP" header and a VM hash (a fork by another author exists), then library locals named SynapseXen_<l/I pattern>, which remain when the header is removed. Read on 88 scripts of a public collection (v1.1.1, v1.1.2, a fork, 23 without header).',
+    techniques: ['VM', 'bytecode verification ("Failed to verify bytecode")'],
+    sources: ['https://github.com/terrorlua/obfuscator-samples'],
   },
   wearedevs: {
     name: 'WeAreDevs Obfuscator',

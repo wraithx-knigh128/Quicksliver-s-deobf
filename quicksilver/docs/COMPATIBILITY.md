@@ -829,7 +829,7 @@ No public documentation or sample output was found.
 
 ## Synapse Xen
 
-Historic commercial obfuscator bundled with an exploit executor; mentioned in community guides.
+Commercial obfuscator bundled with an exploit executor. Scripts begin with a "Synapse Xen vX by Synapse GP" header and a VM hash (a fork by another author exists), then library locals named SynapseXen_<l/I pattern>, which remain when the header is removed. Read on 88 scripts of a public collection (v1.1.1, v1.1.2, a fork, 23 without header).
 
 **Status:** unsupported (signature). Mentions of Synapse Xen only; 88 scripts (v1.1.1, v1.1.2, unknown) of a public sample collection (github.com/terrorlua/obfuscator-samples, read as text, kept outside the repository) are filed under it.
 
@@ -838,6 +838,8 @@ Historic commercial obfuscator bundled with an exploit executor; mentioned in co
 **Limits**
 
 * VM: identified by mention only, not rebuilt.
+
+**Documented techniques with no fixture:** VM, bytecode verification ("Failed to verify bytecode")
 
 ## WeAreDevs Obfuscator
 

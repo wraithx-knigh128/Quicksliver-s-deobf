@@ -146,3 +146,17 @@ test('LuaObfuscator VM: the program is read with the script’s own deserialiser
   assert.ok(st.detail.sample.includes('GetService'));
   assert.equal(r.outcome.outcome, 'not-deobfuscated');
 });
+
+test('lexer (Prompt XXV): Luau drops every `_` in a number before reading its prefix (0_b11_01 is 13, 0_x1F is 31), as the real Luau does', () => {
+  const vals = parse('return 0_b11_01, 0X1_F, 0b1_0__1, 1_000, 0x_ff, 0_x1F, 0, 0.5').body[0].values.map((v) => v.value);
+  assert.deepEqual(vals, [13, 31, 5, 1000, 255, 31, 0, 0.5]);   // the numbers Luau 0.7 prints for the same literals
+});
+
+test('Synapse Xen (Prompt XXV): header with version, and the SynapseXen_ locals that stay when the header is removed', () => {
+  const head = '--[[\n    Synapse Xen v1.1.2 by Synapse GP\n    VM Hash: e2603e44\n]]\n\nlocal SynapseXen_iIlIll=select;local SynapseXen_iliiIl=string.byte;local unpack=unpack;\nreturn 1\n';
+  const f = detectScript(head).detection.families[0];
+  assert.equal(f.id, 'synapse_xen'); assert.equal(f.version, '1.1.2');
+  const bare = detectScript('local SynapseXen_llIIIllIi=select;local SynapseXen_IlIIlIiIililliii=string.byte;local unpack=unpack;\nreturn 1\n').detection.families[0];
+  assert.equal(bare.id, 'synapse_xen');
+  assert.ok(bare.confidence >= 0.9 && bare.evidence.some((e) => e.unrecoverable));
+});
