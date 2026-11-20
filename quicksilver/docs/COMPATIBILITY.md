@@ -16,6 +16,8 @@ but short of that; **unsupported** otherwise. Families without fixtures are sign
 | IronBrew 1 | unsupported | signature | – | – | – |
 | MoonSec V2 | unsupported | signature | – | – | – |
 | wYnFuscate | unsupported | signature | – | – | – |
+| IronBrew 3 | unsupported | signature | – | – | – |
+| LPS | unsupported | signature | – | – | – |
 | Boronide | unsupported | signature | – | – | – |
 | Obscura | partial | real-output | – | – | – |
 | Voltfuscator | unsupported | signature | – | – | – |
@@ -175,13 +177,13 @@ Commercial virtualising obfuscator for Lua and Luau (lura.ph). Per-script VM; v1
 
 Commercial Roblox-oriented Lua obfuscator with a VM loader.
 
-**Status:** unsupported (signature). Banner comments only; no real output obtained.
+**Status:** unsupported (signature). The "protected with MoonSec V3" banner, read on 792 V3 scripts of a public sample collection (github.com/terrorlua/obfuscator-samples, read as text, kept outside the repository) (100% detected) and earlier collections.
 
 **Detection on real scripts:** 23 of 23 files filed under MoonSecV3 in the public collection (https://github.com/vyxonq-dev/obfuscator-samples, commit `82e582fcdd`) were identified as MoonSec V3. The collection's labels are its uploaders' and are noisy; a file our rules call something else was looked at before being counted as a miss.
 
 **Limits**
 
-* VM-based loader; not recoverable statically.
+* VM-based loader: identified, not rebuilt; the outcome is "not deobfuscated" (confidence capped at minimal while the VM remains).
 
 **Documented techniques with no fixture:** VM loader, constant encoding
 
@@ -246,9 +248,34 @@ Obfuscator (wynfuscate.com) whose scripts begin "Protected by wYnFuscate" and on
 
 **Documented techniques with no fixture:** wrapper with environment recovery, names written as string.char codes, VM
 
+## IronBrew 3
+
+Obfuscator whose scripts begin "--ironbrew3:tm:, vX" and one wrapper `return(function(<34 parameters>, ...)` that runs a control-flow-flattened VM (state numbers compared through opaque arithmetic). Read on 17 scripts of a public collection (v0.235, v0.248).
+
+**Status:** unsupported (signature). The "--ironbrew3:tm:, vX" header, read on 17 scripts (v0.235, v0.248) of a public collection.
+
+**Limits**
+
+* Flattened VM wrapper: identified, not rebuilt.
+
+**Documented techniques with no fixture:** wrapper, opaque state loops, VM
+
+## LPS
+
+Two forms filed as LPS in a public collection: v1, a flattened VM wrapper called with its program as a string that begins "LPS"; v2, an Ascii85 payload "[==[LPS/...]==]" that Roblox’s EncodingService:DecompressBuffer unpacks and loadstring runs. Read on 31 scripts.
+
+**Status:** unsupported (signature). v1: a wrapper called with a string that begins "LPS"; v2: an Ascii85 "LPS/" payload passed to EncodingService:DecompressBuffer. Read on 31 scripts of a public collection.
+
+**Limits**
+
+* v1 is a VM: identified, not rebuilt.
+* v2 needs Roblox’s buffer decompression (Zstandard/LZ4), which the engine does not implement; the stage is reported, not unpacked.
+
+**Documented techniques with no fixture:** VM (v1), Ascii85 + Roblox buffer compression + loadstring (v2)
+
 ## Boronide
 
-Obfuscator whose scripts begin with a "Boronide, vX" comment and run a credit string through :gsub('(.*)', function(d) ...) whose body is a state loop. Read on the scripts of a public collection.
+Obfuscator whose scripts begin with a "Boronide, vX" comment (or, from the same generator, "herrtt's obfuscator, vX") and run a credit string through :gsub('(.*)', function(d) ...) whose body is a state loop over a serialised VM program, with quotations measured by # as opaque constants. Read on the scripts of two public collections (4511 herrtt v0.2.4 scripts in four presets in the second).
 
 **Status:** unsupported (signature). The "Boronide[™] [Free|Premium] Obfuscation, vX" header (v0.3.0 to v0.7.0 were found) and the credit string run through :gsub('(.*)', function ...), read on the scripts of a public collection.
 
@@ -482,7 +509,7 @@ Obfuscator that stamps "This file was generated using SnowVeil v1 [discord invit
 
 **Limits**
 
-* The script is a VM in one pcall with a collector, a custom base-85 container, varint-coded constant pools and checksums that make it call error() when the environment differs. Detected and flagged as not recovered: 35% confidence, measured.
+* The script is a VM in one pcall with a collector, a custom base-85 container, varint-coded constant pools and checksums that make it call error() when the environment differs. Detected and flagged as not recovered: minimal confidence (0.25, measured; the VM is not rebuilt).
 * The behaviour trace cannot get past the checks: the script probes Path2D objects (GetPositionOnCurve, GetTangentOnCurve, GetLength, GetBoundingRect, GetControlPoints) and the offline Path2D model has no answer for GetBoundingRect, so the run stops at error() after 93 recorded statements. Making it up would be a guess; the answers need a recording from the real engine (--studio) that was not available.
 * Only version 1 and one script were seen. Another build or setting is unconfirmed.
 
@@ -533,13 +560,14 @@ Open-source (MIT) Lua 5.1 obfuscator in C# that compiles a script with luac and 
 
 Web obfuscation service (luaobfuscator.com) with several protection levels. Its free tier writes an ASCII-art header ending "LuaObfuscator.com (Alpha x.y.z) ~ Much Love, Ferib", read on the scripts of a public collection; a script without the header is only a signature at this point.
 
-**Status:** experimental (signature). Generic string-escape and constant-table heuristics only.
+**Status:** experimental (signature). The service’s ASCII-art header and credit line, its string-XOR prelude, and (Prompt XXV) its VM preset’s prelude, which stays when the banner is stripped; read on 6393 scripts of a public sample collection (github.com/terrorlua/obfuscator-samples, read as text, kept outside the repository) (ChaoticGood 1878, ChaoticEvil 42, VM 4473).
 
 **Detection on real scripts:** 5 of 5 files filed under LuaObfuscator in the public collection (https://github.com/vyxonq-dev/obfuscator-samples, commit `82e582fcdd`) were identified as LuaObfuscator.com. The collection's labels are its uploaders' and are noisy; a file our rules call something else was looked at before being counted as a miss.
 
 **Limits**
 
-* No real output obtained to test against.
+* VM preset: the program is read with the script’s own deserialiser in the sandbox and its constants are reported (step luaobf.program); the instructions are not rebuilt into source: the opcode-to-handler mapping is not proven for every build, so the verdict stays "not deobfuscated".
+* 23 ChaoticGood scripts carry a MoonSec V3 banner: mislabelled, or MoonSec applied on top.
 
 **Documented techniques with no fixture:** string escaping, constant tables, optional VM
 
@@ -547,23 +575,23 @@ Web obfuscation service (luaobfuscator.com) with several protection levels. Its 
 
 Obfuscator seen only through its "77fuscator <version>" banner; no documentation was found.
 
-**Status:** experimental (signature). Banner string only.
+**Status:** experimental (signature). The 77fuscator banner with its version, read on 884 scripts (0.4.7 to 0.6.1) of a public sample collection (github.com/terrorlua/obfuscator-samples, read as text, kept outside the repository) (100% detected).
 
 **Limits**
 
-* Structure unknown.
+* Detected by its banner; no dedicated reader.
 
 ## PSU
 
 Commercial obfuscator (psu.dev). Every script of the public collection (versions 4.0.A and 4.5.A) keeps the string "This file was obfuscated using PSU Obfuscator <version>" as a local of its wrapper `return(function(e, ...)` and reads its constants from a table with numeric and short-string keys. Only identified here.
 
-**Status:** unsupported (signature). No signature known.
+**Status:** unsupported (signature). The "obfuscated using PSU Obfuscator" string, read on 372 scripts (v4.0A, 4.5A, 5.0A) of a public sample collection (github.com/terrorlua/obfuscator-samples, read as text, kept outside the repository).
 
 **Detection on real scripts:** 8 of 8 files filed under PSU in the public collection (https://github.com/vyxonq-dev/obfuscator-samples, commit `82e582fcdd`) were identified as PSU; the version read from the script matched the collection's version directory in 8 of 8. The collection's labels are its uploaders' and are noisy; a file our rules call something else was looked at before being counted as a miss.
 
 **Limits**
 
-* Nothing public to verify against.
+* VM: identified, not rebuilt.
 
 **Documented techniques with no fixture:** wrapper function with a constant table, numeric keys, VM
 
@@ -803,13 +831,13 @@ No public documentation or sample output was found.
 
 Historic commercial obfuscator bundled with an exploit executor; mentioned in community guides.
 
-**Status:** unsupported (signature). No signature known.
+**Status:** unsupported (signature). Mentions of Synapse Xen only; 88 scripts (v1.1.1, v1.1.2, unknown) of a public sample collection (github.com/terrorlua/obfuscator-samples, read as text, kept outside the repository) are filed under it.
 
 **Detection on real scripts:** 0 of 5 files filed under SynapseXen in the public collection (https://github.com/vyxonq-dev/obfuscator-samples, commit `82e582fcdd`) were identified as Synapse Xen. The collection's labels are its uploaders' and are noisy; a file our rules call something else was looked at before being counted as a miss.
 
 **Limits**
 
-* Nothing public to verify against.
+* VM: identified by mention only, not rebuilt.
 
 ## WeAreDevs Obfuscator
 

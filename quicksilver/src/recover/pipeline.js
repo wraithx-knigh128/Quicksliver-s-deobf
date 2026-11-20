@@ -38,6 +38,7 @@ import { rebuildProgram21, Lift21Error } from './moonveil-vm/lift21.js';
 import { liftRealObfuscatorVm, looksLikeRealObfuscatorVm, RealObfuscatorVmError } from './realobfuscator-vm.js';
 import { looksLikeLuaq, decodeLuaq, LuaqError } from './luaq.js';
 import { looksLikeVolt, decodeVoltConstants, voltHeader, VoltError } from './volt.js';
+import { readProgram as readLuaObfProgram, looksLikeLuaObfVm, LuaObfVmError } from './luaobf-vm.js';
 import { removeHerculesAntiTamper, removeHerculesAntiTamperFunction, removeHerculesCoinGuard, restoreMethodSelf } from './hercules.js';
 import { uninlinePass } from '../passes/uninline.js';
 import { splitWebs } from '../passes/webs.js';
@@ -453,6 +454,14 @@ export function recover(source, userOptions = {}) {
         const r = decodeVoltConstants(a, { sandbox: options.sandbox });
         return r.skipped ? r : { ...r, header: voltHeader(source) };
       } catch (e) { if (e instanceof VoltError) return { skipped: e.message }; throw e; }
+    });
+  }
+  if (options.sandbox && options.sandbox.enabled && detection.families.some((f) => f.id === 'luaobfuscator' && f.evidence.some((e) => e.rule === 'vm-prelude'))) {
+    // Prompt XXV: LuaObfuscator.com's VM program, read with the script's own deserialiser in the sandbox. Its constants are reported; the VM
+    // is not rebuilt (see src/recover/luaobf-vm.js for why), so this changes nothing in the code and the verdict stays "not deobfuscated".
+    run.step('luaobf.program', 'Read LuaObfuscator\u2019s VM program with its own deserialiser (sandbox): functions, instructions, constants', () => {
+      if (!looksLikeLuaObfVm(parsed.ast)) return { skipped: 'the VM entry `return F("...", getfenv(), ...)` was not found' };
+      try { return { changed: 0, ...readLuaObfProgram(source) }; } catch (e) { if (e instanceof LuaObfVmError) return { skipped: e.message }; throw e; }
     });
   }
   let unusedAtStart = snapshotUnused(parsed.ast);

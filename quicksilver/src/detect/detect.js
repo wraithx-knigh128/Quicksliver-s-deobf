@@ -252,6 +252,10 @@ const RULES = {
     rule('art', 'banner', 0.9, (c) => /\.____\s+________ ___\.[\s\S]{0,1200}Obfuscator\.com/.test(c.src.slice(0, 3000)) && 'the ASCII-art header of the free tier'),
     // the prelude of the service's string-XOR output: local v0=string.char; v1=string.byte; v2=string.sub; v3=bit32 or bit; ... then v4=v3.bxor, v5=table.concat, v6=table.insert
     rule('prelude', 'structure', 0.85, (c) => /^(?:--[^\n]*\n)*\s*local v0=string\.char;\s*local v1=string\.byte;\s*local v2=string\.sub;\s*local v3=bit32 or bit\s*;/.test(c.src.slice(0, 800)) && 'starts with local v0=string.char; local v1=string.byte; local v2=string.sub; local v3=bit32 or bit; (numbered names, XOR string decoder)'),
+    // Prompt XXIV: the VM preset's prelude, which stays when the banner is stripped (1143 of the 4473 VM scripts of a public collection had no
+    // banner and were not detected): numbered library locals, then the deserialiser `local function v15(v16, v17, ...)`
+    rule('vm-prelude', 'structure', 0.92, (c) => /local v0=tonumber;local v1=string\.byte;local v2=string\.char;local v3=string\.sub;local v4=string\.gsub;local v5=string\.rep;local v6=table\.concat;local v7=table\.insert;local v8=math\.ldexp;local v9=getfenv or/.test(c.src.slice(0, 6000))
+      && 'the VM preset\u2019s prelude: numbered library locals (v0 = tonumber ... v9 = getfenv) and a deserialiser for the program it carries as hex text', true),
     rule('credit', 'banner', 0.95, (c) => { const m = /Obfuscator\.com\s+\(Alpha\s*([0-9][0-9.]*)\)[\s\S]{0,40}Much Love, Ferib/.exec(c.src.slice(0, 4000)); return m ? { text: `LuaObfuscator.com credit line (Alpha ${m[1]})`, version: `Alpha ${m[1]}` } : false; }),
   ],
   psu: [
@@ -270,6 +274,15 @@ const RULES = {
   wynfuscate: [
     rule('banner', 'banner', 0.97, (c) => { const m = /Protected by wYnFuscate/i.exec(c.src.slice(0, 600)); return m ? { text: 'wYnFuscate header comment' } : false; }),
     rule('getfenv-name', 'structure', 0.7, (c) => c.src.slice(0, 3000).includes('string.char(103,101,116,102,101,110,118)') && 'the name getfenv written as string.char(103,101,116,102,101,110,118) inside a (vE,vZ,vu,...) wrapper', true),
+  ],
+  ironbrew3: [
+    rule('banner', 'banner', 0.97, (c) => { const m = /^\s*--\s*ironbrew3:tm:,?\s*v?([0-9][0-9.]*)/i.exec(c.src.slice(0, 300)); return m ? { text: `IronBrew 3 header (v${m[1]}): a VM wrapper (all 17 scripts of the public collection were)`, version: m[1] } : false; }, true),
+  ],
+  lps: [
+    // v1: the VM wrapper is called with its program as a string that begins "LPS" (31 of 31 v1 scripts)
+    rule('vm-call', 'structure', 0.85, (c) => c.src.slice(0, 40).startsWith('return(function(') && /[=(]\s*"LPS[^\/"]/.test(c.src) && { text: 'a wrapper function whose program is a string that begins "LPS" (passed to it or kept in a variable): an LPS v1 VM', version: 'v1' }, true),
+    // v2: Ascii85 payload, Roblox buffer decompression, loadstring
+    rule('packed', 'structure', 0.88, (c) => (/\[(=*)\[LPS\//.test(c.src) && /DecompressBuffer/.test(c.src.slice(0, 4000)) || /"LPS\/r@/.test(c.src)) && { text: 'an Ascii85 payload "[==[LPS/..." unpacked with EncodingService:DecompressBuffer and run with loadstring: an LPS v2 packer (the compressed stage needs Roblox\u2019s buffer compression to read)', version: 'v2' }, true),
   ],
   boronide: [
     rule('banner', 'banner', 0.97, (c) => { const m = /Boronide[^\n]{0,40}?,\s*v([0-9][0-9.]*)/.exec(c.src.slice(0, 600)); return m ? { text: `Boronide header comment (v${m[1]})`, version: m[1] } : false; }),

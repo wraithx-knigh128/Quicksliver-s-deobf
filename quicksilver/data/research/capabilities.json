@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "generatedAt": "2026-11-20T13:57:00.288Z",
+  "generatedAt": "2026-11-20T15:45:14.296Z",
   "capabilities": [
     {
       "id": "luraph.banner-version",
@@ -154,6 +154,16 @@
           },
           {
             "name": "wynfuscate validates",
+            "ok": true,
+            "detail": []
+          },
+          {
+            "name": "ironbrew3 validates",
+            "ok": true,
+            "detail": []
+          },
+          {
+            "name": "lps validates",
             "ok": true,
             "detail": []
           },
@@ -382,6 +392,14 @@
           },
           {
             "name": "wynfuscate@unversioned is not \"supported\"",
+            "ok": true
+          },
+          {
+            "name": "ironbrew3@unversioned is not \"supported\"",
+            "ok": true
+          },
+          {
+            "name": "lps@unversioned is not \"supported\"",
             "ok": true
           },
           {

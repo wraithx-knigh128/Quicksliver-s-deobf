@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-11-20T09:43:46.228Z",
+ "generatedAt": "2026-11-20T15:45:01.602Z",
  "engineVersion": "1.0.0",
  "trace": {
   "generatedAt": "2026-10-25T11:35:15.127Z"
@@ -1788,7 +1788,7 @@
    "status": "unsupported",
    "basis": "signature",
    "summary": "Commercial Roblox-oriented Lua obfuscator with a VM loader.",
-   "detect": "Banner comments only; no real output obtained.",
+   "detect": "The \"protected with MoonSec V3\" banner, read on 792 V3 scripts of a public sample collection (github.com/terrorlua/obfuscator-samples, read as text, kept outside the repository) (100% detected) and earlier collections.",
    "detectEvidence": "banner",
    "documentedTechniques": [
     "VM loader",
@@ -1802,7 +1802,7 @@
    "versions": [],
    "measured": null,
    "limits": [
-    "VM-based loader; not recoverable statically."
+    "VM-based loader: identified, not rebuilt; the outcome is \"not deobfuscated\" (confidence capped at minimal while the VM remains)."
    ],
    "sources": []
   },
@@ -1982,6 +1982,65 @@
    ]
   },
   {
+   "id": "ironbrew3",
+   "corpus": null,
+   "name": "IronBrew 3",
+   "kind": "commercial",
+   "status": "unsupported",
+   "basis": "signature",
+   "summary": "Obfuscator whose scripts begin \"--ironbrew3:tm:, vX\" and one wrapper `return(function(<34 parameters>, ...)` that runs a control-flow-flattened VM (state numbers compared through opaque arithmetic). Read on 17 scripts of a public collection (v0.235, v0.248).",
+   "detect": "The \"--ironbrew3:tm:, vX\" header, read on 17 scripts (v0.235, v0.248) of a public collection.",
+   "detectEvidence": "banner",
+   "documentedTechniques": [
+    "wrapper",
+    "opaque state loops",
+    "VM"
+   ],
+   "untestedTechniques": [
+    "wrapper",
+    "opaque state loops",
+    "VM"
+   ],
+   "techniques": [],
+   "versions": [],
+   "measured": null,
+   "limits": [
+    "Flattened VM wrapper: identified, not rebuilt."
+   ],
+   "sources": [
+    "https://github.com/terrorlua/obfuscator-samples"
+   ]
+  },
+  {
+   "id": "lps",
+   "corpus": null,
+   "name": "LPS",
+   "kind": "commercial",
+   "status": "unsupported",
+   "basis": "signature",
+   "summary": "Two forms filed as LPS in a public collection: v1, a flattened VM wrapper called with its program as a string that begins \"LPS\"; v2, an Ascii85 payload \"[==[LPS/...]==]\" that Roblox’s EncodingService:DecompressBuffer unpacks and loadstring runs. Read on 31 scripts.",
+   "detect": "v1: a wrapper called with a string that begins \"LPS\"; v2: an Ascii85 \"LPS/\" payload passed to EncodingService:DecompressBuffer. Read on 31 scripts of a public collection.",
+   "detectEvidence": "structure",
+   "documentedTechniques": [
+    "VM (v1)",
+    "Ascii85 + Roblox buffer compression + loadstring (v2)"
+   ],
+   "untestedTechniques": [
+    "VM (v1)",
+    "Ascii85 + Roblox buffer compression + loadstring (v2)"
+   ],
+   "techniques": [],
+   "versions": [],
+   "measured": null,
+   "limits": [
+    "v1 is a VM: identified, not rebuilt.",
+    "v2 needs Roblox’s buffer decompression (Zstandard/LZ4), which the engine does not implement; the stage is reported, not unpacked."
+   ],
+   "sources": [
+    "https://github.com/terrorlua/obfuscator-samples"
+   ]
+  },
+  {
    "id": "boronide",
    "corpus": {
     "labels": [
@@ -1999,7 +2058,7 @@
    "kind": "commercial",
    "status": "unsupported",
    "basis": "signature",
-   "summary": "Obfuscator whose scripts begin with a \"Boronide, vX\" comment and run a credit string through :gsub('(.*)', function(d) ...) whose body is a state loop. Read on the scripts of a public collection.",
+   "summary": "Obfuscator whose scripts begin with a \"Boronide, vX\" comment (or, from the same generator, \"herrtt's obfuscator, vX\") and run a credit string through :gsub('(.*)', function(d) ...) whose body is a state loop over a serialised VM program, with quotations measured by # as opaque constants. Read on the scripts of two public collections (4511 herrtt v0.2.4 scripts in four presets in the second).",
    "detect": "The \"Boronide[™] [Free|Premium] Obfuscation, vX\" header (v0.3.0 to v0.7.0 were found) and the credit string run through :gsub('(.*)', function ...), read on the scripts of a public collection.",
    "detectEvidence": "banner",
    "documentedTechniques": [
@@ -2019,7 +2078,8 @@
     "Opaque state loops and a VM: identified, not rebuilt."
    ],
    "sources": [
-    "https://github.com/vyxonq-dev/obfuscator-samples"
+    "https://github.com/vyxonq-dev/obfuscator-samples",
+    "https://github.com/terrorlua/obfuscator-samples"
    ]
   },
   {
@@ -3282,7 +3342,7 @@
    "versions": [],
    "measured": null,
    "limits": [
-    "The script is a VM in one pcall with a collector, a custom base-85 container, varint-coded constant pools and checksums that make it call error() when the environment differs. Detected and flagged as not recovered: 35% confidence, measured.",
+    "The script is a VM in one pcall with a collector, a custom base-85 container, varint-coded constant pools and checksums that make it call error() when the environment differs. Detected and flagged as not recovered: minimal confidence (0.25, measured; the VM is not rebuilt).",
     "The behaviour trace cannot get past the checks: the script probes Path2D objects (GetPositionOnCurve, GetTangentOnCurve, GetLength, GetBoundingRect, GetControlPoints) and the offline Path2D model has no answer for GetBoundingRect, so the run stops at error() after 93 recorded statements. Making it up would be a guess; the answers need a recording from the real engine (--studio) that was not available.",
     "Only version 1 and one script were seen. Another build or setting is unconfirmed."
    ],
@@ -3546,7 +3606,7 @@
    "status": "experimental",
    "basis": "signature",
    "summary": "Web obfuscation service (luaobfuscator.com) with several protection levels. Its free tier writes an ASCII-art header ending \"LuaObfuscator.com (Alpha x.y.z) ~ Much Love, Ferib\", read on the scripts of a public collection; a script without the header is only a signature at this point.",
-   "detect": "Generic string-escape and constant-table heuristics only.",
+   "detect": "The service’s ASCII-art header and credit line, its string-XOR prelude, and (Prompt XXV) its VM preset’s prelude, which stays when the banner is stripped; read on 6393 scripts of a public sample collection (github.com/terrorlua/obfuscator-samples, read as text, kept outside the repository) (ChaoticGood 1878, ChaoticEvil 42, VM 4473).",
    "detectEvidence": "banner",
    "documentedTechniques": [
     "string escaping",
@@ -3562,7 +3622,8 @@
    "versions": [],
    "measured": null,
    "limits": [
-    "No real output obtained to test against."
+    "VM preset: the program is read with the script’s own deserialiser in the sandbox and its constants are reported (step luaobf.program); the instructions are not rebuilt into source: the opcode-to-handler mapping is not proven for every build, so the verdict stays \"not deobfuscated\".",
+    "23 ChaoticGood scripts carry a MoonSec V3 banner: mislabelled, or MoonSec applied on top."
    ],
    "sources": [
     "https://luaobfuscator.com",
@@ -3577,7 +3638,7 @@
    "status": "experimental",
    "basis": "signature",
    "summary": "Obfuscator seen only through its \"77fuscator <version>\" banner; no documentation was found.",
-   "detect": "Banner string only.",
+   "detect": "The 77fuscator banner with its version, read on 884 scripts (0.4.7 to 0.6.1) of a public sample collection (github.com/terrorlua/obfuscator-samples, read as text, kept outside the repository) (100% detected).",
    "detectEvidence": "banner",
    "documentedTechniques": [],
    "untestedTechniques": [],
@@ -3585,7 +3646,7 @@
    "versions": [],
    "measured": null,
    "limits": [
-    "Structure unknown."
+    "Detected by its banner; no dedicated reader."
    ],
    "sources": []
   },
@@ -3608,7 +3669,7 @@
    "status": "unsupported",
    "basis": "signature",
    "summary": "Commercial obfuscator (psu.dev). Every script of the public collection (versions 4.0.A and 4.5.A) keeps the string \"This file was obfuscated using PSU Obfuscator <version>\" as a local of its wrapper `return(function(e, ...)` and reads its constants from a table with numeric and short-string keys. Only identified here.",
-   "detect": "No signature known.",
+   "detect": "The \"obfuscated using PSU Obfuscator\" string, read on 372 scripts (v4.0A, 4.5A, 5.0A) of a public sample collection (github.com/terrorlua/obfuscator-samples, read as text, kept outside the repository).",
    "detectEvidence": "banner",
    "documentedTechniques": [
     "wrapper function with a constant table",
@@ -3624,7 +3685,7 @@
    "versions": [],
    "measured": null,
    "limits": [
-    "Nothing public to verify against."
+    "VM: identified, not rebuilt."
    ],
    "sources": [
     "https://www.psu.dev/",
@@ -4597,7 +4658,7 @@
    "status": "unsupported",
    "basis": "signature",
    "summary": "Historic commercial obfuscator bundled with an exploit executor; mentioned in community guides.",
-   "detect": "No signature known.",
+   "detect": "Mentions of Synapse Xen only; 88 scripts (v1.1.1, v1.1.2, unknown) of a public sample collection (github.com/terrorlua/obfuscator-samples, read as text, kept outside the repository) are filed under it.",
    "detectEvidence": "none",
    "documentedTechniques": [],
    "untestedTechniques": [],
@@ -4605,7 +4666,7 @@
    "versions": [],
    "measured": null,
    "limits": [
-    "Nothing public to verify against."
+    "VM: identified by mention only, not rebuilt."
    ],
    "sources": []
   },

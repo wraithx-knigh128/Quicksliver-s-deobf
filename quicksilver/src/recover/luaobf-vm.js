@@ -116,9 +116,34 @@ export function deserialize(source, loc, { fuel = 400_000_000, timeMs = 60_000 }
 const asgn = (s) => (s && s.type === 'Assign' && s.targets.length === 1 && s.values.length === 1 ? { name: s.targets[0].name, value: s.values[0] }
   : s && s.type === 'Local' && s.ids.length === 1 && s.values.length === 1 ? { name: s.ids[0].name, value: s.values[0] } : null);
 
+/**
+ * The fetch (`I = CODE[PC]; OP = I[1]`, as assignments or locals) and the tree of tests on OP, wherever the generator put them: in a plain
+ * `while true` loop, or split over the states of a small state machine (`if s == 0 then I = CODE[PC]; OP = I[1]; s = 1 end`, `if s == 1
+ * then <dispatch> end`) as some builds do. Returned in the shape the readers use: `{ body: [fetchI, fetchOP, dispatchIf] }`.
+ */
 function dispatchLoop(fn) {
-  return find(fn.body, (n) => n.type === 'While' && n.cond.type === 'True' && n.body.length >= 3
-    && asgn(n.body[0]) && asgn(n.body[1]) && n.body[2].type === 'If')[0] || null;
+  // every `X = A[B]; Y = X[1]` pair is a candidate (handlers contain look-alikes); the real one's Y is tested by the largest tree
+  const cands = [];
+  find(fn.body, (n) => {
+    const list = Array.isArray(n.body) ? n.body : null;
+    if (!list) return false;
+    for (let i = 0; i + 1 < list.length; i++) {
+      const a = asgn(list[i]); const b = asgn(list[i + 1]);
+      const av = a && unparen(a.value); const bv = b && unparen(b.value);
+      if (av && av.type === 'Index' && isName(av.obj) && isName(av.key) && bv && bv.type === 'Index' && isName(bv.obj, a.name) && bv.key.type === 'Number' && bv.key.value === 1) cands.push([list[i], list[i + 1], b.name]);
+    }
+    return false;
+  });
+  let best = null;
+  for (const [fi, fo, op] of cands) {
+    const tree = find(fn.body, (n) => n.type === 'If' && n.clauses.length && (() => { const c = unparen(n.clauses[0].cond); return c.type === 'Binary' && isName(unparen(c.left), op) && unparen(c.right).type === 'Number'; })());
+    if (!tree.length) continue;
+    const inner = new Set();
+    for (const t of tree) for (const u of find(t.clauses.map((c) => c.body).concat(t.orelse ? [t.orelse] : []), (n) => tree.includes(n))) inner.add(u);
+    const root = tree.find((t) => !inner.has(t));
+    if (root && (!best || tree.length > best.size)) best = { size: tree.length, body: [fi, fo, root] };
+  }
+  return best ? { body: best.body } : null;
 }
 
 /** The names the interpreter uses for its stack, instruction, counter, and the rest; and the names the prelude gives library functions. */
@@ -226,7 +251,12 @@ export function handlerFor(leafList, op) {
 /** Split a handler at `PC = PC + 1; I = CODE[PC]` into the slices of the instructions it fuses. */
 export function slices(stmts, R) {
   const isStep = (s) => s.type === 'Assign' && s.targets.length === 1 && isName(s.targets[0]) && R.get(s.targets[0].name) === 'PC'
-    && (() => { const v = unparen(s.values[0]); return v.type === 'Binary' && v.op === '+' && isName(v.left) && R.get(v.left.name) === 'PC' && v.right.type === 'Number' && v.right.value === 1; })();
+    && (() => {
+      let v = unparen(s.values[0]);
+      // `PC + 1 + 0`: the generator pads the step
+      if (v.type === 'Binary' && v.op === '+' && unparen(v.right).type === 'Number' && unparen(v.right).value === 0) v = unparen(v.left);
+      return v.type === 'Binary' && v.op === '+' && isName(unparen(v.left)) && R.get(unparen(v.left).name) === 'PC' && unparen(v.right).type === 'Number' && unparen(v.right).value === 1;
+    })();
   const isFetch = (s) => s.type === 'Assign' && s.targets.length === 1 && isName(s.targets[0]) && R.get(s.targets[0].name) === 'I';
   const out = [[]];
   for (let i = 0; i < stmts.length; i++) {
@@ -275,6 +305,52 @@ export function fill(stmts, ins, R) {
     if (s.type === 'Local' && s.values.length === 0 && s.ids.length === 1) continue;   // a bare `local t` declared for a fused handler
     out.push(s);
   }
+  return straighten(out);
+}
+
+/**
+ * Straight-line state machines the generator wraps some handlers in, once the state numbers are known:
+ *   `local s = 0 while true do if s == 0 then A s = 1 end if s == 1 then B break end end`  ->  A B
+ *   `while true do if 0 == 0 then A break end end`                                          ->  A
+ * Only when every state block ends by setting the next state to a constant or by `break`, and the states are visited once each.
+ */
+export function straighten(stmts) {
+  const out = [];
+  for (let i = 0; i < stmts.length; i++) {
+    const s = stmts[i];
+    const loc = s.type === 'Local' && s.ids.length === 1 && s.values.length === 1 && s.values[0].type === 'Number' ? s : null;
+    const w = loc ? stmts[i + 1] : s;
+    if (!w || w.type !== 'While' || w.cond.type !== 'True') { out.push(s); continue; }
+    const state = loc ? loc.ids[0].name : null;
+    let cur = loc ? loc.values[0].value : null;
+    const blocks = w.body.filter((b) => b.type === 'If');
+    if (blocks.length !== w.body.length || !blocks.every((b) => b.clauses.length === 1 && !b.orelse)) { out.push(s); continue; }
+    const testOf = (b) => {
+      const c = unparen(b.clauses[0].cond);
+      if (c.type === 'Binary' && c.op === '==') {
+        const [l, r] = [unparen(c.left), unparen(c.right)];
+        if (l.type === 'Number' && r.type === 'Number') return l.value === r.value ? 'always' : 'never';
+        if (state && isName(l, state) && r.type === 'Number') return r.value;
+        if (state && isName(r, state) && l.type === 'Number') return l.value;
+      }
+      return undefined;
+    };
+    const seq = []; const seen = new Set(); let ok = true; let done = false;
+    for (let guard = 0; guard < 64 && ok && !done; guard++) {
+      const b = blocks.find((x) => testOf(x) === 'always' || (cur !== null && testOf(x) === cur));
+      if (!b || seen.has(b)) { ok = false; break; }
+      seen.add(b);
+      const body = b.clauses[0].body.slice();
+      const last = body[body.length - 1];
+      if (last && last.type === 'Break') { body.pop(); seq.push(...body); done = true; break; }
+      const set = last && last.type === 'Assign' && last.targets.length === 1 && state && isName(last.targets[0], state) && last.values[0].type === 'Number' ? last : null;
+      if (!set) { ok = false; break; }
+      body.pop(); seq.push(...body); cur = set.values[0].value;
+    }
+    if (!ok || !done) { out.push(s); continue; }
+    out.push(...straighten(seq));
+    if (loc) i++;
+  }
   return out;
 }
 
@@ -309,11 +385,41 @@ export function listing(source) {
       const I = code.arr[pc - 1];
       const ins = { op: tget(I, 1), a: tget(I, 2), b: tget(I, 3), c: tget(I, 4) };
       const h = handlerFor(lv, ins.op);
-      const t = h ? slices(h.body, R).map((sl, k) => (k === 0 ? text(fill(sl, ins, R)) : null)).filter(Boolean)[0] : '(no handler)';
+      const t = h ? slices(straighten(h.body), R).map((sl, k) => (k === 0 ? text(fill(sl, ins, R)) : null)).filter(Boolean)[0] : '(no handler)';
       lines.push(`${String(pc).padStart(4)} [${ins.op}] ${t}`);
     }
     if (protos) for (const [k, q] of [...protos.hash].concat(protos.arr.map((x, i) => [i + 1, x]))) walk(q, `${path}.${k}`);
   };
   walk(proto, 'main');
   return { lines, roles: Object.fromEntries(R), fields };
+}
+
+/**
+ * What can be read with certainty without lifting: the program's functions, instruction counts and constants, as the script's own
+ * deserialiser produced them (Prompt XXV). The instructions are not rebuilt into source here: across builds the opcode-to-handler mapping is
+ * not yet proven for every handler form (about 1% of the forms in a census of 120 builds read an operand the instruction does not have), so
+ * a lift could be readable and wrong. The constants are exact.
+ */
+export function readProgram(source) {
+  const ast = parse(source);
+  const loc = locate(ast);
+  if (!loc) throw new LuaObfVmError('not a LuaObfuscator VM script');
+  const { fields } = roles(cleaned(source), locate(cleaned(source)) || loc);
+  const proto = deserialize(source, loc);
+  const strings = new Map();
+  let functions = 0; let instructions = 0;
+  const walk = (p, depth) => {
+    if (!p || depth > 200) return;
+    functions++;
+    const code = tget(p, fields.code);
+    if (code) for (const I of code.arr) {
+      instructions++;
+      for (const k of [2, 3, 4]) { const v = tget(I, k); if (typeof v === 'string') strings.set(v, (strings.get(v) || 0) + 1); }
+    }
+    const protos = tget(p, fields.protos);
+    if (protos) for (const q of [...protos.hash.values(), ...protos.arr]) walk(q, depth + 1);
+  };
+  walk(proto, 0);
+  const list = [...strings.keys()];
+  return { functions, instructions, strings: list.length, sample: list.filter((x) => /^[\x20-\x7e]{1,200}$/.test(x)).slice(0, 80) };
 }

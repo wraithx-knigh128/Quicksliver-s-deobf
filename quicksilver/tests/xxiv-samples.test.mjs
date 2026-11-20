@@ -104,3 +104,45 @@ print(json.dumps([service.trace_facts(t, 'trace-assisted', log), service.trace_f
   assert.equal(probe.observedProgram, false);
   assert.equal(real.observedProgram, true, 'GetService followed by the program’s own use is a program');
 });
+
+test('detection (Prompt XXV): LuaObfuscator’s VM prelude without its banner, IronBrew 3, LPS v1 and v2', () => {
+  const lobf = 'local v0=tonumber;local v1=string.byte;local v2=string.char;local v3=string.sub;local v4=string.gsub;local v5=string.rep;local v6=table.concat;local v7=table.insert;local v8=math.ldexp;local v9=getfenv or function() return _ENV;end ;local v10=setmetatable;\nreturn 1\n';
+  const f = detectScript(lobf).detection.families[0];
+  assert.equal(f.id, 'luaobfuscator');
+  assert.ok(f.evidence.some((e) => e.rule === 'vm-prelude' && e.unrecoverable));
+  const ib3 = detectScript('--ironbrew3:tm:, v0.248\nreturn(function(a,b,...) return a end)(1,2)\n').detection.families[0];
+  assert.equal(ib3.id, 'ironbrew3'); assert.equal(ib3.version, '0.248');
+  const lps1 = detectScript('return(function(a) local d = a return d end)("LPS_28abc")\n').detection.families[0];
+  assert.equal(lps1.id, 'lps'); assert.equal(lps1.version, 'v1');
+  const lps2 = detectScript('return(function(a,b) local s = game:GetService("EncodingService") return s:DecompressBuffer(a, b) end)([==[LPS/r@bQ,]==], 1)\n').detection.families[0];
+  assert.equal(lps2.id, 'lps'); assert.equal(lps2.version, 'v2');
+});
+
+test('fold (Prompt XXV): `<comparison> or false` and `<comparison> and true` are the comparison; other operands are left alone', async () => {
+  const { foldPass } = await import('../src/passes/fold.js');
+  const { print } = await import('../src/core/printer.js');
+  const a = parse('if x == 1 or false then y() end if (a < b) and true then z() end local q = f() or false local r = g() and true');
+  foldPass(a, {});
+  const t = print(a);
+  assert.match(t, /if x == 1 then/);
+  assert.match(t, /if a < b then/);
+  assert.match(t, /local q = f\(\) or false/, 'a call may return nil: `or false` changes its value');
+  assert.match(t, /local r = g\(\) and true/);
+});
+
+test('LuaObfuscator VM: single-path state machines in handlers are straightened, others are left', async () => {
+  const { straighten } = await import('../src/recover/luaobf-vm.js');
+  const { print } = await import('../src/core/printer.js');
+  const body = parse('local s = 0 while true do if s == 1 then b() break end if s == 0 then a() s = 1 end end c()').body;
+  assert.equal(print({ type: 'Chunk', body: straighten(body) }).replace(/\s+/g, ' ').trim(), 'a() b() c()');
+  const loop = parse('local s = 0 while true do if s == 0 then a() s = 0 end end').body;
+  assert.equal(straighten(loop).length, 2, 'a state machine that never ends is not flattened');
+});
+
+test('LuaObfuscator VM: the program is read with the script’s own deserialiser; constants are reported, the verdict stays "not deobfuscated"', { skip: !have('LuaObfuscator/VM/000cf8a4c0d8db25.lua') && 'the sample collection is kept locally only', timeout: 300_000 }, () => {
+  const r = recoverSource(read('LuaObfuscator/VM/000cf8a4c0d8db25.lua'), { sandbox: { enabled: true } });
+  const st = r.steps.find((x) => x.id === 'luaobf.program');
+  assert.ok(st && st.detail.functions >= 1 && st.detail.instructions > 100);
+  assert.ok(st.detail.sample.includes('GetService'));
+  assert.equal(r.outcome.outcome, 'not-deobfuscated');
+});

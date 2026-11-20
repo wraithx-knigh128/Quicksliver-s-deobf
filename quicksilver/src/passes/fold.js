@@ -29,6 +29,17 @@ const foldable = (lib, name, mode) => mode === 'all' || OBFUSCATION_CALLS.has(`$
 const PURE_GLOBAL_FUNCS = new Set(['tostring', 'tonumber', 'type']);
 
 /** Value of a literal expression, or NOT_CONST. */
+/** Is the expression always a boolean (a comparison, `not`, a boolean literal, or and/or of such)? */
+export function isBoolean(e) {
+  while (e && e.type === 'Paren') e = e.expr;
+  if (!e) return false;
+  if (e.type === 'True' || e.type === 'False') return true;
+  if (e.type === 'Unary' && e.op === 'not') return true;
+  if (e.type === 'Binary' && ['==', '~=', '<', '<=', '>', '>='].includes(e.op)) return true;
+  if (e.type === 'Binary' && (e.op === 'and' || e.op === 'or')) return isBoolean(e.left) && isBoolean(e.right);
+  return false;
+}
+
 export function constOf(e) {
   switch (e.type) {
     case 'Nil': return undefined;
@@ -121,6 +132,11 @@ export function foldPass(chunk, ctx = {}) {
               const truthy = a !== undefined && a !== false;
               if (e.op === 'and') return replaced(truthy ? single(e.right) : e.left);
               return replaced(truthy ? e.left : single(e.right));
+            }
+            // `<boolean> or false` and `<boolean> and true` are the boolean (Prompt XXV: LuaObfuscator pads every state test of its flattened
+            // handlers with `or false`, which hid the state machines from the unflattener). Only for a left side that is always a boolean.
+            if ((e.op === 'or' && b === false) || (e.op === 'and' && b === true)) {
+              if (isBoolean(e.left)) return replaced(e.left);
             }
             return undefined;
           }

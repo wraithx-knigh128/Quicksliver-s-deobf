@@ -13,8 +13,8 @@ const repo = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..')
 
 /** Folder label of the collection → the detector's family id (null: the detector has no family of that name). */
 export const LABEL_FAMILY = {
-  '77fuscator': 'fuscator77', Boronide: 'boronide', Hercules: 'hercules', IronBrew2: 'ironbrew2', Ironbrew1: 'ironbrew1', Ironbrew3: null,
-  LPS: null, LuaObfuscator: 'luaobfuscator', Luraph: 'luraph', MoonSec: null, MoonVeil: 'moonveil', PSU: 'psu', Prometheus: 'prometheus',
+  '77fuscator': 'fuscator77', Boronide: 'boronide', Hercules: 'hercules', IronBrew2: 'ironbrew2', Ironbrew1: 'ironbrew1', Ironbrew3: 'ironbrew3',
+  LPS: 'lps', LuaObfuscator: 'luaobfuscator', Luraph: 'luraph', MoonSec: null, MoonVeil: 'moonveil', PSU: 'psu', Prometheus: 'prometheus',
   SynapseXen: 'synapse_xen', wYnFuscate: 'wynfuscate',
 };
 /** Folder label + subfolder → family, where the subfolder decides (MoonSec V2 / V3, Prometheus' WeAreDevs preset). */

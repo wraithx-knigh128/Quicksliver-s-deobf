@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "generatedAt": "2026-11-20T13:56:51.030Z",
+ "generatedAt": "2026-11-20T15:45:01.720Z",
  "gates": {
   "real": {
    "minFixtures": 8,
@@ -1118,7 +1118,7 @@
       "reproduction": null
      },
      "limitations": [
-      "VM-based loader; not recoverable statically."
+      "VM-based loader: identified, not rebuilt; the outcome is \"not deobfuscated\" (confidence capped at minimal while the VM remains)."
      ],
      "verification": {
       "status": "identified",
@@ -1505,6 +1505,180 @@
      },
      "limitations": [
       "VM: identified, not rebuilt. One recovery run took 7 s on a 245 KB script; no crash on any."
+     ],
+     "verification": {
+      "status": "identified",
+      "basis": "recognised from signatures; no reconstruction measured"
+     }
+    }
+   ],
+   "claims": {
+    "unversioned": {
+     "claim": "identification-only",
+     "why": "The output can be recognised. No reconstruction has been verified against real or authorised samples."
+    }
+   }
+  },
+  {
+   "id": "ironbrew3",
+   "name": "IronBrew 3",
+   "kind": "commercial",
+   "summary": "Obfuscator whose scripts begin \"--ironbrew3:tm:, vX\" and one wrapper `return(function(<34 parameters>, ...)` that runs a control-flow-flattened VM (state numbers compared through opaque arithmetic). Read on 17 scripts of a public collection (v0.235, v0.248).",
+   "versions": [
+    {
+     "id": "unversioned",
+     "label": "as measured (no version split)",
+     "identification": {
+      "methods": [
+       {
+        "kind": "banner",
+        "confidence": 0.7,
+        "note": "banner comment"
+       }
+      ],
+      "confidence": 0.7
+     },
+     "characteristics": [
+      {
+       "text": "wrapper",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/terrorlua/obfuscator-samples"
+       ]
+      },
+      {
+       "text": "opaque state loops",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/terrorlua/obfuscator-samples"
+       ]
+      },
+      {
+       "text": "VM",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/terrorlua/obfuscator-samples"
+       ]
+      }
+     ],
+     "samples": {
+      "authorizedPairs": 0,
+      "realOutput": 0,
+      "publicObserved": 0,
+      "notes": "No real output of this tool was available."
+     },
+     "capabilities": {
+      "identify": {
+       "available": true,
+       "verified": "format-tested"
+      },
+      "trace": {
+       "available": true,
+       "verified": "unverified"
+      },
+      "recover": {
+       "available": false,
+       "verified": "none"
+      }
+     },
+     "results": {
+      "fixtures": 0,
+      "syntheticFixtures": 0,
+      "behaviourChecked": 0,
+      "behaviourSame": 0,
+      "traceChecked": 0,
+      "traceIdentical": 0,
+      "toolBroken": 0,
+      "fidelityAfter": null,
+      "runtime": null,
+      "reproduction": null
+     },
+     "limitations": [
+      "Flattened VM wrapper: identified, not rebuilt."
+     ],
+     "verification": {
+      "status": "identified",
+      "basis": "recognised from signatures; no reconstruction measured"
+     }
+    }
+   ],
+   "claims": {
+    "unversioned": {
+     "claim": "identification-only",
+     "why": "The output can be recognised. No reconstruction has been verified against real or authorised samples."
+    }
+   }
+  },
+  {
+   "id": "lps",
+   "name": "LPS",
+   "kind": "commercial",
+   "summary": "Two forms filed as LPS in a public collection: v1, a flattened VM wrapper called with its program as a string that begins \"LPS\"; v2, an Ascii85 payload \"[==[LPS/...]==]\" that Roblox’s EncodingService:DecompressBuffer unpacks and loadstring runs. Read on 31 scripts.",
+   "versions": [
+    {
+     "id": "unversioned",
+     "label": "as measured (no version split)",
+     "identification": {
+      "methods": [
+       {
+        "kind": "signature",
+        "confidence": 0.8,
+        "note": "heuristic"
+       }
+      ],
+      "confidence": 0.8
+     },
+     "characteristics": [
+      {
+       "text": "VM (v1)",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/terrorlua/obfuscator-samples"
+       ]
+      },
+      {
+       "text": "Ascii85 + Roblox buffer compression + loadstring (v2)",
+       "knownAs": "documented",
+       "sources": [
+        "https://github.com/terrorlua/obfuscator-samples"
+       ]
+      }
+     ],
+     "samples": {
+      "authorizedPairs": 0,
+      "realOutput": 0,
+      "publicObserved": 0,
+      "notes": "No real output of this tool was available."
+     },
+     "capabilities": {
+      "identify": {
+       "available": true,
+       "verified": "format-tested"
+      },
+      "trace": {
+       "available": true,
+       "verified": "unverified"
+      },
+      "recover": {
+       "available": false,
+       "verified": "none"
+      }
+     },
+     "results": {
+      "fixtures": 0,
+      "syntheticFixtures": 0,
+      "behaviourChecked": 0,
+      "behaviourSame": 0,
+      "traceChecked": 0,
+      "traceIdentical": 0,
+      "toolBroken": 0,
+      "fidelityAfter": null,
+      "runtime": null,
+      "reproduction": null
+     },
+     "limitations": [
+      "v1 is a VM: identified, not rebuilt.",
+      "v2 needs Roblox’s buffer decompression (Zstandard/LZ4), which the engine does not implement; the stage is reported, not unpacked."
      ],
      "verification": {
       "status": "identified",
@@ -2952,7 +3126,7 @@
       "reproduction": null
      },
      "limitations": [
-      "The script is a VM in one pcall with a collector, a custom base-85 container, varint-coded constant pools and checksums that make it call error() when the environment differs. Detected and flagged as not recovered: 35% confidence, measured.",
+      "The script is a VM in one pcall with a collector, a custom base-85 container, varint-coded constant pools and checksums that make it call error() when the environment differs. Detected and flagged as not recovered: minimal confidence (0.25, measured; the VM is not rebuilt).",
       "The behaviour trace cannot get past the checks: the script probes Path2D objects (GetPositionOnCurve, GetTangentOnCurve, GetLength, GetBoundingRect, GetControlPoints) and the offline Path2D model has no answer for GetBoundingRect, so the run stops at error() after 93 recorded statements. Making it up would be a guess; the answers need a recording from the real engine (--studio) that was not available.",
       "Only version 1 and one script were seen. Another build or setting is unconfirmed."
      ],
@@ -3265,7 +3439,8 @@
       "reproduction": null
      },
      "limitations": [
-      "No real output obtained to test against."
+      "VM preset: the program is read with the script’s own deserialiser in the sandbox and its constants are reported (step luaobf.program); the instructions are not rebuilt into source: the opcode-to-handler mapping is not proven for every build, so the verdict stays \"not deobfuscated\".",
+      "23 ChaoticGood scripts carry a MoonSec V3 banner: mislabelled, or MoonSec applied on top."
      ],
      "verification": {
       "status": "identified",
@@ -3333,7 +3508,7 @@
       "reproduction": null
      },
      "limitations": [
-      "Structure unknown."
+      "Detected by its banner; no dedicated reader."
      ],
      "verification": {
       "status": "identified",
@@ -3426,7 +3601,7 @@
       "reproduction": null
      },
      "limitations": [
-      "Nothing public to verify against."
+      "VM: identified, not rebuilt."
      ],
      "verification": {
       "status": "identified",
@@ -5020,7 +5195,7 @@
       "reproduction": null
      },
      "limitations": [
-      "Nothing public to verify against."
+      "VM: identified by mention only, not rebuilt."
      ],
      "verification": {
       "status": "identified",
