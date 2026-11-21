@@ -8,11 +8,12 @@
   document.documentElement.setAttribute('data-theme', light ? 'light' : 'dark');
 })();
 
-// Prompt XXVII: which screen opens first. The landing screen greets a first visit; someone who has entered the workspace before, or who came
-// with a link to a tab (?tab=… or #work), goes straight to the workspace — decided here, before the first paint, so the landing never flashes.
+// Prompt XXVIII: which screen opens first. The one-page Deobfuscate site is the default; the expert workbench opens first only when this tab
+// was last in it (sessionStorage, set by src/app/site.js) or the address names a workbench tab (?tab=… or #work / #vm / #loader / #expert) —
+// decided here, before the first paint, so the wrong screen never flashes.
 (function () {
-  var entered = '';
-  try { entered = localStorage.getItem('qs.entered') || ''; } catch (e) { /* storage blocked: show the landing */ }
-  var direct = /[?&]tab=/.test(location.search) || /^#(work|vm|loader)$/.test(location.hash);
-  if (entered === '1' || direct) document.documentElement.classList.add('in-work');
+  var expert = '';
+  try { expert = sessionStorage.getItem('qs.expert') || ''; } catch (e) { /* storage blocked: the site */ }
+  var direct = /[?&]tab=/.test(location.search) || /^#(work|vm|loader|expert)$/.test(location.hash);
+  if (expert === '1' || direct) document.documentElement.classList.add('in-work');
 })();

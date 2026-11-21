@@ -1,7 +1,8 @@
 #!/usr/bin/env node
-// Prompt XXVII Part VII/IX: how the v1.8 interface performs, measured in Chromium.
+// Prompt XXVII Part VII/IX, updated for Prompt XXVIII: how the v1.8 interface performs, measured in Chromium.
 //
-// For the landing (animated scene) and the workspace (scene paused), on a desktop viewport and on a phone viewport with a 4× CPU slowdown:
+// For the Deobfuscate page (the supplied artwork drifting behind it), the same page during a run (the stage rail updating) and Expert tools (the
+// backdrop paused), on a desktop viewport and on a phone viewport with a 4× CPU slowdown:
 //   fps            frames the page produced in a 5 s window (requestAnimationFrame count / 5)
 //   longFrames     frames that took more than 50 ms
 //   layouts/paints Layout and Paint events in the trace during the window: a compositor-only animation causes none of either
@@ -24,7 +25,7 @@ let chromium;
 for (const c of [process.env.QS_PLAYWRIGHT, 'playwright', '/opt/node22/lib/node_modules/playwright'].filter(Boolean)) { try { ({ chromium } = require(c)); break; } catch { /* next */ } }
 if (!chromium) { console.error('Playwright is not available.'); process.exit(2); }
 
-const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.lua': 'text/plain' };
+const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.lua': 'text/plain', '.webp': 'image/webp', '.jpg': 'image/jpeg', '.png': 'image/png' };
 const server = http.createServer((req, res) => {
   const u = new URL(req.url, 'http://x');
   const p = path.join(root, decodeURIComponent(u.pathname === '/' ? '/index.html' : u.pathname));
@@ -38,7 +39,7 @@ const browser = await chromium.launch();
 
 async function measure({ name, viewport, cpu = 1, screen }) {
   const ctx = await browser.newContext({ viewport, deviceScaleFactor: 1 });
-  if (screen === 'work') await ctx.addInitScript(() => { try { localStorage.setItem('qs.entered', '1'); } catch { /* ignore */ } });
+  if (screen === 'work') await ctx.addInitScript(() => { try { sessionStorage.setItem('qs.expert', '1'); } catch { /* ignore */ } });
   await ctx.addInitScript(() => {
     window.__qs = { lcp: 0, cls: 0, long: 0 };
     new PerformanceObserver((l) => { for (const e of l.getEntries()) window.__qs.lcp = e.startTime; }).observe({ type: 'largest-contentful-paint', buffered: true });
@@ -52,6 +53,12 @@ async function measure({ name, viewport, cpu = 1, screen }) {
   await page.waitForLoadState('load');
   await page.evaluate(() => document.fonts.ready);
   await page.waitForTimeout(1500);   // the entrance animation finishes; what is measured next is the steady state
+  if (screen === 'running') {          // a deobfuscation in progress: the stage rail and its pulse are what moves
+    const src = fs.readFileSync(path.join(root, 'tests/corpus/obfuscated/zartha/s07_roblox_style__constants.lua'), 'utf8');
+    await page.fill('#deob-text', src.repeat(4));
+    await page.click('#deob-run');
+    await page.waitForTimeout(200);
+  }
   const m0 = Object.fromEntries((await cdp.send('Performance.getMetrics')).metrics.map((x) => [x.name, x.value]));
   await browser.startTracing(page, { categories: ['devtools.timeline'] });
   const frames = await page.evaluate(() => new Promise((resolve) => {
@@ -76,10 +83,11 @@ async function measure({ name, viewport, cpu = 1, screen }) {
 }
 
 const runs = [];
-runs.push(await measure({ name: 'landing, desktop', viewport: { width: 1440, height: 900 }, screen: 'landing' }));
-runs.push(await measure({ name: 'landing, phone, CPU 4× slower', viewport: { width: 390, height: 844 }, cpu: 4, screen: 'landing' }));
-runs.push(await measure({ name: 'workspace, desktop', viewport: { width: 1440, height: 900 }, screen: 'work' }));
-runs.push(await measure({ name: 'workspace, phone, CPU 4× slower', viewport: { width: 390, height: 844 }, cpu: 4, screen: 'work' }));
+runs.push(await measure({ name: 'Deobfuscate page, desktop', viewport: { width: 1440, height: 900 }, screen: 'site' }));
+runs.push(await measure({ name: 'Deobfuscate page, phone, CPU 4× slower', viewport: { width: 390, height: 844 }, cpu: 4, screen: 'site' }));
+runs.push(await measure({ name: 'Deobfuscate page while running, desktop', viewport: { width: 1440, height: 900 }, screen: 'running' }));
+runs.push(await measure({ name: 'Expert tools, desktop', viewport: { width: 1440, height: 900 }, screen: 'work' }));
+runs.push(await measure({ name: 'Expert tools, phone, CPU 4× slower', viewport: { width: 390, height: 844 }, cpu: 4, screen: 'work' }));
 await browser.close();
 server.close();
 console.table(runs);

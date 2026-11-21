@@ -16,7 +16,7 @@ import { analyze, STDLIB_GLOBALS } from '../core/scope.js';
 import { walk } from '../core/walk.js';
 import { isIdentifier } from '../core/printer.js';
 
-const CONVENTIONAL = new Set(['self', 'i', 'j', 'k', 'n', 'm', 'x', 'y', 'z', '_', 'v', 'dt', 'id', 'ok', 'err', 'fn', 'args']);
+const CONVENTIONAL = new Set(['self', 'i', 'j', 'k', 'n', 'm', 'M', 'x', 'y', 'z', '_', 'v', 'dt', 'id', 'ok', 'err', 'fn', 'args']);   // M: the module-table convention
 
 const ACRONYMS = new Set([
   'ID', 'HWID', 'JSON', 'URL', 'HTTP', 'HTTPS', 'API', 'UI', 'GUI', 'ESP', 'FPS', 'UUID', 'XML', 'HTML', 'CSS', 'SQL',
@@ -181,7 +181,42 @@ export const SIGNAL_PARAMS = {
  *   returns      what a function returns: `local h = configure(c)` where configure returns its local `humanoid`
  *   signalParam  parameters of a callback connected to a Roblox event (SIGNAL_PARAMS)
  */
+// What a value is, read from the members the program uses on it (Prompt XXVIII). Each entry is a member that belongs to one kind of Roblox object
+// only, in the engine's API (create.roblox.com/docs/reference/engine/classes): a variable read as `x.UserId` or `x:Kick()` is a Player whatever it
+// was called. A member several kinds share (Name, Parent, Position, Size, CFrame, Destroy …) decides nothing, and members of two different kinds on
+// one variable decide nothing either: the name is evidence, never a guess.
+export const MEMBER_KIND = (() => {
+  const kinds = {
+    player: ['UserId', 'DisplayName', 'Character', 'CharacterAdded', 'CharacterRemoving', 'CharacterAppearanceLoaded', 'Kick', 'LoadCharacter', 'Team', 'TeamColor', 'AccountAge', 'MembershipType', 'GetMouse', 'Backpack', 'PlayerGui', 'PlayerScripts', 'IsFriendsWith', 'GetRankInGroup', 'GetRoleInGroup', 'IsInGroup', 'RespawnLocation', 'Neutral'],
+    character: ['HumanoidRootPart'],
+    humanoid: ['WalkSpeed', 'JumpPower', 'JumpHeight', 'UseJumpPower', 'MaxHealth', 'TakeDamage', 'MoveTo', 'MoveDirection', 'RootPart', 'Sit', 'PlatformStand', 'ChangeState', 'GetState', 'HipHeight', 'Died', 'StateChanged', 'EquipTool', 'UnequipTools', 'AutoRotate', 'WalkToPoint', 'FloorMaterial', 'DisplayDistanceType', 'GetPlayingAnimationTracks'],
+    input: ['KeyCode', 'UserInputType', 'UserInputState'],
+    part: ['Anchored', 'CanCollide', 'CanTouch', 'CanQuery', 'BrickColor', 'Material', 'AssemblyLinearVelocity', 'AssemblyAngularVelocity', 'ApplyImpulse', 'Massless', 'GetMass', 'SetNetworkOwner', 'ResizeIncrement'],
+    connection: ['Disconnect'],
+    remote: ['FireServer', 'FireClient', 'FireAllClients', 'OnClientEvent', 'OnServerEvent'],
+    remoteFunction: ['InvokeServer', 'InvokeClient', 'OnServerInvoke', 'OnClientInvoke'],
+    camera: ['CameraType', 'CameraSubject', 'FieldOfView', 'ViewportSize', 'WorldToViewportPoint', 'WorldToScreenPoint', 'ScreenPointToRay', 'ViewportPointToRay'],
+    tween: ['Completed'],
+    track: ['AdjustSpeed', 'AdjustWeight', 'TimePosition', 'IsPlaying', 'GetMarkerReachedSignal'],
+  };
+  const m = new Map();
+  for (const [kind, members] of Object.entries(kinds)) for (const x of members) m.set(x, kind);
+  return m;
+})();
+
+/** The one kind of object the members used on a variable name, or null (no member that decides, or members of two kinds). */
+export function kindFromMembers(members) {
+  const kinds = new Set();
+  for (const x of members || []) { const k = MEMBER_KIND.get(x); if (k) kinds.add(k); }
+  return kinds.size === 1 ? [...kinds][0] : null;
+}
+
+// Enum types that share their name with an object's property (Enum.KeyCode, input.KeyCode): `x.KeyCode.E` is a lookup in `Enum`, not a property read
+const ENUM_SHARED = new Set(['KeyCode', 'UserInputType', 'UserInputState', 'Material', 'CameraType', 'HumanoidStateType', 'FloorMaterial']);
+
 function gatherEvidence(chunk, info) {
+  const members = new Map();   // Var -> Set of member names read or called on it (x.Name, x:Method())
+  const enumLike = new Set();  // Vars read as `x.KeyCode.E` (the Enum table under another name): their members name nothing
   const assigned = new Map();
   const callArgs = new Map();
   const returns = new Map();   // Func node -> returned expressions (single-value returns directly in that function)
@@ -199,6 +234,14 @@ function gatherEvidence(chunk, info) {
         if (v && !v.isGlobal && !assigned.has(v)) assigned.set(v, n.values[i]);
       });
     }
+    if (n.type === 'Index' && n.obj && n.obj.type === 'Index' && n.obj.key && n.obj.key.type === 'String' && ENUM_SHARED.has(n.obj.key.value) && n.obj.obj && n.obj.obj.type === 'Name') {
+      const v = info.varOf.get(n.obj.obj);
+      if (v) enumLike.add(v);
+    }
+    if ((n.type === 'Index' && n.key && n.key.type === 'String') || n.type === 'MethodCall') {
+      const v = n.obj && n.obj.type === 'Name' ? info.varOf.get(n.obj) : null;
+      if (v && !v.isGlobal) { if (!members.has(v)) members.set(v, new Set()); members.get(v).add(n.type === 'MethodCall' ? n.name : n.key.value); }
+    }
     if (n.type === 'Call' && n.fn.type === 'Name') {
       const v = info.varOf.get(n.fn);
       if (v && !v.isGlobal) { if (!callArgs.has(v)) callArgs.set(v, []); callArgs.get(v).push(n.args); }
@@ -212,7 +255,7 @@ function gatherEvidence(chunk, info) {
     if (n.type === 'Func') funcStack.pop();
   };
   visit(chunk);
-  return { assigned, callArgs, returns, signalParam };
+  return { assigned, callArgs, returns, signalParam, members, enumLike };
 }
 
 function forInHints(stmt) {
@@ -238,10 +281,18 @@ export function renamePass(chunk, options = {}) {
   if (!vars.length) return { changed: 0, renamed: 0 };
 
   // Decide what counts as mangled in this script: rename everything if most names are machine-made.
-  const mangled = vars.filter((v) => looksObfuscated(v.name) || isShortName(v.name)).length;
-  const wholesale = mode === 'all' || mangled / vars.length > 0.5;
-  // When most names are machine made even `i` or `x` carries no information; `self` and `_` always stay.
-  const eligible = (v) => (wholesale ? v.name !== 'self' && v.name !== '_' : looksObfuscated(v.name));
+  // Short names alone are what people write in small programs (`local M = {}`, `function M.add(a, b)`): they count as a minifier's only when
+  // machine-made names are there too, or the program is large enough for "mostly one or two letters" to be a pattern. (Prompt XXVIII: a
+  // plain module had `M`, `a`, `b` replaced by `tbl`, `param`, `param1` — the author's names traded for placeholders.)
+  // A minifier hands names out in runs (a, b, c, d …): four or more distinct short names are its pattern, two or three are a person's.
+  const machine = vars.filter((v) => looksObfuscated(v.name)).length;
+  const shortOnes = vars.filter((v) => !looksObfuscated(v.name) && isShortName(v.name));
+  const mangled = machine + shortOnes.length;
+  const wholesale = mode === 'all' || machine / vars.length > 0.5 || (mangled / vars.length > 0.5 && (machine > 0 || vars.length >= 12 || new Set(shortOnes.map((v) => v.name)).size >= 4));
+  // When most names are machine made even `i` or `x` carries no information; `self` and `_` always stay. Otherwise a short name (`a`, `t`) is
+  // renamed only when the program states a better one (a role, its initialiser, what it is used as) — never traded for a placeholder.
+  const eligible = (v) => (wholesale ? v.name !== 'self' && v.name !== '_' : looksObfuscated(v.name) || isShortName(v.name));
+  const weak = (v) => !wholesale && !looksObfuscated(v.name);
 
   // Names that must not be introduced: every global used anywhere, plus the standard library.
   const usedFree = new Set([...info.globals.keys(), ...STDLIB_GLOBALS]);
@@ -288,6 +339,7 @@ export function renamePass(chunk, options = {}) {
     return evidenceHint(w, depth + 1);
   };
   const GENERIC_HINTS = new Set(['fn', 'tbl', 'list', 'str', 'num', 'flag', 'value', 'param', 'obj', 'iter', 'count', 'rnd', 'kind', 'ok', 'module', 'instance']);
+  const TYPE_ONLY = new Set(['fn', 'tbl', 'list', 'str', 'num', 'flag', 'value', 'param', 'obj', 'iter', 'rnd', 'instance', 'helpers']);   // say what type a value has, not what it is
   const exprHint = (e, depth) => {
     if (!e) return null;
     if (e.type === 'Name') { const w = info.varOf.get(e); return w ? meaningOf(w, depth) : null; }
@@ -333,10 +385,20 @@ export function renamePass(chunk, options = {}) {
     let base = null;
     // evidence from how the variable is used and what it is related to (src/nexus/roles.js); consulted first
     const role = roleHints && v.decl ? roleHints.get(v.decl) : null;
-    if (role && isIdentifier(role.name)) base = role.name;
+    // a role read from the callee alone ("result of GetService()" → service) says less than the initialiser's own argument
+    // (game:GetService("Players") → Players): three services must not become service, service1, service2 (Prompt XXVIII)
+    const stated = role && role.rule === 'result-of-call' && v.init ? hintFromInit(v.init) : null;
+    if (role && isIdentifier(role.name) && !(stated && isIdentifier(stated) && stated !== role.name)) base = role.name;
     if (!base && v.kind === 'for') base = loopHint.get(v.decl) || null;
     if (!base) base = evidenceHint(v);
     if (!base && v.init) base = hintFromInit(v.init);
+    // what the program does with it: the members it reads or calls on it name the kind of object (Prompt XXVIII)
+    const holdsEnum = [v.init, ev.assigned.get(v)].some((e) => e && e.type === 'Name' && e.name === 'Enum');
+    // only a variable that holds one value: a register a decompiler reuses for several values would be named after one of them
+    const oneValue = v.init ? v.writes.length === 0 : v.writes.length <= 1;
+    if (!base && v.kind !== 'for' && oneValue && !ev.enumLike.has(v) && !holdsEnum) base = kindFromMembers(ev.members.get(v));
+    // a person's short name stays unless the evidence names it (a type-only fallback is not evidence)
+    if (weak(v) && (!base || TYPE_ONLY.has(base) || !isIdentifier(base))) return v.name;
     if (!base && v.kind === 'param') base = 'param';
     if (!base && v.kind === 'localfunc') base = 'fn';
     if (!base) base = 'value';

@@ -23,7 +23,7 @@ async function loadPlaywright() {
   return null;
 }
 
-const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.lua': 'text/plain' };
+const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.lua': 'text/plain', '.webp': 'image/webp', '.jpg': 'image/jpeg', '.png': 'image/png', '.woff2': 'font/woff2' };
 let pyPort = 0; let pyProc = null;
 function serve() {
   const server = http.createServer((req, res) => {
@@ -68,10 +68,10 @@ before(async () => {
 });
 after(async () => { if (browser) await browser.close(); if (server) server.close(); if (pyProc) pyProc.kill(); fs.rmSync(tmp, { recursive: true, force: true }); });
 
-async function newPage(opts = {}, { landing = false } = {}) {
+async function newPage(opts = {}, { site = false } = {}) {
   const ctx = await browser.newContext({ viewport: { width: 1400, height: 860 }, acceptDownloads: true, ...opts });
-  // v1.8 opens on a landing screen the first time; the workbench tests start where a returning user does, in the workspace
-  if (!landing) await ctx.addInitScript(() => { try { localStorage.setItem('qs.entered', '1'); } catch { /* ignore */ } });
+  // v1.8 opens on the one-page Deobfuscate site; the workbench tests start in Expert tools, as a tab that opened them does (src/app/site.js)
+  if (!site) await ctx.addInitScript(() => { try { sessionStorage.setItem('qs.expert', '1'); } catch { /* ignore */ } });
   const page = await ctx.newPage();
   const problems = [];
   page.on('console', (m) => { if (['error', 'warning'].includes(m.type())) problems.push(`[${m.type()}] ${m.text()}`); });
@@ -939,7 +939,8 @@ test('NEXUS reads comment confetti, shows the hidden text as text, removes it af
 
 test('NEXUS can be switched off in the settings, and the older recovery runs unchanged', { skip }, async () => {
   const { page, ctx } = await newPage();
-  await page.fill('textarea.editor', 'local a = 1\nprint(a)');
+  // a machine-made name (a person's short `a` is kept since Prompt XXVIII: a placeholder is not a better name)
+  await page.fill('textarea.editor', 'local _0x1a2b = game:GetService("Players")\nprint(_0x1a2b.LocalPlayer, _0x1a2b.MaxPlayers)');
   await page.click('#btn-settings');
   await page.waitForSelector('.modal');
   await page.locator('.modal .field:has-text("NEXUS analysis") label.switch').click();
@@ -947,7 +948,7 @@ test('NEXUS can be switched off in the settings, and the older recovery runs unc
   await page.click('#act-recover'); await idle(page);
   if (!(await page.isVisible('#inspector'))) await page.click('#btn-inspector');
   assert.ok(!/NEXUS/.test(await page.textContent('#inspector')));
-  assert.match(await page.textContent('#out-body'), /print\(num\)/);
+  assert.match(await page.textContent('#out-body'), /local Players = game:GetService\("Players"\)/, 'the older recovery still names a machine-made local from its initialiser');
   await ctx.close();
 });
 
@@ -1460,54 +1461,7 @@ test('Loader: a Luarmor bootstrap gets the five operations kept apart, its own l
 });
 
 
-// ---- Prompt XXVII: the v1.8 landing screen, its sections, motion and the GitHub field ----------------------------------------------------
-
-test('v1.8 landing: a first visit opens on the landing (QUICKSILVER v1.8 · PREMIUM USER); entering opens the workspace and is remembered', { skip }, async () => {
-  const { page, ctx, problems } = await newPage({}, { landing: true });
-  assert.equal(await page.isVisible('#landing'), true);
-  assert.equal(await page.isVisible('#shell'), false, 'the workspace is not shown under the landing');
-  assert.match(await page.textContent('.wordmark'), /QuickSilver\s*v1\.8/);
-  assert.match(await page.textContent('#premium-tag'), /Premium user/i);
-  assert.match(await page.textContent('.lfoot'), /not affiliated/);
-  // the brand's fonts are self-hosted and load under the strict CSP
-  await page.evaluate(() => document.fonts.ready);
-  assert.equal(await page.evaluate(() => document.fonts.check('40px "Lilita One"')), true, 'Lilita One loaded');
-  await page.click('.cta .btn-hero.primary');
-  await page.waitForFunction(() => document.documentElement.classList.contains('in-work'));
-  await page.waitForSelector('#shell', { state: 'visible' });
-  assert.equal(await activeTab(page), 'tab-work');
-  assert.equal(await page.evaluate(() => localStorage.getItem('qs.entered')), '1');
-  await page.reload();
-  await page.waitForSelector('#toollist li', { state: 'attached' });
-  assert.equal(await page.evaluate(() => document.documentElement.classList.contains('in-work')), true, 'a returning visitor goes straight to the workspace');
-  // the brand in the title bar brings the landing back
-  await page.click('#brand');
-  await page.waitForFunction(() => !document.documentElement.classList.contains('in-work'));
-  assert.equal(await page.isVisible('#landing'), true);
-  assert.deepEqual(problems, []);
-  await ctx.close();
-});
-
-test('v1.8 sections: the landing and the title bar open the VM Reverser and Loader & GitHub sections', { skip }, async () => {
-  const { page, ctx, problems } = await newPage({}, { landing: true });
-  await page.click('.cta [data-go=vm]');
-  await page.waitForSelector('#tab-vm[aria-selected=true]');
-  assert.match(await page.textContent('#view-vm'), /Bytecode back to source/);
-  assert.ok(await page.locator('#view-vm .vm-card').count() >= 6, 'the reverser lists what it reads, with a status each');
-  assert.equal(await page.getAttribute('.titlebar .sections [data-go=vm]', 'aria-current'), 'page');
-  await page.click('.titlebar .sections [data-go=loader]');
-  await page.waitForSelector('#tab-loader[aria-selected=true]');
-  assert.ok(await page.isVisible('#view-loader .qs-hero input[type=url]'), 'the GitHub field is in the Loader section');
-  // a non-GitHub, non-URL entry is refused locally with the reason, nothing is sent
-  await page.fill('#view-loader .qs-hero input[type=url]', 'https://github.com/settings/tokens');
-  await page.click('#view-loader .qs-hero .btn.primary');
-  await page.waitForSelector('.modal');
-  assert.match(await page.textContent('.modal'), /Not a valid GitHub link/);
-  assert.match(await page.textContent('.modal'), /“settings” is not a GitHub account name/);
-  await page.keyboard.press('Escape');
-  assert.deepEqual(problems, []);
-  await ctx.close();
-});
+// ---- Prompt XXVIII: one Deobfuscate page; the workbench is Expert tools -----------------------------------------------------------------
 
 test('v1.8 input recognition: a GitHub link pasted in the editor goes to retrieval; a loader is deobfuscated and its Loader Analysis runs too', { skip }, async () => {
   const { page, ctx } = await newPage();
@@ -1526,49 +1480,20 @@ test('v1.8 input recognition: a GitHub link pasted in the editor goes to retriev
   await ctx.close();
 });
 
-test('v1.8 motion: the scene animates only transform/opacity, stops in the workspace, and stops entirely under reduced motion', { skip }, async () => {
-  const { page, ctx } = await newPage({}, { landing: true });
-  const anim = await page.evaluate(() => document.getAnimations().filter((a) => a instanceof CSSAnimation).map((a) => ({ name: a.animationName, props: Object.keys((a.effect.getKeyframes()[0]) || {}).filter((k) => !['offset', 'easing', 'composite', 'computedOffset'].includes(k)) })));
-  assert.ok(anim.length >= 8, `scene animations running: ${anim.length}`);
-  for (const a of anim) for (const p of a.props) assert.ok(['transform', 'opacity'].includes(p), `${a.name} animates ${p}`);
-  await page.click('.cta .btn-hero.primary');
-  await page.waitForFunction(() => document.documentElement.classList.contains('in-work'));
-  await page.waitForTimeout(600);
-  const running = await page.evaluate(() => document.getAnimations().filter((a) => a.playState === 'running' && a.effect && a.effect.target && a.effect.target.closest && a.effect.target.closest('.scene')).length);
-  assert.equal(running, 0, 'nothing in the scene moves while the workspace is open');
-  await ctx.close();
-  const reduced = await newPage({ reducedMotion: 'reduce' }, { landing: true });
-  const n = await reduced.page.evaluate(() => document.getAnimations().filter((a) => a instanceof CSSAnimation).length);
-  assert.equal(n, 0, 'reduced motion: no animation at all');
-  assert.equal(await reduced.page.evaluate(() => getComputedStyle(document.querySelector('.wordmark')).opacity), '1', 'content is fully shown without the entrance animation');
-  await reduced.ctx.close();
-});
-
-test('v1.8 mobile: the landing and the workspace fit a phone without horizontal scrolling', { skip }, async () => {
-  const { page, ctx } = await newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 }, { landing: true });
-  const wide = await page.evaluate(() => Math.max(document.documentElement.scrollWidth, document.querySelector('#landing').scrollWidth));
-  assert.ok(wide <= 392, `landing width ${wide}`);
-  assert.ok(await page.isVisible('.cta .btn-hero.primary'));
-  await page.click('.cta .btn-hero.primary');
-  await page.waitForSelector('#shell', { state: 'visible' });
-  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth) <= 392);
-  await ctx.close();
-});
-
-test('v1.8 VM Reverser: a reconstruction shows its VM, key-search and naming evidence and the verdict, and is kept in the local history (metadata only)', { skip }, async () => {
+test('v1.8 VM details: a reconstruction shows its VM, key-search and naming evidence and the verdict, and is kept in the local history (metadata only)', { skip }, async () => {
   const { page, ctx, problems } = await newPage();
   const file = path.join(root, 'tests/corpus/obfuscated/zartha/s07_roblox_style__constants.lua');
   await loadFile(page, file);
   await page.click('#act-recover');
   await idle(page);
-  await page.click('.titlebar .sections [data-go=vm]');
+  await page.click('#tab-vm');
   await page.waitForSelector('#tab-vm[aria-selected=true]');
   const text = await page.textContent('#view-vm');
   assert.match(text, /Virtual machine.*zartha: lifted back to source/s);
   // the v1.8 theme must not cover the editor's highlighting layer (an opaque background on the text area hid every line once)
   await page.click('#tab-work');
   assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('textarea.editor')).backgroundColor), 'rgba(0, 0, 0, 0)');
-  await page.click('.titlebar .sections [data-go=vm]');
+  await page.click('#tab-vm');
   assert.match(text, /Masked strings.*39 read back by key search/s);
   assert.match(text, /Names.*locals named from evidence/s);
   assert.match(text, /Verdict.*Syntax-valid/si);
@@ -1576,6 +1501,170 @@ test('v1.8 VM Reverser: a reconstruction shows its VM, key-search and naming evi
   const stored = await page.evaluate(() => localStorage.getItem('qs.history.v1'));
   assert.match(stored, /s07_roblox_style__constants\.lua/);
   assert.doesNotMatch(stored, /GetService|Humanoid/, 'the history holds no script text and no output');
+  assert.deepEqual(problems, []);
+  await ctx.close();
+});
+
+// ---- Prompt XXVIII: the one Deobfuscate page ------------------------------------------------------------------------------------------------
+
+const ZARTHA_FILE = path.join(root, 'tests/corpus/obfuscated/zartha/s07_roblox_style__constants.lua');
+const RAWGH = 'https://raw.githubusercontent.com/alice/hub/main/';
+/** /api/github as the server answers, from a table of files (raw URL → text); records every request. */
+async function mockGitHubApi(page, files, { listing = null } = {}) {
+  const asked = [];
+  await page.route('**/api/github', async (route) => {
+    const { url, mode } = JSON.parse(route.request().postData() || '{}');
+    asked.push({ url, mode });
+    if (mode === 'listing' && listing) return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, outcome: 'listing', listing }) });
+    const raw = url.replace('https://github.com/alice/hub/blob/main/', RAWGH);
+    const body = files[raw];
+    if (body == null) return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: false, outcome: 'file-missing', label: 'The repository exists, but the file is not in it', message: 'The repository exists, but that file is not in it.' }) });
+    const b64 = Buffer.from(body, 'latin1').toString('base64');
+    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, outcome: 'retrieved', target: { owner: 'alice', repo: 'hub', path: raw.slice(RAWGH.length) }, file: { name: raw.split('/').pop(), base64: b64, sha256: 'ab'.repeat(32), contentClass: 'lua', contentReason: 'Lua / Luau source that parses.' } }) });
+  });
+  return asked;
+}
+const deobDone = (page) => page.waitForFunction(() => !document.querySelector('#deob-result').hidden && !document.querySelector('#deob-run').classList.contains('busy'), null, { timeout: 120_000 });
+
+test('v1.8 Deobfuscate page: the default screen — QUICKSILVER v1.8 · PREMIUM USER, one input, one Deobfuscate, no separate tool sections', { skip }, async () => {
+  const { page, ctx, problems } = await newPage({}, { site: true });
+  assert.equal(await page.isVisible('#site'), true);
+  assert.equal(await page.isVisible('#shell'), false, 'the workbench is not shown');
+  assert.match(await page.textContent('.wordmark'), /QuickSilver\s*v1\.8/);
+  assert.match(await page.textContent('#premium-tag'), /Premium User/i);
+  assert.match(await page.textContent('.sitefoot'), /not affiliated/);
+  assert.equal(await page.locator('#site button.btn-deob').count(), 1, 'exactly one Deobfuscate action');
+  assert.equal(await page.locator('#site').getByText(/VM Reverser|Loader & GitHub/).count(), 0, 'no separate VM Reverser or Loader section');
+  // the supplied artwork is the backdrop: the landscape picture on a wide screen
+  const src = await page.evaluate(() => document.querySelector('.backdrop img').currentSrc);
+  assert.match(src, /img\/sunset-desktop-(960|1672)\.(webp|jpg)$/);
+  assert.match(await page.evaluate(() => document.querySelector('.cine img').currentSrc || document.querySelector('.cine img').src), /img\/city-588\./);
+  // the display face: the visitor's own Pricedown if installed, else Lilita One (self-hosted, loads under the strict CSP)
+  await page.evaluate(() => document.fonts.ready);
+  assert.equal(await page.evaluate(() => document.fonts.check('40px "QS Display"')), true);
+  assert.match(await page.evaluate(() => getComputedStyle(document.querySelector('.wm-main')).fontFamily), /^"QS Display"/);
+  // Expert tools opens the workbench, for this tab only; the way back is one button
+  await page.click('.topnav [data-expert]');
+  await page.waitForFunction(() => document.documentElement.classList.contains('in-work'));
+  await page.waitForSelector('#shell', { state: 'visible' });
+  assert.equal(await page.evaluate(() => sessionStorage.getItem('qs.expert')), '1');
+  assert.equal(await page.evaluate(() => localStorage.getItem('qs.entered')), null, 'nothing is remembered across visits');
+  assert.equal(await page.textContent('#tab-vm span'), 'VM details');
+  await page.click('#back-site');
+  await page.waitForFunction(() => !document.documentElement.classList.contains('in-work'));
+  assert.equal(await page.isVisible('#deob-text'), true);
+  assert.deepEqual(problems, []);
+  await ctx.close();
+});
+
+test('v1.8 Deobfuscate: an opened file runs the fourteen stages and the reconstructed program is the result, ready to download', { skip, timeout: 180_000 }, async () => {
+  const { page, ctx, problems } = await newPage({}, { site: true });
+  await page.setInputFiles('input[type=file][accept=".lua,.luau,.txt,.rbxm,.rbxmx"]:not(#file-input)', ZARTHA_FILE);
+  await page.waitForFunction(() => /s07_roblox_style__constants\.lua/.test(document.querySelector('#deob-recog').textContent));
+  await page.click('#deob-run');
+  await deobDone(page);
+  assert.equal(await page.locator('#stage-rail li').count(), 14);
+  assert.equal(await page.locator('#stage-rail li.done').count() >= 12, true);
+  assert.match(await page.textContent('#deob-result .verdict'), /Syntax-valid but behaviourally unverified/i);
+  assert.match(await page.textContent('#deob-result h2'), /s07_roblox_style__constants\.deobf\.lua/);
+  assert.match(await page.textContent('#deob-result .res-facts'), /Protection: Zartha/);
+  const code = await page.textContent('#deob-result .res-code');
+  assert.match(code, /local Players = game:GetService\("Players"\)/);
+  const [dl] = await Promise.all([page.waitForEvent('download'), page.click('#deob-result .res-acts .btn-ghost.primary')]);
+  assert.equal(dl.suggestedFilename(), 's07_roblox_style__constants.deobf.lua');
+  const saved = fs.readFileSync(await dl.path(), 'utf8');
+  assert.match(saved, /RunService\.Heartbeat:Connect/);
+  // the stage details are there for every stage
+  await page.click('#deob-result details:nth-of-type(2) summary');
+  assert.match(await page.textContent('#deob-result .stage-table'), /VM & bytecode reconstruction\s*done\s*zartha VM lifted/);
+  // and the result can be taken to the workbench
+  await page.click('text=Open in Expert tools');
+  await page.waitForSelector('#shell', { state: 'visible' });
+  assert.match(await page.inputValue('textarea.editor'), /Zartha|local|function/);
+  assert.deepEqual(problems, []);
+  await ctx.close();
+});
+
+test('v1.8 Deobfuscate: a pasted GitHub loadstring — the payload is retrieved through /api/github and its reconstruction is the result', { skip, timeout: 180_000 }, async () => {
+  const { page, ctx, problems } = await newPage({}, { site: true });
+  const asked = await mockGitHubApi(page, { [`${RAWGH}payload.lua`]: fs.readFileSync(ZARTHA_FILE, 'latin1') });
+  await page.fill('#deob-text', `loadstring(game:HttpGet("${RAWGH}payload.lua"))()`);
+  await page.waitForFunction(() => /Loader/.test(document.querySelector('#deob-recog').textContent));
+  await page.click('#deob-run');
+  await deobDone(page);
+  assert.deepEqual(asked, [{ url: `${RAWGH}payload.lua`, mode: 'file' }]);
+  assert.match(await page.textContent('#deob-result h2'), /payload\.deobf\.lua/);
+  assert.match(await page.textContent('#deob-result .res-facts'), /Source: Public source retrieved/);
+  assert.match(await page.textContent('#deob-result .res-code'), /RunService\.Heartbeat:Connect/);
+  assert.equal(await page.getAttribute('#stage-rail li[data-stage=retrieve]', 'class'), 'done');
+  assert.equal(await page.getAttribute('#stage-rail li[data-stage=vm]', 'class'), 'done');
+  assert.deepEqual(problems, []);
+  await ctx.close();
+});
+
+test('v1.8 Deobfuscate: a repository link retrieves the entry point and the file it names; a missing payload is said, and nothing is shown in its place', { skip, timeout: 180_000 }, async () => {
+  const { page, ctx, problems } = await newPage({}, { site: true });
+  const listing = { kind: 'repo', owner: 'alice', repo: 'hub', ref: 'main', files: [{ path: 'main.lua', likelyLoader: true }, { path: 'lib/util.lua' }] };
+  const asked = await mockGitHubApi(page, { [`${RAWGH}main.lua`]: 'local util = require("lib/util.lua")\nprint(util.greet("x"))', [`${RAWGH}lib/util.lua`]: 'local M = {}\nfunction M.greet(name) return "hi " .. name end\nreturn M' }, { listing });
+  await page.fill('#deob-text', 'https://github.com/alice/hub');
+  await page.click('#deob-run');
+  await deobDone(page);
+  assert.equal(asked[0].mode, 'listing');
+  assert.ok(asked.some((a) => /lib\/util\.lua$/.test(a.url)), 'the dependency the entry point names is retrieved');
+  assert.match(await page.textContent('#deob-result h2'), /main\.deobf\.lua/);
+  assert.match(await page.textContent('#deob-result'), /Also delivered\s*1 file/);
+  // a loader whose payload is gone
+  await page.fill('#deob-text', `loadstring(game:HttpGet("${RAWGH}gone.lua"))()`);
+  await page.click('#deob-run');
+  await deobDone(page);
+  assert.match(await page.textContent('#deob-result .verdict'), /Payload unavailable/i);
+  assert.equal(await page.locator('#deob-result .res-code').count(), 0, 'no code is shown in place of the payload');
+  assert.match(await page.textContent('#deob-result .res-facts'), /Source: Missing or deleted/);
+  assert.equal(await page.getAttribute('#stage-rail li[data-stage=deliver]', 'class'), 'failed');
+  assert.deepEqual(problems, []);
+  await ctx.close();
+});
+
+test('v1.8 Deobfuscate: a Premium refusal from the server is shown as an authorisation result, never as a retrieval', { skip, timeout: 120_000 }, async () => {
+  const { page, ctx } = await newPage({}, { site: true });
+  // what api/github.js answers when the deployment enforces licences and this browser's licence does not include GitHub retrieval
+  await page.route('**/api/github', (route) => route.fulfill({ status: 403, contentType: 'application/json', body: JSON.stringify({ ok: false, outcome: 'premium_required', message: 'GitHub retrieval needs a Premium licence; this licence does not include it.', licensing: 'enforced' }) }));
+  await page.fill('#deob-text', 'https://github.com/alice/hub/blob/main/payload.lua');
+  await page.click('#deob-run');
+  await deobDone(page);
+  assert.match(await page.textContent('#deob-result .verdict'), /Authorization unavailable/i);
+  assert.match(await page.textContent('#deob-result'), /Premium licence required by this site/);
+  assert.equal(await page.locator('#deob-result .res-code').count(), 0);
+  await ctx.close();
+});
+
+test('v1.8 motion: only transform and opacity animate; the backdrop pauses in Expert tools and nothing moves under reduced motion', { skip }, async () => {
+  const { page, ctx } = await newPage({}, { site: true });
+  const anim = await page.evaluate(() => document.getAnimations().filter((a) => a instanceof CSSAnimation).map((a) => ({ name: a.animationName, props: Object.keys((a.effect.getKeyframes()[0]) || {}).filter((k) => !['offset', 'easing', 'composite', 'computedOffset'].includes(k)) })));
+  assert.ok(anim.some((a) => a.name === 'qs-drift'), 'the backdrop drifts');
+  for (const a of anim) for (const p of a.props) assert.ok(['transform', 'opacity'].includes(p), `${a.name} animates ${p}`);
+  assert.equal(await page.evaluate(() => [...document.querySelectorAll('*')].filter((e) => { const s = getComputedStyle(e); return (s.filter && s.filter !== 'none') || (s.backdropFilter && s.backdropFilter !== 'none'); }).length), 0, 'no filter or backdrop-filter anywhere');
+  await page.click('.topnav [data-expert]');
+  await page.waitForFunction(() => document.documentElement.classList.contains('in-work'));
+  const running = await page.evaluate(() => document.getAnimations().filter((a) => a.playState === 'running' && a.effect && a.effect.target && a.effect.target.closest && a.effect.target.closest('.backdrop')).length);
+  assert.equal(running, 0, 'the backdrop is still while the workbench is open');
+  await ctx.close();
+  const reduced = await newPage({ reducedMotion: 'reduce' }, { site: true });
+  assert.equal(await reduced.page.evaluate(() => document.getAnimations().filter((a) => a instanceof CSSAnimation).length), 0, 'reduced motion: no animation at all');
+  assert.equal(await reduced.page.evaluate(() => getComputedStyle(document.querySelector('.wordmark')).opacity), '1');
+  await reduced.ctx.close();
+});
+
+test('v1.8 mobile: the portrait artwork, and the page and a result fit a phone without horizontal scrolling', { skip, timeout: 180_000 }, async () => {
+  const { page, ctx, problems } = await newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 }, { site: true });
+  assert.match(await page.evaluate(() => document.querySelector('.backdrop img').currentSrc), /img\/sunset-mobile-(540|828)\.(webp|jpg)$/);
+  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth) <= 392);
+  await page.fill('#deob-text', fs.readFileSync(ZARTHA_FILE, 'utf8'));
+  await page.click('#deob-run');
+  await deobDone(page);
+  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth) <= 392, 'the result fits too (code scrolls inside its own box)');
+  const btn = await page.locator('#deob-run').boundingBox();
+  assert.ok(btn.width >= 300 && btn.height >= 44, 'the Deobfuscate button is a full-width touch target');
   assert.deepEqual(problems, []);
   await ctx.close();
 });

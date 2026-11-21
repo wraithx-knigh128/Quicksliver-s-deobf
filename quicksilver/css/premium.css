@@ -1,7 +1,7 @@
 /* QuickSilver v1.8 Premium — the workspace in the sunset identity (Prompt XXVII).
 
    Layered over css/app.css, which keeps the workbench's structure and behaviour; this file changes the look only:
-     * a plum night palette with sunset accents; the dimmed, still scene shows through the frame at the edges;
+     * a plum night palette with sunset accents; the dimmed, still backdrop (css/site.css) shows through the frame at the edges;
      * the brand lockup (QuickSilver · v1.8 · Premium) and section navigation (Workspace · VM Reverser · Loader & GitHub) in the title bar;
      * the one primary action in the sunset gradient; tabs underlined with it; headings in Rubik, the brand in Lilita One;
      * the code panes stay a dark, flat, high-contrast surface: readability of code is not traded for atmosphere.
@@ -47,9 +47,8 @@
   --accent-soft: rgba(194, 64, 126, 0.1);
   --list-on: #f3e1eb;
 }
-:root[data-theme="light"].in-work .scene::after { background: linear-gradient(180deg, rgba(252, 244, 247, 0.93), rgba(252, 244, 247, 0.88) 55%, rgba(252, 244, 247, 0.95)); }
 
-/* the workspace sits over the scene; until it is entered it is not shown at all (the landing is the first screen) */
+/* Expert tools sit over the backdrop; css/site.css shows them only while html.in-work is set (the Deobfuscate page is the first screen) */
 body { background: var(--bg); }
 .shell { position: relative; z-index: 1; background: transparent; }
 html:not(.in-work) .shell { visibility: hidden; }
@@ -68,13 +67,6 @@ h1, h2, h3, .section > h3, .drawer-head, .col-head h2 { font-family: var(--head)
 .titlebar .brand .brand-ver { font-family: var(--display); font-size: 15px; line-height: 1; transform: skewX(-8deg); background: linear-gradient(160deg, #8ad7ff, #b17cff 45%, #ff6fb0); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .titlebar .brand .brand-tier { align-self: center; font: 700 9.5px/1 var(--head); letter-spacing: 1.8px; text-transform: uppercase; padding: 4px 7px; border-radius: 999px; color: var(--on-accent); background: var(--grad-hot); }
 .titlebar .brand .brand-tier.eval { background: var(--panel-3); color: var(--dim); }
-.titlebar .sections { display: flex; gap: 2px; margin-right: 8px; padding: 3px; border-radius: 12px; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--line); }
-:root[data-theme="light"] .titlebar .sections { background: rgba(120, 40, 90, 0.04); }
-.titlebar .sections .sec { font: 500 12.5px/1 var(--head); color: var(--dim); background: transparent; border: 0; padding: 7px 11px; border-radius: 9px; cursor: pointer; transition: background-color 0.18s ease, color 0.18s ease; white-space: nowrap; }
-.titlebar .sections .sec:hover { color: var(--text); background: var(--accent-soft); }
-.titlebar .sections .sec[aria-current="page"] { color: var(--on-accent); background: var(--grad-hot); }
-.titlebar .sections .sec:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-@media (max-width: 1100px) { .titlebar .sections { display: none; } }
 
 /* ---- buttons ------------------------------------------------------------------------------------------------------------------------------- */
 .btn { transition: background-color 0.16s ease, border-color 0.16s ease, color 0.16s ease, transform 0.12s ease; }

@@ -8,7 +8,8 @@
 // and the original's "anchored" names are checked: a local whose initialiser is a GetService call, a constant field read (x.LocalPlayer),
 // Instance.new or WaitForChild has a name the program itself states; the share of those that come back is `anchoredRecovered`.
 //
-//   node tools/audit/names.mjs [--filter text] [--vm-only] [--out file.json]
+//   node tools/audit/names.mjs [--filter text] [--vm-only] [--nexus] [--ids ids.json] [--out file.json]
+//   --nexus measures the site's pipeline (NEXUS on, as the Deobfuscate page runs it); without it, the plain engine.
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -52,6 +53,7 @@ export function measure(output) {
 
 async function main() {
   const filter = opt('--filter', '');
+  const only = opt('--ids', null) ? new Set(JSON.parse(fs.readFileSync(opt('--ids'), 'utf8'))) : null;   // a JSON list of fixture ids (tool/file) to measure
   const vmOnly = args.includes('--vm-only');
   const root = path.join(repo, 'tests', 'corpus', 'obfuscated');
   const originals = path.join(repo, 'tests', 'corpus', 'originals');
@@ -63,13 +65,14 @@ async function main() {
       if (!f.endsWith('.lua')) continue;
       const id = `${tool}/${f}`;
       if (filter && !id.includes(filter)) continue;
+      if (only && !only.has(id)) continue;
       const sample = f.split('__')[0];
       const origPath = path.join(originals, `${sample}.lua`);
       if (!fs.existsSync(origPath)) continue;
       const input = fs.readFileSync(path.join(dir, f), 'utf8');
       let r;
       const t0 = Date.now();
-      try { r = recoverSource(input, { sandbox: { enabled: true } }); } catch (e) { rows.push({ id, crash: String(e.message || e).slice(0, 200) }); continue; }
+      try { r = recoverSource(input, { sandbox: { enabled: true }, nexus: args.includes('--nexus') }); } catch (e) { rows.push({ id, crash: String(e.message || e).slice(0, 200) }); continue; }
       const vmLifted = !!(r.vm && r.vm.lifted);
       if (vmOnly && !vmLifted) continue;
       const m = r.output ? measure(r.output) : null;

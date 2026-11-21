@@ -44,6 +44,7 @@ export const OUTCOMES = Object.freeze({
   'too-large': { ok: false, label: 'The file is larger than the limit' },
   'is-directory': { ok: false, label: 'The address is a directory, not a file' },
   unavailable: { ok: false, label: 'Source unavailable (GitHub did not answer as expected)' },
+  licence: { ok: false, label: 'Premium licence required by this site' },
 });
 
 const OWNER = /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$/;

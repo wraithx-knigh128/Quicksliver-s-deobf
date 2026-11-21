@@ -22,7 +22,7 @@ export async function githubRequest(url, { mode = 'auto', token = sessionToken }
   try { body = await res.json(); } catch { /* not JSON */ }
   if (!body) return { ok: false, outcome: 'unavailable', message: res.status === 404 ? 'GitHub retrieval needs the deployed site (its /api/github function); it is not available on this server.' : `The server answered ${res.status}.` };
   const lic = licenceRefusal(res.status, body);
-  if (lic) return { ...body, ok: false, outcome: body.outcome || 'licence', message: lic };
+  if (lic) return { ...body, ok: false, code: body.outcome || null, outcome: 'licence', message: lic };   // one outcome for every licence refusal; the server's code is kept
   if (body.ok && body.file && body.file.base64) body.file.bytes = b64ToBytes(body.file.base64);
   return body;
 }
@@ -60,6 +60,27 @@ async function pickFromListing(listing) {
   });
   if (r !== 'ok' || !chosen) return null;
   return `https://github.com/${listing.owner}/${listing.repo}/blob/${ref}/${chosen.split('/').map(encodeURIComponent).join('/')}`;
+}
+
+/**
+ * The Deobfuscate page's choice from a listing (src/pipeline/unified.js asks only when the entry point is not clear): for a profile, the
+ * repository to open (its link); for a repository or folder, the file to deobfuscate (its path). Resolves to null when nothing was chosen.
+ */
+export async function chooseEntry(listing) {
+  let chosen = null;
+  const pickOn = (list, attr) => list.addEventListener('click', (e) => { const b = e.target.closest(`button[${attr}]`); if (b) { chosen = b.getAttribute(attr); b.closest('.modal')?.querySelector('.mfoot .primary')?.click(); } });
+  if (listing.kind === 'profile') {
+    const repos = listing.repositories || [];
+    const list = h('ul.gh-list', repos.map((r) => h('li', h('button.btn.chip', { type: 'button', 'data-url': `https://github.com/${listing.owner}/${r.name}` }, r.name), r.language ? h('span.faint', ` ${r.language}`) : null, r.description ? h('span.faint', ` — ${r.description}`) : null)));
+    pickOn(list, 'data-url');
+    const r = await modal({ title: `Repositories of ${listing.owner}`, body: [h('p', `Choose the repository to deobfuscate from (${repos.length} public${listing.onlyLua ? ' Lua / Luau' : ''}). Only the one you choose is read.`), list], buttons: [{ id: 'cancel', label: 'Cancel' }, { id: 'ok', label: 'Open', primary: true }] });
+    return r === 'ok' ? chosen : null;
+  }
+  const files = listing.files || [];
+  const list = h('ul.gh-list', files.map((f) => h('li', h('button.btn.chip', { type: 'button', 'data-path': f.path }, f.path), f.size != null ? h('span.faint', ` ${fmtBytes(f.size)}`) : null, f.likelyLoader ? h('span.badge.info', ' entry point?') : null)));
+  pickOn(list, 'data-path');
+  const r = await modal({ title: `${listing.owner}/${listing.repo}`, body: [h('p', `${files.length} Lua / Luau file(s)${listing.truncated ? ' (GitHub truncated the tree; very large repositories are listed in part)' : ''} and no single entry point. Choose the file to deobfuscate; the files it names are retrieved with it.`), list], buttons: [{ id: 'cancel', label: 'Cancel' }, { id: 'ok', label: 'Deobfuscate this file', primary: true }] });
+  return r === 'ok' ? chosen : null;
 }
 
 export async function showFailure(r) {

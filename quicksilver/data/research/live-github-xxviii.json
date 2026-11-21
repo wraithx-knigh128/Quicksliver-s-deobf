@@ -1,0 +1,640 @@
+{
+ "measured": "2026-11-21",
+ "tool": "tools/live/github-unified.mjs",
+ "runs": [
+  {
+   "input": "loadstring(game:HttpGet(\"https://raw.githubusercontent.com/wraithx-knigh128/Quicksliver-s-deobf/ccr-17f6469c-lf3p64/quicksilver/tests/corpus/obfuscated/zartha/s07_roblox_style__constants.lua\"))()",
+   "ms": 564,
+   "verdict": "syntax-valid-unverified",
+   "source": "public-source",
+   "sourceMessage": "",
+   "delivered": {
+    "name": "s07_roblox_style__constants.deobf.lua",
+    "isPayload": true,
+    "lines": 57,
+    "bytes": 2784,
+    "extras": []
+   },
+   "chain": [
+    {
+     "depth": 0,
+     "name": "input.lua",
+     "address": null,
+     "role": "secondary-loader",
+     "bytes": 195,
+     "sha256": null
+    },
+    {
+     "depth": 1,
+     "name": "s07_roblox_style__constants.lua",
+     "address": "https://raw.githubusercontent.com/wraithx-knigh128/Quicksliver-s-deobf/ccr-17f6469c-lf3p64/quicksilver/tests/corpus/obfuscated/zartha/s07_roblox_style__constants.lua",
+     "role": "obfuscated",
+     "bytes": 17053,
+     "sha256": "569eca651ff78db82b7f30b7faee1bf34e711bad191bf93e82efb86bcaba399e"
+    }
+   ],
+   "stages": [
+    {
+     "n": 1,
+     "id": "recognize",
+     "status": "done",
+     "detail": "A loader: a script that downloads its program and runs it (loadstring / HttpGet). 1 line, 195 bytes."
+    },
+    {
+     "n": 2,
+     "id": "loader",
+     "status": "done",
+     "detail": "The input is a loader: 1 request (game:HttpGet); service: GitHub (raw / gist)."
+    },
+    {
+     "n": 3,
+     "id": "address",
+     "status": "done",
+     "detail": "1 address named by the input: 1 retrieved."
+    },
+    {
+     "n": 4,
+     "id": "retrieve",
+     "status": "done",
+     "detail": "From the input: 1 of 1 retrieval succeeded (https://raw.githubusercontent.com/wraithx-knigh128/Quicksliver-s-deobf/ccr-17f6469c-lf3p64/quicksilver/tests/corpus/obfuscated/zartha/s07_roblox_style__constants.lua, 17,053 bytes, SHA-256 569eca651ff7…)."
+    },
+    {
+     "n": 5,
+     "id": "payload",
+     "status": "done",
+     "detail": "s07_roblox_style__constants.lua is Lua source — obfuscated program (Zartha)."
+    },
+    {
+     "n": 6,
+     "id": "detect",
+     "status": "done",
+     "detail": "Zartha (95%). Dialect: Luau."
+    },
+    {
+     "n": 7,
+     "id": "transform",
+     "status": "done",
+     "detail": "9 transformations undone."
+    },
+    {
+     "n": 8,
+     "id": "strings",
+     "status": "done",
+     "detail": "Give values that shared a register their own variables — 11 changes."
+    },
+    {
+     "n": 9,
+     "id": "vm",
+     "status": "done",
+     "detail": "zartha VM lifted: 3 functions, 83 instructions. Lift the Zartha virtual machine back to source — 83 changes."
+    },
+    {
+     "n": 10,
+     "id": "flow",
+     "status": "done",
+     "detail": "Remove the marker and the anti-tamper block the Zartha generator adds; Simplify control flow and remove dead code — 3 changes."
+    },
+    {
+     "n": 11,
+     "id": "functions",
+     "status": "done",
+     "detail": "Fold field assignments into table constructors; Declare locals without an explicit nil; Orient comparisons; Give obfuscated locals readable names (+1 more) — 18 changes."
+    },
+    {
+     "n": 12,
+     "id": "generate",
+     "status": "done",
+     "detail": "57 lines of Lua written; it parses and prints back identically."
+    },
+    {
+     "n": 13,
+     "id": "validate",
+     "status": "done",
+     "detail": "Syntax-valid but behaviourally unverified: the output parses; 0 of 12 local names are placeholders; behaviour not compared (that needs the sandbox, which is off unless you allow it)."
+    },
+    {
+     "n": 14,
+     "id": "deliver",
+     "status": "done",
+     "detail": "The reconstructed payload of https://raw.githubusercontent.com/wraithx-knigh128/Quicksliver-s-deobf/ccr-17f6469c-lf3p64/quicksilver/tests/corpus/obfuscated/zartha/s07_roblox_style__constants.lua: s07_roblox_style__constants.deobf.lua, 57 lines — syntax-valid but behaviourally unverified."
+    }
+   ]
+  },
+  {
+   "input": "https://github.com/wraithx-knigh128/Quicksliver-s-deobf/blob/ccr-17f6469c-lf3p64/quicksilver/tests/corpus/obfuscated/zartha/s07_roblox_style__constants.lua",
+   "ms": 183,
+   "verdict": "syntax-valid-unverified",
+   "source": "public-source",
+   "sourceMessage": "",
+   "delivered": {
+    "name": "s07_roblox_style__constants.deobf.lua",
+    "isPayload": true,
+    "lines": 57,
+    "bytes": 2784,
+    "extras": []
+   },
+   "chain": [
+    {
+     "depth": 0,
+     "name": "s07_roblox_style__constants.lua",
+     "address": "https://github.com/wraithx-knigh128/Quicksliver-s-deobf/blob/ccr-17f6469c-lf3p64/quicksilver/tests/corpus/obfuscated/zartha/s07_roblox_style__constants.lua",
+     "role": "obfuscated",
+     "bytes": 17053,
+     "sha256": "569eca651ff78db82b7f30b7faee1bf34e711bad191bf93e82efb86bcaba399e"
+    }
+   ],
+   "stages": [
+    {
+     "n": 1,
+     "id": "recognize",
+     "status": "done",
+     "detail": "A GitHub link."
+    },
+    {
+     "n": 2,
+     "id": "loader",
+     "status": "done",
+     "detail": "s07_roblox_style__constants.lua is not a loader: the program is in the file itself."
+    },
+    {
+     "n": 3,
+     "id": "address",
+     "status": "done",
+     "detail": "A file in the GitHub repository wraithx-knigh128/Quicksliver-s-deobf (branch or tag ccr-17f6469c-lf3p64): quicksilver/tests/corpus/obfuscated/zartha/s07_roblox_style__constants.lua."
+    },
+    {
+     "n": 4,
+     "id": "retrieve",
+     "status": "done",
+     "detail": "Retrieved wraithx-knigh128/Quicksliver-s-deobf/quicksilver/tests/corpus/obfuscated/zartha/s07_roblox_style__constants.lua from GitHub: 17,053 bytes, SHA-256 569eca651ff7…. Lua / Luau source that parses."
+    },
+    {
+     "n": 5,
+     "id": "payload",
+     "status": "done",
+     "detail": "s07_roblox_style__constants.lua is Lua source — obfuscated program (Zartha)."
+    },
+    {
+     "n": 6,
+     "id": "detect",
+     "status": "done",
+     "detail": "Zartha (95%). Dialect: Luau."
+    },
+    {
+     "n": 7,
+     "id": "transform",
+     "status": "done",
+     "detail": "9 transformations undone."
+    },
+    {
+     "n": 8,
+     "id": "strings",
+     "status": "done",
+     "detail": "Give values that shared a register their own variables — 11 changes."
+    },
+    {
+     "n": 9,
+     "id": "vm",
+     "status": "done",
+     "detail": "zartha VM lifted: 3 functions, 83 instructions. Lift the Zartha virtual machine back to source — 83 changes."
+    },
+    {
+     "n": 10,
+     "id": "flow",
+     "status": "done",
+     "detail": "Remove the marker and the anti-tamper block the Zartha generator adds; Simplify control flow and remove dead code — 3 changes."
+    },
+    {
+     "n": 11,
+     "id": "functions",
+     "status": "done",
+     "detail": "Fold field assignments into table constructors; Declare locals without an explicit nil; Orient comparisons; Give obfuscated locals readable names (+1 more) — 18 changes."
+    },
+    {
+     "n": 12,
+     "id": "generate",
+     "status": "done",
+     "detail": "57 lines of Lua written; it parses and prints back identically."
+    },
+    {
+     "n": 13,
+     "id": "validate",
+     "status": "done",
+     "detail": "Syntax-valid but behaviourally unverified: the output parses; 0 of 12 local names are placeholders; behaviour not compared (that needs the sandbox, which is off unless you allow it)."
+    },
+    {
+     "n": 14,
+     "id": "deliver",
+     "status": "done",
+     "detail": "The reconstructed program: s07_roblox_style__constants.deobf.lua, 57 lines — syntax-valid but behaviourally unverified."
+    }
+   ]
+  },
+  {
+   "input": "https://github.com/wraithx-knigh128/Gtimcrow/blob/main/message.txt",
+   "ms": 320,
+   "verdict": "invalid-input",
+   "source": "retrieved-unreconstructable",
+   "sourceMessage": "The payload was retrieved and is Lua, but it is incomplete or damaged: it does not parse, so there is nothing sound to reconstruct.",
+   "delivered": null,
+   "chain": [
+    {
+     "depth": 0,
+     "name": "message.txt",
+     "address": "https://github.com/wraithx-knigh128/Gtimcrow/blob/main/message.txt",
+     "role": "invalid",
+     "bytes": 344059,
+     "sha256": "39b61811ea88e739eb48f16824da7c4129f5b5fd8b3954857004a4fc8f389a73"
+    }
+   ],
+   "stages": [
+    {
+     "n": 1,
+     "id": "recognize",
+     "status": "done",
+     "detail": "A GitHub link."
+    },
+    {
+     "n": 2,
+     "id": "loader",
+     "status": "done",
+     "detail": "message.txt is not a loader: the program is in the file itself."
+    },
+    {
+     "n": 3,
+     "id": "address",
+     "status": "done",
+     "detail": "A file in the GitHub repository wraithx-knigh128/Gtimcrow (branch or tag main): message.txt."
+    },
+    {
+     "n": 4,
+     "id": "retrieve",
+     "status": "done",
+     "detail": "Retrieved wraithx-knigh128/Gtimcrow/message.txt from GitHub: 344,059 bytes, SHA-256 39b61811ea88…. Lua-like source that does not parse (incomplete, damaged, or a dialect this parser does not read)."
+    },
+    {
+     "n": 5,
+     "id": "payload",
+     "status": "failed",
+     "detail": "message.txt is text that does not parse as Lua: The program does not parse: 7684:13: '<eof>' expected near 'end'."
+    },
+    {
+     "n": 6,
+     "id": "detect",
+     "status": "skipped",
+     "detail": "Nothing to examine."
+    },
+    {
+     "n": 7,
+     "id": "transform",
+     "status": "skipped",
+     "detail": "The content is not a program."
+    },
+    {
+     "n": 8,
+     "id": "strings",
+     "status": "skipped",
+     "detail": "The content is not a program."
+    },
+    {
+     "n": 9,
+     "id": "vm",
+     "status": "skipped",
+     "detail": "The content is not a program."
+    },
+    {
+     "n": 10,
+     "id": "flow",
+     "status": "skipped",
+     "detail": "The content is not a program."
+    },
+    {
+     "n": 11,
+     "id": "functions",
+     "status": "skipped",
+     "detail": "The content is not a program."
+    },
+    {
+     "n": 12,
+     "id": "generate",
+     "status": "skipped",
+     "detail": "The content is not a program."
+    },
+    {
+     "n": 13,
+     "id": "validate",
+     "status": "skipped",
+     "detail": "The content is not a program."
+    },
+    {
+     "n": 14,
+     "id": "deliver",
+     "status": "failed",
+     "detail": "Nothing was delivered: The program does not parse: 7684:13: '<eof>' expected near 'end'."
+    }
+   ]
+  },
+  {
+   "input": "loadstring(game:HttpGet(\"https://raw.githubusercontent.com/wraithx-knigh128/Gtimcrow/main/message.txt\"))()",
+   "ms": 205,
+   "verdict": "invalid-input",
+   "source": "retrieved-unreconstructable",
+   "sourceMessage": "The payload was retrieved and is Lua, but it is incomplete or damaged: it does not parse, so there is nothing sound to reconstruct.",
+   "delivered": null,
+   "chain": [
+    {
+     "depth": 0,
+     "name": "input.lua",
+     "address": null,
+     "role": "secondary-loader",
+     "bytes": 106,
+     "sha256": null
+    },
+    {
+     "depth": 1,
+     "name": "message.txt",
+     "address": "https://raw.githubusercontent.com/wraithx-knigh128/Gtimcrow/main/message.txt",
+     "role": "invalid",
+     "bytes": 344059,
+     "sha256": "39b61811ea88e739eb48f16824da7c4129f5b5fd8b3954857004a4fc8f389a73"
+    }
+   ],
+   "stages": [
+    {
+     "n": 1,
+     "id": "recognize",
+     "status": "done",
+     "detail": "A loader: a script that downloads its program and runs it (loadstring / HttpGet). 1 line, 106 bytes."
+    },
+    {
+     "n": 2,
+     "id": "loader",
+     "status": "done",
+     "detail": "The input is a loader: 1 request (game:HttpGet); service: GitHub (raw / gist)."
+    },
+    {
+     "n": 3,
+     "id": "address",
+     "status": "done",
+     "detail": "1 address named by the input: 1 retrieved."
+    },
+    {
+     "n": 4,
+     "id": "retrieve",
+     "status": "done",
+     "detail": "From the input: 1 of 1 retrieval succeeded (https://raw.githubusercontent.com/wraithx-knigh128/Gtimcrow/main/message.txt, 344,059 bytes, SHA-256 39b61811ea88…)."
+    },
+    {
+     "n": 5,
+     "id": "payload",
+     "status": "failed",
+     "detail": "message.txt is text that does not parse as Lua: The program does not parse: 7684:13: '<eof>' expected near 'end'."
+    },
+    {
+     "n": 6,
+     "id": "detect",
+     "status": "skipped",
+     "detail": "Nothing to examine."
+    },
+    {
+     "n": 7,
+     "id": "transform",
+     "status": "skipped",
+     "detail": "The content is not a program."
+    },
+    {
+     "n": 8,
+     "id": "strings",
+     "status": "skipped",
+     "detail": "The content is not a program."
+    },
+    {
+     "n": 9,
+     "id": "vm",
+     "status": "skipped",
+     "detail": "The content is not a program."
+    },
+    {
+     "n": 10,
+     "id": "flow",
+     "status": "skipped",
+     "detail": "The content is not a program."
+    },
+    {
+     "n": 11,
+     "id": "functions",
+     "status": "skipped",
+     "detail": "The content is not a program."
+    },
+    {
+     "n": 12,
+     "id": "generate",
+     "status": "skipped",
+     "detail": "The content is not a program."
+    },
+    {
+     "n": 13,
+     "id": "validate",
+     "status": "skipped",
+     "detail": "The content is not a program."
+    },
+    {
+     "n": 14,
+     "id": "deliver",
+     "status": "failed",
+     "detail": "Nothing was delivered: The program does not parse: 7684:13: '<eof>' expected near 'end'."
+    }
+   ]
+  },
+  {
+   "input": "https://github.com/wraithx-knigh128/Gtimcrow/blob/main/does-not-exist.lua",
+   "ms": 347,
+   "verdict": "payload-unavailable",
+   "source": "unavailable",
+   "sourceMessage": "Source unavailable (GitHub did not answer as expected). GitHub answered HTTP 404.",
+   "delivered": null,
+   "chain": [],
+   "stages": [
+    {
+     "n": 1,
+     "id": "recognize",
+     "status": "done",
+     "detail": "A GitHub link."
+    },
+    {
+     "n": 2,
+     "id": "loader",
+     "status": "skipped",
+     "detail": "The input is a link: the file it points at is retrieved and examined."
+    },
+    {
+     "n": 3,
+     "id": "address",
+     "status": "done",
+     "detail": "A file in the GitHub repository wraithx-knigh128/Gtimcrow (branch or tag main): does-not-exist.lua."
+    },
+    {
+     "n": 4,
+     "id": "retrieve",
+     "status": "failed",
+     "detail": "Source unavailable (GitHub did not answer as expected). GitHub answered HTTP 404."
+    },
+    {
+     "n": 5,
+     "id": "payload",
+     "status": "skipped",
+     "detail": "Not reached."
+    },
+    {
+     "n": 6,
+     "id": "detect",
+     "status": "skipped",
+     "detail": "Not reached."
+    },
+    {
+     "n": 7,
+     "id": "transform",
+     "status": "skipped",
+     "detail": "Not reached."
+    },
+    {
+     "n": 8,
+     "id": "strings",
+     "status": "skipped",
+     "detail": "Not reached."
+    },
+    {
+     "n": 9,
+     "id": "vm",
+     "status": "skipped",
+     "detail": "Not reached."
+    },
+    {
+     "n": 10,
+     "id": "flow",
+     "status": "skipped",
+     "detail": "Not reached."
+    },
+    {
+     "n": 11,
+     "id": "functions",
+     "status": "skipped",
+     "detail": "Not reached."
+    },
+    {
+     "n": 12,
+     "id": "generate",
+     "status": "skipped",
+     "detail": "Not reached."
+    },
+    {
+     "n": 13,
+     "id": "validate",
+     "status": "skipped",
+     "detail": "Not reached."
+    },
+    {
+     "n": 14,
+     "id": "deliver",
+     "status": "failed",
+     "detail": "Nothing was delivered: Source unavailable (GitHub did not answer as expected). GitHub answered HTTP 404."
+    }
+   ]
+  },
+  {
+   "input": "https://github.com/wraithx-knigh128/Gtimcrow",
+   "ms": 496,
+   "verdict": "payload-unavailable",
+   "source": "unavailable",
+   "sourceMessage": "Source unavailable (GitHub did not answer as expected). GitHub answered HTTP 403.",
+   "delivered": null,
+   "chain": [],
+   "stages": [
+    {
+     "n": 1,
+     "id": "recognize",
+     "status": "done",
+     "detail": "A GitHub link."
+    },
+    {
+     "n": 2,
+     "id": "loader",
+     "status": "skipped",
+     "detail": "The input is a link: the file it points at is retrieved and examined."
+    },
+    {
+     "n": 3,
+     "id": "address",
+     "status": "done",
+     "detail": "The repository wraithx-knigh128/Gtimcrow. Its Lua files are listed and the entry point is retrieved."
+    },
+    {
+     "n": 4,
+     "id": "retrieve",
+     "status": "failed",
+     "detail": "Source unavailable (GitHub did not answer as expected). GitHub answered HTTP 403."
+    },
+    {
+     "n": 5,
+     "id": "payload",
+     "status": "skipped",
+     "detail": "Not reached."
+    },
+    {
+     "n": 6,
+     "id": "detect",
+     "status": "skipped",
+     "detail": "Not reached."
+    },
+    {
+     "n": 7,
+     "id": "transform",
+     "status": "skipped",
+     "detail": "Not reached."
+    },
+    {
+     "n": 8,
+     "id": "strings",
+     "status": "skipped",
+     "detail": "Not reached."
+    },
+    {
+     "n": 9,
+     "id": "vm",
+     "status": "skipped",
+     "detail": "Not reached."
+    },
+    {
+     "n": 10,
+     "id": "flow",
+     "status": "skipped",
+     "detail": "Not reached."
+    },
+    {
+     "n": 11,
+     "id": "functions",
+     "status": "skipped",
+     "detail": "Not reached."
+    },
+    {
+     "n": 12,
+     "id": "generate",
+     "status": "skipped",
+     "detail": "Not reached."
+    },
+    {
+     "n": 13,
+     "id": "validate",
+     "status": "skipped",
+     "detail": "Not reached."
+    },
+    {
+     "n": 14,
+     "id": "deliver",
+     "status": "failed",
+     "detail": "Nothing was delivered: Source unavailable (GitHub did not answer as expected). GitHub answered HTTP 403."
+    }
+   ]
+  }
+ ]
+}

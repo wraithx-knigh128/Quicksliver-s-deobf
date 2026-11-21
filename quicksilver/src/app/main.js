@@ -35,6 +35,8 @@ import { readFileBytes, download, baseName, FileRejected, ACCEPTED } from './fil
 import { bytesToBinary, binaryToBytes, binaryToText, textToBinary } from '../core/bytes.js';
 import { retrieveGitHub, githubRequest, tokenField, outcomeLabel } from './github-ui.js';
 import { recognizeInput, isGitHubLink } from '../loader/github.js';
+import { initDeobPage } from './deob-page.js';
+import { enterExpert } from './site.js';
 
 window.__qsReady = true;
 
@@ -84,9 +86,9 @@ const S = {
 // Three groups, separated in the tab row: the work itself, reports about the current script, and the reference library.
 const TABS = [
   { id: 'work', label: 'Deobfuscator', group: 'Work' },
-  { id: 'vm', label: 'VM Reverser' },
+  { id: 'vm', label: 'VM details' },
   { id: 'compare', label: 'Compare' },
-  { id: 'loader', label: 'Loader & GitHub' },
+  { id: 'loader', label: 'Loader details' },
   { id: 'reconstruct', label: 'Reconstruct' },
   { id: 'detection', label: 'Detection', group: 'Reports' },
   { id: 'analysis', label: 'Analysis' },
@@ -425,7 +427,7 @@ function switchTab(id) {
   if (id === 'loader') renderLoader();
   if (id === 'vm') renderVm();
   if (id === 'reconstruct') recon.show();
-  // the title bar's section buttons follow the tab (VM Reverser, Loader & GitHub; everything else is the workspace)
+  // the title bar's section buttons follow the tab (none since Prompt XXVIII: the workbench has a single way back to Deobfuscate)
   for (const b of document.querySelectorAll('.titlebar .sections .sec')) {
     const sec = b.dataset.go;
     const on = sec === 'vm' ? id === 'vm' : sec === 'loader' ? id === 'loader' : !['vm', 'loader'].includes(id);
@@ -570,10 +572,12 @@ el.btn.open.addEventListener('click', () => el.file.click());
 el.file.addEventListener('change', () => { const f = el.file.files[0]; el.file.value = ''; if (f) openFile(f); });
 
 let dragDepth = 0;
-window.addEventListener('dragenter', (e) => { if (e.dataTransfer && [...e.dataTransfer.types].includes('Files')) { dragDepth++; el.shell.classList.add('dropzone-active'); } });
-window.addEventListener('dragleave', () => { dragDepth = Math.max(0, dragDepth - 1); if (!dragDepth) el.shell.classList.remove('dropzone-active'); });
-window.addEventListener('dragover', (e) => { if (e.dataTransfer && [...e.dataTransfer.types].includes('Files')) e.preventDefault(); });
+const inExpert = () => document.documentElement.classList.contains('in-work');   // the Deobfuscate page (src/app/deob-page.js) handles its own drops
+window.addEventListener('dragenter', (e) => { if (inExpert() && e.dataTransfer && [...e.dataTransfer.types].includes('Files')) { dragDepth++; el.shell.classList.add('dropzone-active'); } });
+window.addEventListener('dragleave', () => { if (!inExpert()) return; dragDepth = Math.max(0, dragDepth - 1); if (!dragDepth) el.shell.classList.remove('dropzone-active'); });
+window.addEventListener('dragover', (e) => { if (inExpert() && e.dataTransfer && [...e.dataTransfer.types].includes('Files')) e.preventDefault(); });
 window.addEventListener('drop', (e) => {
+  if (!inExpert()) return;
   e.preventDefault();
   dragDepth = 0;
   el.shell.classList.remove('dropzone-active');
@@ -1738,12 +1742,12 @@ el.btn.recover.addEventListener('click', async () => {
   const what = recognizeInput(editor.value);
   if (what.kind === 'github-link') { await openLinkDialog(editor.value.trim()); return; }
   // a loader is deobfuscated like any script (it may be obfuscated itself, and the result says its program is not in the file), and its Loader
-  // Analysis runs as well, so what it downloads is listed in Loader & GitHub with the way to retrieve it — the textual test alone never takes a
+  // Analysis runs as well, so what it downloads is listed in Loader details with the way to retrieve it — the textual test alone never takes a
   // script away from the deobfuscator
   const r = await runRecover();
   if (what.kind === 'loader' && r) {
     await runLoader();
-    S.notes.unshift({ kind: 'info', text: `This is a loader${what.github && what.github.length ? ` that fetches ${what.github.length} GitHub file${what.github.length > 1 ? 's' : ''}` : ''}: its program is downloaded when it runs. Loader & GitHub lists what it fetches; Loader Intelligence there retrieves each stage and reconstructs it.` });
+    S.notes.unshift({ kind: 'info', text: `This is a loader${what.github && what.github.length ? ` that fetches ${what.github.length} GitHub file${what.github.length > 1 ? 's' : ''}` : ''}: its program is downloaded when it runs. Loader details lists what it fetches; Loader Intelligence there retrieves each stage and reconstructs it.` });
     renderAll();
   }
 });
@@ -1760,7 +1764,7 @@ el.btn.moonveil.addEventListener('click', () => runMoonveilTool());
 el.btn.ironbrew.addEventListener('click', () => runIronBrewTool());
 
 document.addEventListener('keydown', (e) => {
-  if (e.defaultPrevented) return;
+  if (e.defaultPrevented || !inExpert()) return;
   const key = e.key.toLowerCase();
   if ((e.ctrlKey || e.metaKey) && key === 'o') { e.preventDefault(); el.file.click(); }
   else if ((e.ctrlKey || e.metaKey) && key === 'enter') { e.preventDefault(); if (!S.busy) runRecover(); }
@@ -1778,15 +1782,45 @@ lic.onchange = () => { renderStatus(); renderInspector(); renderResultBar(); ren
 /** “Premium user” is said only when it is true: no licensing on this deployment, or a valid Premium licence. Otherwise the tag says evaluation. */
 function renderTier() {
   const premium = !lic.configured || (lic.state.status === 'valid' && (lic.state.payload.plan === 'premium' || (lic.state.payload.features || []).length >= 4));
-  for (const node of [document.getElementById('brand-tier'), document.getElementById('premium-tag')]) {
-    if (!node) continue;
-    node.textContent = premium ? (node.id === 'brand-tier' ? 'Premium' : 'Premium user') : (node.id === 'brand-tier' ? 'Evaluation' : 'Premium · evaluation');
-    node.classList.toggle('eval', !premium);
-  }
+  const node = document.getElementById('brand-tier');
+  if (node) { node.textContent = premium ? 'Premium' : 'Evaluation'; node.classList.toggle('eval', !premium); }
+  if (deobPage) deobPage.setTier(premium);
 }
+
+// ---- the Deobfuscate page (src/app/deob-page.js → src/pipeline/unified.js) --------------------------------------------------------------------
+
+/** The recovery options the workbench's Deobfuscate uses — the person's settings, and the research plan where it applies — for the same engine. */
+async function unifiedRecoverOptions(eng, text) {
+  const allowSandbox = lic.allow('sandbox');
+  let options = { ...recoverOptions(settings, { allowSandbox }), format: { indent: indentString(settings), width: settings.width } };
+  if (settings.nexus && settings.advisor && settings.adaptive) {
+    await ensureResearch();
+    if (research) {
+      try {
+        const a = await eng.run('advise', text, { summary: research.summary, families: research.families, allowSandbox: allowSandbox && settings.sandbox, nexus: true }, { timeoutMs: 30_000 });
+        const planned = planOptions(a.advice.applied, options);
+        options = { ...options, adaptive: planned.adaptive, nexus: planned.nexus, sandbox: { ...options.sandbox, enabled: options.sandbox.enabled || (planned.sandbox.enabled && allowSandbox && settings.sandbox) } };
+      } catch { /* the default plan */ }
+    }
+  }
+  return options;
+}
+
+/** "Open in Expert tools": the program and its reconstruction, in the workbench, for compare, trace, analysis and export. */
+function openInExpert({ name, bytes, text, output, recovery }) {
+  const b = bytes || (text != null ? binaryToBytes(text) : null);
+  if (b) loadBytes(name, b);
+  clearTimeout(autoTimer);
+  if (recovery) { S.recovered = recovery; S.detection = recovery.detection || S.detection; }
+  setOutput('recover', { text: output, label: 'Recovered', kind: 'recover' });
+  renderAll();
+  enterExpert('work');
+}
+
+const deobPage = initDeobPage({ lic, recoverOptions: unifiedRecoverOptions, providers: () => loaderState.providers || [], openInExpert });
 renderTier();
 
-// the landing screen and the title bar's section buttons (src/app/landing.js) name a section; open its tab
+// the Deobfuscate page's Expert tools links (src/app/site.js) name a workbench section; open its tab
 document.addEventListener('qs:go', (e) => {
   const sec = e.detail && e.detail.section;
   switchTab(sec === 'vm' ? 'vm' : sec === 'loader' ? 'loader' : sec === 'compat' ? 'compat' : 'work');
@@ -1851,7 +1885,7 @@ function remember(r) {
 function renderVm() {
   const r = S.recovered;
   const hero = h('div.qs-hero',
-    h('div.k', 'VM Reverser'),
+    h('div.k', 'VM details'),
     h('h2', 'Bytecode back to source'),
     h('p', 'A virtual-machine protector turns the program into data that its own interpreter runs. The reverser reads that interpreter, works out what each instruction does, lifts the program back to Lua and decompiles it. Strings and names come from evidence in the program; anything it cannot establish is reported as left, not filled in.'),
     h('div.acts',
@@ -1879,7 +1913,7 @@ function renderVm() {
     parts.push(h('div.section', h('h3', 'Last reconstruction'), h('ul.stages', items.map(([k, a, b]) => h(`li.${k}`, h('span.dot'), h('b', a), h('span', b))))));
     if (oc.reasons && oc.reasons.length) parts.push(h('div.section', h('h3', 'Why this verdict'), h('ul', oc.reasons.map((x) => h('li', x)))));
   } else {
-    parts.push(h('p.note.info', 'Nothing has been reversed yet. Open a protected script (or a GitHub link in Loader & GitHub) and use “Reverse the script in the editor”.'));
+    parts.push(h('p.note.info', 'Nothing has been reversed yet. Open a protected script (or a GitHub link in Loader details) and use “Reverse the script in the editor”.'));
   }
   const hist = readHistory();
   if (hist.length) {
@@ -1898,7 +1932,7 @@ function loaderHero() {
   const go = async () => { const url = input.value.trim(); if (!url) { input.focus(); return; } if (isGitHubLink(url) || /(^|\/\/|\.)github(usercontent)?\.com\//i.test(url)) await retrieveGitHub(url, { onFile: onGitHubFile, setBusy }); else await openLinkDialog(url); };
   input.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
   return h('div.qs-hero',
-    h('div.k', 'Loader & GitHub'),
+    h('div.k', 'Loader details'),
     h('h2', 'Paste the loadstring, or the link'),
     h('p', 'A loader’s program is not in the file: it is downloaded when it runs. Paste the loader in the editor for its analysis, or give a GitHub file, repository or profile link here: the source is retrieved, checked to be Lua, and sent to the pipeline that fits it. Private repositories need your own token; nothing is bypassed.'),
     h('div.acts', input, h('button.btn.primary', { type: 'button', onclick: go }, 'Retrieve'), h('button.btn', { type: 'button', onclick: () => openLinkDialog() }, 'With a token…')));
@@ -2130,6 +2164,7 @@ async function ensureResearch() {
 }
 
 async function start() {
+  if (deobPage) deobPage.setCoverage(VM_FAMILIES);
   setWrap(settings.wrap);
   applyLayout();
   switchTab('work');

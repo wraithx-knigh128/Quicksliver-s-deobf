@@ -45,7 +45,7 @@
       ]
     },
     {
-      "source": "/(fonts|art)/(.*)",
+      "source": "/(fonts|img)/(.*)",
       "headers": [
         {
           "key": "Cache-Control",
