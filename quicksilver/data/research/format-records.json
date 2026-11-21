@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-11-20T16:02:26.408Z",
+ "generatedAt": "2026-11-21T15:51:25.913Z",
  "engine": "src/recover/pipeline.js",
  "records": [
   {
@@ -67,7 +67,7 @@
     }
    ],
    "unresolved": 4,
-   "outputBytes": 168185
+   "outputBytes": 161178
   },
   {
    "id": "moonveil-2.0.26-rideafish",
@@ -187,7 +187,7 @@
     }
    ],
    "unresolved": 0,
-   "outputBytes": 45109,
+   "outputBytes": 44357,
    "reference": {
     "literals": 81,
     "found": 77,
@@ -334,7 +334,7 @@
     }
    ],
    "unresolved": 0,
-   "outputBytes": 4196
+   "outputBytes": 4108
   },
   {
    "id": "moonveil-2.1.0-sample7",
@@ -466,7 +466,7 @@
     }
    ],
    "unresolved": 0,
-   "outputBytes": 4161
+   "outputBytes": 4078
   },
   {
    "id": "snowveil-1-sample2",
@@ -525,7 +525,7 @@
     }
    ],
    "unresolved": 0,
-   "outputBytes": 66932
+   "outputBytes": 66248
   }
  ]
 }

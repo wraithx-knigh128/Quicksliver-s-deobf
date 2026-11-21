@@ -33,6 +33,8 @@ import { planOptions } from '../research/plans.js';
 import { mergeOnline, originAnalysis } from '../origin/index.js';
 import { readFileBytes, download, baseName, FileRejected, ACCEPTED } from './files.js';
 import { bytesToBinary, binaryToBytes, binaryToText, textToBinary } from '../core/bytes.js';
+import { retrieveGitHub, githubRequest, tokenField, outcomeLabel } from './github-ui.js';
+import { recognizeInput, isGitHubLink } from '../loader/github.js';
 
 window.__qsReady = true;
 
@@ -82,8 +84,9 @@ const S = {
 // Three groups, separated in the tab row: the work itself, reports about the current script, and the reference library.
 const TABS = [
   { id: 'work', label: 'Deobfuscator', group: 'Work' },
+  { id: 'vm', label: 'VM Reverser' },
   { id: 'compare', label: 'Compare' },
-  { id: 'loader', label: 'Loader' },
+  { id: 'loader', label: 'Loader & GitHub' },
   { id: 'reconstruct', label: 'Reconstruct' },
   { id: 'detection', label: 'Detection', group: 'Reports' },
   { id: 'analysis', label: 'Analysis' },
@@ -361,6 +364,7 @@ views.compat = h('div.view', { id: 'view-compat' }, emptyState('Loading', 'Readi
 views.research = h('div.view', { id: 'view-research' }, emptyState('Loading', 'Reading data/research'));
 views.custom = h('div.view', { id: 'view-custom' });
 views.loader = h('div.view', { id: 'view-loader' });
+views.vm = h('div.view', { id: 'view-vm' });
 const customState = { result: null, examples: null, busy: false };
 const recon = createReconstructView({ getEditorBytes: () => getInputBytes(), getEditorName: () => S.name || 'script.lua', toast });
 views.reconstruct = recon.root;
@@ -419,7 +423,14 @@ function switchTab(id) {
   if (id === 'research') renderResearch();
   if (id === 'custom') { renderCustom(); ensureExamples(); }
   if (id === 'loader') renderLoader();
+  if (id === 'vm') renderVm();
   if (id === 'reconstruct') recon.show();
+  // the title bar's section buttons follow the tab (VM Reverser, Loader & GitHub; everything else is the workspace)
+  for (const b of document.querySelectorAll('.titlebar .sections .sec')) {
+    const sec = b.dataset.go;
+    const on = sec === 'vm' ? id === 'vm' : sec === 'loader' ? id === 'loader' : !['vm', 'loader'].includes(id);
+    if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
+  }
   if (id === 'detection' && !S.detection && inputPresent()) runDetect({ quiet: true });
   if (id === 'analysis' && !S.analysis && inputPresent()) runAnalyze({ quiet: true });
 }
@@ -780,6 +791,7 @@ async function runRecover({ quiet = false } = {}) {
   const r = await run('recover', options, 'Recovering', { limits: { timeoutMs: 180_000 } });
   if (!r || version !== S.version) return null;
   S.recovered = r;
+  if (S.tab === 'vm') queueMicrotask(() => renderVm());
   S.verify = null;
   S.detection = r.detection || S.detection;
   if (!S.identification) await identifyInput(version);
@@ -995,16 +1007,46 @@ async function runIronBrewTool() {
   if (warning && r && version === S.version) { S.notes.unshift(warning); renderAll(); }
 }
 
-async function openLinkDialog() {
-  const input = h('input', { type: 'url', placeholder: 'https://raw.githubusercontent.com/user/repo/main/script.lua', 'aria-label': 'Link to the script', style: { width: '100%' } });
-  const msg = h('p.note.info', { style: { margin: '8px 0 0' } }, 'Raw GitHub, gist, Pastebin, rentry, paste.ee and Discord attachment links work. A normal GitHub or Pastebin page link is turned into its raw link.');
+/**
+ * A file that came from GitHub: into the editor, then straight on to the pipeline that fits it — reconstruction when it is obfuscated, the
+ * loader analysis when it is itself a loader, nothing more when it is plain source (the person is told which, and why).
+ */
+async function onGitHubFile(name, bytes, meta) {
+  loadBytes(name, bytes);
+  const where = meta.target ? `${meta.target.owner}/${meta.target.repo || meta.target.gist || ''}${meta.target.path ? `/${meta.target.path}` : ''}` : name;
+  if (meta.contentClass === 'lua-invalid') S.notes.unshift({ kind: 'warn', text: `Retrieved ${where} from GitHub (sha-256 ${String(meta.sha256).slice(0, 12)}…). It looks like Lua but does not parse: ${meta.contentReason}` });
+  const kind = recognizeInput(editor.value).kind;
+  const d = await runDetect({ quiet: true });
+  const obf = d && d.detection.families.find((f) => f.confidence >= 0.5);
+  if (kind === 'loader') {
+    S.notes.unshift({ kind: 'info', text: `Retrieved ${where} from GitHub. It is a loader (it downloads and runs more code), so the Loader Analysis runs next.` });
+    renderAll();
+    switchTab('loader');
+    await runLoader();
+    return;
+  }
+  if (obf) {
+    S.notes.unshift({ kind: 'info', text: `Retrieved ${where} from GitHub (sha-256 ${String(meta.sha256).slice(0, 12)}…). It is protected by ${obf.name}, so it goes to reconstruction.` });
+    renderAll();
+    await runRecover();
+    return;
+  }
+  S.notes.unshift({ kind: 'info', text: `Retrieved ${where} from GitHub (sha-256 ${String(meta.sha256).slice(0, 12)}…). No obfuscator was recognised: it is shown as retrieved. Use Deobfuscate if you still want the passes to run.` });
+  renderAll();
+}
+
+async function openLinkDialog(prefill = '') {
+  const input = h('input', { type: 'url', placeholder: 'https://github.com/user/repo/blob/main/script.lua', 'aria-label': 'Link to the script', value: prefill, style: { width: '100%' } });
+  const msg = h('p.note.info', { style: { margin: '8px 0 0' } }, 'GitHub: a file, folder, repository or profile link, raw or API links, and gists — a repository or profile is listed so you can pick the file. Pastebin, rentry, paste.ee and Discord attachment links also work.');
+  const token = tokenField();
   const r = await modal({
     title: 'Get a script from a link',
-    body: [h('p', { style: { margin: '0 0 8px' } }, 'The link is fetched by this site’s server (your browser cannot fetch other sites directly) and the file is put in the editor. It is only read, never run.'), input, msg],
+    body: [h('p', { style: { margin: '0 0 8px' } }, 'The link is fetched by this site’s server (your browser cannot fetch other sites directly) and the file is put in the editor. It is only read, never run.'), input, token, msg],
     buttons: [{ id: 'cancel', label: 'Cancel' }, { id: 'ok', label: 'Get file', primary: true }],
   });
   const url = input.value.trim();
   if (r !== 'ok' || !url) return;
+  if (isGitHubLink(url)) { await retrieveGitHub(url, { onFile: onGitHubFile, setBusy }); return; }
   setBusy('Fetching');
   try {
     const res = await fetch(`/api/fetch?url=${encodeURIComponent(url)}`, { credentials: 'omit', referrerPolicy: 'no-referrer' });
@@ -1687,7 +1729,19 @@ function renderAll() {
 el.btn.detect.addEventListener('click', () => runDetect());
 el.btn.beautify.addEventListener('click', () => runBeautify());
 el.btn.analyze.addEventListener('click', () => runAnalyze());
-el.btn.recover.addEventListener('click', () => runRecover());
+el.btn.recover.addEventListener('click', async () => {
+  // what was submitted decides the pipeline: a GitHub link is retrieved first, a loader is analysed as a loader, a script is deobfuscated
+  const what = recognizeInput(editor.value);
+  if (what.kind === 'github-link') { await openLinkDialog(editor.value.trim()); return; }
+  if (what.kind === 'loader') {
+    // a loader's program is not in the file: its analysis says what it fetches and offers Loader Intelligence (retrieve → reconstruct each stage)
+    toast(`This is a loader${what.github && what.github.length ? ` that fetches ${what.github.length} GitHub file${what.github.length > 1 ? 's' : ''}` : ''}: its program is not in the file. Showing the Loader Analysis; use Loader Intelligence there to retrieve and reconstruct what it loads.`, 8000);
+    switchTab('loader');
+    await runLoader();
+    return;
+  }
+  await runRecover();
+});
 el.btn.trace.addEventListener('click', () => runTrace());
 el.btn.compare.addEventListener('click', () => runCompare());
 el.btn.rename.addEventListener('click', () => runRename());
@@ -1714,7 +1768,24 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-lic.onchange = () => { renderStatus(); renderInspector(); renderResultBar(); };
+lic.onchange = () => { renderStatus(); renderInspector(); renderResultBar(); renderTier(); };
+
+/** “Premium user” is said only when it is true: no licensing on this deployment, or a valid Premium licence. Otherwise the tag says evaluation. */
+function renderTier() {
+  const premium = !lic.configured || (lic.state.status === 'valid' && (lic.state.payload.plan === 'premium' || (lic.state.payload.features || []).length >= 4));
+  for (const node of [document.getElementById('brand-tier'), document.getElementById('premium-tag')]) {
+    if (!node) continue;
+    node.textContent = premium ? (node.id === 'brand-tier' ? 'Premium' : 'Premium user') : (node.id === 'brand-tier' ? 'Evaluation' : 'Premium · evaluation');
+    node.classList.toggle('eval', !premium);
+  }
+}
+renderTier();
+
+// the landing screen and the title bar's section buttons (src/app/landing.js) name a section; open its tab
+document.addEventListener('qs:go', (e) => {
+  const sec = e.detail && e.detail.section;
+  switchTab(sec === 'vm' ? 'vm' : sec === 'loader' ? 'loader' : sec === 'compat' ? 'compat' : 'work');
+});
 
 function renderResearch() {
   if (!research) return;
@@ -1745,8 +1816,71 @@ async function ensureProviders() {
   return loaderState.providers;
 }
 
+// ---- VM Reverser: one place for the VM lifters, what the last reconstruction did with a VM, and how its result is classed ---------------
+
+const VM_FAMILIES = [
+  { name: 'IronBrew 2 / IronBrikked', st: 'lifted', what: 'Opcode handlers matched to Lua 5.1 instructions; the program is rebuilt and decompiled.' },
+  { name: 'MoonVeil 2.0.x / 2.1.0', st: 'lifted', what: 'The VM data read with the build\u2019s own reader layout; handlers lifted instruction by instruction.' },
+  { name: 'Zartha', st: 'lifted', what: 'Template pieces recognised as instructions; masked strings read back by evidence-ranked key search.' },
+  { name: 'Obscura · AzureVM · Vault · FusGato', st: 'lifted', what: 'Per-build interpreters read from their handler templates, rebuilt as Lua 5.1 and decompiled.' },
+  { name: 'Hercules VM · Prometheus Vmify · RealObfuscator', st: 'lifted', what: 'Lifted where the build matches a verified handler form; anything else is reported as left.' },
+  { name: 'LuaObfuscator.com VM', st: 'partial', what: 'Deserialised in the sandbox, constants and listing read; instructions are not yet lifted to source.' },
+  { name: 'Luraph 14.x / 15.x', st: 'identified', what: 'Identified and version-labelled; the dynamic engine (Reconstruct tab) runs it where its environment model holds.' },
+  { name: 'Boronide · IronBrew 3 · PSU · MoonSec V3 · Synapse Xen', st: 'identified', what: 'Identified; the source is reported as unresolved, never as recovered.' },
+];
+
+function renderVm() {
+  const r = S.recovered;
+  const hero = h('div.qs-hero',
+    h('div.k', 'VM Reverser'),
+    h('h2', 'Bytecode back to source'),
+    h('p', 'A virtual-machine protector turns the program into data that its own interpreter runs. The reverser reads that interpreter, works out what each instruction does, lifts the program back to Lua and decompiles it. Strings and names come from evidence in the program; anything it cannot establish is reported as left, not filled in.'),
+    h('div.acts',
+      h('button.btn.primary', { type: 'button', onclick: async () => { if (!inputPresent()) { toast('Open or paste a script first.'); switchTab('work'); return; } await runRecover({ quiet: true }); switchTab('vm'); } }, 'Reverse the script in the editor'),
+      h('button.btn', { type: 'button', onclick: () => runIronBrewTool() }, 'IronBrew'),
+      h('button.btn', { type: 'button', onclick: () => runMoonveilTool() }, 'MoonVeil'),
+      h('button.btn', { type: 'button', onclick: () => switchTab('reconstruct') }, 'Luraph engine')));
+  const parts = [hero];
+  if (r && r.output != null) {
+    const vm = r.vm;
+    const st = (id) => (r.steps || []).find((x) => x.id === id && x.status === 'applied');
+    const zl = st('zartha.vm');
+    const ks = zl && zl.detail && zl.detail.keysearch;
+    const oc = r.outcome || {};
+    const ev = oc.evidence && oc.evidence.recovery;
+    const items = [];
+    const top = S.detection && S.detection.families.find((f) => f.confidence >= 0.5);
+    items.push([top ? 'ok' : 'warn', 'Identified', top ? `${top.name}${top.version ? ` ${top.version}` : ''} (confidence ${Math.round(top.confidence * 100)}%)` : 'no protector recognised']);
+    items.push([vm && vm.lifted ? 'ok' : vm ? 'bad' : 'warn', 'Virtual machine', vm ? (vm.lifted ? `${vm.kind}: lifted back to source${vm.stats && vm.stats.functions ? ` (${vm.stats.functions} functions, ${vm.stats.instructions} instructions)` : ''}` : `${vm.kind || 'present'}: not lifted — the interpreter is still in the output`) : 'no VM in this script']);
+    if (ks) items.push([zl.detail.masked ? 'warn' : 'ok', 'Masked strings', `${ks.decided} read back by key search (${ks.byName} by runtime names), ${zl.detail.masked} left undecided`]);
+    if (ev && ev.naming) items.push([ev.naming.placeholders * 2 >= ev.naming.locals ? 'warn' : 'ok', 'Names', `${ev.naming.locals - ev.naming.placeholders} of ${ev.naming.locals} locals named from evidence; ${ev.naming.placeholders} placeholders`]);
+    if (ev && ev.bodies) items.push([ev.bodies.missingConstants ? 'bad' : 'ok', 'Functions', `${ev.bodies.total - ev.bodies.empty} of ${ev.bodies.total} with a body${ev.bodies.missingConstants ? `, ${ev.bodies.missingConstants} missing constant(s)` : ''}`]);
+    const cls = oc.outcome;
+    items.push([cls === 'validated' ? 'ok' : cls === 'syntax-valid-unverified' ? 'ok' : cls === 'partial' ? 'warn' : 'bad', 'Verdict', oc.label || cls || 'not classified']);
+    parts.push(h('div.section', h('h3', 'Last reconstruction'), h('ul.stages', items.map(([k, a, b]) => h(`li.${k}`, h('span.dot'), h('b', a), h('span', b))))));
+    if (oc.reasons && oc.reasons.length) parts.push(h('div.section', h('h3', 'Why this verdict'), h('ul', oc.reasons.map((x) => h('li', x)))));
+  } else {
+    parts.push(h('p.note.info', 'Nothing has been reversed yet. Open a protected script (or a GitHub link in Loader & GitHub) and use “Reverse the script in the editor”.'));
+  }
+  parts.push(h('div.section', h('h3', 'What the reverser reads'), h('div.vm-grid', VM_FAMILIES.map((f) => h('div.vm-card', h('h4', f.name), h('p', f.what), h(`span.st.${f.st}`, f.st === 'lifted' ? 'Lifted to source' : f.st === 'partial' ? 'Read, not lifted' : 'Identified only'))))));
+  replace(views.vm, h('div.report', parts));
+}
+
+function loaderHero() {
+  const input = h('input', { type: 'url', placeholder: 'https://github.com/owner/repo/blob/main/script.lua — or a repository / profile link', 'aria-label': 'GitHub link' });
+  // a GitHub address goes to GitHub retrieval (which says exactly what is wrong with a malformed one); any other link to the general fetcher
+  const go = async () => { const url = input.value.trim(); if (!url) { input.focus(); return; } if (isGitHubLink(url) || /(^|\/\/|\.)github(usercontent)?\.com\//i.test(url)) await retrieveGitHub(url, { onFile: onGitHubFile, setBusy }); else await openLinkDialog(url); };
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
+  return h('div.qs-hero',
+    h('div.k', 'Loader & GitHub'),
+    h('h2', 'Paste the loadstring, or the link'),
+    h('p', 'A loader’s program is not in the file: it is downloaded when it runs. Paste the loader in the editor for its analysis, or give a GitHub file, repository or profile link here: the source is retrieved, checked to be Lua, and sent to the pipeline that fits it. Private repositories need your own token; nothing is bypassed.'),
+    h('div.acts', input, h('button.btn.primary', { type: 'button', onclick: go }, 'Retrieve'), h('button.btn', { type: 'button', onclick: () => openLinkDialog() }, 'With a token…')));
+}
+
 function renderLoader() {
   replace(views.loader, loaderView(loaderState, { onAnalyze: runLoader, onFetch: fetchStage, onOpen: openStage, onAnalyzeStage: analyzeStage, onIntel: runIntel, onOpenText: openText, onExport: exportIntel, onOwnerCheck: runOwnerCheck, onSupply: runSupplied }));
+  views.loader.prepend(loaderHero());
   if (loaderState.result && loaderState.forVersion !== S.version && loaderState.loaderBytes) {
     const back = h('p.note.info', 'The editor now holds a different script. ', h('button.btn.small', { type: 'button', onclick: () => { loadBytes(loaderState.loaderName, loaderState.loaderBytes); loaderState.forVersion = S.version; switchTab('loader'); } }, 'Put the loader back in the editor'));
     views.loader.firstChild.insertBefore(back, views.loader.firstChild.children[1] || null);
@@ -1809,6 +1943,11 @@ async function fetchStage(req) {
 
 async function pageFetchStage(req) {
   const t = performance.now();
+  if (req.url && isGitHubLink(req.url) && req.retrieval && req.retrieval.route === 'link-fetcher') {
+    const r = await githubRequest(req.url, { mode: 'file' });
+    if (!r.ok || !r.file) return { ok: false, status: r.outcome === 'private-or-missing' || r.outcome === 'not-found-with-token' ? 403 : r.outcome === 'rate-limited' ? 429 : 404, error: `${outcomeLabel(r)}: ${r.message || ''}`, ms: performance.now() - t };
+    return { ok: true, status: 200, bytes: r.file.bytes, contentType: '', ms: performance.now() - t };
+  }
   try {
     const res = req.retrieval.route === 'provider:roblox-asset'
       ? await fetch('/api/retrieve', { method: 'POST', credentials: 'omit', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ provider: 'roblox-asset', assetId: String(req.url) }) })

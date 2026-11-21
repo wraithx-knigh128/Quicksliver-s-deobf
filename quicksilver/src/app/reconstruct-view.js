@@ -11,6 +11,7 @@ import { ENGINES, VERSIONS, parseBanner, versionFor, plan as planFor, hasIronbre
 import { versionStatus, engineStatus, GATES } from '../reconstruct/status.js';
 import { buildReconstructionReport } from '../reconstruct/report.js';
 import { buildCaseFile } from '../reconstruct/casefile.js';
+import { serverFetch } from './server.js';
 
 const STAGES = [
   ['identify', 'Identify the input'], ['select', 'Choose the engine'], ['run', 'Run in the instrumented environment'], ['lift', 'Lift the virtual machine'],
@@ -47,7 +48,7 @@ export function createReconstructView(ctx) {
   const root = h('div.view.recon', { id: 'view-reconstruct' });
   const S = { bytes: null, name: 'script.lua', fromEditor: true, original: null, originalName: null, engine: 'auto', fallback: true, timeout: 90, attest: false,
     running: false, controller: null, stages: {}, attempts: [], fallbacks: [], log: [], ident: null, plan: null, result: null, error: null, tab: 'output', registry: null, started: 0, assistant: null, resultKey: null };
-  const doFetch = ctx.fetchImpl || ((...a) => fetch(...a));
+  const doFetch = ctx.fetchImpl || ((path, init) => serverFetch(path, init));
 
   const input = () => (S.fromEditor ? ctx.getEditorBytes() : S.bytes) || new Uint8Array(0);
   const inputName = () => (S.fromEditor ? ctx.getEditorName() : S.name) || 'script.lua';

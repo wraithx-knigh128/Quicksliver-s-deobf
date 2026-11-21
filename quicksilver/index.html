@@ -3,14 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="robots" content="noindex, nofollow"> <!-- not published yet: remove this line at launch (docs/LAUNCH.md) -->
 <meta name="color-scheme" content="dark light">
 <meta name="description" content="Recover readable Lua and Luau from obfuscated scripts. Runs entirely in your browser; scripts are never executed unless you ask for the sandbox.">
-<title>QuickSilver Deobfuscator</title>
+<title>QuickSilver v1.8 Premium</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preload" href="fonts/lilita-one-latin-400.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/scene.css">
+<link rel="stylesheet" href="css/premium.css">
 <script src="src/app/theme-init.js"></script>
 </head>
 <body>
@@ -52,12 +55,61 @@
   <symbol id="i-wand" viewBox="0 0 16 16"><path d="M3 13 11 5M10 2.5v2M13.5 6h-2M12.4 3.6l-1.2 1.2M3.5 4.5v2M2.5 5.5h2"/></symbol>
 </svg>
 
+<!-- the sunset scene: original art (tools/art/build-scene.mjs) and CSS; decorative only -->
+<div class="scene" id="scene" aria-hidden="true">
+  <div class="sky"></div>
+  <div class="afterglow"></div>
+  <div class="sun"></div>
+  <img class="clouds" src="art/clouds.svg" alt="" decoding="async">
+  <div class="birdtrack"><img src="art/birds.svg" alt="" decoding="async"></div>
+  <div class="city"><img src="art/skyline.svg" alt="" decoding="async"></div>
+  <div class="water"><img class="reflection" src="art/skyline.svg" alt="" decoding="async"><div class="glint"></div><div class="shimmer"></div></div>
+  <div class="road"><img src="art/highway.svg" alt="" decoding="async"><div class="lane l1"><i class="car"></i><i class="car"></i><i class="car"></i><i class="car"></i></div><div class="lane l2"><i class="car"></i><i class="car"></i><i class="car"></i></div></div>
+  <img class="palm palm-l" src="art/palm-left.svg" alt="" decoding="async">
+  <img class="palm palm-r" src="art/palm-right.svg" alt="" decoding="async">
+  <div class="haze"></div>
+</div>
+
+<section class="landing" id="landing" aria-label="QuickSilver v1.8 Premium">
+  <header class="lnav rise">
+    <div class="lbrand">QuickSilver <small>v1.8 · Premium</small></div>
+    <nav aria-label="Sections">
+      <button type="button" data-go="work">Workspace</button>
+      <button type="button" data-go="vm">VM Reverser</button>
+      <button type="button" data-go="loader">Loader &amp; GitHub</button>
+      <button type="button" data-go="compat">Obfuscators</button>
+    </nav>
+  </header>
+  <div class="lhero">
+    <p class="kicker rise d1">Lua &amp; Luau reverse-engineering suite</p>
+    <h1 class="wordmark rise d2"><span class="wm-main" data-text="QuickSilver">QuickSilver</span><span class="wm-skew"><span class="wm-ver" data-text="v1.8">v1.8</span></span></h1>
+    <p class="premium-tag rise d3" id="premium-tag">Premium user</p>
+    <p class="lede rise d4">Recover readable Lua and Luau from obfuscated scripts, virtual-machine protections and GitHub loaders. Every result is classified for what it is: validated, unverified, partial, or not reconstructed.</p>
+    <div class="cta rise d5">
+      <button type="button" class="btn-hero primary" data-go="work">Enter workspace<span class="arrow" aria-hidden="true">→</span></button>
+      <button type="button" class="btn-hero" data-go="vm">VM Reverser</button>
+      <button type="button" class="btn-hero" data-go="loader">Loader &amp; GitHub</button>
+    </div>
+  </div>
+  <div class="lfeatures rise d5">
+    <button type="button" class="lcard" data-go="vm"><span class="lk">VM Reverser</span><h3>Bytecode back to source</h3><p>Interpreters are read, instructions lifted and rebuilt as Lua; names come from what the program itself says, never from guesses.</p></button>
+    <button type="button" class="lcard" data-go="loader"><span class="lk">Loader &amp; GitHub</span><h3>Paste the loadstring</h3><p>A loader, a raw link or a repository: the source is retrieved, checked to be Lua, and sent to the right pipeline.</p></button>
+    <button type="button" class="lcard" data-go="work"><span class="lk">Honest verdicts</span><h3>No false successes</h3><p>A generated file is not a deobfuscation. Placeholders, holes and stubs are counted and reported, not hidden.</p></button>
+  </div>
+  <p class="lfoot rise d5">QuickSilver is an independent tool. Its sunset artwork is original; it is not affiliated with, endorsed by or connected to Rockstar Games or Take-Two Interactive.</p>
+</section>
+
 <noscript><p class="noscript">QuickSilver needs JavaScript. Everything runs locally in the page; nothing is uploaded.</p></noscript>
 <div id="boot-error" class="boot-error" hidden></div>
 
 <div class="shell" id="shell">
   <header class="titlebar">
-    <div class="brand"><svg aria-hidden="true"><use href="#i-mark"/></svg><span class="name">QuickSilver</span><span class="ver" id="ver"></span></div>
+    <button type="button" class="brand" id="brand" title="Back to the QuickSilver v1.8 start screen"><span class="name">QuickSilver</span><span class="brand-ver">v1.8</span><span class="brand-tier" id="brand-tier">Premium</span></button>
+    <nav class="sections" aria-label="Sections">
+      <button type="button" class="sec" data-go="work">Workspace</button>
+      <button type="button" class="sec" data-go="vm">VM Reverser</button>
+      <button type="button" class="sec" data-go="loader">Loader &amp; GitHub</button>
+    </nav>
 
     <nav class="actions" aria-label="Actions">
       <button class="btn" id="act-open" type="button" title="Open a .lua, .luau or .txt file (Ctrl+O)"><svg aria-hidden="true"><use href="#i-open"/></svg><span class="lbl">Open File</span></button>
@@ -134,11 +186,13 @@
     <span id="st-sandbox" class="faint"></span>
     <span id="st-license" class="faint"></span>
     <span id="docname" class="faint"></span>
+    <span class="faint" title="Version of the recovery engine">engine&nbsp;<span id="ver"></span></span>
   </footer>
 </div>
 
 <input type="file" id="file-input" accept=".lua,.luau,.txt,.rbxm,.rbxmx" hidden>
 <script src="src/app/boot-check.js"></script>
+<script type="module" src="src/app/landing.js"></script>
 <script type="module" src="src/app/main.js"></script>
 </body>
 </html>

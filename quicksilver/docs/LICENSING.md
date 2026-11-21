@@ -44,3 +44,24 @@ If the recovery code itself must be kept private, it has to run on a server you 
 Obfuscators whose output is in the test corpus, and the attribution their licences require, are in `THIRD_PARTY_NOTICES.md`. Prometheus requires that products using it carry the sentence
 "Based on Prometheus by Elias Oelschner, https://github.com/prometheus-lua/Prometheus"; it is in the About dialog, the README and the notices. The recovery modules contain no source code of any of these tools.
 Leaked or stolen obfuscator sources are not used, referenced or reproduced anywhere in the project.
+
+## Server-side enforcement (v1.8)
+
+What runs on the server is now checked by the server, with the same token: `x-qs-license: QS1.…` on the request (the page sends the key it stores).
+
+| Server feature | Endpoint | Entitled by |
+|---|---|---|
+| GitHub retrieval (file, repository, profile; the user's own token for private repositories) | `api/github.js` | plan `premium`, or `features` contains `github` |
+| Luraph reconstruction engine | `api/reconstruct.py` | plan `premium`, or `reconstruct` |
+| AI research assistant | `api/assistant.js` | plan `premium`, or `assistant` |
+
+* The public key is read from `QS_LICENSE_PUBLIC_KEY` (a JWK, JSON) in the server's environment, else from `src/license/config.js`.
+* With neither, licensing is **not activated**: requests are served and every answer says `licensing: "not-activated"`. Set `QS_REQUIRE_LICENSE=1` to make
+  the server refuse instead (fail closed) when no key is configured.
+* Expiry, not-before and `QS_REVOKED_IDS` are honoured. A token signed by another key, damaged, expired, revoked or without the entitlement is refused
+  (401 without a token, 403 otherwise, with a reason). Nothing about the token is logged or returned.
+* The Python function verifies with the `cryptography` package; if it is missing and a key is configured, the engine refuses (503) rather than serving unlicensed.
+* Tests: `tests/xxvii-github.test.mjs` (Node), `tests/xxvii-premium-py.test.mjs` (Python), with throw-away keys.
+
+The recovery engine itself still runs in the visitor's browser, so it remains protected only by the page's own check (see "What this does not protect").
+The "Premium user" tag in the interface is shown when licensing is not activated or the licence is Premium; otherwise it reads "Premium · evaluation".

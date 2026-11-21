@@ -68,8 +68,10 @@ before(async () => {
 });
 after(async () => { if (browser) await browser.close(); if (server) server.close(); if (pyProc) pyProc.kill(); fs.rmSync(tmp, { recursive: true, force: true }); });
 
-async function newPage(opts = {}) {
+async function newPage(opts = {}, { landing = false } = {}) {
   const ctx = await browser.newContext({ viewport: { width: 1400, height: 860 }, acceptDownloads: true, ...opts });
+  // v1.8 opens on a landing screen the first time; the workbench tests start where a returning user does, in the workspace
+  if (!landing) await ctx.addInitScript(() => { try { localStorage.setItem('qs.entered', '1'); } catch { /* ignore */ } });
   const page = await ctx.newPage();
   const problems = [];
   page.on('console', (m) => { if (['error', 'warning'].includes(m.type())) problems.push(`[${m.type()}] ${m.text()}`); });
@@ -1442,5 +1444,98 @@ test('Loader: a Luarmor bootstrap gets the five operations kept apart, its own l
   const opened = await page.inputValue('textarea.editor');
   assert.ok(!opened.includes('_bsdata0') && /readfile/.test(opened), 'the opened text is the loader logic, without the data table');
   assert.deepEqual(problems, []);
+  await ctx.close();
+});
+
+
+// ---- Prompt XXVII: the v1.8 landing screen, its sections, motion and the GitHub field ----------------------------------------------------
+
+test('v1.8 landing: a first visit opens on the landing (QUICKSILVER v1.8 · PREMIUM USER); entering opens the workspace and is remembered', { skip }, async () => {
+  const { page, ctx, problems } = await newPage({}, { landing: true });
+  assert.equal(await page.isVisible('#landing'), true);
+  assert.equal(await page.isVisible('#shell'), false, 'the workspace is not shown under the landing');
+  assert.match(await page.textContent('.wordmark'), /QuickSilver\s*v1\.8/);
+  assert.match(await page.textContent('#premium-tag'), /Premium user/i);
+  assert.match(await page.textContent('.lfoot'), /not affiliated/);
+  // the brand's fonts are self-hosted and load under the strict CSP
+  await page.evaluate(() => document.fonts.ready);
+  assert.equal(await page.evaluate(() => document.fonts.check('40px "Lilita One"')), true, 'Lilita One loaded');
+  await page.click('.cta .btn-hero.primary');
+  await page.waitForFunction(() => document.documentElement.classList.contains('in-work'));
+  await page.waitForSelector('#shell', { state: 'visible' });
+  assert.equal(await activeTab(page), 'tab-work');
+  assert.equal(await page.evaluate(() => localStorage.getItem('qs.entered')), '1');
+  await page.reload();
+  await page.waitForSelector('#toollist li', { state: 'attached' });
+  assert.equal(await page.evaluate(() => document.documentElement.classList.contains('in-work')), true, 'a returning visitor goes straight to the workspace');
+  // the brand in the title bar brings the landing back
+  await page.click('#brand');
+  await page.waitForFunction(() => !document.documentElement.classList.contains('in-work'));
+  assert.equal(await page.isVisible('#landing'), true);
+  assert.deepEqual(problems, []);
+  await ctx.close();
+});
+
+test('v1.8 sections: the landing and the title bar open the VM Reverser and Loader & GitHub sections', { skip }, async () => {
+  const { page, ctx, problems } = await newPage({}, { landing: true });
+  await page.click('.cta [data-go=vm]');
+  await page.waitForSelector('#tab-vm[aria-selected=true]');
+  assert.match(await page.textContent('#view-vm'), /Bytecode back to source/);
+  assert.ok(await page.locator('#view-vm .vm-card').count() >= 6, 'the reverser lists what it reads, with a status each');
+  assert.equal(await page.getAttribute('.titlebar .sections [data-go=vm]', 'aria-current'), 'page');
+  await page.click('.titlebar .sections [data-go=loader]');
+  await page.waitForSelector('#tab-loader[aria-selected=true]');
+  assert.ok(await page.isVisible('#view-loader .qs-hero input[type=url]'), 'the GitHub field is in the Loader section');
+  // a non-GitHub, non-URL entry is refused locally with the reason, nothing is sent
+  await page.fill('#view-loader .qs-hero input[type=url]', 'https://github.com/settings/tokens');
+  await page.click('#view-loader .qs-hero .btn.primary');
+  await page.waitForSelector('.modal');
+  assert.match(await page.textContent('.modal'), /Not a valid GitHub link/);
+  assert.match(await page.textContent('.modal'), /“settings” is not a GitHub account name/);
+  await page.keyboard.press('Escape');
+  assert.deepEqual(problems, []);
+  await ctx.close();
+});
+
+test('v1.8 input recognition: a GitHub link pasted in the editor goes to retrieval, a loader to the Loader Analysis', { skip }, async () => {
+  const { page, ctx } = await newPage();
+  await page.fill('textarea.editor', 'loadstring(game:HttpGet("https://raw.githubusercontent.com/alice/tools/main/main.lua"))()');
+  await page.click('#act-recover');
+  await page.waitForSelector('#tab-loader[aria-selected=true]');
+  await page.click('#tab-work');
+  await page.fill('textarea.editor', 'https://github.com/alice/tools/blob/main/a.lua');
+  await page.click('#act-recover');
+  await page.waitForSelector('.modal');
+  assert.equal(await page.inputValue('.modal input[type=url]'), 'https://github.com/alice/tools/blob/main/a.lua', 'the link dialog opens with the pasted link');
+  await page.keyboard.press('Escape');
+  await ctx.close();
+});
+
+test('v1.8 motion: the scene animates only transform/opacity, stops in the workspace, and stops entirely under reduced motion', { skip }, async () => {
+  const { page, ctx } = await newPage({}, { landing: true });
+  const anim = await page.evaluate(() => document.getAnimations().map((a) => ({ name: a.animationName, props: Object.keys((a.effect.getKeyframes()[0]) || {}).filter((k) => !['offset', 'easing', 'composite', 'computedOffset'].includes(k)) })));
+  assert.ok(anim.length >= 8, `scene animations running: ${anim.length}`);
+  for (const a of anim) for (const p of a.props) assert.ok(['transform', 'opacity'].includes(p), `${a.name} animates ${p}`);
+  await page.click('.cta .btn-hero.primary');
+  await page.waitForFunction(() => document.documentElement.classList.contains('in-work'));
+  await page.waitForTimeout(600);
+  const running = await page.evaluate(() => document.getAnimations().filter((a) => a.playState === 'running' && a.effect && a.effect.target && a.effect.target.closest && a.effect.target.closest('.scene')).length);
+  assert.equal(running, 0, 'nothing in the scene moves while the workspace is open');
+  await ctx.close();
+  const reduced = await newPage({ reducedMotion: 'reduce' }, { landing: true });
+  const n = await reduced.page.evaluate(() => document.getAnimations().length);
+  assert.equal(n, 0, 'reduced motion: no animation at all');
+  assert.equal(await reduced.page.evaluate(() => getComputedStyle(document.querySelector('.wordmark')).opacity), '1', 'content is fully shown without the entrance animation');
+  await reduced.ctx.close();
+});
+
+test('v1.8 mobile: the landing and the workspace fit a phone without horizontal scrolling', { skip }, async () => {
+  const { page, ctx } = await newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 }, { landing: true });
+  const wide = await page.evaluate(() => Math.max(document.documentElement.scrollWidth, document.querySelector('#landing').scrollWidth));
+  assert.ok(wide <= 392, `landing width ${wide}`);
+  assert.ok(await page.isVisible('.cta .btn-hero.primary'));
+  await page.click('.cta .btn-hero.primary');
+  await page.waitForSelector('#shell', { state: 'visible' });
+  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth) <= 392);
   await ctx.close();
 });

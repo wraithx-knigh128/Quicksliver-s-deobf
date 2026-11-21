@@ -70,6 +70,85 @@ def _limited(client: str) -> bool:
     return False
 
 
+# ---- Premium licence (the same QS1 token and policy as api/_lib/entitlement.js) -------------------------------------------------------------
+# A request needs `x-qs-license: QS1.<payload>.<signature>` with plan "premium" or the feature "reconstruct", once a licence public key is
+# configured (QS_LICENSE_PUBLIC_KEY, a JWK; else the key built into src/license/config.js). Without a key, licensing is not activated and the
+# endpoint is served, unless QS_REQUIRE_LICENSE=1 (then it refuses: fail closed). Nothing about the token is logged.
+
+def _b64u(s: str) -> bytes:
+    return base64.urlsafe_b64decode(s + "=" * (-len(s) % 4))
+
+
+def _licence_key():
+    env = os.environ.get("QS_LICENSE_PUBLIC_KEY")
+    if env:
+        try:
+            return json.loads(env)
+        except ValueError:
+            return {"invalid": True}
+    cfg = ROOT / "src" / "license" / "config.js"
+    try:
+        text = cfg.read_text(encoding="utf-8")
+    except OSError:
+        return None
+    import re
+    m = re.search(r"export const PUBLIC_KEY\s*=\s*(\{[^;]*\})\s*;", text)
+    if not m:
+        return None
+    try:
+        return json.loads(m.group(1))
+    except ValueError:
+        return {"invalid": True}
+
+
+def licence_check(token: str, feature: str = "reconstruct", now: float | None = None):
+    """(ok, http_status, code, message). Pure apart from the environment; tested in tests/xxvii-premium-py.test.mjs."""
+    key = _licence_key()
+    if key and key.get("invalid"):
+        return False, 500, "licensing_misconfigured", "The server's licence key setting is not valid."
+    if not key:
+        if os.environ.get("QS_REQUIRE_LICENSE") == "1":
+            return False, 503, "licensing_unavailable", "This deployment requires a licence, but no licence key is configured on the server."
+        return True, 200, "open", "Licensing is not activated on this deployment."
+    if not token:
+        return False, 401, "licence_required", "The Luraph reconstruction engine is a Premium feature: enter your licence key first."
+    try:
+        from cryptography.hazmat.primitives import hashes
+        from cryptography.hazmat.primitives.asymmetric import ec
+        from cryptography.hazmat.primitives.asymmetric.utils import encode_dss_signature
+        from cryptography.exceptions import InvalidSignature
+    except ImportError:
+        return False, 503, "licensing_unavailable", "This server cannot verify licences (the cryptography package is missing)."
+    parts = token.strip().split(".")
+    if len(parts) != 3 or parts[0] != "QS1" or len(token) > 4096:
+        return False, 403, "licence_invalid", "This is not a QuickSilver licence key."
+    try:
+        payload = json.loads(_b64u(parts[1]).decode("utf-8"))
+        sig = _b64u(parts[2])
+        pub = ec.EllipticCurvePublicNumbers(int.from_bytes(_b64u(key["x"]), "big"), int.from_bytes(_b64u(key["y"]), "big"), ec.SECP256R1()).public_key()
+    except Exception:  # noqa: BLE001 - any decoding problem is an invalid token
+        return False, 403, "licence_invalid", "The licence key is damaged."
+    if len(sig) != 64:
+        return False, 403, "licence_invalid", "The licence key is damaged."
+    try:
+        pub.verify(encode_dss_signature(int.from_bytes(sig[:32], "big"), int.from_bytes(sig[32:], "big")), f"QS1.{parts[1]}".encode("ascii"), ec.ECDSA(hashes.SHA256()))
+    except InvalidSignature:
+        return False, 403, "licence_invalid", "The signature does not match: this key was not issued for this product, or it was altered."
+    if payload.get("v") != 1 or not isinstance(payload.get("id"), str):
+        return False, 403, "licence_invalid", "Unsupported licence format."
+    t = now if now is not None else time.time()
+    if payload.get("nbf") and t + 300 < payload["nbf"]:
+        return False, 403, "licence_not_yet_valid", "This licence is not valid yet."
+    if payload.get("exp") and t - 300 > payload["exp"]:
+        return False, 403, "licence_expired", "This licence has expired."
+    revoked = [x.strip() for x in os.environ.get("QS_REVOKED_IDS", "").split(",") if x.strip()]
+    if payload["id"] in revoked:
+        return False, 403, "licence_revoked", "This licence has been revoked."
+    if payload.get("plan") != "premium" and feature not in (payload.get("features") or []):
+        return False, 403, "premium_required", "The Luraph reconstruction engine needs a Premium licence; this licence does not include it."
+    return True, 200, "licensed", "Licensed."
+
+
 class handler(BaseHTTPRequestHandler):          # noqa: N801 - the name the Vercel Python runtime looks for
     protocol_version = "HTTP/1.0"                # the body ends when the connection closes, so streaming needs no chunk framing
     server_version = "QuickSilver"
@@ -94,6 +173,10 @@ class handler(BaseHTTPRequestHandler):          # noqa: N801 - the name the Verc
         self._send_json(status, {"ok": False, "error": {"code": code, "message": message}}, extra)
 
     def _authorised(self) -> bool:
+        ok, status, code, message = licence_check(self.headers.get("x-qs-license", ""), "reconstruct")
+        if not ok:
+            self._error(status, code, message)
+            return False
         mode = os.environ.get("QS_RECONSTRUCT_MODE", "open")
         if mode == "off":
             self._error(503, "disabled", "Reconstruction is switched off on this deployment (QS_RECONSTRUCT_MODE=off).")

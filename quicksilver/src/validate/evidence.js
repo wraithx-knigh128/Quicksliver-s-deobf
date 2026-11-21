@@ -4,6 +4,7 @@
 import { parse } from '../core/parser.js';
 import { residualIndicators } from '../core/metrics.js';
 import { classifyOutcome, inputEvidence } from './outcome.js';
+import { analyze } from '../core/scope.js';
 
 const HARD_TRAITS = ['state-machine', 'loadstring-layer', 'bytecode-blob', 'junk-code', 'opaque-predicates', 'string-table', 'escape-encoded-strings', 'vm'];
 
@@ -55,7 +56,25 @@ export function recoveryEvidence(r) {
     unresolved: unresolvedCount(r),
     level: r.confidence ? r.confidence.level : null,
     bodies: ast ? functionBodies(ast) : null,
+    naming: ast ? namingEvidence(ast) : null,
   };
+}
+
+// Names a rebuilder invents when it has no evidence: register temporaries, positional parameters and upvalues, and the renamer's own fallbacks.
+const PLACEHOLDER = /^(?:_r\d+(?:_\d+)*(?:_c\d+)?(?:_\d+)?|a\d+|up\d+|value\d*|param\d*|L_?\d+_?|p\d+|v\d+|var\d+|arg\d+|unk\d*)$/;
+
+/**
+ * Prompt XXVII: how many of the output's locals and parameters carry a placeholder name. Names never change what a program does, so this does not
+ * change the class; it is reported, because a reconstruction full of `param1`/`_r3` names is harder to read than one whose names were recovered
+ * from evidence, and the report should not hide that.
+ */
+export function namingEvidence(ast) {
+  let info;
+  try { info = analyze(ast); } catch { return null; }
+  const vars = info.vars.filter((v) => !v.isGlobal && v.name !== 'self' && v.name !== '_');
+  const placeholders = vars.filter((v) => PLACEHOLDER.test(v.name));
+  const params = vars.filter((v) => v.kind === 'param');
+  return { locals: vars.length, placeholders: placeholders.length, params: params.length, placeholderParams: params.filter((v) => PLACEHOLDER.test(v.name)).length };
 }
 
 /**

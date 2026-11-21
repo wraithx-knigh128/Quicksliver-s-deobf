@@ -82,6 +82,8 @@ export function looksObfuscated(name) {
   if (/^_+$/.test(name)) return true;
   if (/^[Il1O0_]{3,}$/.test(name)) return true;                        // lIIlIlIl, O0O0OO
   if (/^_*0x[0-9a-fA-F]+$/.test(name)) return true;                    // _0x1a2b
+  if (/^_r\d+(?:_\d+)*(?:_c\d+)?(?:_\d+)?$/.test(name)) return true;      // the decompiler's register temporaries: _r3, _r1_4, _r3_c1_1 (a later generation of a captured register)
+  if (/^(?:a|up|L_?)\d+$/.test(name)) return true;                       // the decompiler's parameters (a1) and upvalues (up0), other tools' L_12
   if (/^_*(?:v|var|local|L|l|a|f|func|fn|u|t|tmp|temp|loc|lv|r)?_*\d+(?:_+\d+)*_*$/.test(name) && /[a-zA-Z_]/.test(name)) return true;   // v12, L_3_, local4, _12, _r0_2 (decompiled)
   if (/prometheus/i.test(name) && name.startsWith('__')) return true;
   if (name.length <= 2) return false;
@@ -159,6 +161,60 @@ export function hintFromInit(init) {
   }
 }
 
+// Parameters of the functions Roblox passes to an event's :Connect(), as the Roblox API reference names them. A callback connected to
+// `x.PlayerAdded` receives the player who joined; naming its parameter `player` states what the documentation says the value is.
+export const SIGNAL_PARAMS = {
+  PlayerAdded: ['player'], PlayerRemoving: ['player'], CharacterAdded: ['character'], CharacterRemoving: ['character'], CharacterAppearanceLoaded: ['character'],
+  Heartbeat: ['deltaTime'], RenderStepped: ['deltaTime'], PreRender: ['deltaTime'], PreSimulation: ['deltaTime'], PostSimulation: ['deltaTime'], Stepped: ['time', 'deltaTime'],
+  Touched: ['otherPart'], TouchEnded: ['otherPart'], InputBegan: ['input', 'gameProcessed'], InputEnded: ['input', 'gameProcessed'], InputChanged: ['input', 'gameProcessed'],
+  ChildAdded: ['child'], ChildRemoved: ['child'], DescendantAdded: ['descendant'], DescendantRemoving: ['descendant'], AncestryChanged: ['child', 'parent'],
+  Chatted: ['message', 'recipient'], HealthChanged: ['health'], StateChanged: ['oldState', 'newState'], Died: [], Changed: ['property'],
+  FocusLost: ['enterPressed', 'inputThatCausedFocusLoss'], Activated: ['inputObject', 'clickCount'], OnServerEvent: ['player'], OnServerInvoke: ['player'],
+  AttributeChanged: ['attribute'], Completed: ['playbackState'], MoveToFinished: ['reached'], Triggered: ['player'], MouseClick: ['player'],
+  PromptTriggered: ['prompt', 'player'], TextChanged: [], Equipped: ['mouse'], Unequipped: [], Event: [], OnClientEvent: [],
+};
+
+/**
+ * Evidence about variables that the initialiser alone does not give:
+ *   assigned     a local declared without a value (`local x` ... `x = game:GetService("Players")`): its first assignment
+ *   callArgs     every call of a local function: what it is called with tells what its parameters are
+ *   returns      what a function returns: `local h = configure(c)` where configure returns its local `humanoid`
+ *   signalParam  parameters of a callback connected to a Roblox event (SIGNAL_PARAMS)
+ */
+function gatherEvidence(chunk, info) {
+  const assigned = new Map();
+  const callArgs = new Map();
+  const returns = new Map();   // Func node -> returned expressions (single-value returns directly in that function)
+  const signalParam = new Map(); // param Id node -> name
+  const funcStack = [];
+  const visit = (n) => {
+    if (!n || typeof n !== 'object') return;
+    if (Array.isArray(n)) { n.forEach(visit); return; }
+    if (n.type === 'Func') { funcStack.push(n); returns.set(n, []); }
+    if (n.type === 'Return' && funcStack.length) returns.get(funcStack[funcStack.length - 1]).push(n.values.length === 1 ? n.values[0] : null);
+    if (n.type === 'Assign' && n.targets.length === n.values.length) {
+      n.targets.forEach((t, i) => {
+        if (t.type !== 'Name') return;
+        const v = info.varOf.get(t);
+        if (v && !v.isGlobal && !assigned.has(v)) assigned.set(v, n.values[i]);
+      });
+    }
+    if (n.type === 'Call' && n.fn.type === 'Name') {
+      const v = info.varOf.get(n.fn);
+      if (v && !v.isGlobal) { if (!callArgs.has(v)) callArgs.set(v, []); callArgs.get(v).push(n.args); }
+    }
+    if (n.type === 'MethodCall' && /^(?:Connect|Once|ConnectParallel|Wait)$/.test(n.name) && n.args[0] && n.args[0].type === 'Func') {
+      const sig = n.obj.type === 'Index' && n.obj.key.type === 'String' ? n.obj.key.value : null;
+      const names = sig && SIGNAL_PARAMS[sig];
+      if (names) n.args[0].params.forEach((p, i) => { if (names[i]) signalParam.set(p, names[i]); });
+    }
+    for (const k of Object.keys(n)) if (k !== 'line' && k !== 'comments' && n[k] && typeof n[k] === 'object') visit(n[k]);
+    if (n.type === 'Func') funcStack.pop();
+  };
+  visit(chunk);
+  return { assigned, callArgs, returns, signalParam };
+}
+
 function forInHints(stmt) {
   const call = stmt.exprs[0];
   const f = call && call.type === 'Call' && call.fn.type === 'Name' ? call.fn.name : null;
@@ -222,12 +278,64 @@ export function renamePass(chunk, options = {}) {
     return false;
   };
 
+  const ev = gatherEvidence(chunk, info);
+  const funcNode = (fv) => (fv && fv.init && fv.init.type === 'Func' ? fv.init : null);
+  // a name that carries meaning: one the program kept, or one this pass can state from evidence (depth-limited: hints can refer to each other)
+  const meaningOf = (w, depth = 0) => {
+    if (!w || w.isGlobal) return null;
+    if (!eligible(w)) return isMachineName(w.name) ? null : w.name;
+    if (depth > 3) return null;
+    return evidenceHint(w, depth + 1);
+  };
+  const GENERIC_HINTS = new Set(['fn', 'tbl', 'list', 'str', 'num', 'flag', 'value', 'param', 'obj', 'iter', 'count', 'rnd', 'kind', 'ok', 'module', 'instance']);
+  const exprHint = (e, depth) => {
+    if (!e) return null;
+    if (e.type === 'Name') { const w = info.varOf.get(e); return w ? meaningOf(w, depth) : null; }
+    const h = hintFromInit(e);
+    if (h) return h;
+    // the result of a local function that returns one variable everywhere it returns
+    if (e.type === 'Call' && e.fn.type === 'Name') {
+      const f = funcNode(info.varOf.get(e.fn));
+      const rets = f ? ev.returns.get(f) : null;
+      if (rets && rets.length && rets.every((r) => r && r.type === 'Name')) {
+        const vars = new Set(rets.map((r) => info.varOf.get(r)));
+        if (vars.size === 1) { const only = [...vars][0]; const m = only && depth < 4 ? meaningOf(only, depth + 1) : null; if (m && !GENERIC_HINTS.has(m)) return m; }
+      }
+    }
+    return null;
+  };
+  const paramIndex = (v) => {
+    for (const fv of ev.callArgs.keys()) {
+      const f = funcNode(fv);
+      if (f) { const i = f.params.indexOf(v.decl); if (i >= 0) return { fv, i }; }
+    }
+    return null;
+  };
+  function evidenceHint(v, depth = 0) {
+    if (v.kind === 'for') return loopHint.get(v.decl) || null;
+    let h = v.init && v.init.type !== 'Nil' ? exprHint(v.init, depth) : null;
+    if (!h && (!v.init || v.init.type === 'Nil') && ev.assigned.has(v)) h = exprHint(ev.assigned.get(v), depth);
+    if (!h && v.kind === 'param') {
+      h = ev.signalParam.get(v.decl) || null;
+      if (!h) {
+        // every call site passes something whose meaning is known, and they all agree
+        const at = paramIndex(v);
+        if (at) {
+          const seen = ev.callArgs.get(at.fv).map((args) => (args[at.i] ? exprHint(args[at.i], depth + 1) : null));
+          if (seen.length && seen.every((x) => x && x === seen[0]) && !GENERIC_HINTS.has(seen[0])) h = seen[0];
+        }
+      }
+    }
+    return h;
+  }
+
   const pick = (v) => {
     let base = null;
     // evidence from how the variable is used and what it is related to (src/nexus/roles.js); consulted first
     const role = roleHints && v.decl ? roleHints.get(v.decl) : null;
     if (role && isIdentifier(role.name)) base = role.name;
     if (!base && v.kind === 'for') base = loopHint.get(v.decl) || null;
+    if (!base) base = evidenceHint(v);
     if (!base && v.init) base = hintFromInit(v.init);
     if (!base && v.kind === 'param') base = 'param';
     if (!base && v.kind === 'localfunc') base = 'fn';

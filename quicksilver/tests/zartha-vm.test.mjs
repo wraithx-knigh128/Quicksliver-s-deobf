@@ -85,17 +85,28 @@ test('zartha: the generator\'s defective templates are read as what they were ma
   assert.match(out, /print\("primes: "/);
 });
 
-test('zartha: strings masked with a per-constant key the generator never stores are reported as not recovered, and the confidence says so', () => {
-  let seen = 0;
+test('zartha: strings masked with a per-constant key the generator never stores are read back by key search where the evidence decides, and the rest are reported as not recovered', () => {
+  // Prompt XXVII: before, every one of these strings stayed masked. Now each is read back when exactly one of its 30 readings is a name the
+  // runtime defines, or is clearly more word-like than every other (src/recover/keysearch.js); the rest stay masked and are reported.
+  let seen = 0; let decided = 0; let undecided = 0;
   for (const f of files.filter(masked)) {
     const r = recover(read(path.join(dir, f)), {});
     const step = r.steps.find((s) => s.id === 'zartha.vm');
-    assert.ok(step.detail.masked > 0, `${f}: masked ${step.detail.masked}`);
-    assert.notEqual(r.confidence.level, 'high', f);
-    assert.ok(r.report.unresolved.some((u) => /masked with a key per constant/.test(u.text)), f);
+    const ks = step.detail.keysearch;
+    assert.ok(ks && ks.decided > 0, `${f}: key search decided nothing`);
+    decided += ks.decided;
+    if (step.detail.masked > 0) {
+      undecided += step.detail.masked;
+      assert.notEqual(r.confidence.level, 'high', f);
+      assert.ok(r.report.unresolved.some((u) => /could not be decided by key search/.test(u.text)), f);
+    } else {
+      assert.equal(r.report.unresolved.length, 0, f);
+    }
     seen++;
   }
   assert.equal(seen, 15);
+  assert.ok(decided >= 380, `decided ${decided}`);
+  assert.ok(undecided > 0, 'some strings are genuinely undecidable (one or two characters, or two readings equally word-like) and stay reported');
 });
 
 test('zartha: a build the generator wrote as invalid Lua (its LOADBOOL template) is mended where the damage is, and the report says so', () => {

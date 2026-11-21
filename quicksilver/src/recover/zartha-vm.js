@@ -22,6 +22,7 @@
 // instruction it was made from (its SETGLOBAL stores the name instead of the value, its LOADBOOL reads a scratch cell it never wrote) the instruction is recovered as the one the
 // generator meant, which is what the program was, and the report says the build does not run the way the program did.
 
+import { rankReadings } from './keysearch.js';
 import { print } from '../core/printer.js';
 import { dumpChunk51 } from '../sandbox/bytecode.js';
 import { encode, maxStack } from './ironbrew.js';
@@ -458,6 +459,72 @@ function mapOf(table) {
   return out;
 }
 
+/**
+ * Zartha's constant protection masks each string constant with `bxor(byte, key)`, key = math.random(2, 30), and writes no key and no working
+ * decryptor (its template is a stub). Each string is read back from the evidence of how the program uses it: names of globals and methods
+ * first (they must be identifiers, and most are names the runtime defines), then the remaining strings, with the method each is passed to
+ * as context (a string handed to match / gsub / find / gmatch is a pattern). Undecided strings stay masked and are counted.
+ */
+function unmaskConstants(code, constants, acc, label) {
+  const out = constants.slice();
+  const undecided = new Set();
+  const role = new Map();
+  const K = (x) => (x >= 256 ? x - 256 : -1);
+  for (const i of code) {
+    if (i.op === 'GetGlobal' || i.op === 'SetGlobal') role.set(i.b, 'global');
+    else if (i.op === 'Self' && K(i.c) >= 0) role.set(K(i.c), 'method');
+    else if (i.op === 'GetTable' && K(i.c) >= 0 && !role.has(K(i.c))) role.set(K(i.c), 'field');
+    else if (i.op === 'SetTable' && K(i.b) >= 0 && !role.has(K(i.b))) role.set(K(i.b), 'field');
+  }
+  // only constants an instruction reads are the program's: the rest of the table is the generator's padding (FakeConstants), never read
+  const read = new Set();
+  const NOT_RK = new Set(['Jmp', 'ForLoop', 'ForPrep', 'Call', 'TailCall', 'Return', 'VarArg', 'SetList', 'TForLoop', 'Closure', 'LoadBool']);
+  for (const i of code) {
+    if (i.op === 'LoadConst' || i.op === 'GetGlobal' || i.op === 'SetGlobal') { read.add(i.b); continue; }
+    if (NOT_RK.has(i.op)) continue;
+    for (const f of ['b', 'c']) if (i[f] >= 256) read.add(i[f] - 256);
+  }
+  const decide = (k, r) => {
+    const c = constants[k];
+    if (typeof c !== 'string' || !read.has(k)) return;
+    const res = rankReadings(c, { role: r });
+    acc.keysearch.strings++;
+    if (res.decided && res.key === 0) { acc.keysearch.plain++; return; }
+    if (res.decided) {
+      out[k] = res.text;
+      acc.keysearch.decided++;
+      if (res.why.startsWith('the only reading that is a name')) acc.keysearch.byName++;
+      acc.keysearch.keys[res.key] = (acc.keysearch.keys[res.key] || 0) + 1;
+    } else {
+      undecided.add(k);
+      acc.keysearch.ambiguous.push({ where: label, masked: c, why: res.why, best: res.ranked.slice(0, 3).map((x) => x.text) });
+    }
+  };
+  // names first: they are what tells the other strings their role
+  for (const [k, r] of role) if (r === 'global' || r === 'method') decide(k, r);
+  // what a string is handed to tells what it is: a pattern (match/gsub/find/gmatch), a format (format), or select()'s '#'
+  const ARG_ROLE = { match: 'pattern', gmatch: 'pattern', gsub: 'pattern', find: 'pattern', format: 'format' };
+  const argAt = (from, reg, callReg, r) => {
+    for (let j = from; j < code.length && j < from + 8; j++) {
+      const n = code[j];
+      if (n.op === 'Call' && n.a === callReg) break;
+      if (n.op === 'LoadConst' && n.a === reg && !role.has(n.b)) { role.set(n.b, r); break; }
+    }
+  };
+  code.forEach((i, at) => {
+    // obj:method(arg): the first argument after self is loaded into A+2; ("fmt"):format(...) loads the string itself into B before the SELF
+    if (i.op === 'Self' && K(i.c) >= 0 && ARG_ROLE[out[K(i.c)]]) {
+      argAt(at + 1, i.a + 2, i.a, ARG_ROLE[out[K(i.c)]]);
+      if (out[K(i.c)] === 'format') for (let j = at - 1; j >= 0 && j >= at - 4; j--) if (code[j].op === 'LoadConst' && code[j].a === i.b) { if (!role.has(code[j].b)) role.set(code[j].b, 'format'); break; }
+    }
+    // string.format(fmt, ...), string.match(s, pattern): the function is fetched into A, its arguments follow
+    if (i.op === 'GetTable' && K(i.c) >= 0 && ARG_ROLE[out[K(i.c)]]) argAt(at + 1, i.a + (ARG_ROLE[out[K(i.c)]] === 'format' ? 1 : 2), i.a, ARG_ROLE[out[K(i.c)]]);
+    if (i.op === 'GetGlobal' && out[i.b] === 'select') argAt(at + 1, i.a + 1, i.a, 'select');
+  });
+  constants.forEach((c, k) => { if (typeof c === 'string' && !(role.get(k) === 'global' || role.get(k) === 'method')) decide(k, role.get(k) || 'value'); });
+  return { constants: out, undecided };
+}
+
 function liftBody({ loop, names, roles, constants, map, shift, label, acc }) {
   const body = loop.body.slice(0, -1);
   const tail = loop.body[loop.body.length - 1];
@@ -524,8 +591,11 @@ function liftBody({ loop, names, roles, constants, map, shift, label, acc }) {
   }
   const takesOpen = (i) => i && ((i.op === 'Call' || i.op === 'TailCall' || i.op === 'Return' || i.op === 'SetList') && i.b === 0);
   code.forEach((i, k) => { if (i.op === 'Call' && i.c === 0 && !takesOpen(code[k + 1])) i.c = 1; });
+  // constant protection: every string was masked with its own key (2..30) that the build does not contain; read back by evidence (src/recover/keysearch.js)
+  let undecided = null;
+  if (acc.unmask) ({ constants, undecided } = unmaskConstants(code, constants, acc, label));
   // masked strings: a name a global or a method is called by is an identifier in any program that was written; a string with control characters in it is not text
-  const maskedAt = new Set();
+  const maskedAt = new Set(undecided || []);
   constants.forEach((c, k) => { if (typeof c === 'string' && /[\x00-\x08\x0e-\x1f\x7f]/.test(c)) maskedAt.add(k); });
   for (const i of code) {
     const k = i.op === 'GetGlobal' || i.op === 'SetGlobal' ? i.b : i.op === 'Self' && i.c >= 256 ? i.c - 256 : -1;
@@ -564,14 +634,19 @@ export function liftZarthaVm(ast) {
   if (!table || table.type !== 'Table') fail('the encrypted constants of the program were not found');
   const envFn = find(ast, (n) => n.type === 'Func' && n.body.includes(header.head))[0];
   const roles = rolesOf([], { unpack: header.unpack, ENV: envFn && envFn.params[0] && (envFn.params[0].name || envFn.params[0]), VE: names.VE, S: names.S, T: names.T, U: names.U, P: names.P, TOP: names.TOP, K: names.K });
-  const acc = { masked: 0 };
-  const r = liftBody({ loop: outer, names, roles, constants: decodeTable(table, shift), map: null, shift, label: 'the program', acc });
+  let acc = { masked: 0 };
+  let r = liftBody({ loop: outer, names, roles, constants: decodeTable(table, shift), map: null, shift, label: 'the program', acc });
+  // strings that read as masked mean the build used constant protection, which masks every string: they are read again, all of them, by key search
+  if (acc.masked > 0) {
+    acc = { masked: 0, unmask: true, keysearch: { strings: 0, plain: 0, decided: 0, byName: 0, ambiguous: [], keys: {} } };
+    r = liftBody({ loop: outer, names, roles, constants: decodeTable(table, shift), map: null, shift, label: 'the program', acc });
+  }
   r.fn.isVararg = true;
   const bin = dumpChunk51({ main: r.fn, header: { little: true, intSize: 4, sizeT: 8, numSize: 8 } }, { strip: true });
   let functions = 0; let instructions = 0;
   const count = (f) => { functions++; instructions += f.code.length; f.protos.forEach(count); };
   count(r.fn);
-  return { bytes: bin, stats: { functions, instructions, constants: r.fn.k.length, masked: acc.masked } };
+  return { bytes: bin, stats: { functions, instructions, constants: r.fn.k.length, masked: acc.masked, keysearch: acc.keysearch || null } };
 }
 
 /** Is this the shape of a Zartha build: the header that names the standard library, the register declaration of the machine and a dispatch loop. */

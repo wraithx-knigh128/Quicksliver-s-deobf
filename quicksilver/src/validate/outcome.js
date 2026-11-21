@@ -90,6 +90,8 @@ export function classifyOutcome(ev) {
   // a reconstruction whose functions are mostly signatures without bodies has not recovered them (Prompt XXVI)
   if (rec.bodies && rec.bodies.missingConstants > 0) left.push(`${rec.bodies.missingConstants} constant(s) are missing, written as (nil)[k] (holes, not code)`);
   if (ev.obfuscated && rec.bodies && rec.bodies.total >= 4 && rec.bodies.empty * 2 >= rec.bodies.total) left.push(`${rec.bodies.empty} of its ${rec.bodies.total} functions have no body (a signature is not a recovered function)`);
+  // placeholder names do not change behaviour, so they do not change the class; they are said, so readable code is not mistaken for recovered names
+  if (ev.obfuscated && rec.naming && rec.naming.locals >= 4 && rec.naming.placeholders * 2 >= rec.naming.locals) met.push(`note: ${rec.naming.placeholders} of ${rec.naming.locals} local names are placeholders (the obfuscator removed the names and nothing in the program states them)`);
 
   // behavioural validation
   const b = ev.behaviour;

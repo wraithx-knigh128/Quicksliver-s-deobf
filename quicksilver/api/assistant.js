@@ -10,6 +10,7 @@
 import crypto from 'node:crypto';
 import { askAssistant } from './_lib/assistant-ai.js';
 import { ResearchAIError, configFromEnv } from './_lib/research-ai.js';
+import { checkEntitlement } from './_lib/entitlement.js';
 
 const json = (res, status, body, headers = {}) => {
   res.statusCode = status;
@@ -39,6 +40,8 @@ export function createHandler({ env = process.env, aiConfig = null, now = () => 
     }
     if (req.method !== 'POST') return json(res, 405, { ok: false, error: { code: 'method', message: 'POST a case file, or GET ?check=1.' } }, { Allow: 'GET, POST' });
     if (mode === 'off') return json(res, 501, { ok: false, error: { code: 'not_configured', message: 'The research assistant is switched off on this deployment (set QS_ASSISTANT_MODE; see docs/RECONSTRUCT.md).' } });
+    const ent = await checkEntitlement(req, 'assistant', { env });
+    if (!ent.ok) return json(res, ent.status, { ok: false, error: { code: ent.code, message: ent.message } });
     if (mode === 'token' && !same(req.headers['x-assistant-token'] || '', env.QS_ASSISTANT_TOKEN || '\0')) return json(res, 401, { ok: false, error: { code: 'unauthorized', message: 'Missing or wrong x-assistant-token.' } });
     const limit = Number(env.QS_ASSISTANT_RPM) || 4;
     const t = now();
