@@ -87,7 +87,14 @@ What the person is told about where the program came from (`SOURCE` in `unified.
 
 Names, measured over every corpus fixture with an original (`tools/audit/names.mjs`, 1,227 files; *anchored* = locals of the original whose initialiser states their name, e.g. a `GetService` call; *generic* = `_r3`, `a1`, `param`, `value`, `tbl` …):
 
-NAMES_TABLE
+| Pipeline · fixtures | Anchored names recovered | Generic locals | Generic parameters |
+|---|---|---|---|
+| Site (NEXUS on) · 107 VM-lifted | 32 → **81** of 119 | 1459 → 1458 of 2155 | 545 → 545 of 629 |
+| Site (NEXUS on) · 1,120 others | 574 → **783** of 1036 | 30136 → 30135 of 47982 | 9944 → 9941 of 13612 |
+| Engine (NEXUS off) · 107 VM-lifted | 80 → **81** of 119 | 1580 → 1579 of 2155 | 561 → 561 of 629 |
+| Engine (NEXUS off) · 1,120 others | 782 → **783** of 1036 | 31310 → 31308 of 47985 | 10113 → 10110 of 13612 |
+
+(`data/research/names-xxviii.json`; before = commit `ef27756`.) The site now recovers the names the program states for itself as well as the engine does (81 and 783, from 32 and 574). The generic-name counts barely move, and that is the honest result: the corpus programs are algorithms (`clamp(value, low, high)`, `gcd(a, b)`) whose parameters have no evidence for a name in the program, so they keep placeholders rather than invented names. Usage naming acts on Roblox API use: on the MoonVeil 2.0.26 sample listed in `tools/formats/samples.json` it named 10 `InputBegan` / `InputChanged` callback parameters `input` (previously `param1`); an early version also named a local holding `Enum` `input1` and a reused register `remote` — both caught by reading the diff, both guarded and tested.
 
 No VM instruction handling changed in this prompt; VM lifts are reported stage by stage (unresolved instructions, missing constants, empty bodies) instead of being folded into one verdict.
 
@@ -138,7 +145,34 @@ Only `transform` and `opacity` animate; there is no `filter` or `backdrop-filter
 
 ## 11. Tests
 
-TESTS_SECTION
+| Suite | Result |
+|---|---|
+| Unit (`npm test`, with the reference Lua oracle) | **1,252 tests: 1,245 pass, 0 fail, 7 skipped** (the skips need a local sample collection or a configured key) |
+| Browser (`npm run test:e2e`, Playwright / Chromium) | **88 tests: 88 pass** |
+| Live GitHub (`tools/live/github-unified.mjs`) | §3: raw retrieval → reconstruction verified; API paths not reachable from this environment |
+
+The 18 items of the prompt:
+
+| # | Item | Where it is tested |
+|---|---|---|
+| 1 | File | unit *a file is deobfuscated from its exact bytes*; e2e *an opened file runs the fourteen stages … ready to download* |
+| 2 | Paste | unit (same test: pasted text gives the same result); e2e mobile run |
+| 3 | GitHub loadstring | unit *a GitHub loadstring — the payload … reaches the same engine*; e2e *a pasted GitHub loadstring*; live run |
+| 4 | Raw URL | unit *a raw link and an API contents link*; live run |
+| 5 | API reference | unit (same test, `api.github.com/repos/…/contents/…`) |
+| 6 | Public repository retrieval | unit *a repository link lists the repository …*; e2e *a repository link retrieves the entry point* |
+| 7 | Dependency discovery | the same two tests (the named file is retrieved, an unnamed one is not) |
+| 8 | Secondary loader | unit *a loader that fetches another loader is followed …* (and a loop of loaders ends) |
+| 9 | Missing / deleted | unit *missing, deleted, private and unauthorised sources …*; e2e (missing payload); live run |
+| 10 | Private / authorisation | the same unit test (private or deleted, token rejected, licence) |
+| 11 | VM reconstruction | unit *VM reconstruction is reported from the engine's own evidence*; live run (Zartha lifted from GitHub) |
+| 12 | Generic parameter detection | unit *placeholder parameters, empty bodies … are warnings*; `xxvii-reconstruction` naming evidence |
+| 13 | Incomplete function detection | the same unit test (empty bodies, missing constants, unresolved places) |
+| 14 | Syntax | unit *an input that does not parse is invalid input*; unit *a retrieved file that is Lua but does not parse* |
+| 15 | Behaviour | unit *behaviour is compared only when asked, and a comparison decides the class* |
+| 16 | Premium enforcement | e2e *a Premium refusal from the server is shown as an authorisation result*; `xxvii-github` / `xxvii-premium-py` (server side) |
+| 17 | Mobile | e2e *v1.8 mobile: the portrait artwork, and the page and a result fit a phone* |
+| 18 | Animation performance | e2e *v1.8 motion* (transform / opacity only, no filters, paused, reduced motion); `data/research/perf-xxviii.json` |
 
 ## 12. Limitations
 
