@@ -894,10 +894,18 @@ test('From link explains itself when the server cannot fetch', { skip }, async (
   await page.click('#act-link');
   await page.waitForSelector('.modal');
   assert.match(await page.textContent('.modal'), /It is only read, never run/);
-  await page.fill('.modal input', 'https://raw.githubusercontent.com/a/b/main/x.lua');
+  // a non-GitHub host goes through the general fetcher: its absence is a toast
+  await page.fill('.modal input[type=url]', 'https://pastebin.com/raw/abc123');
   await page.click('.modal button:has-text("Get file")');
   await page.waitForSelector('#toast:not([hidden])');
   assert.match(await page.textContent('#toast'), /deployed site/);
+  // a GitHub link goes through GitHub retrieval (v1.8): its absence is said in the failure dialog
+  await page.click('#act-link');
+  await page.waitForSelector('.modal');
+  await page.fill('.modal input[type=url]', 'https://raw.githubusercontent.com/a/b/main/x.lua');
+  await page.click('.modal button:has-text("Get file")');
+  await page.waitForFunction(() => /deployed site/.test((document.querySelector('.modal') || {}).textContent || ''), null, { timeout: 30_000 });
+  await page.keyboard.press('Escape');
   await ctx.close();
 });
 
@@ -1150,7 +1158,9 @@ test('Reconstruct: a failure is explained, not hidden (service refuses an unatte
 // ---- regressions found in the Phase VII audit ------------------------------------------------------------------------------------------------
 test('Reconstruct: a result belongs to the input it was made from (editing the text and coming back does not show the old result for the new text)', { skip: skipRecon() || skip, timeout: 120_000 }, async () => {
   const { page, ctx } = await newPage();
-  await page.fill('textarea.editor', 'local t = {}\\nprint(#t)');
+  // valid Lua (a literal backslash-n here used to make a script that does not compile; since Prompt XXIV the engine says a run that observed no
+  // program is not a result, which is right, so the test needs a script that runs)
+  await page.fill('textarea.editor', 'local t = {}\nprint(#t)');
   await page.click('#tab-reconstruct');
   await page.check('#recon-attest');
   await page.click('#recon-run');
@@ -1259,6 +1269,8 @@ test('Loader Intelligence: retrieves only after confirmation, measures each stag
     if (url.endsWith('/ib2gz/raw')) return route.fulfill({ status: 200, headers: { 'content-type': 'application/octet-stream' }, body: fs.readFileSync(path.join(remote, 'ib2.b64gz.txt')) });
     return route.fulfill({ status: 404, contentType: 'application/json', body: JSON.stringify({ error: 'The site answered 404.' }) });
   });
+  // GitHub stages go through /api/github (Prompt XXVII); it answers as GitHub would for a file that is not in the repository
+  await page.route('**/api/github', (route) => { asked.push(JSON.parse(route.request().postData() || '{}').url); route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: false, outcome: 'file-missing', label: 'The repository exists, but the file is not in it', message: 'The repository exists, but that file is not in it.' }) }); });
   await page.fill('textarea.editor', 'loadstring(game:HttpGet("https://rentry.co/ib2gz/raw"))()\nloadstring(game:HttpGet("https://raw.githubusercontent.com/a/b/main/missing.lua"))()\nrequire(4242424242)\n');
   await page.click('#act-loader');
   await page.waitForSelector('.intel-head');
@@ -1273,7 +1285,7 @@ test('Loader Intelligence: retrieves only after confirmation, measures each stag
   assert.equal(rows.length, 3);
   // Prompt XXI: "validated" only because the reconstruction was run next to the retrieved payload and behaved identically
   assert.match(rows[0], /base64 → gzip.*IronBrew 2.*confidence high.*behaviour identical.*Fully reconstructed and behaviourally validated/);
-  assert.match(rows[1], /404.*Payload unavailable/);
+  assert.match(rows[1], /file is not in it.*Payload unavailable/);
   assert.match(rows[2], /4242424242.*not requested.*Authorization unavailable/, 'the asset has an owner route (Open Cloud) but no key here, so it is not requested');
   assert.ok(!asked.some((u) => /4242424242/.test(u)));
   const [dl] = await Promise.all([page.waitForEvent('download'), page.click('button:has-text("Report (.md)")')]);
@@ -1497,11 +1509,14 @@ test('v1.8 sections: the landing and the title bar open the VM Reverser and Load
   await ctx.close();
 });
 
-test('v1.8 input recognition: a GitHub link pasted in the editor goes to retrieval, a loader to the Loader Analysis', { skip }, async () => {
+test('v1.8 input recognition: a GitHub link pasted in the editor goes to retrieval; a loader is deobfuscated and its Loader Analysis runs too', { skip }, async () => {
   const { page, ctx } = await newPage();
   await page.fill('textarea.editor', 'loadstring(game:HttpGet("https://raw.githubusercontent.com/alice/tools/main/main.lua"))()');
   await page.click('#act-recover');
-  await page.waitForSelector('#tab-loader[aria-selected=true]');
+  await idle(page);
+  // deobfuscated like any script, and its Loader Analysis ran too (listed in Loader & GitHub)
+  assert.match(await page.textContent('#notes'), /This is a loader that fetches 1 GitHub file/);
+  await page.waitForFunction(() => /raw\.githubusercontent\.com/.test(document.querySelector('#view-loader').textContent), null, { timeout: 30_000 });
   await page.click('#tab-work');
   await page.fill('textarea.editor', 'https://github.com/alice/tools/blob/main/a.lua');
   await page.click('#act-recover');
@@ -1513,7 +1528,7 @@ test('v1.8 input recognition: a GitHub link pasted in the editor goes to retriev
 
 test('v1.8 motion: the scene animates only transform/opacity, stops in the workspace, and stops entirely under reduced motion', { skip }, async () => {
   const { page, ctx } = await newPage({}, { landing: true });
-  const anim = await page.evaluate(() => document.getAnimations().map((a) => ({ name: a.animationName, props: Object.keys((a.effect.getKeyframes()[0]) || {}).filter((k) => !['offset', 'easing', 'composite', 'computedOffset'].includes(k)) })));
+  const anim = await page.evaluate(() => document.getAnimations().filter((a) => a instanceof CSSAnimation).map((a) => ({ name: a.animationName, props: Object.keys((a.effect.getKeyframes()[0]) || {}).filter((k) => !['offset', 'easing', 'composite', 'computedOffset'].includes(k)) })));
   assert.ok(anim.length >= 8, `scene animations running: ${anim.length}`);
   for (const a of anim) for (const p of a.props) assert.ok(['transform', 'opacity'].includes(p), `${a.name} animates ${p}`);
   await page.click('.cta .btn-hero.primary');
@@ -1523,7 +1538,7 @@ test('v1.8 motion: the scene animates only transform/opacity, stops in the works
   assert.equal(running, 0, 'nothing in the scene moves while the workspace is open');
   await ctx.close();
   const reduced = await newPage({ reducedMotion: 'reduce' }, { landing: true });
-  const n = await reduced.page.evaluate(() => document.getAnimations().length);
+  const n = await reduced.page.evaluate(() => document.getAnimations().filter((a) => a instanceof CSSAnimation).length);
   assert.equal(n, 0, 'reduced motion: no animation at all');
   assert.equal(await reduced.page.evaluate(() => getComputedStyle(document.querySelector('.wordmark')).opacity), '1', 'content is fully shown without the entrance animation');
   await reduced.ctx.close();
@@ -1537,5 +1552,30 @@ test('v1.8 mobile: the landing and the workspace fit a phone without horizontal 
   await page.click('.cta .btn-hero.primary');
   await page.waitForSelector('#shell', { state: 'visible' });
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth) <= 392);
+  await ctx.close();
+});
+
+test('v1.8 VM Reverser: a reconstruction shows its VM, key-search and naming evidence and the verdict, and is kept in the local history (metadata only)', { skip }, async () => {
+  const { page, ctx, problems } = await newPage();
+  const file = path.join(root, 'tests/corpus/obfuscated/zartha/s07_roblox_style__constants.lua');
+  await loadFile(page, file);
+  await page.click('#act-recover');
+  await idle(page);
+  await page.click('.titlebar .sections [data-go=vm]');
+  await page.waitForSelector('#tab-vm[aria-selected=true]');
+  const text = await page.textContent('#view-vm');
+  assert.match(text, /Virtual machine.*zartha: lifted back to source/s);
+  // the v1.8 theme must not cover the editor's highlighting layer (an opaque background on the text area hid every line once)
+  await page.click('#tab-work');
+  assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('textarea.editor')).backgroundColor), 'rgba(0, 0, 0, 0)');
+  await page.click('.titlebar .sections [data-go=vm]');
+  assert.match(text, /Masked strings.*39 read back by key search/s);
+  assert.match(text, /Names.*locals named from evidence/s);
+  assert.match(text, /Verdict.*Syntax-valid/si);
+  assert.match(text, /Recent results in this browser/);
+  const stored = await page.evaluate(() => localStorage.getItem('qs.history.v1'));
+  assert.match(stored, /s07_roblox_style__constants\.lua/);
+  assert.doesNotMatch(stored, /GetService|Humanoid/, 'the history holds no script text and no output');
+  assert.deepEqual(problems, []);
   await ctx.close();
 });

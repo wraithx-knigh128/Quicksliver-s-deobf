@@ -791,6 +791,7 @@ async function runRecover({ quiet = false } = {}) {
   const r = await run('recover', options, 'Recovering', { limits: { timeoutMs: 180_000 } });
   if (!r || version !== S.version) return null;
   S.recovered = r;
+  remember(r);
   if (S.tab === 'vm') queueMicrotask(() => renderVm());
   S.verify = null;
   S.detection = r.detection || S.detection;
@@ -1016,8 +1017,11 @@ async function onGitHubFile(name, bytes, meta) {
   const where = meta.target ? `${meta.target.owner}/${meta.target.repo || meta.target.gist || ''}${meta.target.path ? `/${meta.target.path}` : ''}` : name;
   if (meta.contentClass === 'lua-invalid') S.notes.unshift({ kind: 'warn', text: `Retrieved ${where} from GitHub (sha-256 ${String(meta.sha256).slice(0, 12)}…). It looks like Lua but does not parse: ${meta.contentReason}` });
   const kind = recognizeInput(editor.value).kind;
-  const d = await runDetect({ quiet: true });
-  const obf = d && d.detection.families.find((f) => f.confidence >= 0.5);
+  // the automatic detection that loading starts may still be running: wait for a detection of this text rather than read "none" from a busy engine
+  let d = await runDetect({ quiet: true });
+  for (let i = 0; !d && i < 10; i++) { await new Promise((r) => setTimeout(r, 300)); d = await runDetect({ quiet: true }); }
+  if (!d) { S.notes.unshift({ kind: 'warn', text: `Retrieved ${where} from GitHub (sha-256 ${String(meta.sha256).slice(0, 12)}…), but it could not be analysed yet: use Detect or Deobfuscate.` }); renderAll(); return; }
+  const obf = d.detection.families.find((f) => f.confidence >= 0.5);
   if (kind === 'loader') {
     S.notes.unshift({ kind: 'info', text: `Retrieved ${where} from GitHub. It is a loader (it downloads and runs more code), so the Loader Analysis runs next.` });
     renderAll();
@@ -1733,14 +1737,15 @@ el.btn.recover.addEventListener('click', async () => {
   // what was submitted decides the pipeline: a GitHub link is retrieved first, a loader is analysed as a loader, a script is deobfuscated
   const what = recognizeInput(editor.value);
   if (what.kind === 'github-link') { await openLinkDialog(editor.value.trim()); return; }
-  if (what.kind === 'loader') {
-    // a loader's program is not in the file: its analysis says what it fetches and offers Loader Intelligence (retrieve → reconstruct each stage)
-    toast(`This is a loader${what.github && what.github.length ? ` that fetches ${what.github.length} GitHub file${what.github.length > 1 ? 's' : ''}` : ''}: its program is not in the file. Showing the Loader Analysis; use Loader Intelligence there to retrieve and reconstruct what it loads.`, 8000);
-    switchTab('loader');
+  // a loader is deobfuscated like any script (it may be obfuscated itself, and the result says its program is not in the file), and its Loader
+  // Analysis runs as well, so what it downloads is listed in Loader & GitHub with the way to retrieve it — the textual test alone never takes a
+  // script away from the deobfuscator
+  const r = await runRecover();
+  if (what.kind === 'loader' && r) {
     await runLoader();
-    return;
+    S.notes.unshift({ kind: 'info', text: `This is a loader${what.github && what.github.length ? ` that fetches ${what.github.length} GitHub file${what.github.length > 1 ? 's' : ''}` : ''}: its program is downloaded when it runs. Loader & GitHub lists what it fetches; Loader Intelligence there retrieves each stage and reconstructs it.` });
+    renderAll();
   }
-  await runRecover();
 });
 el.btn.trace.addEventListener('click', () => runTrace());
 el.btn.compare.addEventListener('click', () => runCompare());
@@ -1829,6 +1834,20 @@ const VM_FAMILIES = [
   { name: 'Boronide · IronBrew 3 · PSU · MoonSec V3 · Synapse Xen', st: 'identified', what: 'Identified; the source is reported as unresolved, never as recovered.' },
 ];
 
+// Processing history: what was reconstructed in this browser, as metadata only (name, size, a hash, the verdict, when) — never the script or the
+// output, which stay in the page's memory. Kept in this browser's storage, last 20; cleared with one button.
+const HISTORY_KEY = 'qs.history.v1';
+const readHistory = () => { try { const v = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); return Array.isArray(v) ? v : []; } catch { return []; } };
+function remember(r) {
+  if (!r || !r.outcome) return;
+  const text = S.input || '';
+  let h = 0x811c9dc5;   // FNV-1a of the input, to tell runs of the same file apart (not a security hash)
+  for (let i = 0; i < text.length; i++) { h ^= text.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+  const top = S.detection && S.detection.families.find((f) => f.confidence >= 0.5);
+  const entry = { at: new Date().toISOString(), name: String(S.name || 'pasted script').slice(0, 80), bytes: text.length, fp: h.toString(16).padStart(8, '0'), family: top ? top.name : null, outcome: r.outcome.outcome, label: r.outcome.label };
+  try { localStorage.setItem(HISTORY_KEY, JSON.stringify([entry, ...readHistory()].slice(0, 20))); } catch { /* storage full or blocked: no history */ }
+}
+
 function renderVm() {
   const r = S.recovered;
   const hero = h('div.qs-hero',
@@ -1861,6 +1880,13 @@ function renderVm() {
     if (oc.reasons && oc.reasons.length) parts.push(h('div.section', h('h3', 'Why this verdict'), h('ul', oc.reasons.map((x) => h('li', x)))));
   } else {
     parts.push(h('p.note.info', 'Nothing has been reversed yet. Open a protected script (or a GitHub link in Loader & GitHub) and use “Reverse the script in the editor”.'));
+  }
+  const hist = readHistory();
+  if (hist.length) {
+    parts.push(h('div.section', h('h3', 'Recent results in this browser'),
+      h('p.faint', 'Names, sizes and verdicts only; scripts and outputs are never stored.'),
+      h('ul.stages', hist.slice(0, 8).map((e) => h(`li.${e.outcome === 'validated' || e.outcome === 'syntax-valid-unverified' ? 'ok' : e.outcome === 'partial' ? 'warn' : 'bad'}`, h('span.dot'), h('b', e.name), h('span', `${e.family ? `${e.family} · ` : ''}${e.label} · ${fmtBytes(e.bytes)} · ${new Date(e.at).toLocaleString()}`)))),
+      h('button.btn.small', { type: 'button', onclick: () => { try { localStorage.removeItem(HISTORY_KEY); } catch { /* ignore */ } renderVm(); } }, 'Clear history')));
   }
   parts.push(h('div.section', h('h3', 'What the reverser reads'), h('div.vm-grid', VM_FAMILIES.map((f) => h('div.vm-card', h('h4', f.name), h('p', f.what), h(`span.st.${f.st}`, f.st === 'lifted' ? 'Lifted to source' : f.st === 'partial' ? 'Read, not lifted' : 'Identified only'))))));
   replace(views.vm, h('div.report', parts));

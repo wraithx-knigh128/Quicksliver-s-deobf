@@ -91,6 +91,7 @@ export async function retrieveGitHub(url, ctx) {
       r = await githubRequest(chosen, { mode: 'file' });
     }
     if (!r.ok) { busy(null); await showFailure(r); return r; }
+    busy(null);   // the retrieval is over: what follows (detection, reconstruction) runs as the page's own operations, which refuse while it is busy
     await ctx.onFile(r.file.name, r.file.bytes, { source: 'github', target: r.target, sha256: r.file.sha256, contentClass: r.file.contentClass, contentReason: r.file.contentReason });
     return r;
   } finally { busy(null); }

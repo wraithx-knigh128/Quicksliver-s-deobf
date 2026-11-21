@@ -10866,10 +10866,12 @@
     "files": 218,
     "parsed": 217,
     "expected": "luraph",
-    "identified": 206,
-    "unidentified": 4,
+    "identified": 203,
+    "unidentified": 7,
     "classOfUnidentified": {
-     "minified-script": 4
+     "plain-script": 2,
+     "minified-script": 4,
+     "remote-library-script": 1
     }
    },
    {

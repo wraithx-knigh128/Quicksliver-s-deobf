@@ -132,3 +132,42 @@ test('evidence: every result counts its placeholder names, and the outcome says 
   assert.ok(r.outcome.met.some((m) => /local names are placeholders/.test(m)));
   assert.equal(r.outcome.outcome, 'syntax-valid-unverified', 'names do not change what the program does, so they do not change the class');
 });
+
+// ---- the site's pipeline (NEXUS) classes a lifted program as the plain pipeline does ---------------------------------------------------
+
+test('site mode: a program a VM lifter rebuilt is not called "not deobfuscated" because its global names were encrypted in the input', () => {
+  // Prompt XXVII defect: NEXUS (always on in the page) marked lifted programs whose globals are named only in the VM's data as "inconsistent",
+  // which lowered them to minimal: 49 Zartha, 30 AzureVM, 7 LuaXen and 4 FusGato builds were shown as not deobfuscated
+  const dirs = { zartha: 54, azurevm: 30, fusgato: 4, luaxen: 7 };
+  let checked = 0;
+  for (const [t, max] of Object.entries(dirs)) {
+    const d = path.join(here, 'corpus', 'obfuscated', t);
+    for (const f of fs.readdirSync(d).filter((x) => x.endsWith('.lua')).slice(0, max)) {
+      const src = read(path.join(d, f));
+      const plain = recoverSource(src, {});
+      const site = recoverSource(src, { nexus: true });
+      assert.equal(site.outcome.outcome, plain.outcome.outcome, `${t}/${f}: site ${site.outcome.outcome} (${(site.confidence && site.confidence.loweredBy || []).join('; ')}), plain ${plain.outcome.outcome}`);
+      checked++;
+    }
+  }
+  assert.ok(checked >= 90, `checked ${checked}`);
+});
+
+test('site mode: an input that parses only after a documented repair goes to the plain pipeline, not to "invalid input"', () => {
+  const r = recoverSource(read(path.join(zdir, 's06_combined__default.lua')), { nexus: true });
+  assert.notEqual(r.outcome.outcome, 'invalid-input');
+  assert.ok(r.outcome.met.some((m) => /after a documented repair/.test(m)));
+  assert.equal(recoverSource('local x = = 1', { nexus: true }).outcome.outcome, 'invalid-input', 'a broken input is still invalid');
+});
+
+test('detection: Luraph\'s build-flag macros are not evidence that a file was obfuscated by Luraph (false positive found in Prompt XXVII)', async () => {
+  const { detect } = await import('../src/detect/detect.js');
+  const top = (src) => (detect(src).families || []).find((f) => f.confidence >= 0.5);
+  // a decompiler's plain output that defines fallback stubs for the macros (the user's Test 8 comparison file has exactly this)
+  assert.equal(top('loadstring([[\n    function LPH_NO_VIRTUALIZE(f) return f end;\n]])()\nlocal x = LPH_NO_VIRTUALIZE(function() return 1 end)\nprint(x())'), undefined);
+  assert.equal(top('if not LPH_OBFUSCATED then LPH_JIT_MAX = function(...) return ... end end\nprint(1)'), undefined);
+  // source written for Luraph, using the macros without stubs: a hint below the threshold, not a detection
+  assert.equal(top('local f = LPH_NO_VIRTUALIZE(function() print("x") end)\nf()'), undefined);
+  // the banner still decides
+  assert.equal(top('-- This file was protected using Luraph Obfuscator v14.4.1 [https://lura.ph/]\nprint(1)').id, 'luraph');
+});

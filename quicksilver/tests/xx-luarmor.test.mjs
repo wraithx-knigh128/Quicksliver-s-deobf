@@ -60,8 +60,17 @@ test('unrelated scripts are not Luarmor; a mention alone is not a loader', () =>
   assert.equal(analyzeLuarmor('-- inspired by luarmor\nprint(1)'), null);
 });
 
-test('an obfuscated Luarmor loader is routed to the Deobfuscator instead of being called recovered', { skip: fs.existsSync(path.join(root, 'local', 'corpus', 'Luraph', 'Unknown', '0fd9546376a67403.lua')) ? false : 'local corpus not present' }, () => {
+test('a Luarmor loader written in plain Lua that only defines Luraph\'s macro stubs is read as it is (Prompt XXVII: it was called obfuscated)', { skip: fs.existsSync(path.join(root, 'local', 'corpus', 'Luraph', 'Unknown', '0fd9546376a67403.lua')) ? false : 'local corpus not present' }, () => {
+  // 1202 readable lines with `if LPH_OBFUSCATED == nil then LPH_NO_VIRTUALIZE = function(...) ... end`: source prepared for Luraph, not Luraph output.
+  // Until Prompt XXVII the macro names alone made it "Luraph 85 %", so this test asserted it needed deobfuscation; that was the false positive.
   const r = analyzeLuarmor(fs.readFileSync(path.join(root, 'local', 'corpus', 'Luraph', 'Unknown', '0fd9546376a67403.lua'), 'latin1'));
+  assert.equal(r.local.recoverable, 'full');
+  assert.ok(r.local.code);
+});
+
+test('a Luarmor loader that is itself protected is routed to the Deobfuscator instead of being called recovered', () => {
+  const protectedLoader = `-- This file was protected using Luraph Obfuscator v14.4.1 [https://lura.ph/]\n${BOOTSTRAP}`;
+  const r = analyzeLuarmor(protectedLoader);
   assert.equal(r.local.recoverable, 'needs-deobfuscation');
   assert.equal(r.local.code, null);
   assert.equal(r.operations[1].status, 'via-pipeline');

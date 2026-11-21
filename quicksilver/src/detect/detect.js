@@ -216,8 +216,13 @@ const RULES = {
   luraph: [
     rule('banner', 'banner', 0.97, (c) => { const m = /This file was (?:protected|generated) using Luraph Obfuscator v?([0-9][0-9.]*)/i.exec(c.src); return m ? { text: `Luraph banner (v${m[1]})`, version: m[1] } : false; }),
     rule('mention', 'banner', 0.5, (c) => /lura\.ph/i.test(c.src) && 'mentions lura.ph'),
-    // the macro names Luraph defines for its own build flags (read on files of the public collection that carry no banner)
-    rule('macros', 'structure', 0.85, (c) => /\bLPH_(?:NO_VIRTUALIZE|OBFUSCATED|JIT|ENCSTR|CRASH|NO_UPVALUES|SKIP)\b/.test(c.src) && 'the build-flag macros Luraph defines (LPH_NO_VIRTUALIZE, LPH_OBFUSCATED, ...)'),
+    // Luraph's build-flag macros (LPH_NO_VIRTUALIZE, LPH_OBFUSCATED, ...) belong to the *source* written for Luraph: Luraph compiles them away, so its
+    // output does not carry them. Prompt XXVII: as 0.85 evidence this only ever produced false positives — the 2 files of the public collection it
+    // decided were LuaObfuscator builds, and a decompiler's plain output that defines fallback stubs (`function LPH_NO_VIRTUALIZE(f) return f end`)
+    // was shown as Luraph-protected. Stubs defined in the file are no evidence at all; macros used without stubs are a hint below the threshold.
+    rule('macros', 'heuristic', 0.45, (c) => /\bLPH_(?:NO_VIRTUALIZE|OBFUSCATED|JIT|ENCSTR|CRASH|NO_UPVALUES|SKIP)\b/.test(c.src)
+      && !/(?:\bfunction\s+LPH_[A-Z_]+\s*\(|\bLPH_[A-Z_]+\s*=\s*function\b|\bnot\s+LPH_OBFUSCATED\b)/.test(c.src)
+      && 'uses the build-flag macros Luraph defines (LPH_NO_VIRTUALIZE, LPH_OBFUSCATED, ...): written to be protected by Luraph; the macros alone do not show that it was'),
     // the shape of a Luraph 14.x script without its banner: one `return({ name = function(...) ... })` table of VM handlers, and number literals spelled with capital 0X / 0B prefixes and underscores
     // Prompt XXIV: every Luraph version of a public collection (v1 to v15.2, 51 versions) keeps the program as data: the structure probe finds
     // an interpreter (38 to 184 handlers) in 38 versions and a compressed payload that one unpacks at run time in the rest. The banner is text

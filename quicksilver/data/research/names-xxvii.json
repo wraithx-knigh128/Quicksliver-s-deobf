@@ -1,0 +1,49 @@
+{
+ "measured": "2026-11-21",
+ "tool": "tools/audit/names.mjs",
+ "definition": "generic = a name the rebuilder gives without evidence (_r3, a1, up0, value, param, L_12, p1, v7) or a type-only fallback (str, num, fn, tbl, flag); anchors = locals of the original whose initialiser states their name (GetService, a constant field read, Instance.new, WaitForChild); anchoredRecovered = those names present in the output",
+ "before": {
+  "vmLifted": {
+   "files": 107,
+   "locals": 2222,
+   "generic": 1774,
+   "genericShare": 79.8,
+   "params": 633,
+   "genericParams": 633,
+   "anchors": 119,
+   "anchoredRecovered": 62
+  },
+  "other": {
+   "files": 1120,
+   "locals": 47985,
+   "generic": 31881,
+   "genericShare": 66.4,
+   "params": 13612,
+   "genericParams": 10475,
+   "anchors": 1036,
+   "anchoredRecovered": 782
+  }
+ },
+ "after": {
+  "vmLifted": {
+   "files": 107,
+   "locals": 2155,
+   "generic": 1580,
+   "genericShare": 73.3,
+   "params": 629,
+   "genericParams": 561,
+   "anchors": 119,
+   "anchoredRecovered": 80
+  },
+  "other": {
+   "files": 1120,
+   "locals": 47985,
+   "generic": 31310,
+   "genericShare": 65.2,
+   "params": 13612,
+   "genericParams": 10113,
+   "anchors": 1036,
+   "anchoredRecovered": 782
+  }
+ }
+}

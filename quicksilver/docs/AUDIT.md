@@ -374,7 +374,7 @@ One row per version and configuration, in the six categories of `src/core/metric
 | moonveil-2.0.26-rideafish | moonveil | 2.0.26 | 0.97 | yes | medium (0.7) | 0 | 16 |
 | moonveil-2.1.0-sample6 | moonveil | 2.1.0 | 0.97 | yes | high (0.85) | 0 | 18 |
 | moonveil-2.1.0-sample7 | moonveil | 2.1.0 | 0.97 | yes | high (0.85) | 0 | 16 |
-| snowveil-1-sample2 | snowveil | 1 | 0.97 | yes | low (0.35) | 0 | 5 |
+| snowveil-1-sample2 | snowveil | 1 | 0.97 | yes | minimal (0.25) | 0 | 5 |
 
 These rows rest on one to two public scripts per version (KNOWN-ISSUES 23): they say the engine reads the sample, not that it covers the tool.
 
@@ -390,14 +390,14 @@ Source: https://github.com/vyxonq-dev/obfuscator-samples at 82e582fcdd78, 748 fi
 | IronBrew1 | 25 | 25 | 24 | minified-script 1 |
 | IronBrew2 | 8 | 8 | 7 | - |
 | LuaObfuscator | 5 | 5 | 5 | - |
-| Luraph | 218 | 217 | 206 | minified-script 4 |
-| MinifiedLua | 23 | 23 | 0 | minified-script 16, bytecode 1, remote-library-script 1 |
+| Luraph | 218 | 217 | 203 | plain-script 2, minified-script 4, remote-library-script 1 |
+| MinifiedLua | 23 | 23 | 0 | bytecode 1, minified-script 7, remote-library-script 1 |
 | MoonSecV2 | 26 | 26 | 21 | numeric-array-loader 4, minified-script 1 |
 | MoonSecV3 | 23 | 23 | 23 | - |
 | MoonVeil | 76 | 76 | 76 | - |
 | PSU | 8 | 8 | 8 | - |
 | Prometheus | 238 | 236 | 230 | minified-script 5, not-lua 2 |
-| SynapseXen | 5 | 5 | 0 | minified-script 2, encoded-strings 1 |
+| SynapseXen | 5 | 5 | 3 | - |
 | Unknown | 24 | 24 | 0 | plain-script 3, encoded-strings 3, credit-entry 1, minified-script 5, bytecode 1 |
 | VM Compressed | 23 | 23 | 0 | remote-loader 6, remote-library-script 15 |
 | wYnFuscate | 15 | 15 | 15 | - |
@@ -467,7 +467,7 @@ Source: https://github.com/vyxonq-dev/obfuscator-samples at 82e582fcdd78, 748 fi
 * #48: **SnowVeil v1 is detected, not reconstructed**
 * #49: **Luraph without a banner: the version cannot be read from structure**
 * #50: **A reference-less claim for MoonVeil joins**: confidence is capped at medium
-* #51: **Zartha VM is lifted: 54 of 54 builds; 39 behave like the original program, 15 cannot be recovered in full**
+* #51: **Zartha VM is lifted: 54 of 54 builds; 39 behave like the original program, 15 cannot be recovered in full** *(updated in Prompt XXVII: masked strings are now read back by key search where the evidence decides; see row 
 * #52: **Zartha: the generator\'s own templates are defective**: SETGLOBAL stores the name instead of the value, LOADBOOL reads a cell it never wrote, LOADBOOL with a skip writes `\n\t` as text (s06 is invalid Lua), `_CRASH` an
 * #53: **Hercules `mod-VirtualMachine` s06 (1.6, 1.6.2, 2.0.0): the tool leaves a constant out of its own output**
 * #54: **IronBrew 2 `strings` stays at 84%, s08 at 57%**
@@ -490,4 +490,27 @@ Source: https://github.com/vyxonq-dev/obfuscator-samples at 82e582fcdd78, 748 fi
 * #71: **Owner providers are implemented and mock-tested, not tested against the live services**
 * #72: **No authorised retrieval route for Luarmor, Polsec, Panda Vault, LuaProt**
 * #73: **Roblox models: ZSTD chunks; Luau bytecode payloads**
+* #74: **Anatomy: decoder hypotheses need the sandbox and top-level (or unwrapped) decoders**
+* #75: **Learned rules generalise within a generator, rarely across builds**
+* #76: **Luarmor: the protected script is never in the loader**
+* #77: **Four VM lifts the engine rates "high" do not behave like their input**
+* #78: **Behaviour validation in the page uses the project's own interpreter**
+* #79: **Luarmor owner check: untested against the live service**
+* #80: **Behaviour validation needs the run to reach half of the program**
+* #81: **Voltfuscator 8.1: constants decoded, VM not lifted (Prompt XXII)**
+* #82: **Volt behaviour checks need an executor stand-in**
+* #83: **Luraph v15.1: no sample; v15.2: not confirmed to exist**
+* #84: **Luraph v15.0 lifts are syntax-valid but unverified**
+* #85: **LuaQ: the latest version cannot be established**
+* #86: **Luraph v15.1 / v15.2: no program observed**
+* #87: **Luraph 14.x handler-table form: not supported by the dynamic engine**
+* #88: **LuaObfuscator.com VM: constants read, instructions not rebuilt**
+* #89: **LPS v2 payload: Roblox buffer compression**
+* #90: **Boronide / herrtt v0.2.4, IronBrew 3, LPS v1, PSU, MoonSec V3, Synapse Xen: identified, not rebuilt**
+* #91: **Zartha constant protection: strings read back by key search, 79 left undecided**
+* #92: **Names: evidence only, so many locals stay placeholders**
+* #93: **GitHub: private and deleted repositories look the same without a token**
+* #94: **Premium is enforced on the server for server features only**
+* #95: **The landing scene costs a few per cent of one core while it is shown**
+* #96: **Fixed in Prompt XXVII: the site reported lifted VM programs as not deobfuscated**
 

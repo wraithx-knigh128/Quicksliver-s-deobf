@@ -109,7 +109,7 @@ h1, h2, h3, .section > h3, .drawer-head, .col-head h2 { font-family: var(--head)
 .gh-list .btn.chip { font-family: var(--mono); font-size: 12px; }
 
 /* the code panes: flat, dark, high contrast */
-.editor, .viewer, pre, .code { background: var(--code); }
+pre, .code { background: var(--code); }   /* not the editor: it is a transparent text area over the highlighting layer, which an opaque background would hide */
 
 /* ---- the VM Reverser and Loader & GitHub section headers -------------------------------------------------------------------------------- */
 .qs-hero { position: relative; overflow: hidden; border-radius: 18px; padding: 22px 24px; margin: 10px 12px 18px; color: #fff4ea; background: linear-gradient(120deg, #2b1545 0%, #5a2a6e 45%, #b0466f 80%, #e8795f 100%); box-shadow: 0 18px 40px -24px rgba(0, 0, 0, 0.9); }

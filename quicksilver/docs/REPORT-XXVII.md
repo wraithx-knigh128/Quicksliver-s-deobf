@@ -14,8 +14,10 @@ device, GitHub's API from the build environment), it says so.
 | GitHub link forms understood | raw + `blob` (via the general fetcher) | file, raw (`refs/heads/…`), `blob`/`raw`/`tree`, repository, profile, contents API, gist | `tests/xxvii-github.test.mjs` |
 | GitHub failure classes told apart | 3 (refused / 404 / other) | 15 (`src/loader/github.js` OUTCOMES) | same |
 | Server features enforced by the server | none | GitHub retrieval, Luraph engine, AI assistant | `tests/xxvii-github.test.mjs`, `tests/xxvii-premium-py.test.mjs` |
+| Website (NEXUS) results that disagreed with the engine's own class on VM-lifted builds | 95 of 404 (90 called "not deobfuscated", 5 "invalid input") | **0 of 404** (class identical; 44 only lowered high→medium) | `tests/xxvii-reconstruction.test.mjs` "site mode" |
 | Recovery time, 95 fixtures (mean per file) | 406–421 ms | 422–429 ms (within run-to-run noise) | `node timing.mjs` on both trees, two runs each |
-| Workspace idle rendering | 60 fps, 0 paints | 60 fps, 0 paints, 0 animations | `tools/perf/measure-ui.mjs` |
+| Workspace idle rendering | 60 fps, 0 paints | 60 fps, 0 paints, 0 running animations | `tools/perf/measure-ui.mjs` |
+| False-positive "Luraph" detections from its macro names | 5 files (2 of the 43,288-file collection, 3 of the 748-file labelled sample) and the user's own Test 8 file | 0 | `tests/xxvii-reconstruction.test.mjs` "build-flag macros", `data/research/corpus-eval.json` |
 
 ## 2. Defect report (found this round, each fixed at its source)
 
@@ -35,6 +37,12 @@ device, GitHub's API from the build environment), it says so.
 | D12 | Pressing Deobfuscate on a loader ran the deobfuscator on the loader; on a pasted link, on the link text | no input recognition | `recognizeInput`: GitHub link → retrieval; loader → Loader Analysis; script → pipeline | e2e "input recognition" |
 | D13 | A result full of placeholder names gave no sign of it | the evidence counted bodies and holes, not names | `naming` in the evidence; the outcome says how many locals are placeholders (class unchanged: names do not change behaviour) | "evidence" test |
 | D14 | (live) the GitHub live test failed | GitHub's API was rate-limited for this machine (60/h unauthenticated); the test assumed it was not | the test accepts the honest `rate-limited` answer with its retry time — the server had reported it correctly | xxvii-github live |
+| D16 | **The website reported correctly lifted VM programs as "not deobfuscated"**: 49 Zartha, 30 AzureVM, 7 LuaXen, 4 FusGato builds (a false negative, found by comparing the site's pipeline with the engine's) | NEXUS (always on in the page) checks that the result uses no global name the input's code does not; a program read out of a VM's data names its globals only in that data. The list of steps allowed to do that held 8 steps and none of the newer lifters | every VM lifter is in the list (`src/nexus/pipeline.js` REBUILDS) | "site mode: a program a VM lifter rebuilt" |
+| D17 | **The website called 5 Zartha builds "invalid input"** that the engine recovers | NEXUS refused an input that does not parse as written; the plain pipeline mends the generator's documented defect first | such an input goes to the plain pipeline (which records the mend) | "site mode: an input that parses only after a documented repair" |
+| D18 | **False-positive detection: a plain file was shown as "Luraph 85 %"** (the user's Test 8 comparison file, retrieved live from GitHub) | Luraph's build-flag macros (`LPH_NO_VIRTUALIZE`, …) counted as 0.85 evidence; they belong to source written *for* Luraph (it compiles them away), and the file defined fallback stubs for them. Across the 43,288-file collection the rule decided only 2 files, both LuaObfuscator builds with the same stubs | stubs defined in the file are no evidence; macros used without stubs are a hint below the threshold (0.45) | "build-flag macros" |
+| D19 | (introduced this round, caught by the live check) the v1.8 theme hid the editor's text | the editor is a transparent text area over a highlighting layer; `premium.css` gave it an opaque background | the rule no longer touches the editor; an e2e assertion checks the text area stays transparent | e2e "VM Reverser" |
+| D20 | (introduced this round, caught by the live check) a file retrieved from GitHub was said to show "no obfuscator" before detection had run | the retrieval kept the page busy while handing the file over, so detection refused to run and the note read its absence as "none" | the busy state ends before the hand-off; a detection that has not run is said as such | live GitHub check |
+| D21 | (design, from the e2e suite) Deobfuscate on a loader opened only the Loader Analysis | the textual loader test could take an obfuscated script away from the deobfuscator | a loader is deobfuscated like any script, and its Loader Analysis runs as well | e2e "input recognition", "workflow: a script that only downloads its program" |
 | D15 | Generated records drifted after the renamer change (`outputBytes` only) | records hold output sizes | `tools/formats/measure.mjs` regenerated; the recovered code itself is unchanged | formats.test |
 
 ## 3. VM reverser improvements (Part I)
@@ -68,7 +76,8 @@ these are judgements from evidence, not decryptions.
 
 ## 5. Loader and GitHub retrieval (Part II)
 
-* **Input recognition** (`recognizeInput`): GitHub link, other link, loader, bytecode, script. The page routes each to its pipeline.
+* **Input recognition** (`recognizeInput`): GitHub link, other link, loader, bytecode, script. A GitHub link is retrieved first; a loader is deobfuscated
+  and its Loader Analysis runs too (what it downloads, and Loader Intelligence to retrieve and reconstruct each stage); a script goes to the pipeline.
 * **Link forms** (`parseGitHubRef`): see §1. Owner/repo names, refs and paths are validated; `..`, encoded slashes, control characters, credentials,
   ports and look-alike hosts are refused before any request.
 * **Retrieval** (`api/github.js`): only `raw.githubusercontent.com`, `api.github.com`, `gist.githubusercontent.com`; redirects re-checked every hop;
@@ -97,6 +106,8 @@ unauthenticated quota at that moment — also correct. GitHub's API could not be
   string decided), and none is called validated without a behaviour comparison.
 * Placeholder names are now counted and said in every result (D13).
 * GitHub: a retrieval is reported only for a Lua body; every failure is its own class (D8).
+* **False negatives on the website (D16, D17):** 95 results of VM-lifted builds were shown with a worse class than the engine had established. The
+  site's pipeline and the engine now agree on all 404 lifter fixtures, and a test keeps them agreeing.
 
 ## 7. Website (Parts V–VII)
 
@@ -115,16 +126,16 @@ unauthenticated quota at that moment — also correct. GitHub's API could not be
 
 `tools/perf/measure-ui.mjs`, headless Chromium with **software compositing** (no GPU in this environment), 5 s windows; `data/research/perf-xxvii.json`.
 
-| Screen | fps | paints | layouts | main thread / 5 s |
-|---|---|---|---|---|
-| landing, 1440×900 | 44 | 0 | 0 | ≈ 220 ms |
-| landing, 390×844, CPU 4× slower | 60 | 0 | 0 | ≈ 1000 ms |
-| workspace, 1440×900 | 60 | 0 | 0 | ≈ 110 ms |
-| workspace, 390×844, CPU 4× slower | 60 | 0 | 0 | ≈ 380–470 ms |
+| Screen | fps | long frames | paints | layouts | main thread / 5 s | LCP | CLS |
+|---|---|---|---|---|---|---|---|
+| landing, 1440×900 | 47.6 | 0 | 0 | 0 | 159 ms | 268 ms | 0 |
+| landing, 390×844, CPU 4× slower | 60.2 | 0 | 0 | 0 | 721 ms | 308 ms | 0 |
+| workspace, 1440×900 | 60.4 | 0 | 0 | 0 | 70 ms | 160 ms | 0.001 |
+| workspace, 390×844, CPU 4× slower | 60.4 | 0 | 0 | 0 | 260 ms | 284 ms | 0.001 |
 
 Before (the previous interface, same tool): workspace 60 fps, 0 paints, 95 ms / 394 ms. The workspace is unchanged in cost. The landing's cost is the
 browser ticking 13 composited animations (no paint, no layout); the two full-screen opacity animations were removed after the first measurement
-(34 → 44 fps at 1440×900 in software). Page weight 3.49 MB → 3.90 MB (+ art 180 KB, fonts 49 KB, key-search word model 116 KB, styles 25 KB).
+(34 → 44–48 fps at 1440×900 in software). Page weight 3.49 MB → 3.90 MB (+ art 180 KB, fonts 49 KB, key-search word model 116 KB, styles 25 KB).
 Largest contentful paint 420 → 236 ms (desktop). Recovery speed: unchanged within noise (§1).
 
 ## 9. Research (Part IV)
@@ -146,7 +157,28 @@ https://docs.github.com/en/rest/using-the-rest-api/troubleshooting-the-rest-api 
 
 ## 10. Tests and regression
 
-REGRESSION_RESULTS
+**Unit and integration suite** (`npm test`, with the reference Lua runtimes, `QS_LUA_PYTHON` set — the same conditions as the previous round's baseline):
+
+| Run | Tests | Pass | Fail | Skipped |
+|---|---|---|---|---|
+| Baseline, previous round (commit c339755) | 1206 | 1200 | 0 | 6 |
+| This round, first checkpoint (commit 28d4272) | 1229 | 1222 | 0 | 7 |
+| This round, final code | 1232 | 1223 | 2 | 7 |
+
+The two failures of the final run were both consequences of fixing the macros false positive (D18) and were resolved at their source: the labelled-collection
+evaluation was regenerated (exactly the 3 plain files changed; nothing else moved) together with the format database and `docs/AUDIT.md` that derive
+from it, and a Luarmor test that had asserted the false positive ("an obfuscated loader") was corrected to the true reading, with a new test for a loader
+that really is protected. The affected test files were re-run afterwards: 47 of 47 (formats, format database) and 12 of 12 (Luarmor) pass. The 7 skips
+are samples kept outside the repository (licence or ownership) and the opt-in live GitHub test (`QS_LIVE_GITHUB=1`, run separately: passes).
+
+**Browser end-to-end suite** (`tests/e2e/ui.e2e.mjs`, Chromium): **85 of 85 pass** on the final code. On the way there it found D19–D21 above, and three
+tests that encoded superseded behaviour (GitHub stages now go through `/api/github`; transitions are not scene animations; a Reconstruct test fed the
+engine a script that does not compile, which the engine has rightly called "no program observed" since the previous round — that round's e2e suite had
+not been re-run, as its report said). One live end-to-end check ran against the real GitHub raw host with the real `/api/github` handler (§5).
+
+**Engine-level checks added this round:** key-search precision (390 decided, 0 wrong), the site pipeline agreeing with the engine on all 404 VM-lifter
+fixtures, evidence-based naming (and that nothing is invented), placeholder counting, GitHub forms/failure classes/SSRF/token handling, Premium
+enforcement in Node and Python.
 
 ## 11. Remaining limitations
 

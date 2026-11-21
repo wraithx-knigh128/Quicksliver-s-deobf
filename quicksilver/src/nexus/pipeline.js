@@ -40,7 +40,11 @@ export const NEXUS_DEFAULTS = Object.freeze({
 });
 
 /** Passes whose output is a program read out of data the script carries. */
-const REBUILDS = new Set(['ironbrew2', 'hercules.vm', 'moonveil.vm', 'moonveil.constants', 'charlist', 'layers', 'prometheus.vmify', 'evaluate']);
+// Steps that read the program out of data the script carries: the globals the result uses are named in that data (a VM's constant pool, a packed text),
+// not in the input's code. Prompt XXVII: every VM lifter belongs here; with only the first eight listed, NEXUS marked the lifted programs of Zartha,
+// AzureVM, FusGato and LuaXen "inconsistent" (their global names are encrypted in the input) and the site reported them as not deobfuscated.
+const REBUILDS = new Set(['ironbrew2', 'hercules.vm', 'moonveil.vm', 'moonveil.vm21', 'moonveil.constants', 'charlist', 'layers', 'prometheus.vmify', 'prometheus.bvm', 'evaluate',
+  'zartha.vm', 'azurevm.vm', 'obscura.vm', 'fusgato.vm', 'vault.vm', 'realobfuscator.vm', 'ironbrikked.vm', 'volt.constants']);
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 const WIDTH = 108;
 const wrap = (text, first, rest) => {
@@ -118,7 +122,10 @@ export function nexusRecover(source, userOptions = {}) {
   let ast = null;
   let detection = null;
   const parsed = tryParse(source);
-  if (!parsed.ok) return { ok: false, stage: 'parse', error: parsed.error, output: null, steps: [], detection: detect(source), warnings: [], nexus: { version: NEXUS_VERSION, stages, ledger: { claims: [], summary: ledger.summary() } } };
+  // the plain pipeline mends inputs that do not parse as written where a generator's documented defect is the cause (Zartha's LOADBOOL template,
+  // a renamed keyword) and records the mend; NEXUS reads only parsed code, so such an input goes to the plain pipeline instead of being refused
+  // (Prompt XXVII: the site reported five Zartha builds as invalid input that the plain pipeline recovers)
+  if (!parsed.ok) return fallback(`the input does not parse as written (${parsed.error && parsed.error.message}); the plain pipeline applies its documented repairs`);
   ast = parsed.ast;
   const environment = { kind: 'standalone', apis: [] };
   stage('identify', 'Identify the language and the environment', (s) => {
