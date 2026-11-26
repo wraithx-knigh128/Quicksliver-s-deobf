@@ -150,8 +150,15 @@ function lift51(f) {
     if (t === undefined || t < 0 || t > ir.length) throw new LiftError(`jump at ${op.pc} leaves the function`);
     op.t = t;
   }
-  for (const o of ir) {
-    if (o.op === 'jmp' && ir[o.t] && ir[o.t].op === 'tforcall') { o.op = 'tforprep'; o.base = ir[o.t].base; }
+  for (let i = 0; i < ir.length; i++) {
+    const o = ir[i];
+    // Prompt XXX: only the jump that opens a generic for is its prep — the one whose loop jumps back to the instruction right after
+    // it. A `break` out of an inner loop that ends the outer loop's body also lands on the outer loop's TFORCALL; taken for a prep,
+    // it started a phantom loop ("unexpected tforcall") and the whole function was lost.
+    if (o.op === 'jmp' && ir[o.t] && ir[o.t].op === 'tforcall') {
+      const back = ir[o.t + 1];
+      if (!back || back.op !== 'tforloop' || back.t === i + 1) { o.op = 'tforprep'; o.base = ir[o.t].base; }
+    }
   }
   return { ir, pcToIr, version: 0x51 };
 }

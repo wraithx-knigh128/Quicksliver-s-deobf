@@ -214,6 +214,74 @@ export const SNIPPETS = {
     local function noret() local x = 1 end
     print(noret())
   `,
+  // Prompt XXX: shapes found in MoonSec V3 programs that the decompiler abandoned or got wrong (each reduced from a real function)
+  loopIfBreakElse: `
+    local function walk(l)
+      local out = {}
+      while l do
+        if l.x then out[#out + 1] = "hit" .. l.x break else out[#out + 1] = "miss" l = l.nxt end
+      end
+      return table.concat(out, ",")
+    end
+    print(walk({ nxt = { nxt = { x = 3 } } }), walk(nil), walk({ x = 1 }))
+  `,
+  nestedForBreak: `
+    local function find(list, bp, ch)
+      local found
+      for _, item in pairs(bp) do
+        for _, name in ipairs(list) do
+          if name == item.Name then found = item.Name break
+          else
+            for _, child in ipairs(ch) do if child.Name == name then found = "child:" .. child.Name break end end
+          end
+        end
+      end
+      return found
+    end
+    print(find({ "a", "b" }, { { Name = "b" } }, {}), find({ "z" }, { { Name = "q" } }, { { Name = "z" } }), find({}, {}, {}))
+    local function pairsBreak(l, b) local n = 0 for _, i in ipairs(b) do for _, v in ipairs(l) do if v == i then n = n + 1 break end end end return n end
+    print(pairsBreak({ 1, 2, 3 }, { 2, 3, 4 }))
+  `,
+  orderedEffects: `
+    local log = {}
+    local svc = { Players = { LocalPlayer = { Name = "p" } } }
+    local game = { GetService = function(self, n) log[#log + 1] = "get " .. n ; return svc[n] or { JSONEncode = function(_, t) log[#log + 1] = "encode" ; return t.embeds[1].description end } end }
+    local function http_request(r) log[#log + 1] = "send " .. r.Body end
+    local data = { content = "", embeds = { { description = game:GetService("Players").LocalPlayer.Name .. " used it", title = "T" } } }
+    http_request({ Url = "u", Method = "POST", Body = game:GetService("HttpService"):JSONEncode(data) })
+    print(table.concat(log, ";"))
+  `,
+  valueExpressions: `
+    local function v(n, a, b, c)
+      return n == 0 or a and n or "s", n == 0 or a and n, a ~= b and c and c.x > 0, c and c:F("H") and c.x > 0,
+        n > 0 or "s" and n and n < 1 or n and n or a, (n == 0) and a or b
+    end
+    local C = { x = 2, F = function(self, h) return h .. self.x end }
+    for _, args in ipairs({ { 0, false, true, C }, { 2, true, false, nil }, { 5, 1, 1, C }, { -1, nil, 2, { x = -1, F = function() return false end } } }) do
+      print(v(args[1], args[2], args[3], args[4]))
+    end
+    local function w(n, a) local r = n > 1 and n < 9 and a or n return r, (n == 1 or n == 2) and "few" or "many" end
+    print(w(3, "x"), w(1, false), w(10, nil))
+  `,
+  conditionAfterCall: `
+    local function req(t) return { StatusCode = t.code, Body = t.body } end
+    local function get(code, body)
+      local r = req({ code = code, body = body })
+      if r.StatusCode ~= 200 then return "fail " .. r.StatusCode end
+      return r.Body
+    end
+    print(get(200, "ok"), get(404, "x"))
+    local q
+    local function queue(s)
+      if writefile then pcall(function() return s end)
+      elseif (syn and syn.queue_on_teleport) or q then
+        local f = (syn and syn.queue_on_teleport) or q
+        pcall(function() f(s) end)
+      end
+    end
+    q = function(s) print("queued", s) end
+    queue("a")
+  `,
 };
 
 /** Constructs that only exist from Lua 5.3: integer division, bitwise operators, integer/float distinction. */

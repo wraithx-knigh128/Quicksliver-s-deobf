@@ -23,8 +23,16 @@ export const ADAPTERS = Object.freeze([
     label: 'Rebuild the MoonSec V3 program (server engine: moonsec-deobfuscator-js)',
     licence: 'GPL-3.0: moonsec-deobfuscator-js, a port of tupsutumppu/MoonsecDeobfuscator (modified; api/_engine/moonsec/NOTICE.md)',
     // MoonSec V3's runtime calls wait() once before the program starts (seen in 102 of 120 sampled originals, in none of the rebuilt
-    // programs); an original whose main chunk does nothing and runs only as a callback with stand-in arguments is no reference
-    verify: { originalPrelude: ['wait()'], needsMainReference: true },
+    // programs); an original whose main chunk does nothing and runs only as a callback with stand-in arguments is no reference.
+    // Prompt XXX: its runtime also writes two globals the program does not: the name its banner line assigns
+    // (`([[This file was protected with MoonSec V3]]):gsub('.+', (function(a) _xxxx = a; end))`) and MoonSec_StringsHiddenAttr — in the
+    // 120 sampled originals, every keyless one that ran wrote both, and no rebuilt program writes either.
+    verify: {
+      originalPrelude: ['wait()'],
+      needsMainReference: true,
+      // (the banner text varies — "… with MoonSec V3 by <name> on discord" — the pattern matches all 792 files of the public collection)
+      runtimeGlobals: { names: ['MoonSec_StringsHiddenAttr'], fromSource: ["protected with MoonSec V3[^\\]]*\\]\\]\\):gsub\\('\\.\\+', \\(function\\(a\\) ([A-Za-z_][A-Za-z0-9_]*) = a; end\\)\\)"] },
+    },
   },
   {
     // Prometheus' Vmify step (also in its Weak, Medium and Strong presets). QuickSilver's own passes lift some of these VMs; on its 53

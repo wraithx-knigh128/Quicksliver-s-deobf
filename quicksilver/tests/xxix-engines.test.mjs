@@ -252,7 +252,12 @@ test('unified: the behaviour comparison is told what the adapter knows about the
     verify: async (t, rec, o) => { seen.push(o); return { verdict: 'inconclusive', notes: ['test'] }; },
   });
   await deobfuscate({ text: MOONSEC }, d);
-  assert.deepEqual(seen, [{ originalPrelude: ['wait()'], needsMainReference: true }]);
+  // Prompt XXX: the runtime's own globals were added to what the adapter declares
+  assert.deepEqual(seen, [{
+    originalPrelude: ['wait()'],
+    needsMainReference: true,
+    runtimeGlobals: { names: ['MoonSec_StringsHiddenAttr'], fromSource: ["protected with MoonSec V3[^\\]]*\\]\\]\\):gsub\\('\\.\\+', \\(function\\(a\\) ([A-Za-z_][A-Za-z0-9_]*) = a; end\\)\\)"] },
+  }]);
 });
 
 // ---- verify.js options ---------------------------------------------------------------------------------------------------------------------
@@ -265,6 +270,39 @@ test('verify: a format runtime’s prelude is not counted, and only when the reb
   const both = verifyRecovery('wait() print(1)', 'wait() print(1)', { originalPrelude: ['wait()'] });
   assert.equal(both.verdict, 'identical'); assert.equal(both.notes.length, 0);
   assert.equal(verifyRecovery('wait() print(1)', 'print(2)', { originalPrelude: ['wait()'] }).verdict, 'different');
+});
+
+test('verify (Prompt XXX): a prelude wait is not charged to the original, so a waiting loop runs as often in both', () => {
+  // the shape of MoonSec V3 sample 3fed8cb5: a function handed to spawn, then a loop that waits forever; the sandbox stops the loop when
+  // its waits run out and then runs the spawned function. The runtime's own wait() used to take one of the original's waits, so its loop
+  // ran one round fewer and the two runs were reported as different.
+  const program = 'spawn(function() while true do wait(1) print("spawned") end end)\nwhile true do wait(0.5) print("tick") end';
+  const v = verifyRecovery(`wait()\n${program}`, program, { originalPrelude: ['wait()'], maxWaits: 6 });
+  assert.equal(v.verdict, 'identical', JSON.stringify(v.difference));
+  assert.match(v.notes.join(' '), /given 1 more wait/);
+  // the comparison is not loosened: a rebuilt loop that does something else is still a difference
+  const other = 'spawn(function() while true do wait(1) print("spawned") end end)\nwhile true do wait(0.5) print("tock") end';
+  assert.equal(verifyRecovery(`wait()\n${program}`, other, { originalPrelude: ['wait()'], maxWaits: 6 }).verdict, 'different');
+  // and when the rebuilt program makes the same prelude, nothing is stripped and nobody gets an extra wait
+  const same = verifyRecovery(`wait()\n${program}`, `wait()\n${program}`, { originalPrelude: ['wait()'], maxWaits: 6 });
+  assert.equal(same.verdict, 'identical'); assert.equal(same.notes.length, 0);
+});
+
+test('verify (Prompt XXX): globals of the obfuscator’s runtime are not compared; the program’s own globals still are', () => {
+  // MoonSec V3: the banner line assigns a random global and the runtime sets MoonSec_StringsHiddenAttr; the rebuilt program writes neither
+  const banner = "([[This file was protected with MoonSec V3 by someone]]):gsub('.+', (function(a) _AbCdEfGhIjKl = a; end));";
+  const original = `${banner}\nMoonSec_StringsHiddenAttr = true\nWebhook = "x"\nprint(Webhook)`;
+  const opts = { runtimeGlobals: { names: ['MoonSec_StringsHiddenAttr'], fromSource: ["protected with MoonSec V3[^\\]]*\\]\\]\\):gsub\\('\\.\\+', \\(function\\(a\\) ([A-Za-z_][A-Za-z0-9_]*) = a; end\\)\\)"] } };
+  assert.equal(verifyRecovery(original, 'Webhook = "x"\nprint(Webhook)').verdict, 'different');
+  const v = verifyRecovery(original, 'Webhook = "x"\nprint(Webhook)', opts);
+  assert.equal(v.verdict, 'identical', JSON.stringify(v.difference));
+  assert.match(v.notes.join(' '), /MoonSec_StringsHiddenAttr/);
+  assert.match(v.notes.join(' '), /_AbCdEfGhIjKl/);
+  // a global the program writes is still compared
+  assert.equal(verifyRecovery(original, 'Hook = "x"\nprint(Hook)', opts).verdict, 'different');
+  // the pipeline's MoonSec adapter carries the same rule, and its pattern reads the banner
+  const ms = ADAPTERS.find((a) => a.id === 'moonsec-v3');
+  assert.equal(new RegExp(ms.verify.runtimeGlobals.fromSource[0]).exec(banner)[1], '_AbCdEfGhIjKl');
 });
 
 test('verify: an original that only runs as a callback with stand-in arguments is no reference', () => {

@@ -59,6 +59,47 @@ const fixTail = (list) => {
 };
 const mkAnd = (a, b) => ({ type: 'Binary', op: 'and', left: a, right: b });
 const mkOr = (a, b) => ({ type: 'Binary', op: 'or', left: a, right: b });
+// Prompt XXX: value-exact helpers for short-circuit expressions whose value is used (not only their truth)
+const RELATIONAL = new Set(['==', '~=', '<', '<=', '>', '>=']);
+/** Is the value of e always a boolean (so `e and A` is false, not nil, when e fails)? */
+const isBool = (e) => !!e && ((e.type === 'Binary' && RELATIONAL.has(e.op)) || (e.type === 'Unary' && e.op === 'not') || e.type === 'True' || e.type === 'False'
+  || (e.type === 'Binary' && (e.op === 'and' || e.op === 'or') && isBool(e.left) && isBool(e.right)) || (e.type === 'Paren' && isBool(e.expr)));
+/** `not e` as a value: only simplified where the result stays the same boolean. */
+const vNot = (e) => {
+  if (e.type === 'Unary' && e.op === 'not' && isBool(e.arg)) return e.arg;
+  if (e.type === 'Binary' && (e.op === '==' || e.op === '~=')) return { ...e, op: e.op === '==' ? '~=' : '==' };
+  if (e.type === 'True') return { type: 'False' };
+  if (e.type === 'False') return { type: 'True' };
+  return { type: 'Unary', op: 'not', arg: e };
+};
+/** The value of `if P then A else B` as one expression, where a rule makes it exact; null otherwise. */
+const iteValue = (P, A, B) => {
+  const t = (x) => x.type === 'True';
+  const f = (x) => x.type === 'False';
+  if (t(A) && f(B)) return isBool(P) ? P : null;
+  if (f(A) && t(B)) return vNot(P);
+  if (f(B)) return isBool(P) ? mkAnd(P, A) : null;          // P fails → false, which only a boolean P gives
+  if (t(A)) return isBool(P) ? mkOr(P, B) : null;           // P holds → true, likewise
+  if (f(A)) return mkAnd(vNot(P), B);                       // not P is boolean: false when P holds, else B
+  if (t(B)) return mkOr(vNot(P), A);                        // not P is boolean: true when P fails, else A
+  // One alternative ends in the other (the compiler sends both to the same code: `P and x or A` gives B = `x or A`). Exact for any P,
+  // because only the truth of the left operand decides, and each part is evaluated once, in the original order:
+  let x;
+  // (the negations stand where only their truth is read, so mkNot's simplifications are exact there)
+  if ((x = dropTail(B, 'or', A))) return mkOr(mkAnd(mkNot(P), x), A);   // P → A; else x or A
+  if ((x = dropTail(B, 'and', A))) return mkAnd(mkOr(P, x), A);        // P → A; else x and A
+  if ((x = dropTail(A, 'or', B))) return mkOr(mkAnd(P, x), B);         // P → x or B; else B
+  if ((x = dropTail(A, 'and', B))) return mkAnd(mkOr(mkNot(P), x), B);  // P → x and B; else B
+  return null;
+};
+/** `x1 op (x2 op tail)` without its last operand (`x1 op x2`; and/or are associative in value), when that operand is `tail` itself. */
+const dropTail = (e, op, tail) => {
+  if (!e || e.type !== 'Binary' || e.op !== op) return null;
+  if (e.right === tail) return e.left;
+  const r = dropTail(e.right, op, tail);
+  return r ? { type: 'Binary', op, left: e.left, right: r } : null;
+};
+const exprSize = (e) => { let n = 0; const w = (x) => { if (!x || typeof x !== 'object') return; n++; for (const v of Object.values(x)) if (v && typeof v === 'object') w(v); }; w(e); return n; };
 
 // ---- register read / write sets of IR instructions ----------------------------------------------------------------------
 
@@ -126,6 +167,7 @@ class FunctionDecompiler {
     this.ir = l.ir;
     this.n = this.ir.length;
     if (opts.prune) this.pruneUnreachable();
+    this.restoreLoopEnds();
     this.nregs = f.maxStack + 2;
     this.P = new Map();       // register -> pending entry
     this.topEntry = null;     // pending multi-value (call / vararg with open result count)
@@ -144,6 +186,51 @@ class FunctionDecompiler {
    * Instructions nothing can reach (the junk an obfuscator puts after a jump, with jumps of its own among them) are removed, so that a jump over them is a jump over nothing and
    * the structure of what is left is not confused by targets that no run can arrive at.
    */
+  /**
+   * Prompt XXX: a loop whose body ends in `return` (or a jump elsewhere) has no closing `jmp` back to its head, and a generator
+   * that threads jumps (MoonSec V3's rebuilt code) then sends every "next iteration" straight to the head from mid-body. The
+   * structurer then saw the loop end at its last backward jump and the exit jump "leave its block", and abandoned the function.
+   * Where that is the shape — code after the last backward jump that only the loop reaches, ending in an instruction that cannot
+   * fall through, before the loop's exit — the missing closing `jmp head` is put back in front of the exit. It is reached only by
+   * the jumps that went to the head already (the de-threading below redirects them to it), so nothing runs differently.
+   */
+  restoreLoopEnds() {
+    for (let round = 0; round < 32; round++) {
+      const ir = this.ir;
+      const n = ir.length;
+      const backs = new Map();
+      for (let j = 0; j < n; j++) {
+        const o = ir[j];
+        if ((o.op === 'jmp' || o.op === 'cjmp') && o.t <= j) backs.set(o.t, Math.max(backs.has(o.t) ? backs.get(o.t) : -1, j));
+      }
+      let insertAt = -1;
+      let head = -1;
+      for (const [h, maxS] of [...backs].sort((a, b) => a[0] - b[0])) {
+        if (ir[maxS].op === 'jmp') continue;
+        let X = -1;
+        for (let k = h; k <= maxS; k++) { const t = ir[k].t; if (typeof t === 'number' && t > maxS) { X = t; break; } }
+        if (X < 0 || X - 1 <= maxS || X > n) continue;
+        const last = ir[X - 1];
+        if (!(last.op === 'ret' || (last.op === 'jmp' && last.t !== X))) continue;
+        let ok = true;
+        for (let k = 0; k < n && ok; k++) {
+          const t = ir[k].t;
+          if (typeof t !== 'number') continue;
+          if ((k < h || k >= X) && t > maxS && t < X) ok = false;          // something outside jumps into the trailing code
+          if (k >= h && k < X && t > X) ok = false;                         // a jump from the loop past its exit: not this shape
+        }
+        if (!ok) continue;
+        insertAt = X;
+        head = h;
+        break;
+      }
+      if (insertAt < 0) return;
+      for (const o of ir) if (typeof o.t === 'number' && o.t >= insertAt) o.t++;
+      ir.splice(insertAt, 0, { op: 'jmp', t: head, pc: ir[insertAt - 1].pc, synthetic: true });
+      this.n = ir.length;
+    }
+  }
+
   pruneUnreachable() {
     const { ir } = this;
     const n = ir.length;
@@ -280,24 +367,38 @@ class FunctionDecompiler {
       if (o.op === 'forloop' || o.op === 'tforloop') { reads[i] = []; }
       if (o.op === 'tforcall') reads[i] = [];
     }
-    const liveIn = Array.from({ length: n + 1 }, () => new Uint8Array(R));
-    const liveOut = Array.from({ length: n + 1 }, () => new Uint8Array(R));
+    // backward dataflow over word bitsets (32 registers a word): live-in = reads ∪ (live-out − writes), live-out = ∪ live-in of
+    // successors, iterated to the fixed point. (Prompt XXX: the byte-per-register version needed seconds on the largest rebuilt
+    // MoonSec functions once their loop ends were restored; the result is the same.)
+    const W = (R + 31) >>> 5;
+    const inB = new Uint32Array((n + 1) * W);
+    const outB = new Uint32Array((n + 1) * W);
+    const killB = new Uint32Array(n * W);
+    const genB = new Uint32Array(n * W);
+    for (let i = 0; i < n; i++) {
+      if (!(ir[i].op === 'testset' || ir[i].op === 'forloop')) for (const w of writes[i]) if (w >= 0 && w < R) killB[i * W + (w >>> 5)] |= 1 << (w & 31);
+      for (const rd of reads[i]) if (rd >= 0 && rd < R) genB[i * W + (rd >>> 5)] |= 1 << (rd & 31);
+    }
     const succ = Array.from({ length: n }, (_, i) => this.succs(i).filter((s) => s <= n));
     let changed = true;
     let guard = 0;
     while (changed && guard++ < 1000) {
       changed = false;
       for (let i = n - 1; i >= 0; i--) {
-        const out = liveOut[i];
+        const o = i * W;
         for (const s of succ[i]) {
-          const src = liveIn[s];
-          for (let r = 0; r < R; r++) if (src[r] && !out[r]) { out[r] = 1; changed = true; }
+          const so = s * W;
+          for (let w = 0; w < W; w++) { const v = outB[o + w] | inB[so + w]; if (v !== outB[o + w]) { outB[o + w] = v; changed = true; } }
         }
-        const inn = liveIn[i];
-        for (let r = 0; r < R; r++) if (out[r]) inn[r] = 1;
-        for (const w of writes[i]) if (!(ir[i].op === 'testset' || ir[i].op === 'forloop')) inn[w] = 0;
-        for (const rd of reads[i]) if (!inn[rd]) { inn[rd] = 1; changed = true; }
+        for (let w = 0; w < W; w++) { const v = (outB[o + w] & ~killB[o + w]) | genB[o + w]; if (v !== inB[o + w]) { inB[o + w] = v; changed = true; } }
       }
+    }
+    const liveOut = new Array(n + 1);
+    for (let i = 0; i <= n; i++) {
+      const row = new Uint8Array(R);
+      const o = i * W;
+      for (let w = 0; w < W; w++) { let v = outB[o + w]; while (v) { const b = 31 - Math.clz32(v & -v); row[(w << 5) + b] = 1; v &= v - 1; } }
+      liveOut[i] = row;
     }
     this.liveOut = liveOut;
     this.reads = reads;
@@ -313,12 +414,20 @@ class FunctionDecompiler {
     const { ir, n } = this;
     const own = ir[i];
     if (own.op === 'closure' && own.ups.some((u) => u.instack && u.idx === d)) return true;   // a function that refers to itself
-    for (let k = i + 1; k < n; k++) {
+    // Prompt XXX: follow every path (not only the straight line up to the first jump, which answered "yes" at any branch) and
+    // stop where the register is written again: only a value that can still be in the register when a closure captures it has
+    // to be a named variable. The straight-line answer made every temporary in a register some closure captures later — the
+    // tested values of an `elseif a and b or c` — into a variable, and the condition could not be read.
+    const seen = new Uint8Array(n + 1);
+    const stack = [...this.succs(i)];
+    while (stack.length) {
+      const k = stack.pop();
+      if (k < 0 || k >= n || seen[k]) continue;
+      seen[k] = 1;
       const x = ir[k];
       if (x.op === 'closure' && x.ups.some((u) => u.instack && u.idx === d)) return true;
-      if (this.isTarget[k] || x.op === 'jmp' || x.op === 'cjmp' || x.op === 'testset' || x.op === 'forprep' || x.op === 'forloop' || x.op === 'tforcall' || x.op === 'tforloop') return true;
-      if (x.op === 'ret') return false;
-      if (this.writes[k].includes(d)) return false;
+      if (this.writes[k].includes(d)) continue;
+      for (const s of this.succs(k)) stack.push(s);
     }
     return false;
   }
@@ -508,13 +617,21 @@ class FunctionDecompiler {
     const snapP = new Map(this.P);
     const snapTop = this.topEntry;
     const used = [];
-    const result = build(this.consumer(used, true));
+    let result = build(this.consumer(used, true));
     if (!this.orderOk(used)) {
       this.P = snapP;
       this.topEntry = snapTop;
-      this.flushAll(out);
-      return build(this.consumer([], false));
-    }
+      // Prompt XXX: first the precise repair — write out, in their order, the pending values with calls in them that are older
+      // than the newest such value, and inline the rest; only if the order still cannot be kept, write out everything.
+      const repaired = !snapTop && !this.multi ? this.repairOrder(out, build) : null;
+      if (!repaired) {
+        this.flushAll(out);
+        this.lastUsed = [];
+        return build(this.consumer([], false));
+      }
+      result = repaired.result;
+      this.lastUsed = repaired.used;
+    } else this.lastUsed = used;
     if (mode === 'stmt') {
       const rest = [...this.P.entries()].sort((a, b) => a[1].seq - b[1].seq);
       for (const [r, e] of rest) this.flushEntry(out, r, e);
@@ -522,6 +639,23 @@ class FunctionDecompiler {
       if (this.multi) this.flushMulti(out);
     }
     return result;
+  }
+
+  repairOrder(out, build) {
+    const impure = [...this.P.values()].filter((e) => e.impure);
+    if (impure.length < 2) return null;
+    const newest = Math.max(...impure.map((e) => e.seq));
+    const older = [...this.P.entries()].filter(([, e]) => e.impure && e.seq < newest && e.selfOf === undefined && !e.method).sort((a, b) => a[1].seq - b[1].seq);
+    if (!older.length) return null;
+    const before = new Map(this.P);
+    const mark = out.length;
+    for (const [r, e] of older) { this.flushEntry(out, r, e); this.P.delete(r); }
+    const used = [];
+    const result = build(this.consumer(used, true));
+    if (this.orderOk(used)) return { result, used };
+    out.length = mark;
+    this.P = before;
+    return null;
   }
 
   // ---- expression construction ------------------------------------------------------------------------------------------------
@@ -541,7 +675,12 @@ class FunctionDecompiler {
     }
     if (this.forward[i]) {
       const expr = this.tx(out, 'pending', build);
-      this.P.set(d, { expr, impure, seq: this.seq++ });
+      // Prompt XXX: an expression built from consumed values that hold calls (a moved, indexed, concatenated or computed call
+      // result) is itself impure, and its side effects happened when the earliest of those calls ran — not now. Marking it pure,
+      // with a fresh position, let it be inlined after calls that ran later (`local x = f().y; h(g(), x)` became `h(g(), f().y)`).
+      const held = (this.lastUsed || []).filter((e) => e.impure);
+      const seq = this.seq++;
+      this.P.set(d, { expr, impure: impure || held.length > 0, seq: held.length ? Math.min(...held.map((e) => e.seq)) : seq });
       return;
     }
     const expr = this.tx(out, 'stmt', build);
@@ -626,6 +765,7 @@ class FunctionDecompiler {
     const pc = o.pc;
     if (o.kind === 'test') {
       const a = consume(o.a, pc);
+      this.lastTested = a;   // the tested value itself (valueRegion: a TEST on the result register delivers it)
       return o.sense ? a : mkNot(a);
     }
     const a = consume(o.a, pc);
@@ -640,7 +780,7 @@ class FunctionDecompiler {
   }
 
   /** One condition: the setup instructions followed by a conditional jump, with no statement in between. */
-  parseCondNode(i, hi) {
+  parseCondNode(i, hi, valueMode = false) {
     const saveP = new Map(this.P);
     const saveSeq = this.seq;
     const saveTop = this.topEntry;
@@ -662,13 +802,15 @@ class FunctionDecompiler {
         else {
           // TESTSET: when the tested value counts, it is also stored in the destination register
           const sExpr = consume({ r: o.s }, o.pc);
-          if (used.some((e) => e.impure)) return fail();
+          // as a statement the tested value is written twice (tested, then assigned), so a call in it would run twice; in a value
+          // region (valueMode) it appears once, in `x and rest` / `x or rest`
+          if (used.some((e) => e.impure) && !valueMode) return fail();
           P = o.sense ? sExpr : mkNot(sExpr);
           assign = { d: o.d, expr: sExpr, op: o.sense ? 'or' : 'and', pc: o.pc };
         }
         if (!this.orderOk(used) || this.P.size || this.topEntry || this.multi) return fail();
         if (scratch.length) return fail();
-        return { P, t: o.t, start: i, end: k, next: k + 1, assign };
+        return { P, t: o.t, start: i, end: k, next: k + 1, assign, op: o, tested: o.op === 'cjmp' && o.kind === 'test' ? this.lastTested : null };
       }
       if (!setupOps.has(o.op)) return fail();
       // a call whose results are all passed on to the next call (`f(g(x))`) is part of the condition; any other open result is not
@@ -681,9 +823,159 @@ class FunctionDecompiler {
     return fail();
   }
 
+  /**
+   * Prompt XXX: a short-circuit expression whose value is kept (`return a ~= b and c and c.x > 0`) is compiled to condition
+   * nodes whose jumps end at three places: a `false` load (F), a `true` load (T) and the join after them (E), where TESTSET
+   * nodes also deliver the value they tested. Its value at E is rebuilt from the nodes as one expression, by rules that are exact
+   * in Lua (`if P then A else false` is `P and A` only when P is boolean, ...). Any node, jump or combination outside those rules
+   * leaves the region to the statement structuring, as before; this used to abandon the whole function in many shapes
+   * ("unstructured jump", "conditional jump leaves its block").
+   */
+  valueRegion(i, hi, out) {
+    if (this.topEntry || this.multi || this.P.size) return -1;
+    if (!this.boolEnds) {
+      this.boolEnds = [];
+      for (let k = 0; k + 2 < this.n; k++) {
+        const a = this.ir[k];
+        const b = this.ir[k + 1];
+        const c = this.ir[k + 2];
+        if (a.op === 'loadk' && a.v === false && b.op === 'jmp' && b.t === k + 3 && c.op === 'loadk' && c.v === true && c.d === a.d) this.boolEnds.push(k);
+      }
+    }
+    if (!this.conditionAhead(i, hi)) return -1;
+    let R;
+    let F = -2;
+    let T = -2;
+    let E;
+    let end;
+    const bf = this.boolEnds.find((k) => k > i);
+    if (bf !== undefined && bf - i <= 400 && bf + 3 <= hi) {
+      // a boolean result: the false load (F), the true load (T), the join (E)
+      F = bf; T = F + 2; E = F + 3; end = F; R = this.ir[F].d;
+    } else {
+      // no boolean result (`x = a and b or c`): the join is where the expression's TESTSETs deliver their value
+      let ts = -1;
+      for (let k = i; k < hi && k < i + 400; k++) {
+        const o = this.ir[k];
+        if (o.op === 'testset') { ts = k; break; }
+        if (o.op === 'ret' || o.op === 'forprep' || o.op === 'tforprep' || o.op === 'forloop' || o.op === 'tforloop' || o.op === 'tforcall' || o.op === 'setlist' || o.op === 'setup' || o.op === 'setglobal' || o.op === 'setindex') break;
+        if (o.op === 'jmp' && o.t <= k) break;
+      }
+      if (ts < 0) return -1;
+      R = this.ir[ts].d; E = this.ir[ts].t; end = E;
+      if (E <= ts || E > hi) return -1;
+    }
+    // the region is entered at i only, and the join at E is reached only from inside it
+    for (let k = 0; k < this.n; k++) {
+      if (k >= i && k < E) continue;
+      const t = this.ir[k].t;
+      if (typeof t === 'number' && t > i && t <= E) return -1;
+    }
+    // a value computed into R and tested in place by a TEST that jumps to E is that node's value: it stays inline, although R is
+    // live after the test (it is what E receives)
+    const forced = [];
+    const force = (k) => { if (!this.forward[k]) { forced.push(k); this.forward[k] = 1; } };
+    for (let k = i + 1; k < end; k++) {
+      const q = this.ir[k];
+      if (q.op === 'cjmp' && q.kind === 'test' && regOf(q.a) === R && q.t === E && this.writes[k - 1].length === 1 && this.writes[k - 1][0] === R) force(k - 1);
+    }
+    const saved = { P: new Map(this.P), seq: this.seq, top: this.topEntry, multi: this.multi };
+    const restore = () => { this.P = saved.P; this.seq = saved.seq; this.topEntry = saved.top; this.multi = saved.multi; for (const k of forced) this.forward[k] = 0; return -1; };
+    const nodes = new Map();
+    let pos = i;
+    while (pos < end) {
+      let nd = this.parseCondNode(pos, end, true);
+      if (nd) {
+        // the compiler tests a value that is already in the result register with TEST, not TESTSET: on the jump it is the value
+        if (!nd.assign && nd.t === E && nd.op.kind === 'test' && regOf(nd.op.a) === R && nd.tested) nd.assign = { d: R, expr: nd.tested, op: nd.op.sense ? 'or' : 'and', pc: nd.op.pc };
+        if (nd.assign) { if (nd.assign.d !== R || nd.t !== E) return restore(); }
+        else if (!(nd.t === F || nd.t === T || (nd.t > nd.end && nd.t < end))) return restore();
+      } else {
+        nd = this.parseValueNode(pos, end, R, E, F < 0, force);
+        if (!nd) return restore();
+      }
+      nodes.set(pos, nd);
+      pos = nd.next;
+    }
+    if (pos !== end) return restore();
+    for (const nd of nodes.values()) if (!nd.value && !nd.assign && nd.t !== F && nd.t !== T && !nodes.has(nd.t)) return restore();
+    const memo = new Map();
+    const V = (p) => {
+      if (p === F) return { type: 'False' };
+      if (p === T) return { type: 'True' };
+      if (memo.has(p)) return memo.get(p);
+      const nd = nodes.get(p);
+      if (!nd) return null;
+      if (nd.value) { memo.set(p, nd.value); return nd.value; }
+      const rest = V(nd.next);
+      if (rest === null) return null;
+      let v;
+      if (nd.assign) v = nd.assign.op === 'and' ? mkAnd(nd.assign.expr, rest) : mkOr(nd.assign.expr, rest);
+      else { const a = V(nd.t); v = a === null ? null : iteValue(nd.P, a, rest); }
+      memo.set(p, v);
+      return v;
+    };
+    const expr = V(i);
+    if (!expr || exprSize(expr) > 4000) return restore();
+    let impure = false;
+    for (let k = i; k < end; k++) if (this.ir[k].op === 'call') impure = true;
+    const ePc = this.ir[E] ? this.ir[E].pc : this.ir[end - 1].pc;
+    const once = this.ir[E] && this.reads[E].filter((x) => x === R).length === 1 && (!this.liveOut[E][R] || this.writes[E].includes(R)) && !this.localActive(R, ePc);
+    // `local r = a and b or c`: the local begins at E, where its declaration takes the value
+    const lvE = this.ir[E] ? this.localActive(R, ePc) : null;
+    const declaredAtE = lvE && lvE.start === ePc && !lvE.declared && !this.localActive(R, this.ir[i].pc) && E < hi;
+    if (once || declaredAtE) this.P.set(R, { expr, impure, seq: this.seq++ });
+    else out.push({ type: 'Assign', targets: [this.regTarget(R, ePc)], values: [expr] });
+    return E;
+  }
+
+  /**
+   * One value of a value region: straight-line code that leaves the value in R and jumps to the join E (or, with no boolean
+   * result, falls into it). Its expression is what R holds at the jump.
+   */
+  parseValueNode(pos, end, R, E, mayFallIn, force) {
+    const save = { P: new Map(this.P), seq: this.seq, top: this.topEntry, multi: this.multi };
+    const fail = () => { this.P = save.P; this.seq = save.seq; this.topEntry = save.top; this.multi = save.multi; return null; };
+    const setupOps = new Set(['move', 'loadk', 'loadnil', 'getup', 'getglobal', 'index', 'bin', 'un', 'concat', 'self', 'call', 'vararg', 'newtable', 'closure']);
+    const scratch = [];
+    let k = pos;
+    let next = -1;
+    while (k <= end) {
+      if (k === end) { if (!mayFallIn) return fail(); next = end; break; }
+      const o = this.ir[k];
+      if (k > pos && this.isTarget[k]) return fail();
+      if (o.op === 'jmp') { if (o.t !== E) return fail(); next = k + 1; break; }
+      if (!setupOps.has(o.op)) return fail();
+      if (o.op === 'call' && (o.tail || o.nres !== 1)) return fail();
+      if (o.op === 'vararg' && o.n !== 1) return fail();
+      if (this.writes[k].includes(R)) force(k);
+      try { this.stepSimple(k, scratch); } catch (e) { if (e instanceof Unstructured) return fail(); throw e; }
+      if (scratch.length) return fail();
+      k++;
+    }
+    const e = this.P.get(R);
+    if (!e || this.P.size !== 1 || this.topEntry || this.multi) return fail();
+    this.P.delete(R);
+    return { value: e.expr, start: pos, end: k, next };
+  }
+
+  /** Is the code from i only the setup of a condition (computations, then a conditional jump), with nothing jumping into it? */
+  conditionAhead(i, hi) {
+    const setup = new Set(['move', 'loadk', 'loadnil', 'getup', 'getglobal', 'index', 'bin', 'un', 'concat', 'self', 'call', 'vararg', 'newtable', 'closure']);
+    for (let k = i; k < hi && k < i + 64; k++) {
+      const o = this.ir[k];
+      if (k > i && this.isTarget[k]) return false;
+      if (o.op === 'cjmp' || o.op === 'testset') return true;
+      if (!setup.has(o.op)) return false;
+    }
+    return false;
+  }
+
   /** Greedily parse conditions, then keep the longest prefix that folds into one and/or condition. */
-  parseGroup(i, hi) {
-    if (this.P.size || this.topEntry || this.multi) return null;
+  parseGroup(i, hi, allowPending = false) {
+    // allowPending: values computed before the condition may be inlined into it, if the condition consumes every one of them
+    // (parseCondNode still requires nothing pending at the jump, and orderOk keeps the order)
+    if ((this.P.size && !allowPending) || this.topEntry || this.multi) return null;
     const nodes = [];
     let k = i;
     while (k < hi) {
@@ -721,6 +1013,11 @@ class FunctionDecompiler {
               // A or B; both may carry a value for the destination register: it is the first one that fired
               if (A.assign && B.assign) {
                 if (A.assign.op !== B.assign.op || A.assign.d !== B.assign.d) continue;
+                // Prompt XXX: `A.value op B.value` is the first value that fired only when A fires exactly when its own value
+                // decides (a plain TESTSET). A compound A (`b and a`) can fail while its value is truthy: merging it gave
+                // `a or c` where the original yields c (found by the decompiler property test).
+                const own = A.assign.op === 'or' ? A.P === A.assign.expr : (A.P.type === 'Unary' && A.P.op === 'not' && A.P.arg === A.assign.expr);
+                if (!own) continue;
                 const op = A.assign.op;
                 merged = { P: mkOr(A.P, B.P), t: B.t, f: B.f, assign: { ...A.assign, expr: { type: 'Binary', op, left: A.assign.expr, right: B.assign.expr } } };
               } else if (!A.assign && !B.assign) merged = { P: mkOr(A.P, B.P), t: B.t, f: B.f, assign: null };
@@ -779,7 +1076,20 @@ class FunctionDecompiler {
         continue;
       }
       // conditions (without debug names, the results of a call nothing has named are written out first: they cannot be part of one)
+      const vr = this.valueRegion(i, hi, out);
+      if (vr >= 0) { i = vr; continue; }
       let g = this.parseGroup(i, hi);
+      // Prompt XXX: values still pending when a condition begins (`local r = request(t)` then `if r.StatusCode ~= 200`) kept the
+      // condition from being read at all — the function was abandoned ("condition could not be folded"). They run before the
+      // condition either way: write them out, and read the condition.
+      if (!g && this.P.size && !this.topEntry && !this.multi && this.conditionAhead(i, hi)) g = this.parseGroup(i, hi, true);
+      if (!g && this.P.size && !this.topEntry && !this.multi && this.conditionAhead(i, hi)) {
+        const saved = new Map(this.P);
+        const written = [];
+        this.flushAll(written);
+        const again = this.parseGroup(i, hi);
+        if (again) { out.push(...written); g = again; } else this.P = saved;
+      }
       if (!g && this.multi && !this.hasDebug) {
         const saved = this.multi;
         const written = [];
@@ -987,14 +1297,16 @@ class FunctionDecompiler {
         return i + 1;
       }
       case 'self': {
-        const used = [];
-        const consume = this.consumer(used, true);
-        const obj = consume(o.obj, pc);
-        const key = consume(o.key, pc);
-        if (!this.orderOk(used)) throw new Unstructured('method lookup out of order');
+        // Prompt XXX: an object or key whose value cannot stay inline in order is written out first (tx), as for any other
+        // expression; this used to abandon the whole function ("method lookup out of order")
+        let obj;
+        let key;
+        this.tx(out, 'pending', (c) => { obj = c(o.obj, pc); key = c(o.key, pc); return obj; });
+        const held = (this.lastUsed || []).filter((e) => e.impure);
         const idx = this.indexNode(obj, key);
         this.P.set(o.d, { expr: idx, method: { obj, key }, impure: false, seq: this.seq++ });
-        this.P.set(o.d + 1, { expr: obj, selfOf: o.d, impure: used.some((e) => e.impure), seq: this.seq++ });
+        const seq = this.seq++;
+        this.P.set(o.d + 1, { expr: obj, selfOf: o.d, impure: held.length > 0, seq: held.length ? Math.min(...held.map((e) => e.seq)) : seq });
         return i + 1;
       }
       case 'bin':
@@ -1099,6 +1411,7 @@ class FunctionDecompiler {
     const tr = regOf(o.obj);
     const te = tr >= 0 ? this.P.get(tr) : null;
     if (te && te.table && this.canFold(te, o, i)) {
+      const snap = new Map(this.P);
       const used = [];
       const consume = this.consumer(used, true);
       const key = consume(o.key, pc);
@@ -1109,8 +1422,9 @@ class FunctionDecompiler {
         te.table.fields.push(isName ? { kind: 'named', key: key.value, value: val } : { kind: 'keyed', key, value: val });
         return i + 1;
       }
-      // could not keep order: restore by flushing everything as ordinary statements
-      throw new Unstructured('table constructor field out of order');
+      // Prompt XXX: the field's value cannot join the constructor in order — the table so far is written out and the field is
+      // assigned to it as a statement below (this used to abandon the whole function: "table constructor field out of order")
+      this.P = snap;
     }
     // a table that is still being built cannot be the target of an ordinary assignment: give it a name first
     if (te && te.table) this.flushAll(out);
@@ -1159,10 +1473,19 @@ class FunctionDecompiler {
     const consume = this.consumer(used, true);
     const last = o.n === -1 ? o.topFrom - 1 : o.base + o.n;
     const items = [];
+    const snap = new Map(this.P);
+    const snapTop = this.topEntry;
     for (let r = o.base + 1; r <= last; r++) items.push(consume({ r }, pc));
     if (o.n === -1) items.push(this.takeTop());
     fixTail(items);
-    if (!this.orderOk(used)) throw new Unstructured('table constructor items out of order');
+    if (!this.orderOk(used)) {
+      // Prompt XXX: as for a field — write the table out and store the items one by one, instead of abandoning the function
+      this.P = snap;
+      this.topEntry = snapTop;
+      if (this.topEntry) throw new Unstructured('table constructor items out of order');
+      this.flushAll(out);
+      return this.stepSetList(i, out);
+    }
     if (used.some((e) => e.impure) || o.n === -1) te.impure = true;
     for (const v of items) te.table.fields.push({ kind: 'item', value: v });
     return i + 1;
@@ -1222,7 +1545,11 @@ class FunctionDecompiler {
       for (let r = o.base + 1; r <= last; r++) {
         if (method && r === o.base + 1) {
           const e = this.P.get(r);
-          if (e && e.selfOf === o.base) { this.P.delete(r); continue; }
+          // Prompt XXX: the object is consumed by this call like any argument, so it goes through the consumer and counts for the
+          // evaluation order. Deleting it unseen hid an impure object (`game:GetService("HttpService")`) from orderOk, which then let
+          // an argument whose value was computed earlier (a table holding `game:GetService("Players")`) be inlined after it — the
+          // rebuilt program called the two in the opposite order.
+          if (e && e.selfOf === o.base) { c({ r }, pc); this.P.delete(r); continue; }
           throw new Unstructured('method call whose object was not forwarded');
         }
         args.push(c({ r }, pc));

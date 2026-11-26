@@ -1,5 +1,5 @@
 {
- "generatedAt": "2026-11-24T08:26:00.609Z",
+ "generatedAt": "2026-11-26T15:53:49.187Z",
  "engine": "src/recover/pipeline.js",
  "records": [
   {
@@ -315,7 +315,7 @@
     {
      "id": "simplify.mv21",
      "status": "applied",
-     "changed": 10
+     "changed": 11
     },
     {
      "id": "dataflow.mv21",
@@ -325,7 +325,7 @@
     {
      "id": "rename.mv21",
      "status": "applied",
-     "changed": 25
+     "changed": 24
     },
     {
      "id": "idioms.functions.mv21",
@@ -334,7 +334,7 @@
     }
    ],
    "unresolved": 0,
-   "outputBytes": 4108
+   "outputBytes": 3947
   },
   {
    "id": "moonveil-2.1.0-sample7",

@@ -46,6 +46,8 @@ const HTTP_METHODS = new Set(['HttpGet', 'HttpGetAsync', 'GetAsync', 'HttpPost',
 const SPAWNERS = new Set(['spawn', 'delay', 'defer', 'Connect', 'connect', 'Once', 'CharacterAdded', 'ChildAdded', 'Activated', 'MouseButton1Click']);
 
 const LIMITS = { fuel: 40_000_000, timeMs: 8_000, maxEvents: 4000, maxWaits: 400, handlerWaits: 40, maxHandlers: 60, maxLayers: 24 };
+/** The default limits of a trace (read-only), for callers that must reason about them (src/adaptive/verify.js). */
+export const TRACE_LIMITS = Object.freeze({ ...LIMITS });
 const KEYWORDS = new Set(['and', 'break', 'do', 'else', 'elseif', 'end', 'false', 'for', 'function', 'goto', 'if', 'in', 'local', 'nil', 'not', 'or', 'repeat', 'return', 'then', 'true', 'until', 'while', 'continue']);
 
 const SERVICE_NAME = /Service$|^(Players|Workspace|Lighting|RunService|Teams|StarterGui|StarterPack|ReplicatedStorage|ReplicatedFirst|ServerStorage|ServerScriptService|Debris|Chat|CoreGui|StarterPlayer|TestService|VirtualUser|UserInputService)$/;

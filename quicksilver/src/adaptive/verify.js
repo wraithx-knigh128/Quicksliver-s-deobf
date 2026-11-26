@@ -8,7 +8,7 @@
 // that was cut short by a limit (fuel, time) says nothing about what came after, and a program that waits on events that never come is
 // compared up to the point where each stopped.
 
-import { traceScript } from '../trace/trace.js';
+import { traceScript, TRACE_LIMITS } from '../trace/trace.js';
 
 const strip = (s) => (s == null ? s : String(s).replace(/\btrace:\d+:\s*/g, ''));
 
@@ -29,27 +29,59 @@ function summarise(t) {
 /**
  * @param {string} original binary string
  * @param {string} recovered binary string
- * @param {{fuel?: number, timeMs?: number, originalPrelude?: string[], needsMainReference?: boolean}} [options]
+ * @param {{fuel?: number, timeMs?: number, maxWaits?: number, originalPrelude?: string[], runtimeGlobals?: {names?: string[], fromSource?: string[]}, needsMainReference?: boolean}} [options]
  *   originalPrelude: events a format's own runtime makes before the program starts (MoonSec V3 calls wait() once); when the original's run
- *   starts with them and the recovered program's does not, they are not counted, and the note says so.
+ *   starts with them and the recovered program's does not, they are not counted, the waits among them are not charged to the original's
+ *   wait budget, and the note says so.
+ *   runtimeGlobals: globals a format's own runtime writes, which the program it protects does not: `names` (exact) and `fromSource`
+ *   (regular-expression sources run on the original's text; the first capture is such a name). They are left out of the original's
+ *   written globals only when the recovered program does not write them, and the note names them.
  *   needsMainReference: when the original's first event is a call of one of the stand-in arguments the sandbox passes to a script
  *   (`arg1(…)`), the original only ran as a callback of something absent, and its run is no reference for the rebuilt program.
  */
 export function verifyRecovery(original, recovered, options = {}) {
-  const limits = { fuel: options.fuel ?? 40_000_000, timeMs: options.timeMs ?? 8000 };
+  const limits = { fuel: options.fuel ?? 40_000_000, timeMs: options.timeMs ?? 8000, ...(options.maxWaits ? { maxWaits: options.maxWaits } : {}) };
   const t0 = Date.now();
-  const a = summarise(traceScript(original, limits));
+  const prelude = Array.isArray(options.originalPrelude) ? options.originalPrelude : [];
+  // Prompt XXX: a wait the obfuscator's runtime makes before the program starts also spends one of the sandbox's waits. A program that
+  // waits in a loop (`while true do wait() … end`) is stopped when they run out, so the original's loop ran one round fewer than the
+  // rebuilt program's and every later event moved: MoonSec V3 sample 3fed8cb5 was reported as "different" for that alone (with one more
+  // wait for the original, the two runs are identical event for event at 400, 200 and 50 waits). The original gets one more wait for
+  // each wait in the prelude; if the prelude turns out not to apply, it is traced again with the ordinary budget.
+  const preludeWaits = prelude.filter((p) => /^(?:task\.)?wait\(/.test(p)).length;
+  const traceOriginal = (extra) => summarise(traceScript(original, extra ? { ...limits, maxWaits: (options.maxWaits ?? TRACE_LIMITS.maxWaits) + extra } : limits));
+  let a = traceOriginal(preludeWaits);
   // the recovered program's run is the one whose claim is being checked: how much of it the run reached is recorded with the verdict
   const tb = traceScript(recovered, { ...limits, coverage: true });
   const b = summarise(tb);
   const coverage = tb.coverage || null;
-  const ms = Date.now() - t0;
   const notes = [];
   const cut = (x) => x.status === 'limit' || /^stopped/.test(x.ended || '');
-  const prelude = Array.isArray(options.originalPrelude) ? options.originalPrelude : [];
-  if (prelude.length && prelude.every((p, i) => a.events[i] && a.events[i].text === p) && !prelude.every((p, i) => b.events[i] && b.events[i].text === p)) {
+  const startsWith = (x) => prelude.every((p, i) => x.events[i] && x.events[i].text === p);
+  const preludeApplies = prelude.length > 0 && startsWith(a) && !startsWith(b);
+  if (preludeWaits && !preludeApplies) a = traceOriginal(0);
+  const ms = Date.now() - t0;
+  if (preludeApplies) {
     a.events = a.events.slice(prelude.length);
-    notes.push(`The original's first event${prelude.length > 1 ? 's' : ''} (${prelude.join(', ')}) ${prelude.length > 1 ? 'are' : 'is'} made by the obfuscator's own runtime before the program starts, so ${prelude.length > 1 ? 'they were' : 'it was'} not compared.`);
+    notes.push(`The original's first event${prelude.length > 1 ? 's' : ''} (${prelude.join(', ')}) ${prelude.length > 1 ? 'are' : 'is'} made by the obfuscator's own runtime before the program starts, so ${prelude.length > 1 ? 'they were' : 'it was'} not compared${preludeWaits ? ` and the original was given ${preludeWaits} more wait${preludeWaits > 1 ? 's' : ''} in the sandbox to make up for ${preludeWaits > 1 ? 'them' : 'it'}` : ''}.`);
+  }
+  // Prompt XXX: the protection's own globals (MoonSec V3: the name its banner line assigns, and MoonSec_StringsHiddenAttr) were counted as
+  // a difference in every keyless MoonSec result, so none could be verified (the XXIX batch script did not compare globals and
+  // reported 31 identical; the product's comparison reported those 31 as "wrote globals" differences)
+  const rg = options.runtimeGlobals;
+  if (rg && (rg.names || rg.fromSource)) {
+    const own = new Set(rg.names || []);
+    for (const src of rg.fromSource || []) {
+      let re;
+      try { re = new RegExp(src, 'g'); } catch { continue; }
+      for (const m of String(original).matchAll(re)) if (m[1]) own.add(m[1]);
+    }
+    const mine = new Set(b.writes);
+    const dropped = a.writes.filter((w) => own.has(w) && !mine.has(w));
+    if (dropped.length) {
+      a.writes = a.writes.filter((w) => !dropped.includes(w));
+      notes.push(`The original also wrote ${dropped.join(', ')}: global${dropped.length > 1 ? 's' : ''} of the obfuscator's own runtime, not of the program, so ${dropped.length > 1 ? 'they were' : 'it was'} not compared.`);
+    }
   }
   if (options.needsMainReference && a.events[0] && /^arg\d+\(/.test(a.events[0].text)) {
     return {
