@@ -11,3 +11,6 @@ Everything here was written for QuickSilver's tests; none of it comes from a thi
   `os.execute`. The engine evaluates such expressions to find its keys; before QuickSilver's audit its evaluator ran them with the
   whole Lua standard library, so this file ran a shell command. The test runs it through the same isolated path as the server
   (api/_lib/isolate.js) and requires the engine to refuse it.
+- `prometheus-weak-lifted.lua` — what the vendored Prometheus engine (api/_engine/prometheus, MIT) produced for QuickSilver's own
+  fixture `tests/corpus/obfuscated/prometheus/s01_minify_basic__Weak.lua` (run through tools/isolate/run.sh). The e2e test answers
+  `/api/engine` with it, so the page's gate (behaviour comparison with the script) is exercised without a server.

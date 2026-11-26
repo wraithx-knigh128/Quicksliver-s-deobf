@@ -1680,6 +1680,32 @@ test('XXIX Deobfuscate: declining keeps the script in the browser — nothing is
   await ctx.close();
 });
 
+test('XXIX Deobfuscate: a Prometheus VM build that QuickSilver leaves partial is lifted by the server engine, and used only because the behaviour check agrees', { skip, timeout: 240_000 }, async () => {
+  const { page, ctx, problems } = await newPage({}, { site: true });
+  const lifted = fs.readFileSync(path.join(corpus, 'engine', 'prometheus-weak-lifted.lua'), 'latin1');
+  const posts = [];
+  await page.route('**/api/engine', (route) => {
+    const req = route.request();
+    if (req.method() === 'GET') return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, service: 'engine', isolation: 'namespaces', engines: [{ id: 'prometheus-vm', label: 'Prometheus deobfuscator', family: 'prometheus', output: 'lua-source', licence: 'MIT: Prometheus Deobfuscator by LeakD' }] }) });
+    posts.push(JSON.parse(req.postData() || '{}'));
+    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, engine: 'prometheus-vm', output: 'lua-source', source: Buffer.from(lifted, 'latin1').toString('base64'), bytes: lifted.length, ms: 80, isolation: 'namespaces', licence: 'MIT: Prometheus Deobfuscator by LeakD' }) });
+  });
+  await page.fill('#deob-text', fs.readFileSync(path.join(corpus, 'obfuscated/prometheus/s01_minify_basic__Weak.lua'), 'latin1'));
+  await page.check('#deob-verify');
+  await page.click('#deob-run');
+  await page.waitForSelector('.modal', { timeout: 120_000 });
+  assert.match(await page.textContent('.modal'), /left its virtual machine in place/);
+  await page.click('.modal .mfoot .primary');
+  await deobDone(page);
+  assert.equal(posts.length, 1);
+  assert.equal(posts[0].engine, 'prometheus-vm');
+  assert.match(await page.textContent('#deob-result .verdict'), /behaviourally validated/i);
+  assert.match(await page.textContent('#deob-result'), /used because it behaved like the script in the sandbox/);
+  assert.match(await page.textContent('#deob-result .res-code'), /lifted to Lua by a server engine \(prometheus-vm; MIT\)/);
+  assert.deepEqual(problems, []);
+  await ctx.close();
+});
+
 test('v1.8 Deobfuscate: a Premium refusal from the server is shown as an authorisation result, never as a retrieval', { skip, timeout: 120_000 }, async () => {
   const { page, ctx } = await newPage({}, { site: true });
   // what api/github.js answers when the deployment enforces licences and this browser's licence does not include GitHub retrieval

@@ -39,11 +39,16 @@ reach the host through it. No network, no child processes, no timers. It still r
 Measured on QuickSilver's 131 Prometheus fixtures (its own test programs, obfuscated by Prometheus; docs/REPORT-XXIX.md), every run
 isolated, every output compared in QuickSilver's sandbox:
 
-- On the 53 VM builds, the engine lifts 31 to a program that behaves like the protected script (26 like the original; the other 5 are
+- On the 53 Medium, Strong and Vmify builds, the engine lifts 31 to a program that behaves like the protected script (26 like the original; the other 5 are
   builds the manifest records as diverging from their original on real Lua, which the engine reproduces faithfully), is **wrong on 6**
-  (a program that runs, parses and behaves differently), and fails on 16. QuickSilver's own passes leave the VM in place in 40 of them.
+  (a program that runs, parses and behaves differently), and, as supplied, crashed on 16 (the undefined name fixed above). QuickSilver's own passes leave the VM in place in 40 of them.
 - A behaviour comparison **with the script itself** — the only reference a real user has — accepts all 31 faithful programs and none
   of the 6 wrong ones.
+
+Through the whole pipeline (QuickSilver's passes first, then the engine, then the gate), the share of the 131 fixtures that come out
+behaving like the reference with nothing left goes from 59 to 94, with no result that behaves differently and no "validated" result
+that is not clean (68 builds use Vmify: 10 → 45; the engine was asked 58 times, its program used 35 times, rejected by the gate 23
+times).
 
 So the adapter (`src/pipeline/engines.js`, `prometheus-vm`) runs only when QuickSilver's own result still carries Prometheus
 protection, only when the person has the behaviour check on, after they confirm they may send the script, and its program is the

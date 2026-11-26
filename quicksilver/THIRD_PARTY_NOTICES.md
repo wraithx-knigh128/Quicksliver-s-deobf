@@ -413,3 +413,24 @@ No obfuscator other than Prometheus, Hercules, IronBrew 2, Zenfus, AzureVM, the 
 ## Reconstruction engine (api/_engine/luraph)
 
 Supplied by the project owner as the archive `luraph-v15-v14.x-deobfuscator-main` (readme credits "KryptIT / larpcorrupt"; an earlier output header named another person). **No licence file or grant was found**: it is included at the owner's direction and must not be redistributed until its licence status is confirmed. Modifications are listed in `api/_engine/luraph/NOTICE.md`. `luau` and `luau-ast` in `deobf/bin` are builds of Luau 0.739 (MIT, Roblox Corporation and Luau contributors, https://github.com/luau-lang/luau) made for this project.
+
+## Server engines (Prompt XXIX): api/_engine/moonsec, api/_engine/prometheus
+
+Both reached QuickSilver in the archive the project owner supplied for Prompt XXIX. Both run only as separate, isolated processes
+started by `api/engine.js` through `api/_lib/isolate.js`; no QuickSilver module imports them. Each directory carries the licence text,
+and a `NOTICE.md` with the provenance, every change QuickSilver made (each also marked in the code), the audit and the measurements.
+
+| Component | Licence | Notes |
+|---|---|---|
+| `api/_engine/moonsec/src` — moonsec-deobfuscator-js, a JavaScript port of [tupsutumppu/MoonsecDeobfuscator](https://github.com/tupsutumppu/MoonsecDeobfuscator) (credit line: "all credit to the original author (tupsutumppu)") | GPL-3.0 (declared by the port; `LICENSE` is the upstream licence text) | modified: safe key-expression evaluator, byte-exact strings, string rule per kind of build; its decompiler wrapper and the `luadec` / `unluac` binaries it shipped were not brought in. The modified source is distributed here under the same licence. |
+| `api/_engine/prometheus/src` — Prometheus Deobfuscator by LeakD | MIT (Copyright (c) 2026 LeakD; `LICENSE`) | modified: one undefined name in the parser (`BLOCK_TERMINATORS` → `TERMINATORS`). |
+| fengari 0.1.5 | MIT | Lua 5.3 in JavaScript; used by the MoonSec engine to evaluate key expressions (with only base, math and string opened) |
+| luaparse 0.3.1 (Oskar Schöldström) | MIT | the MoonSec engine's Lua parser |
+| readline-sync 1.4.10 (anseki), sprintf-js 1.1.3 (Alexandru Mărășteanu), tmp 0.2.7 (KARASZI István) | MIT, BSD-3-Clause, MIT | fengari's own dependencies, copied with it into each engine run |
+
+Read and measured, **not** integrated (docs/REPORT-XXIX.md says why): CaoMod-Luraph-Deobfuscator and the Luraph v15.1 / v15.2
+deobfuscators (MIT, caomod2077; the same lineage as `api/_engine/luraph`), LuaObfuscator-Deobfuscator (no licence), and from GitHub
+[yennylol/unprom](https://github.com/yennylol/unprom) (MIT), [hutaoshusband/UnPromised](https://github.com/hutaoshusband/UnPromised)
+(MIT), [binxgtl/luau-vmp-deobf](https://github.com/binxgtl/luau-vmp-deobf) (MIT) and
+[memcpython/lua-deobfuscators](https://github.com/memcpython/lua-deobfuscators) (MIT), read as text; unprom was also run, isolated,
+on QuickSilver's own Prometheus fixtures. None of their code is in this repository.

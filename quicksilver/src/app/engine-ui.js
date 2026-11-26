@@ -4,7 +4,7 @@
 // /api/engine (api/engine.js), is read there by the engine in a separate, isolated process without being run, and only the rebuilt
 // bytecode comes back. Declining keeps everything in the browser: QuickSilver's own passes run instead.
 
-import { h, modal } from './dom.js';
+import { h, modal, fmtBytes } from './dom.js';
 import { serverFetch, licenceRefusal } from './server.js';
 
 // what this tab learnt about the server: which engines it offers (GET /api/engine), and a refusal that will not change during the visit
@@ -56,13 +56,12 @@ export async function serverEngineRequest(adapter, text, { confirm = confirmUse 
 }
 
 async function confirmUse(adapter, text) {
-  const kb = Math.max(1, Math.round(text.length / 1024));
   const r = await modal({
     title: `Rebuild with the ${adapter.familyLabel} engine?`,
     body: [
       h('p', `This script is protected with ${adapter.familyLabel}. QuickSilver's own passes ${adapter.when === 'own-result-keeps-vm' ? 'left its virtual machine in place' : 'cannot take its virtual machine apart'}; a server engine can try.`),
       h('ul', [
-        h('li', `The script (${kb} KB) is sent to this site's server, nowhere else. The engine reads it in a separate, isolated process; it does not run it, and nothing is kept once the answer is sent.`),
+        h('li', `The script (${fmtBytes(text.length)}) is sent to this site's server, nowhere else. The engine reads it in a separate, isolated process; it does not run it, and nothing is kept once the answer is sent.`),
         h('li', adapter.output === 'lua-source'
           ? 'Only the rebuilt program comes back; QuickSilver uses it only if it behaves like your script in the sandbox here, and keeps its own result otherwise.'
           : 'Only the rebuilt program comes back, as Lua 5.1 bytecode; QuickSilver decompiles and checks it here, like every other result.'),
