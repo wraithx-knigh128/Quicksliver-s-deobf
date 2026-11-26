@@ -16,7 +16,7 @@
 import { verifyToken } from '../../src/license/license.js';
 import { PUBLIC_KEY } from '../../src/license/config.js';
 
-export const SERVER_FEATURES = Object.freeze({ github: 'GitHub retrieval', reconstruct: 'Luraph reconstruction engine', assistant: 'AI research assistant', retrieve: 'owner retrieval' });
+export const SERVER_FEATURES = Object.freeze({ github: 'GitHub retrieval', reconstruct: 'Luraph reconstruction engine', assistant: 'AI research assistant', retrieve: 'owner retrieval', engine: 'Server deobfuscation engines (MoonSec V3)' });
 
 function publicKey(env) {
   if (env.QS_LICENSE_PUBLIC_KEY) {

@@ -29,7 +29,11 @@ function summarise(t) {
 /**
  * @param {string} original binary string
  * @param {string} recovered binary string
- * @param {{fuel?: number, timeMs?: number}} [options]
+ * @param {{fuel?: number, timeMs?: number, originalPrelude?: string[], needsMainReference?: boolean}} [options]
+ *   originalPrelude: events a format's own runtime makes before the program starts (MoonSec V3 calls wait() once); when the original's run
+ *   starts with them and the recovered program's does not, they are not counted, and the note says so.
+ *   needsMainReference: when the original's first event is a call of one of the stand-in arguments the sandbox passes to a script
+ *   (`arg1(…)`), the original only ran as a callback of something absent, and its run is no reference for the rebuilt program.
  */
 export function verifyRecovery(original, recovered, options = {}) {
   const limits = { fuel: options.fuel ?? 40_000_000, timeMs: options.timeMs ?? 8000 };
@@ -42,6 +46,25 @@ export function verifyRecovery(original, recovered, options = {}) {
   const ms = Date.now() - t0;
   const notes = [];
   const cut = (x) => x.status === 'limit' || /^stopped/.test(x.ended || '');
+  const prelude = Array.isArray(options.originalPrelude) ? options.originalPrelude : [];
+  if (prelude.length && prelude.every((p, i) => a.events[i] && a.events[i].text === p) && !prelude.every((p, i) => b.events[i] && b.events[i].text === p)) {
+    a.events = a.events.slice(prelude.length);
+    notes.push(`The original's first event${prelude.length > 1 ? 's' : ''} (${prelude.join(', ')}) ${prelude.length > 1 ? 'are' : 'is'} made by the obfuscator's own runtime before the program starts, so ${prelude.length > 1 ? 'they were' : 'it was'} not compared.`);
+  }
+  if (options.needsMainReference && a.events[0] && /^arg\d+\(/.test(a.events[0].text)) {
+    return {
+      ok: true,
+      verdict: 'inconclusive',
+      summary: 'The comparison could not settle it: the original did not run as a program in the sandbox.',
+      difference: null,
+      notes: [...notes, `The original's first act was to call one of the stand-in arguments the sandbox passes to a script (${a.events[0].text}): it runs only when something outside it calls it in a particular way, so its run is no reference for the rebuilt program.`],
+      coverage,
+      original: { status: a.status, events: a.events.length, output: a.output.length },
+      recovered: { status: b.status, events: b.events.length, output: b.output.length },
+      ms: Date.now() - t0,
+      reference: 'none',
+    };
+  }
 
   // a run that ran out of fuel or time only tells us how far it got; compare the part both did
   let n = Math.min(a.events.length, b.events.length);
@@ -63,6 +86,12 @@ export function verifyRecovery(original, recovered, options = {}) {
     else if (a.status !== b.status) difference = { index: -1, original: `ended: ${a.ended}`, recovered: `ended: ${b.ended}` };
     else if (a.error !== b.error) difference = { index: -1, original: `error: ${a.error}`, recovered: `error: ${b.error}` };
     else if (a.writes.join() !== b.writes.join()) difference = { index: -1, original: `wrote globals: ${a.writes.join(', ') || 'none'}`, recovered: `wrote globals: ${b.writes.join(', ') || 'none'}` };
+  }
+  // Prompt XXIX: a rebuilt VM program has none of the original's variable names, so the same error names a different variable; the verdict
+  // stays "different" (the check is not loosened), and the note says what the difference is
+  const unnamed = (e) => String(e || '').replace(/\s*\((?:local|global|field|upvalue|method|constant) '[^']*'\)/g, '');
+  if (difference && difference.index === -1 && a.error && b.error && a.error !== b.error && unnamed(a.error) === unnamed(b.error)) {
+    notes.push(`Both runs did the same ${a.events.length} thing(s) and stopped with the same error (${unnamed(a.error)}); the messages differ only in the variable they name, which a rebuilt program does not keep.`);
   }
   if (a.loads !== b.loads) notes.push(`The original loaded ${a.loads} chunk(s) of code at run time, the recovered program ${b.loads}; code that is loaded is compared by what it does.`);
   const idle = a.events.length === 0 && !a.output;

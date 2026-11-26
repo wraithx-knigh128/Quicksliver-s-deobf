@@ -70,7 +70,12 @@
     "api/reconstruct.py": {
       "maxDuration": 300,
       "memory": 2048,
-      "includeFiles": "{api/_engine/**,src/license/config.js}"
+      "includeFiles": "{api/_engine/luraph/**,src/license/config.js}"
+    },
+    "api/engine.js": {
+      "maxDuration": 90,
+      "memory": 2048,
+      "includeFiles": "{api/_engine/moonsec/**,api/_engine/prometheus/**,node_modules/fengari/**,node_modules/luaparse/**,node_modules/readline-sync/**,node_modules/sprintf-js/**,node_modules/tmp/**,tools/isolate/run.sh}"
     },
     "api/assistant.js": {
       "maxDuration": 60

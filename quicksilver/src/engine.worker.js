@@ -9,6 +9,8 @@ const OPS = {
   beautify: api.beautifyScript,
   analyze: api.analyzeSource,
   recover: api.recoverSource,
+  fromBytecode: api.recoverFromBytecode,
+  fromSource: api.recoverFromSource,
   nexus: api.nexusSource,
   advise: api.adviseSource,
   identify: api.identifySource,

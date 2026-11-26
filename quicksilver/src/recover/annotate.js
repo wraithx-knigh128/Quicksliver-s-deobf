@@ -67,6 +67,13 @@ function describeVm(vm) {
     lines.push(...wrap(`Virtual machine (MoonVeil 2.1.0), rebuilt from its program data (${plural(st.functions || 0, 'function')}, ${plural(st.instructions || 0, 'instruction')}). Every instruction was read through the handler its opcode selects in this build (${plural(st.handlers || 0, 'distinct handler')}), evaluated with the instruction's own fields, and the result was decompiled; the code MoonVeil left as plain Lua around the VM (${plural(st.natives || 0, 'native function')}) was joined back in. ${st.selfCheck === 'same' ? 'The rebuilt script ran in the sandbox like the original.' : 'The rebuilt script was not run against the original.'} Names, comments and layout are not recovered.`, '-- ', '--   '));
     return lines;
   }
+  if (vm.lifted && vm.engine) {
+    // Prompt XXIX: a program a server engine rebuilt (api/engine.js) and QuickSilver decompiled
+    const st = vm.stats || {};
+    if (vm.output === 'lua-source') lines.push(...wrap(`Virtual machine (${vm.label || vm.kind}), lifted to Lua by a server engine (${vm.engine}${vm.licence ? `; ${String(vm.licence).split(':')[0]}` : ''}) and cleaned by QuickSilver's passes. Names, comments and layout are not recovered: the VM keeps none.`, '-- ', '--   '));
+    else lines.push(...wrap(`Virtual machine (${vm.label || vm.kind}), rebuilt by a server engine (${vm.engine}${vm.licence ? `; ${String(vm.licence).split(':')[0]}` : ''}) as Lua 5.1 bytecode (${plural(st.functions || 0, 'function')}, ${plural(st.instructions || 0, 'instruction')}, ${plural(st.constants || 0, 'constant')}) and decompiled by QuickSilver's own decompiler${st.undecompiled ? `; ${plural(st.undecompiled, 'function')} could not be decompiled and ${st.undecompiled === 1 ? 'is' : 'are'} marked in the output` : ''}. Names, comments and layout are not recovered: the VM keeps none.`, '-- ', '--   '));
+    return lines;
+  }
   if (vm.lifted && vm.kind === 'vault') {
     const st = vm.stats || {};
     lines.push(...wrap(`Virtual machine (Vault-Obf), lifted back to source from its payload (${plural(st.functions || 0, 'function')} of ${plural(st.payloadPrototypes || 0, 'prototype')} in the payload; the rest are decoys nothing calls). The payload was decoded with the parameters it carries and every opcode was read off the handler this build wrote for it (${st.dispatch || 'dispatch'}). Names, comments and layout are not recovered.`, '-- ', '--   '));
@@ -127,7 +134,12 @@ export function buildReport({ detection, steps, confidence, adaptive, vm = null 
   const remoteOnly = (detection.classes || []).some((c) => c.id === 'remote-loader' || c.id === 'cached-remote-loader');
   lines.push(...wrap(`Result: ${remoteOnly ? 'THE PROGRAM IS NOT IN THIS FILE' : (LABEL[level] || LABEL.none)} (confidence ${level}, ${Number(confidence.score || 0).toFixed(2)}). This is a reconstruction, not the original source: names, comments and layout are not recovered.`, '-- ', '--   '));
   if (families.length) {
-    lines.push(...wrap(`Recognised from the structure of the code (a header comment is not taken as proof): ${families.map((f) => `${f.name}${f.version ? ` ${f.version}` : ''}`).join(', ')}.`, '-- ', '--   '));
+    // Prompt XXIX: a family known only from its banner is said to be so; the banner is text the file's owner can write or remove
+    const fname = (f) => `${f.name}${f.version && !String(f.name).endsWith(f.version) ? ` ${f.version}` : ''}`;
+    const structural = families.filter((f) => !f.evidence || f.evidence.some((e) => e.kind && e.kind !== 'banner'));
+    const bannerOnly = families.filter((f) => !structural.includes(f));
+    if (structural.length) lines.push(...wrap(`Recognised from the structure of the code (a header comment is not taken as proof): ${structural.map(fname).join(', ')}.`, '-- ', '--   '));
+    if (bannerOnly.length) lines.push(...wrap(`Recognised from its banner only (text the file's owner can write or remove; nothing in the structure was checked): ${bannerOnly.map(fname).join(', ')}.`, '-- ', '--   '));
   }
   else if ((detection.classes || []).length && !['plain-script', 'known-tool'].includes(detection.classes[0].id)) {
     // no rule knows the tool: say what the script is made of, and what that means for what could be recovered

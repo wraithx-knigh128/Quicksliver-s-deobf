@@ -1,0 +1,12 @@
+{
+  "name": "moonsec-deobfuscator-js",
+  "version": "1.0.0",
+  "license": "GPL-3.0",
+  "private": true,
+  "description": "Vendored for QuickSilver (Prompt XXIX): MoonSec V3 bytecode recovery, run server-side by api/engine.js. See NOTICE.md.",
+  "main": "qs-driver.js",
+  "dependencies": {
+    "fengari": "0.1.5",
+    "luaparse": "0.3.1"
+  }
+}

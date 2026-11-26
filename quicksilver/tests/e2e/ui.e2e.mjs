@@ -1625,6 +1625,61 @@ test('v1.8 Deobfuscate: a repository link retrieves the entry point and the file
   await ctx.close();
 });
 
+// Prompt XXIX: a format with a server-side adapter goes to its engine from the same Deobfuscate. The engine is mocked here (its answer is the
+// Lua 5.1 chunk of tests/corpus/engine/rebuilt-program.lua); the server half is tested in tests/xxix-engines.test.mjs.
+const MOONSEC_STUB = "([[This file was protected with MoonSec V3]]):gsub('.+', (function(a) _probe = a; end)); return (function(...) return ... end)(1)";
+async function mockEngineApi(page) {
+  const posts = [];
+  const hex = fs.readFileSync(path.join(corpus, 'engine', 'rebuilt-program.luac.hex'), 'utf8').trim();
+  await page.route('**/api/engine', (route) => {
+    const req = route.request();
+    if (req.method() === 'GET') return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, service: 'engine', isolation: 'namespaces', engines: [{ id: 'moonsec-v3', label: 'MoonSec V3 deobfuscator', family: 'moonsec_v3', output: 'lua51-bytecode', licence: 'GPL-3.0: moonsec-deobfuscator-js' }] }) });
+    posts.push(JSON.parse(req.postData() || '{}'));
+    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, engine: 'moonsec-v3', bytecode: Buffer.from(hex, 'hex').toString('base64'), bytes: hex.length / 2, ms: 31, isolation: 'namespaces', licence: 'GPL-3.0: moonsec-deobfuscator-js' }) });
+  });
+  return posts;
+}
+
+test('XXIX Deobfuscate: MoonSec V3 is rebuilt by its server engine after the person confirms, and the result is decompiled here', { skip, timeout: 180_000 }, async () => {
+  const { page, ctx, problems } = await newPage({}, { site: true });
+  const posts = await mockEngineApi(page);
+  await page.fill('#deob-text', MOONSEC_STUB);
+  await page.click('#deob-run');
+  await page.waitForSelector('.modal');
+  assert.match(await page.textContent('.modal'), /Rebuild with the MoonSec V3 engine\?/);
+  assert.match(await page.textContent('.modal'), /own this script or are authorised/);
+  await page.click('.modal .mfoot .primary');
+  await deobDone(page);
+  assert.equal(posts.length, 1);
+  assert.equal(posts[0].engine, 'moonsec-v3');
+  assert.equal(posts[0].attest, true);
+  assert.equal(Buffer.from(posts[0].source, 'base64').toString('latin1'), MOONSEC_STUB);
+  assert.match(await page.textContent('#deob-result .verdict'), /Syntax-valid but behaviourally unverified/i);
+  assert.match(await page.textContent('#deob-result .res-facts'), /Protection: MoonSec V3/);
+  const code = await page.textContent('#deob-result .res-code');
+  assert.match(code, /local Players = game:GetService\("Players"\)/);
+  assert.match(code, /rebuilt by a server engine \(moonsec-v3; GPL-3\.0\)/);
+  assert.match(await page.textContent('#deob-result'), /rebuilt by the server engine moonsec-v3 \(GPL-3\.0, isolation: namespaces\)/);
+  assert.equal(await page.getAttribute('#stage-rail li[data-stage=vm]', 'class'), 'done');
+  assert.deepEqual(problems, []);
+  await ctx.close();
+});
+
+test('XXIX Deobfuscate: declining keeps the script in the browser — nothing is sent, QuickSilver\u2019s own passes run, and the result says so', { skip, timeout: 180_000 }, async () => {
+  const { page, ctx, problems } = await newPage({}, { site: true });
+  const posts = await mockEngineApi(page);
+  await page.fill('#deob-text', MOONSEC_STUB);
+  await page.click('#deob-run');
+  await page.waitForSelector('.modal');
+  await page.click('.modal .mfoot button:not(.primary)');
+  await deobDone(page);
+  assert.equal(posts.length, 0);
+  assert.match(await page.textContent('#deob-result'), /server engine was not used \(you chose to keep the script in the browser\); QuickSilver's own passes were used instead/);
+  assert.doesNotMatch(await page.textContent('#deob-result .verdict'), /validated/i);
+  assert.deepEqual(problems, []);
+  await ctx.close();
+});
+
 test('v1.8 Deobfuscate: a Premium refusal from the server is shown as an authorisation result, never as a retrieval', { skip, timeout: 120_000 }, async () => {
   const { page, ctx } = await newPage({}, { site: true });
   // what api/github.js answers when the deployment enforces licences and this browser's licence does not include GitHub retrieval

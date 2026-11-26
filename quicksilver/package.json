@@ -31,5 +31,9 @@
   },
   "optionalDependencies": {
     "@anthropic-ai/sdk": "^1.6.0"
+  },
+  "dependencies": {
+    "fengari": "0.1.5",
+    "luaparse": "0.3.1"
   }
 }

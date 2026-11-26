@@ -1,0 +1,8 @@
+{
+  "name": "prometheus-deobfuscator",
+  "version": "1.0.0",
+  "description": "Prometheus deobfuscator by LeakD (MIT), vendored by QuickSilver; see NOTICE.md",
+  "private": true,
+  "license": "MIT",
+  "main": "qs-driver.js"
+}

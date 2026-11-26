@@ -11,6 +11,7 @@ import { bytesToBinary, binaryToBytes, binaryToText, textToBinary } from '../cor
 import { recognizeInput, findGitHubRefs } from '../loader/github.js';
 import { deobfuscate, STAGES, SOURCE, ROLES, unifiedMarkdown } from '../pipeline/unified.js';
 import { githubRequest, chooseEntry } from './github-ui.js';
+import { serverEngineRequest } from './engine-ui.js';
 
 const GOOD = new Set(['validated', 'syntax-valid-unverified']);
 const tone = (outcome) => (GOOD.has(outcome) ? 'ok' : outcome === 'partial' ? 'warn' : 'bad');
@@ -145,7 +146,11 @@ export function initDeobPage(ctx) {
       decode: (bytes, meta) => engine.run('payload', bytesToBinary(bytes), meta, { timeoutMs: 30_000 }),
       detect: async (t) => (await engine.run('detect', t, {}, { timeoutMs: 30_000 })).detection,
       recover: async (t) => { options = options || await ctx.recoverOptions(engine, t); return engine.run('recover', t, options, { timeoutMs: 180_000 }); },
-      verify: verify ? (t, recovered) => engine.run('verify', t, { recovered }, { timeoutMs: 90_000 }) : undefined,
+      verify: verify ? (t, recovered, o) => engine.run('verify', t, { ...(o || {}), recovered }, { timeoutMs: 90_000 }) : undefined,
+      // a format with a server-side adapter (src/pipeline/engines.js): the person confirms, the server rebuilds, the worker decompiles
+      serverEngine: (adapter, t) => serverEngineRequest(adapter, t),
+      fromBytecode: async (bc, o) => { options = options || await ctx.recoverOptions(engine, o.original); return engine.run('fromBytecode', bc, { ...o, recover: options }, { timeoutMs: 180_000 }); },
+      fromSource: async (src, o) => { options = options || await ctx.recoverOptions(engine, o.original); return engine.run('fromSource', src, { ...o, recover: options }, { timeoutMs: 180_000 }); },
       github: (url, o) => githubRequest(url, o),
       fetchLink: fetchLink,
       choose: (listing) => chooseEntry(listing),

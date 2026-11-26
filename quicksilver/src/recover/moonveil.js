@@ -16,6 +16,7 @@
 // runs the script. It does not touch the VM blobs: that part of a MoonVeil script is not recovered.
 
 import { walk, transform, structuralKey } from '../core/walk.js';
+import { quoteString } from '../core/printer.js';
 
 const Z85 = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!#$%&()*+-;<=>?@^_`{|}~';
 const u32 = (x) => x >>> 0; // Luau's bit32 truncates toward zero and wraps modulo 2^32, as ToUint32 does
@@ -272,7 +273,7 @@ export function decodeMoonVeilConstants(ast) {
         if (!(aeCall(args[0]) && aeCall(args[1]))) return undefined;
         const text = xorDecrypt(z85Decode(args[0].args[0].value), z85Decode(args[1].args[0].value), w.reversed);
         strings.push(text);
-        return { type: 'String', value: text, raw: JSON.stringify(text), long: false };
+        return { type: 'String', value: text, raw: quoteString(text), long: false };
       }
       const env = new Map(w.params.slice(1).map((p, i) => [p, numberOf(args[i])]));
       if ([...env.values()].some((v) => v === null)) return undefined;

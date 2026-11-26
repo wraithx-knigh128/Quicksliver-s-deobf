@@ -26,6 +26,9 @@ import { decodePayload } from './loader/payload.js';
 import { analyzeLuarmor } from './loader/luarmor.js';
 import { binaryToBytes } from './core/bytes.js';
 import { recoveryOutcome } from './validate/evidence.js';
+import { parseChunk } from './sandbox/bytecode.js';
+import { decompile } from './decompile/decompile.js';
+import { buildReport, annotate } from './recover/annotate.js';
 import { classifyOutcome } from './validate/outcome.js';
 
 export const ENGINE_VERSION = '1.0.0';
@@ -213,6 +216,98 @@ export function dumpSource(source, options = {}) {
  * Run the original and the recovered program in the sandbox (the interface asks first) and compare what each one did. `options.recovered`
  * is the recovered text.
  */
+/**
+ * Prompt XXIX: a server engine's result (api/engine.js) turned into a QuickSilver result. `source` is the Lua 5.1 bytecode the engine rebuilt
+ * (a binary string); `options.original` is the protected script it came from. The bytecode is decompiled by QuickSilver's own decompiler
+ * (src/decompile), cleaned by the ordinary passes, and classified against the original exactly as a lift by one of QuickSilver's own VM readers
+ * is: functions the decompiler could not structure are listed as unresolved, and the engine's part is recorded as a step of its own.
+ * @param {string} source binary string: a Lua 5.1 chunk
+ * @param {{original: string, engine: string, label: string, family: string, licence?: string, recover?: object}} options
+ */
+export function recoverFromBytecode(source, options = {}) {
+  return timed(() => {
+    const original = options.original ?? '';
+    let chunk;
+    try { chunk = parseChunk(source); } catch (e) { return { ok: false, error: { message: `The engine's bytecode could not be read: ${e.message || e}` }, output: null, steps: [], detection: detect(original), warnings: [] }; }
+    const count = (f, acc = { functions: 0, instructions: 0, constants: 0 }) => {
+      acc.functions++; acc.instructions += (f.code || []).length; acc.constants += (f.constants || f.k || []).length;
+      for (const p of f.protos || f.p || []) count(p, acc);
+      return acc;
+    };
+    const stats = count(chunk.main);
+    const d = decompile(chunk);
+    const decompiled = print(d.ast);
+    // the ordinary passes clean the decompiled program (names from evidence, idioms); nothing of the original's VM is left for them to undo
+    const inner = recover(decompiled, { ...(options.recover || {}), annotate: false, sandbox: { enabled: false } });
+    const steps = [
+      { id: `${options.engine}.engine`, label: options.label || 'Rebuild the program with a server engine', status: 'applied', changed: stats.instructions, detail: { engine: options.engine, licence: options.licence || null, ...stats } },
+      { id: 'decompile.bytecode', label: 'Decompile the rebuilt Lua 5.1 bytecode (QuickSilver decompiler)', status: d.failures.length ? 'partial' : 'applied', changed: stats.functions - d.failures.length, detail: { functions: stats.functions, failures: d.failures.length } },
+      ...(inner.steps || []),
+    ];
+    const detection = detect(original);
+    // the engine found the VM in the script and read a well-formed Lua 5.1 program out of it: that is the format's structure, checked
+    const fam = (detection.families || []).find((f) => f.id === options.family);
+    if (fam) {
+      fam.evidence = [...(fam.evidence || []), { rule: 'engine', kind: 'structure', text: `the server engine ${options.engine} found its virtual machine and read a well-formed Lua 5.1 program (${stats.functions} functions) out of it`, weight: 0.9 }];
+      fam.evidenceLevel = 'structure';
+    }
+    // The inner passes saw an ordinary program (the decompiler's output), so their confidence knows nothing of where it came from: the
+    // "no obfuscation was detected" line is dropped, and what the engine did and did not establish is said, with its cost to the score.
+    // A rebuilt program whose behaviour was not compared with the original tops out at medium; a later behaviour comparison
+    // (unified.js) is what can confirm it.
+    const base = inner.confidence || { level: 'medium', score: 0.6, reasons: [] };
+    const reasons = (base.reasons || []).filter((x) => !/^No obfuscation was detected/.test(x.text));
+    // a statement of what was established, not a place left unresolved (the outcome class says "unverified"); its cost is in the score below
+    reasons.unshift({ effect: 0, text: `The program was rebuilt from the VM's own data by a third-party server engine (${options.engine}${options.licence ? `, ${String(options.licence).split(':')[0]}` : ''}) without running it, and its Lua 5.1 bytecode was decompiled by QuickSilver. This is not a comparison with a run of the original: until one is made, its behaviour is unverified.` });
+    if (d.failures.length) reasons.push({ effect: -0.1 * Math.min(d.failures.length, 4), text: `${d.failures.length} of ${stats.functions} function(s) could not be decompiled; they are marked in the output with their instruction count.` });
+    const score = Math.round(Math.max(0.05, Math.min(base.score ?? 0.6, 0.95) - 0.15 - 0.1 * Math.min(d.failures.length, 4)) * 100) / 100;
+    const confidence = { ...base, score, level: score >= 0.85 ? 'high' : score >= 0.6 ? 'medium' : score > 0.25 ? 'low' : 'minimal', reasons };
+    const vm = { kind: options.family || options.engine, label: options.familyLabel || null, licence: options.licence || null, lifted: true, engine: options.engine, stats: { functions: stats.functions, instructions: stats.instructions, constants: stats.constants, undecompiled: d.failures.length } };
+    const report = buildReport({ detection, steps, confidence, adaptive: inner.adaptive || null, vm });
+    for (const f of d.failures) report.unresolved.push({ source: 'decompile', text: f });
+    const clean = inner.output != null ? inner.output : decompiled;
+    const r = { ok: true, output: annotate(clean, report), steps, detection, confidence, adaptive: inner.adaptive || null, vm, report, warnings: inner.warnings || [], engine: options.engine };
+    r.outcome = recoveryOutcome(original, r);
+    return r;
+  });
+}
+
+/**
+ * Prompt XXIX: the page's half of a server engine that answers with Lua source (the Prometheus VM engine). The source is cleaned by the
+ * ordinary passes and reported with what produced it; it is never classified above "unverified" here — unified.js uses it only after a
+ * behaviour comparison with the script (src/pipeline/engines.js, verify.required).
+ * @param {string} engineSource the engine's Lua source (binary string)
+ * @param {{original: string, engine: string, label?: string, family?: string, familyLabel?: string, licence?: string, recover?: object}} options
+ */
+export function recoverFromSource(engineSource, options = {}) {
+  return timed(() => {
+    const original = options.original ?? '';
+    try { parse(engineSource); } catch (e) { return { ok: false, error: { message: `The engine's Lua does not parse: ${e.message || e}` }, output: null, steps: [], detection: detect(original), warnings: [] }; }
+    const inner = recover(engineSource, { ...(options.recover || {}), annotate: false, sandbox: { enabled: false } });
+    const steps = [
+      { id: `${options.engine}.engine`, label: options.label || 'Rebuild the program with a server engine', status: 'applied', changed: engineSource.split('\n').length, detail: { engine: options.engine, licence: options.licence || null, bytes: engineSource.length } },
+      ...(inner.steps || []),
+    ];
+    const detection = detect(original);
+    const fam = (detection.families || []).find((f) => f.id === options.family);
+    if (fam) {
+      fam.evidence = [...(fam.evidence || []), { rule: 'engine', kind: 'structure', text: `the server engine ${options.engine} found its virtual machine and lifted it to Lua that parses`, weight: 0.9 }];
+      fam.evidenceLevel = 'structure';
+    }
+    const base = inner.confidence || { level: 'medium', score: 0.6, reasons: [] };
+    const reasons = (base.reasons || []).filter((x) => !/^No obfuscation was detected/.test(x.text));
+    reasons.unshift({ effect: 0, text: `The program was lifted from the VM by a third-party server engine (${options.engine}${options.licence ? `, ${String(options.licence).split(':')[0]}` : ''}), which reads the VM's own data and folds expressions in its own small interpreter; nothing of the script reaches the host. The engine is wrong on some builds (docs/REPORT-XXIX.md), so its program is used only when a behaviour comparison with the script itself agrees.` });
+    const score = Math.round(Math.max(0.05, Math.min(base.score ?? 0.6, 0.95) - 0.15) * 100) / 100;
+    const confidence = { ...base, score, level: score >= 0.85 ? 'high' : score >= 0.6 ? 'medium' : score > 0.25 ? 'low' : 'minimal', reasons };
+    const vm = { kind: options.family || options.engine, label: options.familyLabel || null, licence: options.licence || null, lifted: true, engine: options.engine, output: 'lua-source', stats: { bytes: engineSource.length } };
+    const report = buildReport({ detection, steps, confidence, adaptive: inner.adaptive || null, vm });
+    const clean = inner.output != null ? inner.output : engineSource;
+    const r = { ok: true, output: annotate(clean, report), steps, detection, confidence, adaptive: inner.adaptive || null, vm, report, warnings: inner.warnings || [], engine: options.engine };
+    r.outcome = recoveryOutcome(original, r);
+    return r;
+  });
+}
+
 export function verifySource(source, options = {}) {
   if (typeof options.recovered !== 'string') return timed(() => ({ ok: false, error: 'There is no recovered program to compare with; recover the script first.' }));
   return timed(() => verifyRecovery(source, options.recovered, options));

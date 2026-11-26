@@ -22,6 +22,7 @@
 
 import { recognizeInput, parseGitHubRef, isGitHubLink, OUTCOMES as GH_OUTCOMES } from '../loader/github.js';
 import { processPayload } from '../loader/intel.js';
+import { selectAdapter } from './engines.js';
 import { classifyOutcome, OUTCOMES as RESULT_LABELS } from '../validate/outcome.js';
 import { parse } from '../core/parser.js';
 import { walk } from '../core/walk.js';
@@ -70,7 +71,7 @@ export const ROLES = Object.freeze({
 
 // what the reconstruction's own steps (src/recover/pipeline.js step ids) did, grouped into the stages the user sees
 const STEP_GROUPS = [
-  ['vm', /(?:^|\.)(?:vm\d*|bvm|vmify|self|program)$|^ironbrew2$|^luaq\.layers$/],
+  ['vm', /(?:^|\.)(?:vm\d*|bvm|vmify|self|program|engine)$|^ironbrew2$|^luaq\.layers$|^decompile\.bytecode$/],
   ['strings', /constants|strtable|charlist|^layers$|webs|^fold|mba|metaarith|unbox|cells|joiner|xfuscator|^moonveil\.join$/],
   ['flow', /cff|dataflow|evaluate|simplify|loops|whileonce|whiles|regions|unwrap|guard|antitamper|sanity|env|orphans|stable|adaptive|coinguard|proxify/],
   ['functions', /idioms|uninline|rename|tidy|varargs/],
@@ -102,7 +103,13 @@ const lines = (t) => (t ? String(t).split('\n').length : 0);
  * @param {(url: string, o: {mode: string}) => Promise<object>} [deps.github]  /api/github (the server's JSON; file.bytes decoded)
  * @param {(url: string) => Promise<{ok: boolean, status?: number, bytes?: Uint8Array, contentType?: string, error?: string, name?: string}>} [deps.fetchLink]  /api/fetch
  * @param {(listing: object) => Promise<string|null>} [deps.choose]            pick a file (or a repository) from a listing; null = none
- * @param {(text: string, recovered: string) => Promise<object>} [deps.verify] behaviour comparison (only when the user allowed the sandbox)
+ * @param {(text: string, recovered: string, options?: object) => Promise<object>} [deps.verify] behaviour comparison (only when the user
+ *   allowed the sandbox); options are what the format's adapter says about its runtime (src/pipeline/engines.js)
+ * @param {(adapter: object, text: string) => Promise<{ok: boolean, bytecode?: string, licence?: string, isolation?: string, ms?: number,
+ *   outcome?: string, message?: string}>} [deps.serverEngine]  /api/engine for a format whose adapter runs on the server (bytecode is a
+ *   binary string); absent, or declined by the person, means QuickSilver's own passes
+ * @param {(bytecode: string, options: object) => Promise<object>} [deps.fromBytecode]  recoverFromBytecode (src/api.js), in the worker
+ * @param {(source: string, options: object) => Promise<object>} [deps.fromSource]  recoverFromSource (src/api.js), in the worker
  * @param {(snapshot: object) => void} [deps.onProgress]
  * @param {{maxDepth?: number, maxRetrievals?: number, maxDependencies?: number, routes?: string[]}} [opts]
  */
@@ -137,6 +144,7 @@ export async function deobfuscate(input, deps, opts = {}) {
   const acc = { address: [], retrieve: [] };
   const push = (id, status, text) => { if (text) acc[id].push(text); set(id, status, acc[id].join(' ')); };
   const seen = new Set();
+  const verifyMemo = new Map();
   const loaderNotes = [];
   const finish = () => {
     R.ms = Date.now() - t0;
@@ -200,6 +208,70 @@ export async function deobfuscate(input, deps, opts = {}) {
 
   // ---- the pieces ----------------------------------------------------------------------------------------------------------------------------
 
+  /**
+   * Reconstruction of one program. Detection picks the engine (src/pipeline/engines.js): a format with a measured adapter goes to it, the
+   * rest to QuickSilver's own passes. An adapter's engine that is not offered here, is declined, fails, or answers with something that
+   * cannot be used hands the program to QuickSilver's own passes, and a note says why; nothing is reported as the engine's result unless
+   * the engine produced it. An adapter marked `when: 'own-result-keeps-vm'` is asked only after QuickSilver's own result still holds the
+   * VM, and one marked `verify.required` is used only when the behaviour comparison with the script itself agrees.
+   */
+  async function reconstruct(t, node) {
+    const adapter = node.detection ? selectAdapter(node.detection) : null;
+    const usable = adapter && adapter.where === 'server' && deps.serverEngine && (adapter.output === 'lua-source' ? deps.fromSource : deps.fromBytecode);
+    if (!usable) return deps.recover(t);
+    let own = null;
+    if (adapter.when === 'own-result-keeps-vm') {
+      own = await deps.recover(t);
+      if (!(await stillHolds(own, adapter))) return own;
+      if (adapter.verify && adapter.verify.required && !deps.verify) {
+        note('engine', `${adapter.familyLabel}: QuickSilver's own passes left the virtual machine in place. A server engine can lift it, but its result is used only after a behaviour comparison, and the behaviour check is off for this run (tick Check behaviour to allow it).`);
+        return own;
+      }
+    }
+    const fallback = async (why) => { note('engine', `${adapter.familyLabel}: ${why}; QuickSilver's own passes were used instead.`); return own || deps.recover(t); };
+    set('vm', 'running', `${adapter.familyLabel}: the server engine (${adapter.id}) is rebuilding the program…`);
+    let eng;
+    try { eng = await deps.serverEngine(adapter, t); } catch (e) { eng = { ok: false, outcome: 'engine-error', message: String((e && e.message) || e) }; }
+    const payload = eng && eng.ok ? (adapter.output === 'lua-source' ? eng.source : eng.bytecode) : null;
+    if (typeof payload !== 'string' || !payload.length) return fallback(`the server engine was not used (${String((eng && (eng.message || eng.outcome)) || 'no answer').slice(0, 200)})`);
+    let r = null;
+    const opts = { original: t, engine: adapter.id, label: adapter.label, family: adapter.family, familyLabel: adapter.familyLabel, licence: eng.licence || adapter.licence };
+    try { r = await (adapter.output === 'lua-source' ? deps.fromSource(payload, opts) : deps.fromBytecode(payload, opts)); } catch (e) { r = { ok: false, error: { message: String((e && e.message) || e) } }; }
+    if (!r || !r.ok || r.output == null) return fallback(`the server engine answered, but its ${adapter.output === 'lua-source' ? 'program' : 'bytecode'} could not be ${adapter.output === 'lua-source' ? 'read' : 'decompiled'} (${String((r && r.error && r.error.message) || 'no result').slice(0, 160)})`);
+    r.engine = { id: adapter.id, isolation: eng.isolation || null, ms: eng.ms || null, licence: eng.licence || adapter.licence, verify: adapter.verify || null };
+    const what = `${adapter.familyLabel}: the program was rebuilt by the server engine ${adapter.id} (${String(eng.licence || adapter.licence).split(':')[0]}${eng.isolation ? `, isolation: ${eng.isolation}` : ''})`;
+    if (adapter.verify && adapter.verify.required) {
+      // the gate: the engine's program is the result only if it behaves like the script, over enough of the program to mean something
+      let v = null;
+      try { v = await verifyOnce(t, r.output, adapter.verify); } catch (e) { v = { verdict: 'inconclusive', notes: [String((e && e.message) || e)] }; }
+      const cov = v && v.coverage ? v.coverage.ratio : null;
+      const min = adapter.verify.minCoverage ?? 0.5;
+      if (!(v && v.verdict === 'identical' && cov != null && cov >= min)) {
+        return fallback(`the server engine's program was not used, because the behaviour comparison with the script did not confirm it (${v ? v.verdict : 'no result'}${cov != null ? `, ${Math.round(cov * 100)}% of its lines reached` : ''}${v && v.difference ? `: ${String(v.difference.original).slice(0, 80)} / ${String(v.difference.recovered).slice(0, 80)}` : ''})`);
+      }
+      r.engine.gate = { verdict: v.verdict, coverage: cov };
+      note('engine', `${what}, and used because it behaved like the script in the sandbox (${Math.round(cov * 100)}% of its lines reached).`);
+      return r;
+    }
+    note('engine', `${what} and decompiled by QuickSilver.`);
+    return r;
+  }
+
+  /** Does a recovery still carry the protection the adapter is for (QuickSilver's own detection, on the recovered text)? */
+  async function stillHolds(r, adapter) {
+    if (!r || r.output == null) return true;
+    const text = String(r.output).includes('-- (end of report)\n') ? String(r.output).split('-- (end of report)\n')[1] : String(r.output);
+    try { return ((await deps.detect(text)).families || []).some((f) => f.id === adapter.family && f.confidence >= adapter.minConfidence); } catch { return false; }
+  }
+
+  // one behaviour comparison per (script, program, options): the gate's run is the one the delivery step reports (verifyMemo is declared
+  // with the other run state at the top: the pipeline runs before this part of the function is reached)
+  function verifyOnce(t, recovered, o) {
+    const key = `${t.length}:${recovered.length}:${JSON.stringify(o || null)}:${t}\u0000${recovered}`;
+    if (!verifyMemo.has(key)) verifyMemo.set(key, Promise.resolve(deps.verify(t, recovered, o)));
+    return verifyMemo.get(key);
+  }
+
   /** One body (the input, or a retrieved file) through payload identification → detection → reconstruction; loaders are followed. */
   async function processBody(body, ctx) {
     set('payload', 'running');
@@ -213,8 +285,8 @@ export async function deobfuscate(input, deps, opts = {}) {
         decode: deps.decode,
         detect: async (t) => { set('detect', 'running'); const d = await deps.detect(t); node.detection = d; return d; },
         analyze: async (t, o) => { set('loader', 'running'); const a = await deps.analyze(t, o); node.analysis = a; return a; },
-        recover: async (t) => { for (const id of ['transform', 'strings', 'vm', 'flow', 'functions', 'generate']) if (byId[id].status === 'pending') set(id, 'running'); const r = await deps.recover(t); node.recovery = r; return r; },
-        verify: deps.verify,
+        recover: async (t) => { for (const id of ['transform', 'strings', 'vm', 'flow', 'functions', 'generate']) if (byId[id].status === 'pending') set(id, 'running'); const r = await reconstruct(t, node); node.recovery = r; return r; },
+        verify: deps.verify ? (t, recovered) => verifyOnce(t, recovered, (node.recovery && node.recovery.engine && node.recovery.engine.verify) || undefined) : undefined,
       },
       onNested: async (analysis) => { nested = analysis; },
     });

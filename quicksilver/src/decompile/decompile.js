@@ -16,7 +16,7 @@
 // code on the reference interpreters (tests/decompile.test.mjs).
 
 import { lift, LiftError } from './lift.js';
-import { isIdentifier } from '../core/printer.js';
+import { isIdentifier, quoteString } from '../core/printer.js';
 
 export class Unstructured extends Error {}
 
@@ -1071,7 +1071,7 @@ class FunctionDecompiler {
   /** A global is a name when it can be one; a global whose name is not an identifier (or is a keyword) is a field of `_G`. */
   globalRef(name) {
     if (typeof name === 'string' && isIdentifier(name) && !KEYWORDS.has(name)) return nameNode(name);
-    return { type: 'Index', obj: nameNode('_G'), key: { type: 'String', value: String(name), raw: JSON.stringify(String(name)), long: false }, dot: false };
+    return { type: 'Index', obj: nameNode('_G'), key: { type: 'String', value: String(name), raw: quoteString(String(name)), long: false }, dot: false };
   }
 
   takeTop() {
