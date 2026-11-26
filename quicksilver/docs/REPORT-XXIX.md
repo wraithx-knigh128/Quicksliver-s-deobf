@@ -17,6 +17,8 @@ person (`src/pipeline/engines.js`):
 
 Before anything leaves the browser, a dialog says what is sent where, that the engine does not run the script, that nothing is kept,
 the engine's licence, and asks the person to confirm they own the script or are authorised to analyse it (`src/app/engine-ui.js`).
+![The confirmation dialog before a script is sent to the MoonSec V3 engine](assets/engine-dialog-xxix.webp)
+
 Declining, an engine that is not deployed, a licence refusal, a failure, a timeout or a rejected result all fall back to QuickSilver's
 own passes, and the result's notes say which and why. Nothing is reported as an engine's result unless the engine produced it.
 
