@@ -11,7 +11,7 @@ import { parse } from '../src/core/parser.js';
 import { parseChunk, dumpChunk51 } from '../src/sandbox/bytecode.js';
 import { decompile } from '../src/decompile/decompile.js';
 import * as oracle from './helpers/lua-oracle.mjs';
-import { rng, expressionCase, expressionHarness, statementCase, statementHarness } from './helpers/decompile-props.mjs';
+import { rng, expressionCase, expressionHarness, statementCase, statementHarness, sharedSubtrees } from './helpers/decompile-props.mjs';
 
 after(() => oracle.stopOracle());
 const skip = oracle.available ? false : 'QS_LUA_PYTHON is not set (reference Lua unavailable)';
@@ -29,6 +29,7 @@ async function run(kind, seed, count) {
     const src = kind === 'expression' ? expressionCase(rnd) : statementCase(rnd);
     const d = decompile(parseChunk(await compileStripped(src)));
     const text = print(d.ast);
+    assert.equal(sharedSubtrees(d.ast), 0, `the decompiled tree shares subtrees:\n${src}`);
     if (d.failures.length) { tally.undecompiled.push({ src, why: d.failures[0] }); continue; }
     assert.doesNotThrow(() => parse(text), `decompiled output does not parse:\n${text}`);
     const harness = kind === 'expression' ? expressionHarness : statementHarness;
@@ -43,8 +44,8 @@ async function run(kind, seed, count) {
 // same cases gave: expression 11 — 187 identical, 1 DIFFERENT, 12 undecompiled; expression 7 — 189 / 0 / 11; statement 5 — 113 / 0 / 7;
 // statement 23 — 109 / 0 / 11; statement 41 — 115 / 0 / 5.
 const CASES = [
-  ['expression', 11, 200, 5],
-  ['expression', 7, 200, 2],
+  ['expression', 11, 200, 0],
+  ['expression', 7, 200, 1],
   ['statement', 5, 120, 0],
   ['statement', 23, 120, 0],
   ['statement', 41, 120, 0],

@@ -1,0 +1,222 @@
+{
+ "generatedBy": "Prompt XXX measurement scripts (tools/engines/xxx/README.md); engine output unchanged (the same 786 rebuilt MoonSec chunks)",
+ "moonsec_v3": {
+  "batch": {
+   "files": 792,
+   "rebuilt": 786,
+   "incompleteFiles": {
+    "xxix": 109,
+    "xxx": 6
+   },
+   "failingFunctions": {
+    "xxix": 172,
+    "xxx": 6
+   },
+   "parse": {
+    "xxix": 786,
+    "xxx": 786
+   },
+   "worse": [],
+   "stillIncomplete": [
+    "local/terrorlua/MoonSec/V3/08010afe2c93b21c.lua",
+    "local/terrorlua/MoonSec/V3/424517eb6c60cf71.lua",
+    "local/terrorlua/MoonSec/V3/6aaee0860c57b0b3.lua",
+    "local/terrorlua/MoonSec/V3/c2f0c41bbabeadb3.lua",
+    "local/terrorlua/MoonSec/V3/ce3faecf8b050ee8.lua",
+    "local/terrorlua/MoonSec/V3/ddc9c42c3da4aea8.lua"
+   ],
+   "sharedSubtreeOutputs": [
+    "local/terrorlua/MoonSec/V3/035e9026cdb16259.lua",
+    "local/terrorlua/MoonSec/V3/6e43bc425214a6aa.lua",
+    "local/terrorlua/MoonSec/V3/ab5c20be4c7f9c86.lua",
+    "local/terrorlua/MoonSec/V3/d737a260e512d159.lua",
+    "local/terrorlua/MoonSec/V3/f1f2fc01e4ab41c4.lua"
+   ]
+  },
+  "censusSteps": [
+   {
+    "after": "XXIX",
+    "failingFunctions": 172,
+    "files": 109
+   },
+   {
+    "after": "impure values keep their place (define/self/setindex/setlist order repair)",
+    "failingFunctions": 120,
+    "files": 82
+   },
+   {
+    "after": "value regions, conditions after pending values, testset-merge fix",
+    "failingFunctions": 80,
+    "files": 64
+   },
+   {
+    "after": "restored loop ends",
+    "failingFunctions": 78,
+    "files": 62
+   },
+   {
+    "after": "closure-capture reachability by paths",
+    "failingFunctions": 41,
+    "files": 30
+   },
+   {
+    "after": "generic-for prep only for the jump that opens it",
+    "failingFunctions": 26,
+    "files": 23
+   },
+   {
+    "after": "a condition ends before a loop head",
+    "failingFunctions": 10,
+    "files": null
+   },
+   {
+    "after": "loop exits de-threaded (Lua jpc)",
+    "failingFunctions": 9,
+    "files": null
+   },
+   {
+    "after": "TESTSET liveness exact on its jump edge",
+    "failingFunctions": 7,
+    "files": null
+   },
+   {
+    "after": "table constructors inside conditions",
+    "failingFunctions": 6,
+    "files": 6
+   }
+  ],
+  "behaviour120": {
+   "xxixProductPath": {
+    "same-error-other-name": 29,
+    "no-reference": 47,
+    "end-state:wrote globals": 32,
+    "event": 10,
+    "inconclusive": 2
+   },
+   "xxx": {
+    "same-error-other-name": 29,
+    "no-reference": 47,
+    "identical": 34,
+    "event": 8,
+    "inconclusive": 2
+   },
+   "xxixBatchScriptReported": {
+    "identical": 31,
+    "note": "ms-verify2.mjs did not compare written globals; the product comparison did"
+   },
+   "eventDifferences": [
+    {
+     "f": "local/terrorlua/MoonSec/V3/0be72e349a825e68.lua",
+     "kind": "runtime-message"
+    },
+    {
+     "f": "local/terrorlua/MoonSec/V3/4962f7267e70d85c.lua",
+     "kind": "trace-text: a folded concatenation (\" \" .. 1 / \" 1\")"
+    },
+    {
+     "f": "local/terrorlua/MoonSec/V3/60d82e8faa815f23.lua",
+     "kind": "trace-text: a stand-in object's name"
+    },
+    {
+     "f": "local/terrorlua/MoonSec/V3/7fa49e612940a529.lua",
+     "kind": "runtime-message"
+    },
+    {
+     "f": "local/terrorlua/MoonSec/V3/83ab8a8b6a844d80.lua",
+     "kind": "runtime-message"
+    },
+    {
+     "f": "local/terrorlua/MoonSec/V3/894b221de805aaa5.lua",
+     "kind": "runtime-message"
+    },
+    {
+     "f": "local/terrorlua/MoonSec/V3/8d5f13559ed0ee9e.lua",
+     "kind": "runtime-message"
+    },
+    {
+     "f": "local/terrorlua/MoonSec/V3/a110bb695e3a17cb.lua",
+     "kind": "trace-text: concatenation grouping"
+    }
+   ],
+   "eventKinds": {
+    "runtime-message": "the protected original printed MoonSec's own anti-debug message instead of running the program, so it is no reference",
+    "trace-text": "the same value, written differently in the trace text (the comparison is not loosened for it; the verdict stays \"different\")"
+   }
+  },
+  "explained": {
+   "c0263d7213740e5d": "decompiler: impurity was lost in define(), so a value was inlined past a later call; fixed (order repair), the rebuilt program is identical",
+   "3fed8cb5033e9747": "comparison: the runtime's prelude wait() was charged to the original's wait budget, so its waiting loop ran one round fewer; with one more wait the runs are identical event for event at 400, 200 and 50 waits; fixed in verify.js"
+  }
+ },
+ "prometheus": {
+  "integratedRowsChanged": 0,
+  "xxix": {
+   "own": {
+    "right, nothing left": 59,
+    "right, protection left": 71,
+    "WRONG": 1
+   },
+   "integrated": {
+    "right, nothing left": 92,
+    "right, protection left": 36,
+    "None": 3
+   }
+  },
+  "xxx": {
+   "own": {
+    "right, nothing left": 59,
+    "right, protection left": 71,
+    "WRONG": 1
+   },
+   "integrated": {
+    "right, nothing left": 92,
+    "right, protection left": 36,
+    "None": 3
+   }
+  }
+ },
+ "luraph_v15_2": {
+  "repository": "pro628713-arch/luraph-v15.2-deobf at ce58767 (no licence file)",
+  "run": "once, unmodified, on its own sample.luau, inside tools/isolate/run.sh, with its driver's DEVIRT_TB traceback switch (tools/engines/xxx/v152-traceback.sh)",
+  "traceback": [
+   "driver.lift",
+   "driver.devirtualize",
+   "devirt.collect_requests",
+   "devirt._walk_one",
+   "devirt.make_stepper",
+   "Stepper.__init__",
+   "Stepper._stack_pointer_candidates",
+   "Stepper._fresh_scopes: exec_block(inner_body[:first_inner])",
+   "luasym.exec_stmt (if) -> exec_block -> exec_stmt (while): raise YieldSig"
+  ],
+  "cause": "research implementation: the VM model takes a top-level if as a mode branch only when a dispatch while is its first statement (Stepper.__init__, tb[0]); in this build the branch begins with a state assignment before the loop, so the branch is executed as prologue and the dispatch-loop signal escapes",
+  "category": "research implementation (VM shape model), not an unsupported instruction and not a protection check",
+  "notImplemented": "the repository has no licence, and no lifted program could be validated: the source/sample pairing is unverified and the protected script's own run ends in its tamper loop, so there is no behaviour reference (evidence limit)"
+ },
+ "sources": [
+  {
+   "what": "Lua 5.1 luaK_jump concatenates the pending jumps-to-here list (fs->jpc) into each new JMP",
+   "where": "github.com/lua/lua tag v5.1, lcode.c lines 54-61 and 174-177",
+   "checked": "2026-11-26, fetched raw; lcode.c sha256 prefix e1c9969d4c0e1b9a",
+   "used_by": "src/decompile/decompile.js dethreadLoopExits"
+  },
+  {
+   "what": "OP_TESTSET: if (R(B) <=> C) then R(A) := R(B) else pc++ (the destination is written only on the jump edge)",
+   "where": "github.com/lua/lua tag v5.1, lopcodes.h line 190",
+   "checked": "2026-11-26, fetched raw; lopcodes.h sha256 prefix 82cf7946f639536b",
+   "used_by": "src/decompile/decompile.js liveness"
+  },
+  {
+   "what": "unluac: \"a decompiler for Lua 5.0 through 5.4\"; licence stated as MIT; needs debug information",
+   "where": "sourceforge.net/projects/unluac",
+   "checked": "2026-11-26, project page",
+   "used_by": "not used (QuickSilver decompiles stripped chunks; no code taken)"
+  },
+  {
+   "what": "differential testing against a reference implementation",
+   "where": "the reference Lua 5.1 already in tests/helpers/lua-oracle.mjs",
+   "checked": "this repository",
+   "used_by": "tests/decompile-property.test.mjs"
+  }
+ ]
+}

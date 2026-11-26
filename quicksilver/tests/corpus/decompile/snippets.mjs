@@ -282,6 +282,61 @@ export const SNIPPETS = {
     q = function(s) print("queued", s) end
     queue("a")
   `,
+  ifThenWhileSameExit: `
+    local on, a, b = false, 1, 2
+    local n = 0
+    local function toggle()
+      on = not on
+      if on then
+        while on do
+          local args = { "Transfer", a, b }
+          n = n + #args
+          if n > 6 then on = false end
+        end
+      end
+    end
+    toggle()
+    print(n, on)
+    toggle() toggle()
+    print(n, on)
+  `,
+  innerLoopThenBreak: `
+    local cfg = { n = 0, title = { Text = "(0/0)" } }
+    local s = { autofarm = true, oldfarm = false, log = {} }
+    function s.retry() s.log[#s.log + 1] = "retry" cfg.n = cfg.n + 1 if cfg.n > 2 then cfg.title.Text = "STARTING" end end
+    local function tick() return cfg.n < 10 end
+    local function run()
+      while tick() do
+        if string.find(cfg.title.Text, "(0/0)", 1, true) then
+          if s.autofarm or s.oldfarm then s.retry() end
+          while not string.find(cfg.title.Text, "STARTING", 1, true) do
+            s.log[#s.log + 1] = "wait"
+            if s.autofarm or s.oldfarm then s.retry() end
+          end
+          break
+        end
+      end
+    end
+    run()
+    print(table.concat(s.log, ","), cfg.n, cfg.title.Text)
+  `,
+  conditionWithTable: `
+    local S = { WallCheck = true }
+    local function obscuring(t, extra) return #t > 1 and t or {} end
+    local function pick(list)
+      local out = {}
+      for _, v in pairs(list) do
+        if S.WallCheck and #obscuring({ v.a, v.b }, v.c) > 0 then
+        else
+          out[#out + 1] = v.name
+        end
+      end
+      table.sort(out)
+      return table.concat(out, ",")
+    end
+    local L = { { name = "x", a = 1, b = 2 }, { name = "y", a = 1 }, { name = "z" } }
+    print(pick(L)) S.WallCheck = false print(pick(L))
+  `,
 };
 
 /** Constructs that only exist from Lua 5.3: integer division, bitwise operators, integer/float distinction. */
@@ -292,5 +347,35 @@ export const SNIPPETS_54 = {
     print(n // 3, n % 3, n / 4, -n // 3, n * 1.0, 1e2, 0x7fffffff + 1)
     for i = 3, 1, -1 do print(i, i * 2) end
     for f = 1.0, 2 do print(f) end
+  `,
+};
+
+/**
+ * Prompt XXX: shapes that Lua 5.1 compiles in a way the decompiler now reads; Lua 5.4 compiles them differently. (`local ok = …` with a
+ * field comparison, a local's value delivered by TESTSET and a method call, then `if ok`: Lua 5.4 with debug information is still not
+ * decompiled — docs/KNOWN-ISSUES.md.)
+ */
+export const SNIPPETS_51 = {
+  valueThenTest: `
+    local Mode = { Value = "Boss" }
+    local D = { GetAttribute = function(self, k) return self[k] end, Dungeon = true }
+    local function pick(list)
+      local best, bestD = nil, math.huge
+      for _, e in pairs(list) do
+        if e.part and not e.dead then
+          local scale = e.scale
+          local isBoss = scale and scale > 1.5
+          local isMini = scale and scale <= 1.5
+          local ok = Mode.Value == "All" or Mode.Value == "Boss" and isBoss or Mode.Value == "Mini Boss" and isMini or (Mode.Value ~= "Boss" and Mode.Value ~= "Mini Boss") and D:GetAttribute("Dungeon") == true
+          if ok then
+            if e.d < bestD then bestD = e.d best = e end
+          end
+        end
+      end
+      return best and best.name, bestD
+    end
+    local L = { { part = true, scale = 2, d = 5, name = "a" }, { part = true, scale = 1, d = 3, name = "b" }, { part = true, dead = true, scale = 3, d = 1, name = "c" }, { part = false, d = 0, name = "d" } }
+    for _, m in ipairs({ "All", "Boss", "Mini Boss", "Other" }) do Mode.Value = m print(m, pick(L)) end
+    D.Dungeon = false Mode.Value = "Other" print(pick(L))
   `,
 };

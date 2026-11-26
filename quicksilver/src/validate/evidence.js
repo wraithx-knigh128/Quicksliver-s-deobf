@@ -130,7 +130,9 @@ export function recoveryOutcome(source, r, { behaviour = null, retrieval = null 
   const mend = r && Array.isArray(r.steps) ? r.steps.find((x) => (x.id === 'keyword.repair' || x.id === 'zartha.repair') && x.status === 'applied') : null;
   if (input.kind === 'lua' && input.parses === false && mend && r.output != null) input = { kind: 'lua', parses: true, repaired: `${mend.label} (${mend.changed} place(s))` };
   const recovery = recoveryEvidence(r);
-  const ev = { retrieval, input, obfuscated: wasObfuscated(r && r.detection), recovery, behaviour, remote: remoteEvidence(r), architecture: unresolvedArchitecture(r) };
+  const top = r && r.detection ? (r.detection.families || []).filter((f) => f.confidence >= 0.5).sort((a, b) => b.confidence - a.confidence)[0] : null;
+  const detected = top ? { family: top.id, name: top.name || null, version: top.version || null, confidence: top.confidence } : null;
+  const ev = { retrieval, input, obfuscated: wasObfuscated(r && r.detection), detected, recovery, behaviour, remote: remoteEvidence(r), architecture: unresolvedArchitecture(r) };
   // the evidence travels with the result (and back for the behaviour step) without the output text itself
   return { evidence: { ...ev, recovery: recovery && { ...recovery, output: undefined, hasOutput: recovery.output != null } }, ...classifyOutcome(ev) };
 }

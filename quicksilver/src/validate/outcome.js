@@ -50,7 +50,7 @@ export function classifyOutcome(ev) {
   const reasons = [];
   const met = [];
   const notes = [];
-  const out = (outcome) => ({ outcome, label: label(outcome, ev), success: outcome === 'validated', reasons, met, notes });
+  const out = (outcome) => ({ outcome, label: label(outcome, ev), success: outcome === 'validated', reasons, met, notes, facets: resultFacets(ev, outcome) });
   // what the script downloads when it runs is never part of the result, whatever the class: it is said on every result that has such parts
   const rm = ev.remote;
   if (rm && rm.places && rm.places.length) notes.push(`Not in this file: ${rm.places.length} part(s) the script downloads and runs when it runs (line${rm.places.length === 1 ? '' : 's'} ${rm.places.map((p) => p.line).join(', ')}). Nothing is recovered of them here; the Loader tab says whether they can be retrieved.`);
@@ -109,6 +109,61 @@ export function classifyOutcome(ev) {
   if (b.coverage != null && b.coverage < MIN_COVERAGE) { reasons.push(`The comparison run reached only ${Math.round(b.coverage * 100)}% of the program's statement lines; the rest was never run, so it is not validated.`); return out('syntax-valid-unverified'); }
   met.push(`behaved identically to ${b.against === 'original' ? 'the authorised original' : 'the submitted program'}`);
   return out('validated');
+}
+
+// ---- result facets (Prompt XXX) ------------------------------------------------------------------------------------------------------
+// The one class above answers "what did this run achieve, overall". The facets answer separate questions, each from its own evidence, so
+// that a result can say at once that its protection was detected, that it parses, that two functions were not reconstructed and that its
+// behaviour was not checked. A facet is true, false, or null (the question does not apply, or nothing measured it). No facet is ever set
+// from a confidence score: "behaviourally verified" comes only from a comparison run; "structurally reconstructed" only from the output
+// (it parses; no residual protection, unresolved place, missing constant or empty body is left).
+
+export const FACETS = {
+  detected: 'Detected',
+  retrieved: 'Retrieved',
+  partial: 'Partially reconstructed',
+  syntaxValid: 'Syntax-valid',
+  structural: 'Structurally reconstructed',
+  behavioural: 'Behaviourally verified',
+  unverified: 'Unverified',
+  failed: 'Failed',
+};
+
+const FAILED = new Set(['not-deobfuscated', 'payload-unavailable', 'authorization-unavailable', 'unsupported-format', 'invalid-input']);
+
+/** @returns {Record<keyof FACETS, {value: boolean|null, why: string}>} */
+export function resultFacets(ev, outcome) {
+  const f = (value, why) => ({ value, why });
+  const det = ev.detected;
+  const detected = det && det.family
+    ? f(true, `${det.name || det.family}${det.version ? ` ${det.version}` : ''} (detection confidence ${Math.round((det.confidence || 0) * 100)}%)`)
+    : ev.obfuscated === true ? f(true, 'obfuscation was recognised, without a named family')
+      : ev.obfuscated === false ? f(false, 'no protection was recognised') : f(null, 'not examined');
+  const r = ev.retrieval;
+  const retrieved = !r ? f(null, 'the program was in the input; nothing had to be retrieved') : r.status === 'ok' ? f(true, 'retrieved through an authorised route') : f(false, r.reason || `retrieval: ${r.status}`);
+  const rec = ev.recovery;
+  const hasOutput = !!rec && (rec.output != null || !!rec.hasOutput);
+  const syntaxValid = !hasOutput ? f(null, 'there is no output') : rec.parses === false ? f(false, 'the output does not parse') : f(true, 'the output parses');
+  const left = [];
+  if (hasOutput && rec.parses !== false) {
+    if ((rec.residual || []).length) left.push(`obfuscation still detected (${rec.residual.join(', ')})`);
+    if (rec.unresolved > 0) left.push(`${rec.unresolved} unresolved place(s)`);
+    if (rec.bodies && rec.bodies.missingConstants > 0) left.push(`${rec.bodies.missingConstants} missing constant(s)`);
+    if (ev.obfuscated && rec.bodies && rec.bodies.total >= 4 && rec.bodies.empty * 2 >= rec.bodies.total) left.push(`${rec.bodies.empty} of ${rec.bodies.total} functions without a body`);
+    if (ev.obfuscated && ['none', 'minimal'].includes(rec.level)) left.push('the protection is essentially all still present');
+  }
+  const structuralOk = hasOutput && rec.parses !== false && !left.length;
+  const structural = !hasOutput || rec.parses === false ? f(null, 'no output that parses') : structuralOk ? f(true, 'the output parses and nothing unresolved or protected is left in it') : f(false, left.join('; '));
+  const partial = !hasOutput || rec.parses === false ? f(null, 'no output that parses') : structuralOk ? f(false, 'nothing is left unresolved') : f(true, left.join('; '));
+  const b = ev.behaviour;
+  const covered = b && (b.coverage == null || b.coverage >= MIN_COVERAGE);
+  const behavioural = !b ? f(null, 'no comparison was run')
+    : b.verdict === 'identical' && covered ? f(true, `behaved identically to ${b.against === 'original' ? 'the authorised original' : 'the submitted program'}${b.coverage != null ? ` over ${Math.round(b.coverage * 100)}% of its lines` : ''}`)
+      : b.verdict === 'different' ? f(false, `behaved differently${b.note ? `: ${b.note}` : ''}`)
+        : f(null, b.verdict === 'identical' ? `identical, but the run reached only ${Math.round((b.coverage || 0) * 100)}% of the lines` : 'the comparison could not settle it');
+  const unverified = hasOutput ? (behavioural.value === null ? f(true, behavioural.why) : f(false, behavioural.value ? 'verified' : 'compared: it behaved differently')) : f(null, 'there is no output');
+  const failed = FAILED.has(outcome) ? f(true, OUTCOMES[outcome]) : f(false, OUTCOMES[outcome]);
+  return { detected, retrieved, partial, syntaxValid, structural, behavioural, unverified, failed };
 }
 
 function label(outcome, ev) {

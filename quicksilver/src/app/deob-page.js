@@ -9,6 +9,7 @@ import { Viewer } from './viewer.js';
 import { download, baseName, readFileBytes, FileRejected } from './files.js';
 import { bytesToBinary, binaryToBytes, binaryToText, textToBinary } from '../core/bytes.js';
 import { recognizeInput, findGitHubRefs } from '../loader/github.js';
+import { FACETS } from '../validate/outcome.js';
 import { deobfuscate, STAGES, SOURCE, ROLES, unifiedMarkdown } from '../pipeline/unified.js';
 import { githubRequest, chooseEntry } from './github-ui.js';
 import { serverEngineRequest } from './engine-ui.js';
@@ -200,13 +201,31 @@ export function initDeobPage(ctx) {
     const det = (f && f.node && f.node.detection) || (R.chain[0] && R.chain[0].detection) || null;
     const fam = det && (det.families || []).find((x) => x.confidence >= 0.5);
     const src = R.source || { class: 'input', label: SOURCE.input };
+    // Prompt XXX: what was detected, which engine produced the result, how far the stages got and what is left unreconstructed are said
+    // next to the verdict, not only in the report
+    const rec = f && f.node && f.node.recovery;
+    const eng = rec && rec.engine;
+    const undec = rec && rec.vm && rec.vm.stats && typeof rec.vm.stats.undecompiled === 'number' ? rec.vm.stats : null;
     const facts = [
       ['Source', src.label],
-      fam ? ['Protection', `${fam.name}${fam.version ? ` ${fam.version}` : ''}`] : det ? ['Protection', 'none recognised'] : null,
+      // (a family whose name already carries its version — "MoonSec V3" — is not followed by it again)
+      fam ? ['Protection', `${fam.name}${fam.version && !String(fam.name).endsWith(String(fam.version)) ? ` ${fam.version}` : ''}`] : det ? ['Protection', 'none recognised'] : null,
+      f && f.output != null ? ['Engine', eng ? `${eng.id}${eng.gate ? ` (${eng.gate})` : ''}` : 'QuickSilver'] : null,
+      ['Stages', `${R.stages.filter((s) => s.status === 'done').length} of ${R.stages.length} done${R.stages.some((s) => s.status === 'failed') ? `, ${R.stages.filter((s) => s.status === 'failed').length} failed` : ''}`],
+      undec ? ['Functions', `${undec.functions - undec.undecompiled} of ${undec.functions} reconstructed`] : null,
       f && f.output != null ? ['Output', `${f.output.split('\n').length.toLocaleString('en')} lines`] : null,
       R.chain.length > 1 ? ['Chain', `${R.chain.length} stages`] : null,
       ['Time', fmtMs(R.wallMs || R.ms)],
     ].filter(Boolean);
+    const fc = v.facets || null;
+    const facetStrip = fc ? h('div.res-facets', { 'aria-label': 'Result facets' }, Object.entries(FACETS).map(([k, name]) => {
+      const x = fc[k] || { value: null, why: '' };
+      // a facet that holds is shown plainly; one that does not is struck; one that does not apply is faint (Failed and Unverified read
+      // the other way round: holding is the bad news)
+      const bad = k === 'failed' || k === 'unverified' || k === 'partial';
+      const cls = x.value === null ? 'na' : x.value === !bad ? 'yes' : 'no';
+      return h(`span.facet.${cls}`, { title: x.why, 'data-facet': k, 'data-value': String(x.value) }, `${name}: `, h('b', x.value === null ? 'n/a' : x.value ? 'yes' : 'no'));
+    })) : null;
     const title = f ? (f.isPayload ? f.name : `${f.name} — the loader, not the payload`) : 'Nothing delivered';
     const sub = f && f.isPayload
       ? (f.node && f.node.address ? `Reconstructed from the payload retrieved from ${f.node.address}.` : 'Reconstructed from the input.')
@@ -224,7 +243,8 @@ export function initDeobPage(ctx) {
         h(`span.verdict.${f && !f.isPayload ? 'bad' : tone(v.outcome)}`, v.label),
         h('h2', title),
         h('p', sub),
-        h('div.res-facts', facts.map(([k, x]) => h('span', `${k}: `, h('b', x))))),
+        h('div.res-facts', facts.map(([k, x]) => h('span', `${k}: `, h('b', x)))),
+        facetStrip),
       h('div.res-acts', acts));
 
     const parts = [head];
@@ -239,6 +259,7 @@ export function initDeobPage(ctx) {
 
     const details = [];
     details.push(section('Why this verdict', `${v.label}`, [
+      fc ? h('table.facet-table', h('tbody', Object.entries(FACETS).map(([k, name]) => h('tr', h('td', h('b', name)), h('td', fc[k] && fc[k].value === null ? 'n/a' : fc[k] && fc[k].value ? 'yes' : 'no'), h('td', (fc[k] && fc[k].why) || ''))))) : null,
       v.met && v.met.length ? h('p', 'Established: ', v.met.join('; '), '.') : null,
       v.reasons && v.reasons.length ? h('ul', v.reasons.map((x) => h('li', x))) : h('p', 'Nothing held it back.'),
       v.notes && v.notes.length ? h('ul', v.notes.map((x) => h('li', x))) : null,

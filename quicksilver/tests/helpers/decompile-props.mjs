@@ -94,3 +94,23 @@ for _, inp in ipairs({ {0, false, true, {1, 2}}, {2, true, false, {3}}, {5, true
   out[#out + 1] = tostring(ok) .. ":" .. tostring(r) .. ":" .. tostring(x) .. "|" .. table.concat(buf, ";")
 end
 print(table.concat(out, "#"))`;
+
+/**
+ * Prompt XXX: interior AST nodes (nodes with children) that appear more than once in a decompiled tree. Sharing one would print the same
+ * code twice, so it would also run twice; it is how a speculative step that mutated a pending table showed up. Leaves (names, constants)
+ * may be shared.
+ */
+export function sharedSubtrees(ast) {
+  const seen = new Set();
+  let shared = 0;
+  const visit = (n) => {
+    if (!n || typeof n !== 'object') return;
+    if (Array.isArray(n)) { n.forEach(visit); return; }
+    const kids = Object.entries(n).filter(([k, v]) => v && typeof v === 'object' && k !== 'comments');
+    if (kids.length && seen.has(n)) { shared++; return; }
+    seen.add(n);
+    for (const [, v] of kids) visit(v);
+  };
+  visit(ast);
+  return shared;
+}

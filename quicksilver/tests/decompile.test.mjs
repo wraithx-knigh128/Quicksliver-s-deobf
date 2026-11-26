@@ -13,7 +13,8 @@ import { parse } from '../src/core/parser.js';
 import { parseChunk, dumpChunk51 } from '../src/sandbox/bytecode.js';
 import { decompile } from '../src/decompile/decompile.js';
 import * as oracle from './helpers/lua-oracle.mjs';
-import { SNIPPETS, SNIPPETS_54 } from './corpus/decompile/snippets.mjs';
+import { SNIPPETS, SNIPPETS_54, SNIPPETS_51 } from './corpus/decompile/snippets.mjs';
+import { sharedSubtrees } from './helpers/decompile-props.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 after(() => oracle.stopOracle());
@@ -41,11 +42,12 @@ async function roundTrip(src, runtime, strip = false) {
   }
   const { ast, failures } = decompile(parseChunk(bin));
   const text = print(ast, {});
+  assert.equal(sharedSubtrees(ast), 0, 'the decompiled tree shares subtrees (code would be written, and run, twice)');
   return { text, failures };
 }
 
 for (const runtime of ['lua51', 'lua54']) {
-  for (const [name, src] of Object.entries(runtime === 'lua54' ? { ...SNIPPETS, ...SNIPPETS_54 } : SNIPPETS)) {
+  for (const [name, src] of Object.entries(runtime === 'lua54' ? { ...SNIPPETS, ...SNIPPETS_54 } : { ...SNIPPETS, ...SNIPPETS_51 })) {
     for (const strip of [false, true]) {
       test(`${runtime}${strip ? ' stripped' : ''}: ${name} decompiles to equivalent code`, { skip }, async () => {
         const expected = await oracle.runLua(src, runtime);

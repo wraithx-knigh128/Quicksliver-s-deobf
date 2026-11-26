@@ -1656,6 +1656,17 @@ test('XXIX Deobfuscate: MoonSec V3 is rebuilt by its server engine after the per
   assert.equal(Buffer.from(posts[0].source, 'base64').toString('latin1'), MOONSEC_STUB);
   assert.match(await page.textContent('#deob-result .verdict'), /Syntax-valid but behaviourally unverified/i);
   assert.match(await page.textContent('#deob-result .res-facts'), /Protection: MoonSec V3/);
+  // Prompt XXX: the engine that produced the result, the stages and how many functions were reconstructed are next to the verdict, and
+  // the eight facets are shown, each decided by its own evidence: no comparison ran here, so behaviour is not "verified"
+  const facts = await page.textContent('#deob-result .res-facts');
+  assert.match(facts, /Engine: moonsec-v3/);
+  assert.match(facts, /Stages: \d+ of 14 done/);
+  assert.match(facts, /Functions: \d+ of \d+ reconstructed/);
+  assert.equal(await page.locator('#deob-result .res-facets .facet').count(), 8);
+  assert.equal(await page.getAttribute('#deob-result .facet[data-facet=detected]', 'data-value'), 'true');
+  assert.equal(await page.getAttribute('#deob-result .facet[data-facet=syntaxValid]', 'data-value'), 'true');
+  assert.equal(await page.getAttribute('#deob-result .facet[data-facet=behavioural]', 'data-value'), 'null');
+  assert.equal(await page.getAttribute('#deob-result .facet[data-facet=unverified]', 'data-value'), 'true');
   const code = await page.textContent('#deob-result .res-code');
   assert.match(code, /local Players = game:GetService\("Players"\)/);
   assert.match(code, /rebuilt by a server engine \(moonsec-v3; GPL-3\.0\)/);

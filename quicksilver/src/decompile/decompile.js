@@ -168,6 +168,7 @@ class FunctionDecompiler {
     this.n = this.ir.length;
     if (opts.prune) this.pruneUnreachable();
     this.restoreLoopEnds();
+    this.dethreadLoopExits();
     this.nregs = f.maxStack + 2;
     this.P = new Map();       // register -> pending entry
     this.topEntry = null;     // pending multi-value (call / vararg with open result count)
@@ -228,6 +229,32 @@ class FunctionDecompiler {
       for (const o of ir) if (typeof o.t === 'number' && o.t >= insertAt) o.t++;
       ir.splice(insertAt, 0, { op: 'jmp', t: head, pc: ir[insertAt - 1].pc, synthetic: true });
       this.n = ir.length;
+    }
+  }
+
+  /**
+   * Prompt XXX: Lua's code generator chains the jumps that are pending "to here" into the next JMP it emits (`fs->jpc`), so in
+   * `while a do while b do … end break end` the inner loop's exit goes straight to the outer loop's exit, past the `break`. The
+   * structurer then saw a jump leave the inner block and abandoned the function. A jump to T and a jump to an instruction that is only
+   * `jmp T` do the same thing, so inside a loop whose natural exit (the instruction after its last backward jump) is `jmp T`, every
+   * jump to T is sent to that exit instead. Measured on plain Lua 5.1 and 5.4 output and on MoonSec V3's rebuilt chunks.
+   */
+  dethreadLoopExits() {
+    const ir = this.ir;
+    const n = ir.length;
+    const ends = new Map();
+    for (let k = 0; k < n; k++) {
+      const o = ir[k];
+      if ((o.op === 'jmp' || o.op === 'cjmp') && typeof o.t === 'number' && o.t <= k) ends.set(o.t, Math.max(ends.has(o.t) ? ends.get(o.t) : -1, k));
+    }
+    for (const [h, j] of ends) {
+      const E = j + 1;
+      const x = ir[E];
+      if (!x || x.op !== 'jmp' || typeof x.t !== 'number' || x.t <= E) continue;
+      for (let k = h; k <= j; k++) {
+        const q = ir[k];
+        if ((q.op === 'cjmp' || q.op === 'jmp') && q.t === x.t) q.t = E;
+      }
     }
   }
 
@@ -386,9 +413,20 @@ class FunctionDecompiler {
       changed = false;
       for (let i = n - 1; i >= 0; i--) {
         const o = i * W;
+        // Prompt XXX: a TESTSET writes its destination on the jump edge only, so the destination is not live into it from the jump
+        // target (it was treated as live on both edges: a temporary in that register — `M.V` of `M.V == "Boss" and isBoss` — then
+        // looked live after its single use and the value condition could not be read)
+        const ts = ir[i].op === 'testset' ? ir[i] : null;
+        const tsWord = ts && ts.d >= 0 && ts.d < R ? ts.d >>> 5 : -1;
+        const tsMask = tsWord >= 0 ? ~(1 << (ts.d & 31)) : -1;
         for (const s of succ[i]) {
           const so = s * W;
-          for (let w = 0; w < W; w++) { const v = outB[o + w] | inB[so + w]; if (v !== outB[o + w]) { outB[o + w] = v; changed = true; } }
+          const edge = ts && s === ts.t && s !== i + 1;
+          for (let w = 0; w < W; w++) {
+            const inc = edge && w === tsWord ? inB[so + w] & tsMask : inB[so + w];
+            const v = outB[o + w] | inc;
+            if (v !== outB[o + w]) { outB[o + w] = v; changed = true; }
+          }
         }
         for (let w = 0; w < W; w++) { const v = (outB[o + w] & ~killB[o + w]) | genB[o + w]; if (v !== inB[o + w]) { inB[o + w] = v; changed = true; } }
       }
@@ -788,7 +826,9 @@ class FunctionDecompiler {
     const scratch = [];
     let k = i;
     const fail = () => { this.P = saveP; this.seq = saveSeq; this.topEntry = saveTop; this.multi = saveMulti; return null; };
-    const setupOps = new Set(['move', 'loadk', 'loadnil', 'getup', 'getglobal', 'index', 'bin', 'un', 'concat', 'self', 'call', 'vararg', 'newtable', 'closure']);
+    // Prompt XXX: SETLIST / SETINDEX fill a table constructor inside the condition (`#f({ a, b }) > 0`); one that writes a statement
+    // instead (the table is not a pending constructor) leaves `scratch` non-empty, and the node is refused as before
+    const setupOps = new Set(['move', 'loadk', 'loadnil', 'getup', 'getglobal', 'index', 'bin', 'un', 'concat', 'self', 'call', 'vararg', 'newtable', 'closure', 'setlist', 'setindex']);
     while (k < hi) {
       const o = this.ir[k];
       if (k > i && this.isTarget[k]) return fail();
@@ -936,7 +976,7 @@ class FunctionDecompiler {
   parseValueNode(pos, end, R, E, mayFallIn, force) {
     const save = { P: new Map(this.P), seq: this.seq, top: this.topEntry, multi: this.multi };
     const fail = () => { this.P = save.P; this.seq = save.seq; this.topEntry = save.top; this.multi = save.multi; return null; };
-    const setupOps = new Set(['move', 'loadk', 'loadnil', 'getup', 'getglobal', 'index', 'bin', 'un', 'concat', 'self', 'call', 'vararg', 'newtable', 'closure']);
+    const setupOps = new Set(['move', 'loadk', 'loadnil', 'getup', 'getglobal', 'index', 'bin', 'un', 'concat', 'self', 'call', 'vararg', 'newtable', 'closure', 'setlist', 'setindex']);
     const scratch = [];
     let k = pos;
     let next = -1;
@@ -961,7 +1001,7 @@ class FunctionDecompiler {
 
   /** Is the code from i only the setup of a condition (computations, then a conditional jump), with nothing jumping into it? */
   conditionAhead(i, hi) {
-    const setup = new Set(['move', 'loadk', 'loadnil', 'getup', 'getglobal', 'index', 'bin', 'un', 'concat', 'self', 'call', 'vararg', 'newtable', 'closure']);
+    const setup = new Set(['move', 'loadk', 'loadnil', 'getup', 'getglobal', 'index', 'bin', 'un', 'concat', 'self', 'call', 'vararg', 'newtable', 'closure', 'setlist', 'setindex']);
     for (let k = i; k < hi && k < i + 64; k++) {
       const o = this.ir[k];
       if (k > i && this.isTarget[k]) return false;
@@ -979,6 +1019,9 @@ class FunctionDecompiler {
     const nodes = [];
     let k = i;
     while (k < hi) {
+      // Prompt XXX: a loop begins here, so the condition ends before it. `if on then while on do … end end` jumps to the same place
+      // from both tests; read as one condition (`on and on`), the loop's head was inside it and its back-edge became unstructured.
+      if (k > i && this.loopAt && this.loopAt.has(k)) break;
       const node = this.parseCondNode(k, hi);
       if (!node) break;
       nodes.push(node);
@@ -1417,9 +1460,8 @@ class FunctionDecompiler {
       const key = consume(o.key, pc);
       const val = consume(o.val, pc);
       if (this.orderOk(used)) {
-        if (used.some((e) => e.impure)) te.impure = true;
         const isName = key.type === 'String' && isIdentifier(key.value);
-        te.table.fields.push(isName ? { kind: 'named', key: key.value, value: val } : { kind: 'keyed', key, value: val });
+        this.extendTable(tr, te, [isName ? { kind: 'named', key: key.value, value: val } : { kind: 'keyed', key, value: val }], used.some((e) => e.impure));
         return i + 1;
       }
       // Prompt XXX: the field's value cannot join the constructor in order — the table so far is written out and the field is
@@ -1486,9 +1528,18 @@ class FunctionDecompiler {
       this.flushAll(out);
       return this.stepSetList(i, out);
     }
-    if (used.some((e) => e.impure) || o.n === -1) te.impure = true;
-    for (const v of items) te.table.fields.push({ kind: 'item', value: v });
+    this.extendTable(o.base, te, items.map((v) => ({ kind: 'item', value: v })), used.some((e) => e.impure) || o.n === -1);
     return i + 1;
+  }
+
+  /**
+   * Prompt XXX: a pending constructor gains fields as a new table node in a new entry, never in place. Condition readers try steps
+   * speculatively and restore the pending map when a reading fails; a field pushed into the shared table survived that restore, so the
+   * retry pushed it again and the output held the same subtrees twice (code written twice, and an AST walk that never finished).
+   */
+  extendTable(r, te, fields, impure) {
+    const t = { ...te.table, fields: [...te.table.fields, ...fields] };
+    this.P.set(r, { ...te, expr: t, table: t, impure: te.impure || impure });
   }
 
   stepClosure(i, out) {
