@@ -91,6 +91,9 @@ class Run {
     this.steps = new Map();
     this.warnings = [];
     this.vmifyLayers = 0;
+    // Prompt XXX: once a lifted program has been verified against the VM's own decoded chunk, every later step that changes the program
+    // must keep that behaviour; `guard(ast)` returns false when it no longer does, and the step is undone
+    this.guard = null;
   }
 
   /** Run one pass under a snapshot. `fn(ast)` returns { changed, ...detail }. */
@@ -106,6 +109,15 @@ class Run {
       return 0;
     }
     const changed = r.changed || 0;
+    if (this.guard && changed && !r.skipped) {
+      let why = null;
+      try { why = this.guard(this.ast); } catch (e) { why = `the check could not run (${e && e.message ? e.message : e})`; }
+      if (why) {
+        this.ast = snapshot;
+        this.record(id, label, { status: 'failed', changed: 0, error: `undone: ${why}`, ms: now() - t0 });
+        return 0;
+      }
+    }
     if (r.skipped) this.record(id, label, { status: 'skipped', changed: 0, detail: r.skipped, ms: now() - t0 });
     else if (changed || !quiet) this.record(id, label, { status: changed ? 'applied' : 'no-op', changed, detail: r, ms: now() - t0 });
     return changed;
@@ -113,12 +125,14 @@ class Run {
 
   record(id, label, data) {
     const prev = this.steps.get(id);
-    if (!prev) { this.steps.set(id, { id, label, rounds: 1, ...data }); return; }
+    if (!prev) { this.steps.set(id, { id, label, rounds: 1, ...data, ...(data.error && data.error.startsWith('undone:') ? { undone: 1, undoneWhy: data.error } : {}) }); return; }
     prev.rounds++;
     prev.changed += data.changed || 0;
     prev.ms += data.ms || 0;
     if (data.status === 'applied') prev.status = 'applied';
     if (data.status === 'failed') { prev.status = 'failed'; prev.error = data.error; }
+    // a round undone by the guard stays visible when a later round applies
+    if (data.error && data.error.startsWith('undone:')) { prev.undone = (prev.undone || 0) + 1; prev.undoneWhy = data.error; }
     if (data.detail && data.status !== 'skipped') prev.detail = data.detail;
     if (data.status === 'skipped' && prev.status !== 'applied') { prev.status = 'skipped'; prev.detail = data.detail; }
   }
@@ -291,6 +305,7 @@ function rebuildAzureVm(ast, state) {
   }
   ast.body = out.ast.body;
   ast.features = out.ast.features || ast.features;
+  if (check && check.checked && check.same) state.verifiedChunk = r.bytes;
   state.stats = { ...r.stats, selfCheck: check ? (check.checked ? 'same as the decoded bytecode in the sandbox' : `not checked: ${check.reason}`) : 'not checked (sandbox off)' };
   return { changed: r.stats.instructions, ...state.stats };
 }
@@ -512,6 +527,12 @@ export function recover(source, userOptions = {}) {
     const az = { stats: null, sandbox: options.sandbox && options.sandbox.enabled };
     if (run.step('azurevm.vm', 'Lift the AzureVM virtual machine back to source', (a) => rebuildAzureVm(a, az))) {
       unusedAtStart = new WeakSet(); decompiled = true;
+      // Prompt XXX: the clean-up passes keep what the self-check established. (s04_control_flow__AzureGodUltra: the decoder evaluation
+      // read one of two identical `pool[decode(...)]` sites as "" — the lifted program was right, the cleaned one printed something else.)
+      if (az.verifiedChunk) {
+        const bytes = az.verifiedChunk;
+        run.guard = (a) => { const c = checkAgainstChunk(bytes, print(a)); return c.checked && !c.same ? `the program no longer behaves like the VM's decoded bytecode (${c.reason})` : null; };
+      }
       vm = { kind: 'azurevm', lifted: true, functions: [], instructionBytes: 0, constants: null, stats: az.stats };
     }
   }

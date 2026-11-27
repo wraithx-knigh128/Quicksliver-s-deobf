@@ -63,3 +63,21 @@ test('azurevm: every build either runs like the original (or like the tool where
   }
   assert.deepEqual(bad, []);
 });
+
+test('azurevm (Prompt XXX): after the clean-up passes, every lifted program still behaves like the VM’s decoded bytecode', () => {
+  // the pipeline checks each step after a verified lift against the decoded chunk and undoes one that changes what the program does
+  // (s04_control_flow__AzureGodUltra: one round of the decoder evaluation read a `pool[decode(...)]` site as "")
+  const bad = [];
+  let lifted = 0;
+  for (const e of manifest.entries.filter((x) => x.status === 'ok')) {
+    const src = read(path.join(dir, e.file));
+    const r = run(src);
+    const st = r.steps.find((x) => x.id === 'azurevm.vm');
+    if (!st || st.status !== 'applied') continue;
+    lifted++;
+    const c = checkAgainstChunk(liftAzureVM(parse(src)).bytes, r.output);
+    if (c.checked && !c.same) bad.push(`${e.file}: ${c.reason}`);
+  }
+  assert.ok(lifted > 0);
+  assert.deepEqual(bad, []);
+});

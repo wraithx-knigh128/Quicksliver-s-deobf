@@ -153,6 +153,9 @@ export function buildReport({ detection, steps, confidence, adaptive, vm = null 
   if (notApplied.length) {
     lines.push(...wrap(`Not done: ${notApplied.slice(0, 5).map((s) => `${s.id}${s.why ? ` (${String(s.why).slice(0, 80)})` : ''}`).join('; ')}.`, '-- ', '--   '));
   }
+  // Prompt XXX: a step whose round was undone because it changed what the lifted program does is said, even when its other rounds applied
+  const undone = steps.filter((s) => s.undone && s.status !== 'failed');
+  if (undone.length) lines.push(...wrap(`Undone: ${undone.map((s) => `${s.id} (${s.undone} round${s.undone > 1 ? 's' : ''}: it changed what the lifted program does, checked against the VM's own bytecode)`).join('; ')}.`, '-- ', '--   '));
   if (vm) lines.push(...describeVm(vm));
   if (unresolved.length) {
     lines.push('-- Left unresolved:');
