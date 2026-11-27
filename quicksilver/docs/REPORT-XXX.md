@@ -88,7 +88,7 @@ share left undecompiled is a floor that may only go down.
 | Functions not decompiled | **172** | **6** |
 | Output parses | 786 | 786 |
 | A file worse than before | — | none |
-| 25 largest chunks, decompile time (measured alone) | 65.5 s | 5.8 s |
+| 25 largest chunks, decompile time (idle machine, two runs) | 65.5 s | 10.9 s / 11.9 s |
 
 Census after each step (functions / files): 172/109 → order repair 120/82 → value regions 80/64 → loop ends 78/62 → capture reachability 41/30 → generic-for prep 26/23 → loop heads 10 → loop exits 9 → TESTSET liveness 7 → constructors in conditions 6/6.
 
@@ -189,12 +189,23 @@ The same records measured with XXIX's source tree (for a per-fixture before/afte
 
 ## 9. Unit and browser results
 
-First full runs (with every fix of this prompt except the clean-up guard): unit 1,329 tests — 1,319 pass, 3 fail, 7 skipped. The 3 failures:
-the AzureVM regression (§2 item 13, fixed) and the two records tests, which ran against a 10-record trial file before the full records
-existed. The 7 skips are the same as in XXIX (local-only corpora not in the repository, and the opt-in live GitHub test). Browser: 91 tests,
-90 pass; the failing one (Reconstruct: "Identical to the original" read as "Not verified") ran while the unit suite loaded the machine
-and passes 3 of 3 times alone — its behaviour check has a wall-clock limit. Final runs after the guard: being run; this section is updated
-with them.
+Final runs, with every change of this prompt (`npm test` with the reference runtime, then `npm run test:e2e` on an idle machine):
+
+| Suite | Tests | Pass | Fail | Skipped |
+|---|---|---|---|---|
+| unit | 1,330 | 1,323 | 0 | 7 |
+| browser | 91 | 91 | 0 | 0 |
+
+The 7 skips are the same as in XXIX: six tests of four local-only corpora that are not in the repository (`obfuscated-local/colisseum`
+and `aztupbrew`, one each; `user-local/RideAPet.lua` and `Tech-hub.lua`, two each) and the opt-in live GitHub test. New tests:
+`tests/decompile-property.test.mjs` (5), `tests/xxx-facets.test.mjs` (7), `tests/xxx-records.test.mjs` (2), eight decompile snippets
+(each run on Lua 5.1 and 5.4, with and without debug information), and new cases in `tests/xxix-engines.test.mjs` and
+`tests/xvi-azurevm.test.mjs`. No test was removed or weakened; the one test whose expectation changed (`unified: the behaviour comparison is
+told what the adapter knows`) still asserts the adapter's options exactly, with the runtime globals added to them.
+
+Earlier runs during the prompt found two real problems that are fixed above: the AzureVM regression (§2 item 13) and the copy-on-write bug
+(§2 item 9). A browser run made while the unit suite loaded the machine failed one behaviour check on its wall-clock limit (Reconstruct:
+"Not verified"); it passed 3 of 3 times alone and in the idle full run.
 
 ## 10. Remaining limitations and priorities
 
