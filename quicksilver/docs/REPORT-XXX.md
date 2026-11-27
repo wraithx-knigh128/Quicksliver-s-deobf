@@ -185,7 +185,12 @@ facets, the class and its stated limitations; `--check` fails on any difference.
 
 Facets over all 1227 records: structurally reconstructed 608, not 548, no parsing output 71; behaviourally verified 1011, behaved differently 75, not settled 141. Every `validated` record has both a behaviour verification and a structural reconstruction (checked by `tests/xxx-records.test.mjs`).
 
-The same records measured with XXIX's source tree (for a per-fixture before/after) are being run; this section is updated with them.
+The same records measured with XXIX's source tree (same fixtures, limits and references; XXIX has no facets, so classes are compared):
+**10 fixtures better, 0 worse**. All 10 are AzureVM builds (,  ×3, ,  ×3, , ) that go from "not
+deobfuscated" (the VM kept: one function could not be decompiled) to "partial": the VM is lifted, the program behaves identically to its
+original, and one place is left unresolved in each. Totals, XXIX → XXX: validated 561 → 561, partial 460 → 470, syntax-valid unverified
+21 → 21, not deobfuscated 114 → 104, invalid input 71 → 71. (The corpus fixtures are QuickSilver's own test programs; the MoonSec and
+Prometheus results of §4 and §5 are the before/after on third-party and engine-assisted inputs.)
 
 ## 9. Unit and browser results
 

@@ -218,5 +218,86 @@
    "checked": "this repository",
    "used_by": "tests/decompile-property.test.mjs"
   }
- ]
+ ],
+ "corpus": {
+  "fixtures": 1227,
+  "method": "tools/regress/records.mjs on the current tree and on the XXIX tree (same fixtures, same limits, same references)",
+  "xxix": {
+   "validated": 561,
+   "partial": 460,
+   "not-deobfuscated": 114,
+   "invalid-input": 71,
+   "syntax-valid-unverified": 21
+  },
+  "xxx": {
+   "partial": 470,
+   "validated": 561,
+   "not-deobfuscated": 104,
+   "invalid-input": 71,
+   "syntax-valid-unverified": 21
+  },
+  "changed": [
+   {
+    "id": "azurevm/s01_minify_basic__AzureGodUltra.lua",
+    "xxix": "not-deobfuscated",
+    "xxx": "partial",
+    "behaviouralNow": true
+   },
+   {
+    "id": "azurevm/s02_renamed_vars__AzureGod15.lua",
+    "xxix": "not-deobfuscated",
+    "xxx": "partial",
+    "behaviouralNow": true
+   },
+   {
+    "id": "azurevm/s02_renamed_vars__AzureGodUltra.lua",
+    "xxix": "not-deobfuscated",
+    "xxx": "partial",
+    "behaviouralNow": true
+   },
+   {
+    "id": "azurevm/s02_renamed_vars__Luraph14.lua",
+    "xxix": "not-deobfuscated",
+    "xxx": "partial",
+    "behaviouralNow": true
+   },
+   {
+    "id": "azurevm/s03_encoded_strings__AzureGodUltra.lua",
+    "xxix": "not-deobfuscated",
+    "xxx": "partial",
+    "behaviouralNow": true
+   },
+   {
+    "id": "azurevm/s04_control_flow__AzureGod15.lua",
+    "xxix": "not-deobfuscated",
+    "xxx": "partial",
+    "behaviouralNow": true
+   },
+   {
+    "id": "azurevm/s04_control_flow__AzureGodUltra.lua",
+    "xxix": "not-deobfuscated",
+    "xxx": "partial",
+    "behaviouralNow": true
+   },
+   {
+    "id": "azurevm/s04_control_flow__Luraph14.lua",
+    "xxix": "not-deobfuscated",
+    "xxx": "partial",
+    "behaviouralNow": true
+   },
+   {
+    "id": "azurevm/s06_combined__AzureGodUltra.lua",
+    "xxix": "not-deobfuscated",
+    "xxx": "partial",
+    "behaviouralNow": true
+   },
+   {
+    "id": "azurevm/s08_ironbrew_macros__AzureGodUltra.lua",
+    "xxix": "not-deobfuscated",
+    "xxx": "partial",
+    "behaviouralNow": true
+   }
+  ],
+  "worse": []
+ }
 }
