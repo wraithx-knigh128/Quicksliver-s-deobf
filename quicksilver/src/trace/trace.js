@@ -199,7 +199,21 @@ function installEnvironment(rec) {
   const arith = (op) => nf(`__${op}`, ([a, b]) => [rec.mock(`(${rec.repr(a)} ${op} ${rec.repr(b)})`, { inline: true, cls: 'number' })]);
   for (const [name, op] of [['__add', '+'], ['__sub', '-'], ['__mul', '*'], ['__div', '/'], ['__mod', '%'], ['__pow', '^'], ['__idiv', '//']]) meta.set(name, arith(op));
   meta.set('__unm', nf('__unm', ([a]) => [rec.mock(`(-${rec.repr(a)})`, { inline: true, cls: 'number' })]));
-  meta.set('__concat', nf('__concat', ([a, b]) => [rec.mock(`${rec.repr(a)} .. ${rec.repr(b)}`, { inline: true, cls: 'string' })]));
+  // Prompt XXXI (KNOWN-ISSUES #116): a concatenation with a stand-in is written in one form whatever its grouping: the chain is
+  // flattened and neighbouring string constants are joined, so `"a" .. ("b" .. s)` and `"ab" .. s` (equal strings for any string s)
+  // trace alike. Numbers are not joined (their text depends on the Lua version), and nothing else about the operands changes.
+  const concatParts = (x) => (x instanceof LuaUserdata && x.concatParts ? x.concatParts : typeof x === 'string' ? [{ lit: x }] : [{ text: rec.repr(x) }]);
+  meta.set('__concat', nf('__concat', ([a, b]) => {
+    const parts = [];
+    for (const p of [...concatParts(a), ...concatParts(b)]) {
+      const last = parts[parts.length - 1];
+      if (p.lit !== undefined && last && last.lit !== undefined) parts[parts.length - 1] = { lit: last.lit + p.lit };
+      else parts.push(p);
+    }
+    const u = rec.mock(parts.map((p) => (p.lit !== undefined ? rec.str(p.lit) : p.text)).join(' .. '), { inline: true, cls: 'string' });
+    u.concatParts = parts;
+    return [u];
+  }));
   meta.set('__len', nf('__len', () => [0]));
   meta.set('__lt', nf('__lt', () => [false]));
   meta.set('__le', nf('__le', () => [false]));

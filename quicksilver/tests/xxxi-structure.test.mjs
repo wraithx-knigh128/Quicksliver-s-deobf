@@ -66,6 +66,21 @@ for (const name of ['xxxi-for-break.lua', 'xxxi-or-commands.lua']) {
   });
 }
 
+test('xxxi-testset-continue-point.lua: a TESTSET whose value goes to the continue point is decompiled as Luau and as Lua, same output', { skip }, async () => {
+  const src = fs.readFileSync(path.join(regress, 'xxxi-testset-continue-point.lua'), 'latin1');
+  for (const runtime of ['lua51', 'lua54']) for (const strip of [true, false]) for (const dialect of ['luau', null]) {
+    const d = decompile(parseChunk(await compile(src, runtime, strip)), dialect ? { dialect } : {});
+    const where = `${runtime} ${strip ? 'stripped' : 'debug'} ${dialect || 'lua'}`;
+    assert.deepEqual(d.failures, [], where);
+    // (labels exist only from Lua 5.2: on 5.1 there must be no `continue` to write back)
+    if (runtime === 'lua51') assert.doesNotMatch(print(d.ast), /\bcontinue\b/, where);
+    const text = print(dialect && runtime === 'lua54' ? continuesToGoto(d.ast) : d.ast);
+    const [a, b] = [await oracle.runLua(src, runtime), await oracle.runLua(text, runtime)];
+    assert.ok(b.ok, `${where}: ${b.error}`);
+    assert.equal(b.stdout, a.stdout, where);
+  }
+});
+
 test('a while loop whose condition leaves for a second, identical return: decompiled as `while cond do`, same output', { skip }, async () => {
   const src = 'local out = {}\nlocal function run(n)\n  local i = 0\n  while i < n do\n    i = i + 1\n    if i == 5 then break end\n    out[#out + 1] = i\n  end\n  return\nend\nrun(3) run(0) run(7)\nprint(table.concat(out, ","))\n';
   const ch = parseChunk(await compile(src, 'lua51', false));

@@ -1234,13 +1234,15 @@ class FunctionDecompiler {
     if (X > hi) throw new Unstructured(`conditional jump at ${this.ir[g.end].pc} leaves its block`);
     // `if ... else ... end`: the compiler sends jumps that would reach the closing `jmp` of the then-branch straight to
     // its destination. Undo that, so that they are plain jumps to the end of the then-branch.
-    // (Prompt XXXI, Luau: not when that destination is the loop's continue point; a jump there from inside is a `continue` of its own,
-    // and sent to the closing `jmp` it would look like the end of an inner then-branch)
+    // (Prompt XXXI, Luau: a `jmp` / conditional jump to the loop's continue point is left alone, since it is a `continue` of its own and,
+    // sent to the closing `jmp`, would look like the end of an inner then-branch; a TESTSET's jump delivers a value and is redirected
+    // as before)
     const closing = this.ir[X - 1];
-    if (X - 1 >= bodyStart && closing.op === 'jmp' && closing.t > X && closing.t <= hi && (ctx.exit === null || closing.t !== ctx.exit) && !this.isLoopBackEdge(X - 1)
-        && !(this.o.luau && ctx.cont != null && closing.t === ctx.cont)) {
+    if (X - 1 >= bodyStart && closing.op === 'jmp' && closing.t > X && closing.t <= hi && (ctx.exit === null || closing.t !== ctx.exit) && !this.isLoopBackEdge(X - 1)) {
+      const keepContinues = this.o.luau && ctx.cont != null && closing.t === ctx.cont;
       for (let k = bodyStart; k < X - 1; k++) {
         const q = this.ir[k];
+        if (keepContinues && q.op !== 'testset') continue;
         if ((q.op === 'jmp' || q.op === 'cjmp' || q.op === 'testset') && q.t === closing.t) { q.t = X - 1; this.isTarget[X - 1] = 1; }
       }
     }
@@ -1250,7 +1252,7 @@ class FunctionDecompiler {
     for (let k = bodyStart; k < X; k++) {
       const q = this.ir[k];
       if (k === X - 1 && q.op === 'jmp') continue; // the jump that closes an if/else
-      if ((q.op === 'jmp' || q.op === 'cjmp' || q.op === 'testset') && q.t > shared && q.t <= hi && (ctx.exit === null || q.t !== ctx.exit) && !(this.o.luau && ctx.cont != null && q.t === ctx.cont)) shared = q.t;
+      if ((q.op === 'jmp' || q.op === 'cjmp' || q.op === 'testset') && q.t > shared && q.t <= hi && (ctx.exit === null || q.t !== ctx.exit) && !(this.o.luau && ctx.cont != null && q.t === ctx.cont && q.op !== 'testset')) shared = q.t;
     }
     // Prompt XXXI: a tail too large to duplicate that only jumps to a `return` of nothing made: those jumps are written `return` where
     // they are (the nested blocks do so), and the tail is the one before them, if any. Smaller tails are duplicated as before.
@@ -1259,7 +1261,7 @@ class FunctionDecompiler {
       for (let k = bodyStart; k < X; k++) {
         const q = this.ir[k];
         if (k === X - 1 && q.op === 'jmp') continue;
-        if ((q.op === 'jmp' || q.op === 'cjmp' || q.op === 'testset') && q.t > other && q.t <= hi && (ctx.exit === null || q.t !== ctx.exit) && !(this.o.luau && ctx.cont != null && q.t === ctx.cont) && !(q.op !== 'testset' && this.plainReturn(q.t))) other = q.t;
+        if ((q.op === 'jmp' || q.op === 'cjmp' || q.op === 'testset') && q.t > other && q.t <= hi && (ctx.exit === null || q.t !== ctx.exit) && !(this.o.luau && ctx.cont != null && q.t === ctx.cont && q.op !== 'testset') && !(q.op !== 'testset' && this.plainReturn(q.t))) other = q.t;
       }
       if (other <= X || other - X <= 80) shared = other;
     }
