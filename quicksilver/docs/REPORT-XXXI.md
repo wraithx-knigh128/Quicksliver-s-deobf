@@ -120,7 +120,7 @@ The single Deobfuscate option, the UI and the engines are unchanged.
 |---|---|---|
 | `tests/xxxi-evaluate.test.mjs` | 8: the #118 reduction; two decoders over one cache; the rerun; two controls (set-up visible: still evaluated; a call counter: still refused); a property over 36 random memoising-decoder programs (one decoder, a shared cache, an aliased cache; set-up visible or hidden; sites inside functions; never-run failing sites); the AzureVM fixture with the guard off; the guard on its own | with XXX's `evaluate.js`, the 5 #118 tests fail and the 3 others pass |
 | `tests/xxxi-evaluation-order.test.mjs` | 5: the reduction; 4 × 120 random value-condition statements (2 seeds, stripped and with debug information) through proxies that log every read and call, compared with the original on reference Lua 5.1 | all 5 fail with XXX's decompiler |
-| `tests/xxxi-structure.test.mjs` | 7: for-break and or-commands (5.1/5.4, stripped/debug); TESTSET to the continue point (both dialects); the two-return chunk; the continue fixture; a property over 60 random Lua 5.4 `goto continue` programs, decompiled as Luau (each `continue` written back as a goto, run on reference Lua 5.4) and as Lua (never a `continue`) | for-break, or-commands, the two-return chunk and the continue fixture fail with XXX's decompiler (§3); the TESTSET fixture guards a regression of this prompt's own first `continue` rules (XXX, without a Luau mode, decompiles it) |
+| `tests/xxxi-structure.test.mjs` | 6: for-break and or-commands (5.1/5.4, stripped/debug); TESTSET to the continue point (both dialects); the two-return chunk; the continue fixture; a property over 60 random Lua 5.4 `goto continue` programs, decompiled as Luau (each `continue` written back as a goto, run on reference Lua 5.4) and as Lua (never a `continue`) | for-break, or-commands, the two-return chunk and the continue fixture fail with XXX's decompiler (§3); the TESTSET fixture guards a regression of this prompt's own first `continue` rules (XXX, without a Luau mode, decompiles it) |
 | `tests/xxxi-trace.test.mjs` | 3: grouping does not change the trace; different strings and numbers still differ; the comparison | — |
 | `tests/decompile.test.mjs` (existing) | `valueThenTest` and `localAtSplitRead` now on Lua 5.1 and 5.4, stripped and with debug information | `localAtSplitRead` on Lua 5.4 with debug information |
 
@@ -187,7 +187,20 @@ itself diverges, as before; the engine asked 35 times; the same two `s03_encoded
 
 ## 9. Unit and browser results
 
-(filled in from the final runs below)
+Final tree, idle machine apart from the measurements of §8:
+
+| Suite | XXX (`534bb94`, measured) | XXXI |
+|---|---|---|
+| unit (`npm test`, reference Lua through `QS_LUA_PYTHON`) | 1,330 tests: 1,323 pass, 0 fail, 7 skipped | **1,358 tests: 1,351 pass, 0 fail, 7 skipped** |
+| browser (`npm run test:e2e`) | 91 / 91 | **91 / 91** |
+
+The 28 new unit tests (compared name by name with the XXX run; none disappeared) are the 22 of §6 (8 + 5 + 6 + 3) and 6 decompiler snippet runs: `localAtSplitRead` on Lua 5.1 and 5.4, stripped and with debug information (4), and `valueThenTest` now also on Lua 5.4 (2). The 7 skipped tests
+are the same 7 as before, each for a reason stated in the test: two need licence-restricted corpora that may not be committed
+(`tests/corpus/obfuscated-local/colisseum`, `aztupbrew`; generated locally by `tests/corpus/tools/gen_external.py`), four need scripts
+supplied for analysis that are not stored in the repository (`tests/corpus/user-local/RideAPet.lua`, `Tech-hub.lua`, two tests each),
+and one reads a live public GitHub file and runs only with `QS_LIVE_GITHUB=1`. No test was deleted, weakened or skipped to obtain these
+results; one test written during this prompt failed first because of a defect in the test itself (it mutated a literal's `value`, which
+the printer ignores in favour of `raw`), and was corrected, not loosened.
 
 ## 10. Remaining limitations
 

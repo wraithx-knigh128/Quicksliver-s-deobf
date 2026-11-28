@@ -150,5 +150,36 @@
         "behaviour": "same"
       }
     }
+  },
+  "final": {
+    "unit": {
+      "tests": 1358,
+      "pass": 1351,
+      "fail": 0,
+      "skipped": 7,
+      "newTests": 28
+    },
+    "browser": {
+      "tests": 91,
+      "pass": 91
+    },
+    "records": {
+      "checked": 1227,
+      "reproduced": 1224,
+      "differ": 3,
+      "reRecorded": [
+        "azurevm/s04_control_flow__AzureGod15.lua",
+        "azurevm/s04_control_flow__Luraph14.lua",
+        "zartha/s04_control_flow__constants.lua"
+      ],
+      "why": "value conditions written once (KNOWN-ISSUES #114): stage list gains dataflow (AzureVM, output 207 -> 200 lines, same output as the original on reference Lua 5.1); Zartha unresolved 3 -> 1; no facet or outcome class changed"
+    },
+    "prometheus": {
+      "rowsChangedVsXXX": 0
+    },
+    "decompilerPropertySeeds": {
+      "xxx": "200/0/0, 199/0/1, 120/0/0, 120/0/0, 120/0/0",
+      "xxxi": "200/0/0, 199/0/1, 120/0/0, 120/0/0, 120/0/0"
+    }
   }
 }
