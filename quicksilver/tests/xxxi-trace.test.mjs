@@ -1,5 +1,5 @@
 // Prompt XXXI (KNOWN-ISSUES #116): the trace writes a concatenation with a stand-in in one form whatever its grouping, so two programs
-// that build the same string trace alike (MoonSec V3 a110bb69: `"…php?key=" .. s` against the rebuilt `"…php" .. "?key=" .. s`), and
+// that build the same string trace alike (MoonSec V3 a110bb69: a constant the original has whole and the rebuilt program has split in two), and
 // programs that build different strings still trace differently.
 import test from 'node:test';
 import assert from 'node:assert/strict';

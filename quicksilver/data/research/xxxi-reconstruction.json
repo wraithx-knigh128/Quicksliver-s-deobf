@@ -1,0 +1,154 @@
+{
+  "generatedBy": "Prompt XXXI measurement scripts (tools/engines/xxxi/README.md); XXX figures measured again on a worktree of 534bb94; engine output unchanged (the same 786 rebuilt MoonSec chunks)",
+  "baseline": {
+    "commit": "534bb94",
+    "unit": {
+      "tests": 1330,
+      "pass": 1323,
+      "fail": 0,
+      "skipped": 7
+    },
+    "browser": {
+      "tests": 91,
+      "pass": 91
+    },
+    "records": {
+      "checked": 1227,
+      "differ": 0
+    },
+    "prometheusRowsChangedVsXXX": 0
+  },
+  "moonsec_v3": {
+    "batch": {
+      "files": 792,
+      "xxx": {
+        "rebuilt": 786,
+        "incompleteFiles": 6,
+        "failingFunctions": 6,
+        "parse": 786,
+        "sharedSubtrees": 7,
+        "filesWithShared": 5,
+        "continues": 0,
+        "filesWithContinue": 0
+      },
+      "xxxi": {
+        "rebuilt": 786,
+        "incompleteFiles": 0,
+        "failingFunctions": 0,
+        "parse": 786,
+        "sharedSubtrees": 0,
+        "filesWithShared": 0,
+        "continues": 162,
+        "filesWithContinue": 61
+      },
+      "worse": []
+    },
+    "behaviour": {
+      "sampled": 120,
+      "xxx": {
+        "same-error-other-name": 29,
+        "no-reference": 47,
+        "identical": 34,
+        "event": 8,
+        "inconclusive": 2
+      },
+      "xxxi": {
+        "same-error-other-name": 29,
+        "no-reference": 47,
+        "identical": 35,
+        "event": 7,
+        "inconclusive": 2
+      },
+      "changed": [
+        {
+          "file": "a110bb695e3a17cb.lua",
+          "xxx": "event",
+          "xxxi": "identical",
+          "coverage": 0.703
+        }
+      ]
+    },
+    "doubleReads": {
+      "method": "tools/engines/xxxi/doubleread.mjs",
+      "xxx": {
+        "files": 24,
+        "sites": 46,
+        "kinds": {
+          "Name": 44,
+          "Index": 2
+        }
+      },
+      "xxxi": {
+        "files": 2,
+        "sites": 5,
+        "kinds": {
+          "Name": 5
+        }
+      }
+    },
+    "functionsFixed": [
+      {
+        "file": "08010afe2c93b21c",
+        "path": "main/35/0/0",
+        "cause": "inner for loop break threaded through the outer break",
+        "fixture": "tests/corpus/regress/xxxi-for-break.lua"
+      },
+      {
+        "file": "424517eb6c60cf71",
+        "path": "main/0",
+        "cause": "while condition leaving for a second identical return",
+        "fixture": "tests/xxxi-structure.test.mjs (patched chunk)"
+      },
+      {
+        "file": "6aaee0860c57b0b3",
+        "path": "main/7/14/3",
+        "cause": "jump to a return of nothing from inside a split condition",
+        "fixture": "tests/corpus/regress/xxxi-or-commands.lua"
+      },
+      {
+        "file": "ce3faecf8b050ee8",
+        "path": "main/1",
+        "cause": "jump to a return of nothing from inside a split condition",
+        "fixture": "tests/corpus/regress/xxxi-or-commands.lua"
+      },
+      {
+        "file": "ddc9c42c3da4aea8",
+        "path": "main/5",
+        "cause": "Luau continue (while loop)",
+        "fixture": "tests/corpus/regress/xxxi-continue.lua"
+      },
+      {
+        "file": "c2f0c41bbabeadb3",
+        "path": "main/11",
+        "cause": "Luau continue (generic for; then-block ending in if not c then continue end)",
+        "fixture": "tests/corpus/regress/xxxi-continue.lua"
+      }
+    ]
+  },
+  "evaluationOrder": {
+    "method": "tools/engines/xxxi/evalorder.mjs, 4 x 120 programs",
+    "xxx": {
+      "different": 282,
+      "shared": 299,
+      "undecompiled": 0
+    },
+    "xxxi": {
+      "different": 0,
+      "shared": 0,
+      "undecompiled": 0
+    }
+  },
+  "decoderEvaluation": {
+    "azurevmPreEvaluate": {
+      "xxx": {
+        "evaluated": 2,
+        "behaviour": "different"
+      },
+      "xxxi": {
+        "evaluated": 1,
+        "reruns": 2,
+        "behaviour": "same"
+      }
+    }
+  }
+}
