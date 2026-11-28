@@ -160,7 +160,30 @@ after 2 reruns; the program behaves like the original.
 
 ## 8. Full regression comparison
 
-(filled in from the final runs below)
+**Per-fixture records (1,227, `tools/regress/records.mjs --check` on the final tree, both shards).** 1,224 reproduce their record exactly.
+3 differ, each examined before it was re-recorded (`--sets azurevm,zartha`, which re-measures those sets and keeps every other record):
+
+| Fixture | Field | XXX → XXXI | Why |
+|---|---|---|---|
+| `azurevm/s04_control_flow__AzureGod15.lua` | stages | `dataflow` now applies | C: `if value then x = value else x = obj[…] end` (a temporary and an if/else) became `x = fn2(…) or obj[…]`; output 207 → 200 lines; same output as the original on reference Lua 5.1, before and after |
+| `azurevm/s04_control_flow__Luraph14.lua` | stages | the same | the same program behind another wrapper |
+| `zartha/s04_control_flow__constants.lua` | unresolved, limitations | 3 → 1 place unresolved | D: `if value == "m" and "accept" then str = "accept" else str = "start" end` became `str = value == "m" and "accept" or "start"`; the old shape was counted as unresolved |
+
+No record lost a facet: syntax-valid, structural, behavioural, unverified and the outcome class are unchanged for all 1,227. No previously
+verified reconstruction changed its verdict.
+
+**MoonSec V3** (§7): no program worse, 6 better; behaviour 34 → 35 identical, no program left a category it was in except `a110bb69`
+(event → identical).
+
+**Prometheus** (131 fixtures with originals, the integrated run with the gated engine, XXIX's scoring, `prom-sum.py`): **0 rows changed**
+against XXX (92 right with nothing left, 37 with protection left, 2 scored "different" against the original because the protected build
+itself diverges, as before; the engine asked 35 times; the same two `s03_encoded_strings` builds validated against the protected script).
+
+**AzureVM guard** (tested on its own, `tests/xxxi-evaluate.test.mjs`): a step that changes what the program does is undone and recorded; on
+`s04_control_flow__AzureGodUltra` the lifted program now stays right with the guard switched off, and with it on nothing is undone.
+
+**Reference Lua 5.1 / 5.4:** every new test that compares behaviour runs both programs on reference PUC Lua through `lupa`
+(`tests/helpers/lua-oracle.mjs`); `continue` is checked on Lua 5.4 through `goto`.
 
 ## 9. Unit and browser results
 
