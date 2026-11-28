@@ -1191,11 +1191,15 @@ class FunctionDecompiler {
     // `x = E or c` when the fall-through code is that one assignment, and otherwise E goes to the register the bytecode tested
     // (`_rS = E; if _rS then x = _rS else ... end`), unless E is a plain local or a constant, which can be read twice.
     const own = g.assign && ownTest(g.P, g.assign.expr, g.assign.op);
+    // a guard before the tested value (`x = A and B or c`, read later): the condition is `A and <B's own test>`, and A runs first, then B
+    const guard = !own && g.assign && g.assign.op === 'or' && g.P.type === 'Binary' && g.P.op === 'and' && ownTest(g.P.right, g.assign.expr, 'or') ? g.P.left : null;
+    const guarded = (rest) => ({ type: 'Binary', op: 'or', left: { type: 'Binary', op: 'and', left: guard, right: g.assign.expr }, right: rest });
     if (g.t === g.f) {
       // both outcomes continue at the same place: only the (possible) assignment of a value condition remains
       if (g.assign) {
         const target = this.regTarget(g.assign.d, g.assign.pc);
         if (own) out.push({ type: 'Assign', targets: [target], values: [{ type: 'Binary', op: g.assign.op, left: g.assign.expr, right: nameNode(target.name) }] });
+        else if (guard) out.push({ type: 'Assign', targets: [target], values: [guarded(nameNode(target.name))] });
         else out.push({ type: 'If', clauses: [{ cond: g.P, body: [{ type: 'Assign', targets: [target], values: [g.assign.expr] }] }], orelse: null });
       } else out.push({ type: 'If', clauses: [{ cond: g.P, body: [] }], orelse: null });
       return bodyStart;
@@ -1206,8 +1210,8 @@ class FunctionDecompiler {
       const target = this.regTarget(g.assign.d, g.assign.pc);
       const fall = this.sub(bodyStart, X, ctx);
       const only = fall.length === 1 && fall[0].type === 'Assign' && fall[0].targets.length === 1 && fall[0].values.length === 1 ? fall[0] : null;
-      if (own && only && only.targets[0].type === 'Name' && only.targets[0].name === target.name) {
-        out.push({ type: 'Assign', targets: [target], values: [{ type: 'Binary', op: g.assign.op, left: g.assign.expr, right: only.values[0] }] });
+      if ((own || guard) && only && only.targets[0].type === 'Name' && only.targets[0].name === target.name) {
+        out.push({ type: 'Assign', targets: [target], values: [own ? { type: 'Binary', op: g.assign.op, left: g.assign.expr, right: only.values[0] } : guarded(only.values[0])] });
         return X;
       }
       const chain = own ? this.valueChain(g.assign, target, fall) : null;

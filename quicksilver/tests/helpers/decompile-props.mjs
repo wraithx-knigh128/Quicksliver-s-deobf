@@ -143,6 +143,11 @@ export function evaluationCase(rnd) {
     () => `for i = 1, 2 do x = u[i] and x or ${atom()} end`,
     () => `n = ${atom()} or n x = n or x`,
     () => `g(${atom()} or x, ${atom()} and x)`,
+    // a guard before the tested value (`x = A and B or c`), with x read afterwards so the value is kept in a statement
+    () => `x = ${atom()} and ${atom()} or nil g(x)`,
+    () => `x = ${atom()} and ${atom()} or ${atom()} g(x)`,
+    () => `x = ${atom()} and ${atom()} or x g(x)`,
+    () => `x = ${atom()} and ${atom()} and ${atom()} or nil g(x)`,
   ];
   const body = Array.from({ length: 1 + rnd(3) }, () => stmts[rnd(stmts.length)]()).join('\n');
   return `local t, u, k, x, n, c = ...\n${body}\nreturn x, n`;
