@@ -222,7 +222,7 @@ export function dumpSource(source, options = {}) {
  * (src/decompile), cleaned by the ordinary passes, and classified against the original exactly as a lift by one of QuickSilver's own VM readers
  * is: functions the decompiler could not structure are listed as unresolved, and the engine's part is recorded as a step of its own.
  * @param {string} source binary string: a Lua 5.1 chunk
- * @param {{original: string, engine: string, label: string, family: string, licence?: string, recover?: object}} options
+ * @param {{original: string, engine: string, label: string, family: string, licence?: string, dialect?: string, recover?: object}} options (dialect "luau": the rebuilt program is Luau)
  */
 export function recoverFromBytecode(source, options = {}) {
   return timed(() => {
@@ -235,7 +235,7 @@ export function recoverFromBytecode(source, options = {}) {
       return acc;
     };
     const stats = count(chunk.main);
-    const d = decompile(chunk);
+    const d = decompile(chunk, { dialect: options.dialect });
     const decompiled = print(d.ast);
     // the ordinary passes clean the decompiled program (names from evidence, idioms); nothing of the original's VM is left for them to undo
     const inner = recover(decompiled, { ...(options.recover || {}), annotate: false, sandbox: { enabled: false } });

@@ -235,7 +235,7 @@ export async function deobfuscate(input, deps, opts = {}) {
     const payload = eng && eng.ok ? (adapter.output === 'lua-source' ? eng.source : eng.bytecode) : null;
     if (typeof payload !== 'string' || !payload.length) return fallback(`the server engine was not used (${String((eng && (eng.message || eng.outcome)) || 'no answer').slice(0, 200)})`);
     let r = null;
-    const opts = { original: t, engine: adapter.id, label: adapter.label, family: adapter.family, familyLabel: adapter.familyLabel, licence: eng.licence || adapter.licence };
+    const opts = { original: t, engine: adapter.id, label: adapter.label, family: adapter.family, familyLabel: adapter.familyLabel, licence: eng.licence || adapter.licence, dialect: adapter.dialect };
     try { r = await (adapter.output === 'lua-source' ? deps.fromSource(payload, opts) : deps.fromBytecode(payload, opts)); } catch (e) { r = { ok: false, error: { message: String((e && e.message) || e) } }; }
     if (!r || !r.ok || r.output == null) return fallback(`the server engine answered, but its ${adapter.output === 'lua-source' ? 'program' : 'bytecode'} could not be ${adapter.output === 'lua-source' ? 'read' : 'decompiled'} (${String((r && r.error && r.error.message) || 'no result').slice(0, 160)})`);
     r.engine = { id: adapter.id, isolation: eng.isolation || null, ms: eng.ms || null, licence: eng.licence || adapter.licence, verify: adapter.verify || null };

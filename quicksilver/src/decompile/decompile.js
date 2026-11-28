@@ -57,6 +57,16 @@ const fixTail = (list) => {
   if (last && last.single && (last.type === 'Call' || last.type === 'MethodCall' || last.type === 'Vararg')) list[list.length - 1] = { type: 'Paren', expr: last };
   return list;
 };
+/**
+ * Prompt XXXI: is P exactly the test of the value E a TESTSET (or a chain of them) stores? `or`: P is E itself, or `P1 or P2` over
+ * `E1 or E2`; `and`: P is `not E`, or `P1 or P2` over `E1 and E2` (the chain fires when the first value is false). Identity, not
+ * likeness: only then does P evaluate exactly what E evaluates, in the same order.
+ */
+function ownTest(P, E, op) {
+  if (op === 'or' && P === E) return true;
+  if (op === 'and' && P.type === 'Unary' && P.op === 'not' && P.arg === E) return true;
+  return P.type === 'Binary' && P.op === 'or' && E.type === 'Binary' && E.op === op && ownTest(P.left, E.left, op) && ownTest(P.right, E.right, op);
+}
 const mkAnd = (a, b) => ({ type: 'Binary', op: 'and', left: a, right: b });
 const mkOr = (a, b) => ({ type: 'Binary', op: 'or', left: a, right: b });
 // Prompt XXX: value-exact helpers for short-circuit expressions whose value is used (not only their truth)
@@ -243,14 +253,30 @@ class FunctionDecompiler {
     const ir = this.ir;
     const n = ir.length;
     const ends = new Map();
+    // Prompt XXXI: numeric and generic for loops too (their back edge is FORLOOP / TFORLOOP): `for … do for … do if c then break end
+    // end break end` sends the inner break through the outer one, past the inner loop's exit
     for (let k = 0; k < n; k++) {
       const o = ir[k];
-      if ((o.op === 'jmp' || o.op === 'cjmp') && typeof o.t === 'number' && o.t <= k) ends.set(o.t, Math.max(ends.has(o.t) ? ends.get(o.t) : -1, k));
+      if ((o.op === 'jmp' || o.op === 'cjmp' || o.op === 'forloop' || o.op === 'tforloop') && typeof o.t === 'number' && o.t <= k) ends.set(o.t, Math.max(ends.has(o.t) ? ends.get(o.t) : -1, k));
     }
+    const sameRet = (a, b) => a && b && a.op === 'ret' && b.op === 'ret' && a.n >= 0 && a.n === b.n && a.base === b.base;
     for (const [h, j] of ends) {
       const E = j + 1;
       const x = ir[E];
-      if (!x || x.op !== 'jmp' || typeof x.t !== 'number' || x.t <= E) continue;
+      // Prompt XXXI: the loop's exit is a `return` and a jump in the loop goes to another, identical `return` (the same registers,
+      // nothing run in between): MoonSec V3's rebuilt code has a `while` whose condition leaves for a second `return` right after the
+      // first. The two are the same jump; it is sent to the loop's exit.
+      if (x && x.op === 'ret' && x.n >= 0) {
+        for (let k = h; k <= j; k++) {
+          const q = ir[k];
+          if ((q.op === 'cjmp' || q.op === 'jmp') && typeof q.t === 'number' && q.t !== E && q.t > j && sameRet(ir[q.t], x)) q.t = E;
+        }
+        continue;
+      }
+      // Prompt XXXI: T may also lie before the loop, at the head of an enclosing one: MoonSec V3's rebuilt Luau code threads an inner
+      // loop's exit through the `jmp head` that ends the outer loop's body (the outer loop's next iteration). Only a T inside this loop
+      // (its own head, its body) is left alone.
+      if (!x || x.op !== 'jmp' || typeof x.t !== 'number' || (x.t >= h && x.t <= E)) continue;
       for (let k = h; k <= j; k++) {
         const q = ir[k];
         if ((q.op === 'cjmp' || q.op === 'jmp') && q.t === x.t) q.t = E;
@@ -832,7 +858,9 @@ class FunctionDecompiler {
     while (k < hi) {
       const o = this.ir[k];
       if (k > i && this.isTarget[k]) return fail();
-      if (this.startAt.has(o.pc) && this.localsStartingAt(o.pc).length && k > i) return fail();
+      // a local that begins inside the condition cannot be part of it. Prompt XXXI (KNOWN-ISSUES #115): one already declared is not
+      // such a local: Lua 5.4's GETTABUP is two IR ops with one pc, so a local beginning at that pc was declared before the first of them
+      if (this.startAt.has(o.pc) && this.localsStartingAt(o.pc).some((lv) => !lv.declared) && k > i) return fail();
       if (o.op === 'cjmp' || o.op === 'testset') {
         const used = [];
         const consume = this.consumer(used, true);
@@ -846,7 +874,7 @@ class FunctionDecompiler {
           // region (valueMode) it appears once, in `x and rest` / `x or rest`
           if (used.some((e) => e.impure) && !valueMode) return fail();
           P = o.sense ? sExpr : mkNot(sExpr);
-          assign = { d: o.d, expr: sExpr, op: o.sense ? 'or' : 'and', pc: o.pc };
+          assign = { d: o.d, expr: sExpr, op: o.sense ? 'or' : 'and', pc: o.pc, parts: [{ expr: sExpr, s: o.s, pc: o.pc }] };
         }
         if (!this.orderOk(used) || this.P.size || this.topEntry || this.multi) return fail();
         if (scratch.length) return fail();
@@ -1062,7 +1090,7 @@ class FunctionDecompiler {
                 const own = A.assign.op === 'or' ? A.P === A.assign.expr : (A.P.type === 'Unary' && A.P.op === 'not' && A.P.arg === A.assign.expr);
                 if (!own) continue;
                 const op = A.assign.op;
-                merged = { P: mkOr(A.P, B.P), t: B.t, f: B.f, assign: { ...A.assign, expr: { type: 'Binary', op, left: A.assign.expr, right: B.assign.expr } } };
+                merged = { P: mkOr(A.P, B.P), t: B.t, f: B.f, assign: { ...A.assign, parts: [...A.assign.parts, ...B.assign.parts], expr: { type: 'Binary', op, left: A.assign.expr, right: B.assign.expr } } };
               } else if (!A.assign && !B.assign) merged = { P: mkOr(A.P, B.P), t: B.t, f: B.f, assign: null };
             } else if (A.t === B.f && !A.assign) merged = { P: mkAnd(mkNot(A.P), B.P), t: B.t, f: A.t, assign: B.assign };
           } else if (D === A.t) {
@@ -1157,11 +1185,18 @@ class FunctionDecompiler {
     const X = jumpWhenP ? g.t : g.f;
     const toX = jumpWhenP ? g.P : mkNot(g.P);        // truth leading to X
     const toBody = mkNot(toX);                       // truth leading into the fall-through code
+    // Prompt XXXI (KNOWN-ISSUES #114): a TESTSET's condition and the value it stores are one expression. Written `if E then x = E`,
+    // E runs twice (`x = t.a or x` read t.a, and so called its __index, twice). Where the condition is exactly the test of the stored
+    // value, the statement is written so that E runs once, in its place: `x = E or x` when both outcomes continue at the same place,
+    // `x = E or c` when the fall-through code is that one assignment, and otherwise E goes to the register the bytecode tested
+    // (`_rS = E; if _rS then x = _rS else ... end`), unless E is a plain local or a constant, which can be read twice.
+    const own = g.assign && ownTest(g.P, g.assign.expr, g.assign.op);
     if (g.t === g.f) {
       // both outcomes continue at the same place: only the (possible) assignment of a value condition remains
       if (g.assign) {
         const target = this.regTarget(g.assign.d, g.assign.pc);
-        out.push({ type: 'If', clauses: [{ cond: g.P, body: [{ type: 'Assign', targets: [target], values: [g.assign.expr] }] }], orelse: null });
+        if (own) out.push({ type: 'Assign', targets: [target], values: [{ type: 'Binary', op: g.assign.op, left: g.assign.expr, right: nameNode(target.name) }] });
+        else out.push({ type: 'If', clauses: [{ cond: g.P, body: [{ type: 'Assign', targets: [target], values: [g.assign.expr] }] }], orelse: null });
       } else out.push({ type: 'If', clauses: [{ cond: g.P, body: [] }], orelse: null });
       return bodyStart;
     }
@@ -1170,6 +1205,13 @@ class FunctionDecompiler {
       if (!jumpWhenP || X <= g.end || X > hi) throw new Unstructured(`value condition at ${this.ir[g.end].pc} is not in a recognised shape`);
       const target = this.regTarget(g.assign.d, g.assign.pc);
       const fall = this.sub(bodyStart, X, ctx);
+      const only = fall.length === 1 && fall[0].type === 'Assign' && fall[0].targets.length === 1 && fall[0].values.length === 1 ? fall[0] : null;
+      if (own && only && only.targets[0].type === 'Name' && only.targets[0].name === target.name) {
+        out.push({ type: 'Assign', targets: [target], values: [{ type: 'Binary', op: g.assign.op, left: g.assign.expr, right: only.values[0] }] });
+        return X;
+      }
+      const chain = own ? this.valueChain(g.assign, target, fall) : null;
+      if (chain) { out.push(...chain); return X; }
       out.push({ type: 'If', clauses: [{ cond: g.P, body: [{ type: 'Assign', targets: [target], values: [g.assign.expr] }] }], orelse: fall.length ? fall : null });
       return X;
     }
@@ -1177,12 +1219,26 @@ class FunctionDecompiler {
       out.push({ type: 'If', clauses: [{ cond: toX, body: [{ type: 'Break' }] }], orelse: null });
       return bodyStart;
     }
+    // Luau `continue` (Prompt XXXI): a conditional jump from inside a nested block to the loop's continue point. Where the block
+    // is the loop body itself (X === hi) the ordinary `if` is written, as before; Lua 5.1 output never gets a `continue`.
+    if (this.o.luau && ctx.cont != null && X === ctx.cont && X > hi) {
+      out.push({ type: 'If', clauses: [{ cond: toX, body: [{ type: 'Continue' }] }], orelse: null });
+      return bodyStart;
+    }
     if (X <= g.end) throw new Unstructured(`backward conditional jump at ${this.ir[g.end].pc}`);
+    // Prompt XXXI: a jump to a `return` that returns nothing is that `return` (nothing runs in between)
+    if (X > hi && this.plainReturn(X)) {
+      out.push({ type: 'If', clauses: [{ cond: toX, body: [{ type: 'Return', values: [] }] }], orelse: null });
+      return bodyStart;
+    }
     if (X > hi) throw new Unstructured(`conditional jump at ${this.ir[g.end].pc} leaves its block`);
     // `if ... else ... end`: the compiler sends jumps that would reach the closing `jmp` of the then-branch straight to
     // its destination. Undo that, so that they are plain jumps to the end of the then-branch.
+    // (Prompt XXXI, Luau: not when that destination is the loop's continue point; a jump there from inside is a `continue` of its own,
+    // and sent to the closing `jmp` it would look like the end of an inner then-branch)
     const closing = this.ir[X - 1];
-    if (X - 1 >= bodyStart && closing.op === 'jmp' && closing.t > X && closing.t <= hi && (ctx.exit === null || closing.t !== ctx.exit) && !this.isLoopBackEdge(X - 1)) {
+    if (X - 1 >= bodyStart && closing.op === 'jmp' && closing.t > X && closing.t <= hi && (ctx.exit === null || closing.t !== ctx.exit) && !this.isLoopBackEdge(X - 1)
+        && !(this.o.luau && ctx.cont != null && closing.t === ctx.cont)) {
       for (let k = bodyStart; k < X - 1; k++) {
         const q = this.ir[k];
         if ((q.op === 'jmp' || q.op === 'cjmp' || q.op === 'testset') && q.t === closing.t) { q.t = X - 1; this.isTarget[X - 1] = 1; }
@@ -1194,7 +1250,18 @@ class FunctionDecompiler {
     for (let k = bodyStart; k < X; k++) {
       const q = this.ir[k];
       if (k === X - 1 && q.op === 'jmp') continue; // the jump that closes an if/else
-      if ((q.op === 'jmp' || q.op === 'cjmp' || q.op === 'testset') && q.t > shared && q.t <= hi && (ctx.exit === null || q.t !== ctx.exit)) shared = q.t;
+      if ((q.op === 'jmp' || q.op === 'cjmp' || q.op === 'testset') && q.t > shared && q.t <= hi && (ctx.exit === null || q.t !== ctx.exit) && !(this.o.luau && ctx.cont != null && q.t === ctx.cont)) shared = q.t;
+    }
+    // Prompt XXXI: a tail too large to duplicate that only jumps to a `return` of nothing made: those jumps are written `return` where
+    // they are (the nested blocks do so), and the tail is the one before them, if any. Smaller tails are duplicated as before.
+    if (shared > X && shared - X > 80) {
+      let other = X;
+      for (let k = bodyStart; k < X; k++) {
+        const q = this.ir[k];
+        if (k === X - 1 && q.op === 'jmp') continue;
+        if ((q.op === 'jmp' || q.op === 'cjmp' || q.op === 'testset') && q.t > other && q.t <= hi && (ctx.exit === null || q.t !== ctx.exit) && !(this.o.luau && ctx.cont != null && q.t === ctx.cont) && !(q.op !== 'testset' && this.plainReturn(q.t))) other = q.t;
+      }
+      if (other <= X || other - X <= 80) shared = other;
     }
     if (shared > X) {
       if (shared - X > 80) throw new Unstructured(`shared tail at ${this.ir[X].pc} is too large to duplicate`);
@@ -1207,7 +1274,10 @@ class FunctionDecompiler {
     let thenEnd = X;
     let elseRange = null;
     const tail = this.ir[X - 1];
-    if (X - 1 >= bodyStart && tail.op === 'jmp' && tail.t > X && tail.t <= hi && (ctx.exit === null || tail.t !== ctx.exit) && !this.isLoopBackEdge(X - 1)) {
+    // Prompt XXXI, Luau: a then-block that ends in a jump to the loop's continue point and also jumps to X itself is no if/else
+    // (no then-branch of one can reach its else): it ends in `if not c then continue end`, and X is what follows the `if`.
+    const continueEnd = this.o.luau && ctx.cont != null && tail.op === 'jmp' && tail.t === ctx.cont && this.jumpsTo(bodyStart, X - 1, X);
+    if (X - 1 >= bodyStart && tail.op === 'jmp' && tail.t > X && tail.t <= hi && (ctx.exit === null || tail.t !== ctx.exit) && !this.isLoopBackEdge(X - 1) && !continueEnd) {
       thenEnd = X - 1;
       elseRange = [X, tail.t];
     }
@@ -1231,6 +1301,18 @@ class FunctionDecompiler {
     return elseRange ? elseRange[1] : X;
   }
 
+  /** Prompt XXXI: is the instruction at idx a `return` with no values (so a jump to it is `return`)? */
+  plainReturn(idx) {
+    const o = this.ir[idx];
+    return !!o && o.op === 'ret' && o.n === 0;
+  }
+
+  /** Does a jump in [lo, hi) go to T? */
+  jumpsTo(lo, hi, T) {
+    for (let k = lo; k < hi; k++) { const q = this.ir[k]; if ((q.op === 'jmp' || q.op === 'cjmp' || q.op === 'testset') && q.t === T) return true; }
+    return false;
+  }
+
   isLoopBackEdge(idx) {
     const o = this.ir[idx];
     return o.t <= idx;
@@ -1251,14 +1333,16 @@ class FunctionDecompiler {
 
   wrapReturns(stmts) {
     // `return` must be the last statement of a block; anything after it becomes unreachable and is dropped
-    const k = stmts.findIndex((s) => s.type === 'Return' || s.type === 'Break');
+    const k = stmts.findIndex((s) => s.type === 'Return' || s.type === 'Break' || s.type === 'Continue');
     return k >= 0 && k < stmts.length - 1 ? stmts.slice(0, k + 1) : stmts;
   }
 
   loop(s, loop, out, ctx) {
     const { j } = loop;
     const exit = j + 1;
-    const lctx = { exit, innerStart: -1, until: -1 };
+    // Prompt XXXI (KNOWN-ISSUES #112): the continue point of a `while` loop is its closing `jmp` (jumps to the head were sent there);
+    // a Luau program reaches it from mid-body with `continue`. Repeat and for loops start a context without one.
+    const lctx = { exit, innerStart: -1, until: -1, cont: loop.kind === 'jmp' ? j : null };
     if (loop.kind === 'cjmp') {
       // repeat ... until cond
       this.pushScope();
@@ -1405,6 +1489,18 @@ class FunctionDecompiler {
         if (simple) throw new Unstructured('jump inside a condition');
         if (o.t === i + 1) return i + 1;                         // a jump to the next instruction does nothing (what is left of a jump over removed junk)
         if (ctx.exit !== null && o.t === ctx.exit) { this.flushAll(out); out.push({ type: 'Break' }); return i + 1; }
+        if (o.t > hi && this.plainReturn(o.t)) {
+          // Prompt XXXI: a jump out of the block to a `return` of nothing is that `return`, where nothing after it here can be reached
+          let dead = true;
+          for (let k = i + 1; k < hi; k++) if (this.isTarget[k]) { dead = false; break; }
+          if (dead) { this.flushAll(out); out.push({ type: 'Return', values: [] }); return hi; }
+        }
+        if (this.o.luau && ctx.cont != null && o.t === ctx.cont && o.t > hi) {
+          // Luau `continue` (Prompt XXXI), only where nothing after it in this block can be reached
+          let dead = true;
+          for (let k = i + 1; k < hi; k++) if (this.isTarget[k]) { dead = false; break; }
+          if (dead) { this.flushAll(out); out.push({ type: 'Continue' }); return hi; }
+        }
         if (o.t > i + 1 && o.t <= hi) {
           // a jump over code that nothing else can reach (the compiler's LOADBOOL pairs): skip it
           let dead = true;
@@ -1434,6 +1530,39 @@ class FunctionDecompiler {
     const e = this.topEntry;
     this.topEntry = null;
     return e.expr;
+  }
+
+  /**
+   * Prompt XXXI: `x = E1 or E2 ... or <fall-through code>` as statements in which every Ei runs once and in order, as the bytecode runs
+   * them: a part that cannot be read twice is first stored in the register its TESTSET tested (`_r6 = t[k]`), and the parts after an
+   * impure one are only reached on its false edge. Null when there is nothing to fix (every part is a local or a constant).
+   */
+  valueChain(assign, target, fall) {
+    const op = assign.op;
+    const leaf = (e) => ({ ...e });
+    const join = (es) => es.reduce((l, r) => ({ type: 'Binary', op, left: l, right: r }));
+    const test = (es) => (op === 'or' ? join(es) : es.map((e) => mkNot(e)).reduce((l, r) => mkOr(l, r)));
+    const emit = (parts) => {
+      if (parts.every((p) => this.readsTwice(p.expr))) {
+        return [{ type: 'If', clauses: [{ cond: test(parts.map((p) => leaf(p.expr))), body: [{ type: 'Assign', targets: [target], values: [join(parts.map((p) => leaf(p.expr)))] }] }], orelse: fall.length ? fall : null }];
+      }
+      const [p, ...rest] = parts;
+      const reg = this.regTarget(p.s, p.pc);
+      const stored = { type: 'Assign', targets: [reg], values: [p.expr] };
+      const held = { ...p, expr: nameNode(reg.name) };
+      if (rest.every((q) => this.readsTwice(q.expr))) return [stored, ...emit([held, ...rest])];
+      const inner = emit(rest);
+      const cond = op === 'or' ? nameNode(reg.name) : { type: 'Unary', op: 'not', arg: nameNode(reg.name) };
+      return [stored, { type: 'If', clauses: [{ cond, body: [{ type: 'Assign', targets: [target], values: [nameNode(reg.name)] }] }], orelse: inner }];
+    };
+    if (!assign.parts || assign.parts.every((p) => this.readsTwice(p.expr))) return null;
+    return emit(assign.parts);
+  }
+
+  /** Prompt XXXI: an expression that may be written twice without running anything twice: a constant, or a local of this function. */
+  readsTwice(e) {
+    if (e.type === 'Nil' || e.type === 'True' || e.type === 'False' || e.type === 'Number' || e.type === 'String') return true;
+    return e.type === 'Name' && (this.hoisted.has(e.name) || this.locals.some((lv) => lv.outName === e.name));
   }
 
   regTarget(r, pc) {
@@ -1557,7 +1686,7 @@ class FunctionDecompiler {
     const envUps = o.ups.map((u) => (!u.instack && this.o.envUps && this.o.envUps[u.idx] === true));
     let func;
     try {
-      func = decompileFunction(o.proto, { depth: this.o.depth + 1, upNames, envUps, version: this.f.version });
+      func = decompileFunction(o.proto, { depth: this.o.depth + 1, upNames, envUps, version: this.f.version, luau: this.o.luau });
     } catch (e) {
       if (!(e instanceof Unstructured || e instanceof LiftError)) throw e;
       func = failedFunction(o.proto, e.message);
@@ -1678,7 +1807,7 @@ class FunctionDecompiler {
     this.pushScope();
     const varName = lv ? this.nameOf(lv) : this.tempName(o.base + 3);
     if (!lv) this.hoisted.delete(varName);
-    const body = this.sub(i + 1, f, { exit: f + 1, innerStart: -1, until: -1 });
+    const body = this.sub(i + 1, f, { exit: f + 1, innerStart: -1, until: -1, cont: f }); // a jump to FORLOOP is the next iteration (Luau `continue`)
     this.popScope();
     let step = exprs[2];
     if (step.type === 'Number' && step.value === 1) step = null;
@@ -1715,7 +1844,7 @@ class FunctionDecompiler {
       if (lv) { this.skipDecl.add(lv); ids.push(idNode(this.nameOf(lv))); } else ids.push(idNode(this.tempName(call.varBase + k)));
     }
     for (const l of this.locals) if (l.internal && l.start === bodyPc) this.skipDecl.add(l);
-    const body = this.sub(i + 1, c, { exit: c + 2, innerStart: -1, until: -1 });
+    const body = this.sub(i + 1, c, { exit: c + 2, innerStart: -1, until: -1, cont: c }); // a jump to TFORCALL is the next iteration (Luau `continue`)
     this.popScope();
     out.push({ type: 'GenFor', ids, exprs, body });
     return c + 2;
@@ -1744,14 +1873,16 @@ export function decompileFunction(f, opts) {
 
 /**
  * @param {{version: number, main: object}} chunk result of parseChunk()
+ * @param {{dialect?: string}} [options] dialect "luau": the rebuilt program is Luau, so a jump to a loop's continue point may be written `continue`
  * @returns {{ast: object, failures: string[]}}
  */
-export function decompile(chunk) {
+export function decompile(chunk, options = {}) {
   const failures = [];
   const envUps = chunk.version === 0x54 ? [true] : [];
   let fn;
   try {
-    fn = decompileFunction(chunk.main, { depth: 0, upNames: [], envUps, version: chunk.version });
+    // options.dialect 'luau': the program is Luau (MoonSec V3 rebuilds Roblox scripts), so `continue` may be written
+    fn = decompileFunction(chunk.main, { depth: 0, upNames: [], envUps, version: chunk.version, luau: options.dialect === 'luau' });
   } catch (e) {
     if (!(e instanceof Unstructured || e instanceof LiftError)) throw e;
     failures.push(e.message);

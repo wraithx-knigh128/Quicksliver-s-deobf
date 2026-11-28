@@ -337,25 +337,6 @@ export const SNIPPETS = {
     local L = { { name = "x", a = 1, b = 2 }, { name = "y", a = 1 }, { name = "z" } }
     print(pick(L)) S.WallCheck = false print(pick(L))
   `,
-};
-
-/** Constructs that only exist from Lua 5.3: integer division, bitwise operators, integer/float distinction. */
-export const SNIPPETS_54 = {
-  integers: `
-    print(7 // 2, 7.0 // 2, 7 % 3, 2 ^ 3, 10 / 2, 3 | 4, 6 & 3, 5 ~ 1, 1 << 4, 256 >> 4, ~0)
-    local n = 10
-    print(n // 3, n % 3, n / 4, -n // 3, n * 1.0, 1e2, 0x7fffffff + 1)
-    for i = 3, 1, -1 do print(i, i * 2) end
-    for f = 1.0, 2 do print(f) end
-  `,
-};
-
-/**
- * Prompt XXX: shapes that Lua 5.1 compiles in a way the decompiler now reads; Lua 5.4 compiles them differently. (`local ok = …` with a
- * field comparison, a local's value delivered by TESTSET and a method call, then `if ok`: Lua 5.4 with debug information is still not
- * decompiled — docs/KNOWN-ISSUES.md.)
- */
-export const SNIPPETS_51 = {
   valueThenTest: `
     local Mode = { Value = "Boss" }
     local D = { GetAttribute = function(self, k) return self[k] end, Dungeon = true }
@@ -378,4 +359,39 @@ export const SNIPPETS_51 = {
     for _, m in ipairs({ "All", "Boss", "Mini Boss", "Other" }) do Mode.Value = m print(m, pick(L)) end
     D.Dungeon = false Mode.Value = "Other" print(pick(L))
   `,
+  // Prompt XXXI (KNOWN-ISSUES #115, reduced from valueThenTest): a local (isBoss) begins at the pc of a split upvalue read (Mode.Value,
+  // Lua 5.4 GETTABUP), and a value condition follows; Lua 5.4 with debug information was not decompiled
+  localAtSplitRead: `
+    local Mode = { Value = "Boss" }
+    local D = { GetAttribute = function(self, k) return self[k] end, Dungeon = true }
+    local function f(list)
+      local n = 0
+      for _, e in pairs(list) do
+        local isBoss = e.b
+        local ok = Mode.Value == "All" or Mode.Value == "Boss" and isBoss or (Mode.Value ~= "Boss") and D:GetAttribute("Dungeon") == true
+        if ok then n = n + 1 end
+      end
+      return n
+    end
+    local L = { { b = 1 }, { m = 1 }, {} }
+    for _, m in ipairs({ "All", "Boss", "x" }) do Mode.Value = m print(f(L)) D.Dungeon = not D.Dungeon end
+  `,
 };
+
+/** Constructs that only exist from Lua 5.3: integer division, bitwise operators, integer/float distinction. */
+export const SNIPPETS_54 = {
+  integers: `
+    print(7 // 2, 7.0 // 2, 7 % 3, 2 ^ 3, 10 / 2, 3 | 4, 6 & 3, 5 ~ 1, 1 << 4, 256 >> 4, ~0)
+    local n = 10
+    print(n // 3, n % 3, n / 4, -n // 3, n * 1.0, 1e2, 0x7fffffff + 1)
+    for i = 3, 1, -1 do print(i, i * 2) end
+    for f = 1.0, 2 do print(f) end
+  `,
+};
+
+/**
+ * Prompt XXX: shapes Lua 5.1 compiled in a way the decompiler read, where Lua 5.4 with debug information did not. Prompt XXXI: none left
+ * (`valueThenTest` is in SNIPPETS: Lua 5.4's GETTABUP is two IR ops at one pc, and a local beginning at that pc kept the condition after
+ * it from being read; docs/KNOWN-ISSUES.md #115).
+ */
+export const SNIPPETS_51 = {};

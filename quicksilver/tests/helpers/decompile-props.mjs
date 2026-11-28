@@ -114,3 +114,62 @@ export function sharedSubtrees(ast) {
   visit(ast);
   return shared;
 }
+
+/**
+ * Prompt XXXI (KNOWN-ISSUES #114): statements whose value conditions read fields through `__index`, call methods and functions, in
+ * chains of `and` / `or` that keep the variable's old value, take a new one or fall through to code. The harness logs every read and
+ * call, so a decompiled program that evaluates something twice, once too few, or in another order, prints a different log.
+ */
+export function evaluationCase(rnd) {
+  const atoms = ['t.a', 't.b', 't[k]', 't:m()', 'f(t.c)', 'u.a', 'u[k]', 'n', 'c'];
+  const atom = () => atoms[rnd(atoms.length)];
+  const chain = (len, op) => Array.from({ length: len }, atom).join(` ${op} `);
+  const stmts = [
+    () => `x = ${atom()} or x`,
+    () => `x = ${atom()} and x`,
+    () => `x = ${chain(2, 'or')} or x`,
+    () => `x = ${chain(2, 'and')} and x`,
+    () => `x = ${atom()} or ${atom()}`,
+    () => `x = ${atom()} and ${atom()}`,
+    () => `x = ${chain(3, 'or')}`,
+    () => `x = c and ${atom()} or x`,
+    () => `x = (${atom()} and ${atom()}) or x`,
+    () => `x = ${atom()} or g(x)`,
+    () => `x = ${atom()} or (x and ${atom()})`,
+    () => `x = ${atom()} or ${atom()} or g(x) or x`,
+    () => `if ${atom()} then x = ${atom()} end`,
+    () => `local y = ${atom()} or ${atom()} x = y`,
+    () => `for i = 1, 2 do x = t[i] or x end`,
+    () => `for i = 1, 2 do x = u[i] and x or ${atom()} end`,
+    () => `n = ${atom()} or n x = n or x`,
+    () => `g(${atom()} or x, ${atom()} and x)`,
+  ];
+  const body = Array.from({ length: 1 + rnd(3) }, () => stmts[rnd(stmts.length)]()).join('\n');
+  return `local t, u, k, x, n, c = ...\n${body}\nreturn x, n`;
+}
+
+/** Runs an evaluation case on rows of field values through logging proxies; prints, per row, the results and the read/call log. */
+export const evaluationHarness = (quoted) => `
+local fn = assert(loadstring(${quoted}))
+local log
+local function proxy(name, V)
+  return setmetatable({}, { __index = function(_, key)
+    log[#log + 1] = name .. "." .. tostring(key)
+    if key == "m" then return function(self) log[#log + 1] = name .. ":m" return V.m end end
+    return V[key]
+  end })
+end
+function f(v) log[#log + 1] = "f(" .. tostring(v) .. ")" return v end
+function g(v, w) log[#log + 1] = "g(" .. tostring(v) .. "," .. tostring(w) .. ")" return w end
+local D = { nil, false, 0, "s" }
+local out = {}
+for row = 1, 24 do
+  local function pick(j) return D[(row * 7 + j * 3) % 4 + 1] end
+  local V = { a = pick(1), b = pick(2), c = pick(3), m = pick(4), [1] = pick(5), [2] = pick(6) }
+  local W = { a = pick(7), [1] = pick(8), [2] = pick(9) }
+  log = {}
+  local t, u = proxy("t", V), proxy("u", W)
+  local r = { pcall(fn, t, u, (row % 3 == 0) and "a" or (row % 2) + 1, pick(10), pick(11), pick(12)) }
+  out[#out + 1] = tostring(r[1]) .. ":" .. tostring(r[2]) .. ":" .. tostring(r[3]) .. "|" .. table.concat(log, ",")
+end
+print(table.concat(out, "\\n"))`;

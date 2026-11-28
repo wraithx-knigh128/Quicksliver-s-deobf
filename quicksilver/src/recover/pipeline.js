@@ -77,6 +77,9 @@ export const DEFAULT_OPTIONS = Object.freeze({
   roleHints: null,            // (ast) => Map<Id node, {name}>: names inferred from relations (src/nexus/roles.js); consulted by the renamer before the initialiser
   moonveilVm: true,           // read a MoonVeil VM program back out of its data (static; falls back to the general passes when the script does not fit)
   reuseInstructions: true,    // lift an instruction once per kind and reuse it (false lifts every one: slower, same result)
+  // Prompt XXX: after a VM lift verified against its decoded bytecode, every later step is checked against it again and undone when it
+  // changes what the program does. Off only to test a pass on its own (tests/xxxi-evaluate.test.mjs); the site never turns it off.
+  vmGuard: true,
   onProgress: null,           // called with { phase, done?, total? } while long steps run
   stringStyle: 'normalize',
   format: { indent: '  ', width: 100 },
@@ -84,7 +87,7 @@ export const DEFAULT_OPTIONS = Object.freeze({
 
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
-class Run {
+export class Run {
   constructor(ast, options) {
     this.ast = ast;
     this.options = options;
@@ -529,7 +532,7 @@ export function recover(source, userOptions = {}) {
       unusedAtStart = new WeakSet(); decompiled = true;
       // Prompt XXX: the clean-up passes keep what the self-check established. (s04_control_flow__AzureGodUltra: the decoder evaluation
       // read one of two identical `pool[decode(...)]` sites as "" — the lifted program was right, the cleaned one printed something else.)
-      if (az.verifiedChunk) {
+      if (az.verifiedChunk && options.vmGuard !== false) {
         const bytes = az.verifiedChunk;
         run.guard = (a) => { const c = checkAgainstChunk(bytes, print(a)); return c.checked && !c.same ? `the program no longer behaves like the VM's decoded bytecode (${c.reason})` : null; };
       }

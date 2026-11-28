@@ -541,7 +541,6 @@ function evaluateOnce(chunk, ctx = {}) {
   }
 
   // ---- synthetic chunk ------------------------------------------------------------------------------------
-  const ids = new Map(sites.map((e, i) => [e, i + 1]));
   const wrap = (e, k) => ({
     type: 'Assign',
     targets: [{ type: 'Index', obj: rn('__qs_r'), key: { type: 'Number', value: k, raw: String(k) }, dot: false }],
@@ -556,27 +555,35 @@ function evaluateOnce(chunk, ctx = {}) {
     if (!perStmt.has(s)) perStmt.set(s, []);
     perStmt.get(s).push(e);
   }
-  const body = [{ type: 'Local', ids: [{ type: 'Id', name: '__qs_r' }], values: [{ type: 'Table', fields: [] }] }];
-  for (const s of top) {
-    if (perStmt.has(s)) for (const e of perStmt.get(s)) if (!late.has(e)) body.push(wrap(e, ids.get(e)));
-    if (slice.has(s)) body.push(s);
-  }
-  for (const e of sites) if (late.has(e)) body.push(wrap(e, ids.get(e)));
-  const n = sites.length;
-  for (const e of [...sites].reverse()) body.push(wrap(e, ids.get(e) + n));
-  body.push({ type: 'Return', values: [rn('__qs_r')] });
-  const synthetic = { type: 'Chunk', body, endComments: [], features: new Set() };
+  // `fwdPos` is the order in which the forward run evaluates the sites (Prompt XXXI: what ran before a failed call can be trusted, what ran after it cannot)
+  const build = (list) => {
+    const keep = new Set(list);
+    const ids = new Map(list.map((e, i) => [e, i + 1]));
+    const fwdPos = new Map();
+    const body = [{ type: 'Local', ids: [{ type: 'Id', name: '__qs_r' }], values: [{ type: 'Table', fields: [] }] }];
+    const forward = (e) => { fwdPos.set(e, fwdPos.size); body.push(wrap(e, ids.get(e))); };
+    for (const s of top) {
+      if (perStmt.has(s)) for (const e of perStmt.get(s)) if (keep.has(e) && !late.has(e)) forward(e);
+      if (slice.has(s)) body.push(s);
+    }
+    for (const e of list) if (late.has(e)) forward(e);
+    for (const e of [...list].reverse()) body.push(wrap(e, ids.get(e) + list.length));
+    body.push({ type: 'Return', values: [rn('__qs_r')] });
+    return { ids, fwdPos, n: list.length, synthetic: { type: 'Chunk', body, endComments: [], features: new Set() } };
+  };
+  let run = build(sites);
 
   // A decoder written for LuaJIT or Garry's Mod asks for the `bit` library, which Luau does not have (it has bit32): when the run fails on exactly that, it is
   // run again as LuaJIT, where `bit` exists. The dialect only decides which libraries are present.
   let dialect = opts.dialect || 'luau';
   const execute = (numMode) => {
     const m = createMachine({ fuel: opts.fuel ?? 60_000_000, timeMs: opts.timeMs ?? 10_000, dialect, numMode });
-    const t = callValue(m, compileAst(m, synthetic, 'decoder', m.globals), [], '')[0];
+    const t = callValue(m, compileAst(m, run.synthetic, 'decoder', m.globals), [], '')[0];
     return { table: t, loss: m.precisionLoss };
   };
   let table;
   let precisionLoss = 0;
+  const started = Date.now();
   try {
     try {
       ({ table, loss: precisionLoss } = execute('watch'));
@@ -593,6 +600,42 @@ function evaluateOnce(chunk, ctx = {}) {
     return result;
   }
   if (!(table instanceof LuaTable)) { result.skipped = 'the sandbox returned no results'; return result; }
+
+  // Prompt XXXI (KNOWN-ISSUES #118): the forward and the reverse order run in one machine, so their agreeing is no proof once a call
+  // failed on the way. A decoder that memoises (`cache[key] = ""` before decoding, the text after) and fails part-way leaves its
+  // placeholder behind, and every later call with that key returns it, in either order, and agrees. (AzureVM s04_control_flow__AzureGodUltra:
+  // the decoder's character table is filled inside the program's main loop, which the slice cannot run; one lookup failed and an identical
+  // later one was accepted as "".) What a failed call may have left behind is not limited to its own decoder: two decoders can share a
+  // cache, under one name or two. So the sites that failed are left out and the rest is run again, in a fresh machine, until a run has no
+  // failure (at most twice more, and only while the runs are quick); only such a run's results are used. Without one, no result the
+  // forward run obtained after its first failure is used.
+  const allSites = sites;
+  const droppedForFailure = new Set();
+  const failedIn = (t, r) => sites.filter((e) => { const x = t.get(r.ids.get(e)); return !(x instanceof LuaTable && x.get(1) === true); });
+  const succeedsAfter = (r, failed) => {
+    const first = Math.min(...failed.map((e) => r.fwdPos.get(e)));
+    return sites.some((e) => r.fwdPos.get(e) > first && !failed.includes(e));
+  };
+  let firstFailure = null;
+  for (let rerun = 0; ; rerun++) {
+    const failed = failedIn(table, run);
+    if (!failed.length) { firstFailure = null; break; }
+    firstFailure = Math.min(...failed.map((e) => run.fwdPos.get(e)));
+    if (!succeedsAfter(run, failed) || rerun >= 2 || precisionLoss > 0 || Date.now() - started > (opts.rerunBudgetMs ?? 4_000)) break;
+    const rest = sites.filter((e) => !failed.includes(e));
+    const prev = { run, table, precisionLoss, sites };
+    sites = rest;
+    run = build(sites);
+    let t2 = null;
+    try { ({ table: t2, loss: precisionLoss } = execute('watch')); } catch { t2 = null; }
+    if (!(t2 instanceof LuaTable)) { ({ run, table, precisionLoss, sites } = prev); break; }
+    for (const e of failed) droppedForFailure.add(e);
+    table = t2;
+    result.reruns = rerun + 1;
+  }
+  const n = run.n;
+  const ids = run.ids;
+  const fwdPos = run.fwdPos;
 
   // Some arithmetic went past 2^53, where doubles and Lua 5.4 integers disagree: run again with integers and compare.
   const unresolved = new Set();
@@ -633,9 +676,25 @@ function evaluateOnce(chunk, ctx = {}) {
   // `decode(s, key)` as a statement fills the cache and its result is thrown away: what it returns says nothing about the decoder
   const discarded = new Set();
   walk(chunk, (n) => { if (n.type === 'CallStmt') discarded.add(n.call); });
+  // Identical expressions must all give one result, in both orders (a second line of defence for the same kind of hidden state).
+  const textOf = (e) => print({ type: 'Chunk', body: [{ type: 'Return', values: [e] }], endComments: [], features: new Set() });
+  const outcomeOf = (t) => (t instanceof LuaTable ? `${t.get(1)}\u0000${typeof t.get(2)}\u0000${String(t.get(2))}` : 'none');
+  const groups = new Map();
+  for (const e of sites) {
+    const k = textOf(e);
+    if (!groups.has(k)) groups.set(k, new Set());
+    const g = groups.get(k);
+    g.add(outcomeOf(table.get(ids.get(e))));
+    g.add(outcomeOf(table.get(ids.get(e) + n)));
+  }
+  result.afterFailure = 0;
+  result.inconsistent = 0;
+  result.rejected += droppedForFailure.size;
   for (const e of sites) {
     const a = table.get(ids.get(e));
     const b = table.get(ids.get(e) + n);
+    if (firstFailure !== null && fwdPos.get(e) > firstFailure) { result.rejected++; result.afterFailure++; continue; }
+    if (groups.get(textOf(e)).size > 1) { result.rejected++; result.inconsistent++; continue; }
     if (unresolved.has(ids.get(e)) || !single(a) || !single(b) || a.get(2) !== b.get(2) || !usable(a.get(2))) { result.rejected++; continue; }
     if (keyOf.has(e)) { if (typeof a.get(2) === 'string') fallbacks.push([e, a.get(2)]); continue; }
     const v = decoderOf(e);
@@ -668,7 +727,7 @@ function evaluateOnce(chunk, ctx = {}) {
     result.changed += result.removedStatements;
   }
   result.evaluated = accepted.size;
-  result.indexRejected = sites.filter((e) => e.type === 'Index' && !accepted.has(e)).length;
+  result.indexRejected = allSites.filter((e) => e.type === 'Index' && !accepted.has(e)).length;
   return result;
 }
 

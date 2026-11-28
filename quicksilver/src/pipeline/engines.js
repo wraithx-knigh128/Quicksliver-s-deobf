@@ -20,6 +20,9 @@ export const ADAPTERS = Object.freeze([
     minConfidence: 0.5,
     where: 'server',
     output: 'lua51-bytecode',
+    // Prompt XXXI: the programs MoonSec V3 protects are Roblox (Luau) scripts, and its rebuilt bytecode keeps their `continue` jumps; the
+    // decompiler may write them as `continue` (src/decompile/decompile.js), which Lua 5.1 output never contains
+    dialect: 'luau',
     label: 'Rebuild the MoonSec V3 program (server engine: moonsec-deobfuscator-js)',
     licence: 'GPL-3.0: moonsec-deobfuscator-js, a port of tupsutumppu/MoonsecDeobfuscator (modified; api/_engine/moonsec/NOTICE.md)',
     // MoonSec V3's runtime calls wait() once before the program starts (seen in 102 of 120 sampled originals, in none of the rebuilt
