@@ -576,14 +576,16 @@ function evaluateOnce(chunk, ctx = {}) {
   // A decoder written for LuaJIT or Garry's Mod asks for the `bit` library, which Luau does not have (it has bit32): when the run fails on exactly that, it is
   // run again as LuaJIT, where `bit` exists. The dialect only decides which libraries are present.
   let dialect = opts.dialect || 'luau';
+  const fuel = opts.fuel ?? 60_000_000;
+  let fuelUsed = 0;
   const execute = (numMode) => {
-    const m = createMachine({ fuel: opts.fuel ?? 60_000_000, timeMs: opts.timeMs ?? 10_000, dialect, numMode });
+    const m = createMachine({ fuel, timeMs: opts.timeMs ?? 10_000, dialect, numMode });
     const t = callValue(m, compileAst(m, run.synthetic, 'decoder', m.globals), [], '')[0];
+    fuelUsed = fuel - m.fuel;
     return { table: t, loss: m.precisionLoss };
   };
   let table;
   let precisionLoss = 0;
-  const started = Date.now();
   try {
     try {
       ({ table, loss: precisionLoss } = execute('watch'));
@@ -607,8 +609,9 @@ function evaluateOnce(chunk, ctx = {}) {
   // the decoder's character table is filled inside the program's main loop, which the slice cannot run; one lookup failed and an identical
   // later one was accepted as "".) What a failed call may have left behind is not limited to its own decoder: two decoders can share a
   // cache, under one name or two. So the sites that failed are left out and the rest is run again, in a fresh machine, until a run has no
-  // failure (at most twice more, and only while the runs are quick); only such a run's results are used. Without one, no result the
-  // forward run obtained after its first failure is used.
+  // failure (at most twice more, and only when the first run used at most a quarter of its fuel: a measure that is the same on every
+  // machine, unlike time); only such a run's results are used. Without one, no result the forward run obtained after its first failure
+  // is used.
   const allSites = sites;
   const droppedForFailure = new Set();
   const failedIn = (t, r) => sites.filter((e) => { const x = t.get(r.ids.get(e)); return !(x instanceof LuaTable && x.get(1) === true); });
@@ -617,11 +620,12 @@ function evaluateOnce(chunk, ctx = {}) {
     return sites.some((e) => r.fwdPos.get(e) > first && !failed.includes(e));
   };
   let firstFailure = null;
+  const firstFuel = fuelUsed;
   for (let rerun = 0; ; rerun++) {
     const failed = failedIn(table, run);
     if (!failed.length) { firstFailure = null; break; }
     firstFailure = Math.min(...failed.map((e) => run.fwdPos.get(e)));
-    if (!succeedsAfter(run, failed) || rerun >= 2 || precisionLoss > 0 || Date.now() - started > (opts.rerunBudgetMs ?? 4_000)) break;
+    if (!succeedsAfter(run, failed) || rerun >= 2 || precisionLoss > 0 || firstFuel > (opts.rerunFuel ?? fuel / 4)) break;
     const rest = sites.filter((e) => !failed.includes(e));
     const prev = { run, table, precisionLoss, sites };
     sites = rest;
